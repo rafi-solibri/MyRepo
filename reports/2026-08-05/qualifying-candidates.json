@@ -1,0 +1,63 @@
+{
+  "date": "2026-08-05",
+  "applied_before": null,
+  "applied_after": 0,
+  "submitted": [],
+  "board_blockers": {
+    "foundit": "Akamai Access Denied on search/SRP",
+    "naukri": "Login required for Apply / Quick Apply",
+    "linkedin": "Sign in required for Easy Apply"
+  },
+  "ready_when_logged_in": [
+    {
+      "posted": "1 day ago",
+      "title": "Solution Architect (Microsoft .NET/Azure Cloud)",
+      "company": "Experian",
+      "location": "Hyderabad",
+      "experience": "7-12 Yrs",
+      "salary": "Not Disclosed",
+      "url": "https://www.naukri.com/job-listings-solution-architect-microsoft-net-azure-cloud-experian-services-india-private-limited-hyderabad-7-to-12-years-040826922222",
+      "board": "naukri"
+    },
+    {
+      "posted": "1 day ago",
+      "title": ".NET Solution Architect",
+      "company": "LTM",
+      "location": "Hyderabad",
+      "experience": "15-20 Yrs",
+      "salary": "Not Disclosed",
+      "url": "https://www.naukri.com/job-listings-net-solution-architect-ltm-hyderabad-15-to-20-years-150626003008",
+      "board": "naukri"
+    },
+    {
+      "posted": "1 day ago",
+      "title": "Dot Net-Engineering Manager",
+      "company": "Big 4 / Anlage Infotech",
+      "location": "Hyderabad, Bengaluru",
+      "experience": "10-13 Yrs",
+      "salary": "Not Disclosed",
+      "url": "https://www.naukri.com/job-listings-dot-net-engineering-manager-anlage-infotech-hyderabad-bengaluru-10-to-13-years-280426037143",
+      "board": "naukri"
+    },
+    {
+      "posted": "2 days ago",
+      "title": ".Net Lead",
+      "company": "Persistent",
+      "location": "Hyderabad",
+      "experience": "7-10 Yrs",
+      "salary": "Not Disclosed",
+      "url": "https://www.naukri.com/job-listings-net-lead-persistent-systems-limited-hyderabad-7-to-10-years-171024011766",
+      "board": "naukri"
+    },
+    {
+      "posted": "2 days ago",
+      "title": ".Net JS developer-Lead(Immediate)",
+      "company": "PwC",
+      "location": "Hyderabad, Bengaluru",
+      "experience": "7-12 Yrs",
+      "salary": "Not Disclosed",
+      "url": "https://www.naukri.com/job-listings-net-js-developer-lead-immediate-pwc-hyderabad-bengaluru-7-to-12-years-030826003935",
+      "board": "naukri"
+    }
+  ]
+}
