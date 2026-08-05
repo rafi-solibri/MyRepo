@@ -41,7 +41,7 @@ Most India postings hide salary. Prioritize product MNCs, Staff/Principal titles
 - **Apply:** https://careers.servicenow.com/jobs/744000099998765/sr-staff-solution-architect/
 - **Job ID:** JB0069206
 
-### 5. UHG/Optum — Software Engineering Lead (.NET, Angular, SQL, DevOps, K8s) (Hyderabad)
+### 5. UHG/Optum — Software Engineering Lead (.NET, Angular, SQL, DevOps, K8s) (Hyderabad) ✅ HTTP 200
 - **Fit:** Excellent stack + prior UHG TL (returning candidate advantage)
 - **CTC risk:** Eng Lead bands vary — confirm ≥60 before long process; alumni path helps
 - **Resume:** `resumes/Rafi_Ahmed_Azure_DotNet_Solutions_Architect.md`
@@ -49,16 +49,16 @@ Most India postings hide salary. Prioritize product MNCs, Staff/Principal titles
 - **Apply:** https://careers.unitedhealthgroup.com/job/hyderabad/software-engineering-lead-net-angular-sql-server-devops-kubernetes/34088/96812377152
 - **Req:** 2368971
 
-### 6. UHG — Advisory Senior Consultant .NET FSE (Hyderabad)
-- **Fit:** Strong — ASP.NET Core, React/Angular, microservices, Azure, K8s, payer domain from prior UHG
-- **Resume:** `resumes/Rafi_Ahmed_Azure_DotNet_Solutions_Architect.md`
-- **Cover:** §6
-- **Apply:** https://careers.unitedhealthgroup.com/job/hyderabad/advisory-services-senior-consultant-net-fse/34088/94264217472
-- **Req:** 2350501
-
 ---
 
 ## Priority B — Good match / verify CTC early
+
+### 6. ServiceNow — Principal Applications Dev Engineer (Hyderabad) 🆕
+- **Fit:** Strong platform/engineering leadership; ServiceNow-specific depth is a gap — Principal band still worth shot
+- **Resume:** `resumes/Rafi_Ahmed_Principal_Platform_Architect.md`
+- **Cover:** §6 (repurposed)
+- **Apply:** https://careers.servicenow.com/jobs/744000137112143/principal-applications-dev-engineer/
+- **Job ID:** JB0073281 | Note: careers site may 403 bots — open in browser
 
 ### 7. Verisk — Software Engineering Architect (.NET, AWS, Cloud Native) (Hyderabad)
 - **Fit:** Excellent stack (.NET Core, AWS Lambda/ECS/EKS, Angular/React, SaaS)
@@ -68,7 +68,7 @@ Most India postings hide salary. Prioritize product MNCs, Staff/Principal titles
 - **Portal:** https://www.verisk.com/company/careers/ (search Hyderabad + Architect .NET AWS)
 - **Listing mirror:** https://www.bestkaam.com/job/software-engineering-architect-net-aws-cloud-native-verisk-hyderabad-4-8-years-643785
 
-### 8. Amazon — Principal Software Engineer, Delivery Experience (Hyderabad) — stretch
+### 8. Amazon — Principal Software Engineer, Delivery Experience (Hyderabad) — stretch ✅ HTTP 200
 - **Fit:** Stretch — Principal distributed systems + cross-org influence yes; deep delivery/promise domain no
 - **CTC:** Amazon Hyd Principal TC typically clears 60+ easily
 - **Resume:** `resumes/Rafi_Ahmed_Principal_Platform_Architect.md`
@@ -98,7 +98,13 @@ Most India postings hide salary. Prioritize product MNCs, Staff/Principal titles
 - **Listing:** https://www.hirist.tech/j/incedo-net-aws-architect-1642777
 - **Resume:** `resumes/Rafi_Ahmed_AWS_DotNet_Solutions_Architect.md`
 
-### 12. Informica — Technical Architect .NET (Remote India)
+### 12. NCR Voyix — Architect / Principal (alumni track)
+- **Fit:** Excellent — prior NCR SA + POS .NET/Azure/Kafka background
+- **CTC:** Confirm architect/principal band ≥60 (skip SE II/III IC postings)
+- **Resume:** `resumes/Rafi_Ahmed_Azure_DotNet_Solutions_Architect.md`
+- **Portal:** https://www.ncrvoyix.com/company/careers
+
+### 13. Informica — Technical Architect .NET (Remote India)
 - **Fit:** Strong — ASP.NET Core, Azure (App Services/AKS/Functions), K8s, SQL/PostgreSQL, 10–15 YOE
 - **CTC risk:** Confirm ≥60 before process
 - **Resume:** `resumes/Rafi_Ahmed_Azure_DotNet_Solutions_Architect.md`
@@ -125,6 +131,7 @@ Most India postings hide salary. Prioritize product MNCs, Staff/Principal titles
 
 - Crew Kraftorz .NET/AWS Architect @ **30–35 LPA** (below floor)
 - LTM .NET SA requiring **React Native** primary (poor stack match)
+- **Closed:** UHG Advisory .NET FSE 2350501 (HTTP 404 as of 2026-08-05)
 - Pure ServiceNow ITSM-admin architects without .NET/cloud platform scope (unless Staff TC confirmed)
 - 4–8 YOE inflated “Solution Architect” titles
 - Mandatory React Native / Snowflake-only without .NET
@@ -139,10 +146,11 @@ Most India postings hide salary. Prioritize product MNCs, Staff/Principal titles
 2. Experian .NET/Azure (official careers link)  
 3. Deloitte Azure 354080  
 4. UHG Eng Lead 2368971 (alumni angle)  
-5. UHG Advisory .NET FSE 2350501  
-6. ServiceNow Sr Staff SA  
+5. ServiceNow Sr Staff SA  
+6. ServiceNow Principal Apps Dev JB0073281  
 7. Verisk careers search + apply  
 8. Amazon Principal DEX (stretch)  
 9. Microsoft Hyd Architect search — apply 2–3 closest  
-10. Prudent Technologies (CTC gate)  
-11. LinkedIn Easy Apply ×15 + Naukri ×10 (product MNCs)
+10. NCR Voyix Architect search (alumni)  
+11. Prudent Technologies (CTC gate)  
+12. LinkedIn Easy Apply ×15 + Naukri ×10 (product MNCs)

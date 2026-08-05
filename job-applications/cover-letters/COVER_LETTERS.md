@@ -46,11 +46,12 @@ Returning-interest note: I previously served as Technical Lead at UnitedHealth G
 
 ---
 
-## 6. UHG — Advisory Senior Consultant .NET FSE (Req 2350501)
-**Resume:** `resumes/Rafi_Ahmed_Azure_DotNet_Solutions_Architect.md`  
-**Apply:** https://careers.unitedhealthgroup.com/job/hyderabad/advisory-services-senior-consultant-net-fse/34088/94264217472
+## 6. ServiceNow — Principal Applications Dev Engineer (JB0073281)
+**Resume:** `resumes/Rafi_Ahmed_Principal_Platform_Architect.md`  
+**Apply:** https://careers.servicenow.com/jobs/744000137112143/principal-applications-dev-engineer/  
+**(Closed — do not use):** UHG Advisory 2350501 returned HTTP 404 on 2026-08-05.
 
-I am a Solutions Architect with prior UHG Technical Lead experience and strong fit for payer/digital platform work: ASP.NET Core, React/Angular, microservices, Docker/Kubernetes, Azure/cloud migration, SQL Server/PostgreSQL. At Nemetschek I own multi-product distributed architecture; at NCR I designed Azure/.NET POS backends and Kafka eventing. Targeting Hyderabad roles at 60 LPA+ TC.
+I am applying for Principal Applications Dev Engineer at ServiceNow in Hyderabad. I bring 15+ years building and leading delivery of large-scale platforms: currently owning multi-product microservices architecture at Nemetschek (20+ services / 50+ APIs), previously Technical Lead of a 10-engineer cloud-native healthcare platform at UHG, and Solutions Architect for high-volume retail/POS backends at NCR. Strengths: distributed systems design, API-first integration, event-driven patterns, Kubernetes/CI/CD, and mentoring senior engineers. Eager to apply that platform depth inside ServiceNow’s product engineering culture. Target TC commensurate with Principal band / 60 LPA+.
 
 ---
 
