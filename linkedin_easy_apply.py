@@ -480,12 +480,24 @@ def select_resume(page: Page) -> None:
 
 
 def _apply_modal(page: Page):
-    # New LinkedIn modals may lack .jobs-easy-apply-modal
+    # New LinkedIn modals may lack .jobs-easy-apply-modal / role=dialog
+    heading = page.get_by_role("heading", name=re.compile(r"Apply to ", re.I))
+    try:
+        if heading.count() and heading.first.is_visible():
+            modal = heading.first.locator(
+                "xpath=ancestor::div[contains(@class,'artdeco-modal') or contains(@class,'easy-apply') or @role='dialog'][1]"
+            )
+            if modal.count():
+                return modal
+            return heading.first.locator(
+                "xpath=ancestor::div[.//button[contains(.,'Next') or contains(.,'Review') or contains(.,'Submit')]][1]"
+            )
+    except Exception:
+        pass
     for sel in [
         ".jobs-easy-apply-modal",
         "[role='dialog']:has-text('Apply to')",
         "div.artdeco-modal:has-text('Apply to')",
-        "div:has(> h2:has-text('Apply to'))",
     ]:
         loc = page.locator(sel).first
         try:
@@ -889,7 +901,7 @@ def process_search(page: Page, keywords: str, location: str, remote: bool, resul
 
 def main() -> None:
     results: list[JobResult] = []
-    seen: set[str] = set()
+    seen: set[str] = {'4448545122', '4448935949'}  # PRE_SEEN submitted earlier this run
     with sync_playwright() as p:
         browser = p.chromium.connect_over_cdp(CDP)
         context = browser.contexts[0]
