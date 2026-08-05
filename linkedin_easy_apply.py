@@ -325,11 +325,66 @@ def fill_inputs(page: Page) -> None:
                 opts = control.locator("option").all_inner_texts()
                 texts = [o.strip() for o in opts]
                 if any(t.lower() == "yes" for t in texts) and any(
-                    k in blob for k in ("experience", "worked", "belong", "willing", "relocate", "authorize", "available")
+                    k in blob
+                    for k in (
+                        "experience",
+                        "worked",
+                        "belong",
+                        "willing",
+                        "relocate",
+                        "authorize",
+                        "available",
+                        "presales",
+                        "government",
+                        "hyderabad",
+                    )
                 ):
                     control.select_option(label=re.compile(r"^yes$", re.I))
             except Exception:
                 pass
+
+    # Artdeco / custom dropdowns showing "Select an option"
+    try:
+        triggers = page.locator(
+            "[role='dialog'] button:has-text('Select an option'), "
+            ".jobs-easy-apply-modal button:has-text('Select an option')"
+        )
+        for i in range(min(triggers.count(), 6)):
+            t = triggers.nth(i)
+            if not t.is_visible():
+                continue
+            t.click(timeout=2000)
+            time.sleep(0.35)
+            yes = page.locator(
+                "[role='listbox'] [role='option']:has-text('Yes'), "
+                ".artdeco-dropdown__content [role='option']:has-text('Yes'), "
+                "div.artdeco-dropdown__item:has-text('Yes')"
+            ).first
+            if yes.count() and yes.is_visible():
+                yes.click(timeout=2000)
+            else:
+                # choose first non-placeholder option
+                opt = page.locator("[role='listbox'] [role='option']").nth(1)
+                if opt.count():
+                    opt.click(timeout=2000)
+            time.sleep(0.3)
+    except Exception:
+        pass
+
+    # Native selects still on Select an option
+    try:
+        for s in page.locator("[role='dialog'] select, .jobs-easy-apply-modal select").all()[:10]:
+            try:
+                val = s.input_value()
+                if val and "select" not in val.lower():
+                    continue
+                opts = [o.strip() for o in s.locator("option").all_inner_texts()]
+                if any(o.lower() == "yes" for o in opts):
+                    s.select_option(label=re.compile(r"^yes$", re.I))
+            except Exception:
+                pass
+    except Exception:
+        pass
         elif "date of birth" in blob or blob.strip() == "dob" or "birth" in blob:
             if "day" in blob:
                 set_val(PROFILE["dob_day"])
@@ -510,15 +565,35 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
     for step in range(14):
         # If save dialog appeared mid-flow, discard and reopen apply
         try:
-            if page.get_by_text("Save this application?").first.is_visible():
+            if page.get_by_text("Save this application?").count() and page.get_by_text("Save this application?").first.is_visible():
                 page.get_by_role("button", name="Discard").click(timeout=2000)
                 time.sleep(0.8)
-                # reopen
                 try:
                     scope.locator("button:has-text('Easy Apply')").first.click(timeout=4000)
                     time.sleep(1)
                 except Exception:
                     pass
+        except Exception:
+            pass
+
+        # Mid-form stack mismatch (e.g. PHP/Laravel questions)
+        try:
+            modal_text = page.locator("[role='dialog'], .jobs-easy-apply-modal").first.inner_text(timeout=1000)
+            bad = jd_blacklist(modal_text)
+            if bad and re.search(r"php|laravel|salesforce|servicenow|java|python|node", bad, re.I):
+                job.status = "skipped"
+                job.reason = f"form blacklist: {bad}"
+                try:
+                    page.locator(
+                        ".jobs-easy-apply-modal button.artdeco-modal__dismiss, "
+                        "[role='dialog']:has-text('Apply to') button.artdeco-modal__dismiss"
+                    ).first.click(timeout=2000)
+                    time.sleep(0.3)
+                    if page.get_by_text("Save this application?").count():
+                        page.get_by_role("button", name="Discard").click(timeout=2000)
+                except Exception:
+                    pass
+                return job
         except Exception:
             pass
 
@@ -551,7 +626,12 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
                     s.evaluate("el => el.click()")
                 time.sleep(2.2)
                 body = page.locator("body").inner_text()[:5000]
-                if re.search(r"application (was )?submitted|applied to .+ ago|\byou applied\b", body, re.I):
+                if re.search(
+                    r"application (was )?submitted|applied to .+ ago|\byou applied\b|"
+                    r"applied \d+ (second|minute|hour|day)s? ago|\bapplication sent\b",
+                    body,
+                    re.I,
+                ):
                     job.status = "submitted"
                     job.reason = "Application submitted"
                     try:
@@ -606,6 +686,26 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
         except Exception:
             pass
 
+        # Success may appear without clicking our Submit handler
+        try:
+            body = page.locator("body").inner_text()[:5000]
+            if re.search(
+                r"application (was )?submitted|applied \d+ (second|minute|hour|day)s? ago|"
+                r"\bapplication sent\b",
+                body,
+                re.I,
+            ):
+                job.status = "submitted"
+                job.reason = "Application submitted"
+                shot(page, f"submitted-{job.job_id}.png")
+                try:
+                    page.get_by_role("button", name=re.compile(r"^done$|dismiss", re.I)).first.click(timeout=2000)
+                except Exception:
+                    pass
+                return job
+        except Exception:
+            pass
+
         err = ""
         try:
             err = " | ".join(
@@ -625,7 +725,6 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
         job.reason = f"stuck on Easy Apply step {step}: {err or 'no Next/Submit'}"
         shot(page, f"blocked-step-{job.job_id}.png")
         try:
-            # dismiss carefully
             dismiss = page.locator(
                 ".jobs-easy-apply-modal button.artdeco-modal__dismiss, "
                 "[role='dialog']:has-text('Apply to') button.artdeco-modal__dismiss"
