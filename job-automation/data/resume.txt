@@ -1,0 +1,24 @@
+# Paste the full text of Rafi_Resume.docx here.
+#
+# The attached Rafi_Resume.docx was not available in this repository workspace.
+# Convert your .docx to text (Word → Save as Plain Text, or: pandoc Rafi_Resume.docx -t plain -o data/resume.txt)
+# then replace this file. Skills and titles in config/profile.yaml should match the resume.
+
+Mohammed Rafi Ahmed
+Hyderabad, India
+Email: mohammed.ahmed@solibri.com
+
+SUMMARY
+Experienced software professional targeting senior / staff / lead engineering roles.
+Expected CTC: 65 LPA. Open to Hyderabad onsite/hybrid and remote WFH roles across India.
+
+EXPERIENCE
+- Software engineering experience (update with exact employers, titles, and dates from your resume)
+- Solibri / BIM / construction-tech domain experience (update with accurate details)
+
+SKILLS
+Python, Java, JavaScript, TypeScript, React, Node.js, AWS, Azure, Docker, Kubernetes,
+SQL, System Design, Microservices, REST APIs, CI/CD
+
+EDUCATION
+(Update from resume)

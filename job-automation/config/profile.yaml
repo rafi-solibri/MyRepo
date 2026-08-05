@@ -1,0 +1,84 @@
+# Candidate profile — update after pasting full resume into data/resume.txt
+# Rafi_Resume.docx was not found in the repo; fill skills/titles from your resume.
+
+name: "Mohammed Rafi Ahmed"
+email: "mohammed.ahmed@solibri.com"
+phone: ""  # optional
+location: "Hyderabad, India"
+linkedin_url: ""  # e.g. https://www.linkedin.com/in/your-profile
+portfolio_url: ""
+
+# Target compensation (INR LPA)
+expected_ctc_lpa: 65
+min_ctc_lpa: 55  # skip roles clearly below this when salary is disclosed
+
+# Experience (years) — set accurately from resume
+experience_years: 10
+
+# Preferred titles / keywords (OR matching)
+target_titles:
+  - "Software Engineer"
+  - "Senior Software Engineer"
+  - "Staff Engineer"
+  - "Principal Engineer"
+  - "Engineering Manager"
+  - "Tech Lead"
+  - "Solution Architect"
+  - "Product Engineer"
+  - "Full Stack Developer"
+  - "Backend Engineer"
+  - "Platform Engineer"
+
+# Skills extracted / prioritized from resume (edit freely)
+skills:
+  - "Python"
+  - "Java"
+  - "JavaScript"
+  - "TypeScript"
+  - "React"
+  - "Node.js"
+  - "AWS"
+  - "Azure"
+  - "Docker"
+  - "Kubernetes"
+  - "SQL"
+  - "System Design"
+  - "Microservices"
+  - "REST APIs"
+  - "CI/CD"
+
+# Negative keywords — skip these roles
+exclude_keywords:
+  - "intern"
+  - "internship"
+  - "fresher"
+  - "graduate trainee"
+  - "unpaid"
+  - "graphic designer"
+  - "ui/ux designer"
+  - "product designer"
+  - "designer"
+  - "marketing"
+  - "sales executive"
+  - "recruiter"
+  - "content writer"
+  - "copywriter"
+  - "accountant"
+  - "hr executive"
+  - "sales specialist"
+  - "product manager"
+  - "account executive"
+  - "customer success"
+
+# Screening answers used when packaging applications
+screening:
+  notice_period_days: 30
+  willing_to_relocate: false
+  preferred_work_modes:
+    - "remote"
+    - "hybrid"
+    - "hyderabad"
+  current_location: "Hyderabad"
+  expected_ctc: "65 LPA"
+  current_ctc: ""  # fill if you want it in packs
+  reason_for_change: "Looking for a senior role with stronger ownership, remote/hybrid flexibility, and impact at scale."

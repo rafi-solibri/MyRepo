@@ -1,0 +1,52 @@
+# Daily search settings
+
+locations:
+  - "Hyderabad"
+  - "Remote"
+  - "Work From Home"
+  - "India Remote"
+
+# Queries sent to free APIs and used for portal deep-links
+search_queries:
+  - "Senior Software Engineer"
+  - "Staff Engineer"
+  - "Tech Lead"
+  - "Engineering Manager"
+  - "Solution Architect"
+  - "Backend Engineer"
+  - "Full Stack Engineer"
+
+# Location / work-mode filters
+prefer_remote: true
+include_hyderabad: true
+india_timezone_friendly: true  # prefer remote roles that mention India / APAC / IST
+
+# Matching thresholds
+min_match_score: 0.35
+max_jobs_per_run: 40
+max_application_packs: 15
+
+# Sources (public/free APIs — no account login required)
+sources:
+  remotive: true
+  remoteok: true
+  arbeitnow: true
+  adzuna: true  # needs ADZUNA_APP_ID + ADZUNA_APP_KEY secrets (optional)
+
+# Portal deep-links to open for manual Easy Apply (accounts stay under your control)
+portals:
+  - naukri
+  - linkedin
+  - indeed
+  - cutshort
+  - foundit
+  - instahyre
+  - wellfound
+  - hirist
+
+# Notifications
+notify:
+  write_markdown_digest: true
+  # Set NOTIFY_WEBHOOK_URL (Slack/Discord) or SMTP_* env vars for email
+  webhook: true
+  email: false
