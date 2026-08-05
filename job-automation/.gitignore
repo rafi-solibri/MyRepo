@@ -1,0 +1,10 @@
+output/applications/
+output/*.json
+output/*.sqlite
+output/*.sqlite-*
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.DS_Store
