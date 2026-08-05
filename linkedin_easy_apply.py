@@ -228,7 +228,7 @@ def fill_inputs(page: Page) -> None:
     # Text/select/textarea with labels
     labels = page.locator(
         ".jobs-easy-apply-modal label, .jobs-easy-apply-content label, "
-        "[role='dialog'] label, form label"
+        "[role='dialog'] label, .artdeco-modal label, form label"
     )
     count = min(labels.count(), 40)
     for i in range(count):
@@ -342,49 +342,6 @@ def fill_inputs(page: Page) -> None:
                     control.select_option(label=re.compile(r"^yes$", re.I))
             except Exception:
                 pass
-
-    # Artdeco / custom dropdowns showing "Select an option"
-    try:
-        triggers = page.locator(
-            "[role='dialog'] button:has-text('Select an option'), "
-            ".jobs-easy-apply-modal button:has-text('Select an option')"
-        )
-        for i in range(min(triggers.count(), 6)):
-            t = triggers.nth(i)
-            if not t.is_visible():
-                continue
-            t.click(timeout=2000)
-            time.sleep(0.35)
-            yes = page.locator(
-                "[role='listbox'] [role='option']:has-text('Yes'), "
-                ".artdeco-dropdown__content [role='option']:has-text('Yes'), "
-                "div.artdeco-dropdown__item:has-text('Yes')"
-            ).first
-            if yes.count() and yes.is_visible():
-                yes.click(timeout=2000)
-            else:
-                # choose first non-placeholder option
-                opt = page.locator("[role='listbox'] [role='option']").nth(1)
-                if opt.count():
-                    opt.click(timeout=2000)
-            time.sleep(0.3)
-    except Exception:
-        pass
-
-    # Native selects still on Select an option
-    try:
-        for s in page.locator("[role='dialog'] select, .jobs-easy-apply-modal select").all()[:10]:
-            try:
-                val = s.input_value()
-                if val and "select" not in val.lower():
-                    continue
-                opts = [o.strip() for o in s.locator("option").all_inner_texts()]
-                if any(o.lower() == "yes" for o in opts):
-                    s.select_option(label=re.compile(r"^yes$", re.I))
-            except Exception:
-                pass
-    except Exception:
-        pass
         elif "date of birth" in blob or blob.strip() == "dob" or "birth" in blob:
             if "day" in blob:
                 set_val(PROFILE["dob_day"])
@@ -402,16 +359,58 @@ def fill_inputs(page: Page) -> None:
             except Exception:
                 set_val("India")
 
+    # Artdeco / custom dropdowns showing "Select an option"
+    try:
+        triggers = page.locator("button:has-text('Select an option')")
+        for i in range(min(triggers.count(), 6)):
+            t = triggers.nth(i)
+            if not t.is_visible():
+                continue
+            t.click(timeout=2000)
+            time.sleep(0.35)
+            yes = page.locator(
+                "[role='listbox'] [role='option']:has-text('Yes'), "
+                ".artdeco-dropdown__content [role='option']:has-text('Yes'), "
+                "div.artdeco-dropdown__item:has-text('Yes')"
+            ).first
+            if yes.count() and yes.is_visible():
+                yes.click(timeout=2000)
+            else:
+                opt = page.locator("[role='listbox'] [role='option']").nth(1)
+                if opt.count():
+                    opt.click(timeout=2000)
+            time.sleep(0.3)
+    except Exception:
+        pass
+
+    # Native selects still on Select an option
+    try:
+        page.evaluate(
+            """() => {
+              const h=[...document.querySelectorAll('h2,h1')].find(e=>/Apply to /i.test(e.innerText||''));
+              const root=h ? (h.closest('.artdeco-modal') || h.parentElement?.parentElement?.parentElement) : document;
+              for (const s of root.querySelectorAll('select')) {
+                const yes=[...s.options].find(o=>o.text.trim().toLowerCase()==='yes');
+                if(yes && (!s.value || /select/i.test(s.options[s.selectedIndex]?.text||''))) {
+                  s.value=yes.value;
+                  s.dispatchEvent(new Event('input',{bubbles:true}));
+                  s.dispatchEvent(new Event('change',{bubbles:true}));
+                }
+              }
+            }"""
+        )
+    except Exception:
+        pass
+
     # Also fill unlabeled numeric errors: decimal > 0 near CTC/notice
     try:
-        for inp in page.locator("[role='dialog'] input[type='text'], [role='dialog'] input:not([type])").all()[:20]:
+        for inp in page.locator("input[type='text']").all()[:25]:
             try:
                 if not inp.is_visible():
                     continue
                 val = inp.input_value()
                 if val:
                     continue
-                # nearby text
                 near = inp.evaluate(
                     """e => (e.closest('div')?.innerText || '').slice(0,180).toLowerCase()"""
                 )
@@ -421,11 +420,8 @@ def fill_inputs(page: Page) -> None:
                     inp.fill("60")
                 elif "notice" in near:
                     inp.fill("1")
-                elif "years" in near or "experience" in near:
+                elif ("years" in near or "experience" in near) and "php" not in near:
                     inp.fill("15")
-                elif "month" in near and ("experience" in near or "php" in near or "laravel" in near):
-                    # wrong stack — leave empty so we can skip; mark via blacklist earlier
-                    pass
             except Exception:
                 pass
     except Exception:
@@ -613,82 +609,51 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
         select_resume(page)
         fill_inputs(page)
 
-        # Scope buttons to apply modal footer
-        footer = page.locator(
-            ".jobs-easy-apply-modal footer, .artdeco-modal__actionbar, "
-            "[role='dialog'] footer, .jobs-easy-apply-footer"
-        ).first
-        btn_scope = footer if footer.count() else page.locator("[role='dialog']").first
-
-        submit = btn_scope.get_by_role("button", name=re.compile(r"submit application|submit", re.I))
-        next_btn = btn_scope.get_by_role("button", name=re.compile(r"^next$|^review$|^continue$", re.I))
-        # fallback text locators
-        if not submit.count():
-            submit = page.locator("button[aria-label*='Submit application'], button:has-text('Submit application')")
-        if not next_btn.count():
-            next_btn = page.locator("button[aria-label*='Continue to next'], button[aria-label*='Next'], button:has-text('Next'), button:has-text('Review')")
-
-        # Submit first
-        try:
-            s = submit.first
-            if s.count() and s.is_visible():
-                try:
-                    s.click(timeout=3000, force=True)
-                except Exception:
-                    s.evaluate("el => el.click()")
-                time.sleep(2.2)
-                body = page.locator("body").inner_text()[:5000]
-                if re.search(
-                    r"application (was )?submitted|applied to .+ ago|\byou applied\b|"
-                    r"applied \d+ (second|minute|hour|day)s? ago|\bapplication sent\b",
-                    body,
-                    re.I,
-                ):
-                    job.status = "submitted"
-                    job.reason = "Application submitted"
+        # Prefer role-based footer actions (works even when role=dialog is missing)
+        advanced = False
+        for name in ("Submit application", "Submit", "Review", "Next", "Continue"):
+            try:
+                btn = page.get_by_role("button", name=name, exact=True)
+                if not btn.count():
+                    btn = page.get_by_role("button", name=re.compile(rf"^{re.escape(name)}$", re.I))
+                for i in range(min(btn.count(), 3)):
+                    b = btn.nth(i)
+                    if not (b.is_visible() and b.is_enabled()):
+                        continue
                     try:
-                        page.get_by_role("button", name=re.compile(r"^done$|dismiss", re.I)).first.click(timeout=2000)
+                        b.click(timeout=3000, force=True)
                     except Exception:
+                        b.evaluate("el => el.click()")
+                    time.sleep(1.6)
+                    advanced = True
+                    body = page.locator("body").inner_text()[:5000]
+                    if re.search(
+                        r"application (was )?submitted|applied to .+ ago|\byou applied\b|"
+                        r"applied \d+ (second|minute|hour|day)s? ago|\bapplication sent\b",
+                        body,
+                        re.I,
+                    ):
+                        job.status = "submitted"
+                        job.reason = "Application submitted"
                         try:
-                            page.keyboard.press("Escape")
+                            page.get_by_role("button", name=re.compile(r"^done$|dismiss", re.I)).first.click(
+                                timeout=2000
+                            )
                         except Exception:
                             pass
-                    shot(page, f"submitted-{job.job_id}.png")
-                    return job
-                # follow-up next if still open
-        except Exception:
-            pass
-
-        # Next / Review
-        advanced = False
-        try:
-            n = next_btn.first
-            if n.count() and n.is_visible():
-                disabled = n.get_attribute("disabled")
-                aria_dis = n.get_attribute("aria-disabled")
-                if disabled or aria_dis == "true":
-                    # try fill again
-                    fill_inputs(page)
-                    select_resume(page)
-                    time.sleep(0.5)
-                try:
-                    n.click(timeout=3000, force=True)
-                except Exception:
-                    n.evaluate("el => el.click()")
-                time.sleep(1.4)
-                advanced = True
-        except Exception:
-            pass
+                        shot(page, f"submitted-{job.job_id}.png")
+                        return job
+                    break
+                if advanced:
+                    break
+            except Exception:
+                continue
 
         if advanced:
             continue
 
-        # One more attempt: any primary blue button in modal
         try:
-            primary = page.locator(
-                "[role='dialog'] button.artdeco-button--primary, "
-                ".jobs-easy-apply-modal button.artdeco-button--primary"
-            ).first
+            primary = page.locator("button.artdeco-button--primary").first
             if primary.count() and primary.is_visible():
                 txt = (primary.inner_text() or "").lower()
                 if any(x in txt for x in ("next", "review", "submit", "continue")):
