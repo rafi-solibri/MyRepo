@@ -9,7 +9,9 @@ Cursor Automations have no built-in **Send Email** tool. Job-status emails go th
 3. Verify a sending domain: [Domains](https://resend.com/domains) (SPF/DKIM).
 4. Pick a From address on that domain, e.g. `notifications@yourdomain.com`.
 
-`rafi.success@gmail.com` is the **recipient**. It cannot be the From address unless you own and verify that domain in Resend. Resend’s `onboarding@resend.dev` test sender only delivers to your Resend account email.
+`rafi.success@gmail.com` is the **recipient**. It cannot be the From address unless you own and verify that domain in Resend.
+
+A **send-only** Resend API key works for delivery. With that key type you cannot list/manage domains via API. For From, use a verified domain address when available; otherwise `Job Status <onboarding@resend.dev>` works for this recipient (verified 2026-08-05).
 
 ## 2. Cloud Agent secrets
 
