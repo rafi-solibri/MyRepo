@@ -1,0 +1,5 @@
+{
+  "install": "pip3 install --user playwright beautifulsoup4 lxml requests && python3 -m playwright install-deps chromium || true && python3 -m playwright install chromium || true",
+  "start": "",
+  "agentCanUpdateSnapshot": true
+}
