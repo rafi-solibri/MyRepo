@@ -58,6 +58,42 @@ function hasAuth(portal, profileRoot = PROFILES[portal] || PROFILES.source) {
   return need.some((n) => names.has(n));
 }
 
+function portalStatus(portal) {
+  if (!AUTH_COOKIES[portal] || !PROFILES[portal]) {
+    return {
+      ok: false,
+      portal,
+      reason: "unknown_portal",
+      knownPortals: Object.keys(AUTH_COOKIES),
+    };
+  }
+  const sourceNames = new Set(cookieNames(PROFILES.source));
+  const dest = PROFILES[portal];
+  const destNames = new Set(cookieNames(dest));
+  const need = AUTH_COOKIES[portal];
+  const sourceHasAuth = need.some((n) => sourceNames.has(n));
+  const destHasAuth = need.some((n) => destNames.has(n));
+  return {
+    ok: destHasAuth,
+    portal,
+    profile: dest,
+    source: PROFILES.source,
+    sourceHasAuth,
+    destHasAuth,
+    need,
+    reason: destHasAuth
+      ? "ok"
+      : "login_required_sync_desktop_chrome_and_save_snapshot",
+  };
+}
+
+function checkPortal(portal) {
+  const result = portalStatus(portal);
+  console.log(JSON.stringify(result, null, 2));
+  if (result.reason === "unknown_portal") return 2;
+  return result.ok ? 0 : 3;
+}
+
 function syncSessions() {
   const script = path.join(__dirname, "..", "scripts", "sync-chrome-sessions.sh");
   execFileSync("bash", [script], { stdio: "inherit" });
@@ -79,12 +115,23 @@ function statusReport() {
   return report;
 }
 
-module.exports = { PROFILES, AUTH_COOKIES, cookieNames, hasAuth, syncSessions, statusReport };
+module.exports = {
+  PROFILES,
+  AUTH_COOKIES,
+  cookieNames,
+  hasAuth,
+  portalStatus,
+  checkPortal,
+  syncSessions,
+  statusReport,
+};
 
 if (require.main === module) {
   const cmd = process.argv[2] || "status";
   if (cmd === "sync") {
     syncSessions();
+  } else if (cmd === "check") {
+    process.exit(checkPortal(process.argv[3] || ""));
   }
   console.log(JSON.stringify(statusReport(), null, 2));
 }

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import time
 from dataclasses import dataclass, asdict
@@ -13,7 +14,7 @@ from urllib.parse import quote
 
 from playwright.sync_api import sync_playwright, Page, TimeoutError as PWTimeout
 
-CDP = "http://127.0.0.1:9222"
+CDP = os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222")
 OUT = Path("/opt/cursor/artifacts/apply-report.json")
 SCREEN_DIR = Path("/opt/cursor/artifacts")
 RESUME_LABEL = "Rafi_Resume"

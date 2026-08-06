@@ -5,9 +5,9 @@ Automation: https://cursor.com/automations/5d1b07b2-90a9-11f1-ba66-0e7d0216e441
 Copy everything inside the block below:
 
 ```text
-FIRST: run `bash scripts/bootstrap-job-assets.sh` so Rafi_Resume.docx is on disk.
-FIRST: `bash scripts/bootstrap-job-assets.sh` then `bash scripts/sync-chrome-sessions.sh`.
-Use `node tools/foundit/resume.js` to verify the resume path. Chrome CDP profile: /home/ubuntu/.config/chrome-foundit (synced from Desktop Default; do not CDP-attach Default).
+FIRST: run `bash scripts/preflight-portal-run.sh foundit` so Rafi_Resume.docx and Foundit cookies are verified.
+Then run `bash scripts/launch-chrome-cdp.sh foundit` if using browser/CDP. Use `node tools/foundit/resume.js` to verify the resume path.
+Chrome CDP profile: /home/ubuntu/.config/chrome-foundit (synced from Desktop Default; do not CDP-attach Default).
 
 Daily Foundit job-apply agent for Mohammed Abdul Rafi Ahmed (Solutions Architect / Tech Lead / EM / Principal–Staff, .NET + Azure/AWS, Hyderabad + remote, Expected CTC 65 LPA).
 
