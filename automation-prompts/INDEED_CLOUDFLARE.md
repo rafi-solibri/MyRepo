@@ -8,6 +8,17 @@ block is on the network path, not the session.
 Verified 2026-08-06 from Cursor public cloud: both `curl` and headless Chrome
 to `https://in.indeed.com/` return the block page.
 
+## Home daily automation (free schedule)
+
+Cannot create Cursor dashboard Automations from this agent (API read-only).
+Use the home-PC cron instead — see **[INDEED_HOME_AUTOMATION.md](INDEED_HOME_AUTOMATION.md)**:
+
+```bash
+bash scripts/install-indeed-home-cron.sh 09:00   # macOS/Linux/WSL
+# or Windows: scripts\install-indeed-home-task.ps1
+bash scripts/indeed-home-daily.sh                # test now
+```
+
 ## Easiest free fix (no purchase)
 
 Indeed blocks Cursor’s public-cloud IPs. You cannot fix that without either a
