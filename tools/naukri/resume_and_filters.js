@@ -22,9 +22,11 @@ function findResume() {
   return null;
 }
 
-/** Hard skip keywords (Coupa/Pega etc. - Mondelez false-apply fix). */
+/** Hard skip keywords (Coupa/Pega etc. - Mondelez false-apply fix).
+ *  QA/SDET only as role tokens — do not match "Software & QA" department chrome.
+ *  Prefer shouldSkipTitle(role) over full page blobs. */
 const SKIP_TITLE_RE =
-  /\b(qa|sdet|intern(?!et)|fresher|salesforce|servicenow|coupa|pega|guidewire|sap\b|dynamics|workday hms)\b/i;
+  /\b((manual\s+)?qa(\s+engineer|\s+analyst|\s+lead|\s+manager|\s+tester)|\bquality assurance\b|sdet|intern(?!et)|fresher|salesforce|servicenow|coupa|pega|guidewire|(^|[^a-z])sap(\s|&|$)|dynamics\s*365|microsoft dynamics|workday hms)\b/i;
 
 const DOTNET_RE = /(\.net|dotnet|asp\.?\s*net|c#|csharp)/i;
 
