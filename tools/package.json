@@ -1,0 +1,7 @@
+{
+  "name": "job-apply-tools",
+  "private": true,
+  "dependencies": {
+    "playwright-core": "1.49.1"
+  }
+}
