@@ -43,6 +43,19 @@ if [[ "${CHROME_HEADLESS:-auto}" == "1" || ( "${CHROME_HEADLESS:-auto}" == "auto
   headless=(--headless=new)
 fi
 
+# Optional residential proxy (required for Indeed on public-cloud IPs).
+# Prefer portal-specific env, then generic HTTPS_PROXY/HTTP_PROXY.
+proxy_url="${INDEED_HTTP_PROXY:-}"
+if [[ "$portal" == "indeed" ]]; then
+  proxy_url="${INDEED_HTTP_PROXY:-${HTTPS_PROXY:-${HTTP_PROXY:-${https_proxy:-${http_proxy:-}}}}}"
+fi
+proxy_args=()
+if [[ -n "$proxy_url" ]]; then
+  # Chrome --proxy-server accepts host:port or a full proxy URL.
+  proxy_args=(--proxy-server="$proxy_url")
+  echo "launch-chrome-cdp: using proxy for $portal (credentials redacted in logs)"
+fi
+
 log="/tmp/cursor/chrome-cdp-${portal}.log"
 nohup "$chrome" \
   "${headless[@]}" \
@@ -52,6 +65,8 @@ nohup "$chrome" \
   --disable-extensions \
   --remote-debugging-address=127.0.0.1 \
   --remote-debugging-port=9222 \
+  --remote-allow-origins='*' \
+  "${proxy_args[@]}" \
   --user-data-dir="$profile" \
   about:blank >"$log" 2>&1 &
 

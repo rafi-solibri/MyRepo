@@ -54,7 +54,7 @@ bash scripts/sync-chrome-sessions.sh
 | --- | --- |
 | Resume in git | YES — `resumes/Rafi_Resume.docx` |
 | Install bootstrap | `bash scripts/cloud-agent-install.sh` |
-| Indeed Cloudflare on public cloud IP | Needs **private / residential worker** |
+| Indeed Cloudflare on public cloud IP | Needs **My Machines residential worker** or secret **`INDEED_HTTP_PROXY`** — see `INDEED_CLOUDFLARE.md` |
 | General Daily 9 AM | Disable (research-only, 0 applies) |
 | Notification sender | Set secret `RESEND_FROM_EMAIL` |
 
