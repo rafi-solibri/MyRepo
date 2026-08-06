@@ -6,12 +6,22 @@
  * Wrong shape (nested question object + screeningSubmitted) returns 200 but
  * locks empty answers (400 on retry) — caused 9/11 empty Qs on 2026-08-05.
  *
- * Working body:
+ * Working body (MCQ):
  * {
  *   messageId,
  *   questions: [{ _id: answerRowId, question: "<questionIdString>", responseStringArray: ["<optionId>"] }],
  * }
+ *
+ * Working body (free-text / no options) — put the text IN responseStringArray
+ * (not responseString). Verified 2026-08-06 on Incubyte:
+ * {
+ *   messageId,
+ *   questions: [{ _id: answerRowId, question: "<questionIdString>", responseStringArray: ["65 LPA"], responseNumberArray: [] }],
+ * }
+ *
  * Then same + screeningSubmitted: true after loadthread verifies answers.
+ *
+ * Thread shape: GET /loadthread-v2/{id} → { thread: { firstMessage, messages } }
  */
 "use strict";
 
@@ -31,13 +41,15 @@ function findResume() {
 }
 
 function buildAnswerPayload(messageId, answers) {
-  // answers: [{ answerRowId, questionId, optionId }]
+  // answers: [{ answerRowId, questionId, optionId }] for MCQ
+  // or [{ answerRowId, questionId, text }] for free-text (uses responseStringArray)
   return {
     messageId,
     questions: answers.map((a) => ({
       _id: a.answerRowId,
       question: String(a.questionId),
-      responseStringArray: [String(a.optionId)],
+      responseStringArray: [String(a.optionId != null ? a.optionId : a.text)],
+      responseNumberArray: [],
     })),
   };
 }
