@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Portal login checklist</title>
+  <style>
+    :root {
+      --ink: #1a2332;
+      --ok: #1b7f4a;
+      --bad: #b42318;
+      --muted: #5b6573;
+      --bg: #f3f6f9;
+      --card: #ffffff;
+      --line: #d7dee7;
+    }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, #dce9f7 0%, transparent 42%),
+        linear-gradient(180deg, #eef3f8 0%, var(--bg) 100%);
+      min-height: 100vh;
+    }
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 48px 24px 72px;
+    }
+    h1 {
+      font-family: "Fraunces", "Iowan Old Style", Georgia, serif;
+      font-size: 2.2rem;
+      margin: 0 0 8px;
+      letter-spacing: -0.02em;
+    }
+    .lede {
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.5;
+      margin: 0 0 28px;
+    }
+    ol {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 28px;
+      display: grid;
+      gap: 12px;
+    }
+    li {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+    }
+    a {
+      color: #0b57d0;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    a:hover { text-decoration: underline; }
+    .hint {
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+    .box {
+      background: #10233f;
+      color: #e8eef7;
+      border-radius: 16px;
+      padding: 18px 20px;
+      line-height: 1.55;
+    }
+    code {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 0.9em;
+      background: rgba(255,255,255,0.08);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Sign in once — then Save snapshot</h1>
+    <p class="lede">
+      Daily automations boot from the saved environment disk. Visiting portals in
+      another agent session does nothing unless those cookies exist in
+      <strong>this</strong> Default Chrome profile and you Save the snapshot.
+    </p>
+    <ol>
+      <li><div><a href="https://www.linkedin.com/feed/">LinkedIn feed</a><div class="hint">Must show your feed, not Sign in</div></div><span>li_at</span></li>
+      <li><div><a href="https://www.naukri.com/mnjuser/homepage">Naukri homepage</a><div class="hint">Google SSO is fine</div></div><span>nauk_rt / nauk_at</span></li>
+      <li><div><a href="https://www.foundit.in/seeker/dashboard">Foundit dashboard</a><div class="hint">Seeker dashboard, not login</div></div><span>MSSOAT</span></li>
+      <li><div><a href="https://cutshort.io/profile">Cutshort profile</a><div class="hint">Already OK on current snapshot</div></div><span>cutshort_authentication</span></li>
+      <li><div><a href="https://www.instahyre.com/candidate/opportunities/">Instahyre opportunities</a><div class="hint">Logged-in opportunities list</div></div><span>sessionid</span></li>
+      <li><div><a href="https://www.indeed.com/">Indeed home</a><div class="hint">Signed-in home; Cloudflare may still need private worker</div></div><span>CTK / Passport</span></li>
+    </ol>
+    <div class="box">
+      After every portal shows a logged-in home page:<br />
+      1. Quit Chrome completely<br />
+      2. Run <code>bash scripts/verify-portal-logins.sh --strict</code><br />
+      3. Confirm all 6 say OK<br />
+      4. Click <strong>Save / Update snapshot</strong> on the environment dashboard
+    </div>
+  </main>
+</body>
+</html>

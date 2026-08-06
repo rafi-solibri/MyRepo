@@ -5,7 +5,8 @@ Automation: https://cursor.com/automations/d6ba8b9d-9094-11f1-ba66-0e7d0216e441
 Copy everything inside the block below:
 
 ```text
-FIRST: run `bash scripts/bootstrap-job-assets.sh` then `bash scripts/sync-chrome-sessions.sh`. Verify with `node tools/cutshort/questionnaire.js`.
+FIRST: run `bash scripts/preflight-portal-run.sh cutshort`. Verify questionnaire helpers with `node tools/cutshort/questionnaire.js`.
+Then run `bash scripts/launch-chrome-cdp.sh cutshort` if using browser/CDP.
 Prefer Chrome CDP profile /home/ubuntu/chrome-cutshort-profile (synced from Desktop Default).
 
 Run the daily Cutshort job-search and apply flow for Rafi Ahmed.
