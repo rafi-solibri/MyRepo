@@ -5,8 +5,8 @@ Automation: https://cursor.com/automations/1d0ea682-9093-11f1-ba66-0e7d0216e441
 Copy everything inside the block below:
 
 ```text
-FIRST: run `bash scripts/bootstrap-job-assets.sh`. Verify `node tools/instahyre/resume.js`.
-Chrome CDP profile: /home/ubuntu/chrome-instahyre-profile (non-default user-data-dir).
+FIRST: run `bash scripts/bootstrap-job-assets.sh` then `bash scripts/sync-chrome-sessions.sh`. Verify `node tools/instahyre/resume.js`.
+Chrome CDP profile: /home/ubuntu/chrome-instahyre-profile (synced from Desktop Default; do not CDP-attach Default).
 
 Daily Instahyre apply for Mohammed Abdul Rafi Ahmed. Maximize applies + interview callbacks.
 
@@ -19,7 +19,7 @@ Current 52 LPA | Expected 65 LPA | Immediate | +91 8790251698 | rafi.success@gma
 
 ## Scope
 - https://www.instahyre.com/candidate/opportunities/
-- Must be logged in. If login wall: try INSTAHYRE_EMAIL/PASSWORD secrets if present; else stop and report Instahyre login required (persist session in chrome-instahyre-profile).
+- Must be logged in. If login wall after sync: try INSTAHYRE_EMAIL/PASSWORD secrets if present; else stop and report Instahyre login required — log in via Desktop Chrome Default, sync-chrome-sessions.sh, Save Environment snapshot.
 - Newest first; Hyd then Remote/WFH.
 
 ## Apply paths

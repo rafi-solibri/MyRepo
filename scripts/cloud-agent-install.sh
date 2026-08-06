@@ -16,5 +16,9 @@ mkdir -p \
   /home/ubuntu/chrome-linkedin-profile \
   /home/ubuntu/chrome-cutshort-profile \
   /opt/cursor/artifacts
+# Propagate Desktop Chrome logins into CDP profiles when source cookies exist.
+if [[ -f /home/ubuntu/.config/google-chrome/Default/Cookies ]]; then
+  bash scripts/sync-chrome-sessions.sh || true
+fi
 echo "Job-apply assets ready."
 ls -la resumes/Rafi_Resume.docx /home/ubuntu/resumes/Rafi_Resume.docx 2>/dev/null || true

@@ -6,8 +6,9 @@ Automation: https://cursor.com/automations/003b88eb-909a-11f1-ba66-0e7d0216e441
 Copy everything inside the block below:
 
 ```text
-FIRST: run `bash scripts/bootstrap-job-assets.sh`. Verify `node tools/naukri/resume_and_filters.js`.
-Chrome CDP: copy profile to /home/ubuntu/.naukri-chrome-profile (default profile rejects DevTools). --disable-extensions. Port 9222.
+FIRST: run `bash scripts/bootstrap-job-assets.sh` then `bash scripts/sync-chrome-sessions.sh`. Verify `node tools/naukri/resume_and_filters.js`.
+Chrome CDP: --user-data-dir=/home/ubuntu/.naukri-chrome-profile (synced from Desktop Default; Default rejects DevTools). --disable-extensions. Port 9222.
+Title skips: use job title / job-panel text only — never full document.body (sidebar "Software & QA" false-skips SA roles). Prefer `shouldSkipTitle` / `shouldSkipTitleFromDetail` from resume_and_filters.js.
 
 Daily Naukri + company-ATS apply for Mohammed Abdul Rafi Ahmed. Hyd + Remote/WFH. Expected CTC 65 LPA.
 

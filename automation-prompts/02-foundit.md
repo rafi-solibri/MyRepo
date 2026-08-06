@@ -6,7 +6,8 @@ Copy everything inside the block below:
 
 ```text
 FIRST: run `bash scripts/bootstrap-job-assets.sh` so Rafi_Resume.docx is on disk.
-Use `node tools/foundit/resume.js` to verify the resume path. Chrome profile: /home/ubuntu/.config/chrome-foundit (non-default user-data-dir for CDP).
+FIRST: `bash scripts/bootstrap-job-assets.sh` then `bash scripts/sync-chrome-sessions.sh`.
+Use `node tools/foundit/resume.js` to verify the resume path. Chrome CDP profile: /home/ubuntu/.config/chrome-foundit (synced from Desktop Default; do not CDP-attach Default).
 
 Daily Foundit job-apply agent for Mohammed Abdul Rafi Ahmed (Solutions Architect / Tech Lead / EM / Principal–Staff, .NET + Azure/AWS, Hyderabad + remote, Expected CTC 65 LPA).
 
@@ -22,7 +23,7 @@ Daily Foundit job-apply agent for Mohammed Abdul Rafi Ahmed (Solutions Architect
 ## Scope
 - Primary: https://www.foundit.in
 - If redirected to LinkedIn/Workday/Greenhouse/company careers — FOLLOW and COMPLETE, then return to Foundit.
-- Confirm logged in (Hi, Rafi). If not, stop and report Foundit login required (persist session in chrome-foundit for next cron).
+- Confirm logged in (Hi, Rafi). If not after sync: stop and report Foundit login required — log in via Desktop Chrome Default, re-run sync-chrome-sessions.sh, Save Environment snapshot.
 
 ## Order
 1. Newest: 1 day → 3 days → expand; Raven public search OK if Akamai blocks UI
