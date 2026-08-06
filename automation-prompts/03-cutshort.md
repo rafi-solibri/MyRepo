@@ -5,50 +5,46 @@ Automation: https://cursor.com/automations/d6ba8b9d-9094-11f1-ba66-0e7d0216e441
 Copy everything inside the block below:
 
 ```text
-Run the daily Cutshort job-search and apply flow for Rafi Ahmed. Maximize interview callbacks and referrals, while still applying to every qualifying role.
+FIRST: run `bash scripts/bootstrap-job-assets.sh`. Verify with `node tools/cutshort/questionnaire.js`.
+
+Run the daily Cutshort job-search and apply flow for Rafi Ahmed.
 
 Profile:
-- Title: Solutions Architect / Technical Lead
-- Experience: 15+ years
-- Stack: .NET/C#, React, AWS/Azure, microservices, cloud platforms
-- Location: Hyderabad (also Remote / WFH roles)
-- Notice: Immediate joinee (available now)
-- Current CTC: 52 LPA; Expected CTC: 65 LPA (use 65 LPA on all forms — not 60)
-- Proof points: Nemetschek/Solibri, Infosys, EPAM (architecture + delivery for large product platforms)
-- Email: rafi.success@gmail.com | Phone: +91 8790251698
+- Solutions Architect / Technical Lead | 15+ years | .NET/C#, React, AWS/Azure, microservices
+- Hyderabad + Remote/WFH | Immediate | Current 52 LPA | Expected **65 LPA**
+- Email rafi.success@gmail.com | Phone +91 8790251698
+- Resume: **Rafi_Resume.docx** (bootstrap paths). Upload on any external ATS.
 
-Daily order (do not skip):
-1. Newest jobs first from the Cutshort find-jobs feed (and Hyderabad / high-CTC / Remote scans when useful).
-2. Apply Tier 1 first: Solutions/Technical/Cloud/Platform Architect, Tech Lead, Engineering Manager, Principal/Staff, Head/Director of Eng, Delivery Lead with .NET/cloud fit.
-3. Then Tier 2: .NET/C#/Azure senior fullstack-backend, platform lead.
-4. Then Tier 3/stretch (interview volume): strong senior Node/Java/platform/GenAI lead roles ONLY when Hyderabad/remote and CTC band can reach ~55+ LPA — still state expected 65 LPA.
-5. Skip: QA/SDET, junior/intern/associate, Workday/Dynamics/SAP-primary, pure data architects, sales/BD, clear low YOE gates, listed max CTC < 50 LPA, and other weak fits.
-6. After every apply batch, answer ALL pending employer questionnaires.
-7. Report counts: applied, already applied, failed/blocked, questionnaires answered.
+## Resume (HARD)
+Use only Rafi_Resume.docx from /workspace/resumes or /home/ubuntu/resumes. Never invent stubs.
 
-Location (HARD):
-- Apply only if Hyderabad / Remote / WFH. For other cities on questionnaires: say can relocate only if the role is otherwise exceptional; prefer “Hyderabad / remote preferred”.
+## Daily order
+1. Newest find-jobs / matchesfor={seekerId}
+2. Tier 1: Architect / Tech Lead / EM / Principal / Staff / Head Eng with .NET/cloud fit
+3. Tier 2: .NET/C#/Azure senior fullstack-backend / platform lead
+4. Tier 3 stretch only if Hyd/remote and CTC band can reach ~55+ (still state 65 expected)
+5. Skip QA/SDET/junior/SAP/Workday-Dynamics-primary/pure data/sales/BD/low YOE/listed max <50L
+6. Answer ALL questionnaires after EACH apply (not in a careless batch)
+7. Report applied / already / failed / questionnaires filled vs locked-empty
 
-Apply note formula:
-- Personalize with Hi {first name} from the Apply modal To field when available.
-- Role-specific first line + one proof line + logistics (Hyderabad, immediate, 52→65 LPA).
-- Explicit ask for a 15–20 min screening call this week OR referral to the hiring manager.
+## Questionnaire rules (CRITICAL FIX)
+- Use helper shape from tools/cutshort/questionnaire.js
+- POST body: messageId + questions[]._id=answerRowId + question="<questionIdString>" + responseStringArray:[optionId]
+- NEVER set screeningSubmitted:true until loadthread shows non-empty responses
+- Wrong nested question object + screeningSubmitted returns 200 but locks EMPTY answers (400 retry) — treat that as failure
+- Prefer UI leaf option-div clicks with request capture; verify before submit
+- Notice: immediate. Salary band Yes only if max>=55 else No. Free-text expected 65 LPA.
+- Location: Hyderabad/remote
 
-Questionnaire rules:
-- Notice/availability: Served notice / immediately.
-- Salary band "does this work?": Yes if max band >= 55 LPA, else No. Always state expected 65 LPA in free-text CTC.
-- Location: Hyderabad/remote → currently there; other cities → only if asked, prefer remote/Hyd.
-- Strong skills (AWS/.NET/React/etc.): 5+ years; weak skills (SageMaker/MLOps/SAP/etc.): Not much.
-- Free-text CTC: Current 52 LPA fixed, expected 65 LPA; no active offers.
-- Prefer Cutshort APIs over flaky UI clicks: list awaiting conversations, load thread, POST update-message with filled questions and screeningSubmitted true.
+## Apply notes
+Hi {first name}; JD fit + proof + Hyd/immediate/52→65; ask 15–20 min screen or HM referral.
 
-External / company website:
-- If Cutshort opens an external careers / ATS link, complete that application with the same profile (52/65 LPA, Hyderabad, immediate). Do not stop the batch because Apply left Cutshort. Return and continue.
+## External ATS
+If Cutshort opens company careers, complete with Rafi_Resume.docx then continue.
 
-Hard constraints:
-- Navigate one job URL at a time. Never batch-navigate with location.href inside a single script/evaluate.
-- If Cutshort login/session is missing, stop immediately and report that login is required.
-- Maximize interview callbacks and referrals; avoid low-fit spam.
-- Do not invent applications; only apply when the Apply now path succeeds and View conversation confirms success when possible.
-- Keep applying while qualifying inventory remains (aim for a large daily batch, not a tiny sample).
+## Hard constraints
+- One job URL at a time; stop if Candidate login missing
+- Tighten filters: no bare "platform" match (avoids Mac Admin / IAM false applies)
+- Do not invent applications
+- Count locked-empty questionnaires as failures, not Failed:0
 ```

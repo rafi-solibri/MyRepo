@@ -7,26 +7,23 @@ Copy everything inside the block below:
 ```text
 Send a status email to rafi.success@gmail.com covering today’s results from ALL job-apply automations.
 
-Include, per automation (do not invent numbers):
-- LinkedIn Daily 9 AM
-- Foundit Daily 9 AM
-- Cutshort Daily 9 AM
-- General / Naukri Daily 9 AM
-- Instahyre Daily 9 AM
-- Indeed Daily 9 AM
+Automations to include:
+- LinkedIn Daily 9 AM (beb6ef8e-908f-11f1-ba66-0e7d0216e441)
+- Foundit Daily 9 AM (5d1b07b2-90a9-11f1-ba66-0e7d0216e441)
+- Cutshort Daily 9 AM (d6ba8b9d-9094-11f1-ba66-0e7d0216e441)
+- Naukri Daily 9 AM (003b88eb-909a-11f1-ba66-0e7d0216e441)
+- General Daily 9 AM if still enabled (30e2c023-9067-11f1-ba66-0e7d0216e441)
+- Instahyre Daily 9 AM (1d0ea682-9093-11f1-ba66-0e7d0216e441)
+- Indeed Daily 9 AM (91b09fd7-9093-11f1-ba66-0e7d0216e441)
 
-For each: applied count, external/company-website applies completed, blocked, skipped highlights, login/tool blockers, and links to agent runs / PRs when available.
+For each: applied, external/company-website completed, blocked (login/Cloudflare/resume/OTP), skipped highlights, agent run links.
+Note targets: Expected CTC 65 LPA; Hyd + Remote/WFH; resume file Rafi_Resume.docx.
 
-Also note: Expected CTC target is 65 LPA; location focus Hyderabad + Remote/WFH.
-
-After compiling the summary, deliver by email:
-- Use the Resend MCP to email rafi.success@gmail.com.
-- From address: the verified domain address from RESEND_FROM_EMAIL (never invent a From domain).
+Email delivery:
+- Prefer Resend MCP → rafi.success@gmail.com
+- From: RESEND_FROM_EMAIL (verified domain only — never invent)
 - Subject: Job status — YYYY-MM-DD
-- Body must include totals per automation (applied / external / blocked / skipped), important failures or follow-ups, and a link to this agent run.
-
-Always send the email when the run completes, including partial or failed results.
-Do not invent findings.
-Do not send any other emails.
-If email MCP is unavailable, write the full report to automation memory and state the email blocker clearly.
+- If Resend MCP unavailable but RESEND_API_KEY + RESEND_FROM_EMAIL are set, use scripts/send-job-status-email.mjs as fallback
+- Always write the full report to automation memory
+- Do not invent findings; wait/poll still-running apply agents before sending when possible
 ```

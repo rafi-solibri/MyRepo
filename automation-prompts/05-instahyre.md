@@ -5,39 +5,31 @@ Automation: https://cursor.com/automations/1d0ea682-9093-11f1-ba66-0e7d0216e441
 Copy everything inside the block below:
 
 ```text
-Daily Instahyre job-apply agent for Mohammed Abdul Rafi Ahmed (Rafi Ahmed). Maximize qualifying applies AND interview callbacks.
+FIRST: run `bash scripts/bootstrap-job-assets.sh`. Verify `node tools/instahyre/resume.js`.
+Chrome CDP profile: /home/ubuntu/chrome-instahyre-profile (non-default user-data-dir).
 
-## Profile (use exactly)
-- Title targets: Solutions Architect / Technical Lead / Engineering Manager / Principal–Staff
-- Stack: .NET Core/C#, Azure/AWS, microservices, Kafka/RabbitMQ, K8s, React/Angular
-- Location: Hyderabad + Remote/WFH only
-- Current CTC: 52 LPA | Expected CTC: 65 LPA (always use 65 LPA on forms)
-- Notice: Immediate (0 days)
-- Phone: +91 8790251698 | Email: rafi.success@gmail.com
-- Resume: Rafi_Resume_Architect.docx; tailor when company ATS requires upload
-- Experience: 15+ years — Nemetschek/Solibri, UHG, NCR, EPAM, Infosys
+Daily Instahyre apply for Mohammed Abdul Rafi Ahmed. Maximize applies + interview callbacks.
+
+## Resume (HARD)
+Upload **Rafi_Resume.docx** on Instahyre and every company ATS. Paths after bootstrap: /workspace/resumes/Rafi_Resume.docx, /home/ubuntu/resumes/Rafi_Resume.docx, /home/ubuntu/Documents/Rafi_Resume.docx. Never invent stubs.
+
+## Profile
+SA / Tech Lead / EM / Principal–Staff | .NET + Azure/AWS | Hyd + Remote/WFH
+Current 52 LPA | Expected 65 LPA | Immediate | +91 8790251698 | rafi.success@gmail.com
 
 ## Scope
-- Primary: https://www.instahyre.com (opportunities / job recommendations / search).
-- Confirm logged in. If login missing, stop and report Instahyre login required.
-- Newest / recently posted first. Prefer Hyderabad, then Remote India / WFH.
+- https://www.instahyre.com/candidate/opportunities/
+- Must be logged in. If login wall: try INSTAHYRE_EMAIL/PASSWORD secrets if present; else stop and report Instahyre login required (persist session in chrome-instahyre-profile).
+- Newest first; Hyd then Remote/WFH.
 
-## Apply paths (CRITICAL — not in-app only)
-- Use Instahyre Apply / Express interest / One-click apply when it fully submits on Instahyre.
-- If redirected to company website or ATS (Workday, Greenhouse, Lever, etc.), COMPLETE the application there with profile data above. Do not skip external applies. Return to Instahyre and continue.
-- Cap stuck flows (~3–4 min); log blocked; continue the batch.
+## Apply paths
+- In-app Apply / Express interest when it fully submits.
+- Company website / ATS redirects: COMPLETE with Rafi_Resume.docx + 52→65. Do not skip.
+- Cap stuck flows ~3–4 min; continue.
 
 ## Filters
-- Prefer .NET/C#/ASP.NET + cloud architecture / tech lead / EM titles.
-- Skip QA/SDET, junior/intern, Salesforce/ServiceNow/SAP-primary, pure data/AI without .NET, listed max CTC < 50 LPA, non-Hyderabad non-remote locations.
-- Undisclosed salary: still apply if other filters pass; enter 52→65 LPA when asked.
-- Experience bands: prefer 8–15+ / 10–18; skip if max YOE < 8 unless Principal/Architect clearly fits.
-
-## Interview-call maximization
-- Personalize Instahyre notes / recruiter messages: 1-line JD fit + proof + Hyderabad/immediate/65 LPA + ask for 15–20 min screen.
-- Keep applying while inventory remains (aim for a large daily batch of qualifying roles).
-- Do not invent applications.
+Prefer .NET/C#/ASP.NET + architect/lead/EM. Skip QA/junior/Salesforce/ServiceNow/SAP-primary/pure AI without .NET/listed max <50L/non-Hyd non-remote.
 
 ## Report
-Submitted (company, role, location, Instahyre vs company/ATS path), skipped, blocked. Totals only for confirmed submits.
+Submitted (path Instahyre vs ATS), skipped, blocked. No invented applies.
 ```

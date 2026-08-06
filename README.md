@@ -1,9 +1,19 @@
 # MyRepo
 
-Job-apply automation prompt pack for Mohammed Abdul Rafi Ahmed.
+Job-apply automation assets for Mohammed Abdul Rafi Ahmed.
 
-## Refined agent instructions
+## Resume
 
-See [`automation-prompts/README.md`](automation-prompts/README.md) for copy-paste prompts for all Daily 9 AM apply automations (LinkedIn, Foundit, Cutshort, Naukri/General, Instahyre, Indeed) plus the 11 AM notification job.
+Canonical file: [`resumes/Rafi_Resume.docx`](resumes/Rafi_Resume.docx)
 
-Shared targets: **Expected CTC 65 LPA**, **Hyderabad + Remote/WFH**, and **complete company-website / ATS applies** (not Easy/Quick Apply only).
+```bash
+bash scripts/bootstrap-job-assets.sh
+```
+
+## Agent instructions
+
+See [`automation-prompts/README.md`](automation-prompts/README.md).
+
+Shared targets: **Expected CTC 65 LPA**, **Hyderabad + Remote/WFH**, **Rafi_Resume.docx**, company-website/ATS completion (not Easy Apply only).
+
+Issue log: [`automation-prompts/ISSUES_AND_FIXES.md`](automation-prompts/ISSUES_AND_FIXES.md).
