@@ -58,8 +58,15 @@ bash scripts/sync-chrome-sessions.sh
 | General Daily 9 AM | Disable (research-only, 0 applies) |
 | Notification sender | Set secret `RESEND_FROM_EMAIL` |
 
-## Install command (environment dashboard)
+## Environment commands (dashboard)
 
+**Install** (durable baseline — Python + Playwright + Chromium, resume assets, npm tools, CDP profile dirs). With environment builds this runs once at build time:
 ```bash
 bash scripts/cloud-agent-install.sh
 ```
+
+**Start** (per-boot session reconciliation — copies Desktop Chrome Default logins into each portal CDP profile on every boot so cron agents don't hit login walls):
+```bash
+bash scripts/cloud-agent-start.sh
+```
+The start hook is best-effort and never blocks boot: it only syncs when Desktop Chrome has a `Default/Cookies` DB. Log into the portals in Desktop Chrome once, then Save/Update the environment snapshot so the logins persist into future boots.
