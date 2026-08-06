@@ -99,20 +99,71 @@ Docs: https://cursor.com/docs/cloud-agent/self-hosted-guides/my-machines
 
 ## Option B — Residential HTTP proxy (for unattended daily cron)
 
-1. Get a **residential** (not datacenter) proxy URL, e.g. `http://user:pass@host:port`.
-2. In the Cloud Agent environment secrets, set:
+This is the path that lets the **9 AM Indeed automation** keep working on
+Cursor public cloud without you starting a home worker every day.
+
+### B1. Buy / create a **residential** proxy
+
+Must be labeled **residential** (or ISP/static residential). **Datacenter /
+shared / “datacenter sticky” proxies will still get Request Blocked.**
+
+Examples of providers that sell residential plans: IPRoyal, Bright Data,
+Oxylabs, Smartproxy, SOAX (pick any you already trust; we do not embed vendor
+creds in the repo).
+
+Ask the provider for an HTTP(S) endpoint in this form:
 
 ```text
-INDEED_HTTP_PROXY=http://user:pass@host:port
+http://USERNAME:PASSWORD@HOST:PORT
 ```
 
-3. Re-Save / rebuild the environment so cron pods inherit the secret.
-4. Preflight + `launch-chrome-cdp.sh indeed` will route Indeed through the proxy.
+Tips:
+- Prefer a **sticky session** (same exit IP for 10–30+ minutes) so Chrome login
+  + applies stay on one IP.
+- India exit / “IN” geo is nice-to-have for `in.indeed.com`, not required if
+  the IP is truly residential.
+- Do **not** commit the URL to git. Use Cursor secrets only.
+
+### B2. Add the secret in Cursor
+
+1. Open your environment:  
+   https://cursor.com/dashboard/cloud-agents/environments/e/545c2557-9097-11f1-ba66-0e7d0216e441
+2. Find **Secrets** / **Runtime secrets** (Environment Variables).
+3. Add:
+
+| Name | Value |
+| --- | --- |
+| `INDEED_HTTP_PROXY` | `http://USERNAME:PASSWORD@HOST:PORT` |
+
+4. Scope it to this environment (or Personal secrets that cover `rafi-solibri/MyRepo`).
+5. Save.
+
+Also merge [PR #22](https://github.com/rafi-solibri/MyRepo/pull/22) to `main`
+so install/start + `launch-chrome-cdp.sh` honor the proxy (already implemented
+on that branch).
+
+### B3. Refresh the environment so new agents see the secret
+
+Existing VMs do **not** pick up new secrets automatically.
+
+1. On the same environment page: **Update Environment** (⋯) then green **Save**,
+   **or** trigger a new Build / New Setup Run.
+2. Wait until the build succeeds.
+
+### B4. Verify (tell the agent after B2+B3 — do not paste the password)
+
+On a **fresh** cloud agent:
 
 ```bash
+# Should print a redacted host, not empty:
+node -e 'const p=process.env.INDEED_HTTP_PROXY||""; console.log({set:!!p, host:p.replace(/\/\/.*@/,"//***@")})'
+
 node tools/indeed/preflight.js
-# proxyConfigured:true and ok:true when the residential proxy works
+# expect: proxyConfigured:true AND ok:true  (exit 0)
 ```
+
+If `ok:false` / exit 5 with proxy set → the proxy is still datacenter or dead;
+swap to a true residential endpoint and re-test.
 
 Datacenter proxies will still get `Request Blocked`.
 
