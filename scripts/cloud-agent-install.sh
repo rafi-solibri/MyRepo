@@ -51,10 +51,11 @@ mkdir -p \
   /home/ubuntu/chrome-cutshort-profile \
   /opt/cursor/artifacts
 
-# --- 5. Session sync --------------------------------------------------------
-# Propagate Desktop Chrome logins into CDP profiles when source cookies exist.
-# The sync script is non-destructive: it preserves an authenticated destination
-# profile when Desktop Default lacks that portal's cookie.
+# --- 5. Session restore + sync ----------------------------------------------
+# Environment builds often boot from a base disk that lacks Desktop logins.
+# Restore the private .portal-sessions seed first (if present), then sync
+# Default Chrome into each CDP profile. Sync is non-destructive.
+bash scripts/restore-portal-sessions.sh || echo "WARNING: portal session restore failed; continuing install."
 if [[ -f /home/ubuntu/.config/google-chrome/Default/Cookies ]]; then
   bash scripts/sync-chrome-sessions.sh || echo "WARNING: Chrome session sync reported missing auth; continuing install."
 fi
