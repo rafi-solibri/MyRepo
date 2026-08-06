@@ -1,0 +1,13 @@
+{
+  "createdAt": "2026-08-06T08:25:20Z",
+  "createdOnAgent": "bc-678ccc71-66f5-4a33-a018-caf9aeee727f",
+  "portalsPresent": {
+    "linkedin": true,
+    "naukri": true,
+    "foundit": true,
+    "cutshort": true,
+    "instahyre": true,
+    "indeed": true
+  },
+  "note": "Private session seed for Cloud Agent install restore. Do not share publicly."
+}

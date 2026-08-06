@@ -58,6 +58,15 @@ bash scripts/sync-chrome-sessions.sh
 | General Daily 9 AM | Disable (research-only, 0 applies) |
 | Notification sender | Set secret `RESEND_FROM_EMAIL` |
 
+## Session seed (why Save kept failing)
+
+Desktop logins on a running agent do **not** enter environment builds until the
+build disk contains those Chrome cookies. Saving install/start alone rebuilds
+from the old base (Cutshort-only) and drops the other portals.
+
+Fix in this repo: private `.portal-sessions/` cookie seed + `scripts/restore-portal-sessions.sh`
+runs during install/start so every new build restores all 6 portal sessions.
+
 ## Environment commands (dashboard)
 
 **Install** (durable baseline — Python + Playwright + Chromium, resume assets, npm tools, CDP profile dirs). With environment builds this runs once at build time:
