@@ -1,6 +1,10 @@
 # Job-apply automation prompts (refined)
 
-Paste each file’s fenced `text` block into the matching Cursor Automation **Agent instructions**, then Save.
+**This cloud agent cannot write automation Agent instructions** (Automations API is read-only).
+
+**Recommended:** paste the short loaders in [ONE_TIME_LOADERS.md](ONE_TIME_LOADERS.md) once. After that, merge PRs and agents pull the latest full prompts from these files automatically.
+
+Alternatively, paste each file’s full fenced `text` block into the matching automation, then Save.
 
 ## Shared targets
 
