@@ -19,16 +19,21 @@ Alternatively, paste each file’s full fenced `text` block into the matching au
 ## First command every run
 
 ```bash
-bash scripts/bootstrap-job-assets.sh
-python3 tools/resume_paths.py
+bash scripts/preflight-portal-run.sh <portal>
 ```
+
+Use one of: `linkedin`, `foundit`, `cutshort`, `naukri`, `instahyre`, `indeed`.
+The preflight bootstraps the resume, syncs Chrome sessions without clobbering
+existing authenticated CDP profiles, and fails fast if the portal login is not
+available in the saved environment snapshot.
 
 ## Naukri daily profile resume refresh
 
 Before job applies, the Naukri automation must re-upload `Rafi_Resume.docx` to the Naukri profile:
 
 ```bash
-# Chrome CDP already running on :9222 with Naukri logged in
+bash scripts/preflight-portal-run.sh naukri
+bash scripts/launch-chrome-cdp.sh naukri
 node tools/naukri/update_profile_resume.js
 ```
 

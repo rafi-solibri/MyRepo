@@ -22,13 +22,24 @@
 | Naukri false-skips on SA roles | Title skip no longer matches bare `QA`; detail scans must not use full `document.body` |
 | General Daily noise | Documented: **disable** General Daily (research-only, 0 applies) |
 
+## Fixed for 2026-08-06 reliability pass
+
+| Issue | Fix |
+| --- | --- |
+| Session sync could wipe a previously authenticated CDP profile when Desktop Default lacked that portal cookie | `scripts/sync-chrome-sessions.sh` is now non-destructive and preserves authenticated destinations |
+| Portal jobs started without a consistent resume/session check | `scripts/preflight-portal-run.sh <portal>` bootstraps assets, syncs safely, verifies resume, and exits clearly on login-required |
+| Ad-hoc Chrome CDP launch caused `ECONNREFUSED` / wrong profile risks | `scripts/launch-chrome-cdp.sh <portal>` starts port 9222 with the correct synced profile |
+| Notification fallback script referenced by prompts was missing from main | Added `scripts/send-job-status-email.mjs` with `RESEND_FROM_EMAIL` or documented onboarding fallback |
+| Indeed failures wasted apply time behind Cloudflare | `tools/indeed/preflight.js` detects public-cloud Cloudflare blocks and reports private worker required |
+| Indeed/Instahyre resume verifier commands were silent | `node tools/indeed/resume.js` and `node tools/instahyre/resume.js` now print JSON |
+
 ## Still requires your action (cannot fix from code alone)
 
 | Blocker | Who | What to do |
 | --- | --- | --- |
-| Snapshot without Default Chrome logins | You | Confirm Desktop Chrome logins → `bash scripts/sync-chrome-sessions.sh` → **Save/Update snapshot** |
+| Snapshot without Default Chrome logins | You | Confirm Desktop Chrome logins → `bash scripts/sync-chrome-sessions.sh --strict` → **Save/Update snapshot** |
 | Indeed Cloudflare 403 on datacenter IP | You | Attach a **private worker** (residential IP) |
-| Resend notification email not sent | You | Authenticate **Resend MCP** + set secret `RESEND_FROM_EMAIL` |
+| Verified notification sender missing | You | Set secret `RESEND_FROM_EMAIL` to a verified sender; fallback uses `Job Status <onboarding@resend.dev>` |
 | Greenhouse / ATS email OTP | Optional | Keep Gmail logged in same Chrome profile |
 | Portal passwords | Optional | Add secrets if interactive login is not snapshotted |
 | General Daily duplicate | You | Disable https://cursor.com/automations/30e2c023-9067-11f1-ba66-0e7d0216e441 |

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Finish any open Easy Apply modal, then exit."""
-import re, time
+import os, re, time
 from playwright.sync_api import sync_playwright
 
 PROFILE_PHONE = "8790251698"
 
 def main():
     with sync_playwright() as p:
-        b = p.chromium.connect_over_cdp("http://127.0.0.1:9222")
+        b = p.chromium.connect_over_cdp(os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222"))
         ctx = b.contexts[0]
         page = next((pg for pg in ctx.pages if "linkedin.com/jobs" in pg.url), ctx.pages[0])
         page.bring_to_front()

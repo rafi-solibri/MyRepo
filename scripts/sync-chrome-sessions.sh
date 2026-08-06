@@ -18,7 +18,14 @@ if [[ ! -f "$SRC_DEFAULT/Cookies" ]]; then
   exit 1
 fi
 
+STRICT=0
+if [[ "${1:-}" == "--strict" ]]; then
+  STRICT=1
+fi
+
 # Portal CDP profiles (must stay non-default for --remote-debugging-port).
+# Keep cookie names in sync with tools/chrome_session.js.
+PORTALS=(linkedin naukri foundit cutshort instahyre indeed linkedin_alt)
 DESTS=(
   "${LINKEDIN_CHROME_PROFILE:-/home/ubuntu/chrome-cdp-profile}"
   "${NAUKRI_CHROME_PROFILE:-/home/ubuntu/.naukri-chrome-profile}"
@@ -28,6 +35,17 @@ DESTS=(
   "${INDEED_CHROME_PROFILE:-/home/ubuntu/chrome-indeed-profile}"
   "${LINKEDIN_CHROME_PROFILE_ALT:-/home/ubuntu/chrome-linkedin-profile}"
 )
+COOKIE_SETS=(
+  "li_at"
+  "nauk_rt nauk_at"
+  "MSSOAT"
+  "cutshort_authentication"
+  "sessionid"
+  "__Secure-PassportAuthProxy-BearerToken CTK"
+  "li_at"
+)
+# linkedin_alt is a compatibility profile; do not fail strict mode solely for it.
+REQUIRED=(1 1 1 1 1 1 0)
 
 copy_tree() {
   local src="$1" dest="$2"
@@ -57,7 +75,8 @@ copy_tree() {
 }
 
 sync_one() {
-  local dest_root="$1"
+  local portal="$1" dest_root="$2"
+  shift 2
   mkdir -p "$dest_root/Default"
   if [[ -f "$SRC_ROOT/Local State" ]]; then
     cp -f "$SRC_ROOT/Local State" "$dest_root/Local State"
@@ -65,42 +84,63 @@ sync_one() {
   copy_tree "$SRC_DEFAULT" "$dest_root/Default"
   # First-run marker so Chrome does not wipe the copied profile.
   touch "$dest_root/First Run" 2>/dev/null || true
-  echo "synced -> $dest_root"
+  echo "synced $portal -> $dest_root"
+}
+
+has_auth() {
+  local profile_root="$1"
+  shift
+  python3 - "$profile_root" "$@" <<'PY'
+import os, shutil, sqlite3, sys, tempfile
+
+profile_root, *needed = sys.argv[1:]
+db = os.path.join(profile_root, "Default", "Cookies")
+if not os.path.exists(db):
+    raise SystemExit(1)
+
+tmp = tempfile.mktemp(suffix=".db")
+try:
+    shutil.copy2(db, tmp)
+    con = sqlite3.connect(tmp)
+    names = {r[0] for r in con.execute("SELECT name FROM cookies")}
+    con.close()
+finally:
+    try:
+        os.remove(tmp)
+    except OSError:
+        pass
+
+raise SystemExit(0 if any(n in names for n in needed) else 1)
+PY
 }
 
 echo "Source: $SRC_DEFAULT"
-for d in "${DESTS[@]}"; do
-  sync_one "$d"
+missing_required=0
+for i in "${!PORTALS[@]}"; do
+  portal="${PORTALS[$i]}"
+  dest="${DESTS[$i]}"
+  read -r -a cookies <<< "${COOKIE_SETS[$i]}"
+
+  if has_auth "$SRC_ROOT" "${cookies[@]}"; then
+    sync_one "$portal" "$dest" "${cookies[@]}"
+    continue
+  fi
+
+  if has_auth "$dest" "${cookies[@]}"; then
+    echo "skipped $portal -> source lacks auth; preserved existing authenticated profile at $dest"
+    continue
+  fi
+
+  echo "MISSING $portal auth in source and destination profile: $dest" >&2
+  if [[ "${REQUIRED[$i]}" == "1" ]]; then
+    missing_required=$((missing_required + 1))
+  fi
 done
 
-# Quick auth cookie presence check (best-effort; Chrome may lock DB).
-python3 - <<'PY' || true
-import os, shutil, sqlite3, tempfile
-src = "/home/ubuntu/.config/google-chrome/Default/Cookies"
-need = {
-  "linkedin": "li_at",
-  "naukri": "nauk_rt",
-  "foundit": "MSSOAT",
-  "cutshort": "cutshort_authentication",
-  "instahyre": "sessionid",
-  "indeed": "__Secure-PassportAuthProxy-BearerToken",
-}
-if not os.path.exists(src):
-  print("cookie check: source Cookies missing")
-  raise SystemExit(0)
-tmp = tempfile.mktemp(suffix=".db")
-shutil.copy2(src, tmp)
-con = sqlite3.connect(tmp)
-names = {r[0] for r in con.execute("SELECT name FROM cookies")}
-con.close()
-os.remove(tmp)
-missing = [p for p, n in need.items() if n not in names]
-present = [p for p, n in need.items() if n in names]
-print("auth present:", ", ".join(present) if present else "(none)")
-if missing:
-  print("auth MISSING (login + Save Snapshot required):", ", ".join(missing))
-else:
-  print("all 6 portal auth cookies present in source Default profile")
-PY
+node tools/chrome_session.js status || true
 
 echo "Chrome session sync complete."
+if [[ "$STRICT" == "1" && "$missing_required" -gt 0 ]]; then
+  echo "ERROR: $missing_required required portal profile(s) still lack auth." >&2
+  exit 3
+fi

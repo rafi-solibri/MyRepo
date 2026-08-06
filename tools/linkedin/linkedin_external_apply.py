@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import time
 from dataclasses import asdict, dataclass
@@ -30,7 +31,7 @@ except Exception:
                 return c
         raise FileNotFoundError("Rafi_Resume.docx missing")
 
-CDP = "http://127.0.0.1:9222"
+CDP = os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222")
 REPORT_IN = Path("/opt/cursor/artifacts/apply-report.json")
 REPORT_OUT = Path("/opt/cursor/artifacts/external-apply-report.json")
 SCREEN_DIR = Path("/opt/cursor/artifacts")
