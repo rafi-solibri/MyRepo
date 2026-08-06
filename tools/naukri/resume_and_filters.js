@@ -22,9 +22,20 @@ function findResume() {
   return null;
 }
 
-/** Hard skip keywords (Coupa/Pega etc. - Mondelez false-apply fix). */
+/**
+ * Hard skip keywords (Coupa/Pega etc. - Mondelez false-apply fix).
+ * Do NOT match bare "QA" — page chrome / "Software & QA" sidebars false-skip SA roles.
+ * Only skip when title itself is a QA/SDET role.
+ */
 const SKIP_TITLE_RE =
-  /\b(qa|sdet|intern(?!et)|fresher|salesforce|servicenow|coupa|pega|guidewire|sap\b|dynamics|workday hms)\b/i;
+  /\b(qa engineer|quality assurance|quality engineer|sdet|intern(?!et)|fresher|salesforce|servicenow|coupa|pega|guidewire|sap\b|dynamics|workday hms)\b/i;
+
+/** When scanning detail pages, use job panel text only — never document.body. */
+function shouldSkipTitleFromDetail(detailText) {
+  const t = String(detailText || "");
+  // Prefer first heading-sized chunk if agent passes full panel.
+  return shouldSkipTitle(t.slice(0, 400));
+}
 
 const DOTNET_RE = /(\.net|dotnet|asp\.?\s*net|c#|csharp)/i;
 
@@ -45,6 +56,7 @@ module.exports = {
   findResume,
   hasDotNet,
   shouldSkipTitle,
+  shouldSkipTitleFromDetail,
   normalizeAspNet,
   RESUME_CANDIDATES,
   EXPECTED_CTC_LPA: 65,

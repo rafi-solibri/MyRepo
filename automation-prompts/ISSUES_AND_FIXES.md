@@ -13,15 +13,25 @@
 | Agents rediscovering tools each run | Durable helpers under `tools/linkedin`, `tools/cutshort`, `tools/naukri`, etc. |
 | Naukri profile resume not refreshed daily | `tools/naukri/update_profile_resume.js` + STEP 0 in Naukri prompt re-uploads `Rafi_Resume.docx` every run for recruiter freshness |
 
+## Fixed for 2026-08-06 “automations did not run”
+
+| Issue | Fix |
+| --- | --- |
+| Cron fired but 0 applies (login walls) | Agents used empty CDP profiles while you logged into Default Chrome |
+| Session mismatch | `scripts/sync-chrome-sessions.sh` + `tools/chrome_session.js` copy Default → all portal CDP profiles |
+| Naukri false-skips on SA roles | Title skip no longer matches bare `QA`; detail scans must not use full `document.body` |
+| General Daily noise | Documented: **disable** General Daily (research-only, 0 applies) |
+
 ## Still requires your action (cannot fix from code alone)
 
 | Blocker | Who | What to do |
 | --- | --- | --- |
-| Foundit / Instahyre / Naukri / LinkedIn session loss on cold VM | You | Log into each portal in Desktop Chrome for the cloud environment, then **save an environment snapshot** so cookies persist |
-| Indeed Cloudflare 403 on datacenter IP | You | Attach a **private worker** (residential IP) with a logged-in Indeed Chrome profile |
-| Resend notification email not sent | You | Authenticate **Resend MCP** + set secret `RESEND_FROM_EMAIL` (verified domain). `RESEND_API_KEY` alone is not enough |
-| Greenhouse / ATS email OTP | Optional | Keep Gmail logged in same Chrome profile, or add `GMAIL_APP_PASSWORD` |
-| Portal passwords | Optional | Add secrets: `LINKEDIN_*`, `FOUNDIT_*`, `NAUKRI_*`, `INSTAHYRE_*`, `INDEED_*` if interactive login is not snapshotted |
+| Snapshot without Default Chrome logins | You | Confirm Desktop Chrome logins → `bash scripts/sync-chrome-sessions.sh` → **Save/Update snapshot** |
+| Indeed Cloudflare 403 on datacenter IP | You | Attach a **private worker** (residential IP) |
+| Resend notification email not sent | You | Authenticate **Resend MCP** + set secret `RESEND_FROM_EMAIL` |
+| Greenhouse / ATS email OTP | Optional | Keep Gmail logged in same Chrome profile |
+| Portal passwords | Optional | Add secrets if interactive login is not snapshotted |
+| General Daily duplicate | You | Disable https://cursor.com/automations/30e2c023-9067-11f1-ba66-0e7d0216e441 |
 
 ## After merging this PR
 

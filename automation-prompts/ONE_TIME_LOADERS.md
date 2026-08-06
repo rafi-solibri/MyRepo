@@ -3,46 +3,48 @@
 Cursor Automations **cannot be edited by this cloud agent** (`get-automation` is read-only; there is no update/write tool).  
 Paste each block below into the matching automation **once**. After that, merge PRs to `main` (or point the automation at this branch) and the agent will load the latest instructions from the repo files — no more manual re-pastes when we refine prompts.
 
+**Critical for every portal run:** agents must run `bash scripts/sync-chrome-sessions.sh` so Desktop Chrome logins are copied into CDP profiles. Without that (and without Save Snapshot of Default Chrome), cron hits login walls.
+
 ## LinkedIn Daily 9 AM
 https://cursor.com/automations/beb6ef8e-908f-11f1-ba66-0e7d0216e441
 
 ```text
-Read and OBEY the full instructions in automation-prompts/01-linkedin.md (the fenced text block). Run `bash scripts/bootstrap-job-assets.sh` first. Use resumes/Rafi_Resume.docx. Execute the daily LinkedIn apply job now.
+Read and OBEY the full instructions in automation-prompts/01-linkedin.md (the fenced text block). Run `bash scripts/bootstrap-job-assets.sh` then `bash scripts/sync-chrome-sessions.sh` first. Use resumes/Rafi_Resume.docx. Execute the daily LinkedIn apply job now.
 ```
 
 ## Foundit Daily 9 AM
 https://cursor.com/automations/5d1b07b2-90a9-11f1-ba66-0e7d0216e441
 
 ```text
-Read and OBEY the full instructions in automation-prompts/02-foundit.md (the fenced text block). Run `bash scripts/bootstrap-job-assets.sh` first. Use resumes/Rafi_Resume.docx. Execute the daily Foundit apply job now.
+Read and OBEY the full instructions in automation-prompts/02-foundit.md (the fenced text block). Run `bash scripts/bootstrap-job-assets.sh` then `bash scripts/sync-chrome-sessions.sh` first. Use resumes/Rafi_Resume.docx. Execute the daily Foundit apply job now.
 ```
 
 ## Cutshort Daily 9 AM
 https://cursor.com/automations/d6ba8b9d-9094-11f1-ba66-0e7d0216e441
 
 ```text
-Read and OBEY the full instructions in automation-prompts/03-cutshort.md (the fenced text block). Run `bash scripts/bootstrap-job-assets.sh` first. Use resumes/Rafi_Resume.docx. Execute the daily Cutshort apply job now.
+Read and OBEY the full instructions in automation-prompts/03-cutshort.md (the fenced text block). Run `bash scripts/bootstrap-job-assets.sh` then `bash scripts/sync-chrome-sessions.sh` first. Use resumes/Rafi_Resume.docx. Execute the daily Cutshort apply job now.
 ```
 
 ## Naukri Daily 9 AM
 https://cursor.com/automations/003b88eb-909a-11f1-ba66-0e7d0216e441
 
 ```text
-Read and OBEY the full instructions in automation-prompts/04-naukri-general.md (the fenced text block). Run `bash scripts/bootstrap-job-assets.sh` first. CRITICAL STEP 0: refresh Naukri profile resume with resumes/Rafi_Resume.docx via `node tools/naukri/update_profile_resume.js` (or manual upload on mnjuser/profile) BEFORE applying. Then execute the daily Naukri apply job.
+Read and OBEY the full instructions in automation-prompts/04-naukri-general.md (the fenced text block). Run `bash scripts/bootstrap-job-assets.sh` then `bash scripts/sync-chrome-sessions.sh` first. CRITICAL STEP 0: refresh Naukri profile resume with resumes/Rafi_Resume.docx via `node tools/naukri/update_profile_resume.js` (or manual upload on mnjuser/profile) BEFORE applying. Then execute the daily Naukri apply job.
 ```
 
 ## Instahyre Daily 9 AM
 https://cursor.com/automations/1d0ea682-9093-11f1-ba66-0e7d0216e441
 
 ```text
-Read and OBEY the full instructions in automation-prompts/05-instahyre.md (the fenced text block). Run `bash scripts/bootstrap-job-assets.sh` first. Use resumes/Rafi_Resume.docx. Execute the daily Instahyre apply job now.
+Read and OBEY the full instructions in automation-prompts/05-instahyre.md (the fenced text block). Run `bash scripts/bootstrap-job-assets.sh` then `bash scripts/sync-chrome-sessions.sh` first. Use resumes/Rafi_Resume.docx. Execute the daily Instahyre apply job now.
 ```
 
 ## Indeed Daily 9 AM
 https://cursor.com/automations/91b09fd7-9093-11f1-ba66-0e7d0216e441
 
 ```text
-Read and OBEY the full instructions in automation-prompts/06-indeed.md (the fenced text block). Run `bash scripts/bootstrap-job-assets.sh` first. Use resumes/Rafi_Resume.docx. Execute the daily Indeed apply job now.
+Read and OBEY the full instructions in automation-prompts/06-indeed.md (the fenced text block). Run `bash scripts/bootstrap-job-assets.sh` then `bash scripts/sync-chrome-sessions.sh` first. Use resumes/Rafi_Resume.docx. Execute the daily Indeed apply job now.
 ```
 
 ## Notification Job 11 AM
@@ -52,7 +54,7 @@ https://cursor.com/automations/8e34696c-90b1-11f1-ba66-0e7d0216e441
 Read and OBEY the full instructions in automation-prompts/07-notification.md (the fenced text block). Compile status from all apply automations and email rafi.success@gmail.com.
 ```
 
-## Optional: General Daily 9 AM
+## Optional: General Daily 9 AM — DISABLE THIS
 https://cursor.com/automations/30e2c023-9067-11f1-ba66-0e7d0216e441
 
-If this is still enabled and duplicates Naukri, either disable it or paste the same Naukri loader as above.
+This duplicates portal work but only does research/PRs (0 applies). **Disable it** in the Automations UI, or paste the Naukri loader above if you keep it.

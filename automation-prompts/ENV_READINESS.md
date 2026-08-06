@@ -1,33 +1,41 @@
 # Environment readiness for 6 daily job automations
 
-## Verdict (checked from cloud agent)
+## Verdict (2026-08-06 morning cron audit)
 
 | Item | Status |
 | --- | --- |
-| PR #8 merged to `main` (resume + helpers) | YES |
-| Environment exists | YES — [545c2557-9097-11f1-ba66-0e7d0216e441](https://cursor.com/dashboard/cloud-agents/environments/e/545c2557-9097-11f1-ba66-0e7d0216e441) |
-| Successful environment builds exist | YES (older snapshots) |
-| **Saved snapshot with portal logins** | **NO** — cold boots; Naukri/Foundit/Instahyre/Indeed have 0 cookies |
-| LinkedIn auth (`li_at`) in snapshot | **NO** — only marketing cookies |
-| Cutshort auth cookie present on this VM | Partial (`cutshort_authentication`) — not guaranteed on next cold boot |
-| Resume file in git | YES — `resumes/Rafi_Resume.docx` |
-| Indeed Cloudflare / private worker | **NO** — managed cloud IP will keep failing |
+| Schedulers fired at 9 AM IST (03:30 UTC) | YES — all 6 portal automations + General Daily launched |
+| PR #11 install bootstrap on `main` | YES |
+| Resume in git | YES — `resumes/Rafi_Resume.docx` |
+| Desktop Chrome Default has all 6 logins (this VM) | YES when you logged in |
+| Cron CDP profiles had those logins | **NO** — agents used empty `chrome-cdp-profile` / `chrome-foundit` / etc. |
+| Cutshort | Applied (1) — only portal that got past auth |
+| LinkedIn / Foundit / Instahyre / Indeed | Stopped at login / Cloudflare |
+| Naukri | Logged in via Google OAuth; 0 applies (title-filter false skips) |
+| Indeed private worker | NO |
 
-**Conclusion:** Save Environment is **not** complete for unattended 9 AM runs. Automations are enabled, but most will stop at login (and Indeed at Cloudflare) until you finish the steps below.
+**Root cause:** You logged into **Default** Chrome (`~/.config/google-chrome`). Cron agents launch **separate** CDP profiles that were empty. Fix in repo: `scripts/sync-chrome-sessions.sh` copies Default → each CDP profile at start of every run.
 
-## What you must do once (Desktop)
+## What you must do once (Desktop) so tomorrow works
 
-1. Open Cloud Agent Desktop / Take control for this environment.
-2. In Chrome (non-default profile dirs are fine), log in to:
-   - LinkedIn
-   - Naukri (+ Gmail if OTP)
-   - Foundit
-   - Cutshort
-   - Instahyre
-   - Indeed (prefer **private worker** / residential IP)
-3. Confirm each site shows your logged-in home/profile (not Sign in).
-4. Open [Environment dashboard](https://cursor.com/dashboard/cloud-agents/environments/e/545c2557-9097-11f1-ba66-0e7d0216e441) → **Save / Update snapshot** (or Save after install) so those Chrome sessions persist for cron.
-5. Paste one-time loaders from `ONE_TIME_LOADERS.md` if you have not already.
-6. For notification email: authenticate Resend MCP + set `RESEND_FROM_EMAIL`.
+1. Open Cloud Agent Desktop for [this environment](https://cursor.com/dashboard/cloud-agents/environments/e/545c2557-9097-11f1-ba66-0e7d0216e441).
+2. In **normal Chrome** (Default profile), confirm still logged into LinkedIn, Naukri, Foundit, Cutshort, Instahyre, Indeed (home/profile pages, not Sign in).
+3. In a terminal on that Desktop run:
+   ```bash
+   bash scripts/sync-chrome-sessions.sh
+   node tools/chrome_session.js status
+   ```
+   All 6 portals should show `sourceHasAuth: true` and `destHasAuth: true`.
+4. **Save / Update snapshot** on the environment dashboard (freeze this disk — including `~/.config/google-chrome` and the synced CDP profiles).
+5. Merge the session-sync PR to `main` (or point automations at that branch).
+6. Re-paste loaders from `ONE_TIME_LOADERS.md` if prompts were never loaded from repo.
+7. **Disable General Daily 9 AM** (it only opens research PRs; 0 applies).
+8. Indeed: attach a **private worker** if Cloudflare still blocks.
 
-Until step 4 is done, daily runs will keep hitting login walls on cold VMs.
+## Install command (environment dashboard)
+
+Prefer:
+```bash
+bash scripts/cloud-agent-install.sh
+```
+(That bootstraps resume, npm tools, and runs session sync when Default cookies exist.)
