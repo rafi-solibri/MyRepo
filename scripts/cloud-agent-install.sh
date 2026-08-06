@@ -1,10 +1,44 @@
 #!/usr/bin/env bash
+# Canonical Cloud Agent bootstrap for the job-apply automation repo.
+#
+# Idempotent: safe to re-run. Prepares everything the daily portal automations
+# and their helper scripts rely on:
+#   1. Python tooling  (Playwright + scraping/HTTP libs + pytest) and Chromium
+#   2. Resume assets    (Rafi_Resume.docx materialized in every expected dir)
+#   3. Node tooling     (playwright-core for the JS portal helpers)
+#   4. Chrome CDP dirs  (per-portal profiles the cron agents launch)
+#   5. Session sync     (copy authenticated Desktop Chrome logins into CDP dirs)
 set -euo pipefail
 cd "$(dirname "$0")/.."
+
+# --- 1. Python tooling ------------------------------------------------------
+# The linkedin/*.py helpers and any pytest checks import Playwright plus
+# scraping/HTTP libraries. Install into the user site and drive a Chromium
+# build. Debian/Ubuntu ship a PEP 668 "externally managed" interpreter, so
+# allow --break-system-packages when the local pip supports it.
+PY=python3
+export PIP_DISABLE_PIP_VERSION_CHECK=1
+PIP_INSTALL=("$PY" -m pip install --user --upgrade)
+if "$PY" -m pip install --help 2>/dev/null | grep -q -- '--break-system-packages'; then
+  PIP_INSTALL+=(--break-system-packages)
+fi
+"${PIP_INSTALL[@]}" playwright beautifulsoup4 lxml requests pytest
+
+# install-deps shells out to apt (escalating with sudo itself) and is
+# best-effort: if sudo/apt are unavailable the base image already ships the
+# needed libraries.
+"$PY" -m playwright install-deps chromium || true
+"$PY" -m playwright install chromium
+
+# --- 2. Resume assets -------------------------------------------------------
 bash scripts/bootstrap-job-assets.sh
+
+# --- 3. Node tooling --------------------------------------------------------
 if [[ -f tools/package.json ]]; then
   (cd tools && npm ci --no-fund --no-audit || npm install --no-fund --no-audit)
 fi
+
+# --- 4. Chrome CDP profile directories --------------------------------------
 mkdir -p \
   /home/ubuntu/resumes \
   /home/ubuntu/Documents \
@@ -16,9 +50,12 @@ mkdir -p \
   /home/ubuntu/chrome-linkedin-profile \
   /home/ubuntu/chrome-cutshort-profile \
   /opt/cursor/artifacts
+
+# --- 5. Session sync --------------------------------------------------------
 # Propagate Desktop Chrome logins into CDP profiles when source cookies exist.
 if [[ -f /home/ubuntu/.config/google-chrome/Default/Cookies ]]; then
   bash scripts/sync-chrome-sessions.sh || true
 fi
+
 echo "Job-apply assets ready."
 ls -la resumes/Rafi_Resume.docx /home/ubuntu/resumes/Rafi_Resume.docx 2>/dev/null || true
