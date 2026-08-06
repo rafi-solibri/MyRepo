@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Human-readable auth gate for the 6 daily job portals.
-# Exit 0 only when all required portals have auth cookies in Desktop Default
-# AND in each CDP profile (after a safe sync).
+# Exit 0 when every CDP profile (what daily cron uses) has its auth cookie(s).
+# Desktop Default gaps are reported as notes only (non-fatal for cron).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -69,41 +69,47 @@ def names(root):
 
 src_names = names(SRC)
 print("=" * 64)
-print("Portal login verification (Desktop Default Chrome cookies)")
+print("Portal login verification (CDP profiles = what daily cron uses)")
 print(f"Source profile: {SRC}")
 print("=" * 64)
 
-missing = []
+cdp_missing = []
+source_missing = []
 rows = []
 for portal, dest, need, url in PORTALS:
     src_ok = any(n in src_names for n in need)
     dest_ok = any(n in names(dest) for n in need)
-    mark = "OK  " if (src_ok and dest_ok) else "FAIL"
-    if not (src_ok and dest_ok):
-        missing.append(portal)
-    print(f"[{mark}] {portal:10} source={src_ok}  cdp={dest_ok}  need={','.join(need)}")
+    # Cron launches CDP profiles (dest). Source is for sync only.
+    mark = "OK  " if dest_ok else "FAIL"
+    if not dest_ok:
+        cdp_missing.append(portal)
     if not src_ok:
-        print(f"         → open Desktop Chrome and sign in: {url}")
+        source_missing.append(portal)
+    print(f"[{mark}] {portal:10} source={src_ok}  cdp={dest_ok}  need={','.join(need)}")
+    if not dest_ok:
+        print(f"         → CDP lacks auth; need seed restore / Desktop login: {url}")
+    elif not src_ok:
+        print(f"         note: Desktop Default lacks cookie; CDP still OK for cron")
     rows.append({
         "portal": portal,
         "sourceHasAuth": src_ok,
         "destHasAuth": dest_ok,
-        "ok": src_ok and dest_ok,
+        "ok": dest_ok,
         "loginUrl": url,
         "need": need,
     })
 
 print("=" * 64)
 report = {
-    "ok": len(missing) == 0,
-    "missing": missing,
+    "ok": len(cdp_missing) == 0,
+    "missing": cdp_missing,
+    "sourceMissing": source_missing,
     "portals": rows,
     "nextStepsIfMissing": [
-        "Open Cloud Agent Desktop for this environment",
-        "In Default Chrome (not a CDP profile window), sign into each FAIL portal until the home/feed page loads",
-        "Fully quit Chrome (all windows)",
+        "Ensure .portal-sessions seed is on main; install/start call restore-portal-sessions.sh",
+        "Or Desktop-login FAIL portals, quit Chrome, refresh .portal-sessions",
         "bash scripts/verify-portal-logins.sh --strict",
-        "Save / Update snapshot on the environment dashboard",
+        "Update Environment → Save so cron boots the new snapshot",
     ],
 }
 out_path = "/opt/cursor/artifacts/portal-login-status.json"
@@ -112,11 +118,13 @@ with open(out_path, "w") as f:
     json.dump(report, f, indent=2)
 print(f"Wrote {out_path}")
 
-if missing:
-    print(f"MISSING AUTH: {', '.join(missing)}")
+if cdp_missing:
+    print(f"MISSING CDP AUTH: {', '.join(cdp_missing)}")
     print("Daily automations WILL hit login walls until these are fixed + snapshot saved.")
     sys.exit(3)
 
-print("All 6 portals authenticated in source and CDP profiles.")
+print("All 6 portal CDP profiles authenticated (cron-ready).")
+if source_missing:
+    print(f"Desktop Default still missing: {', '.join(source_missing)} (non-fatal for cron if CDP OK)")
 sys.exit(0)
 PY

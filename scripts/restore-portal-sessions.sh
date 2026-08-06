@@ -25,6 +25,31 @@ if [[ ! -f "$SEED/source/Default/Cookies" ]]; then
   exit 0
 fi
 
+has_all_auth() {
+  local profile_root="$1"
+  shift
+  python3 - "$profile_root" "$@" <<'PY'
+import os, shutil, sqlite3, sys, tempfile
+profile_root, *needed = sys.argv[1:]
+db = os.path.join(profile_root, "Default", "Cookies")
+if not os.path.exists(db):
+    raise SystemExit(1)
+tmp = tempfile.mktemp(suffix=".db")
+try:
+    shutil.copy2(db, tmp)
+    con = sqlite3.connect(tmp)
+    names = {r[0] for r in con.execute("SELECT name FROM cookies")}
+    con.close()
+finally:
+    try:
+        os.remove(tmp)
+    except OSError:
+        pass
+# ALL required cookie names must be present (one marker per portal group is passed in).
+raise SystemExit(0 if all(n in names for n in needed) else 1)
+PY
+}
+
 has_auth() {
   local profile_root="$1"
   shift
@@ -76,13 +101,22 @@ restore_tree() {
 }
 
 SRC_DEST="${CHROME_SOURCE_PROFILE:-/home/ubuntu/.config/google-chrome}"
-ANY_COOKIE=('li_at' 'nauk_rt' 'nauk_at' 'MSSOAT' 'cutshort_authentication' 'sessionid' '__Secure-PassportAuthProxy-BearerToken' 'CTK')
+# One marker cookie per required portal. Default must have ALL of these or we
+# re-seed from .portal-sessions (Cutshort-only disks used to skip restore).
+REQUIRED_SOURCE_COOKIES=(
+  li_at
+  nauk_rt
+  MSSOAT
+  cutshort_authentication
+  sessionid
+  CTK
+)
 
-if [[ "$FORCE" == "1" ]] || ! has_auth "$SRC_DEST" "${ANY_COOKIE[@]}"; then
+if [[ "$FORCE" == "1" ]] || ! has_all_auth "$SRC_DEST" "${REQUIRED_SOURCE_COOKIES[@]}"; then
   echo "restore-portal-sessions: seeding Desktop Default -> $SRC_DEST"
   restore_tree "$SEED/source" "$SRC_DEST"
 else
-  echo "restore-portal-sessions: Desktop Default already has portal auth; leaving in place"
+  echo "restore-portal-sessions: Desktop Default already has all 6 portal auth cookies; leaving in place"
 fi
 
 declare -A PORTALS=(
