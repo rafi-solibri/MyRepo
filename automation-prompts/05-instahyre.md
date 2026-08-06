@@ -5,7 +5,8 @@ Automation: https://cursor.com/automations/1d0ea682-9093-11f1-ba66-0e7d0216e441
 Copy everything inside the block below:
 
 ```text
-FIRST: run `bash scripts/bootstrap-job-assets.sh` then `bash scripts/sync-chrome-sessions.sh`. Verify `node tools/instahyre/resume.js`.
+FIRST: run `bash scripts/preflight-portal-run.sh instahyre`. Verify `node tools/instahyre/resume.js`.
+Then run `bash scripts/launch-chrome-cdp.sh instahyre` if using browser/CDP.
 Chrome CDP profile: /home/ubuntu/chrome-instahyre-profile (synced from Desktop Default; do not CDP-attach Default).
 
 Daily Instahyre apply for Mohammed Abdul Rafi Ahmed. Maximize applies + interview callbacks.

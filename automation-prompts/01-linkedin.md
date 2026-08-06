@@ -5,9 +5,10 @@ Automation: https://cursor.com/automations/beb6ef8e-908f-11f1-ba66-0e7d0216e441
 Copy everything inside the block below:
 
 ```text
-FIRST: run `bash scripts/bootstrap-job-assets.sh` then `bash scripts/sync-chrome-sessions.sh` so resume + portal cookies are ready.
+FIRST: run `bash scripts/preflight-portal-run.sh linkedin` so resume + portal cookies are ready and verified.
+Then run `bash scripts/launch-chrome-cdp.sh linkedin`.
 Use helpers: `python3 tools/linkedin/linkedin_easy_apply.py` and `python3 tools/linkedin/linkedin_external_apply.py`.
-Launch Chrome CDP with --user-data-dir=/home/ubuntu/chrome-cdp-profile and --disable-extensions (Simplify breaks Easy Apply). Never use the Default google-chrome profile for CDP — sync copies logins into chrome-cdp-profile.
+Never use the Default google-chrome profile for CDP — sync copies logins into chrome-cdp-profile.
 
 Apply to LinkedIn jobs for Mohammed Abdul Rafi Ahmed (Rafi Ahmed) until a solid daily batch is done or inventory runs thin. Maximize BOTH application volume and interview callbacks.
 
