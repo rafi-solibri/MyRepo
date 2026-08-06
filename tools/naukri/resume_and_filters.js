@@ -50,6 +50,9 @@ module.exports = {
   EXPECTED_CTC_LPA: 65,
   CURRENT_CTC_LPA: 52,
   CHROME_PROFILE: process.env.NAUKRI_CHROME_PROFILE || "/home/ubuntu/.naukri-chrome-profile",
+  PROFILE_URL: process.env.NAUKRI_PROFILE_URL || "https://www.naukri.com/mnjuser/profile",
+  RESUME_HEADLINE:
+    "Solutions Architect & Technical Lead - 15+ Yrs - .NET Core, Microservices, AWS&Azure, Kafka&RabbitMQ",
 };
 
 if (require.main === module) {

@@ -11,6 +11,7 @@
 | Foundit `canJobApply` accidental submit | Explicit forbid in `tools/foundit/resume.js` + prompts |
 | LinkedIn Bengaluru false-allow via page body "Hyderabad" | Prompts: location from top card / workplace pills only |
 | Agents rediscovering tools each run | Durable helpers under `tools/linkedin`, `tools/cutshort`, `tools/naukri`, etc. |
+| Naukri profile resume not refreshed daily | `tools/naukri/update_profile_resume.js` + STEP 0 in Naukri prompt re-uploads `Rafi_Resume.docx` every run for recruiter freshness |
 
 ## Still requires your action (cannot fix from code alone)
 

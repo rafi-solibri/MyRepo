@@ -19,6 +19,17 @@ bash scripts/bootstrap-job-assets.sh
 python3 tools/resume_paths.py
 ```
 
+## Naukri daily profile resume refresh
+
+Before job applies, the Naukri automation must re-upload `Rafi_Resume.docx` to the Naukri profile:
+
+```bash
+# Chrome CDP already running on :9222 with Naukri logged in
+node tools/naukri/update_profile_resume.js
+```
+
+See STEP 0 in [04-naukri-general.md](04-naukri-general.md).
+
 ## Automations
 
 | Automation | Prompt |
