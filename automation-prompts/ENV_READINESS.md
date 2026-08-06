@@ -32,10 +32,15 @@
 7. **Disable General Daily 9 AM** (it only opens research PRs; 0 applies).
 8. Indeed: attach a **private worker** if Cloudflare still blocks.
 
-## Install command (environment dashboard)
+## Environment commands (dashboard)
 
-Prefer:
+**Install** (durable baseline — Python + Playwright + Chromium, resume assets, npm tools, CDP profile dirs). With environment builds this runs once at build time:
 ```bash
 bash scripts/cloud-agent-install.sh
 ```
-(That bootstraps resume, npm tools, and runs session sync when Default cookies exist.)
+
+**Start** (per-boot session reconciliation — copies Desktop Chrome Default logins into each portal CDP profile on every boot so cron agents don't hit login walls):
+```bash
+bash scripts/cloud-agent-start.sh
+```
+The start hook is best-effort and never blocks boot: it only syncs when Desktop Chrome has a `Default/Cookies` DB. Log into the portals in Desktop Chrome once, then Save/Update the environment snapshot so the logins persist into future boots.
