@@ -44,7 +44,7 @@ Read and OBEY the full instructions in automation-prompts/05-instahyre.md (the f
 https://cursor.com/automations/91b09fd7-9093-11f1-ba66-0e7d0216e441
 
 ```text
-Read and OBEY the full instructions in automation-prompts/06-indeed.md (the fenced text block). Run `node tools/indeed/preflight.js` first; if it exits 5, STOP and report Cloudflare Request Blocked — need My Machines residential worker OR secret INDEED_HTTP_PROXY (see automation-prompts/INDEED_CLOUDFLARE.md). Otherwise run `bash scripts/preflight-portal-run.sh indeed`. Use resumes/Rafi_Resume.docx. Execute the daily Indeed apply job now.
+Read and OBEY the full instructions in automation-prompts/06-indeed.md (the fenced text block). Run `node tools/indeed/preflight.js` first; if it exits 5, STOP and report Cloudflare Request Blocked — for on-demand runs use My Machines worker indeed-home (see automation-prompts/INDEED_CLOUDFLARE.md); for unattended cron set secret INDEED_HTTP_PROXY. Otherwise run `bash scripts/preflight-portal-run.sh indeed`. Use resumes/Rafi_Resume.docx. Execute the daily Indeed apply job now.
 ```
 
 ## Notification Job 11 AM

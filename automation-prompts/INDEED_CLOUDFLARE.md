@@ -8,37 +8,96 @@ block is on the network path, not the session.
 Verified 2026-08-06 from Cursor public cloud: both `curl` and headless Chrome
 to `https://in.indeed.com/` return the block page.
 
-## Fix options (pick one)
+## Option A — My Machines on your home PC (do this now)
 
-### Option A — My Machines worker (recommended, free if you have a home PC)
+Tool calls (Chrome, Indeed pages) run on **your home ISP IP**, so Cloudflare
+usually lets you through.
 
-Run the Indeed automation tool calls on a machine with a **residential ISP IP**:
+### Important limitation (individual / Ultra plans)
 
-1. On your home laptop / PC (same network you browse Indeed normally):
+**Daily Automations cannot target a personal My Machines worker** on
+non-Enterprise plans. Option A is for **on-demand** Indeed runs:
+
+- Start worker on home PC → open [cursor.com/agents](https://cursor.com/agents) →
+  pick `indeed-home` under **My Machines / Remote Control** → run the Indeed prompt.
+
+For unattended 9 AM cron on public cloud, use **Option B** (residential proxy)
+or an Enterprise Self-Hosted Pool.
+
+### Step-by-step (home laptop / PC)
+
+Use the **same Cursor account** as `mohammed.ahmed@solibri.com`.
+
+#### 1. Install CLI (once)
+
+**macOS / Linux / WSL:**
 
 ```bash
 curl https://cursor.com/install -fsS | bash
+agent --version
+```
+
+**Windows PowerShell:**
+
+```powershell
+irm 'https://cursor.com/install?win32=true' | iex
+agent --version
+```
+
+#### 2. Sign in (once)
+
+```bash
 agent login
-cd /path/to/MyRepo   # clone of github.com/rafi-solibri/MyRepo
+```
+
+#### 3. Clone the repo (once)
+
+```bash
+git clone https://github.com/rafi-solibri/MyRepo.git
+cd MyRepo
+git checkout main
+git pull
+```
+
+#### 4. Start the worker (every day you want Indeed to run)
+
+```bash
+cd /path/to/MyRepo
 agent worker start --name indeed-home
 ```
 
-2. Keep that process running when Indeed Daily is scheduled (or start it before a manual run).
+Leave this terminal open. If the machine does not appear:
 
-3. In Cursor → [Indeed Daily 9 AM](https://cursor.com/automations/91b09fd7-9093-11f1-ba66-0e7d0216e441):
-   - Point the run / environment at your **My Machines** worker `indeed-home`
-     (or trigger with `worker=indeed-home` where the product UI supports it).
+```bash
+agent worker start --name indeed-home --debug
+```
 
-4. Confirm:
+#### 5. Run Indeed on that machine
+
+1. Open https://cursor.com/agents (same account).
+2. New agent → **Run on** / environment picker → select **`indeed-home`**
+   (My Machines / Remote Control).
+3. Paste this prompt:
+
+```text
+Read and OBEY automation-prompts/06-indeed.md (fenced block).
+Run `node tools/indeed/preflight.js` first; if exit 5, stop and report.
+Otherwise: `bash scripts/preflight-portal-run.sh indeed`, then
+`bash scripts/launch-chrome-cdp.sh indeed`, then execute the daily Indeed apply job.
+Use resumes/Rafi_Resume.docx. Report submitted/skipped/blocked.
+```
+
+4. On the worker machine, first-time Indeed login in Chrome if needed, then
+   confirm:
 
 ```bash
 node tools/indeed/preflight.js
-# expect ok:true on the worker machine
+# expect ok: true
 ```
 
 Docs: https://cursor.com/docs/cloud-agent/self-hosted-guides/my-machines
 
-### Option B — Residential HTTP proxy secret
+## Option B — Residential HTTP proxy (for unattended daily cron)
 
 1. Get a **residential** (not datacenter) proxy URL, e.g. `http://user:pass@host:port`.
 2. In the Cloud Agent environment secrets, set:
@@ -71,3 +130,4 @@ Datacenter proxies will still get `Request Blocked`.
 - Re-logging into Indeed on Desktop Chrome alone
 - Saving the environment snapshot again without a residential path
 - Waiting out the Security Check page on a blocked datacenter IP
+- Expecting the 9 AM Indeed automation to use My Machines on an individual plan
