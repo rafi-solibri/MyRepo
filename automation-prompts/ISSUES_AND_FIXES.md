@@ -46,7 +46,7 @@
 | Blocker | Who | What to do |
 | --- | --- | --- |
 | Snapshot missing 5 portal logins | You | `bash scripts/open-portal-login-tabs.sh` → sign in on Desktop → quit Chrome → `bash scripts/verify-portal-logins.sh --strict` → **Save/Update snapshot** |
-| Indeed Cloudflare / Request Blocked on datacenter IP | You | Run Indeed on a **My Machines** residential worker (`agent worker start --name indeed-home`) OR set secret **`INDEED_HTTP_PROXY`** to a residential proxy — see `automation-prompts/INDEED_CLOUDFLARE.md` |
+| Indeed Cloudflare / Request Blocked on datacenter IP | You | **Easiest:** disable Indeed Daily cloud automation; run Indeed from Cursor Desktop on **home Wi‑Fi**. Or My Machines / paid `INDEED_HTTP_PROXY` — see `INDEED_CLOUDFLARE.md` |
 | Verified notification sender missing | You | Set secret `RESEND_FROM_EMAIL` to a verified sender; fallback uses `Job Status <onboarding@resend.dev>` |
 | Greenhouse / ATS email OTP | Optional | Keep Gmail logged in same Chrome profile |
 | Portal passwords | Optional | Add secrets if interactive login is not snapshotted |

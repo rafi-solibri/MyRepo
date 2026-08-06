@@ -8,7 +8,34 @@ block is on the network path, not the session.
 Verified 2026-08-06 from Cursor public cloud: both `curl` and headless Chrome
 to `https://in.indeed.com/` return the block page.
 
-## Option A — My Machines on your home PC (do this now)
+## Easiest free fix (no purchase)
+
+Indeed blocks Cursor’s public-cloud IPs. You cannot fix that without either a
+home/residential network or a paid residential proxy.
+
+**Do this (2 minutes):**
+
+1. **Disable** the cloud cron so it stops failing every morning:  
+   https://cursor.com/automations/91b09fd7-9093-11f1-ba66-0e7d0216e441 → turn **Off**
+2. On your **home PC / laptop (home Wi‑Fi)**, open Cursor Desktop → this repo
+   (`rafi-solibri/MyRepo` on `main`) → start a chat and paste:
+
+```text
+Run the Indeed daily apply now.
+Read and OBEY automation-prompts/06-indeed.md.
+First: node tools/indeed/preflight.js (must exit 0).
+Then: bash scripts/preflight-portal-run.sh indeed
+Then: bash scripts/launch-chrome-cdp.sh indeed
+Use resumes/Rafi_Resume.docx. Apply Hyd/Remote .NET architect/lead roles.
+Report submitted/skipped/blocked. Do not invent applies.
+```
+
+Home Wi‑Fi uses your residential ISP IP, so Indeed usually loads normally.
+No proxy purchase, no My Machines CLI required.
+
+If Chrome shows Indeed login once, sign in, then re-run the same prompt.
+
+## Option A — My Machines worker (also free; more setup)
 
 Tool calls (Chrome, Indeed pages) run on **your home ISP IP**, so Cloudflare
 usually lets you through.
