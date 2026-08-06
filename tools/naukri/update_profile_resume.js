@@ -16,6 +16,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const { hasAuth } = require("../chrome_session");
 const { findResume, CHROME_PROFILE } = require("./resume_and_filters");
 
 const CDP = process.env.NAUKRI_CDP || "http://127.0.0.1:9222";
@@ -233,6 +234,9 @@ async function main() {
     resume,
     chromeProfileHint: CHROME_PROFILE,
     cdp: CDP,
+    auth: {
+      destHasAuth: hasAuth("naukri"),
+    },
     ok: false,
   };
 
@@ -258,10 +262,20 @@ async function main() {
     }
   }
 
-  const browser = await chromium.connectOverCDP(CDP);
-  const context = browser.contexts()[0] || (await browser.newContext());
-  const page = await context.newPage();
-  page.setDefaultTimeout(45000);
+  let page;
+  try {
+    const browser = await chromium.connectOverCDP(CDP);
+    const context = browser.contexts()[0] || (await browser.newContext());
+    page = await context.newPage();
+    page.setDefaultTimeout(45000);
+  } catch (e) {
+    result.reason = "cdp_unreachable";
+    result.error = String(e).slice(0, 500);
+    result.hint = "Run: bash scripts/launch-chrome-cdp.sh naukri";
+    writeReport(result);
+    console.error(JSON.stringify(result, null, 2));
+    process.exit(2);
+  }
 
   try {
     const login = await ensureLoggedIn(page);
@@ -302,7 +316,7 @@ async function main() {
     console.error(JSON.stringify(result, null, 2));
     process.exit(1);
   } finally {
-    await page.close().catch(() => {});
+    if (page) await page.close().catch(() => {});
   }
 }
 

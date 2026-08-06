@@ -53,9 +53,12 @@ mkdir -p \
 
 # --- 5. Session sync --------------------------------------------------------
 # Propagate Desktop Chrome logins into CDP profiles when source cookies exist.
+# The sync script is non-destructive: it preserves an authenticated destination
+# profile when Desktop Default lacks that portal's cookie.
 if [[ -f /home/ubuntu/.config/google-chrome/Default/Cookies ]]; then
-  bash scripts/sync-chrome-sessions.sh || true
+  bash scripts/sync-chrome-sessions.sh || echo "WARNING: Chrome session sync reported missing auth; continuing install."
 fi
+node tools/chrome_session.js status || true
 
 echo "Job-apply assets ready."
 ls -la resumes/Rafi_Resume.docx /home/ubuntu/resumes/Rafi_Resume.docx 2>/dev/null || true
