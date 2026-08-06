@@ -3,7 +3,7 @@
 Cursor Automations **cannot be edited by this cloud agent** (`get-automation` is read-only; there is no update/write tool).  
 Paste each block below into the matching automation **once**. After that, merge PRs to `main` (or point the automation at this branch) and the agent will load the latest instructions from the repo files — no more manual re-pastes when we refine prompts.
 
-**Critical for every portal run:** agents must run `bash scripts/preflight-portal-run.sh <portal>` so Desktop Chrome logins are copied into CDP profiles without clobbering existing authenticated profiles. Without a saved snapshot of Default Chrome logins, cron hits login walls.
+**Critical for every portal run:** agents must run `bash scripts/preflight-portal-run.sh <portal>` so Desktop Chrome logins are copied into CDP profiles without clobbering existing authenticated profiles. Without authenticated Default Chrome cookies **inside the saved snapshot**, cron hits login walls. Owner check: `bash scripts/verify-portal-logins.sh --strict`.
 
 ## LinkedIn Daily 9 AM
 https://cursor.com/automations/beb6ef8e-908f-11f1-ba66-0e7d0216e441

@@ -59,6 +59,7 @@ if [[ -f /home/ubuntu/.config/google-chrome/Default/Cookies ]]; then
   bash scripts/sync-chrome-sessions.sh || echo "WARNING: Chrome session sync reported missing auth; continuing install."
 fi
 node tools/chrome_session.js status || true
+bash scripts/verify-portal-logins.sh --no-sync || true
 
 echo "Job-apply assets ready."
 ls -la resumes/Rafi_Resume.docx /home/ubuntu/resumes/Rafi_Resume.docx 2>/dev/null || true

@@ -18,6 +18,17 @@ Shared targets: **Expected CTC 65 LPA**, **Hyderabad + Remote/WFH**, **Rafi_Resu
 
 Issue log: [`automation-prompts/ISSUES_AND_FIXES.md`](automation-prompts/ISSUES_AND_FIXES.md).
 
+## Portal login (required for daily cron)
+
+If automations stop at Sign-in pages, the saved environment snapshot is missing auth cookies.
+
+```bash
+bash scripts/open-portal-login-tabs.sh          # Desktop Chrome tabs
+bash scripts/verify-portal-logins.sh --strict   # must show all 6 OK
+```
+
+Then **Save / Update snapshot** on the environment dashboard. Details: [`automation-prompts/ENV_READINESS.md`](automation-prompts/ENV_READINESS.md).
+
 ## Daily automation readiness
 
 Before saving a daily automation snapshot, log into each portal in Desktop Chrome

@@ -33,11 +33,19 @@
 | Indeed failures wasted apply time behind Cloudflare | `tools/indeed/preflight.js` detects public-cloud Cloudflare blocks and reports private worker required |
 | Indeed/Instahyre resume verifier commands were silent | `node tools/indeed/resume.js` and `node tools/instahyre/resume.js` now print JSON |
 
+## Fixed for 2026-08-06 login diagnosis (this PR)
+
+| Issue | Fix |
+| --- | --- |
+| Saved snapshot only had Cutshort auth; LinkedIn/Naukri/Foundit/Instahyre/Indeed missing | Documented live cookie audit in `ENV_READINESS.md`; added `scripts/verify-portal-logins.sh` |
+| Hard to complete Desktop logins correctly | `scripts/open-portal-login-tabs.sh` + `scripts/portal-login-checklist.html` open Default Chrome with all 6 portals |
+| “Saved environment” confused with “sessions captured” | Checklist / verify script require auth cookies before declaring ready |
+
 ## Still requires your action (cannot fix from code alone)
 
 | Blocker | Who | What to do |
 | --- | --- | --- |
-| Snapshot without Default Chrome logins | You | Confirm Desktop Chrome logins → `bash scripts/sync-chrome-sessions.sh --strict` → **Save/Update snapshot** |
+| Snapshot missing 5 portal logins | You | `bash scripts/open-portal-login-tabs.sh` → sign in on Desktop → quit Chrome → `bash scripts/verify-portal-logins.sh --strict` → **Save/Update snapshot** |
 | Indeed Cloudflare 403 on datacenter IP | You | Attach a **private worker** (residential IP) |
 | Verified notification sender missing | You | Set secret `RESEND_FROM_EMAIL` to a verified sender; fallback uses `Job Status <onboarding@resend.dev>` |
 | Greenhouse / ATS email OTP | Optional | Keep Gmail logged in same Chrome profile |
