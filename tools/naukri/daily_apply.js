@@ -87,6 +87,18 @@ function fingerprint(company, role) {
     .trim()}`;
 }
 
+/** TopTier often shows multiline CTA text: "Quick apply\\nApplied". */
+function isAlreadyAppliedCta(text) {
+  const t = String(text || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!t) return false;
+  if (/Quick apply\s*Applied/i.test(t)) return true;
+  if (/^Applied$/i.test(t)) return true;
+  if (/\bApplied\b/i.test(t) && !/^Quick apply$/i.test(t)) return true;
+  return false;
+}
+
 async function dismiss(page) {
   for (const sel of [
     "button:has-text('Later')",
@@ -126,7 +138,7 @@ function searchUrls(q, age) {
 }
 
 async function collectCards(page) {
-  return page.evaluate(() => {
+  const raw = await page.evaluate(() => {
     const nodes = [...document.querySelectorAll("div.cursor-pointer")].filter(
       (c) =>
         /Quick apply|Applied|On company site|On hirist/i.test(c.innerText || "")
@@ -148,7 +160,6 @@ async function collectCards(page) {
         role = lines[applyIdx + 1] || "";
         location = lines[applyIdx + 2] || "";
       }
-      const already = /\bApplied\b/i.test(text) && !/Quick apply/i.test(text);
       const companySite = /On company site|On hirist/i.test(text);
       const quick = /Quick apply/i.test(text);
       return {
@@ -157,23 +168,54 @@ async function collectCards(page) {
         role,
         location,
         text: text.slice(0, 600),
-        already,
         companySite,
         quick,
       };
     });
   });
+  return raw.map((c) => {
+    const already = isAlreadyAppliedCta(c.text);
+    return {
+      ...c,
+      already,
+      quick: c.quick && !already,
+    };
+  });
 }
 
-async function openCard(page, idx) {
+async function openCard(context, page, idx) {
   const cards = page.locator("div.cursor-pointer").filter({
     hasText: /Quick apply|Applied|On company site|On hirist/i,
   });
   const card = cards.nth(idx);
   await card.scrollIntoViewIfNeeded().catch(() => {});
+  const before = new Set(context.pages().map((p) => p.url()));
+  const popupPromise = context
+    .waitForEvent("page", { timeout: 5000 })
+    .catch(() => null);
   await card.click({ timeout: 10000 });
+  const popup = await popupPromise;
   await sleep(2000);
-  await dismiss(page);
+  // TopTier often opens /job-listings-... in a new tab — apply there.
+  let detailPage = page;
+  if (popup && /naukri\.com\/job-listings/i.test(popup.url())) {
+    detailPage = popup;
+    await detailPage.waitForLoadState("domcontentloaded").catch(() => {});
+    await sleep(1500);
+  } else {
+    const fresh = context
+      .pages()
+      .find(
+        (p) =>
+          /naukri\.com\/job-listings/i.test(p.url()) && !before.has(p.url())
+      );
+    if (fresh) {
+      detailPage = fresh;
+      await sleep(1000);
+    }
+  }
+  await dismiss(detailPage);
+  return detailPage;
 }
 
 async function readDetail(page) {
@@ -184,12 +226,22 @@ async function readDetail(page) {
         "[class*='detail'], [class*='Detail'], aside, [role='dialog']"
       ) || document.body;
     const ptext = panel.innerText || body;
-    const cta =
-      [...document.querySelectorAll("button, a, div[role='button']")]
-        .map((e) => (e.innerText || e.getAttribute("aria-label") || "").trim())
-        .find((t) =>
-          /Quick apply|Apply|Applied|On company site|Apply on company/i.test(t)
-        ) || "";
+    // Prefer real apply buttons; normalize multiline "Quick apply\\nApplied".
+    const ctas = [...document.querySelectorAll("button, a, div[role='button']")]
+      .map((e) =>
+        (e.innerText || e.getAttribute("aria-label") || "")
+          .replace(/\s+/g, " ")
+          .trim()
+      )
+      .filter((t) =>
+        /Quick apply|Apply|Applied|On company site|Apply on company/i.test(t)
+      );
+    const preferred =
+      ctas.find((t) => /Quick apply\s*Applied|^Applied$/i.test(t)) ||
+      ctas.find((t) => /On company site|Apply on company/i.test(t)) ||
+      ctas.find((t) => /Quick apply/i.test(t)) ||
+      ctas[0] ||
+      "";
     const links = [...document.querySelectorAll("a[href]")]
       .map((a) => a.href)
       .filter((h) =>
@@ -198,7 +250,7 @@ async function readDetail(page) {
         )
       );
     return {
-      cta,
+      cta: preferred,
       links: [...new Set(links)].slice(0, 8),
       blob: ptext.slice(0, 4000),
       url: location.href,
@@ -272,11 +324,13 @@ async function clickQuickApply(page) {
   for (const sel of selectors) {
     const btn = page.locator(sel).first();
     if (await btn.isVisible().catch(() => false)) {
-      const label = ((await btn.innerText().catch(() => "")) || "").trim();
-      if (/Applied/i.test(label) && !/Quick apply/i.test(label)) {
-        return { already: true };
+      const label = ((await btn.innerText().catch(() => "")) || "")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (isAlreadyAppliedCta(label)) {
+        return { already: true, label };
       }
-      if (/^Apply$/i.test(label) && /company/i.test(label)) continue;
+      if (/company site|on company/i.test(label)) continue;
       await btn.click().catch(() => {});
       await sleep(2500);
       await dismiss(page);
@@ -289,8 +343,8 @@ async function clickQuickApply(page) {
 
 async function confirmApplied(page) {
   const detail = await readDetail(page);
-  const cta = (detail.cta || "").trim();
-  if (/Quick apply\s*Applied/i.test(cta) || (/^Applied$/i.test(cta) && cta.length < 20)) {
+  const cta = (detail.cta || "").replace(/\s+/g, " ").trim();
+  if (isAlreadyAppliedCta(cta)) {
     return { ok: true, cta };
   }
   const toast = await page
@@ -299,8 +353,11 @@ async function confirmApplied(page) {
       if (/applied successfully|application sent|successfully applied/i.test(t))
         return "toast";
       const hit = [...document.querySelectorAll("button, a, div")]
-        .map((e) => (e.innerText || "").trim())
-        .find((x) => /Quick apply Applied|^Applied$/i.test(x) && x.length < 40);
+        .map((e) => (e.innerText || "").replace(/\s+/g, " ").trim())
+        .find(
+          (x) =>
+            /Quick apply\s*Applied|^Applied$/i.test(x) && x.length < 40
+        );
       return hit || "";
     })
     .catch(() => "");
@@ -543,8 +600,9 @@ function decideSkip(card, { detailMode = false } = {}) {
 }
 
 async function processCard(context, page, card, i, jobMeta, report) {
-  await openCard(page, i);
-  const detail = await readDetail(page);
+  const detailPage = await openCard(context, page, i);
+  const openedTab = detailPage !== page;
+  const detail = await readDetail(detailPage);
   // Detail re-check: location/CTC/.NET only — skip_title already decided from card role.
   const detailSkip = decideSkip(
     {
@@ -555,36 +613,61 @@ async function processCard(context, page, card, i, jobMeta, report) {
     },
     { detailMode: true }
   );
+  const closeDetail = async () => {
+    if (openedTab) {
+      detailPage.close().catch(() => {});
+      await page.bringToFront().catch(() => {});
+    } else {
+      await page.keyboard.press("Escape").catch(() => {});
+    }
+  };
   if (
     detailSkip &&
     detailSkip !== "already_applied" &&
     !String(detailSkip).startsWith("skip_title")
   ) {
     report.skipped.push({ ...jobMeta, reason: detailSkip + "_detail" });
-    await page.keyboard.press("Escape").catch(() => {});
+    await closeDetail();
     return;
   }
-  if (
-    /Applied/i.test(detail.cta) &&
-    !/Quick apply$/i.test((detail.cta || "").trim())
-  ) {
-    report.skipped.push({ ...jobMeta, reason: "already_applied_detail" });
-    await page.keyboard.press("Escape").catch(() => {});
+  if (isAlreadyAppliedCta(detail.cta)) {
+    report.skipped.push({
+      ...jobMeta,
+      reason: "already_applied_detail",
+      naukriJobUrl: detail.url,
+      cta: detail.cta,
+    });
+    // Interview-call maximization: still try recruiter note on prior applies.
+    const rec = await tryContactRecruiter(detailPage);
+    if (rec.sent) {
+      report.recruiterNotes = report.recruiterNotes || [];
+      report.recruiterNotes.push({
+        company: jobMeta.company,
+        role: jobMeta.role,
+        naukriJobUrl: detail.url,
+      });
+    }
+    await closeDetail();
     return;
   }
 
   if (card.companySite || /On company site|Apply on company/i.test(detail.cta)) {
-    await handleExternal(context, page, detail, jobMeta, report);
+    await handleExternal(context, detailPage, detail, jobMeta, report);
     await page.bringToFront().catch(() => {});
-    await page.keyboard.press("Escape").catch(() => {});
+    await closeDetail();
     await sleep(800);
     return;
   }
 
-  const click = await clickQuickApply(page);
+  const click = await clickQuickApply(detailPage);
   if (click.already) {
-    report.skipped.push({ ...jobMeta, reason: "already_applied_cta" });
-    await page.keyboard.press("Escape").catch(() => {});
+    report.skipped.push({
+      ...jobMeta,
+      reason: "already_applied_cta",
+      naukriJobUrl: detail.url,
+      cta: click.label,
+    });
+    await closeDetail();
     return;
   }
   if (!click.clicked) {
@@ -592,20 +675,22 @@ async function processCard(context, page, card, i, jobMeta, report) {
       ...jobMeta,
       reason: "quick_apply_not_found",
       path: "Naukri",
+      naukriJobUrl: detail.url,
+      cta: detail.cta,
     });
-    await page.keyboard.press("Escape").catch(() => {});
+    await closeDetail();
     return;
   }
   await sleep(2000);
-  const conf = await confirmApplied(page);
+  const conf = await confirmApplied(detailPage);
   if (conf.ok) {
-    const rec = await tryContactRecruiter(page);
+    const rec = await tryContactRecruiter(detailPage);
     report.applied.push({
       ...jobMeta,
       path: "Naukri",
       cta: conf.cta,
       recruiterNote: rec.sent,
-      naukriJobUrl: detail.url,
+      naukriJobUrl: detail.url || detailPage.url(),
     });
   } else {
     report.blocked.push({
@@ -613,9 +698,10 @@ async function processCard(context, page, card, i, jobMeta, report) {
       reason: "apply_unconfirmed",
       cta: conf.cta,
       path: "Naukri",
+      naukriJobUrl: detail.url,
     });
   }
-  await page.keyboard.press("Escape").catch(() => {});
+  await closeDetail();
   await sleep(700);
 }
 
@@ -629,6 +715,7 @@ async function main() {
     blocked: [],
     skipped: [],
     seen: [],
+    recruiterNotes: [],
     queriesRun: [],
   };
 
