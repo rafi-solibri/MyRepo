@@ -209,7 +209,7 @@ def _parse_poll_hotel(raw: dict[str, Any], query: SearchQuery) -> HotelOffer | N
     )
 
 
-def fetch_kayak(context: BrowserContext, query: SearchQuery, *, max_wait_s: int = 40) -> list[HotelOffer]:
+def fetch_kayak(context: BrowserContext, query: SearchQuery, *, max_wait_s: int = 55) -> list[HotelOffer]:
     page = context.new_page()
     polls: list[dict[str, Any]] = []
 
@@ -256,9 +256,9 @@ def fetch_kayak(context: BrowserContext, query: SearchQuery, *, max_wait_s: int 
             break
         time.sleep(0.5)
 
-    # Infinite scroll / show more to pull additional result pages
-    scroll_results(page, rounds=14, pause_s=1.0)
-    time.sleep(1.5)
+    # Infinite scroll / show more to pull the full result set (not just first page)
+    scroll_results(page, rounds=22, pause_s=1.1)
+    time.sleep(2.0)
 
     by_id: dict[str, dict[str, Any]] = {}
     for poll in polls:
