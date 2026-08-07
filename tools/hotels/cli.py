@@ -26,7 +26,24 @@ def _parse_dates(values: list[str] | None) -> list[date] | None:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Nightly automation path — full requirements (areas/weekends/email artifacts)
+    if argv is not None and "--nightly" in argv:
+        from .automation import main as automation_main
+
+        rest = [a for a in argv if a != "--nightly"]
+        return automation_main(rest)
+    if argv is None and "--nightly" in sys.argv[1:]:
+        from .automation import main as automation_main
+
+        rest = [a for a in sys.argv[1:] if a != "--nightly"]
+        return automation_main(rest)
+
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--nightly",
+        action="store_true",
+        help="Run full Hotel Price Tracker automation (see tools/hotels/AUTOMATION.md)",
+    )
     parser.add_argument(
         "--areas",
         nargs="+",

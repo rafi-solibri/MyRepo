@@ -2,6 +2,8 @@
 
 Fetches **4★+** hotel rates for Hyderabad neighbourhoods (Madhapur, Kondapur, Gachibowli, Botanical Garden, Ayyappa Society, 100 Feet Road, Raghavendra Colony) across major OTAs and aggregators.
 
+**Cron / agent runs:** follow [`AUTOMATION.md`](./AUTOMATION.md). Use the nightly entrypoint so every requirement (all areas, remaining weekends, full inventory, email + CSV) is satisfied — do not ship smoke-test-only results.
+
 ## Why this exists
 
 Direct scrapes of Booking.com / MakeMyTrip / Yatra from cloud IPs often hit bot walls or HTTP/2 failures. This package:
@@ -21,6 +23,11 @@ playwright install chromium   # if browsers are missing
 ## Usage
 
 ```bash
+# === Preferred for automation (full requirements) ===
+PYTHONPATH=. python3 -m tools.hotels.automation -v --out-dir /tmp/hotel-email
+# then email (needs RESEND_API_KEY):
+PYTHONPATH=. python3 -m tools.hotels.automation --send --out-dir /tmp/hotel-email
+
 # Remaining Sat/Sun this month, all providers
 python -m tools.hotels -v --out /tmp/hotels.json --csv /tmp/hotels.csv
 
