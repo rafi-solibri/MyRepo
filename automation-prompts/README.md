@@ -48,7 +48,7 @@ See STEP 0 in [04-naukri-general.md](04-naukri-general.md).
 | Cutshort Daily 9 AM | [03-cutshort.md](03-cutshort.md) |
 | Naukri Daily 9 AM | [04-naukri-general.md](04-naukri-general.md) |
 | Instahyre Daily 9 AM | [05-instahyre.md](05-instahyre.md) |
-| Indeed Daily 9 AM | [06-indeed.md](06-indeed.md) |
+| Indeed Daily 9 AM | [06-indeed.md](06-indeed.md) · [INDEED_CLOUDFLARE.md](INDEED_CLOUDFLARE.md) · [INDEED_HOME_AUTOMATION.md](INDEED_HOME_AUTOMATION.md) |
 | Notification Job 11 AM | [07-notification.md](07-notification.md) |
 
 See [ISSUES_AND_FIXES.md](ISSUES_AND_FIXES.md) for what was broken in the last cron and what still needs your login/secrets.

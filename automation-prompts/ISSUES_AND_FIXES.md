@@ -30,7 +30,7 @@
 | Portal jobs started without a consistent resume/session check | `scripts/preflight-portal-run.sh <portal>` bootstraps assets, syncs safely, verifies resume, and exits clearly on login-required |
 | Ad-hoc Chrome CDP launch caused `ECONNREFUSED` / wrong profile risks | `scripts/launch-chrome-cdp.sh <portal>` starts port 9222 with the correct synced profile |
 | Notification fallback script referenced by prompts was missing from main | Added `scripts/send-job-status-email.mjs` with `RESEND_FROM_EMAIL` or documented onboarding fallback |
-| Indeed failures wasted apply time behind Cloudflare | `tools/indeed/preflight.js` detects public-cloud Cloudflare blocks and reports private worker required |
+| Indeed failures wasted apply time behind Cloudflare | `tools/indeed/preflight.js` + `chrome_probe.js` detect Request Blocked; `launch-chrome-cdp.sh` honors `INDEED_HTTP_PROXY`; setup in `INDEED_CLOUDFLARE.md` |
 | Indeed/Instahyre resume verifier commands were silent | `node tools/indeed/resume.js` and `node tools/instahyre/resume.js` now print JSON |
 
 ## Fixed for 2026-08-06 login diagnosis (this PR)
@@ -46,7 +46,7 @@
 | Blocker | Who | What to do |
 | --- | --- | --- |
 | Snapshot missing 5 portal logins | You | `bash scripts/open-portal-login-tabs.sh` → sign in on Desktop → quit Chrome → `bash scripts/verify-portal-logins.sh --strict` → **Save/Update snapshot** |
-| Indeed Cloudflare 403 on datacenter IP | You | Attach a **private worker** (residential IP) |
+| Indeed Cloudflare / Request Blocked on datacenter IP | You | **Easiest:** disable Indeed Daily cloud automation; run Indeed from Cursor Desktop on **home Wi‑Fi**. Or My Machines / paid `INDEED_HTTP_PROXY` — see `INDEED_CLOUDFLARE.md` |
 | Verified notification sender missing | You | Set secret `RESEND_FROM_EMAIL` to a verified sender; fallback uses `Job Status <onboarding@resend.dev>` |
 | Greenhouse / ATS email OTP | Optional | Keep Gmail logged in same Chrome profile |
 | Portal passwords | Optional | Add secrets if interactive login is not snapshotted |
@@ -57,5 +57,5 @@
 1. Re-paste updated prompts from `automation-prompts/0*.md` into each automation (resume section changed).
 2. Merge to `main` (or point automations at this branch) so cron checkouts include `resumes/Rafi_Resume.docx`.
 3. Complete portal logins + snapshot once.
-4. For Indeed: enable private worker.
+4. For Indeed: follow `automation-prompts/INDEED_CLOUDFLARE.md` (My Machines residential worker or `INDEED_HTTP_PROXY`).
 5. For Notification: connect Resend MCP + `RESEND_FROM_EMAIL`.

@@ -43,8 +43,13 @@ Read and OBEY the full instructions in automation-prompts/05-instahyre.md (the f
 ## Indeed Daily 9 AM
 https://cursor.com/automations/91b09fd7-9093-11f1-ba66-0e7d0216e441
 
+**Recommended on individual plans:** turn this automation **Off** in the UI.
+Public-cloud cron hits Indeed Cloudflare. Run Indeed instead from **Cursor Desktop on home Wi‑Fi** (see `INDEED_CLOUDFLARE.md` → “Easiest free fix”).
+
+If you keep the automation enabled (will keep failing until residential proxy / Enterprise pool):
+
 ```text
-Read and OBEY the full instructions in automation-prompts/06-indeed.md (the fenced text block). Run `node tools/indeed/preflight.js` first; if it exits 5, report private worker required and stop. Otherwise run `bash scripts/preflight-portal-run.sh indeed`. Use resumes/Rafi_Resume.docx. Execute the daily Indeed apply job now.
+Read and OBEY the full instructions in automation-prompts/06-indeed.md (the fenced text block). Run `node tools/indeed/preflight.js` first; if it exits 5, STOP and report Cloudflare Request Blocked — disable this cloud automation and run Indeed from Cursor Desktop on home Wi‑Fi (automation-prompts/INDEED_CLOUDFLARE.md). Otherwise run `bash scripts/preflight-portal-run.sh indeed`. Use resumes/Rafi_Resume.docx. Execute the daily Indeed apply job now.
 ```
 
 ## Notification Job 11 AM
