@@ -12,7 +12,15 @@ from .providers import DEFAULT_PROVIDERS, PROVIDERS
 
 log = logging.getLogger(__name__)
 
-DEFAULT_AREAS = ("Madhapur", "Kondapur", "Gachibowli")
+DEFAULT_AREAS = (
+    "Madhapur",
+    "Kondapur",
+    "Gachibowli",
+    "Botanical Garden",
+    "Ayyappa Society",
+    "100 Feet Road",
+    "Raghavendra Colony",
+)
 
 
 def weekend_dates(year: int, month: int, *, include_past: bool = False, today: date | None = None) -> list[date]:

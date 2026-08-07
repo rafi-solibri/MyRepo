@@ -7,8 +7,13 @@ from rapidfuzz import fuzz
 
 from .models import HotelOffer, ProviderPrice
 
+_AREA_PHRASES = re.compile(
+    r"\b(botanical\s+garden|ayyappa\s+society|100\s+feet\s+road|"
+    r"raghavendra\s+colony|madhapur|kondapur|gachibowli)\b",
+    re.I,
+)
 _NOISE = re.compile(
-    r"\b(hotel|the|a|an|hyderabad|madhapur|kondapur|gachibowli|hitec|hitech|city)\b",
+    r"\b(hotel|the|a|an|hyderabad|hitec|hitech|city|botanical|ayyappa|raghavendra)\b",
     re.I,
 )
 
@@ -16,6 +21,7 @@ _NOISE = re.compile(
 def normalize_name(name: str) -> str:
     s = name.lower().strip()
     s = re.sub(r"[^\w\s]", " ", s)
+    s = _AREA_PHRASES.sub(" ", s)
     s = _NOISE.sub(" ", s)
     s = re.sub(r"\s+", " ", s).strip()
     return s

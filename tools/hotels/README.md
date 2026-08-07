@@ -1,6 +1,6 @@
 # Multi-provider hotel price fetcher
 
-Fetches **4★+** hotel rates for Hyderabad neighbourhoods (Madhapur, Kondapur, Gachibowli) across major OTAs and aggregators.
+Fetches **4★+** hotel rates for Hyderabad neighbourhoods (Madhapur, Kondapur, Gachibowli, Botanical Garden, Ayyappa Society, 100 Feet Road, Raghavendra Colony) across major OTAs and aggregators.
 
 ## Why this exists
 
@@ -29,7 +29,7 @@ python -m tools.hotels --core -v --out /tmp/hotels.json --csv /tmp/hotels.csv
 
 # One weekend night
 python -m tools.hotels \
-  --areas Madhapur Kondapur Gachibowli \
+  --areas Madhapur Kondapur Gachibowli "Botanical Garden" "Ayyappa Society" "100 Feet Road" "Raghavendra Colony" \
   --dates 2026-08-15 \
   --providers kayak google booking agoda \
   --out /tmp/hotels.json --csv /tmp/hotels.csv -v

@@ -21,6 +21,14 @@ AREA_SLUGS = {
     "Madhapur": "Madhapur,Hyderabad,India",
     "Kondapur": "Kondapur,Hyderabad,India",
     "Gachibowli": "Gachibowli,Hyderabad,India",
+    # Landmark id from Kayak smarty (Kotla Vijayabhaskara Reddy Botanical Garden)
+    "Botanical Garden": "Hyderabad,India-c15297-l87562",
+    "Ayyappa Society": "Ayyappa-Society,Madhapur,Hyderabad,India",
+    "100 Feet Road": "100-Feet-Road,Madhapur,Hyderabad,India",
+    # Needs Hyderabad airport/city suffix (-a7297) for Kayak to resolve the neighbourhood
+    "Raghavendra Colony": (
+        "Raghavendra-Colony,Kondapur,Hyderabad,India,Hyderabad,Telangana,India-a7297"
+    ),
 }
 
 

@@ -31,7 +31,10 @@ def main(argv: list[str] | None = None) -> int:
         "--areas",
         nargs="+",
         default=list(DEFAULT_AREAS),
-        help="Neighbourhoods to search (default: Madhapur Kondapur Gachibowli)",
+        help=(
+            "Neighbourhoods to search (default: Madhapur Kondapur Gachibowli "
+            "Botanical Garden Ayyappa Society 100 Feet Road Raghavendra Colony)"
+        ),
     )
     parser.add_argument(
         "--dates",
