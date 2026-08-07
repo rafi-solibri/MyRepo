@@ -78,7 +78,8 @@ BLACKLIST = re.compile(
     r"big data architect|data architect|data warehouse architect|implementation specialist|"
     r"\bphp\b|laravel|ruby on rails|\bror\b|"
     r"interior designer|civil engineer|electrical engineering|golang &|golang and|"
-    r"bpo|call center|marketing cloud|success architect",
+    r"bpo|call center|marketing cloud|success architect|"
+    r"non-?it staffing|us non-?it|staffing recruiter|talent acquisition",
     re.I,
 )
 
@@ -90,19 +91,29 @@ TITLE_OK = re.compile(
 
 HYD_OK = re.compile(
     r"hyderabad|telangana|secunderabad|greater hyderabad|gachibowli|hitech city|"
-    r"madhapur|kondapur",
+    r"madhapur|kondapur|banjara hills|"
+    # Arabic / Urdu LinkedIn UI (locale drift)
+    r"حيدر\s*أ?باد|حيدرآباد|تلنگانہ|تلنغانا|تيلانجانا|سکندرآباد",
     re.I,
 )
 REMOTE_OK = re.compile(
     r"\bremote\b|\bwfh\b|work from home|india remote|fully remote|remote[, ]*india|"
-    r"remote \(india\)|anywhere in india",
+    r"remote \(india\)|anywhere in india|"
+    # Arabic remote / WFH
+    r"عن بعد|العمل من المنزل|العمل عن بعد|من المنزل",
     re.I,
 )
+# India alone (EN/AR) — only with remote workplace filter or REMOTE_OK
+INDIA_ONLY = re.compile(r"^(greater\s+)?india\b|^الهند\b", re.I)
 BAD_CITY = re.compile(
     r"bengaluru|bangalore|pune|chennai|mumbai|delhi|noida|gurgaon|gurugram|"
     r"ahmedabad|kolkata|jaipur|kochi|trivandrum|thiruvananthapuram|coimbatore|"
     r"indore|nagpur|united states|\busa\b|\buk\b|london|singapore|dubai|"
-    r"toronto|canada|australia|germany|netherlands",
+    r"toronto|canada|australia|germany|netherlands|"
+    # Arabic / Urdu city names
+    r"بنغالور|بنجالور|بانجلور|بوني|بونة|تشيناي|مومباي|دلهي|نويدا|جورجاون|"
+    r"أحمد آباد|كولكاتا|جايبور|كوتشي|كوتشي|إندور|اندور|ناجبور|"
+    r"ماهاراشترا|تاميل نادو|كارناتاكا|كارناتاكا|ماديا براديش",
     re.I,
 )
 
@@ -208,19 +219,79 @@ def close_overlays(page: Page, *, keep_easy_apply: bool = True) -> None:
     # Do NOT press Escape here — it dismisses Easy Apply when Simplify sidebar is open.
 
 
-def location_allowed(loc: str, workplace: str = "") -> bool:
+def location_allowed(loc: str, workplace: str = "", *, remote_search: bool = False) -> bool:
     """HARD filter: only job location/workplace strings — never page chrome/profile text."""
     text = f"{loc} {workplace}".strip()
     if not text:
         return False
+    remoteish = bool(REMOTE_OK.search(text)) or remote_search
     # Bad city wins unless the SAME job text clearly says Remote/WFH
+    # (LinkedIn remote filter alone is not enough if top-card city is Bengaluru/Pune/etc.)
     if BAD_CITY.search(text) and not REMOTE_OK.search(text):
         return False
     if REMOTE_OK.search(text):
         return True
     if HYD_OK.search(text):
         return True
+    # Remote search + India-only location (EN/AR) with no bad city → allow
+    if remoteish and INDIA_ONLY.search((loc or "").strip()):
+        return True
+    # Arabic "India" appearing in tertiary line during remote search
+    if remoteish and re.search(r"\bالهند\b", text) and not BAD_CITY.search(text):
+        return True
     return False
+
+
+def ensure_english_ui(page: Page) -> None:
+    """Force LinkedIn English so location/title filters stay reliable."""
+    try:
+        page.goto(
+            "https://www.linkedin.com/mypreferences/d/language/",
+            wait_until="domcontentloaded",
+            timeout=45000,
+        )
+        time.sleep(2)
+        # Prefer select/dropdown for English
+        for sel in [
+            "select",
+            "button:has-text('English')",
+            "div[role='combobox']",
+        ]:
+            try:
+                el = page.locator(sel).first
+                if el.count() and el.is_visible():
+                    tag = el.evaluate("e => e.tagName.toLowerCase()")
+                    if tag == "select":
+                        try:
+                            el.select_option(label=re.compile(r"English", re.I))
+                        except Exception:
+                            el.select_option(value="en_US")
+                        time.sleep(1)
+                        break
+            except Exception:
+                pass
+        # Cookie / lang query fallback
+        page.context.add_cookies(
+            [
+                {
+                    "name": "lang",
+                    "value": "v=2&lang=en-us",
+                    "domain": ".linkedin.com",
+                    "path": "/",
+                }
+            ]
+        )
+    except Exception as e:
+        print("ensure_english_ui warning:", e, flush=True)
+    try:
+        page.goto(
+            "https://www.linkedin.com/feed/?locale=en_US",
+            wait_until="domcontentloaded",
+            timeout=45000,
+        )
+        time.sleep(1.5)
+    except Exception:
+        pass
 
 
 def jd_blacklist(text: str) -> str | None:
@@ -881,7 +952,7 @@ def process_search(
         except Exception:
             pass
 
-        if not location_allowed(loc, workplace[:800]):
+        if not location_allowed(loc, workplace[:800], remote_search=remote):
             job.status = "skipped"
             job.reason = f"location filter: {loc[:120]}"
             results.append(job)
@@ -927,7 +998,7 @@ def main() -> None:
     results: list[JobResult] = []
     # Prior-run IDs (already applied) — LinkedIn also marks Applied; keep for safety
     seen: set[str] = {
-        # Prior automation run
+        # Prior automation runs
         "4448545122",
         "4448935949",
         "4446632306",
@@ -938,8 +1009,7 @@ def main() -> None:
         "4446643678",
         "4446651098",
         "4446252379",
-        # This run (partial before location-filter fix)
-        "4449489116",  # Blue Yonder Hyd — submitted OK
+        "4449489116",  # Blue Yonder Hyd
         "4448834059",  # Infosys Finacle Bengaluru — wrongly submitted; skip revisit
         "4448876456",  # Avtex blocked
         "4444107986",
@@ -948,6 +1018,49 @@ def main() -> None:
         "4448954474",
         "4448954715",
         "4448953152",
+        # 2026-08-05 submitted
+        "4442582798",
+        "4442589503",
+        "4449476472",
+        "4447381958",
+        "4448875176",
+        "4447389879",
+        "4447500027",
+        "4446210548",
+        "4449101332",
+        "4430575398",
+        "4448528071",
+        "4448858320",
+        "4449494440",
+        "4448990793",
+        "4447296353",
+        "4447285103",
+        "4446749238",
+        "4445834680",
+        "4447061211",
+        "4448032024",
+        # 2026-08-05 blocked Easy Apply
+        "4449459735",
+        "4449485007",
+        "4447984186",
+        "4447298642",
+        "4377950713",
+        # 2026-08-07 partial run (before Arabic locale fix)
+        "4448440792",
+        "4449792167",
+        "4449760452",
+        "4442011506",
+        "4448438234",
+        "4441207759",
+        "4449388429",
+        "4450284449",
+        "4437050474",
+        "4405159441",
+        "4442580526",
+        "4450205567",
+        "4450682491",
+        "4415350173",
+        "4270943974",
     }
     with sync_playwright() as p:
         browser = p.chromium.connect_over_cdp(CDP)
@@ -970,6 +1083,8 @@ def main() -> None:
             OUT.write_text(json.dumps([asdict(r) for r in results], indent=2))
             print("BLOCKED: not signed in")
             return
+
+        ensure_english_ui(page)
 
         for tpr in TPR_WINDOWS:
             if len([r for r in results if r.status == "submitted"]) >= MAX_APPLY:

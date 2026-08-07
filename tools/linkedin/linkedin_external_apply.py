@@ -54,6 +54,20 @@ PROFILE = {
 
 # Prefer .NET/architect Hyderabad or Remote India; skip known bad cities unless remote-only listing.
 PRIORITY_IDS = [
+    "4405159441",  # Blackbaud Laureate .NET Architecture Hyd
+    "4442580526",  # Experian Lead SWE .NET + AWS Hyd
+    "4415350173",  # Hyland Senior Software Architect .NET
+    "4433879078",  # Hyland Senior Software Architect Hyd
+    "4270943974",  # Storable Technical Architect Hyd
+    "4442700522",  # GE Vernova Lead Software Solution Architect Hyd
+    "4438407299",  # Palo Alto Senior Principal Software Architect Hyd
+    "4446911955",  # Cognizant Technology Architect Hyd
+    "4444948388",  # Agivant Principal Software Engineer Hyd
+    "4450205567",  # Hire Feed Backend C#/.NET Remote
+    "4450682491",  # Netrolynx AI Associate Technical Lead
+    "4450035921",  # Quik Hire .NET Engineer Remote
+    "4398091856",  # Willspired Professional Services Solutions Architect Hyd
+    "3963509343",  # Rise Services Senior Principal Solution Engineer Hyd
     "4401736196",  # StarRez Technical Lead Hyd
     "4437577980",  # RSM Digital Solutions Architect Hyd
     "4447521118",  # Microsoft Architect Apps & AI Hyd
@@ -61,12 +75,15 @@ PRIORITY_IDS = [
     "4440227307",  # Solera Principal SWE Hyd
     "4404747227",  # Brady Principal .NET Azure India
     "4441511168",  # MCO Engineering Manager Hyd
-    "4270943974",  # Storable Technical Architect Hyd
     "4448938075",  # Hire Feed Solutions Architect Remote
 ]
 
-SKIP_COMPANY_LOC = re.compile(r"pune|noida|bengaluru|bangalore|delhi", re.I)
-MAX_EXTERNAL = 8
+SKIP_COMPANY_LOC = re.compile(
+    r"pune|noida|bengaluru|bangalore|delhi|chennai|mumbai|gurgaon|gurugram|"
+    r"indore|بنغالور|مومباي|دلهي|تشيناي|بوني|إندور",
+    re.I,
+)
+MAX_EXTERNAL = 12
 ATS_TIME_CAP_S = 210  # ~3.5 minutes
 
 
@@ -315,10 +332,13 @@ def process_external(page: Page, job: dict) -> ExtResult:
         try:
             resume = resume_upload_path()
             for sel in ("#resume", "input[type=file]", "input[name*=resume i]", "input[accept*='pdf']"):
-                loc = page.locator(sel).first
-                if loc.count() and loc.is_visible():
-                    loc.set_input_files(resume, timeout=15000)
-                    break
+                floc = ats.locator(sel).first
+                if floc.count():
+                    try:
+                        floc.set_input_files(resume, timeout=15000)
+                        break
+                    except Exception:
+                        continue
         except Exception as e:
             print("resume upload note:", e)
         # file upload skip if required without resume on disk
@@ -360,7 +380,15 @@ def process_external(page: Page, job: dict) -> ExtResult:
 
 def main() -> None:
     data = json.loads(REPORT_IN.read_text())
-    by_id = {c["job_id"]: c for c in data.get("external_candidates", [])}
+    by_id = {c["job_id"]: c for c in data.get("external_candidates", []) if c.get("job_id")}
+    # Priority first, then remaining external candidates from today's Easy Apply scan
+    ordered: list[str] = []
+    for jid in PRIORITY_IDS:
+        if jid in by_id and jid not in ordered:
+            ordered.append(jid)
+    for jid in by_id:
+        if jid not in ordered:
+            ordered.append(jid)
     results: list[ExtResult] = []
     with sync_playwright() as p:
         browser = p.chromium.connect_over_cdp(CDP)
@@ -368,12 +396,16 @@ def main() -> None:
         page = context.pages[0] if context.pages else context.new_page()
         page.bring_to_front()
         done = 0
-        for jid in PRIORITY_IDS:
+        for jid in ordered:
             if done >= MAX_EXTERNAL:
                 break
             job = by_id.get(jid)
             if not job:
-                continue
+                # Still try priority IDs even if not in today's scan
+                if jid in PRIORITY_IDS:
+                    job = {"job_id": jid, "company": "", "role": "", "location": "", "url": f"https://www.linkedin.com/jobs/view/{jid}/"}
+                else:
+                    continue
             r = process_external(page, job)
             results.append(r)
             if r.status in ("submitted", "blocked", "skipped"):
