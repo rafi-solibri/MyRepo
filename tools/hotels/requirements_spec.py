@@ -6,6 +6,7 @@ tests unless the user explicitly asks for a sample.
 
 from __future__ import annotations
 
+from .calendar_prices import TRACKED_HOTELS
 from .fetch import DEFAULT_AREAS
 
 # --- Search scope ---
@@ -19,13 +20,20 @@ WEEKEND_SCOPE: str = "remaining_sat_sun_current_month"
 # Direct scrapers are optional extras and often blocked from cloud IPs.
 AUTOMATION_PROVIDERS: tuple[str, ...] = ("kayak",)
 
+# --- MOST IMPORTANT: per-hotel calendars (current + next month) ---
+# Lowest nightly price across all compared hotel providers for each day.
+REQUIRE_HOTEL_CALENDARS: bool = True
+CALENDAR_HOTELS: tuple[dict[str, str], ...] = TRACKED_HOTELS
+CALENDAR_MONTHS: str = "current_and_next"
+
 # --- Delivery ---
 EMAIL_TO: str = "rafi.success@gmail.com"
 EMAIL_FROM: str = "Hotel Price Watch <onboarding@resend.dev>"
-EMAIL_SUBJECT_PREFIX: str = "Hyderabad 4★+ weekend hotel prices"
+EMAIL_SUBJECT_PREFIX: str = "Hyderabad hotel prices + Qualia/Oak calendars"
 
 # Output must be tabular, sorted by check-in date then ascending lowest price,
 # with a CSV attachment of the full inventory (all matching hotel-nights).
+# Email HTML MUST lead with the Qualia Oak + Oak Business calendar views.
 REQUIRE_FULL_INVENTORY: bool = True
 REQUIRE_CSV_ATTACHMENT: bool = True
 REQUIRE_HTML_TABLE: bool = True

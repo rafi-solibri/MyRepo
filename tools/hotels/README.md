@@ -2,7 +2,7 @@
 
 Fetches **4★+** hotel rates for Hyderabad neighbourhoods (Madhapur, Kondapur, Gachibowli, Botanical Garden, Ayyappa Society, 100 Feet Road, Raghavendra Colony) across major OTAs and aggregators.
 
-**Cron / agent runs:** follow [`AUTOMATION.md`](./AUTOMATION.md). Use the nightly entrypoint so every requirement (all areas, remaining weekends, full inventory, email + CSV) is satisfied — do not ship smoke-test-only results.
+**Cron / agent runs:** follow [`AUTOMATION.md`](./AUTOMATION.md). Use the nightly entrypoint so every requirement is satisfied — especially the **Qualia Oak / Oak Business Hotel calendars** (current + next month, lowest price across providers), plus all areas, remaining weekends, full inventory, email + CSV.
 
 ## Why this exists
 
@@ -25,6 +25,8 @@ playwright install chromium   # if browsers are missing
 ```bash
 # === Preferred for automation (full requirements) ===
 PYTHONPATH=. python3 -m tools.hotels.automation -v --out-dir /tmp/hotel-email
+# Calendars only (Qualia Oak + Oak Business, current+next month):
+PYTHONPATH=. python3 -m tools.hotels.automation --calendars-only -v --out-dir /tmp/hotel-email
 # then email (needs RESEND_API_KEY):
 PYTHONPATH=. python3 -m tools.hotels.automation --send --out-dir /tmp/hotel-email
 
