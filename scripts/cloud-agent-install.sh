@@ -4,7 +4,7 @@
 # Idempotent: safe to re-run. Prepares everything the daily portal automations
 # and their helper scripts rely on:
 #   1. Python tooling  (Playwright + scraping/HTTP libs + pytest) and Chromium
-#   2. Resume assets    (Rafi_Resume.docx materialized in every expected dir)
+#   2. Resume assets    (Rafi_Resume_Technical_Architect.docx materialized in every expected dir)
 #   3. Node tooling     (playwright-core for the JS portal helpers)
 #   4. Chrome CDP dirs  (per-portal profiles the cron agents launch)
 #   5. Session sync     (copy authenticated Desktop Chrome logins into CDP dirs)
@@ -63,4 +63,4 @@ node tools/chrome_session.js status || true
 bash scripts/verify-portal-logins.sh --no-sync || true
 
 echo "Job-apply assets ready."
-ls -la resumes/Rafi_Resume.docx /home/ubuntu/resumes/Rafi_Resume.docx 2>/dev/null || true
+ls -la resumes/Rafi_Resume_Technical_Architect.docx /home/ubuntu/resumes/Rafi_Resume_Technical_Architect.docx 2>/dev/null || true

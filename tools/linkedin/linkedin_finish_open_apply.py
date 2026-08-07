@@ -57,7 +57,13 @@ def main():
 
             # resume
             try:
-                r = page.get_by_text(re.compile(r"Rafi_Resume(?:_Architect)?|Rafi_Resume\.docx|Architect", re.I))
+                r = page.get_by_text(
+                    re.compile(
+                        r"Rafi_Resume_Technical_Architect|Rafi_Resume(?:_Architect)?|"
+                        r"Rafi_Resume\.docx|Architect",
+                        re.I,
+                    )
+                )
                 if r.count():
                     r.first.click(timeout=1500)
             except Exception:

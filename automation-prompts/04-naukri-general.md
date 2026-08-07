@@ -14,17 +14,17 @@ Title skips: use job title / job-panel text only — never full document.body (s
 Daily Naukri + company-ATS apply for Mohammed Abdul Rafi Ahmed. Hyd + Remote/WFH. Expected CTC 65 LPA.
 
 ## Resume (HARD)
-- Canonical **Rafi_Resume.docx** at resumes/Rafi_Resume.docx and /home/ubuntu/Documents/Rafi_Resume.docx after bootstrap.
-- Upload this file on every company ATS. Never invent a stub. Do not require Rafi_Resume_Architect.docx.
+- Canonical **Rafi_Resume_Technical_Architect.docx** at resumes/Rafi_Resume_Technical_Architect.docx and /home/ubuntu/Documents/Rafi_Resume_Technical_Architect.docx after bootstrap.
+- Upload this file on every company ATS. Never invent a stub. Legacy aliases Rafi_Resume.docx / Rafi_Resume_Architect.docx are same-file copies.
 
 ## STEP 0 — Naukri profile resume refresh (HARD — do before any job applies)
 Goal: recruiters see an updated resume / “Updated today” every morning so the profile looks actively looking and ranks better for interview calls.
 
 1. Confirm Naukri login (Hi / profile name). If login/OTP: use Gmail in same Chrome profile; if impossible, stop and report.
 2. Run: `node tools/naukri/update_profile_resume.js`
-   - Or manually: open https://www.naukri.com/mnjuser/profile → Upload/Update resume → attach **Rafi_Resume.docx** (`#attachCV` / `#lazyAttachCV` / file input) → confirm.
+   - Or manually: open https://www.naukri.com/mnjuser/profile → Upload/Update resume → attach **Rafi_Resume_Technical_Architect.docx** (`#attachCV` / `#lazyAttachCV` / file input) → confirm.
 3. Also soft-touch Resume Headline (open edit → Save same/equivalent headline) so last-updated advances if file upload alone does not.
-4. Verify success: profile shows resume name containing Rafi_Resume / .docx AND/or update date = today. Write result to `/opt/cursor/artifacts/naukri-profile-resume.json`.
+4. Verify success: profile shows resume name containing Rafi_Resume_Technical_Architect / Rafi_Resume / .docx AND/or update date = today. Write result to `/opt/cursor/artifacts/naukri-profile-resume.json`.
 5. If profile resume update fails, report it clearly, then CONTINUE with job applies (do not abort the whole day unless login is missing).
 6. Do this EVERY daily run even if the file content is unchanged — re-upload is the point (freshness signal).
 

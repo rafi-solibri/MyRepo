@@ -13,7 +13,7 @@ Chrome CDP profile: /home/ubuntu/chrome-indeed-profile (synced from Desktop Defa
 Daily Indeed (in.indeed.com) apply for Mohammed Abdul Rafi Ahmed.
 
 ## Resume (HARD)
-Upload **Rafi_Resume.docx** on Easy Apply and every company ATS. Bootstrap paths: /workspace/resumes/Rafi_Resume.docx, /home/ubuntu/Documents/Rafi_Resume.docx. Never invent stubs.
+Upload **Rafi_Resume_Technical_Architect.docx** on Easy Apply and every company ATS. Bootstrap paths: /workspace/resumes/Rafi_Resume_Technical_Architect.docx, /home/ubuntu/Documents/Rafi_Resume_Technical_Architect.docx. Never invent stubs.
 
 ## Profile
 SA / Technical Architect / Tech Lead / EM / Principal .NET | Hyd + Remote/WFH

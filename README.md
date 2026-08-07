@@ -4,17 +4,19 @@ Job-apply automation assets for Mohammed Abdul Rafi Ahmed.
 
 ## Resume
 
-Canonical file: [`resumes/Rafi_Resume.docx`](resumes/Rafi_Resume.docx)
+Canonical file: [`resumes/Rafi_Resume_Technical_Architect.docx`](resumes/Rafi_Resume_Technical_Architect.docx)
 
 ```bash
 bash scripts/bootstrap-job-assets.sh
 ```
 
+Legacy aliases `Rafi_Resume.docx` / `Rafi_Resume_Architect.docx` are same-file copies for older prompts.
+
 ## Agent instructions
 
 See [`automation-prompts/README.md`](automation-prompts/README.md).
 
-Shared targets: **Expected CTC 65 LPA**, **Hyderabad + Remote/WFH**, **Rafi_Resume.docx**, company-website/ATS completion (not Easy Apply only).
+Shared targets: **Expected CTC 65 LPA**, **Hyderabad + Remote/WFH**, **Rafi_Resume_Technical_Architect.docx**, company-website/ATS completion (not Easy Apply only).
 
 Issue log: [`automation-prompts/ISSUES_AND_FIXES.md`](automation-prompts/ISSUES_AND_FIXES.md).
 

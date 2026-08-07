@@ -23,13 +23,16 @@ try:
 except Exception:
     def resume_upload_path():
         for c in [
+            "/workspace/resumes/Rafi_Resume_Technical_Architect.docx",
+            "/home/ubuntu/resumes/Rafi_Resume_Technical_Architect.docx",
+            "/home/ubuntu/Documents/Rafi_Resume_Technical_Architect.docx",
             "/workspace/resumes/Rafi_Resume.docx",
             "/home/ubuntu/resumes/Rafi_Resume.docx",
             "/home/ubuntu/Documents/Rafi_Resume.docx",
         ]:
             if Path(c).is_file():
                 return c
-        raise FileNotFoundError("Rafi_Resume.docx missing")
+        raise FileNotFoundError("Rafi_Resume_Technical_Architect.docx missing")
 
 CDP = os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222")
 REPORT_IN = Path("/opt/cursor/artifacts/apply-report.json")

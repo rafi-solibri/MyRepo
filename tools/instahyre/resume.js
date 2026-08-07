@@ -1,22 +1,28 @@
 /**
- * Shared constants for Indeed / Instahyre agents.
+ * Shared constants for Instahyre agents.
  */
 "use strict";
-const fs = require("fs");
+const {
+  findResume,
+  resumeUploadPath,
+  CANONICAL_NAME,
+  RESUME_LABEL,
+  LEGACY_ALIASES,
+} = require("../resume_paths");
+
 const RESUME_CANDIDATES = [
-  "/workspace/resumes/Rafi_Resume.docx",
-  "/home/ubuntu/resumes/Rafi_Resume.docx",
-  "/home/ubuntu/Documents/Rafi_Resume.docx",
+  `/workspace/resumes/${CANONICAL_NAME}`,
+  `/home/ubuntu/resumes/${CANONICAL_NAME}`,
+  `/home/ubuntu/Documents/${CANONICAL_NAME}`,
+  ...LEGACY_ALIASES.map((n) => `/workspace/resumes/${n}`),
 ];
-function findResume() {
-  for (const p of RESUME_CANDIDATES) {
-    if (fs.existsSync(p) && fs.statSync(p).size > 1000) return p;
-  }
-  return null;
-}
+
 module.exports = {
   findResume,
+  resumeUploadPath,
   RESUME_CANDIDATES,
+  RESUME_LABEL,
+  CANONICAL_NAME,
   EXPECTED_CTC_LPA: 65,
   CURRENT_CTC_LPA: 52,
   CHROME_INDEED: process.env.INDEED_CHROME_PROFILE || "/home/ubuntu/chrome-indeed-profile",
@@ -25,6 +31,6 @@ module.exports = {
 
 if (require.main === module) {
   const resume = findResume();
-  console.log(JSON.stringify({ resume }, null, 2));
+  console.log(JSON.stringify({ resume, label: RESUME_LABEL }, null, 2));
   if (!resume) process.exit(2);
 }

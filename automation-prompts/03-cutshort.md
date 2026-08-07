@@ -15,10 +15,10 @@ Profile:
 - Solutions Architect / Technical Lead | 15+ years | .NET/C#, React, AWS/Azure, microservices
 - Hyderabad + Remote/WFH | Immediate | Current 52 LPA | Expected **65 LPA**
 - Email rafi.success@gmail.com | Phone +91 8790251698
-- Resume: **Rafi_Resume.docx** (bootstrap paths). Upload on any external ATS.
+- Resume: **Rafi_Resume_Technical_Architect.docx** (bootstrap paths). Upload on any external ATS.
 
 ## Resume (HARD)
-Use only Rafi_Resume.docx from /workspace/resumes or /home/ubuntu/resumes. Never invent stubs.
+Use only Rafi_Resume_Technical_Architect.docx from /workspace/resumes or /home/ubuntu/resumes. Never invent stubs.
 
 ## Daily order
 1. Newest find-jobs / matchesfor={seekerId}

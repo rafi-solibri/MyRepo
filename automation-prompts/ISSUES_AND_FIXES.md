@@ -4,14 +4,14 @@
 
 | Issue | Fix |
 | --- | --- |
-| `Rafi_Resume_Architect.docx` missing → agents invented stubs or used portal-only resume | Canonical **`resumes/Rafi_Resume.docx`** (your upload) + `scripts/bootstrap-job-assets.sh` copies to Documents/resumes/Downloads; legacy Architect filename is a same-file alias |
-| LinkedIn Easy Apply looked for Architect label | Scripts use label **Rafi_Resume**; external ATS uploads canonical docx |
+| `Rafi_Resume_Architect.docx` missing → agents invented stubs or used portal-only resume | Canonical **`resumes/Rafi_Resume_Technical_Architect.docx`** (your upload) + `scripts/bootstrap-job-assets.sh` copies to Documents/resumes/Downloads; legacy Architect filename is a same-file alias |
+| LinkedIn Easy Apply looked for Architect label | Scripts use label **Rafi_Resume_Technical_Architect**; external ATS uploads canonical docx |
 | Cutshort questionnaires locked empty (9/11) | Documented correct API payload in `tools/cutshort/questionnaire.js` — never `screeningSubmitted` before verified answers |
 | Naukri Coupa/Pega / Intern≈Internet false applies | Filters in `tools/naukri/resume_and_filters.js` |
 | Foundit `canJobApply` accidental submit | Explicit forbid in `tools/foundit/resume.js` + prompts |
 | LinkedIn Bengaluru false-allow via page body "Hyderabad" | Prompts: location from top card / workplace pills only |
 | Agents rediscovering tools each run | Durable helpers under `tools/linkedin`, `tools/cutshort`, `tools/naukri`, etc. |
-| Naukri profile resume not refreshed daily | `tools/naukri/update_profile_resume.js` + STEP 0 in Naukri prompt re-uploads `Rafi_Resume.docx` every run for recruiter freshness |
+| Naukri profile resume not refreshed daily | `tools/naukri/update_profile_resume.js` + STEP 0 in Naukri prompt re-uploads `Rafi_Resume_Technical_Architect.docx` every run for recruiter freshness |
 
 ## Fixed for 2026-08-06 “automations did not run”
 
@@ -55,7 +55,7 @@
 ## After merging this PR
 
 1. Re-paste updated prompts from `automation-prompts/0*.md` into each automation (resume section changed).
-2. Merge to `main` (or point automations at this branch) so cron checkouts include `resumes/Rafi_Resume.docx`.
+2. Merge to `main` (or point automations at this branch) so cron checkouts include `resumes/Rafi_Resume_Technical_Architect.docx`.
 3. Complete portal logins + snapshot once.
 4. For Indeed: enable private worker.
 5. For Notification: connect Resend MCP + `RESEND_FROM_EMAIL`.

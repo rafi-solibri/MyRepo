@@ -20,14 +20,14 @@ Apply to LinkedIn jobs for Mohammed Abdul Rafi Ahmed (Rafi Ahmed) until a solid 
 - Notice: Immediate (0 days)
 - Current CTC: 5200000 (52 LPA) | Expected CTC: 6500000 (65 LPA) — use these numbers on ALL forms
 - Experience: ~15 years; .NET Core, microservices, AWS/Azure, Kafka/RabbitMQ, K8s, Angular/React
-- Resume: Rafi_Resume.docx only
+- Resume: Rafi_Resume_Technical_Architect.docx only
 - Education: Acharya Nagarjuna University, B.Tech IT — July 2006 to May 2010
 - Employer: Nemetschek / Solibri / Spacewell (Principal Analyst)
 
 ## Resume (HARD)
-- Canonical: `resumes/Rafi_Resume.docx` → also `/home/ubuntu/resumes/Rafi_Resume.docx` and `/home/ubuntu/Documents/Rafi_Resume.docx` after bootstrap.
-- Easy Apply label text: **Rafi_Resume** (upload the docx if LinkedIn has no saved copy).
-- Do NOT require Rafi_Resume_Architect.docx. Never invent a stub resume.
+- Canonical: `resumes/Rafi_Resume_Technical_Architect.docx` → also `/home/ubuntu/resumes/Rafi_Resume_Technical_Architect.docx` and `/home/ubuntu/Documents/Rafi_Resume_Technical_Architect.docx` after bootstrap.
+- Easy Apply label text: **Rafi_Resume_Technical_Architect** (upload the docx if LinkedIn has no saved copy).
+- Legacy aliases Rafi_Resume.docx / Rafi_Resume_Architect.docx are same-file copies. Never invent a stub resume.
 - External ATS: always `set_input_files` with the canonical docx path.
 
 ## Location filter (HARD)

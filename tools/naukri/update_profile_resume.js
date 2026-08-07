@@ -2,8 +2,9 @@
 /**
  * Daily Naukri profile resume refresh.
  *
- * Uploads resumes/Rafi_Resume.docx to https://www.naukri.com/mnjuser/profile
- * so recruiters see "Updated today" and the latest CV.
+ * Uploads resumes/Rafi_Resume_Technical_Architect.docx to
+ * https://www.naukri.com/mnjuser/profile so recruiters see "Updated today"
+ * and the latest CV.
  *
  * Prerequisites:
  * - Logged-in Naukri Chrome CDP on http://127.0.0.1:9222
@@ -212,7 +213,11 @@ async function verifyUpdated(page) {
       resumeName: (
         [...document.querySelectorAll("a, span, div")]
           .map((e) => (e.innerText || "").trim())
-          .find((t) => /Rafi_Resume|\.docx|\.pdf/i.test(t) && t.length < 80) || ""
+          .find(
+            (t) =>
+              /Rafi_Resume_Technical_Architect|Rafi_Resume|\.docx|\.pdf/i.test(t) &&
+              t.length < 100
+          ) || ""
       ),
     };
   });
@@ -241,7 +246,7 @@ async function main() {
   };
 
   if (!resume) {
-    result.reason = "Rafi_Resume.docx_missing";
+    result.reason = "Rafi_Resume_Technical_Architect.docx_missing";
     writeReport(result);
     console.error(JSON.stringify(result, null, 2));
     process.exit(2);

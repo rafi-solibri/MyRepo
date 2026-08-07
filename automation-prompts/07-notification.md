@@ -16,7 +16,7 @@ Automations to include:
 - Indeed Daily 9 AM (91b09fd7-9093-11f1-ba66-0e7d0216e441)
 
 For each: applied, external/company-website completed, blocked (login/Cloudflare/resume/OTP), skipped highlights, agent run links.
-Note targets: Expected CTC 65 LPA; Hyd + Remote/WFH; resume file Rafi_Resume.docx.
+Note targets: Expected CTC 65 LPA; Hyd + Remote/WFH; resume file Rafi_Resume_Technical_Architect.docx.
 
 Email delivery:
 - Prefer Resend MCP → rafi.success@gmail.com

@@ -17,7 +17,7 @@ from playwright.sync_api import sync_playwright, Page, TimeoutError as PWTimeout
 CDP = os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222")
 OUT = Path("/opt/cursor/artifacts/apply-report.json")
 SCREEN_DIR = Path("/opt/cursor/artifacts")
-RESUME_LABEL = "Rafi_Resume"
+RESUME_LABEL = "Rafi_Resume_Technical_Architect"
 
 # Ensure resume exists before apply batch
 try:
@@ -561,7 +561,13 @@ def fill_inputs(page: Page) -> None:
 def select_resume(page: Page) -> None:
     try:
         # Click card/label containing resume name
-        cand = page.get_by_text(re.compile(r"Rafi_Resume(?:_Architect)?|Rafi_Resume\.docx|Architect\.docx|Rafi.*Architect", re.I))
+        cand = page.get_by_text(
+            re.compile(
+                r"Rafi_Resume_Technical_Architect|Rafi_Resume(?:_Architect)?|"
+                r"Rafi_Resume\.docx|Architect\.docx|Rafi.*Architect|Technical.?Architect\.docx",
+                re.I,
+            )
+        )
         if cand.count():
             cand.first.click(timeout=2000)
             return

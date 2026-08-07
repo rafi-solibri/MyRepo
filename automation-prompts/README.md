@@ -10,7 +10,7 @@ Alternatively, paste each file’s full fenced `text` block into the matching au
 
 | Rule | Value |
 | --- | --- |
-| Resume | **`resumes/Rafi_Resume.docx`** (bootstrap copies to Documents/resumes) |
+| Resume | **`resumes/Rafi_Resume_Technical_Architect.docx`** (bootstrap copies to Documents/resumes; legacy aliases kept) |
 | Expected CTC | **65 LPA** |
 | Current CTC | **52 LPA** |
 | Locations | Hyderabad / Telangana **or** Remote / WFH |
@@ -29,7 +29,7 @@ available in the saved environment snapshot.
 
 ## Naukri daily profile resume refresh
 
-Before job applies, the Naukri automation must re-upload `Rafi_Resume.docx` to the Naukri profile:
+Before job applies, the Naukri automation must re-upload `Rafi_Resume_Technical_Architect.docx` to the Naukri profile:
 
 ```bash
 bash scripts/preflight-portal-run.sh naukri

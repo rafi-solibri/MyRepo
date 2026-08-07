@@ -15,20 +15,20 @@
  */
 "use strict";
 
-const RESUME_CANDIDATES = [
-  "/workspace/resumes/Rafi_Resume.docx",
-  "/home/ubuntu/resumes/Rafi_Resume.docx",
-  "/home/ubuntu/Documents/Rafi_Resume.docx",
-  "/workspace/resumes/Rafi_Resume_Architect.docx",
-];
+const {
+  findResume,
+  resumeUploadPath,
+  CANONICAL_NAME,
+  RESUME_LABEL,
+  LEGACY_ALIASES,
+} = require("../resume_paths");
 
-function findResume() {
-  const fs = require("fs");
-  for (const p of RESUME_CANDIDATES) {
-    if (fs.existsSync(p) && fs.statSync(p).size > 1000) return p;
-  }
-  return null;
-}
+const RESUME_CANDIDATES = [
+  `/workspace/resumes/${CANONICAL_NAME}`,
+  `/home/ubuntu/resumes/${CANONICAL_NAME}`,
+  `/home/ubuntu/Documents/${CANONICAL_NAME}`,
+  ...LEGACY_ALIASES.map((n) => `/workspace/resumes/${n}`),
+];
 
 function buildAnswerPayload(messageId, answers) {
   // answers: [{ answerRowId, questionId, optionId }]
@@ -50,9 +50,12 @@ function answersNonEmpty(questions) {
 
 module.exports = {
   findResume,
+  resumeUploadPath,
   buildAnswerPayload,
   answersNonEmpty,
   RESUME_CANDIDATES,
+  RESUME_LABEL,
+  CANONICAL_NAME,
   EXPECTED_CTC_LPA: 65,
   CURRENT_CTC_LPA: 52,
 };

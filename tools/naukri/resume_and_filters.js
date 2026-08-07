@@ -6,21 +6,24 @@
  */
 "use strict";
 
-const fs = require("fs");
+const {
+  findResume,
+  resumeUploadPath,
+  CANONICAL_NAME,
+  RESUME_LABEL,
+  LEGACY_ALIASES,
+} = require("../resume_paths");
 
 const RESUME_CANDIDATES = [
-  "/workspace/resumes/Rafi_Resume.docx",
-  "/home/ubuntu/resumes/Rafi_Resume.docx",
-  "/home/ubuntu/Documents/Rafi_Resume.docx",
-  "/workspace/resumes/Rafi_Resume_Architect.docx",
+  `/workspace/resumes/${CANONICAL_NAME}`,
+  `/home/ubuntu/resumes/${CANONICAL_NAME}`,
+  `/home/ubuntu/Documents/${CANONICAL_NAME}`,
+  ...LEGACY_ALIASES.flatMap((name) => [
+    `/workspace/resumes/${name}`,
+    `/home/ubuntu/resumes/${name}`,
+    `/home/ubuntu/Documents/${name}`,
+  ]),
 ];
-
-function findResume() {
-  for (const p of RESUME_CANDIDATES) {
-    if (fs.existsSync(p) && fs.statSync(p).size > 1000) return p;
-  }
-  return null;
-}
 
 /**
  * Hard skip keywords (Coupa/Pega etc. - Mondelez false-apply fix).
@@ -54,11 +57,14 @@ function shouldSkipTitle(title) {
 
 module.exports = {
   findResume,
+  resumeUploadPath,
   hasDotNet,
   shouldSkipTitle,
   shouldSkipTitleFromDetail,
   normalizeAspNet,
   RESUME_CANDIDATES,
+  RESUME_LABEL,
+  CANONICAL_NAME,
   EXPECTED_CTC_LPA: 65,
   CURRENT_CTC_LPA: 52,
   CHROME_PROFILE: process.env.NAUKRI_CHROME_PROFILE || "/home/ubuntu/.naukri-chrome-profile",
@@ -68,5 +74,5 @@ module.exports = {
 };
 
 if (require.main === module) {
-  console.log(JSON.stringify({ resume: findResume() }, null, 2));
+  console.log(JSON.stringify({ resume: findResume(), label: RESUME_LABEL }, null, 2));
 }

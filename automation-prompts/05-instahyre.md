@@ -12,7 +12,7 @@ Chrome CDP profile: /home/ubuntu/chrome-instahyre-profile (synced from Desktop D
 Daily Instahyre apply for Mohammed Abdul Rafi Ahmed. Maximize applies + interview callbacks.
 
 ## Resume (HARD)
-Upload **Rafi_Resume.docx** on Instahyre and every company ATS. Paths after bootstrap: /workspace/resumes/Rafi_Resume.docx, /home/ubuntu/resumes/Rafi_Resume.docx, /home/ubuntu/Documents/Rafi_Resume.docx. Never invent stubs.
+Upload **Rafi_Resume_Technical_Architect.docx** on Instahyre and every company ATS. Paths after bootstrap: /workspace/resumes/Rafi_Resume_Technical_Architect.docx, /home/ubuntu/resumes/Rafi_Resume_Technical_Architect.docx, /home/ubuntu/Documents/Rafi_Resume_Technical_Architect.docx. Never invent stubs.
 
 ## Profile
 SA / Tech Lead / EM / Principal–Staff | .NET + Azure/AWS | Hyd + Remote/WFH

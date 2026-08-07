@@ -52,7 +52,7 @@ bash scripts/sync-chrome-sessions.sh
 
 | Item | Status |
 | --- | --- |
-| Resume in git | YES — `resumes/Rafi_Resume.docx` |
+| Resume in git | YES — `resumes/Rafi_Resume_Technical_Architect.docx` |
 | Install bootstrap | `bash scripts/cloud-agent-install.sh` |
 | Indeed Cloudflare on public cloud IP | Needs **private / residential worker** |
 | General Daily 9 AM | Disable (research-only, 0 applies) |

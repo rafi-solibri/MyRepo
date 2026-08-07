@@ -12,9 +12,9 @@ Chrome CDP profile: /home/ubuntu/.config/chrome-foundit (synced from Desktop Def
 Daily Foundit job-apply agent for Mohammed Abdul Rafi Ahmed (Solutions Architect / Tech Lead / EM / Principal–Staff, .NET + Azure/AWS, Hyderabad + remote, Expected CTC 65 LPA).
 
 ## Resume (HARD)
-- Upload / attach **Rafi_Resume.docx** on every Foundit and company ATS form.
-- Paths: resumes/Rafi_Resume.docx, /home/ubuntu/resumes/Rafi_Resume.docx, /home/ubuntu/Documents/Rafi_Resume.docx
-- Never invent a stub. Do not require Rafi_Resume_Architect.docx.
+- Upload / attach **Rafi_Resume_Technical_Architect.docx** on every Foundit and company ATS form.
+- Paths: resumes/Rafi_Resume_Technical_Architect.docx, /home/ubuntu/resumes/Rafi_Resume_Technical_Architect.docx, /home/ubuntu/Documents/Rafi_Resume_Technical_Architect.docx
+- Never invent a stub. Legacy aliases Rafi_Resume.docx / Rafi_Resume_Architect.docx are same-file copies.
 
 ## Profile
 - Phone +91 8790251698 | Email rafi.success@gmail.com
