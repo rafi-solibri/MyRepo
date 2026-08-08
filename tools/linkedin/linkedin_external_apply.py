@@ -245,27 +245,43 @@ def process_external(page: Page, job: dict) -> ExtResult:
         print(f"  SKIP location {loc[:80]}", flush=True)
         return res
 
-    # Click Apply (not Easy Apply)
+    # Click Apply (not Easy Apply). LinkedIn 2026 may drop .jobs-apply-button classes.
     apply_btn = None
-    for sel in [
-        "button.jobs-apply-button",
-        "a.jobs-apply-button",
-        "button:has-text('Apply')",
-        "a:has-text('Apply')",
-    ]:
-        locb = page.locator(sel).first
-        try:
-            if locb.count() and locb.is_visible():
-                label = ((locb.inner_text() or "") + " " + (locb.get_attribute("aria-label") or "")).lower()
-                if "easy apply" in label:
-                    res.status = "skipped"
-                    res.reason = "became Easy Apply"
-                    return res
-                if "apply" in label:
-                    apply_btn = locb
-                    break
-        except Exception:
-            continue
+    try:
+        ea = page.get_by_role("button", name=re.compile(r"Easy Apply", re.I))
+        if ea.count() and ea.first.is_visible():
+            res.status = "skipped"
+            res.reason = "became Easy Apply"
+            return res
+    except Exception:
+        pass
+    try:
+        role_apply = page.get_by_role("button", name=re.compile(r"^Apply$", re.I))
+        if role_apply.count() and role_apply.first.is_visible():
+            apply_btn = role_apply.first
+    except Exception:
+        pass
+    if not apply_btn:
+        for sel in [
+            "button[aria-label*='Apply to']",
+            "button.jobs-apply-button",
+            "a.jobs-apply-button",
+            "button:has-text('Apply')",
+            "a:has-text('Apply')",
+        ]:
+            locb = page.locator(sel).first
+            try:
+                if locb.count() and locb.is_visible():
+                    label = ((locb.inner_text() or "") + " " + (locb.get_attribute("aria-label") or "")).lower()
+                    if "easy apply" in label:
+                        res.status = "skipped"
+                        res.reason = "became Easy Apply"
+                        return res
+                    if "apply" in label:
+                        apply_btn = locb
+                        break
+            except Exception:
+                continue
     if not apply_btn:
         res.status = "skipped"
         res.reason = "no external Apply button"
@@ -381,10 +397,10 @@ def process_external(page: Page, job: dict) -> ExtResult:
 def main() -> None:
     data = json.loads(REPORT_IN.read_text())
     by_id = {c["job_id"]: c for c in data.get("external_candidates", []) if c.get("job_id")}
-    # Priority first, then remaining external candidates from today's Easy Apply scan
+    # Priority IDs always (even if not in today's Easy Apply scan), then today's externals
     ordered: list[str] = []
     for jid in PRIORITY_IDS:
-        if jid in by_id and jid not in ordered:
+        if jid not in ordered:
             ordered.append(jid)
     for jid in by_id:
         if jid not in ordered:
