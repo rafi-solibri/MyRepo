@@ -323,10 +323,89 @@ def extract_job_id(url: str) -> str:
 
 def fill_inputs(page: Page) -> None:
     """Best-effort fill of Easy Apply form fields."""
+    # New LinkedIn Easy Apply often uses aria-label on inputs (no <label for=>).
+    try:
+        for inp in page.locator("input[type='text'], textarea, input:not([type])").all()[:35]:
+            try:
+                if not inp.is_visible():
+                    continue
+                aria = (inp.get_attribute("aria-label") or "").strip().lower()
+                if not aria:
+                    continue
+                cur = ""
+                try:
+                    cur = inp.input_value()
+                except Exception:
+                    pass
+                if any(k in aria for k in ("phone", "mobile")) and "country" not in aria:
+                    if not cur:
+                        inp.fill(PROFILE["phone"])
+                elif "email" in aria and not cur:
+                    inp.fill(PROFILE["email"])
+                elif "current ctc" in aria or "present ctc" in aria or "current salary" in aria:
+                    inp.fill(PROFILE["current_ctc_lakhs"] if "lakh" in aria else PROFILE["current_ctc"])
+                elif "expected ctc" in aria or "expected salary" in aria or "desired salary" in aria:
+                    inp.fill(PROFILE["expected_ctc_lakhs"] if "lakh" in aria else PROFILE["expected_ctc"])
+                elif "notice" in aria:
+                    inp.fill("0")
+                elif "last working date" in aria or "last day" in aria:
+                    # Many forms reject prose; "0" / short token accepted when immediate
+                    inp.fill("0")
+                elif "years of" in aria or "how many years" in aria:
+                    # Prefer 15 for general; stack-specific years use modest nonzero
+                    if any(k in aria for k in ("python", "java", "node", "golang", "php")):
+                        inp.fill("3")
+                    elif any(k in aria for k in (".net", "c#", "csharp", "microservices", "azure", "aws", "kafka")):
+                        inp.fill(PROFILE["experience_years"])
+                    else:
+                        inp.fill(PROFILE["experience_years"])
+                elif ("city" in aria) and not cur:
+                    inp.fill(PROFILE["city"])
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+    # Radio Yes/No groups: check the first option in each group (usually Yes)
+    try:
+        seen: set[str] = set()
+        radios = page.locator("input[type='radio']")
+        for i in range(min(radios.count(), 24)):
+            r = radios.nth(i)
+            try:
+                if not r.is_visible():
+                    continue
+                name = r.get_attribute("name") or f"anon-{i}"
+                if name in seen:
+                    continue
+                # Prefer explicit Yes nearby; else first radio in group
+                parent = r.locator(
+                    "xpath=ancestor::div[.//text()='Yes' or .//text()='No'][1]"
+                )
+                yes = parent.locator("input[type='radio']").first
+                target = yes if yes.count() else r
+                # If question looks like sponsorship/visa, prefer No (second)
+                blob = ""
+                try:
+                    blob = (parent.inner_text(timeout=400) or "").lower()
+                except Exception:
+                    blob = ""
+                if any(k in blob for k in ("sponsorship", "visa sponsorship", "require sponsorship")):
+                    opts = parent.locator("input[type='radio']")
+                    if opts.count() >= 2:
+                        target = opts.nth(1)
+                target.check(force=True)
+                seen.add(name)
+            except Exception:
+                continue
+    except Exception:
+        pass
+
     # Text/select/textarea with labels
     labels = page.locator(
         ".jobs-easy-apply-modal label, .jobs-easy-apply-content label, "
-        "[role='dialog'] label, .artdeco-modal label, form label"
+        "[role='dialog'] label, .artdeco-modal label, form label, "
+        "div:has(> h2:has-text('Apply to')) label"
     )
     count = min(labels.count(), 40)
     for i in range(count):
@@ -604,29 +683,59 @@ def _apply_modal(page: Page):
 
 def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
     close_overlays(page)
-    # Find Easy Apply button in job details (not list)
+    # Find Easy Apply — LinkedIn 2026 job-view markup often drops .jobs-apply-button
+    # (hashed utility classes). Prefer role/aria text, then CSS fallbacks.
     btn = None
-    details = page.locator(".jobs-details, .scaffold-layout__detail, .job-view-layout").first
-    scope = details if details.count() else page
-    for sel in [
-        "button.jobs-apply-button",
-        "button:has-text('Easy Apply')",
-        "button[aria-label*='Easy Apply']",
-    ]:
-        loc = scope.locator(sel).first
-        try:
-            if loc.count() and loc.is_visible():
-                label = ((loc.inner_text() or "") + " " + (loc.get_attribute("aria-label") or "")).lower()
-                if "easy apply" in label:
-                    btn = loc
-                    break
-                if "apply" in label and "easy" not in label:
-                    job.status = "skipped"
-                    job.reason = "external/non-Easy Apply"
-                    return job
-        except Exception:
-            continue
+    try:
+        role_btn = page.get_by_role("button", name=re.compile(r"Easy Apply", re.I))
+        if role_btn.count() and role_btn.first.is_visible():
+            btn = role_btn.first
+    except Exception:
+        pass
     if not btn:
+        details = page.locator(
+            ".jobs-details, .scaffold-layout__detail, .job-view-layout, "
+            ".job-details-jobs-unified-top-card__container, main"
+        ).first
+        scopes = []
+        if details.count():
+            scopes.append(details)
+        scopes.append(page)
+        for scope in scopes:
+            for sel in [
+                "button[aria-label*='Easy Apply']",
+                "button:has-text('Easy Apply')",
+                "button.jobs-apply-button",
+            ]:
+                loc = scope.locator(sel).first
+                try:
+                    if loc.count() and loc.is_visible():
+                        label = (
+                            (loc.inner_text() or "")
+                            + " "
+                            + (loc.get_attribute("aria-label") or "")
+                        ).lower()
+                        if "easy apply" in label:
+                            btn = loc
+                            break
+                        if "apply" in label and "easy" not in label:
+                            job.status = "skipped"
+                            job.reason = "external/non-Easy Apply"
+                            return job
+                except Exception:
+                    continue
+            if btn:
+                break
+    if not btn:
+        # Distinguish external Apply vs missing button
+        try:
+            apply_role = page.get_by_role("button", name=re.compile(r"^Apply$", re.I))
+            if apply_role.count() and apply_role.first.is_visible():
+                job.status = "skipped"
+                job.reason = "external/non-Easy Apply"
+                return job
+        except Exception:
+            pass
         body = page.locator("body").inner_text()[:3000]
         if re.search(r"\bapplied\b|application submitted", body, re.I):
             job.status = "skipped"
@@ -649,6 +758,12 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
     time.sleep(1.5)
     close_overlays(page)
 
+    def _reopen_easy_apply() -> None:
+        try:
+            page.get_by_role("button", name=re.compile(r"Easy Apply", re.I)).first.click(timeout=5000)
+        except Exception:
+            page.locator("button:has-text('Easy Apply')").first.click(timeout=5000)
+
     modal = _apply_modal(page)
     try:
         modal.wait_for(state="visible", timeout=10000)
@@ -658,7 +773,7 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
         time.sleep(2)
         close_overlays(page)
         try:
-            scope.locator("button:has-text('Easy Apply')").first.click(timeout=5000)
+            _reopen_easy_apply()
             time.sleep(1.5)
             modal = _apply_modal(page)
             modal.wait_for(state="visible", timeout=8000)
@@ -675,7 +790,7 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
                 page.get_by_role("button", name="Discard").click(timeout=2000)
                 time.sleep(0.8)
                 try:
-                    scope.locator("button:has-text('Easy Apply')").first.click(timeout=4000)
+                    _reopen_easy_apply()
                     time.sleep(1)
                 except Exception:
                     pass
@@ -941,9 +1056,16 @@ def process_search(
             url=job_url,
         )
 
-        # Already applied badge
+        # Already applied badge (class names are unstable — use text/role)
         try:
-            if page.get_by_text(re.compile(r"^Applied$", re.I)).count() or page.locator(".jobs-s-apply button:has-text('Applied')").count():
+            applied = False
+            if page.get_by_role("button", name=re.compile(r"^Applied$", re.I)).count():
+                applied = True
+            elif page.get_by_text(re.compile(r"^Applied$", re.I)).count():
+                applied = True
+            elif page.locator("button:has-text('Applied'), .jobs-s-apply button:has-text('Applied')").count():
+                applied = True
+            if applied:
                 job.status = "skipped"
                 job.reason = "already applied"
                 results.append(job)
@@ -1061,6 +1183,23 @@ def main() -> None:
         "4450682491",
         "4415350173",
         "4270943974",
+        # 2026-08-07 remaining submitted
+        "4449004507",
+        "4448045993",
+        "4449743811",
+        # 2026-08-08 submitted
+        "4450094873",
+        "4448731672",
+        "4448713951",
+        "4450354286",
+        "4440489211",
+        # 2026-08-08 blocked Easy Apply
+        "4450344115",
+        "4448280604",
+        "4448857323",
+        "4448752998",
+        "4443667824",
+        "4450071178",
     }
     with sync_playwright() as p:
         browser = p.chromium.connect_over_cdp(CDP)
