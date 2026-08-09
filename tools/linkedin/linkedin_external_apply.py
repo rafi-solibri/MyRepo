@@ -54,6 +54,10 @@ PROFILE = {
 
 # Prefer .NET/architect Hyderabad or Remote India; skip known bad cities unless remote-only listing.
 PRIORITY_IDS = [
+    "4450304534",  # insightsoftware Lead SWE Oracle/BI/.Net Hyd (new 08-09)
+    "4433970156",  # Palo Alto Senior Principal Software Architect Hyd (new 08-09)
+    "4451039667",  # Quik Hire .NET Engineer Remote (new 08-09)
+    "4451066634",  # Hire Feed Backend C#/.NET Remote (new 08-09)
     "4405159441",  # Blackbaud Laureate .NET Architecture Hyd
     "4442580526",  # Experian Lead SWE .NET + AWS Hyd
     "4415350173",  # Hyland Senior Software Architect .NET
@@ -381,10 +385,10 @@ def process_external(page: Page, job: dict) -> ExtResult:
 def main() -> None:
     data = json.loads(REPORT_IN.read_text())
     by_id = {c["job_id"]: c for c in data.get("external_candidates", []) if c.get("job_id")}
-    # Priority first, then remaining external candidates from today's Easy Apply scan
+    # Priority first (even if missing from today's Easy Apply scan), then remaining externals
     ordered: list[str] = []
     for jid in PRIORITY_IDS:
-        if jid in by_id and jid not in ordered:
+        if jid not in ordered:
             ordered.append(jid)
     for jid in by_id:
         if jid not in ordered:

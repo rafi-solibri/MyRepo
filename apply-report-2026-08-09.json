@@ -1,0 +1,396 @@
+{
+  "ts": "2026-08-09T04:42:50.383400+00:00",
+  "agent_note": "2026-08-09 LinkedIn daily cron",
+  "totals": {
+    "easy_apply_submitted": 10,
+    "external_completed": 0,
+    "blocked_easy_apply": 4,
+    "blocked_external": 12,
+    "skipped_easy_apply_scan": 135,
+    "recruiter_messages_sent": 0
+  },
+  "submitted_easy_apply": [
+    {
+      "status": "submitted",
+      "company": "VySystems",
+      "role": ".Net Kafka Autosys",
+      "job_id": "4451069876",
+      "location": "Hyderabad, Telangana, India",
+      "path": "Easy Apply",
+      "reason": "Application submitted"
+    },
+    {
+      "status": "submitted",
+      "company": "Visara Partners",
+      "role": "Technology Principal, Compliance, Legal & People",
+      "job_id": "4449255077",
+      "location": "Hyderabad, Telangana, India",
+      "path": "Easy Apply",
+      "reason": "Application submitted"
+    },
+    {
+      "status": "submitted",
+      "company": "Palo Alto Networks",
+      "role": "Senior Staff Software Engineer (.Net and AWS)",
+      "job_id": "4441152692",
+      "location": "Hyderabad, Telangana, India",
+      "path": "Easy Apply",
+      "reason": "Application submitted"
+    },
+    {
+      "status": "submitted",
+      "company": "Turing",
+      "role": "Software Engineering Manager",
+      "job_id": "4442122227",
+      "location": "Bengaluru, Karnataka, India (Remote)",
+      "path": "Easy Apply",
+      "reason": "Application submitted"
+    },
+    {
+      "status": "submitted",
+      "company": "Kumaran Systems",
+      "role": "Senior Dotnet Developer",
+      "job_id": "4450916092",
+      "location": "Greater Chennai Area \u00b7 13 hours ago \u00b7 Over 100 applicants Promoted by hirer \u00b7 Company review time is typically 1 week",
+      "reason": "Application submitted",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4450916092&f_AL=true&f_TPR=r86400&f_WT=2&keywords=Technical%20Lead&location=India&sortBy=DD",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "submitted",
+      "company": "Mavlers",
+      "role": "Hubspot Architect",
+      "job_id": "4449253881",
+      "location": "Greater Ahmedabad Area \u00b7 10 hours ago \u00b7 10 applicants No response insights available yet",
+      "reason": "Application submitted",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4449253881&f_AL=true&f_TPR=r86400&f_WT=2&keywords=Principal%20.NET&location=India&sortBy=DD",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "submitted",
+      "company": "MUSOFT CONSULTING",
+      "role": "M365 Architect",
+      "job_id": "4426950872",
+      "location": "Chennai, Tamil Nadu, India \u00b7 1 month ago \u00b7 Over 100 applicants Promoted by hirer \u00b7 No response insights available yet",
+      "reason": "Application submitted",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4426950872&f_AL=true&f_TPR=r259200&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "submitted",
+      "company": "BINDER",
+      "role": "Revit architects - Highly experienced - Barch a must!!!",
+      "job_id": "4404627855",
+      "location": "India \u00b7 Reposted 3 months ago \u00b7 Over 100 applicants Promoted by hirer \u00b7 Actively reviewing applicants",
+      "reason": "Application submitted",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4404627855&f_AL=true&f_TPR=r259200&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "submitted",
+      "company": "Staffington Global",
+      "role": "AI Architect",
+      "job_id": "4450098793",
+      "location": "Kerala, India \u00b7 1 day ago \u00b7 43 applicants Promoted by hirer \u00b7 Actively reviewing applicants",
+      "reason": "Application submitted",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4450098793&f_AL=true&f_TPR=r259200&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "submitted",
+      "company": "EXT India",
+      "role": "Backend Lead Architect",
+      "job_id": "4448029094",
+      "location": "Hyderabad, Telangana, India \u00b7 3 days ago \u00b7 39 applicants Promoted by hirer \u00b7 Actively reviewing applicants",
+      "reason": "Application submitted",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4448029094&f_AL=true&f_TPR=r259200&f_WT=2&keywords=Technical%20Architect&location=India&sortBy=DD",
+      "path": "Easy Apply"
+    }
+  ],
+  "submitted_external": [],
+  "blocked_easy_apply": [
+    {
+      "status": "blocked",
+      "company": "SonicWall",
+      "role": "Senior Solutions Engineer - Mumbai (Presales experience is a must)",
+      "job_id": "4433897297",
+      "location": "Mumbai, Maharashtra, India \u00b7 Reposted 15 hours ago \u00b7 Over 100 applicants Promoted by hirer \u00b7 Actively reviewing applicants",
+      "reason": "exceeded Easy Apply steps",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4433897297&f_AL=true&f_TPR=r86400&f_WT=2&keywords=Technical%20Lead&location=India&sortBy=DD",
+      "path": ""
+    },
+    {
+      "status": "blocked",
+      "company": "Crossing Hurdles",
+      "role": "C# Developer | $27/hr Remote",
+      "job_id": "4411890001",
+      "location": "India \u00b7 Reposted 16 hours ago \u00b7 Over 100 applicants Promoted by hirer \u00b7 Actively reviewing applicants",
+      "reason": "stuck on Easy Apply step 9: Please enter a valid answer | Please enter a valid answer",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4411890001&f_AL=true&f_TPR=r86400&f_WT=2&keywords=Principal%20.NET&location=India&sortBy=DD",
+      "path": ""
+    },
+    {
+      "status": "blocked",
+      "company": "FE fundinfo",
+      "role": "Principal Engineer - Enterprise Systems",
+      "job_id": "4451310962",
+      "location": "Chennai, Tamil Nadu, India \u00b7 1 minute ago \u00b7 1 applicant Promoted by hirer \u00b7 No response insights available yet",
+      "reason": "stuck on Easy Apply step 4: Please enter a valid answer | Please enter a valid answer",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4451310962&f_AL=true&f_TPR=r604800&f_WT=2&keywords=Technical%20Lead&location=India&sortBy=DD",
+      "path": ""
+    },
+    {
+      "status": "blocked",
+      "company": "Netskope",
+      "role": "Sr. Staff Engineer - Windows OS -Client",
+      "job_id": "4442122295",
+      "location": "Bengaluru, Karnataka, India \u00b7 Reposted 17 hours ago \u00b7 77 applicants Promoted by hirer \u00b7 Actively reviewing applicants",
+      "reason": "exceeded Easy Apply steps",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4442122295&f_AL=true&f_TPR=r604800&f_WT=2&keywords=Technical%20Lead&location=India&sortBy=DD",
+      "path": ""
+    }
+  ],
+  "blocked_external": [
+    {
+      "status": "blocked",
+      "company": "insightsoftware",
+      "role": "Lead Software Engineer (Oracle/BI/.Net\u2013Financial Reporting)",
+      "job_id": "4450304534",
+      "location": "Greater Hyderabad Area \u00b7 1 day ago \u00b7 12 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "stuck/time cap after 2 steps on magnitudesoftware.wd1.myworkdayjobs.com",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4450304534&f_AL=true&f_TPR=r86400&keywords=Solution%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://magnitudesoftware.wd1.myworkdayjobs.com/External/job/India---Hyderabad---Remote/Lead-Software-Engineer--Oracle-BI-Net-Financial-Reporting-_REQ000995?source=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "Palo Alto Networks",
+      "role": "Senior Principal Software Architect",
+      "job_id": "4433970156",
+      "location": "Hyderabad, Telangana, India \u00b7 Reposted 1 week ago \u00b7 Over 100 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "stuck/time cap after 1 steps on paloaltonetworks.wd5.myworkdayjobs.com",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4433970156&f_AL=true&f_TPR=r86400&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://paloaltonetworks.wd5.myworkdayjobs.com/panwexternalcareers/job/Office---India---CyberArk-Hyderabad/Senior-Principal-Software-Architect_JR-018058/apply?source=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "Quik Hire Staffing",
+      "role": ".NET Engineer (Remote)",
+      "job_id": "4451039667",
+      "location": "APAC \u00b7 22 hours ago \u00b7 32 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "stuck/time cap after 12 steps on jobs.micro1.ai",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4451039667&f_AL=true&f_TPR=r259200&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://jobs.micro1.ai/post/02f5e4c0-747b-4ef7-ab15-73cb26d0938a?referralCode=e91c9585-63ad-45aa-9820-d63708190a83&utm_source=referral&utm_medium=share&utm_campaign=job_referral"
+    },
+    {
+      "status": "blocked",
+      "company": "Hire Feed",
+      "role": "Backend Developer - C#/.NET (Remote)",
+      "job_id": "4451066634",
+      "location": "APAC \u00b7 16 hours ago \u00b7 9 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "stuck/time cap after 12 steps on jobs.micro1.ai",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4451066634&f_AL=true&f_TPR=r259200&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://jobs.micro1.ai/post/f55c5e8b-d0e2-427c-b84f-7642e66e263f?referralCode=e91c9585-63ad-45aa-9820-d63708190a83&utm_source=referral&utm_medium=share&utm_campaign=job_referral"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4405159441",
+      "location": "",
+      "reason": "stuck/time cap after 12 steps on careers.blackbaud.com",
+      "url": "https://www.linkedin.com/jobs/view/4405159441/",
+      "path": "https://careers.blackbaud.com/us/en/job/BLBBUSR0014040EXTERNALENUS/Laureate-Software-Engineer-NET-Architecture?utm_source=linkedin&utm_medium=phenom-feeds"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4442580526",
+      "location": "",
+      "reason": "stuck/time cap after 1 steps on jobs.smartrecruiters.com",
+      "url": "https://www.linkedin.com/jobs/view/4442580526/",
+      "path": "https://jobs.smartrecruiters.com/Experian/744000138563410-lead-software-engineer-net-aws-?trid=2d92f286-613b-4daf-9dfa-6340ffbecf73"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4415350173",
+      "location": "",
+      "reason": "stuck/time cap after 1 steps on careers-hyland.icims.com",
+      "url": "https://www.linkedin.com/jobs/view/4415350173/",
+      "path": "https://careers-hyland.icims.com/jobs/13991/senior-software-architect---.net/job?mode=apply&iis=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4433879078",
+      "location": "",
+      "reason": "stuck/time cap after 1 steps on careers-hyland.icims.com",
+      "url": "https://www.linkedin.com/jobs/view/4433879078/",
+      "path": "https://careers-hyland.icims.com/jobs/14169/senior-software-architect/job?mode=apply&iis=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4270943974",
+      "location": "",
+      "reason": "stuck/time cap after 1 steps on www.storable.com",
+      "url": "https://www.linkedin.com/jobs/view/4270943974/",
+      "path": "https://www.storable.com/about-us/culture/careers/?gh_jid=5564835004&gh_src=f3ue5c3c4us"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4442700522",
+      "location": "",
+      "reason": "stuck/time cap after 1 steps on careers.gevernova.com",
+      "url": "https://www.linkedin.com/jobs/view/4442700522/",
+      "path": "https://careers.gevernova.com/lead-software-solution-architect/job/R5047701"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4438407299",
+      "location": "",
+      "reason": "stuck/time cap after 1 steps on paloaltonetworks.wd5.myworkdayjobs.com",
+      "url": "https://www.linkedin.com/jobs/view/4438407299/",
+      "path": "https://paloaltonetworks.wd5.myworkdayjobs.com/panwexternalcareers/job/Office---India---CyberArk-Hyderabad/Senior-Principal-Software-Architect_JR-018059-1/apply?source=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4446911955",
+      "location": "",
+      "reason": "stuck/time cap after 1 steps on careers.cognizant.com",
+      "url": "https://www.linkedin.com/jobs/view/4446911955/",
+      "path": "https://careers.cognizant.com/global-en/jobs/00069823894/technology-architect/?source=JB-11500"
+    }
+  ],
+  "external_candidates": [
+    {
+      "status": "skipped",
+      "company": "insightsoftware",
+      "role": "Lead Software Engineer (Oracle/BI/.Net\u2013Financial Reporting)",
+      "job_id": "4450304534",
+      "location": "Greater Hyderabad Area \u00b7 1 day ago \u00b7 12 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "external/non-Easy Apply",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4450304534&f_AL=true&f_TPR=r86400&keywords=Solution%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": ""
+    },
+    {
+      "status": "skipped",
+      "company": "Palo Alto Networks",
+      "role": "Senior Principal Software Architect",
+      "job_id": "4433970156",
+      "location": "Hyderabad, Telangana, India \u00b7 Reposted 1 week ago \u00b7 Over 100 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "external/non-Easy Apply",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4433970156&f_AL=true&f_TPR=r86400&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": ""
+    },
+    {
+      "status": "skipped",
+      "company": "Quik Hire Staffing",
+      "role": ".NET Engineer (Remote)",
+      "job_id": "4451039667",
+      "location": "APAC \u00b7 22 hours ago \u00b7 32 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "external/non-Easy Apply",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4451039667&f_AL=true&f_TPR=r259200&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": ""
+    },
+    {
+      "status": "skipped",
+      "company": "Hire Feed",
+      "role": "Backend Developer - C#/.NET (Remote)",
+      "job_id": "4451066634",
+      "location": "APAC \u00b7 16 hours ago \u00b7 9 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "external/non-Easy Apply",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4451066634&f_AL=true&f_TPR=r259200&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": ""
+    }
+  ],
+  "weak_fit_job_ids": [
+    "4404627855",
+    "4426950872",
+    "4449253881",
+    "4450098793"
+  ],
+  "recruiter_messages": [
+    {
+      "job_id": "4451069876",
+      "company": "VySystems",
+      "role": ".Net Kafka Autosys",
+      "status": "skipped",
+      "reason": "generic typeahead"
+    },
+    {
+      "job_id": "4449255077",
+      "company": "Visara Partners",
+      "role": "Technology Principal",
+      "status": "skipped",
+      "reason": "compose not visible"
+    },
+    {
+      "job_id": "4441152692",
+      "company": "Palo Alto Networks",
+      "role": "Senior Staff Software Engineer (.Net and AWS)",
+      "status": "skipped",
+      "reason": "compose not visible"
+    },
+    {
+      "job_id": "4442122227",
+      "company": "Turing",
+      "role": "Software Engineering Manager",
+      "status": "skipped",
+      "reason": "no poster Message control"
+    },
+    {
+      "job_id": "4450916092",
+      "company": "Kumaran Systems",
+      "role": "Senior Dotnet Developer",
+      "status": "skipped",
+      "reason": "no poster Message control"
+    },
+    {
+      "job_id": "4449253881",
+      "company": "Mavlers",
+      "role": "Hubspot Architect",
+      "status": "skipped",
+      "reason": "no poster Message control"
+    },
+    {
+      "job_id": "4426950872",
+      "company": "MUSOFT CONSULTING",
+      "role": "M365 Architect",
+      "status": "skipped",
+      "reason": "compose not visible"
+    },
+    {
+      "job_id": "4450098793",
+      "company": "Staffington Global",
+      "role": "AI Architect",
+      "status": "skipped",
+      "reason": "compose not visible"
+    },
+    {
+      "job_id": "4448029094",
+      "company": "EXT India",
+      "role": "Backend Lead Architect",
+      "status": "skipped",
+      "reason": "no poster Message control"
+    }
+  ],
+  "fixes": [
+    "Greenhouse Easy Apply filler: LinkedIn URL, education, engineers managed, checkbox groups",
+    "Easy Apply hard 3-min time-cap + stagnant validation abandon",
+    "TITLE_OK no longer matches Solutions Engineer via bare 'solution'",
+    "Blacklist: presales/solutions engineer, Revit/BArch, Hubspot, M365 architect, DFT/EDA/compiler",
+    "External PRIORITY_IDS always processed even if missing from today's scan",
+    "Aug 8/9 submitted IDs added to seen"
+  ]
+}
