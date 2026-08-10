@@ -542,44 +542,88 @@ async function handleExternal(context, page, detail, jobMeta, report) {
     }
 
     if (RESUME) {
-      const file = newPage.locator("input[type='file']").first();
-      if (await file.count()) {
-        await file.setInputFiles(RESUME).catch(() => {});
-        await sleep(1000);
+      const files = newPage.locator("input[type='file']");
+      const n = await files.count().catch(() => 0);
+      for (let fi = 0; fi < Math.min(n, 3); fi++) {
+        await files.nth(fi).setInputFiles(RESUME).catch(() => {});
       }
+      if (n) await sleep(1000);
     }
 
     await newPage
       .evaluate(
         ({ cur, exp }) => {
+          const setVal = (inp, val) => {
+            if (inp.tagName === "SELECT") return;
+            const proto = Object.getOwnPropertyDescriptor(
+              window.HTMLInputElement.prototype,
+              "value"
+            );
+            if (proto && proto.set) proto.set.call(inp, val);
+            else inp.value = val;
+            inp.dispatchEvent(new Event("input", { bubbles: true }));
+            inp.dispatchEvent(new Event("change", { bubbles: true }));
+          };
           const inputs = [
             ...document.querySelectorAll("input, textarea, select"),
           ];
           for (const inp of inputs) {
-            if (inp.offsetParent === null && inp.type !== "file") continue;
+            if (inp.type === "file" || inp.type === "hidden") continue;
+            if (inp.offsetParent === null && inp.type !== "radio" && inp.type !== "checkbox")
+              continue;
+            if (inp.disabled || inp.readOnly) continue;
             const ctx = (
               (inp.getAttribute("placeholder") || "") +
               " " +
               (inp.getAttribute("name") || "") +
               " " +
+              (inp.getAttribute("id") || "") +
+              " " +
+              (inp.getAttribute("autocomplete") || "") +
+              " " +
               (inp.getAttribute("aria-label") || "") +
               " " +
               (inp.closest("label,div,fieldset,li")?.innerText || "")
-            ).slice(0, 240);
+            ).slice(0, 280);
             if (
               /expected/i.test(ctx) &&
               /ctc|salary|compensation|lpa|pay/i.test(ctx)
             ) {
-              if (inp.tagName === "SELECT") continue;
-              inp.value = String(exp * 100000);
-              inp.dispatchEvent(new Event("input", { bubbles: true }));
+              setVal(inp, String(exp * 100000));
             } else if (
               /current/i.test(ctx) &&
               /ctc|salary|compensation|lpa|pay/i.test(ctx)
             ) {
-              if (inp.tagName === "SELECT") continue;
-              inp.value = String(cur * 100000);
-              inp.dispatchEvent(new Event("input", { bubbles: true }));
+              setVal(inp, String(cur * 100000));
+            } else if (
+              /first\s*name|fname/i.test(ctx) &&
+              !/last/i.test(ctx)
+            ) {
+              setVal(inp, "Mohammed Abdul Rafi");
+            } else if (/last\s*name|lname|surname/i.test(ctx)) {
+              setVal(inp, "Ahmed");
+            } else if (
+              (/^name$|full\s*name|candidate\s*name|your\s*name/i.test(ctx) ||
+                /autocomplete["']?\s*=\s*["']name/i.test(inp.outerHTML || "")) &&
+              !/user|company|job|file/i.test(ctx)
+            ) {
+              setVal(inp, "Mohammed Abdul Rafi Ahmed");
+            } else if (/e-?mail|emailaddress/i.test(ctx) || inp.type === "email") {
+              setVal(inp, "rafi.success@gmail.com");
+            } else if (
+              /phone|mobile|tel\b/i.test(ctx) ||
+              inp.type === "tel"
+            ) {
+              setVal(inp, "8790251698");
+            } else if (
+              /city|location|prefer.*loc|current.*loc/i.test(ctx) &&
+              !/url|email/i.test(ctx)
+            ) {
+              setVal(inp, "Hyderabad");
+            } else if (/notice|joining|availability|immediate/i.test(ctx)) {
+              setVal(inp, "Immediate");
+            } else if (/linkedin/i.test(ctx)) {
+              setVal(inp, "https://www.linkedin.com/in/");
             }
           }
         },
@@ -592,12 +636,14 @@ async function handleExternal(context, page, detail, jobMeta, report) {
       "button:has-text('Submit Application')",
       "button:has-text('Submit')",
       "button:has-text('Apply')",
+      "button:has-text('Send application')",
       "input[type='submit']",
     ]) {
       const b = newPage.locator(sel).first();
       if (await b.isVisible().catch(() => false)) {
         await b.click().catch(() => {});
-        await sleep(2000);
+        await sleep(2500);
+        break;
       }
     }
 
@@ -605,7 +651,7 @@ async function handleExternal(context, page, detail, jobMeta, report) {
       .evaluate(() => (document.body?.innerText || "").slice(0, 2500))
       .catch(() => "");
     if (
-      /thank you for appl|application (has been )?submitted|successfully submitted|we have received your application|application received/i.test(
+      /thank you for appl|application (has been )?submitted|successfully submitted|we have received your application|application received|thanks for applying|application was sent/i.test(
         after
       )
     ) {
@@ -628,7 +674,7 @@ async function handleExternal(context, page, detail, jobMeta, report) {
 
     const next = newPage
       .locator(
-        "button:has-text('Next'), button:has-text('Continue'), button:has-text('Save and Continue')"
+        "button:has-text('Next'), button:has-text('Continue'), button:has-text('Save and Continue'), button:has-text('Review')"
       )
       .first();
     if (await next.isVisible().catch(() => false)) {
@@ -636,8 +682,8 @@ async function handleExternal(context, page, detail, jobMeta, report) {
       await sleep(1500);
       continue;
     }
-    await sleep(2000);
-    break;
+    // Keep retrying within budget — multi-step ATS / slow thank-you pages.
+    await sleep(2500);
   }
 
   report.blocked.push({
