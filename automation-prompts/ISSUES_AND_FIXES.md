@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Policy: auto-fix & push every daily run
+
+See [AUTO_FIX.md](AUTO_FIX.md). Code-fixable blockers discovered during any daily
+automation must be patched in durable helpers, pushed on a feature branch, and
+opened as a draft PR — not left as report-only notes.
+
 ## Fixed in this repo
 
 | Issue | Fix |

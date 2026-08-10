@@ -55,4 +55,7 @@ When running via home cron (`scripts/indeed-home-daily.sh`), write JSON to
 with counts: applied, external, rejected, blocked, skipped, seen — then
 `node tools/indeed/daily_run_report.js write --in <file> --source home-local --out <file>`
 so the 11 AM Notification Job can include Indeed in the daily mail.
+
+## Auto-fix & push (MANDATORY)
+If you hit a code-fixable blocker on a residential/home run (preflight false positive, daily_run_report, publish/fetch scripts, Easy Apply helper), fix durable helpers under tools/indeed or scripts/, append automation-prompts/ISSUES_AND_FIXES.md, commit + push a feature branch, open a draft PR to main. Follow automation-prompts/AUTO_FIX.md. Do not invent applies. Cloudflare on public-cloud IP is NOT code-fixable — report home worker / INDEED_HTTP_PROXY only.
 ```

@@ -30,6 +30,16 @@ The preflight bootstraps the resume, syncs Chrome sessions without clobbering
 existing authenticated CDP profiles, and fails fast if the portal login is not
 available in the saved environment snapshot.
 
+## Auto-fix & push (every run)
+
+**Yes — for code-fixable blockers.** Every daily automation must follow
+[AUTO_FIX.md](AUTO_FIX.md): patch durable helpers under `tools/` / `scripts/` /
+`automation-prompts/`, commit, push a feature branch, open a draft PR into `main`,
+and note the fix in [ISSUES_AND_FIXES.md](ISSUES_AND_FIXES.md).
+
+Not auto-fixable from code alone: portal logins/snapshot, Indeed Cloudflare on
+public cloud, missing secrets, CAPTCHA/OTP. Those stay owner actions.
+
 ## Naukri daily profile resume refresh
 
 Before job applies, the Naukri automation must re-upload `Rafi_Resume.docx` to the Naukri profile. Prefer:
