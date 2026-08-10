@@ -33,11 +33,26 @@
 - Home Indeed cron publishes JSON counts to branch `automation-results`
 - Notification Job must fetch home results (not cloud Cloudflare stub) for Indeed
 
+## 2026-08-10 volume / false-skip + full reliability pass
+
+| Area | Fix |
+| --- | --- |
+| LinkedIn filters | Title-first blacklist (`filters.py`); broader TITLE_OK; MAX_APPLY=50 / MAX_EXTERNAL=25 / 14-day |
+| LinkedIn Easy Apply | Greenhouse education/LinkedIn URL/engineers managed/checkbox fill + 3-min time-cap |
+| LinkedIn external | Always queue PRIORITY_IDS |
+| Naukri | CTC floor 35; arch/lead without card .NET; skip pure AI titles; MAX_APPLIES=60 |
+| Foundit | Senior .NET seniority; CTC 35; keep Capgemini 6-9 reject; `daily_apply.js` |
+| Cutshort | Free-text questionnaire payload; restored `daily_apply.js`; CTC floor 35 |
+| Instahyre | CTC parse in `skipReason`; `daily_apply.js` |
+| Indeed | `chrome_probe.js` + proxy-aware preflight; `daily_apply.js` gate; Windows home task installer; cloud automation stay OFF |
+| Prompts | Apply-bias + title-first + 40–50+ volume; runners referenced; ENV_READINESS updated |
+
 ## Manual step required
 
 Cursor Automations API from this agent is **read-only** (`get-automation` only). Paste each `automation-prompts/0N-*.md` fenced `text` block into the matching automation’s Agent instructions and Save.
 
 **You still must** (not fixable in code alone):
-1. Indeed: home Wi‑Fi cron (`scripts/indeed-home-daily.sh`) with push access to `automation-results`
-2. Re-paste updated Notification (+ Indeed) loaders after merge
-3. Keep General Daily disabled; keep cloud Indeed Daily Off (Cloudflare)
+1. Keep **cloud Indeed Daily OFF**; use home cron / private worker
+2. Re-paste **all** updated apply prompts after merge
+3. Set `RESEND_FROM_EMAIL` for Notification
+4. Keep General Daily disabled

@@ -15,12 +15,23 @@ function locationOk(loc) {
   );
 }
 
+/** Parse listed max CTC in LPA from free-text location/salary blurb. */
+function parseMaxCtcLpa(text) {
+  const t = String(text || "");
+  let m = t.match(/₹?\s*([\d.]+)\s*L\s*[-–]\s*₹?\s*([\d.]+)\s*L/i);
+  if (m) return Number(m[2]);
+  m = t.match(/([\d.]+)\s*[-–]\s*([\d.]+)\s*LPA/i);
+  if (m) return Number(m[2]);
+  m = t.match(/up to\s*₹?\s*([\d.]+)\s*L/i);
+  if (m) return Number(m[1]);
+  return null;
+}
+
 /**
  * Returns skip reason string or null if allowed.
  */
-function skipReason(title, { company = "", location = "", skills = "" } = {}) {
+function skipReason(title, { company = "", location = "", skills = "", salary = "" } = {}) {
   const t = title || "";
-  const blob = `${t} ${company} ${skills}`;
 
   // QA / Quality Engineering slipped past bare "qa" filters previously
   if (
@@ -43,7 +54,7 @@ function skipReason(title, { company = "", location = "", skills = "" } = {}) {
     /\b(ai architect|ai engineer|ml engineer|data scientist|data engineer|genai)\b/i.test(
       t
     ) &&
-    !hasDotNet(t, skills)
+    !hasDotNet(t, "") // title-only .NET proof for pure AI/data (skills laundry lists are noisy)
   ) {
     return "pure_ai_data_without_dotnet";
   }
@@ -52,7 +63,7 @@ function skipReason(title, { company = "", location = "", skills = "" } = {}) {
   if (
     /\bjava\b/i.test(t) &&
     !hasDotNet(t, skills) &&
-    !/\b(architect|engineering manager|staff|principal)\b/i.test(t)
+    !/\b(architect|engineering manager|staff|principal|tech(?:nical)?\s+lead)\b/i.test(t)
   ) {
     return "java_primary";
   }
@@ -61,12 +72,18 @@ function skipReason(title, { company = "", location = "", skills = "" } = {}) {
     return "location_not_hyd_remote";
   }
 
+  const maxCtc = parseMaxCtcLpa(`${salary} ${location}`);
+  if (maxCtc != null && maxCtc < 35) {
+    return `ctc_max_${maxCtc}`;
+  }
+
   return null;
 }
 
 module.exports = {
   hasDotNet,
   locationOk,
+  parseMaxCtcLpa,
   skipReason,
 };
 

@@ -34,12 +34,19 @@ Apply to LinkedIn jobs for Mohammed Abdul Rafi Ahmed (Rafi Ahmed) until a solid 
 ONLY apply if Hyderabad / Greater Hyderabad / Telangana OR Fully Remote / WFH / India Remote.
 Judge location from the TOP CARD / workplace pills only — never the full page body (profile chrome can contain "Hyderabad" and false-allow Bengaluru roles).
 
+## Apply bias (CRITICAL — volume)
+- Default to APPLY for Hyd/remote Architect / Tech Lead / EM / Principal / Staff / Director .NET/cloud roles.
+- When uncertain between skip and apply → APPLY (then state expected 65 LPA on forms).
+- Aim for **40–50+** qualifying Easy Applies when inventory exists. Do not stop at ~20.
+- Helpers default MAX_APPLY=50 / MAX_EXTERNAL=25 / scan deeper + 14-day window.
+- Do NOT invent applies; confirm Application submitted / ATS confirmation.
+
 ## Search / apply order
 1. Latest / Most recent first
 2. Hyderabad then Remote India
-3. Titles: Solution Architect, Technical Architect, Technical Lead, Engineering Manager, Principal/Staff .NET
+3. Titles: Solution Architect, Technical Architect, Software Architect, Technical Lead, Engineering Manager, Principal/Staff .NET, Azure/Cloud Architect
 4. Skip already Applied
-5. Keep going while inventory remains (~20–40 qualifying if available)
+5. Keep going while inventory remains (expand to 7d then 14d if thin)
 6. Retry flaky job-card clicks (scroll into view + retry) before skipping
 
 ## Apply paths (CRITICAL — not Easy Apply only)
@@ -49,8 +56,15 @@ Judge location from the TOP CARD / workplace pills only — never the full page 
 - Greenhouse email OTP: if GMAIL session available in Chrome, read OTP; else block and continue
 - After Easy Apply, message the poster (poster-specific Message, not generic typeahead) asking for a 15–20 min screen
 
-## Skip blacklist
-Salesforce, ServiceNow, SAP/D365, Guidewire, Splunk, PEGA, Java-mandatory-only, Oracle ERP, Sitecore-only, MEAN, DevOps/SRE-primary (unless strong .NET/platform lead), GCP-presales-only, data-only, niche AI-only (no .NET), Node/Java/Python/Golang-mandatory backends with no .NET, low CTC (listed max ~15–50 LPA), BPO SA, RoR, firmware, MES/ERP-primary, Blockchain, GIS/Esri-primary, Mandarin-required, BizTalk-deep-mandatory, iPaaS-only, Coupa, interior designer, electrical EM, roles no longer accepting, non-Hyderabad non-remote
+## Skip rules (TITLE-FIRST — do not over-filter)
+Skip ONLY when the TITLE (or clear mandatory JD language) is wrong:
+- Wrong-stack TITLE: Salesforce, ServiceNow, SAP/D365-primary, Guidewire, PEGA, Coupa, Revit/BArch, Hubspot, M365-only, GIS/Esri-primary, QA/SDET/Quality Engineering, BPO, pure AI/data title without .NET on the title
+- Wrong-city TITLE/location pills: non-Hyd and not Remote/WFH
+- Junior / intern / fresher titles
+- JD says Java/Python/Node/Salesforce is **mandatory/required/only** (not a casual mention)
+- Listed max CTC clearly under **35 LPA** (35–55 bands are OK — always state 65 expected)
+
+DO NOT skip because the JD casually mentions Salesforce, SAP, Java, Data Engineer, presales, or other stacks as adjacent teams/tools when the role itself is .NET / architect / lead / EM. Title wins over incidental JD text.
 
 ## Form mechanics
 - ONE job at a time; close messaging overlays before Next/Submit
@@ -60,5 +74,5 @@ Salesforce, ServiceNow, SAP/D365, Guidewire, Splunk, PEGA, Java-mandatory-only, 
 - If login missing, stop and report LinkedIn login required
 
 ## Report
-submitted (company, role, job id, location, Easy Apply vs ATS URL), skipped, blocked. Totals.
+submitted (company, role, job id, location, Easy Apply vs ATS URL), skipped, blocked. Totals. Call out any false-skip suspects.
 ```

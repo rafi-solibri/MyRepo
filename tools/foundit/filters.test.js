@@ -76,7 +76,50 @@ assert.strictEqual(
     maximumExperience: { years: 7 },
   }).pass,
   false,
-  "maxExp 7 must still fail after location enrich"
+  "maxExp 7 with min 5 must still fail (junior/mid band)"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 5,
+    title: ".NET Technical Lead",
+    companyName: "Example",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: ".NET Core" }],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 12 },
+  }).pass,
+  true,
+  "8-12 TL band should pass"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 6,
+    title: "Solution Architect .NET",
+    companyName: "Example",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: "C#" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+    maximumSalary: { absoluteValue: 4000000 },
+  }).pass,
+  true,
+  "listed max 40 LPA should pass (forms still state 65 expected)"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 7,
+    title: "Senior .NET Developer",
+    companyName: "Example",
+    locations: [{ text: "Remote" }],
+    skills: [{ text: ".NET" }],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 12 },
+  }).pass,
+  true,
+  "Senior .NET should count as seniority"
 );
 
 console.log("filters.test.js OK");

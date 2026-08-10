@@ -5,10 +5,13 @@ Automation: https://cursor.com/automations/91b09fd7-9093-11f1-ba66-0e7d0216e441
 Copy everything inside the block below:
 
 ```text
-FIRST: run `node tools/indeed/preflight.js`. If it exits 5, stop and report that Indeed needs a private worker / residential IP.
+FIRST: run `node tools/indeed/preflight.js` (HTTP + Chrome probe; honors `INDEED_HTTP_PROXY`). If it exits 5, stop and report that Indeed needs a private worker / residential IP — do not invent applies.
 Then run `bash scripts/preflight-portal-run.sh indeed`. Verify `node tools/indeed/resume.js`.
+Prefer: `node tools/indeed/daily_apply.js` (wraps preflight). On home Wi‑Fi use `bash scripts/indeed-home-daily.sh`.
 Then run `bash scripts/launch-chrome-cdp.sh indeed` if using browser/CDP.
 Chrome CDP profile: /home/ubuntu/chrome-indeed-profile (synced from Desktop Default).
+
+**Cloud Indeed Daily automation should stay OFF** (datacenter Cloudflare). Prefer home cron / My Machines private worker.
 
 Daily Indeed (in.indeed.com) apply for Mohammed Abdul Rafi Ahmed.
 
@@ -27,6 +30,11 @@ Current 52 LPA | Expected 65 LPA | Immediate | +91 8790251698 | rafi.success@gma
   2) Set env secret `INDEED_HTTP_PROXY` then `bash scripts/launch-chrome-cdp.sh indeed`.
 - If login missing but page loads: stop and report Indeed login required — Desktop Chrome Default login + sync-chrome-sessions.sh + Save Snapshot.
 
+## Apply bias (CRITICAL)
+- Default to APPLY for Hyd/remote Architect / Tech Lead / EM / Principal / Staff / Senior .NET/cloud.
+- When uncertain → APPLY. Title-first skips only. Do not invent applies.
+- Keep going while inventory remains.
+
 ## Apply paths
 - Prefer Indeed Easy Apply through confirmation.
 - "Apply on company site" / external ATS: FOLLOW and COMPLETE with Rafi_Resume.docx. Do not skip.
@@ -36,7 +44,9 @@ Current 52 LPA | Expected 65 LPA | Immediate | +91 8790251698 | rafi.success@gma
 Hyd/Telangana OR Remote/WFH/India Remote only.
 
 ## Filters
-Prefer .NET/C# evidence; skip Java/Node/Python-mandatory-only, QA/junior, Salesforce/ServiceNow/SAP-primary, listed max <50L.
+Prefer .NET/C# evidence. Skip Java/Node/Python-**mandatory**-only, QA/junior, Salesforce/ServiceNow/SAP-primary titles.
+Skip listed max only if clearly under **35 LPA** (forms always 65 expected).
+Do NOT skip because JD casually mentions Salesforce/Java/data as adjacent tech.
 
 ## Report
 Submitted (Easy Apply vs ATS), rejected, skipped, blocked. No invented applies.

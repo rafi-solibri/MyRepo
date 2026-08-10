@@ -14,6 +14,35 @@ from urllib.parse import quote
 
 from playwright.sync_api import sync_playwright, Page, TimeoutError as PWTimeout
 
+try:
+    from tools.linkedin.filters import (
+        TITLE_BLACKLIST,
+        JD_HARD_BLACKLIST,
+        BLACKLIST,
+        TITLE_OK,
+        HYD_OK,
+        REMOTE_OK,
+        INDIA_ONLY,
+        BAD_CITY,
+        location_allowed,
+        jd_blacklist,
+        skip_reason,
+    )
+except Exception:
+    from filters import (  # type: ignore
+        TITLE_BLACKLIST,
+        JD_HARD_BLACKLIST,
+        BLACKLIST,
+        TITLE_OK,
+        HYD_OK,
+        REMOTE_OK,
+        INDIA_ONLY,
+        BAD_CITY,
+        location_allowed,
+        jd_blacklist,
+        skip_reason,
+    )
+
 CDP = os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222")
 OUT = Path("/opt/cursor/artifacts/apply-report.json")
 SCREEN_DIR = Path("/opt/cursor/artifacts")
@@ -35,12 +64,14 @@ except Exception as _e:
 PROFILE = {
     "phone": "8790251698",
     "email": "rafi.success@gmail.com",
+    "linkedin": "https://linkedin.com/in/rafi-ahmed-mohammed-abdul-151644ba",
     "current_ctc": "5200000",
     "expected_ctc": "6500000",
     "current_ctc_lakhs": "52",
     "expected_ctc_lakhs": "65",
     "notice": "0",
     "experience_years": "15",
+    "engineers_managed": "8",
     "dob_day": "16",
     "dob_month": "January",
     "dob_month_num": "01",
@@ -61,74 +92,20 @@ PROFILE = {
 TITLES = [
     "Solution Architect",
     "Technical Architect",
+    "Software Architect",
     "Technical Lead",
     "Engineering Manager",
     "Principal .NET",
     "Staff .NET",
     ".NET Architect",
+    "Azure Architect",
+    "Cloud Architect",
 ]
 
-BLACKLIST = re.compile(
-    r"salesforce|servicenow|guidewire|splunk|\bpega\b|oracle\s*erp|sitecore|"
-    r"\bmean\b|devops engineer|sre engineer|site reliability engineer|gcp.?presales|workato|mulesoft|"
-    r"blockchain|mandarin|biztalk|firmware|\bmes\b|\bror\b|ruby on rails|"
-    r"\bsap\b|dynamics\s*365|\bd365\b|esri|\bgis\b|"
-    r"java[- ]?(mandatory|only|required|backend)|java full[- ]?stack|"
-    r"node\.?js[- ]?(mandatory|only)|"
-    r"python[- ]?(mandatory|only)|principal engineer\s*\(\s*python|"
-    r"data engineer|machine learning engineer|"
-    r"big data architect|data architect|data warehouse architect|implementation specialist|"
-    r"\bphp\b|laravel|ruby on rails|\bror\b|"
-    r"interior designer|civil engineer|electrical engineering|golang &|golang and|"
-    r"bpo|call center|marketing cloud|success architect|"
-    r"non-?it staffing|us non-?it|staffing recruiter|talent acquisition|"
-    # Weak-fit / wrong-domain titles from daily runs (Revit, Hubspot, M365, AI-only)
-    r"\brevit\b|\bbarch\b|hubspot|m365 architect|microsoft 365 architect|"
-    r"solutions engineer|presales|pre-sales|"
-    r"\binfor\b|\berp\b.?primary|dft architect|\beda\b|"
-    r"ai compiler|gen[- ]?ai architect|ai architect(?!.*\.net)|"
-    r"quality engineering|quality assurance|qa engineer|\bsdet\b",
-    re.I,
-)
-
-TITLE_OK = re.compile(
-    r"architect|technical lead|tech lead|engineering manager|engineering lead|"
-    r"principal|staff|solution architect|\.net|dotnet|c#|software (development )?manager",
-    re.I,
-)
-
-HYD_OK = re.compile(
-    r"hyderabad|telangana|secunderabad|greater hyderabad|gachibowli|hitech city|"
-    r"madhapur|kondapur|banjara hills|"
-    # Arabic / Urdu LinkedIn UI (locale drift)
-    r"حيدر\s*أ?باد|حيدرآباد|تلنگانہ|تلنغانا|تيلانجانا|سکندرآباد",
-    re.I,
-)
-REMOTE_OK = re.compile(
-    r"\bremote\b|\bwfh\b|work from home|india remote|fully remote|remote[, ]*india|"
-    r"remote \(india\)|anywhere in india|"
-    # Arabic remote / WFH
-    r"عن بعد|العمل من المنزل|العمل عن بعد|من المنزل",
-    re.I,
-)
-# India alone (EN/AR) — only with remote workplace filter or REMOTE_OK
-INDIA_ONLY = re.compile(r"^(greater\s+)?india\b|^الهند\b", re.I)
-BAD_CITY = re.compile(
-    r"bengaluru|bangalore|pune|chennai|mumbai|delhi|noida|gurgaon|gurugram|"
-    r"ahmedabad|kolkata|jaipur|kochi|trivandrum|thiruvananthapuram|coimbatore|"
-    r"indore|nagpur|united states|\busa\b|\buk\b|london|singapore|dubai|"
-    r"toronto|canada|australia|germany|netherlands|"
-    # Arabic / Urdu city names
-    r"بنغالور|بنجالور|بانجلور|بوني|بونة|تشيناي|مومباي|دلهي|نويدا|جورجاون|"
-    r"أحمد آباد|كولكاتا|جايبور|كوتشي|كوتشي|إندور|اندور|ناجبور|"
-    r"ماهاراشترا|تاميل نادو|كارناتاكا|كارناتاكا|ماديا براديش",
-    re.I,
-)
-
-MAX_APPLY = 30
-MAX_SCAN_PER_SEARCH = 40
-# Past 24h, then 3 days, then 7 days
-TPR_WINDOWS = ("r86400", "r259200", "r604800")
+MAX_APPLY = int(os.environ.get("LINKEDIN_MAX_APPLY", "50"))
+MAX_SCAN_PER_SEARCH = int(os.environ.get("LINKEDIN_MAX_SCAN", "60"))
+# Past 24h, then 3 days, then 7 days, then 14 days (thin-inventory expand)
+TPR_WINDOWS = ("r86400", "r259200", "r604800", "r1209600")
 
 
 @dataclass
@@ -227,29 +204,6 @@ def close_overlays(page: Page, *, keep_easy_apply: bool = True) -> None:
     # Do NOT press Escape here — it dismisses Easy Apply when Simplify sidebar is open.
 
 
-def location_allowed(loc: str, workplace: str = "", *, remote_search: bool = False) -> bool:
-    """HARD filter: only job location/workplace strings — never page chrome/profile text."""
-    text = f"{loc} {workplace}".strip()
-    if not text:
-        return False
-    remoteish = bool(REMOTE_OK.search(text)) or remote_search
-    # Bad city wins unless the SAME job text clearly says Remote/WFH
-    # (LinkedIn remote filter alone is not enough if top-card city is Bengaluru/Pune/etc.)
-    if BAD_CITY.search(text) and not REMOTE_OK.search(text):
-        return False
-    if REMOTE_OK.search(text):
-        return True
-    if HYD_OK.search(text):
-        return True
-    # Remote search + India-only location (EN/AR) with no bad city → allow
-    if remoteish and INDIA_ONLY.search((loc or "").strip()):
-        return True
-    # Arabic "India" appearing in tertiary line during remote search
-    if remoteish and re.search(r"\bالهند\b", text) and not BAD_CITY.search(text):
-        return True
-    return False
-
-
 def ensure_english_ui(page: Page) -> None:
     """Force LinkedIn English so location/title filters stay reliable."""
     try:
@@ -300,11 +254,6 @@ def ensure_english_ui(page: Page) -> None:
         time.sleep(1.5)
     except Exception:
         pass
-
-
-def jd_blacklist(text: str) -> str | None:
-    m = BLACKLIST.search(text or "")
-    return m.group(0) if m else None
 
 
 def search_url(
@@ -396,6 +345,44 @@ def fill_inputs(page: Page) -> None:
                 pass
         elif "email" in blob:
             set_val(PROFILE["email"])
+        elif any(k in blob for k in ("linkedin profile", "linkedin url", "profile url", "linkedin.com")):
+            set_val(PROFILE["linkedin"])
+        elif any(
+            k in blob
+            for k in (
+                "institution",
+                "university",
+                "college",
+                "bachelor's degree from",
+                "bachelors degree from",
+                "school name",
+                "where did you study",
+            )
+        ):
+            set_val(PROFILE["education_school"])
+        elif any(
+            k in blob
+            for k in (
+                "specialization",
+                "field of study",
+                "major",
+                "discipline",
+                "branch of engineering",
+            )
+        ):
+            set_val(PROFILE["education_field"])
+        elif any(
+            k in blob
+            for k in (
+                "engineers do you currently manage",
+                "engineers managed",
+                "direct reports",
+                "team size",
+                "people managed",
+                "manage directly",
+            )
+        ):
+            set_val(PROFILE["engineers_managed"])
         elif "country code" in blob or ( "phone" in blob and "country" in blob):
             try:
                 control.select_option(label=re.compile(r"India \(\+91\)", re.I))
@@ -508,9 +495,11 @@ def fill_inputs(page: Page) -> None:
     except Exception:
         pass
 
-    # Also fill unlabeled numeric errors: decimal > 0 near CTC/notice
+    # Also fill unlabeled / aria-label / near-text inputs (Greenhouse Easy Apply)
     try:
-        for inp in page.locator("input[type='text']").all()[:25]:
+        for inp in page.locator(
+            "input[type='text'], input:not([type]), textarea, input[type='url'], input[type='number']"
+        ).all()[:40]:
             try:
                 if not inp.is_visible():
                     continue
@@ -518,9 +507,24 @@ def fill_inputs(page: Page) -> None:
                 if val:
                     continue
                 near = inp.evaluate(
-                    """e => (e.closest('div')?.innerText || '').slice(0,180).toLowerCase()"""
+                    """e => {
+                      const aria = e.getAttribute('aria-label') || '';
+                      const ph = e.getAttribute('placeholder') || '';
+                      const lab = e.labels && e.labels[0] ? e.labels[0].innerText : '';
+                      const wrap = (e.closest('fieldset, .fb-dash-form-element, .jobs-easy-apply-form-element, div') || e.parentElement);
+                      const t = (wrap && wrap.innerText) ? wrap.innerText.slice(0, 220) : '';
+                      return (aria + ' ' + ph + ' ' + lab + ' ' + t).toLowerCase();
+                    }"""
                 )
-                if "ctc" in near and "lakh" in near and "current" in near:
+                if re.search(r"linkedin|profile url", near):
+                    inp.fill(PROFILE["linkedin"])
+                elif re.search(r"institution|university|college|bachelor.?s degree from|school name", near):
+                    inp.fill(PROFILE["education_school"])
+                elif re.search(r"specialization|field of study|major|discipline", near):
+                    inp.fill(PROFILE["education_field"])
+                elif re.search(r"manage directly|engineers managed|direct reports|team size|people managed", near):
+                    inp.fill(PROFILE["engineers_managed"])
+                elif "ctc" in near and "lakh" in near and "current" in near:
                     inp.fill(PROFILE["current_ctc_lakhs"])
                 elif "ctc" in near and "lakh" in near and "expect" in near:
                     inp.fill(PROFILE["expected_ctc_lakhs"])
@@ -528,10 +532,67 @@ def fill_inputs(page: Page) -> None:
                     inp.fill("1")
                 elif ("years" in near or "experience" in near) and "php" not in near:
                     inp.fill("15")
+                elif re.search(r"\bphone\b|\bmobile\b", near) and "country" not in near:
+                    inp.fill(PROFILE["phone"])
+                elif "email" in near:
+                    inp.fill(PROFILE["email"])
             except Exception:
                 pass
     except Exception:
         pass
+
+    # Multi-select checkboxes (Turing/Greenhouse role & responsibility groups)
+    checkbox_picks = [
+        (r"best describes your current role", ["Principal Engineer", "Technical Lead", "Engineering Manager"]),
+        (
+            r"part of your current responsibilities",
+            [
+                "Technical Roadmap",
+                "Architecture Reviews",
+                "System Design",
+                "Mentoring Engineers",
+                "Hiring",
+            ],
+        ),
+        (
+            r"areas have you worked on extensively",
+            [
+                "Backend Engineering",
+                "Platform Engineering",
+                "Distributed Systems",
+                "Cloud Infrastructure",
+                "Event-driven Systems",
+            ],
+        ),
+    ]
+    for qpat, choices in checkbox_picks:
+        try:
+            q = page.get_by_text(re.compile(qpat, re.I)).first
+            if not (q.count() and q.is_visible()):
+                continue
+            container = q.locator(
+                "xpath=ancestor::fieldset|ancestor::div[contains(@class,'fb-dash') or contains(@class,'jobs-easy-apply')][1]"
+            )
+            if not container.count():
+                container = q.locator("xpath=ancestor::div[1]")
+            for choice in choices:
+                try:
+                    opt = container.get_by_label(choice, exact=False)
+                    if opt.count():
+                        el = opt.first
+                        try:
+                            if not el.is_checked():
+                                el.check(force=True)
+                        except Exception:
+                            el.click(timeout=800, force=True)
+                        continue
+                    txt = container.get_by_text(choice, exact=True).first
+                    if txt.count() and txt.is_visible():
+                        txt.click(timeout=800, force=True)
+                except Exception:
+                    continue
+        except Exception:
+            pass
 
     # Radio / yes-no common
     for pair in [
@@ -676,7 +737,21 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
             shot(page, f"blocked-no-modal-{job.job_id}.png")
             return job
 
+    flow_deadline = time.time() + int(os.environ.get("LINKEDIN_EASY_APPLY_CAP_S", "180"))
+    last_err = ""
     for step in range(14):
+        if time.time() > flow_deadline:
+            job.status = "blocked"
+            job.reason = f"Easy Apply time-cap: {last_err or 'timeout'}"
+            shot(page, f"blocked-timeout-{job.job_id}.png")
+            try:
+                page.locator(
+                    ".jobs-easy-apply-modal button.artdeco-modal__dismiss, "
+                    "[role='dialog']:has-text('Apply to') button.artdeco-modal__dismiss"
+                ).first.click(timeout=2000)
+            except Exception:
+                pass
+            return job
         # If save dialog appeared mid-flow, discard and reopen apply
         try:
             if page.get_by_text("Save this application?").count() and page.get_by_text("Save this application?").first.is_visible():
@@ -708,7 +783,8 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
                 except Exception:
                     pass
                 return job
-        except Exception:
+        except Exception as e:
+            last_err = str(e)[:120]
             pass
 
         close_overlays(page)
@@ -980,7 +1056,7 @@ def process_search(
             except Exception:
                 jd = ""
 
-        bl = jd_blacklist(f"{role}\n{company}\n{jd}")
+        bl = skip_reason(role, company, jd)
         if bl:
             job.status = "skipped"
             job.reason = f"blacklist: {bl}"

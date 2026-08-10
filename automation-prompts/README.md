@@ -11,10 +11,13 @@ Alternatively, paste each file’s full fenced `text` block into the matching au
 | Rule | Value |
 | --- | --- |
 | Resume | **`resumes/Rafi_Resume.docx`** (bootstrap copies to Documents/resumes) |
-| Expected CTC | **65 LPA** |
+| Expected CTC | **65 LPA** (forms always) |
 | Current CTC | **52 LPA** |
+| Listed max CTC skip | Only if clearly under **35 LPA** |
 | Locations | Hyderabad / Telangana **or** Remote / WFH |
+| Apply bias | When uncertain on Hyd/remote senior .NET/cloud → **APPLY** |
 | Apply paths | Easy/Quick Apply **and** company website / ATS |
+| Durable runners | `tools/{linkedin,naukri,cutshort,foundit,instahyre,indeed}/…` |
 
 ## First command every run
 

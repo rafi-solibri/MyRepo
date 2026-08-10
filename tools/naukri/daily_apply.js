@@ -47,7 +47,7 @@ function parseJobAges() {
 }
 
 const JOB_AGES = parseJobAges();
-const MAX_APPLIES = Number(process.env.NAUKRI_MAX_APPLIES || 40);
+const MAX_APPLIES = Number(process.env.NAUKRI_MAX_APPLIES || 60);
 const MAX_EXTERNAL_MS = 3.5 * 60 * 1000;
 const SKIP_PROFILE_REFRESH = process.env.NAUKRI_SKIP_PROFILE_REFRESH === "1";
 
@@ -82,7 +82,10 @@ function runProfileResumeRefresh() {
 }
 
 const SENIORITY_RE =
-  /\b(architect|technical lead|tech lead|engineering manager|principal|staff|director|avp|head of|solution architect|cloud architect|azure architect|\.net lead|dotnet lead)\b/i;
+  /\b(architect|technical lead|tech lead|technology lead|engineering manager|engineering lead|principal|staff|director|avp|head of|solution architect|cloud architect|azure architect|\.net lead|dotnet lead|lead (software|development|engineer)|software manager|senior engineering)\b/i;
+
+/** Listed max CTC below this → skip. Postings often under-list; do not use 50. */
+const MIN_LISTED_MAX_CTC_LPA = Number(process.env.NAUKRI_MIN_LISTED_MAX_CTC || 35);
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -656,15 +659,24 @@ function decideSkip(card, { detailMode = false } = {}) {
   if (shouldSkipTitle(role)) return "skip_title_keyword";
   if (!detailMode && shouldSkipTitle(blob.split("\n").slice(0, 8).join(" ")))
     return "skip_title_keyword";
-  if (!SENIORITY_RE.test(role) && !SENIORITY_RE.test(blob)) {
-    if (!/\b(lead|manager|architect|principal|staff)\b/i.test(role))
-      return "skip_seniority";
+  const seniorTitle =
+    SENIORITY_RE.test(role) ||
+    /\b(lead|manager|architect|principal|staff|director)\b/i.test(role);
+  if (!seniorTitle && !SENIORITY_RE.test(blob)) {
+    return "skip_seniority";
   }
-  if (!hasDotNet(role, blob)) return "skip_no_dotnet";
+  // Architect / Tech Lead / EM / Principal / Staff: allow without .NET on the card
+  // snippet (many SA cards bury .NET in the JD). Still require .NET for weaker titles.
+  const archLead =
+    /\b(architect|technical lead|tech lead|technology lead|engineering manager|engineering lead|principal|staff|director)\b/i.test(
+      role
+    );
+  if (!hasDotNet(role, blob) && !archLead) return "skip_no_dotnet";
   if (locationHardSkip(loc, blob)) return "skip_location";
   if (!locationAllowed(loc, blob)) return "skip_location";
   const maxCtc = parseMaxCtcLpa(blob);
-  if (maxCtc !== null && maxCtc < 50) return `skip_ctc_max_${maxCtc}`;
+  if (maxCtc !== null && maxCtc < MIN_LISTED_MAX_CTC_LPA)
+    return `skip_ctc_max_${maxCtc}`;
   return null;
 }
 

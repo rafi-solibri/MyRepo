@@ -54,6 +54,10 @@ PROFILE = {
 
 # Prefer .NET/architect Hyderabad or Remote India; skip known bad cities unless remote-only listing.
 PRIORITY_IDS = [
+    "4443293962",  # Palo Alto Principal Software Architect Hyd
+    "4448608798",  # Convatec Solution Architect Hyd
+    "4400708113",  # ModMed Senior Software Architect Hyd
+    "4451327394",  # Quik Hire .NET Remote
     "4405159441",  # Blackbaud Laureate .NET Architecture Hyd
     "4442580526",  # Experian Lead SWE .NET + AWS Hyd
     "4415350173",  # Hyland Senior Software Architect .NET
@@ -83,8 +87,8 @@ SKIP_COMPANY_LOC = re.compile(
     r"indore|بنغالور|مومباي|دلهي|تشيناي|بوني|إندور",
     re.I,
 )
-MAX_EXTERNAL = 12
-ATS_TIME_CAP_S = 210  # ~3.5 minutes
+MAX_EXTERNAL = int(os.environ.get("LINKEDIN_MAX_EXTERNAL", "25"))
+ATS_TIME_CAP_S = int(os.environ.get("LINKEDIN_ATS_TIME_CAP_S", "210"))  # ~3.5 minutes
 
 
 @dataclass
@@ -381,10 +385,10 @@ def process_external(page: Page, job: dict) -> ExtResult:
 def main() -> None:
     data = json.loads(REPORT_IN.read_text())
     by_id = {c["job_id"]: c for c in data.get("external_candidates", []) if c.get("job_id")}
-    # Priority first, then remaining external candidates from today's Easy Apply scan
+    # Priority first (even if missing from today's Easy Apply scan), then remaining externals
     ordered: list[str] = []
     for jid in PRIORITY_IDS:
-        if jid in by_id and jid not in ordered:
+        if jid not in ordered:
             ordered.append(jid)
     for jid in by_id:
         if jid not in ordered:

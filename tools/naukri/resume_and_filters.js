@@ -30,6 +30,10 @@ function findResume() {
 const SKIP_TITLE_RE =
   /\b(qa engineer|quality assurance|quality engineer|quality engineering|sdet|intern(?!et)|fresher|salesforce|servicenow|coupa|pega|guidewire|sap\b|dynamics|workday hms|revit|\bbarch\b|hubspot)\b/i;
 
+/** Pure AI/data titles need .NET|C# on the TITLE (skills laundry lists are noisy). */
+const PURE_AI_DATA_RE =
+  /\b(ai\s+architect|ai\s+engineer|ml\s+engineer|genai|data\s+scientist|data\s+engineer)\b/i;
+
 /** When scanning detail pages, use job panel text only — never document.body. */
 function shouldSkipTitleFromDetail(detailText) {
   const t = String(detailText || "");
@@ -49,7 +53,11 @@ function hasDotNet(title, skills) {
 }
 
 function shouldSkipTitle(title) {
-  return SKIP_TITLE_RE.test(title || "");
+  const t = title || "";
+  if (SKIP_TITLE_RE.test(t)) return true;
+  // AI Architect without .NET on the title itself (Instahyre/Foundit parity)
+  if (PURE_AI_DATA_RE.test(t) && !hasDotNet(t, "")) return true;
+  return false;
 }
 
 module.exports = {

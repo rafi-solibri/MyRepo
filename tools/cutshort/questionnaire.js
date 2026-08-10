@@ -31,20 +31,24 @@ function findResume() {
 }
 
 function buildAnswerPayload(messageId, answers) {
-  // answers: [{ answerRowId, questionId, optionId }]
+  // answers: [{ answerRowId, questionId, optionId }] for MCQ
+  // or [{ answerRowId, questionId, text }] for free-text (uses responseStringArray, NOT responseString)
   return {
     messageId,
     questions: answers.map((a) => ({
       _id: a.answerRowId,
       question: String(a.questionId),
-      responseStringArray: [String(a.optionId)],
+      responseStringArray: [String(a.optionId != null ? a.optionId : a.text)],
+      responseNumberArray: [],
     })),
   };
 }
 
 function answersNonEmpty(questions) {
   return (questions || []).every(
-    (q) => Array.isArray(q.responseStringArray) && q.responseStringArray.length > 0
+    (q) =>
+      (Array.isArray(q.responseStringArray) && q.responseStringArray.length > 0) ||
+      (typeof q.responseString === "string" && q.responseString.trim().length > 0)
   );
 }
 

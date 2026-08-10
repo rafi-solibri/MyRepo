@@ -54,17 +54,36 @@
 | Indeed Cloudflare only vaguely documented | Added `INDEED_CLOUDFLARE.md` / home-cron helpers; `launch-chrome-cdp.sh` honors `INDEED_HTTP_PROXY` |
 | Daily mail ignored home Indeed applies (only showed cloud Cloudflare 0) | Home cron writes/publishes `indeed-daily-run.json` to `automation-results`; Notification prompt fetches via `scripts/fetch-indeed-home-result.sh` and includes applied/rejected/blocked/skipped |
 
+## Fixed for 2026-08-10 volume / false-skip pass
+
+| Issue | Fix |
+| --- | --- |
+| LinkedIn JD blacklist false-skip (S&P Global .NET Director → `Data Engineer`) | `tools/linkedin/filters.py`: title-first blacklist; JD only for mandatory/required stacks |
+| LinkedIn TITLE_OK too narrow + MAX_APPLY=30 | Broader titles (Software/Cloud/Azure Architect, Lead SWE, Director); MAX_APPLY=50, MAX_EXTERNAL=25, 14-day TPR |
+| LinkedIn PRIORITY_IDS skipped when missing from Easy Apply scan | Always queue `PRIORITY_IDS` in `linkedin_external_apply.py` |
+| LinkedIn Greenhouse Easy Apply stuck (education/LinkedIn URL/checkboxes/no time-cap) | Greenhouse filler + 3-min time-cap in `linkedin_easy_apply.py` |
+| Naukri 0 applies: CTC floor 50 skipped 30–40 LPA .NET Architect/Lead | Floor lowered to **35 LPA**; forms still state 65 expected |
+| Naukri `skip_no_dotnet` on Architect/Lead cards without .NET snippet | Architect/Lead/EM/Principal/Staff allowed without card .NET proof |
+| Naukri would false-allow pure AI Architect after archLead waiver | `shouldSkipTitle` skips AI/data titles without .NET on title |
+| Foundit over-skip on seniority / CTC&lt;50 / maxExp | Senior .NET seniority; CTC floor 35; keep Capgemini 6-9 reject |
+| Cutshort free-text questionnaires locked empty | `questionnaire.js` free-text via `responseStringArray` + empty `responseNumberArray` |
+| Cutshort / Foundit / Instahyre / Indeed reinvent flows each run | Durable `daily_apply.js` runners (+ filters) under each portal |
+| Indeed preflight HTTP-only (proxy ignored in Chrome) | `chrome_probe.js` + proxy-aware `preflight.js`; Windows home task installer |
+| Agent prompts over-filtering (“listed max ~15–50”, soft stop ~20) | Apply-bias + title-first + aim 40–50+ across `automation-prompts/0*.md` |
+| Stale ENV_READINESS “5/6 missing logins” | Updated for session-seed reality |
+
 ## Still requires your action (cannot fix from code alone)
 
 | Blocker | Who | What to do |
 | --- | --- | --- |
 | Snapshot missing portal logins | You | `bash scripts/open-portal-login-tabs.sh` → sign in on Desktop → quit Chrome → `bash scripts/verify-portal-logins.sh --strict` → **Save/Update snapshot** |
-| Indeed Cloudflare 403 on datacenter IP | You | Run Indeed on **home Wi‑Fi** / private residential worker, **or** set secret `INDEED_HTTP_PROXY` (see `automation-prompts/INDEED_CLOUDFLARE.md`) |
+| Indeed Cloudflare 403 on datacenter IP | You | Keep **cloud Indeed automation OFF**; run `scripts/indeed-home-daily.sh` (or Windows task) / private residential worker, **or** set secret `INDEED_HTTP_PROXY` |
 | Hirist secondary board login | Optional | Log into Hirist in Desktop Chrome and re-seed sessions if you want Hirist applies |
 | Workday / Greenhouse OTP ATS walls | Optional | Keep Gmail logged in same Chrome profile; complete OTP once per ATS |
 | Verified notification sender missing | You | Set secret `RESEND_FROM_EMAIL` to a verified sender; fallback uses `Job Status <onboarding@resend.dev>` |
 | General Daily duplicate | You | Keep disabled: https://cursor.com/automations/30e2c023-9067-11f1-ba66-0e7d0216e441 |
 | Indeed home results → daily mail | You | Keep home cron on; ensure home PC can `git push origin automation-results`; re-paste Notification loader from `ONE_TIME_LOADERS.md` once |
+| Re-paste Agent instructions | You | After merge, paste each `automation-prompts/0N-*.md` fenced block (Automations API is read-only) |
 
 ## After merging this PR
 
