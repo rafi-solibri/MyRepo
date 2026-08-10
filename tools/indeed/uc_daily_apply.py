@@ -749,6 +749,31 @@ def _solve_recaptcha_audio(sb) -> bool:
     )
     try:
         sb.driver.switch_to.default_content()
+        all_frames = sb.driver.find_elements("css selector", "iframe")
+        frame_meta = []
+        for iframe in all_frames:
+            try:
+                rect = sb.driver.execute_script(
+                    """
+                    const r=arguments[0].getBoundingClientRect();
+                    return {x:r.x,y:r.y,w:r.width,h:r.height};
+                    """,
+                    iframe,
+                )
+                frame_meta.append(
+                    {
+                        "title": (iframe.get_attribute("title") or "")[:60],
+                        "src": (iframe.get_attribute("src") or "")[:100],
+                        "rect": rect,
+                        "visible": iframe.is_displayed(),
+                    }
+                )
+            except Exception:
+                continue
+        print(
+            f"  recaptcha_frames={json.dumps(frame_meta, separators=(',', ':'))[:1000]}",
+            flush=True,
+        )
         frames = sb.driver.find_elements("css selector", challenge_selector)
     except Exception as exc:
         print(f"  recaptcha_challenge_frame={exc!s}"[:220], flush=True)
@@ -769,27 +794,65 @@ def _solve_recaptcha_audio(sb) -> bool:
     try:
         sb.driver.switch_to.frame(challenge)
         # Switch from image tiles to the audio challenge.
+        audio_button = None
+        for _ in range(12):
+            for selector in (
+                "#recaptcha-audio-button",
+                ".rc-button-audio",
+                'button[title*="audio" i]',
+                '[aria-label*="audio" i]',
+            ):
+                try:
+                    candidate = sb.driver.find_element("css selector", selector)
+                    if candidate.is_displayed():
+                        audio_button = candidate
+                        break
+                except Exception:
+                    continue
+            if audio_button is not None:
+                break
+            time.sleep(0.5)
+        if audio_button is None:
+            raise RuntimeError("audio challenge button not found")
         try:
-            audio_button = sb.driver.find_element(
-                "css selector", "#recaptcha-audio-button"
-            )
             audio_button.click()
         except Exception:
-            pass
-        time.sleep(1.5)
+            sb.driver.execute_script("arguments[0].click()", audio_button)
+
         body = ""
-        try:
-            body = sb.driver.find_element("css selector", "body").text
-        except Exception:
-            pass
+        source = ""
+        for _ in range(20):
+            time.sleep(0.5)
+            try:
+                body = sb.driver.find_element("css selector", "body").text
+            except Exception:
+                body = ""
+            if re.search(
+                r"try again later|automated queries|unusual traffic", body, re.I
+            ):
+                print("  recaptcha_audio=rate_limited", flush=True)
+                return False
+            for selector in ("#audio-source", "audio source", "audio"):
+                try:
+                    media = sb.driver.find_element("css selector", selector)
+                    source = (
+                        media.get_attribute("src")
+                        or media.get_attribute("data-src")
+                        or ""
+                    )
+                    if source:
+                        break
+                except Exception:
+                    continue
+            if source:
+                break
         if re.search(r"try again later|automated queries|unusual traffic", body, re.I):
             print("  recaptcha_audio=rate_limited", flush=True)
             return False
-        source = sb.driver.find_element(
-            "css selector", "#audio-source"
-        ).get_attribute("src")
         if not source:
-            print("  recaptcha_audio=no_source", flush=True)
+            print(
+                f"  recaptcha_audio=no_source body={body[:400]!r}", flush=True
+            )
             return False
     except Exception as exc:
         print(f"  recaptcha_audio_open={exc!s}"[:220], flush=True)
