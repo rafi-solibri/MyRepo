@@ -73,19 +73,26 @@ BLACKLIST = re.compile(
     r"\bmean\b|devops engineer|sre engineer|site reliability engineer|gcp.?presales|workato|mulesoft|"
     r"blockchain|mandarin|biztalk|firmware|\bmes\b|\bror\b|ruby on rails|"
     r"\bsap\b|dynamics\s*365|\bd365\b|esri|\bgis\b|"
-    r"java[- ]?(mandatory|only|required|backend)|node\.?js[- ]?(mandatory|only)|"
-    r"python[- ]?(mandatory|only)|data engineer|machine learning engineer|"
+    r"java[- ]?(mandatory|only|required|backend)|java full[- ]?stack|"
+    r"node\.?js[- ]?(mandatory|only)|"
+    r"python[- ]?(mandatory|only)|principal engineer\s*\(\s*python|"
+    r"data engineer|machine learning engineer|"
     r"big data architect|data architect|data warehouse architect|implementation specialist|"
     r"\bphp\b|laravel|ruby on rails|\bror\b|"
     r"interior designer|civil engineer|electrical engineering|golang &|golang and|"
     r"bpo|call center|marketing cloud|success architect|"
-    r"non-?it staffing|us non-?it|staffing recruiter|talent acquisition",
+    r"non-?it staffing|us non-?it|staffing recruiter|talent acquisition|"
+    # Weak-fit domains from prior daily runs
+    r"\brevit\b|\bbarch\b|hubspot|m365 architect|microsoft 365 architect|"
+    r"solutions engineer|presales|pre-sales|"
+    r"\binfor\b|\berp\b.?primary|dft architect|\beda\b|"
+    r"ai compiler|gen[- ]?ai architect|ai architect(?!.*\.net)",
     re.I,
 )
 
 TITLE_OK = re.compile(
     r"architect|technical lead|tech lead|engineering manager|engineering lead|"
-    r"principal|staff|solution|\.net|dotnet|c#|software (development )?manager",
+    r"principal|staff|solution architect|\.net|dotnet|c#|software (development )?manager",
     re.I,
 )
 
