@@ -7,3 +7,4 @@ hotel_prices*.json
 hotel_prices*.csv
 .mcp_send_email_args*.json
 mcp_send_email_args*.json
+artifacts/

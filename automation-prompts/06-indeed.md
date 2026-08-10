@@ -39,5 +39,10 @@ Hyd/Telangana OR Remote/WFH/India Remote only.
 Prefer .NET/C# evidence; skip Java/Node/Python-mandatory-only, QA/junior, Salesforce/ServiceNow/SAP-primary, listed max <50L.
 
 ## Report
-Submitted (Easy Apply vs ATS), skipped, blocked. No invented applies.
+Submitted (Easy Apply vs ATS), rejected, skipped, blocked. No invented applies.
+When running via home cron (`scripts/indeed-home-daily.sh`), write JSON to
+`/opt/cursor/artifacts/indeed-daily-run.json` or `./artifacts/indeed-daily-run.json`
+with counts: applied, external, rejected, blocked, skipped, seen — then
+`node tools/indeed/daily_run_report.js write --in <file> --source home-local --out <file>`
+so the 11 AM Notification Job can include Indeed in the daily mail.
 ```

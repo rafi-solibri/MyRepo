@@ -44,6 +44,19 @@ bash scripts/indeed-home-daily.sh
 
 Logs: `~/.cursor/indeed-home-logs/`
 
+After each run the script normalizes `artifacts/indeed-daily-run.json` and
+**publishes** it to git branch `automation-results` (`automation-results/indeed/YYYY-MM-DD.json`
++ `latest.json`) so the 11 AM Notification Job can include applied / rejected /
+blocked / skipped counts in the daily mail.
+
+```bash
+bash scripts/publish-indeed-home-result.sh   # re-publish last report if needed
+bash scripts/fetch-indeed-home-result.sh --today   # what Notification Job reads
+```
+
+Home machine must be able to `git push origin automation-results` (same GitHub
+auth you use for this repo).
+
 ## Also do this in the Cursor UI
 
 1. **Disable** the cloud Indeed Daily automation (it hits Cloudflare):  
