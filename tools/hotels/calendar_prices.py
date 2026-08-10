@@ -25,11 +25,13 @@ TRACKED_HOTELS: tuple[dict[str, str], ...] = (
         "name": "Hotel Qualia Oak",
         "hid": "1073114832",
         "slug": "Hyderabad-p15297-h1073114832",
+        "google_query": "Hotel Qualia Oak Madhapur Hyderabad",
     },
     {
         "name": "Oak Business Hotel",
         "hid": "1071537171",
         "slug": "Hyderabad-p15297-h1071537171",
+        "google_query": "Oak Business Hotel Madhapur Hyderabad",
     },
 )
 
