@@ -3,8 +3,8 @@
   "source": "home-local",
   "date": "2026-08-10",
   "startedAt": null,
-  "finishedAt": "2026-08-10T07:57:23.697Z",
-  "host": "cursor",
+  "finishedAt": "2026-08-10T09:24:26.085Z",
+  "host": "NEM01-GBGR234",
   "ok": false,
   "counts": {
     "applied": 0,
@@ -27,5 +27,5 @@
   "blockerSummary": "indeed_cloudflare_private_worker_required",
   "notes": [],
   "preflight": null,
-  "logPath": null
+  "logPath": "C:/Users/MohammedAhmed/.cursor/indeed-home-logs/indeed-20260810T092414Z.log"
 }
