@@ -24,10 +24,20 @@ function locationsFrom(job) {
   if (Array.isArray(locs)) {
     for (const l of locs) {
       if (typeof l === "string") parts.push(l);
-      else if (l) parts.push(l.text || l.name || l.city || l.label || "");
+      else if (l) {
+        parts.push(l.text || l.name || l.city || l.label || "");
+        // Country-only rows still expose country; keep for debugging but city may be empty.
+        if (!l.city && !l.text && !l.name && l.country) parts.push(String(l.country));
+      }
     }
   }
   if (job.location) parts.push(String(job.location));
+  // Many external cards leave locations=[] / India-only; JD body often has Remote/Hyderabad.
+  if (job.description) {
+    const desc = String(job.description).replace(/<[^>]+>/g, " ");
+    const hits = desc.match(/\b(hyderabad|secunderabad|remote|wfh|work\s*from\s*home)\b/gi);
+    if (hits) parts.push(...hits);
+  }
   return parts.filter(Boolean).join(" | ");
 }
 
@@ -92,11 +102,14 @@ function skipTitleReason(title) {
   if (/\bservicenow\b/i.test(t)) return "ServiceNow";
   if (/\bpower\s*platform\b/i.test(t)) return "Power Platform";
   if (/\bduck\s*creek\b/i.test(t)) return "Duck Creek";
+  // Pure AI / data titles need .NET|C#|dotnet on the TITLE (skills laundry lists are noisy).
   if (
-    /\b(ai\s+engineer|ml\s+engineer|genai|data\s+scientist)\b/i.test(t) &&
+    /\b(ai\s+architect|ai\s+engineer|ml\s+engineer|genai|data\s+scientist|data\s+engineer)\b/i.test(
+      t
+    ) &&
     !hasDotNet(t, "")
   )
-    return "pure AI without .NET";
+    return "pure AI/data without .NET on title";
   if (/\bwpf\b/i.test(t) && !/\basp\.?\s*net|web\s*api|azure|\.net\s*core\b/i.test(t))
     return "WPF/hardware desktop";
   return null;

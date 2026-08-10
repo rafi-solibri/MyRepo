@@ -18,7 +18,7 @@ function writeReport(report) {
 function isCloudflareBlocked(status, text) {
   return (
     status === 403 ||
-    /additional verification required|security check|cloudflare|cf-ray|ray id/i.test(
+    /additional verification required|security check|cloudflare|cf-ray|ray id|request blocked|blocked - indeed/i.test(
       text || "",
     )
   );
@@ -47,7 +47,8 @@ async function main() {
     if (isCloudflareBlocked(res.status, text)) {
       report.reason = "indeed_cloudflare_private_worker_required";
       report.hint =
-        "Attach a private/residential worker and save a logged-in Indeed Chrome profile before running Indeed applies.";
+        "Indeed blocks datacenter IPs. Fix: (1) run on home Wi‑Fi / private residential worker, or (2) set secret INDEED_HTTP_PROXY and relaunch via scripts/launch-chrome-cdp.sh indeed. See automation-prompts/INDEED_CLOUDFLARE.md.";
+      report.proxyConfigured = Boolean(process.env.INDEED_HTTP_PROXY);
       writeReport(report);
       console.error(JSON.stringify(report, null, 2));
       process.exit(5);

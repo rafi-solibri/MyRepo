@@ -6,6 +6,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const { spawnSync } = require("child_process");
 const {
   findResume,
   hasDotNet,
@@ -36,9 +37,49 @@ const QUERIES = [
   ".net architect hyderabad",
 ];
 
-const JOB_AGES = [1, 3, 7];
+function parseJobAges() {
+  const raw = process.env.NAUKRI_JOB_AGES || "1,3,7";
+  const ages = raw
+    .split(",")
+    .map((s) => Number(String(s).trim()))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  return ages.length ? ages : [1, 3, 7];
+}
+
+const JOB_AGES = parseJobAges();
 const MAX_APPLIES = Number(process.env.NAUKRI_MAX_APPLIES || 40);
 const MAX_EXTERNAL_MS = 3.5 * 60 * 1000;
+const SKIP_PROFILE_REFRESH = process.env.NAUKRI_SKIP_PROFILE_REFRESH === "1";
+
+/** STEP 0 — always refresh Naukri profile resume before applies. */
+function runProfileResumeRefresh() {
+  const script = path.join(__dirname, "update_profile_resume.js");
+  const env = {
+    ...process.env,
+    // Soft: do not abort daily applies if UI scrape misses "Updated today"
+    NAUKRI_RESUME_SOFT: process.env.NAUKRI_RESUME_SOFT || "1",
+  };
+  const r = spawnSync(process.execPath, [script], {
+    env,
+    encoding: "utf8",
+    timeout: 180000,
+  });
+  let report = null;
+  try {
+    report = JSON.parse(
+      fs.readFileSync("/opt/cursor/artifacts/naukri-profile-resume.json", "utf8")
+    );
+  } catch (_) {
+    report = {
+      ok: false,
+      reason: "profile_resume_report_missing",
+      exitCode: r.status,
+      stderr: (r.stderr || "").slice(0, 500),
+      stdout: (r.stdout || "").slice(0, 500),
+    };
+  }
+  return report;
+}
 
 const SENIORITY_RE =
   /\b(architect|technical lead|tech lead|engineering manager|principal|staff|director|avp|head of|solution architect|cloud architect|azure architect|\.net lead|dotnet lead)\b/i;
@@ -433,6 +474,23 @@ async function handleExternal(context, page, detail, jobMeta, report) {
   }
   atsUrl = newPage.url();
 
+  // Hirist is a secondary board — skip login walls instead of hard-blocking the day.
+  if (/hirist\.tech|hirist\.com|\/hirist/i.test(atsUrl)) {
+    const hText = await newPage
+      .evaluate(() => (document.body?.innerText || "").slice(0, 1500))
+      .catch(() => "");
+    if (/login|sign in|register|otp/i.test(atsUrl + " " + hText)) {
+      report.skipped.push({
+        ...jobMeta,
+        reason: "hirist_login_required_skip",
+        url: atsUrl,
+        path: "hirist",
+      });
+      if (newPage !== page) await newPage.close().catch(() => {});
+      return;
+    }
+  }
+
   while (Date.now() - start < MAX_EXTERNAL_MS) {
     const url = newPage.url();
     const text = await newPage
@@ -452,6 +510,17 @@ async function handleExternal(context, page, detail, jobMeta, report) {
       /sign in|log in|login/i.test(url + text) &&
       !/application|apply|thank/i.test(text)
     ) {
+      // Hirist login wall → skip (not a hard blocker)
+      if (/hirist/i.test(url + text)) {
+        report.skipped.push({
+          ...jobMeta,
+          reason: "hirist_login_required_skip",
+          url,
+          path: "hirist",
+        });
+        if (newPage !== page) await newPage.close().catch(() => {});
+        return;
+      }
       const guest = newPage
         .locator("text=/Continue as guest|Apply without|Don't have an account/i")
         .first();
@@ -709,6 +778,7 @@ async function main() {
   const report = {
     startedAt: new Date().toISOString(),
     resume: RESUME,
+    jobAges: JOB_AGES,
     profileResumeRefresh: null,
     applied: [],
     external: [],
@@ -719,11 +789,34 @@ async function main() {
     queriesRun: [],
   };
 
-  try {
-    report.profileResumeRefresh = JSON.parse(
-      fs.readFileSync("/opt/cursor/artifacts/naukri-profile-resume.json", "utf8")
-    );
-  } catch (_) {}
+  if (!SKIP_PROFILE_REFRESH) {
+    report.profileResumeRefresh = runProfileResumeRefresh();
+    if (!report.profileResumeRefresh?.profileUpdated) {
+      console.error(
+        "WARN: Naukri profile resume not confirmed Updated today:",
+        JSON.stringify({
+          ok: report.profileResumeRefresh?.ok,
+          profileUpdated: report.profileResumeRefresh?.profileUpdated,
+          warning: report.profileResumeRefresh?.warning,
+          reason: report.profileResumeRefresh?.reason,
+          verify: report.profileResumeRefresh?.verify,
+        })
+      );
+    } else {
+      console.log(
+        "Naukri profile resume refreshed:",
+        report.profileResumeRefresh.verify?.matchedToken ||
+          report.profileResumeRefresh.verify?.updateOn ||
+          "ok"
+      );
+    }
+  } else {
+    try {
+      report.profileResumeRefresh = JSON.parse(
+        fs.readFileSync("/opt/cursor/artifacts/naukri-profile-resume.json", "utf8")
+      );
+    } catch (_) {}
+  }
 
   const { chromium } = require("playwright-core");
   const browser = await chromium.connectOverCDP(CDP);
@@ -883,6 +976,7 @@ async function main() {
   } finally {
     report.finishedAt = new Date().toISOString();
     report.counts = {
+      profileUpdated: Boolean(report.profileResumeRefresh?.profileUpdated),
       applied: report.applied.length,
       externalCompleted: report.external.length,
       blocked: report.blocked.length,

@@ -20,6 +20,19 @@
 5. **Instahyre / Indeed** — Full prompts aligned to same profile, CTC, location, and external-apply rules (prior prompts not readable from expired runs).
 6. **Notification 11 AM** — Lists all six apply automations + external-apply counts + 65 LPA note.
 
+## 2026-08-10 blocker pass
+
+- Naukri STEP 0 resume refresh hardened + auto-run from `daily_apply.js`
+- Foundit `filters.js` (title experience bands)
+- LinkedIn blacklist for Revit/Hubspot/M365/AI-only/QA
+- Instahyre `filters.js` Quality Engineering skip
+- Indeed Cloudflare docs + `INDEED_HTTP_PROXY` support in Chrome CDP launch
+
 ## Manual step required
 
 Cursor Automations API from this agent is **read-only** (`get-automation` only). Paste each `automation-prompts/0N-*.md` fenced `text` block into the matching automation’s Agent instructions and Save.
+
+**You still must** (not fixable in code alone):
+1. Indeed: home Wi‑Fi run or set `INDEED_HTTP_PROXY` / private worker
+2. Re-paste updated Naukri / Foundit / Instahyre / Indeed prompts after merge
+3. Keep General Daily disabled
