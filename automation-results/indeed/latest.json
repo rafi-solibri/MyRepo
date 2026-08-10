@@ -3,7 +3,7 @@
   "source": "home-local",
   "date": "2026-08-10",
   "startedAt": null,
-  "finishedAt": "2026-08-10T07:56:59.738Z",
+  "finishedAt": "2026-08-10T07:57:23.697Z",
   "host": "cursor",
   "ok": false,
   "counts": {
@@ -27,5 +27,5 @@
   "blockerSummary": "indeed_cloudflare_private_worker_required",
   "notes": [],
   "preflight": null,
-  "logPath": "/home/ubuntu/.cursor/indeed-home-logs/indeed-20260810T075629Z.log"
+  "logPath": null
 }
