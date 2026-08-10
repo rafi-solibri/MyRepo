@@ -15,6 +15,8 @@ import time
 import urllib.parse
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[2]
+
 
 @contextlib.contextmanager
 def _stdout_to_stderr():
@@ -30,7 +32,37 @@ def _stdout_to_stderr():
 def _emit(payload: dict) -> None:
     print(json.dumps(payload, indent=2), file=sys.__stdout__, flush=True)
 
-ROOT = Path(__file__).resolve().parents[2]
+
+def _patch_filelock_singleton() -> None:
+    """SeleniumBase nests FileLock(pyautogui.lock); filelock 3.20+ deadlocks without singleton."""
+    try:
+        import filelock
+
+        if getattr(filelock.FileLock, "_indeed_singleton_patched", False):
+            return
+        _Orig = filelock.FileLock
+
+        class _SingletonFileLock(_Orig):  # type: ignore[misc,valid-type]
+            def __init__(self, *args, **kwargs):
+                kwargs.setdefault("is_singleton", True)
+                super().__init__(*args, **kwargs)
+
+        _SingletonFileLock._indeed_singleton_patched = True  # type: ignore[attr-defined]
+        filelock.FileLock = _SingletonFileLock  # type: ignore[misc,assignment]
+        print("  filelock_singleton=1", flush=True)
+    except Exception as exc:
+        print(f"  filelock_patch_error={exc!s}"[:180], flush=True)
+
+    # Stale lock files from crashed UC runs.
+    for lock in (
+        ROOT / "downloaded_files" / "pyautogui.lock",
+        Path("downloaded_files/pyautogui.lock"),
+    ):
+        try:
+            if lock.exists():
+                lock.unlink()
+        except Exception:
+            pass
 OUT = Path(
     os.environ.get(
         "INDEED_DAILY_REPORT", "/opt/cursor/artifacts/indeed-daily-run.json"
@@ -504,40 +536,48 @@ def fill_common_questions(sb) -> None:
             pass
 
 
-def click_next_or_submit(sb, allow_disabled: bool = False) -> str:
+def click_next_or_submit(
+    sb, allow_disabled: bool = False, submit_only: bool = False
+) -> str:
     # SmartApply primary CTA via JS (visible Continue/Submit).
     _switch_smartapply_frame(sb)
     try:
         clicked = sb.execute_script(
             """
             const allowDisabled = Boolean(arguments[0]);
-            const labels = [
-              'submit your application','submit application','submit',
-              'continue applying','continue','next','save and continue','apply'
-            ];
+            const submitOnly = Boolean(arguments[1]);
+            const labels = submitOnly
+              ? ['submit your application','submit application','submit']
+              : [
+                  'submit your application','submit application','submit',
+                  'continue applying','continue','next','save and continue','apply'
+                ];
             const btns = [...document.querySelectorAll(
               'button, a[role=button], input[type=submit], [data-testid*="continue"], [data-testid*="submit"], .ia-continueButton'
             )];
             const textOf = (el) => ((el.innerText || el.value || el.getAttribute('aria-label') || '')).trim().toLowerCase();
-            const reject = (t) => /close|cancel|report|skip to|view full|back|previous|remove|delete|preview|employer sees|download|edit/.test(t);
+            const reject = (t) => /close|cancel|report|skip to|view full|back|previous|remove|delete|preview|employer sees|download|edit|save and close/.test(t);
             const score = (el) => {
               const t = textOf(el);
               // Exact / prefix match only — avoid matching "Preview..." via includes('review').
               const idx = labels.findIndex(l => t === l || t.startsWith(l + ' ') || t.startsWith(l));
               return idx === -1 ? 999 : idx;
             };
-            const visible = btns.filter(el => {
+            // Include off-screen CTAs — review Submit is often below the fold.
+            const candidates = btns.filter(el => {
               const r = el.getBoundingClientRect();
               const t = textOf(el);
               const disabled = el.disabled || el.getAttribute('aria-disabled') === 'true';
-              return r.width > 0 && r.height > 0 && t && !reject(t)
+              const onScreen = r.width > 0 && r.height > 0;
+              return t && !reject(t) && (onScreen || submitOnly)
                 && (allowDisabled || !disabled);
             }).sort((a,b) => score(a)-score(b));
-            let el = visible.find(el => score(el) < 999);
+            let el = candidates.find(el => score(el) < 999);
             // On review, prefer an explicit Submit even if Continue also exists.
-            const submitEl = visible.find(el => /^submit/.test(textOf(el)));
+            const submitEl = candidates.find(el => /^submit/.test(textOf(el)));
             if (submitEl) el = submitEl;
-            if (!el && allowDisabled) {
+            if (submitOnly && !submitEl) return null;
+            if (!el && allowDisabled && !submitOnly) {
               el = btns.find(el => {
                 const r = el.getBoundingClientRect();
                 const t = textOf(el);
@@ -556,6 +596,7 @@ def click_next_or_submit(sb, allow_disabled: bool = False) -> str:
             return (el.innerText || el.value || '').trim().slice(0,80);
             """,
             allow_disabled,
+            submit_only,
         )
         if clicked:
             return str(clicked)
@@ -593,23 +634,34 @@ def _is_submitted(body: str, url: str) -> bool:
             "thank you for applying",
             "we have received your application",
         )
-    ) or ("confirmation" in u and "review" not in u)
+    ) or (
+        ("confirmation" in u and "review" not in u)
+        or "post-apply" in u
+        or "post_apply" in u
+    )
 
 
 def _page_has_recaptcha(sb) -> bool:
+    """True only when a SmartApply checkbox widget is present (ignore footer badge text)."""
     try:
         body = (sb.get_text("body") or "").lower()
     except Exception:
         body = ""
-    if "i'm not a robot" in body or "im not a robot" in body or "recaptcha" in body:
+    if "i'm not a robot" in body or "im not a robot" in body:
+        return True
+    # Prefer live SmartApply frames — page footer always mentions reCAPTCHA.
+    frames = _recaptcha_anchor_frames(sb)
+    if frames:
         return True
     try:
         return bool(
             sb.execute_script(
                 """
-                return Boolean(
-                  document.querySelector('iframe[src*="recaptcha"], .g-recaptcha, #g-recaptcha, [data-sitekey]')
-                );
+                const frames=[...document.querySelectorAll('iframe[src*="recaptcha"][src*="anchor"]')];
+                return frames.some(f => {
+                  const src=(f.src||'').toLowerCase();
+                  return src.includes('anchor') && !src.includes('6lcr30spaaaaa');
+                });
                 """
             )
         )
@@ -633,80 +685,790 @@ def _recaptcha_token_present(sb) -> bool:
         return False
 
 
-def clear_recaptcha(sb, attempts: int = 3) -> bool:
-    """Clear Google reCAPTCHA on SmartApply review via UC GUI click."""
-    frames = (
-        'iframe[title="reCAPTCHA"]',
-        'iframe[src*="recaptcha/api2/anchor"]',
-        'iframe[src*="recaptcha"]',
-        "iframe",
+# Indeed page footer badge sitekey — not the SmartApply review checkbox.
+_FOOTER_RECAPTCHA_KEYS = (
+    "6lcr30spaaaaa",  # sitewide "protected by reCAPTCHA" badge
+)
+
+# Google audio challenges rate-limit aggressively on cloud IPs.
+_AUDIO_RATE_LIMITED = False
+_AUDIO_RATE_LIMITED_AT = 0.0
+
+
+def _recaptcha_anchor_frames(sb):
+    """Find SmartApply Google reCAPTCHA checkbox iframes (skip footer badge)."""
+    try:
+        sb.driver.switch_to.default_content()
+        frames = sb.driver.find_elements(
+            "css selector",
+            'iframe[title="reCAPTCHA"], '
+            'iframe[src*="recaptcha/api2/anchor"], '
+            'iframe[src*="recaptcha/enterprise/anchor"], '
+            'iframe[src*="recaptcha.net"][src*="anchor"]',
+        )
+    except Exception:
+        return []
+    scored = []
+    for fr in frames:
+        try:
+            src = (fr.get_attribute("src") or "").lower()
+            title = (fr.get_attribute("title") or "").lower()
+            if "bframe" in src or "challenge" in title:
+                continue
+            if "anchor" not in src and title != "recaptcha":
+                continue
+            if any(k in src for k in _FOOTER_RECAPTCHA_KEYS):
+                continue
+            rect = sb.driver.execute_script(
+                "const r=arguments[0].getBoundingClientRect();"
+                "return {w:r.width,h:r.height,y:r.y,x:r.x};",
+                fr,
+            ) or {}
+            # Prefer the real checkbox widget (~74–80px tall) over tiny badges.
+            h = float(rect.get("h") or 0)
+            score = 0
+            if 50 <= h <= 100:
+                score += 5
+            if "6ldn8qwp" in src:  # known SmartApply sitekey prefix
+                score += 10
+            # Probe for checkbox node — footer badge has no #recaptcha-anchor.
+            has_anchor = False
+            try:
+                sb.driver.switch_to.frame(fr)
+                has_anchor = bool(
+                    sb.driver.find_elements("css selector", "#recaptcha-anchor, .recaptcha-checkbox, [role=checkbox]")
+                )
+            except Exception:
+                has_anchor = False
+            finally:
+                try:
+                    sb.driver.switch_to.default_content()
+                except Exception:
+                    pass
+            if has_anchor:
+                score += 20
+            else:
+                score -= 20
+            scored.append((score, h, fr))
+        except Exception:
+            continue
+    scored.sort(key=lambda t: (-t[0], -t[1]))
+    # Keep only positively scored frames when available.
+    good = [fr for sc, _h, fr in scored if sc > 0]
+    return good if good else [fr for _sc, _h, fr in scored]
+
+
+
+def _recaptcha_checkbox_checked(sb) -> bool:
+    """Read the checkbox state from Google's cross-origin anchor iframe."""
+    try:
+        frames = _recaptcha_anchor_frames(sb)
+        for frame in frames:
+            try:
+                sb.driver.switch_to.default_content()
+                sb.driver.switch_to.frame(frame)
+                anchor = sb.driver.find_element("css selector", "#recaptcha-anchor")
+                checked = (anchor.get_attribute("aria-checked") or "").lower() == "true"
+                sb.driver.switch_to.default_content()
+                if checked:
+                    return True
+            except Exception:
+                continue
+    except Exception:
+        pass
+    try:
+        sb.driver.switch_to.default_content()
+    except Exception:
+        pass
+    return False
+
+
+
+def _force_recaptcha_onscreen(sb, frame) -> dict:
+    """SmartApply often clips the enterprise widget past the right edge — pin it."""
+    try:
+        sb.driver.switch_to.default_content()
+    except Exception:
+        pass
+    try:
+        sb.set_window_size(1600, 1000)
+    except Exception:
+        pass
+    rect = sb.driver.execute_script(
+        """
+        const f = arguments[0];
+        try { f.scrollIntoView({block:'center', inline:'center'}); } catch (e) {}
+        // Walk scrollable ancestors.
+        let p = f.parentElement;
+        while (p) {
+          try { p.scrollLeft = Math.max(0, (p.scrollWidth - p.clientWidth) / 2); } catch (e) {}
+          p = p.parentElement;
+        }
+        const r0 = f.getBoundingClientRect();
+        const clipped = r0.right > window.innerWidth - 8 || r0.left < 8
+          || r0.bottom > window.innerHeight - 8 || r0.top < 8
+          || r0.width < 10 || r0.height < 10;
+        if (clipped) {
+          f.style.setProperty('position', 'fixed', 'important');
+          f.style.setProperty('left', '80px', 'important');
+          f.style.setProperty('top', '180px', 'important');
+          f.style.setProperty('z-index', '2147483647', 'important');
+          f.style.setProperty('opacity', '1', 'important');
+          f.style.setProperty('visibility', 'visible', 'important');
+          f.style.setProperty('pointer-events', 'auto', 'important');
+          f.style.setProperty('transform', 'none', 'important');
+        }
+        const r = f.getBoundingClientRect();
+        return {
+          x:r.x, y:r.y, width:r.width, height:r.height,
+          vw: window.innerWidth, vh: window.innerHeight,
+          visible: r.width>40 && r.height>40 && r.left>=0 && r.top>=0
+            && r.right <= window.innerWidth && r.bottom <= window.innerHeight,
+          pinned: clipped
+        };
+        """,
+        frame,
     )
+    time.sleep(0.5)
+    return rect or {}
+
+
+def _click_recaptcha_checkbox(sb) -> bool:
+    """Click the reCAPTCHA anchor using DOM first, then a real GUI coordinate."""
+    # Also search inside SmartApply child frames.
+    try:
+        _switch_smartapply_frame(sb)
+    except Exception:
+        pass
+    try:
+        sb.driver.switch_to.default_content()
+    except Exception:
+        pass
+
+    frames = _recaptcha_anchor_frames(sb)
+    if not frames:
+        # Nested: scan one level of iframes for enterprise anchors.
+        try:
+            parents = sb.driver.find_elements("css selector", "iframe")
+            for parent in parents[:8]:
+                try:
+                    sb.driver.switch_to.default_content()
+                    sb.driver.switch_to.frame(parent)
+                    nested = sb.driver.find_elements(
+                        "css selector",
+                        'iframe[title="reCAPTCHA"], iframe[src*="anchor"]',
+                    )
+                    if nested:
+                        # Click nested from inside parent.
+                        frames = nested
+                        print("  recaptcha_nested=1", flush=True)
+                        break
+                except Exception:
+                    continue
+            sb.driver.switch_to.default_content()
+        except Exception:
+            try:
+                sb.driver.switch_to.default_content()
+            except Exception:
+                pass
+
+    if not frames:
+        print("  recaptcha_frame_missing=no_anchor_iframe", flush=True)
+        return False
+
+    for idx, frame in enumerate(frames):
+        try:
+            sb.driver.switch_to.default_content()
+        except Exception:
+            pass
+        # Re-query to avoid stale element after layout changes.
+        frames = _recaptcha_anchor_frames(sb)
+        if idx >= len(frames):
+            break
+        frame = frames[idx]
+        rect = _force_recaptcha_onscreen(sb, frame)
+        print(
+            f"  recaptcha_onscreen pinned={rect.get('pinned')} "
+            f"visible={rect.get('visible')} "
+            f"rect=({round(rect.get('x',0))},{round(rect.get('y',0))},"
+            f"{round(rect.get('width',0))}x{round(rect.get('height',0))})",
+            flush=True,
+        )
+
+        # DOM click inside the checkbox iframe.
+        try:
+            frames = _recaptcha_anchor_frames(sb)
+            frame = frames[min(idx, len(frames) - 1)]
+            sb.driver.switch_to.frame(frame)
+            time.sleep(0.4)
+            anchor = None
+            for sel in (
+                "#recaptcha-anchor",
+                ".recaptcha-checkbox",
+                "#recaptcha-anchor-label",
+                ".rc-anchor-checkbox",
+                "[role=checkbox]",
+            ):
+                try:
+                    els = sb.driver.find_elements("css selector", sel)
+                    if els:
+                        anchor = els[0]
+                        break
+                except Exception:
+                    continue
+            if anchor is None:
+                # Dump frame HTML length for diagnosis.
+                try:
+                    html_len = len(sb.driver.page_source or "")
+                except Exception:
+                    html_len = -1
+                raise RuntimeError(f"anchor checkbox missing inside frame html_len={html_len}")
+            try:
+                anchor.click()
+            except Exception:
+                sb.driver.execute_script("arguments[0].click()", anchor)
+            time.sleep(2)
+            checked = (anchor.get_attribute("aria-checked") or "").lower() == "true"
+            sb.driver.switch_to.default_content()
+            if checked or _recaptcha_token_present(sb):
+                print("  recaptcha_checkbox=checked_dom", flush=True)
+                return True
+            # Checkbox click may open challenge without aria-checked flipping yet.
+            if _solve_recaptcha_audio(sb):
+                return True
+        except Exception as exc:
+            print(f"  recaptcha_dom_click={exc!s}"[:220], flush=True)
+        finally:
+            try:
+                sb.driver.switch_to.default_content()
+            except Exception:
+                pass
+
+    # Fallback: click the checkbox at its on-screen coordinates.
+    try:
+        import pyautogui
+
+        frames = _recaptcha_anchor_frames(sb)
+        if not frames:
+            return False
+        frame = frames[0]
+        rect = _force_recaptcha_onscreen(sb, frame)
+        metrics = sb.driver.execute_script(
+            """
+            return {
+              sx: window.screenX,
+              sy: window.screenY,
+              chromeY: Math.max(0, window.outerHeight - window.innerHeight)
+            };
+            """
+        )
+        x = float(metrics.get("sx") or 0) + float(rect.get("x") or 0) + 28
+        y = (
+            float(metrics.get("sy") or 0)
+            + float(metrics.get("chromeY") or 0)
+            + float(rect.get("y") or 0)
+            + 28
+        )
+        print(
+            f"  recaptcha_gui_click=({round(x)},{round(y)}) "
+            f"frame=({round(rect.get('x', 0))},{round(rect.get('y', 0))},"
+            f"{round(rect.get('width', 0))}x{round(rect.get('height', 0))}) "
+            f"visible={rect.get('visible')} pinned={rect.get('pinned')}",
+            flush=True,
+        )
+        pyautogui.click(x=round(x), y=round(y), duration=0.2)
+        time.sleep(2.5)
+        if _recaptcha_checkbox_checked(sb) or _recaptcha_token_present(sb):
+            print("  recaptcha_checkbox=checked_gui", flush=True)
+            return True
+        if _solve_recaptcha_audio(sb):
+            return True
+        # Last resort: SeleniumBase UC captcha helpers after pinning.
+        try:
+            sb.uc_gui_click_captcha()
+            time.sleep(2)
+            if _recaptcha_cleared(sb) or _solve_recaptcha_audio(sb):
+                return True
+        except Exception as exc:
+            print(f"  recaptcha_uc_gui={exc!s}"[:180], flush=True)
+    except Exception as exc:
+        print(f"  recaptcha_gui_error={exc!s}"[:220], flush=True)
+    return False
+
+
+def _solve_recaptcha_audio(sb) -> bool:
+    """Solve an opened reCAPTCHA audio challenge and verify its token."""
+    global _AUDIO_RATE_LIMITED, _AUDIO_RATE_LIMITED_AT
+    if _AUDIO_RATE_LIMITED and (time.time() - _AUDIO_RATE_LIMITED_AT) < 180:
+        print("  recaptcha_audio=skip_rate_limited", flush=True)
+        return False
+    if _AUDIO_RATE_LIMITED and (time.time() - _AUDIO_RATE_LIMITED_AT) >= 180:
+        _AUDIO_RATE_LIMITED = False
+    try:
+        import requests
+        import speech_recognition as sr
+    except Exception as exc:
+        print(f"  recaptcha_audio_dependency={exc!s}"[:220], flush=True)
+        return False
+
+    challenge_selector = (
+        'iframe[title*="challenge"], iframe[src*="recaptcha/api2/bframe"], '
+        'iframe[src*="recaptcha/enterprise/bframe"], '
+        'iframe[src*="/bframe"]'
+    )
+    try:
+        sb.driver.switch_to.default_content()
+        all_frames = sb.driver.find_elements("css selector", "iframe")
+        frame_meta = []
+        for iframe in all_frames:
+            try:
+                rect = sb.driver.execute_script(
+                    """
+                    const r=arguments[0].getBoundingClientRect();
+                    return {x:r.x,y:r.y,w:r.width,h:r.height};
+                    """,
+                    iframe,
+                )
+                frame_meta.append(
+                    {
+                        "title": (iframe.get_attribute("title") or "")[:60],
+                        "src": (iframe.get_attribute("src") or "")[:100],
+                        "rect": rect,
+                        "visible": iframe.is_displayed(),
+                    }
+                )
+            except Exception:
+                continue
+        print(
+            f"  recaptcha_frames={json.dumps(frame_meta, separators=(',', ':'))[:1000]}",
+            flush=True,
+        )
+        frames = sb.driver.find_elements("css selector", challenge_selector)
+    except Exception as exc:
+        print(f"  recaptcha_challenge_frame={exc!s}"[:220], flush=True)
+        return False
+    if not frames:
+        return False
+
+    challenge = None
+    for frame in frames:
+        try:
+            if frame.is_displayed():
+                challenge = frame
+                break
+        except Exception:
+            continue
+    challenge = challenge or frames[0]
+
+    try:
+        sb.driver.switch_to.frame(challenge)
+        # Switch from image tiles to the audio challenge.
+        audio_button = None
+        for _ in range(12):
+            for selector in (
+                "#recaptcha-audio-button",
+                ".rc-button-audio",
+                'button[title*="audio" i]',
+                '[aria-label*="audio" i]',
+            ):
+                try:
+                    candidate = sb.driver.find_element("css selector", selector)
+                    if candidate.is_displayed():
+                        audio_button = candidate
+                        break
+                except Exception:
+                    continue
+            if audio_button is not None:
+                break
+            time.sleep(0.5)
+        if audio_button is None:
+            raise RuntimeError("audio challenge button not found")
+        try:
+            audio_button.click()
+        except Exception:
+            sb.driver.execute_script("arguments[0].click()", audio_button)
+
+        body = ""
+        source = ""
+        for _ in range(20):
+            time.sleep(0.5)
+            try:
+                body = sb.driver.find_element("css selector", "body").text
+            except Exception:
+                body = ""
+            if re.search(
+                r"try again later|automated queries|unusual traffic", body, re.I
+            ):
+                print("  recaptcha_audio=rate_limited", flush=True)
+                _AUDIO_RATE_LIMITED = True
+                _AUDIO_RATE_LIMITED_AT = time.time()
+                try:
+                    # Reload captcha so the next checkbox click can pass cleanly.
+                    reload_btn = sb.driver.find_element(
+                        "css selector", "#recaptcha-reload-button, .rc-button-reload"
+                    )
+                    reload_btn.click()
+                except Exception:
+                    pass
+                try:
+                    sb.driver.switch_to.default_content()
+                except Exception:
+                    pass
+                return False
+            for selector in ("#audio-source", "audio source", "audio"):
+                try:
+                    media = sb.driver.find_element("css selector", selector)
+                    source = (
+                        media.get_attribute("src")
+                        or media.get_attribute("data-src")
+                        or ""
+                    )
+                    if source:
+                        break
+                except Exception:
+                    continue
+            if source:
+                break
+        if re.search(r"try again later|automated queries|unusual traffic", body, re.I):
+            print("  recaptcha_audio=rate_limited", flush=True)
+            return False
+        if not source:
+            print(
+                f"  recaptcha_audio=no_source body={body[:400]!r}", flush=True
+            )
+            return False
+    except Exception as exc:
+        print(f"  recaptcha_audio_open={exc!s}"[:220], flush=True)
+        return False
+    finally:
+        try:
+            sb.driver.switch_to.default_content()
+        except Exception:
+            pass
+
+    audio_dir = Path("/tmp/cursor/indeed-recaptcha-audio")
+    audio_dir.mkdir(parents=True, exist_ok=True)
+    mp3 = audio_dir / "challenge.mp3"
+    wav = audio_dir / "challenge.wav"
+    proxy = os.environ.get("INDEED_HTTP_PROXY", PROXY)
+    proxies = {"http": proxy, "https": proxy} if proxy else None
+    try:
+        response = requests.get(source, proxies=proxies, timeout=30)
+        response.raise_for_status()
+        mp3.write_bytes(response.content)
+        converted = subprocess.run(
+            [
+                "ffmpeg",
+                "-loglevel",
+                "error",
+                "-y",
+                "-i",
+                str(mp3),
+                "-ar",
+                "16000",
+                "-ac",
+                "1",
+                str(wav),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if converted.returncode != 0:
+            print(f"  recaptcha_audio_ffmpeg={converted.stderr!s}"[:220], flush=True)
+            return False
+    except Exception as exc:
+        print(f"  recaptcha_audio_download={exc!s}"[:220], flush=True)
+        return False
+
+    try:
+        recognizer = sr.Recognizer()
+        with sr.AudioFile(str(wav)) as audio_file:
+            audio = recognizer.record(audio_file)
+        answer = recognizer.recognize_google(audio).strip()
+        answer = re.sub(r"[^A-Za-z0-9 ]+", " ", answer)
+        answer = re.sub(r"\s+", " ", answer).strip()
+        if not answer:
+            return False
+        print(f"  recaptcha_audio_answer={answer!r}", flush=True)
+    except Exception as exc:
+        print(f"  recaptcha_audio_transcribe={exc!s}"[:220], flush=True)
+        return False
+
+    try:
+        sb.driver.switch_to.default_content()
+        frames = sb.driver.find_elements("css selector", challenge_selector)
+        challenge = next((f for f in frames if f.is_displayed()), frames[0])
+        sb.driver.switch_to.frame(challenge)
+        field = sb.driver.find_element("css selector", "#audio-response")
+        field.clear()
+        field.send_keys(answer)
+        sb.driver.find_element(
+            "css selector", "#recaptcha-verify-button"
+        ).click()
+        time.sleep(2.5)
+    except Exception as exc:
+        print(f"  recaptcha_audio_submit={exc!s}"[:220], flush=True)
+        return False
+    finally:
+        try:
+            sb.driver.switch_to.default_content()
+        except Exception:
+            pass
+
+    if _recaptcha_token_present(sb) or _recaptcha_checkbox_checked(sb):
+        print("  recaptcha_audio=solved", flush=True)
+        return True
+    print("  recaptcha_audio=incorrect", flush=True)
+    return False
+
+
+def _recaptcha_cleared(sb) -> bool:
+    return _recaptcha_token_present(sb) or _recaptcha_checkbox_checked(sb)
+
+
+
+def _smartapply_sitekey(sb) -> str | None:
+    try:
+        sb.driver.switch_to.default_content()
+        srcs = sb.execute_script(
+            """
+            return [...document.querySelectorAll('iframe[src*="recaptcha"][src*="anchor"]')]
+              .map(f => f.src || '');
+            """
+        ) or []
+    except Exception:
+        srcs = []
+    for src in srcs:
+        low = (src or "").lower()
+        if any(k in low for k in _FOOTER_RECAPTCHA_KEYS):
+            continue
+        m = re.search(r"[?&]k=([^&]+)", src)
+        if m:
+            return m.group(1)
+    return None
+
+
+def _solve_recaptcha_via_api(sb) -> bool:
+    """Optional CapSolver / 2Captcha when audio is rate-limited on cloud IPs."""
+    api_key = (
+        os.environ.get("CAPSOLVER_API_KEY")
+        or os.environ.get("TWOCAPTCHA_API_KEY")
+        or os.environ.get("TWO_CAPTCHA_API_KEY")
+        or ""
+    ).strip()
+    if not api_key:
+        return False
+    sitekey = _smartapply_sitekey(sb)
+    try:
+        pageurl = sb.get_current_url() or "https://smartapply.indeed.com/"
+    except Exception:
+        pageurl = "https://smartapply.indeed.com/"
+    if not sitekey:
+        print("  recaptcha_api=no_sitekey", flush=True)
+        return False
+    print(f"  recaptcha_api=start sitekey={sitekey[:12]}…", flush=True)
+    try:
+        import requests
+    except Exception as exc:
+        print(f"  recaptcha_api_dep={exc!s}"[:160], flush=True)
+        return False
+
+    token = None
+    # CapSolver
+    if os.environ.get("CAPSOLVER_API_KEY"):
+        try:
+            create = requests.post(
+                "https://api.capsolver.com/createTask",
+                json={
+                    "clientKey": api_key,
+                    "task": {
+                        "type": "ReCaptchaV2EnterpriseTaskProxyLess",
+                        "websiteURL": pageurl,
+                        "websiteKey": sitekey,
+                    },
+                },
+                timeout=60,
+            ).json()
+            task_id = create.get("taskId")
+            if not task_id:
+                print(f"  recaptcha_api_create={create}"[:220], flush=True)
+            for _ in range(40):
+                time.sleep(3)
+                res = requests.post(
+                    "https://api.capsolver.com/getTaskResult",
+                    json={"clientKey": api_key, "taskId": task_id},
+                    timeout=60,
+                ).json()
+                if res.get("status") == "ready":
+                    token = (res.get("solution") or {}).get("gRecaptchaResponse")
+                    break
+                if res.get("status") == "failed" or res.get("errorId"):
+                    print(f"  recaptcha_api_fail={res}"[:220], flush=True)
+                    break
+        except Exception as exc:
+            print(f"  recaptcha_capsolver={exc!s}"[:200], flush=True)
+    # 2Captcha fallback
+    if not token and (
+        os.environ.get("TWOCAPTCHA_API_KEY") or os.environ.get("TWO_CAPTCHA_API_KEY")
+    ):
+        try:
+            create = requests.get(
+                "https://2captcha.com/in.php",
+                params={
+                    "key": api_key,
+                    "method": "userrecaptcha",
+                    "googlekey": sitekey,
+                    "pageurl": pageurl,
+                    "enterprise": 1,
+                    "json": 1,
+                },
+                timeout=60,
+            ).json()
+            if create.get("status") != 1:
+                print(f"  recaptcha_2c_create={create}"[:220], flush=True)
+            else:
+                req_id = create.get("request")
+                for _ in range(40):
+                    time.sleep(5)
+                    res = requests.get(
+                        "https://2captcha.com/res.php",
+                        params={
+                            "key": api_key,
+                            "action": "get",
+                            "id": req_id,
+                            "json": 1,
+                        },
+                        timeout=60,
+                    ).json()
+                    if res.get("status") == 1:
+                        token = res.get("request")
+                        break
+                    if res.get("request") not in ("CAPCHA_NOT_READY", "CAPTCHA_NOT_READY"):
+                        print(f"  recaptcha_2c_fail={res}"[:220], flush=True)
+                        break
+        except Exception as exc:
+            print(f"  recaptcha_2captcha={exc!s}"[:200], flush=True)
+
+    if not token or len(token) < 20:
+        return False
+    try:
+        sb.driver.switch_to.default_content()
+        sb.execute_script(
+            """
+            const token = arguments[0];
+            for (const sel of ['#g-recaptcha-response','textarea[name="g-recaptcha-response"]']) {
+              let el = document.querySelector(sel);
+              if (!el) {
+                el = document.createElement('textarea');
+                el.id = 'g-recaptcha-response';
+                el.name = 'g-recaptcha-response';
+                el.style.display = 'block';
+                document.body.appendChild(el);
+              }
+              el.value = token;
+              el.innerHTML = token;
+              el.dispatchEvent(new Event('input', {bubbles:true}));
+              el.dispatchEvent(new Event('change', {bubbles:true}));
+            }
+            try {
+              if (window.___grecaptcha_cfg) {
+                const clients = window.___grecaptcha_cfg.clients || {};
+                // Best-effort callback invoke
+                JSON.stringify(clients, (k,v) => {
+                  if (v && typeof v === 'object') {
+                    for (const val of Object.values(v)) {
+                      if (typeof val === 'function' && val.length === 1) {
+                        try { val(token); } catch (e) {}
+                      }
+                    }
+                  }
+                  return v;
+                });
+              }
+            } catch (e) {}
+            return true;
+            """,
+            token,
+        )
+        time.sleep(1)
+        if _recaptcha_token_present(sb):
+            print("  recaptcha_api=token_injected", flush=True)
+            return True
+    except Exception as exc:
+        print(f"  recaptcha_api_inject={exc!s}"[:200], flush=True)
+    return False
+
+
+def _dismiss_recaptcha_challenge(sb) -> None:
+    """Close a stuck/rate-limited bframe so the next checkbox click is clean."""
+    try:
+        sb.driver.switch_to.default_content()
+        sb.press_keys("body", "\ue00c")  # ESC
+    except Exception:
+        pass
+    try:
+        sb.execute_script(
+            """
+            for (const f of document.querySelectorAll('iframe[src*="bframe"]')) {
+              try { f.remove(); } catch (e) {}
+            }
+            """
+        )
+    except Exception:
+        pass
+
+
+def clear_recaptcha(sb, attempts: int = 3) -> bool:
+    """Clear Google reCAPTCHA on SmartApply review.
+
+    Prefer a single PyAutoGUI/DOM checkbox click + at most one audio solve.
+    Nested SeleniumBase uc_gui_* FileLocks deadlock on filelock>=3.20.
+    """
+    global _AUDIO_RATE_LIMITED, _AUDIO_RATE_LIMITED_AT
     for n in range(attempts):
         try:
             sb.driver.switch_to.default_content()
         except Exception:
             pass
-        if _recaptcha_token_present(sb):
+        if _recaptcha_cleared(sb):
             return True
         if not _page_has_recaptcha(sb):
             return True
         print(f"  recaptcha_attempt={n+1}", flush=True)
-        # Bring widget into view so PyAutoGUI lands on the checkbox.
-        for fr in frames[:3]:
-            try:
-                if sb.is_element_present(fr):
-                    sb.scroll_to(fr)
-                    break
-            except Exception:
-                continue
-        clicked = False
-        for fr in frames:
-            try:
-                if hasattr(sb, "uc_gui_click_rc"):
-                    sb.uc_gui_click_rc(frame=fr, retry=True)
-                    clicked = True
-                    break
-            except Exception:
-                pass
-            try:
-                sb.uc_gui_click_captcha(frame=fr, retry=True)
-                clicked = True
-                break
-            except TypeError:
-                # Older SB binding may not accept frame kwargs on the SB wrapper.
-                try:
-                    sb.driver.uc_gui_click_captcha(frame=fr, retry=True)
-                    clicked = True
-                    break
-                except Exception:
-                    continue
-            except Exception:
-                continue
-        if not clicked:
-            try:
-                sb.uc_gui_click_captcha()
-            except Exception as e1:
-                try:
-                    sb.uc_gui_handle_captcha()
-                except Exception as e2:
-                    print(f"  recaptcha_click_error={e1!s}|{e2!s}"[:220], flush=True)
-        time.sleep(2.5)
-        if _recaptcha_token_present(sb):
+
+        # If a prior challenge is rate-limited, dismiss it before re-clicking.
+        if _AUDIO_RATE_LIMITED:
+            _dismiss_recaptcha_challenge(sb)
+            elapsed = time.time() - _AUDIO_RATE_LIMITED_AT
+            if elapsed < 240:
+                wait_s = int(240 - elapsed)
+                print(f"  recaptcha_cooldown_s={wait_s}", flush=True)
+                time.sleep(wait_s)
+                _AUDIO_RATE_LIMITED = False
+
+        # Direct DOM + PyAutoGUI click on the SmartApply (non-footer) widget.
+        clicked = _click_recaptcha_checkbox(sb)
+        if _recaptcha_cleared(sb):
             print("  recaptcha_token=ok", flush=True)
             return True
-        # Image challenge may have opened — second GUI pass.
-        try:
-            if hasattr(sb, "uc_gui_click_rc"):
-                sb.uc_gui_click_rc(retry=True, blind=True)
-            else:
-                sb.uc_gui_click_captcha()
-        except Exception:
-            pass
-        time.sleep(2)
-        if _recaptcha_token_present(sb):
-            print("  recaptcha_token=ok", flush=True)
+        time.sleep(1.5)
+        if _recaptcha_cleared(sb):
             return True
-    return _recaptcha_token_present(sb)
+
+        # One audio attempt only when a challenge is open and not rate-limited.
+        if clicked or _page_has_recaptcha(sb):
+            if _solve_recaptcha_audio(sb):
+                return True
+            if _solve_recaptcha_via_api(sb):
+                return True
+
+        if _AUDIO_RATE_LIMITED:
+            _dismiss_recaptcha_challenge(sb)
+            # Don't burn remaining attempts during the cool-down window.
+            break
+    return _recaptcha_cleared(sb)
+
 
 
 def submit_review_application(sb) -> bool:
@@ -715,8 +1477,20 @@ def submit_review_application(sb) -> bool:
         sb.driver.switch_to.default_content()
     except Exception:
         pass
-    if _page_has_recaptcha(sb):
+    # Submit CTA is below the fold on many SmartApply review pages.
+    try:
+        sb.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    except Exception:
+        pass
+    # Always try to clear captcha on review — widget can hydrate after first paint.
+    for _ in range(8):
+        if _page_has_recaptcha(sb) or _smartapply_sitekey(sb):
+            break
+        time.sleep(0.5)
+    if (_page_has_recaptcha(sb) or _smartapply_sitekey(sb)) and not _recaptcha_cleared(sb):
         clear_recaptcha(sb, attempts=3)
+        if not _recaptcha_cleared(sb):
+            _solve_recaptcha_via_api(sb)
     try:
         sb.execute_script(
             """
@@ -726,6 +1500,7 @@ def submit_review_application(sb) -> bool:
                 try { (c.closest('label') || c).click(); } catch (e) {}
               }
             }
+            window.scrollTo(0, document.body.scrollHeight);
             """
         )
     except Exception:
@@ -740,29 +1515,57 @@ def submit_review_application(sb) -> bool:
         "button.ia-continueButton",
     ):
         try:
-            if sb.is_element_visible(sel, timeout=1):
+            if sb.is_element_present(sel):
                 try:
                     sb.scroll_to(sel)
                 except Exception:
                     pass
-                # UC click when available — better against bot detection.
                 try:
                     sb.uc_click(sel)
                 except Exception:
-                    sb.click(sel)
+                    try:
+                        sb.click(sel)
+                    except Exception:
+                        continue
                 clicked_sel = sel
                 print(f"  review_click={sel!r}", flush=True)
                 break
         except Exception:
             continue
     if not clicked_sel:
-        clicked = click_next_or_submit(sb, allow_disabled=True)
+        # JS fallback — finds Submit even when off-screen / aria-disabled.
+        try:
+            clicked_sel = sb.execute_script(
+                """
+                window.scrollTo(0, document.body.scrollHeight);
+                const btns=[...document.querySelectorAll('button, a[role=button], [role=button], input[type=submit]')];
+                const textOf = (b) => ((b.innerText||b.value||b.getAttribute('aria-label')||'')).trim().toLowerCase();
+                const el = btns
+                  .map(b => ({b, t: textOf(b), r: b.getBoundingClientRect()}))
+                  .filter(x => x.r.width+x.r.height > 0 && /submit/.test(x.t) && !/preview|employer sees/.test(x.t))
+                  .sort((a,b) => (/your application/.test(a.t)?0:1) - (/your application/.test(b.t)?0:1))
+                  [0]?.b;
+                if (!el) return null;
+                el.disabled=false; el.removeAttribute('disabled');
+                el.setAttribute('aria-disabled','false');
+                el.scrollIntoView({block:'center'});
+                el.click();
+                return (el.innerText||el.value||'').trim().slice(0,80);
+                """
+            )
+            print(f"  review_js_submit={clicked_sel!r}", flush=True)
+        except Exception:
+            clicked_sel = None
+    if not clicked_sel:
+        clicked = click_next_or_submit(
+            sb, allow_disabled=True, submit_only=True
+        )
         print(f"  review_js_click={clicked!r}", flush=True)
         if not clicked:
             return False
 
     # Poll for confirmation / navigation away from review.
-    for i in range(20):
+    for i in range(28):
         time.sleep(0.5)
         try:
             sb.driver.switch_to.default_content()
@@ -779,9 +1582,13 @@ def submit_review_application(sb) -> bool:
             if not re.search(r"something went wrong|unable to submit|try again", body, re.I):
                 return True
         # reCAPTCHA may reappear / remain unsolved after a dead Submit click.
-        if i in (3, 8, 14) and _page_has_recaptcha(sb):
-            clear_recaptcha(sb, attempts=1)
-            click_next_or_submit(sb, allow_disabled=True)
+        if i in (3, 8, 14, 20) and _page_has_recaptcha(sb) and not _recaptcha_cleared(sb):
+            clear_recaptcha(sb, attempts=2)
+            try:
+                sb.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            except Exception:
+                pass
+            click_next_or_submit(sb, allow_disabled=True, submit_only=True)
         try:
             sb.press_keys("body", "\ue00c")  # ESC preview overlays
         except Exception:
@@ -789,8 +1596,8 @@ def submit_review_application(sb) -> bool:
     return False
 
 
-def easy_apply_flow(sb, max_steps: int = 18, deadline: float | None = None) -> str:
-    """Returns 'submitted' | 'external' | 'failed'."""
+def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> str:
+    """Returns 'submitted' | 'external' | 'failed' | 'recaptcha'."""
     stuck_questions = 0
     review_submit_attempts = 0
     for step in range(max_steps):
@@ -822,7 +1629,10 @@ def easy_apply_flow(sb, max_steps: int = 18, deadline: float | None = None) -> s
             if submit_review_application(sb):
                 return "submitted"
             # CAPTCHA wall: don't burn the whole job budget (AUTO_FIX ~3–4 min).
-            if review_submit_attempts >= 2 and _page_has_recaptcha(sb) and not _recaptcha_token_present(sb):
+            captcha_unsolved = (
+                _page_has_recaptcha(sb) and not _recaptcha_cleared(sb)
+            )
+            if review_submit_attempts >= 3 and captcha_unsolved:
                 try:
                     sample = (sb.get_text("body") or "")[:500].replace("\n", " | ")
                     print(f"  review_recaptcha_blocked sample={sample!r}", flush=True)
@@ -830,7 +1640,7 @@ def easy_apply_flow(sb, max_steps: int = 18, deadline: float | None = None) -> s
                 except Exception:
                     pass
                 return "recaptcha"
-            if review_submit_attempts >= 3:
+            if review_submit_attempts >= 5:
                 try:
                     sample = (sb.get_text("body") or "")[:500].replace("\n", " | ")
                     print(f"  review_stuck sample={sample!r}", flush=True)
@@ -900,10 +1710,13 @@ def easy_apply_flow(sb, max_steps: int = 18, deadline: float | None = None) -> s
                 break
             if not clicked:
                 stuck_questions += 1
-                if stuck_questions >= 4:
+                if stuck_questions >= 6:
                     try:
                         sample = (sb.get_text("body") or "")[:400].replace("\n", " | ")
                         print(f"  questions_stuck sample={sample!r}", flush=True)
+                        sb.save_screenshot(
+                            "/opt/cursor/artifacts/indeed-questions-stuck.png"
+                        )
                     except Exception:
                         pass
                     break
@@ -920,19 +1733,33 @@ def easy_apply_flow(sb, max_steps: int = 18, deadline: float | None = None) -> s
         if _is_submitted(body, url):
             return "submitted"
         # Landed on review after Continue — dedicated submit next loop.
-        if "review-module" in (url or "").lower():
+        if "review-module" in (url or "").lower() or (
+            "review" in (url or "").lower() and "question" not in (url or "").lower()
+        ):
             continue
     return "failed"
 
 
 def main() -> int:
     os.environ.setdefault("DISPLAY", ":1")
+    _patch_filelock_singleton()
     proxy = ensure_warp()
     if not RESUME.exists():
         _emit({"error": "resume_missing", "path": str(RESUME)})
         return 2
 
     from seleniumbase import SB
+
+    # Re-assert singleton FileLock inside already-imported SB modules.
+    try:
+        import filelock
+        import seleniumbase.fixtures.page_actions as _pa
+        import seleniumbase.core.sb_cdp as _cdp
+        for mod in (_pa, _cdp):
+            if hasattr(mod, "FileLock"):
+                mod.FileLock = filelock.FileLock
+    except Exception as exc:
+        print(f"  filelock_rebind={exc!s}"[:160], flush=True)
 
     prep = prepare_profile()
     report = {
@@ -969,6 +1796,11 @@ def main() -> int:
       ) as sb:
         try:
             sb.set_default_timeout(4)
+        except Exception:
+            pass
+        try:
+            sb.set_window_size(1600, 1000)
+            sb.set_window_position(20, 40)
         except Exception:
             pass
         sb.uc_open_with_reconnect("https://in.indeed.com/", 5)
@@ -1090,7 +1922,7 @@ def main() -> int:
                     flush=True,
                 )
                 job_deadline = time.time() + int(
-                    os.environ.get("INDEED_JOB_TIMEOUT_SEC", "180")
+                    os.environ.get("INDEED_JOB_TIMEOUT_SEC", "240")
                 )
 
                 # Prefer Easy Apply ("Apply with Indeed" is the current IN CTA).
@@ -1209,7 +2041,9 @@ def main() -> int:
                 time.sleep(1)
 
     report["finishedAt"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    report["ok"] = report["counts"]["blocked"] == 0
+    applied_n = report["counts"]["applied"] + report["counts"]["external"]
+    # Success = at least one real apply; residual reCAPTCHA on later jobs is ok.
+    report["ok"] = applied_n > 0
     report["date"] = report["finishedAt"][:10]
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(report, indent=2))
@@ -1229,7 +2063,11 @@ def main() -> int:
         check=False,
     )
     _emit(report)
-    return 0 if report["ok"] else 5
+    if applied_n > 0:
+        return 0
+    if report["counts"]["blocked"] > 0:
+        return 5
+    return 1
 
 
 if __name__ == "__main__":

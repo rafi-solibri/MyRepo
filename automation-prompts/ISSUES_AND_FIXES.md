@@ -88,6 +88,13 @@ opened as a draft PR — not left as report-only notes.
 | Agent prompts over-filtering (“listed max ~15–50”, soft stop ~20) | Apply-bias + title-first + aim 40–50+ across `automation-prompts/0*.md` |
 | Stale ENV_READINESS “5/6 missing logins” | Updated for session-seed reality |
 
+## Fixed for 2026-08-10 Indeed Easy Apply 0-submit
+
+| Issue | Fix |
+| --- | --- |
+| Cloud runs reached review but 0 applied (`easy_apply_recaptcha` / `easy_apply_incomplete`) | Ported audio reCAPTCHA solver + direct checkbox click from `cursor/indeed-daily-apply-job-e0ec`; recognize `/post-apply`; scroll-to-Submit; treat checkbox-checked as cleared; longer job timeout; install `SpeechRecognition`/`pydub` in `cloud-agent-install.sh` |
+| SmartApply reCAPTCHA clicked footer badge / FileLock deadlock / audio rate-limit → 0 submits | Prefer SmartApply sitekey `6Ldn8Qwp` (skip footer `6Lcr30sp`); `post-apply` confirmation; submit-only CTA; filelock singleton + avoid nested `uc_gui_*`; audio rate-limit cool-down/dismiss; `SpeechRecognition` in install |
+
 ## Fixed for 2026-08-10 Indeed preflight false exit 5
 
 | Issue | Fix |
