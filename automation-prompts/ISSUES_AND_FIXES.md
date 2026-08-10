@@ -13,7 +13,7 @@ opened as a draft PR — not left as report-only notes.
 | Easy Apply stuck on `questions-module` (Continue never clicked) | Hardened `fill_common_questions` in `uc_daily_apply.py`: React InputEvents, radio-group defaults, required text/select fill, iframe awareness |
 | Review step clicked **Preview what the employer sees** and trapped in `about:srcdoc` | CTA scorer excludes Preview/Edit/Download; skip `about:` frames; dedicated `submit_review_application()` |
 | `daily_apply.js` timed out / failed to parse UC stdout logs | Parse JSON tail; read `indeed-daily-run.json` artifact; raise UC timeout default to 30m |
-| Google **reCAPTCHA** checkbox on Review was not actually clicked by generic UC helper | Target the anchor iframe directly, verify `aria-checked` / response token, and fall back to PyAutoGUI using the iframe’s viewport coordinates |
+| Google **reCAPTCHA** checkbox on Review opened an image challenge after a direct click | Target/verify the anchor iframe, then use the accessible audio challenge with `SpeechRecognition`; PyAutoGUI remains the coordinate fallback |
 
 ## Fixed in this repo
 

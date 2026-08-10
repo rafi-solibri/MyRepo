@@ -22,7 +22,9 @@ PIP_INSTALL=("$PY" -m pip install --user --upgrade)
 if "$PY" -m pip install --help 2>/dev/null | grep -q -- '--break-system-packages'; then
   PIP_INSTALL+=(--break-system-packages)
 fi
-"${PIP_INSTALL[@]}" playwright beautifulsoup4 lxml requests pytest seleniumbase PyAutoGUI pysocks
+"${PIP_INSTALL[@]}" \
+  playwright beautifulsoup4 lxml requests pytest \
+  seleniumbase PyAutoGUI pysocks SpeechRecognition pydub
 
 # install-deps shells out to apt (escalating with sudo itself) and is
 # best-effort: if sudo/apt are unavailable the base image already ships the

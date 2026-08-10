@@ -734,6 +734,149 @@ def _click_recaptcha_checkbox(sb) -> bool:
     return False
 
 
+def _solve_recaptcha_audio(sb) -> bool:
+    """Solve an opened reCAPTCHA audio challenge and verify its token."""
+    try:
+        import requests
+        import speech_recognition as sr
+    except Exception as exc:
+        print(f"  recaptcha_audio_dependency={exc!s}"[:220], flush=True)
+        return False
+
+    challenge_selector = (
+        'iframe[title*="challenge"], iframe[src*="recaptcha/api2/bframe"], '
+        'iframe[src*="/bframe"]'
+    )
+    try:
+        sb.driver.switch_to.default_content()
+        frames = sb.driver.find_elements("css selector", challenge_selector)
+    except Exception as exc:
+        print(f"  recaptcha_challenge_frame={exc!s}"[:220], flush=True)
+        return False
+    if not frames:
+        return False
+
+    challenge = None
+    for frame in frames:
+        try:
+            if frame.is_displayed():
+                challenge = frame
+                break
+        except Exception:
+            continue
+    challenge = challenge or frames[0]
+
+    try:
+        sb.driver.switch_to.frame(challenge)
+        # Switch from image tiles to the audio challenge.
+        try:
+            audio_button = sb.driver.find_element(
+                "css selector", "#recaptcha-audio-button"
+            )
+            audio_button.click()
+        except Exception:
+            pass
+        time.sleep(1.5)
+        body = ""
+        try:
+            body = sb.driver.find_element("css selector", "body").text
+        except Exception:
+            pass
+        if re.search(r"try again later|automated queries|unusual traffic", body, re.I):
+            print("  recaptcha_audio=rate_limited", flush=True)
+            return False
+        source = sb.driver.find_element(
+            "css selector", "#audio-source"
+        ).get_attribute("src")
+        if not source:
+            print("  recaptcha_audio=no_source", flush=True)
+            return False
+    except Exception as exc:
+        print(f"  recaptcha_audio_open={exc!s}"[:220], flush=True)
+        return False
+    finally:
+        try:
+            sb.driver.switch_to.default_content()
+        except Exception:
+            pass
+
+    audio_dir = Path("/tmp/cursor/indeed-recaptcha-audio")
+    audio_dir.mkdir(parents=True, exist_ok=True)
+    mp3 = audio_dir / "challenge.mp3"
+    wav = audio_dir / "challenge.wav"
+    proxy = os.environ.get("INDEED_HTTP_PROXY", PROXY)
+    proxies = {"http": proxy, "https": proxy} if proxy else None
+    try:
+        response = requests.get(source, proxies=proxies, timeout=30)
+        response.raise_for_status()
+        mp3.write_bytes(response.content)
+        converted = subprocess.run(
+            [
+                "ffmpeg",
+                "-loglevel",
+                "error",
+                "-y",
+                "-i",
+                str(mp3),
+                "-ar",
+                "16000",
+                "-ac",
+                "1",
+                str(wav),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if converted.returncode != 0:
+            print(f"  recaptcha_audio_ffmpeg={converted.stderr!s}"[:220], flush=True)
+            return False
+    except Exception as exc:
+        print(f"  recaptcha_audio_download={exc!s}"[:220], flush=True)
+        return False
+
+    try:
+        recognizer = sr.Recognizer()
+        with sr.AudioFile(str(wav)) as audio_file:
+            audio = recognizer.record(audio_file)
+        answer = recognizer.recognize_google(audio).strip()
+        answer = re.sub(r"[^A-Za-z0-9 ]+", " ", answer)
+        answer = re.sub(r"\s+", " ", answer).strip()
+        if not answer:
+            return False
+        print(f"  recaptcha_audio_answer={answer!r}", flush=True)
+    except Exception as exc:
+        print(f"  recaptcha_audio_transcribe={exc!s}"[:220], flush=True)
+        return False
+
+    try:
+        sb.driver.switch_to.default_content()
+        frames = sb.driver.find_elements("css selector", challenge_selector)
+        challenge = next((f for f in frames if f.is_displayed()), frames[0])
+        sb.driver.switch_to.frame(challenge)
+        field = sb.driver.find_element("css selector", "#audio-response")
+        field.clear()
+        field.send_keys(answer)
+        sb.driver.find_element(
+            "css selector", "#recaptcha-verify-button"
+        ).click()
+        time.sleep(2.5)
+    except Exception as exc:
+        print(f"  recaptcha_audio_submit={exc!s}"[:220], flush=True)
+        return False
+    finally:
+        try:
+            sb.driver.switch_to.default_content()
+        except Exception:
+            pass
+
+    if _recaptcha_token_present(sb) or _recaptcha_checkbox_checked(sb):
+        print("  recaptcha_audio=solved", flush=True)
+        return True
+    print("  recaptcha_audio=incorrect", flush=True)
+    return False
+
+
 def clear_recaptcha(sb, attempts: int = 3) -> bool:
     """Clear Google reCAPTCHA on SmartApply review via UC GUI click."""
     frames = (
@@ -760,6 +903,10 @@ def clear_recaptcha(sb, attempts: int = 3) -> bool:
             time.sleep(1)
             if _recaptcha_checkbox_checked(sb) or _recaptcha_token_present(sb):
                 return True
+        # A direct checkbox click may open image tiles. Prefer the accessible
+        # audio challenge so the run can continue without image recognition.
+        if _solve_recaptcha_audio(sb):
+            return True
         # Bring widget into view so PyAutoGUI lands on the checkbox.
         for fr in frames[:3]:
             try:
