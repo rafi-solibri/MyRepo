@@ -6,7 +6,8 @@ Copy everything inside the block below:
 
 ```text
 FIRST: run `bash scripts/preflight-portal-run.sh foundit` so Rafi_Resume.docx and Foundit cookies are verified.
-Then run `bash scripts/launch-chrome-cdp.sh foundit` if using browser/CDP. Use `node tools/foundit/resume.js` to verify the resume path.
+Then run `bash scripts/launch-chrome-cdp.sh foundit`. Use `node tools/foundit/resume.js` to verify the resume path.
+Prefer durable helpers: `node tools/foundit/daily_apply.js` + `tools/foundit/filters.js` (`classifyJob`) — do not reinvent eligibility each run.
 Chrome CDP profile: /home/ubuntu/.config/chrome-foundit (synced from Desktop Default; do not CDP-attach Default).
 
 Daily Foundit job-apply agent for Mohammed Abdul Rafi Ahmed (Solutions Architect / Tech Lead / EM / Principal–Staff, .NET + Azure/AWS, Hyderabad + remote, Expected CTC 65 LPA).

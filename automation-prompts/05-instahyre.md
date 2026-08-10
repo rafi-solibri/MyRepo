@@ -6,7 +6,8 @@ Copy everything inside the block below:
 
 ```text
 FIRST: run `bash scripts/preflight-portal-run.sh instahyre`. Verify `node tools/instahyre/resume.js`.
-Then run `bash scripts/launch-chrome-cdp.sh instahyre` if using browser/CDP.
+Then run `bash scripts/launch-chrome-cdp.sh instahyre`.
+Prefer durable helper: `node tools/instahyre/daily_apply.js` + `node tools/instahyre/filters.js` (`skipReason`).
 Chrome CDP profile: /home/ubuntu/chrome-instahyre-profile (synced from Desktop Default; do not CDP-attach Default).
 
 Daily Instahyre apply for Mohammed Abdul Rafi Ahmed. Maximize applies + interview callbacks.

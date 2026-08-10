@@ -40,11 +40,13 @@ https://cursor.com/automations/1d0ea682-9093-11f1-ba66-0e7d0216e441
 Read and OBEY the full instructions in automation-prompts/05-instahyre.md (the fenced text block). Run `bash scripts/preflight-portal-run.sh instahyre` first. Use resumes/Rafi_Resume.docx. Execute the daily Instahyre apply job now.
 ```
 
-## Indeed Daily 9 AM
+## Indeed Daily 9 AM — prefer OFF on public cloud
 https://cursor.com/automations/91b09fd7-9093-11f1-ba66-0e7d0216e441
 
+**Recommendation:** keep this automation **disabled** on public cloud (Cloudflare). Run Indeed via home cron (`scripts/indeed-home-daily.sh` / Windows task `scripts/install-indeed-home-task.ps1`) or a My Machines private/residential worker. If you keep the cloud automation for private-worker use only:
+
 ```text
-Read and OBEY the full instructions in automation-prompts/06-indeed.md (the fenced text block). Run `node tools/indeed/preflight.js` first; if it exits 5, report private worker required and stop. Otherwise run `bash scripts/preflight-portal-run.sh indeed`. Use resumes/Rafi_Resume.docx. Execute the daily Indeed apply job now.
+Read and OBEY the full instructions in automation-prompts/06-indeed.md (the fenced text block). Run `node tools/indeed/daily_apply.js` (or `node tools/indeed/preflight.js`); if exit 5, report private worker / home cron required and stop. Otherwise run `bash scripts/preflight-portal-run.sh indeed`. Use resumes/Rafi_Resume.docx. Execute the daily Indeed apply job now.
 ```
 
 ## Notification Job 11 AM

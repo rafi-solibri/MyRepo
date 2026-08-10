@@ -15,12 +15,23 @@ function locationOk(loc) {
   );
 }
 
+/** Parse listed max CTC in LPA from free-text location/salary blurb. */
+function parseMaxCtcLpa(text) {
+  const t = String(text || "");
+  let m = t.match(/₹?\s*([\d.]+)\s*L\s*[-–]\s*₹?\s*([\d.]+)\s*L/i);
+  if (m) return Number(m[2]);
+  m = t.match(/([\d.]+)\s*[-–]\s*([\d.]+)\s*LPA/i);
+  if (m) return Number(m[2]);
+  m = t.match(/up to\s*₹?\s*([\d.]+)\s*L/i);
+  if (m) return Number(m[1]);
+  return null;
+}
+
 /**
  * Returns skip reason string or null if allowed.
  */
-function skipReason(title, { company = "", location = "", skills = "" } = {}) {
+function skipReason(title, { company = "", location = "", skills = "", salary = "" } = {}) {
   const t = title || "";
-  const blob = `${t} ${company} ${skills}`;
 
   // QA / Quality Engineering slipped past bare "qa" filters previously
   if (
@@ -61,12 +72,18 @@ function skipReason(title, { company = "", location = "", skills = "" } = {}) {
     return "location_not_hyd_remote";
   }
 
+  const maxCtc = parseMaxCtcLpa(`${salary} ${location}`);
+  if (maxCtc != null && maxCtc < 35) {
+    return `ctc_max_${maxCtc}`;
+  }
+
   return null;
 }
 
 module.exports = {
   hasDotNet,
   locationOk,
+  parseMaxCtcLpa,
   skipReason,
 };
 

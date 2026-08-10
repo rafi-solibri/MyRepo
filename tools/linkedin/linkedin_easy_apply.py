@@ -64,12 +64,14 @@ except Exception as _e:
 PROFILE = {
     "phone": "8790251698",
     "email": "rafi.success@gmail.com",
+    "linkedin": "https://linkedin.com/in/rafi-ahmed-mohammed-abdul-151644ba",
     "current_ctc": "5200000",
     "expected_ctc": "6500000",
     "current_ctc_lakhs": "52",
     "expected_ctc_lakhs": "65",
     "notice": "0",
     "experience_years": "15",
+    "engineers_managed": "8",
     "dob_day": "16",
     "dob_month": "January",
     "dob_month_num": "01",
@@ -343,6 +345,44 @@ def fill_inputs(page: Page) -> None:
                 pass
         elif "email" in blob:
             set_val(PROFILE["email"])
+        elif any(k in blob for k in ("linkedin profile", "linkedin url", "profile url", "linkedin.com")):
+            set_val(PROFILE["linkedin"])
+        elif any(
+            k in blob
+            for k in (
+                "institution",
+                "university",
+                "college",
+                "bachelor's degree from",
+                "bachelors degree from",
+                "school name",
+                "where did you study",
+            )
+        ):
+            set_val(PROFILE["education_school"])
+        elif any(
+            k in blob
+            for k in (
+                "specialization",
+                "field of study",
+                "major",
+                "discipline",
+                "branch of engineering",
+            )
+        ):
+            set_val(PROFILE["education_field"])
+        elif any(
+            k in blob
+            for k in (
+                "engineers do you currently manage",
+                "engineers managed",
+                "direct reports",
+                "team size",
+                "people managed",
+                "manage directly",
+            )
+        ):
+            set_val(PROFILE["engineers_managed"])
         elif "country code" in blob or ( "phone" in blob and "country" in blob):
             try:
                 control.select_option(label=re.compile(r"India \(\+91\)", re.I))
@@ -455,9 +495,11 @@ def fill_inputs(page: Page) -> None:
     except Exception:
         pass
 
-    # Also fill unlabeled numeric errors: decimal > 0 near CTC/notice
+    # Also fill unlabeled / aria-label / near-text inputs (Greenhouse Easy Apply)
     try:
-        for inp in page.locator("input[type='text']").all()[:25]:
+        for inp in page.locator(
+            "input[type='text'], input:not([type]), textarea, input[type='url'], input[type='number']"
+        ).all()[:40]:
             try:
                 if not inp.is_visible():
                     continue
@@ -465,9 +507,24 @@ def fill_inputs(page: Page) -> None:
                 if val:
                     continue
                 near = inp.evaluate(
-                    """e => (e.closest('div')?.innerText || '').slice(0,180).toLowerCase()"""
+                    """e => {
+                      const aria = e.getAttribute('aria-label') || '';
+                      const ph = e.getAttribute('placeholder') || '';
+                      const lab = e.labels && e.labels[0] ? e.labels[0].innerText : '';
+                      const wrap = (e.closest('fieldset, .fb-dash-form-element, .jobs-easy-apply-form-element, div') || e.parentElement);
+                      const t = (wrap && wrap.innerText) ? wrap.innerText.slice(0, 220) : '';
+                      return (aria + ' ' + ph + ' ' + lab + ' ' + t).toLowerCase();
+                    }"""
                 )
-                if "ctc" in near and "lakh" in near and "current" in near:
+                if re.search(r"linkedin|profile url", near):
+                    inp.fill(PROFILE["linkedin"])
+                elif re.search(r"institution|university|college|bachelor.?s degree from|school name", near):
+                    inp.fill(PROFILE["education_school"])
+                elif re.search(r"specialization|field of study|major|discipline", near):
+                    inp.fill(PROFILE["education_field"])
+                elif re.search(r"manage directly|engineers managed|direct reports|team size|people managed", near):
+                    inp.fill(PROFILE["engineers_managed"])
+                elif "ctc" in near and "lakh" in near and "current" in near:
                     inp.fill(PROFILE["current_ctc_lakhs"])
                 elif "ctc" in near and "lakh" in near and "expect" in near:
                     inp.fill(PROFILE["expected_ctc_lakhs"])
@@ -475,10 +532,67 @@ def fill_inputs(page: Page) -> None:
                     inp.fill("1")
                 elif ("years" in near or "experience" in near) and "php" not in near:
                     inp.fill("15")
+                elif re.search(r"\bphone\b|\bmobile\b", near) and "country" not in near:
+                    inp.fill(PROFILE["phone"])
+                elif "email" in near:
+                    inp.fill(PROFILE["email"])
             except Exception:
                 pass
     except Exception:
         pass
+
+    # Multi-select checkboxes (Turing/Greenhouse role & responsibility groups)
+    checkbox_picks = [
+        (r"best describes your current role", ["Principal Engineer", "Technical Lead", "Engineering Manager"]),
+        (
+            r"part of your current responsibilities",
+            [
+                "Technical Roadmap",
+                "Architecture Reviews",
+                "System Design",
+                "Mentoring Engineers",
+                "Hiring",
+            ],
+        ),
+        (
+            r"areas have you worked on extensively",
+            [
+                "Backend Engineering",
+                "Platform Engineering",
+                "Distributed Systems",
+                "Cloud Infrastructure",
+                "Event-driven Systems",
+            ],
+        ),
+    ]
+    for qpat, choices in checkbox_picks:
+        try:
+            q = page.get_by_text(re.compile(qpat, re.I)).first
+            if not (q.count() and q.is_visible()):
+                continue
+            container = q.locator(
+                "xpath=ancestor::fieldset|ancestor::div[contains(@class,'fb-dash') or contains(@class,'jobs-easy-apply')][1]"
+            )
+            if not container.count():
+                container = q.locator("xpath=ancestor::div[1]")
+            for choice in choices:
+                try:
+                    opt = container.get_by_label(choice, exact=False)
+                    if opt.count():
+                        el = opt.first
+                        try:
+                            if not el.is_checked():
+                                el.check(force=True)
+                        except Exception:
+                            el.click(timeout=800, force=True)
+                        continue
+                    txt = container.get_by_text(choice, exact=True).first
+                    if txt.count() and txt.is_visible():
+                        txt.click(timeout=800, force=True)
+                except Exception:
+                    continue
+        except Exception:
+            pass
 
     # Radio / yes-no common
     for pair in [
@@ -623,7 +737,21 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
             shot(page, f"blocked-no-modal-{job.job_id}.png")
             return job
 
+    flow_deadline = time.time() + int(os.environ.get("LINKEDIN_EASY_APPLY_CAP_S", "180"))
+    last_err = ""
     for step in range(14):
+        if time.time() > flow_deadline:
+            job.status = "blocked"
+            job.reason = f"Easy Apply time-cap: {last_err or 'timeout'}"
+            shot(page, f"blocked-timeout-{job.job_id}.png")
+            try:
+                page.locator(
+                    ".jobs-easy-apply-modal button.artdeco-modal__dismiss, "
+                    "[role='dialog']:has-text('Apply to') button.artdeco-modal__dismiss"
+                ).first.click(timeout=2000)
+            except Exception:
+                pass
+            return job
         # If save dialog appeared mid-flow, discard and reopen apply
         try:
             if page.get_by_text("Save this application?").count() and page.get_by_text("Save this application?").first.is_visible():
@@ -655,7 +783,8 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
                 except Exception:
                     pass
                 return job
-        except Exception:
+        except Exception as e:
+            last_err = str(e)[:120]
             pass
 
         close_overlays(page)
