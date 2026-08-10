@@ -1,0 +1,33 @@
+{
+  "portal": "indeed",
+  "source": "home-local",
+  "date": "2026-08-10",
+  "startedAt": null,
+  "finishedAt": "2026-08-10T06:34:54.249Z",
+  "host": "cursor",
+  "ok": false,
+  "counts": {
+    "applied": 0,
+    "external": 0,
+    "rejected": 0,
+    "blocked": 1,
+    "skipped": 0,
+    "seen": 0
+  },
+  "applied": [],
+  "external": [],
+  "rejected": [],
+  "blocked": [
+    {
+      "reason": "awaiting_next_home_cron_run"
+    }
+  ],
+  "skipped": [],
+  "seen": [],
+  "blockerSummary": "awaiting_next_home_cron_run",
+  "notes": [
+    "seeded_by_indeed_daily_mail_pr"
+  ],
+  "preflight": null,
+  "logPath": null
+}
