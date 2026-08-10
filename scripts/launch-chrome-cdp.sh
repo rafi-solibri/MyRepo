@@ -44,13 +44,27 @@ if [[ "${CHROME_HEADLESS:-auto}" == "1" || ( "${CHROME_HEADLESS:-auto}" == "auto
 fi
 
 proxy_args=()
-# Indeed (and optional others): residential proxy bypasses datacenter Cloudflare.
-if [[ "$portal" == "indeed" && -n "${INDEED_HTTP_PROXY:-}" ]]; then
-  proxy_args=(--proxy-server="${INDEED_HTTP_PROXY}")
-  echo "Using INDEED_HTTP_PROXY for Chrome CDP"
+# Indeed: WARP SOCKS (auto) or residential INDEED_HTTP_PROXY bypasses datacenter Cloudflare.
+if [[ "$portal" == "indeed" ]]; then
+  if [[ -z "${INDEED_HTTP_PROXY:-}" || "${INDEED_HTTP_PROXY}" == *"127.0.0.1:40000"* ]]; then
+    # shellcheck disable=SC1091
+    eval "$(bash "$ROOT/scripts/ensure-indeed-warp.sh")" || {
+      echo "ERROR: Could not start WARP SOCKS for Indeed CDP" >&2
+      exit 1
+    }
+  fi
+  if [[ -n "${INDEED_HTTP_PROXY:-}" ]]; then
+    proxy_args=(--proxy-server="${INDEED_HTTP_PROXY}")
+    echo "Using INDEED_HTTP_PROXY for Chrome CDP (${INDEED_HTTP_PROXY})"
+  fi
 elif [[ -n "${CHROME_HTTP_PROXY:-}" ]]; then
   proxy_args=(--proxy-server="${CHROME_HTTP_PROXY}")
   echo "Using CHROME_HTTP_PROXY for Chrome CDP"
+fi
+
+# Indeed Turnstile / applies need a headed display when possible.
+if [[ "$portal" == "indeed" && "${CHROME_HEADLESS:-auto}" == "auto" && -n "${DISPLAY:-}" ]]; then
+  headless=()
 fi
 
 log="/tmp/cursor/chrome-cdp-${portal}.log"

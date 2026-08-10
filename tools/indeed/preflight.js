@@ -3,12 +3,15 @@
  * Detect Indeed Cloudflare / Akamai IP blocks before attempting applies.
  *
  * Exit codes:
- *   0 — reachable (HTTP and/or Chrome CDP)
- *   5 — blocked; needs private/residential worker OR INDEED_HTTP_PROXY
+ *   0 — reachable (HTTP and/or Chrome CDP / UC bypass)
+ *   5 — still blocked after WARP+UC attempts
  *   1 — unexpected network/runtime error
+ *   2 — WARP/proxy misconfiguration
  *
- * Proxy: set INDEED_HTTP_PROXY or HTTPS_PROXY / HTTP_PROXY to a residential
- * proxy URL (http://user:pass@host:port). Preflight and Chrome CDP honor it.
+ * Proxy:
+ *   - Set INDEED_HTTP_PROXY (residential HTTP or socks5://…)
+ *   - Or omit it: auto-starts Cloudflare WARP SOCKS on 127.0.0.1:40000
+ *     and clears Turnstile via tools/indeed/cf_bypass_uc.py when needed.
  */
 "use strict";
 
@@ -16,17 +19,11 @@ const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 
+const ROOT = path.resolve(__dirname, "../..");
 const OUT =
   process.env.INDEED_PREFLIGHT_REPORT ||
   "/opt/cursor/artifacts/indeed-preflight.json";
 const URL = process.env.INDEED_PREFLIGHT_URL || "https://in.indeed.com/";
-const PROXY =
-  process.env.INDEED_HTTP_PROXY ||
-  process.env.HTTPS_PROXY ||
-  process.env.HTTP_PROXY ||
-  process.env.https_proxy ||
-  process.env.http_proxy ||
-  "";
 
 function writeReport(report) {
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
@@ -41,6 +38,53 @@ function isCloudflareBlocked(status, text, title) {
       blob,
     )
   );
+}
+
+/** curl prefers socks5h:// so DNS goes through the proxy. */
+function curlProxy(proxy) {
+  if (!proxy) return "";
+  if (proxy.startsWith("socks5://")) {
+    return "socks5h://" + proxy.slice("socks5://".length);
+  }
+  return proxy;
+}
+
+function ensureWarpProxy(currentProxy) {
+  if (process.env.INDEED_SKIP_WARP === "1") {
+    return { proxy: currentProxy || "", started: false, skipped: true };
+  }
+  if (
+    currentProxy &&
+    !/127\.0\.0\.1:40000|localhost:40000/.test(currentProxy)
+  ) {
+    return { proxy: currentProxy, started: false, external: true };
+  }
+  const script = path.join(ROOT, "scripts/ensure-indeed-warp.sh");
+  if (!fs.existsSync(script)) {
+    return { proxy: currentProxy || "", started: false, missingScript: true };
+  }
+  const res = spawnSync("bash", [script], {
+    encoding: "utf8",
+    timeout: 120000,
+    cwd: ROOT,
+  });
+  const out = `${res.stdout || ""}\n${res.stderr || ""}`;
+  const m = out.match(/export INDEED_HTTP_PROXY=([^\n]+)/);
+  let proxy = currentProxy || "";
+  if (m) {
+    // printf %q may wrap in $'…' or quotes — strip lightly
+    proxy = m[1].replace(/^\$'|'$/g, "").replace(/^'|'$/g, "").replace(/^"|"$/g, "");
+  }
+  if (res.status !== 0 || !proxy) {
+    return {
+      proxy: currentProxy || "",
+      started: false,
+      error: out.slice(0, 800),
+      exitCode: res.status,
+    };
+  }
+  process.env.INDEED_HTTP_PROXY = proxy;
+  return { proxy, started: true };
 }
 
 function curlFetch(url, proxy) {
@@ -58,14 +102,11 @@ function curlFetch(url, proxy) {
     "--max-time",
     "45",
   ];
-  if (proxy) {
-    args.push("-x", proxy);
-  }
+  const px = curlProxy(proxy);
+  if (px) args.push("-x", px);
   args.push(url);
   const res = spawnSync("curl", args, { encoding: "utf8" });
-  if (res.error) {
-    throw res.error;
-  }
+  if (res.error) throw res.error;
   const status = Number(String(res.stdout || "").trim()) || 0;
   const text = fs.existsSync("/tmp/indeed-preflight-body.html")
     ? fs.readFileSync("/tmp/indeed-preflight-body.html", "utf8")
@@ -94,39 +135,130 @@ function chromeProbe(url, proxy) {
   }
 }
 
-async function main() {
+function ucBypass(proxy) {
+  const script = path.join(__dirname, "cf_bypass_uc.py");
+  if (!fs.existsSync(script)) return { ok: false, error: "cf_bypass_uc.py missing" };
+  const env = { ...process.env, INDEED_HTTP_PROXY: proxy || "" };
+  const res = spawnSync("python3", [script, "--attempts", "3"], {
+    encoding: "utf8",
+    env,
+    timeout: 240000,
+  });
+  try {
+    const parsed = JSON.parse(res.stdout || "{}");
+    return { ...parsed, exitCode: res.status };
+  } catch {
+    return {
+      ok: false,
+      error: (res.stderr || res.stdout || "uc bypass failed").slice(0, 800),
+      exitCode: res.status,
+    };
+  }
+}
+
+function probeOnce(proxy) {
+  const { status, text } = curlFetch(URL, proxy || undefined);
+  const title = (text.match(/<title[^>]*>([^<]+)/i) || [])[1] || "";
+  const httpBlocked = isCloudflareBlocked(status, text, title);
+  let chrome = null;
+  if (process.env.SKIP_CHROME_PROBE !== "1") {
+    chrome = chromeProbe(URL, proxy || undefined);
+  }
+  return {
+    httpStatus: status,
+    title,
+    bodySample: text.replace(/\s+/g, " ").slice(0, 500),
+    httpBlocked,
+    chrome,
+    chromeOk: Boolean(chrome && chrome.ok),
+    blocked: Boolean(
+      httpBlocked || (chrome && chrome.blocked) || (chrome && chrome.ok === false),
+    ),
+  };
+}
+
+function main() {
+  const initialProxy =
+    process.env.INDEED_HTTP_PROXY ||
+    process.env.HTTPS_PROXY ||
+    process.env.HTTP_PROXY ||
+    process.env.https_proxy ||
+    process.env.http_proxy ||
+    "";
+
   const report = {
     startedAt: new Date().toISOString(),
     url: URL,
-    proxyConfigured: Boolean(PROXY),
-    proxyHost: PROXY ? PROXY.replace(/\/\/.*@/, "//***@") : null,
     ok: false,
   };
 
   try {
-    const { status, text } = curlFetch(URL, PROXY || undefined);
-    report.httpStatus = status;
-    report.title = (text.match(/<title[^>]*>([^<]+)/i) || [])[1] || "";
-    report.bodySample = text.replace(/\s+/g, " ").slice(0, 500);
-    report.httpBlocked = isCloudflareBlocked(status, text, report.title);
+    const warp = ensureWarpProxy(initialProxy);
+    report.warp = {
+      started: Boolean(warp.started),
+      external: Boolean(warp.external),
+      skipped: Boolean(warp.skipped),
+      error: warp.error || null,
+    };
+    const proxy = warp.proxy || initialProxy || "";
+    report.proxyConfigured = Boolean(proxy);
+    report.proxyHost = proxy ? proxy.replace(/\/\/.*@/, "//***@") : null;
 
-    // Browser path (more accurate for real applies). Skipped when SKIP_CHROME_PROBE=1.
-    if (process.env.SKIP_CHROME_PROBE !== "1") {
-      report.chrome = chromeProbe(URL, PROXY || undefined);
-      if (report.chrome && report.chrome.ok) {
-        report.ok = true;
-        report.reason = "chrome_reachable";
-        writeReport(report);
-        console.log(JSON.stringify(report, null, 2));
-        process.exit(0);
+    if (warp.error && !proxy) {
+      report.reason = "warp_proxy_failed";
+      report.hint =
+        "Could not start Cloudflare WARP SOCKS. Install cloudflare-warp or set INDEED_HTTP_PROXY.";
+      writeReport(report);
+      console.error(JSON.stringify(report, null, 2));
+      process.exit(2);
+    }
+
+    let probe = probeOnce(proxy);
+    Object.assign(report, {
+      httpStatus: probe.httpStatus,
+      title: probe.title,
+      bodySample: probe.bodySample,
+      httpBlocked: probe.httpBlocked,
+      chrome: probe.chrome,
+    });
+
+    if (probe.chromeOk) {
+      report.ok = true;
+      report.reason = "chrome_reachable";
+      writeReport(report);
+      console.log(JSON.stringify(report, null, 2));
+      process.exit(0);
+    }
+
+    // HTTP 403 alone is expected through WARP until Turnstile is cleared in a
+    // real browser — try SeleniumBase UC + uc_gui_click_captcha.
+    if (probe.blocked && process.env.INDEED_SKIP_UC_BYPASS !== "1") {
+      report.ucBypass = ucBypass(proxy);
+      if (report.ucBypass && report.ucBypass.ok) {
+        probe = probeOnce(proxy);
+        Object.assign(report, {
+          httpStatus: probe.httpStatus,
+          title: probe.title,
+          bodySample: probe.bodySample,
+          httpBlocked: probe.httpBlocked,
+          chrome: probe.chrome,
+        });
+        if (probe.chromeOk || report.ucBypass.ok) {
+          report.ok = true;
+          report.reason = probe.chromeOk
+            ? "chrome_reachable_after_uc_bypass"
+            : "uc_bypass_cleared";
+          writeReport(report);
+          console.log(JSON.stringify(report, null, 2));
+          process.exit(0);
+        }
       }
     }
 
-    if (report.httpBlocked || (report.chrome && report.chrome.blocked)) {
-      report.reason = "indeed_cloudflare_private_worker_required";
-      report.hint = PROXY
-        ? "Proxy is set but Indeed still blocked it. Use a residential (not datacenter) proxy, or run Indeed on a My Machines / private worker with a residential IP."
-        : "Public-cloud / datacenter IPs are hard-blocked by Indeed (Request Blocked / Ray ID). Fix: (1) start a Cursor My Machines worker on a home/residential network and point the Indeed automation at it, OR (2) set secret INDEED_HTTP_PROXY to a residential proxy URL.";
+    if (probe.httpBlocked || (probe.chrome && probe.chrome.blocked) || !probe.chromeOk) {
+      report.reason = "indeed_cloudflare_still_blocked";
+      report.hint =
+        "WARP SOCKS + SeleniumBase UC did not clear Indeed. Retry uc bypass, or set a residential INDEED_HTTP_PROXY. See automation-prompts/INDEED_CLOUDFLARE.md";
       report.setupDoc = "automation-prompts/INDEED_CLOUDFLARE.md";
       writeReport(report);
       console.error(JSON.stringify(report, null, 2));

@@ -22,4 +22,11 @@ else
   echo "start: seed .portal-sessions or log into portals in Desktop Chrome, then Save snapshot."
 fi
 
+# Indeed cloud bypass: start WARP SOCKS (proxy mode ONLY — never full tunnel).
+if [[ -x scripts/start-warp-proxy.sh ]]; then
+  bash scripts/start-warp-proxy.sh start >/tmp/cursor/warp-proxy-start.log 2>&1 \
+    && echo "start: WARP SOCKS ready on 127.0.0.1:40000" \
+    || echo "start: WARP SOCKS not ready (non-fatal); see /tmp/cursor/warp-proxy-start.log"
+fi
+
 echo "start: ready."

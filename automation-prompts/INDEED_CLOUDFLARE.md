@@ -2,11 +2,44 @@
 
 Indeed hard-blocks **datacenter / public-cloud IPs** with pages titled
 `Blocked - Indeed.com` / `Security Check` and body text `Request Blocked`
-(includes a Ray ID). Logged-in Chrome cookies do **not** bypass this — the
-block is on the network path, not the session.
+(includes a Ray ID). Logged-in Chrome cookies alone do **not** bypass a hard
+block — the network path matters.
 
 Verified 2026-08-06 from Cursor public cloud: both `curl` and headless Chrome
 to `https://in.indeed.com/` return the block page.
+
+## Option C — Cloudflare WARP SOCKS + SeleniumBase UC (preferred on cloud VMs)
+
+Verified 2026-08-10 on a Cursor cloud agent (no private/home worker):
+
+1. **Cloudflare WARP in proxy mode** → local SOCKS5 `127.0.0.1:40000`
+2. **SeleniumBase UC Chrome** through that proxy (headed / Xvfb display)
+3. **`uc_gui_click_captcha()`** when the page shows
+   `Additional Verification Required` / Turnstile
+
+That combo clears Turnstile. Plain Chrome clicks, cloudscraper, and WARP alone
+(without UC GUI captcha) did **not**.
+
+```bash
+bash scripts/start-warp-proxy.sh          # proxy mode ONLY — never full tunnel
+eval "$(bash scripts/ensure-indeed-warp.sh)"
+python3 tools/indeed/cf_bypass_uc.py      # clears CF; uses chrome-indeed-profile
+node tools/indeed/preflight.js            # expects exit 0 (auto-starts WARP+UC)
+bash scripts/launch-chrome-cdp.sh indeed  # CDP Chrome also uses WARP SOCKS
+```
+
+Notes:
+- `warp-cli mode proxy` **before** `connect`. Full-tunnel WARP can blackhole the pod.
+- No systemd? `scripts/start-warp-proxy.sh` starts `warp-svc` via `nohup`.
+- HTTP curl through WARP may still return 403 until a real browser clears
+  Turnstile — trust `cf_bypass_uc.py` / Chrome probe, not curl alone.
+- Install pulls `cloudflare-warp` + `seleniumbase` via `cloud-agent-install.sh`;
+  start hook brings WARP up via `cloud-agent-start.sh`.
+- If the synced `chrome-indeed-profile` gets stuck on **Additional Verification
+  Required** with no widget, rebuild a hybrid UC profile:
+  `python3 tools/indeed/prepare_uc_profile.py` (keeps CTK/Passport, deletes `cf_*`).
+- Plain Chrome CDP (`launch-chrome-cdp.sh`) through WARP can still show
+  **Request Blocked** — apply via `python3 tools/indeed/uc_daily_apply.py`.
 
 ## Home daily automation (free schedule)
 

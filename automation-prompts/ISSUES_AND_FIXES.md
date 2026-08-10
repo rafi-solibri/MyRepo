@@ -10,6 +10,7 @@ opened as a draft PR — not left as report-only notes.
 
 | Issue | Fix |
 | --- | --- |
+| Cloud Indeed Cloudflare **Request Blocked** / Turnstile on datacenter IPs | **WARP SOCKS `127.0.0.1:40000` + SeleniumBase UC + `uc_gui_click_captcha()`**. Scripts: `scripts/start-warp-proxy.sh`, `tools/indeed/cf_bypass_uc.py`, hybrid profile prep (`prepare_uc_profile.py` strips burned `cf_*` cookies). Preflight auto-starts WARP+UC. Plain Chrome CDP through WARP still hard-blocks — use UC path (`uc_daily_apply.py`). |
 | `Rafi_Resume_Architect.docx` missing → agents invented stubs or used portal-only resume | Canonical **`resumes/Rafi_Resume.docx`** (your upload) + `scripts/bootstrap-job-assets.sh` copies to Documents/resumes/Downloads; legacy Architect filename is a same-file alias |
 | LinkedIn Easy Apply looked for Architect label | Scripts use label **Rafi_Resume**; external ATS uploads canonical docx |
 | Cutshort questionnaires locked empty (9/11) | Documented correct API payload in `tools/cutshort/questionnaire.js` — never `screeningSubmitted` before verified answers |
