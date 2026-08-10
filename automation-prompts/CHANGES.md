@@ -18,7 +18,7 @@
 3. **Cutshort** — Locked expected CTC to **65** (was ~65); added external ATS completion; Hyd/remote hard filter.
 4. **General** — Rewritten as **Naukri-first + company ATS** (was vague resume-only / no submits). This addresses Naukri “apply on company website” stopping.
 5. **Instahyre / Indeed** — Full prompts aligned to same profile, CTC, location, and external-apply rules (prior prompts not readable from expired runs).
-6. **Notification 11 AM** — Lists all six apply automations + external-apply counts + 65 LPA note.
+6. **Notification 11 AM** — Lists cloud apply automations + **Indeed home-local** results via `fetch-indeed-home-result.sh` (applied/rejected/blocked/skipped) + external-apply counts + 65 LPA note.
 
 ## 2026-08-10 blocker pass
 
@@ -28,11 +28,16 @@
 - Instahyre `filters.js` Quality Engineering skip
 - Indeed Cloudflare docs + `INDEED_HTTP_PROXY` support in Chrome CDP launch
 
+## 2026-08-10 Indeed daily mail
+
+- Home Indeed cron publishes JSON counts to branch `automation-results`
+- Notification Job must fetch home results (not cloud Cloudflare stub) for Indeed
+
 ## Manual step required
 
 Cursor Automations API from this agent is **read-only** (`get-automation` only). Paste each `automation-prompts/0N-*.md` fenced `text` block into the matching automation’s Agent instructions and Save.
 
 **You still must** (not fixable in code alone):
-1. Indeed: home Wi‑Fi run or set `INDEED_HTTP_PROXY` / private worker
-2. Re-paste updated Naukri / Foundit / Instahyre / Indeed prompts after merge
-3. Keep General Daily disabled
+1. Indeed: home Wi‑Fi cron (`scripts/indeed-home-daily.sh`) with push access to `automation-results`
+2. Re-paste updated Notification (+ Indeed) loaders after merge
+3. Keep General Daily disabled; keep cloud Indeed Daily Off (Cloudflare)

@@ -51,7 +51,7 @@ Read and OBEY the full instructions in automation-prompts/06-indeed.md (the fenc
 https://cursor.com/automations/8e34696c-90b1-11f1-ba66-0e7d0216e441
 
 ```text
-Read and OBEY the full instructions in automation-prompts/07-notification.md (the fenced text block). Compile status from all apply automations and email rafi.success@gmail.com.
+Read and OBEY the full instructions in automation-prompts/07-notification.md (the fenced text block). Compile status from all apply automations and email rafi.success@gmail.com. For Indeed, run `bash scripts/fetch-indeed-home-result.sh --today` first and include applied/external/rejected/blocked/skipped from that home-local JSON (do not use cloud Cloudflare as Indeed when same-day home results exist).
 ```
 
 ## Optional: General Daily 9 AM — DISABLE THIS

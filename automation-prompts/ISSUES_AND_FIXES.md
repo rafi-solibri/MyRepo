@@ -52,6 +52,7 @@
 | Instahyre “Quality Engineering Lead” filter slip | Added `tools/instahyre/filters.js` + prompt HARD skip |
 | Hirist login counted as hard blocked | Naukri external path skips Hirist login walls (`hirist_login_required_skip`) |
 | Indeed Cloudflare only vaguely documented | Added `INDEED_CLOUDFLARE.md` / home-cron helpers; `launch-chrome-cdp.sh` honors `INDEED_HTTP_PROXY` |
+| Daily mail ignored home Indeed applies (only showed cloud Cloudflare 0) | Home cron writes/publishes `indeed-daily-run.json` to `automation-results`; Notification prompt fetches via `scripts/fetch-indeed-home-result.sh` and includes applied/rejected/blocked/skipped |
 
 ## Still requires your action (cannot fix from code alone)
 
@@ -63,6 +64,7 @@
 | Workday / Greenhouse OTP ATS walls | Optional | Keep Gmail logged in same Chrome profile; complete OTP once per ATS |
 | Verified notification sender missing | You | Set secret `RESEND_FROM_EMAIL` to a verified sender; fallback uses `Job Status <onboarding@resend.dev>` |
 | General Daily duplicate | You | Keep disabled: https://cursor.com/automations/30e2c023-9067-11f1-ba66-0e7d0216e441 |
+| Indeed home results → daily mail | You | Keep home cron on; ensure home PC can `git push origin automation-results`; re-paste Notification loader from `ONE_TIME_LOADERS.md` once |
 
 ## After merging this PR
 
