@@ -3,7 +3,7 @@
   "source": "home-local",
   "date": "2026-08-10",
   "startedAt": null,
-  "finishedAt": "2026-08-10T06:34:54.249Z",
+  "finishedAt": "2026-08-10T07:56:59.738Z",
   "host": "cursor",
   "ok": false,
   "counts": {
@@ -19,15 +19,13 @@
   "rejected": [],
   "blocked": [
     {
-      "reason": "awaiting_next_home_cron_run"
+      "reason": "indeed_cloudflare_private_worker_required"
     }
   ],
   "skipped": [],
   "seen": [],
-  "blockerSummary": "awaiting_next_home_cron_run",
-  "notes": [
-    "seeded_by_indeed_daily_mail_pr"
-  ],
+  "blockerSummary": "indeed_cloudflare_private_worker_required",
+  "notes": [],
   "preflight": null,
-  "logPath": null
+  "logPath": "/home/ubuntu/.cursor/indeed-home-logs/indeed-20260810T075629Z.log"
 }
