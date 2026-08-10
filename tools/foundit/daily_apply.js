@@ -546,6 +546,7 @@ function writeReport(report) {
     skipped: report.skipped.length,
     blocked: report.blocked.length,
     duplicates: report.duplicates.length,
+    externalAttempts: (report.externalAttempts || []).length,
     scanned: report.scanned,
     classifiedPass: report.classifiedPass,
   };
@@ -579,6 +580,7 @@ async function main() {
     skipped: [],
     blocked: [],
     duplicates: [],
+    externalAttempts: [],
     referralDrafts: [],
     note: "Foundit Raven+Falcon daily apply via CDP; eligibility via userJobInfo/applicationStatus only.",
   };
@@ -825,6 +827,7 @@ async function main() {
       redirect;
 
     if (redirectFromApply && isExternalRedirect(redirectFromApply)) {
+      const blockedBefore = report.blocked.length;
       const ok = await handleExternal(
         context,
         page,
@@ -837,6 +840,12 @@ async function main() {
         // Falcon may have recorded apply even if ATS incomplete — verify
         const uji3 = await userJobInfo(page, bearer, jobId);
         if (uji3.row?.applied) {
+          // Move just-added ATS failure off blocked → externalAttempts
+          const attempt = report.blocked.splice(blockedBefore)[0];
+          if (attempt) {
+            report.externalAttempts = report.externalAttempts || [];
+            report.externalAttempts.push(attempt);
+          }
           report.applied.push({
             ...meta,
             path: "Foundit Falcon (ATS incomplete)",
