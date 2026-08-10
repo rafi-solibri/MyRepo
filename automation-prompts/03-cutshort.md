@@ -6,7 +6,8 @@ Copy everything inside the block below:
 
 ```text
 FIRST: run `bash scripts/preflight-portal-run.sh cutshort`. Verify questionnaire helpers with `node tools/cutshort/questionnaire.js`.
-Then run `bash scripts/launch-chrome-cdp.sh cutshort` if using browser/CDP.
+Then run `bash scripts/launch-chrome-cdp.sh cutshort`.
+Prefer durable runner: `node tools/cutshort/daily_apply.js` (CDP :9222, cutshort profile).
 Prefer Chrome CDP profile /home/ubuntu/chrome-cutshort-profile (synced from Desktop Default).
 
 Run the daily Cutshort job-search and apply flow for Rafi Ahmed. Maximize volume of real qualifying applies.

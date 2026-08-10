@@ -1,21 +1,19 @@
 # Environment readiness for 6 daily job automations
 
-## Live diagnosis (2026-08-06 — this snapshot)
+## Current status (2026-08-10)
 
-Verified on the Cloud Agent VM that boots from the **saved** environment build:
+Portal auth cookies are seeded via `.portal-sessions/` + `scripts/restore-portal-sessions.sh` on install/start. On a healthy snapshot, `bash scripts/verify-portal-logins.sh --strict` and `/opt/cursor/artifacts/portal-login-status.json` should show all 6 portals OK.
 
-| Portal | Auth cookie present? | Evidence |
-| --- | --- | --- |
-| Cutshort | YES | `cutshort_authentication` |
-| LinkedIn | **NO** | only marketing cookies (`bcookie`, `lidc`); **no `li_at`** → Sign-in wall |
-| Naukri | **NO** | zero Naukri cookies (Google account cookies alone are not enough) |
-| Foundit | **NO** | zero Foundit cookies |
-| Instahyre | **NO** | zero Instahyre cookies |
-| Indeed | **NO** | zero Indeed auth cookies |
+If any portal shows FAIL after a rebuild, re-login on Desktop Default Chrome and Save/Update the environment snapshot.
 
-**Why “I logged in on Desktop and Saved” still fails:** Saving install/config is not the same as capturing portal sessions. Cron agents only see cookies that exist in `~/.config/google-chrome/Default` **inside the saved snapshot**. On the current snapshot, 5/6 portals are not authenticated. Visiting login pages without completing sign-in also does not create auth cookies.
+## Historical note (2026-08-06 — fixed)
 
-## What you must do now (on this Desktop)
+Earlier snapshots only had Cutshort auth; LinkedIn/Naukri/Foundit/Instahyre/Indeed hit Sign-in walls. Fixed with:
+- `.portal-sessions/` cookie seed restored on install/start
+- Non-destructive `scripts/sync-chrome-sessions.sh`
+- `scripts/preflight-portal-run.sh` + `scripts/verify-portal-logins.sh`
+
+## What to do if logins fail again
 
 ```bash
 # 1) Open Default Chrome with the 6 portal tabs + checklist
@@ -36,17 +34,14 @@ Optional check:
 node tools/chrome_session.js status
 ```
 
-## Cron / automation behavior after snapshot is fixed
+## Cron / automation behavior
 
 Every portal run must start with:
 ```bash
 bash scripts/preflight-portal-run.sh <portal>
-# or:
-bash scripts/bootstrap-job-assets.sh
-bash scripts/sync-chrome-sessions.sh
 ```
 
-`sync-chrome-sessions.sh` copies authenticated Default Chrome cookies into each CDP profile (`chrome-cdp-profile`, `.naukri-chrome-profile`, etc.). It is **non-destructive**: if Default lacks a portal cookie, it will not wipe an already-authenticated CDP profile.
+`sync-chrome-sessions.sh` copies authenticated Default Chrome cookies into each CDP profile. It is **non-destructive**: if Default lacks a portal cookie, it will not wipe an already-authenticated CDP profile.
 
 ## Other blockers
 
@@ -54,18 +49,9 @@ bash scripts/sync-chrome-sessions.sh
 | --- | --- |
 | Resume in git | YES — `resumes/Rafi_Resume.docx` |
 | Install bootstrap | `bash scripts/cloud-agent-install.sh` |
-| Indeed Cloudflare on public cloud IP | Needs **private / residential worker** |
-| General Daily 9 AM | Disable (research-only, 0 applies) |
-| Notification sender | Set secret `RESEND_FROM_EMAIL` |
-
-## Session seed (why Save kept failing)
-
-Desktop logins on a running agent do **not** enter environment builds until the
-build disk contains those Chrome cookies. Saving install/start alone rebuilds
-from the old base (Cutshort-only) and drops the other portals.
-
-Fix in this repo: private `.portal-sessions/` cookie seed + `scripts/restore-portal-sessions.sh`
-runs during install/start so every new build restores all 6 portal sessions.
+| Indeed Cloudflare on public cloud IP | Keep **cloud Indeed automation OFF**; use home cron / private worker / `INDEED_HTTP_PROXY` |
+| General Daily 9 AM | Keep **disabled** (research-only, 0 applies) |
+| Notification sender | Set secret `RESEND_FROM_EMAIL` (verified) + Resend MCP |
 
 ## Environment commands (dashboard)
 
@@ -78,4 +64,3 @@ bash scripts/cloud-agent-install.sh
 ```bash
 bash scripts/cloud-agent-start.sh
 ```
-The start hook is best-effort and never blocks boot: it only syncs when Desktop Chrome has a `Default/Cookies` DB. Log into the portals in Desktop Chrome once, then Save/Update the environment snapshot so the logins persist into future boots.

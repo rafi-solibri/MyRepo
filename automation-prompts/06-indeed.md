@@ -5,10 +5,13 @@ Automation: https://cursor.com/automations/91b09fd7-9093-11f1-ba66-0e7d0216e441
 Copy everything inside the block below:
 
 ```text
-FIRST: run `node tools/indeed/preflight.js`. If it exits 5, stop and report that Indeed needs a private worker / residential IP.
+FIRST: run `node tools/indeed/preflight.js` (HTTP + Chrome probe; honors `INDEED_HTTP_PROXY`). If it exits 5, stop and report that Indeed needs a private worker / residential IP — do not invent applies.
 Then run `bash scripts/preflight-portal-run.sh indeed`. Verify `node tools/indeed/resume.js`.
+Prefer: `node tools/indeed/daily_apply.js` (wraps preflight). On home Wi‑Fi use `bash scripts/indeed-home-daily.sh`.
 Then run `bash scripts/launch-chrome-cdp.sh indeed` if using browser/CDP.
 Chrome CDP profile: /home/ubuntu/chrome-indeed-profile (synced from Desktop Default).
+
+**Cloud Indeed Daily automation should stay OFF** (datacenter Cloudflare). Prefer home cron / My Machines private worker.
 
 Daily Indeed (in.indeed.com) apply for Mohammed Abdul Rafi Ahmed.
 
