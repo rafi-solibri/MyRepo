@@ -83,8 +83,8 @@ SKIP_COMPANY_LOC = re.compile(
     r"indore|بنغالور|مومباي|دلهي|تشيناي|بوني|إندور",
     re.I,
 )
-MAX_EXTERNAL = 12
-ATS_TIME_CAP_S = 210  # ~3.5 minutes
+MAX_EXTERNAL = int(os.environ.get("LINKEDIN_MAX_EXTERNAL", "25"))
+ATS_TIME_CAP_S = int(os.environ.get("LINKEDIN_ATS_TIME_CAP_S", "210"))  # ~3.5 minutes
 
 
 @dataclass

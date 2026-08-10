@@ -54,6 +54,17 @@
 | Indeed Cloudflare only vaguely documented | Added `INDEED_CLOUDFLARE.md` / home-cron helpers; `launch-chrome-cdp.sh` honors `INDEED_HTTP_PROXY` |
 | Daily mail ignored home Indeed applies (only showed cloud Cloudflare 0) | Home cron writes/publishes `indeed-daily-run.json` to `automation-results`; Notification prompt fetches via `scripts/fetch-indeed-home-result.sh` and includes applied/rejected/blocked/skipped |
 
+## Fixed for 2026-08-10 volume / false-skip pass
+
+| Issue | Fix |
+| --- | --- |
+| LinkedIn JD blacklist false-skip (S&P Global .NET Director → `Data Engineer`) | `tools/linkedin/filters.py`: title-first blacklist; JD only for mandatory/required stacks |
+| LinkedIn TITLE_OK too narrow + MAX_APPLY=30 | Broader titles (Software/Cloud/Azure Architect, Lead SWE, Director); MAX_APPLY=50, MAX_EXTERNAL=25, 14-day TPR |
+| Naukri 0 applies: CTC floor 50 skipped 30–40 LPA .NET Architect/Lead | Floor lowered to **35 LPA**; forms still state 65 expected |
+| Naukri `skip_no_dotnet` on Architect/Lead cards without .NET snippet | Architect/Lead/EM/Principal/Staff allowed without card .NET proof |
+| Foundit over-skip on seniority / CTC&lt;50 / maxExp | Senior .NET seniority; CTC floor 35; keep Capgemini 6-9 reject |
+| Agent prompts over-filtering (“listed max ~15–50”, soft stop ~20) | Apply-bias + title-first + aim 40–50+ across `automation-prompts/0*.md` |
+
 ## Still requires your action (cannot fix from code alone)
 
 | Blocker | Who | What to do |

@@ -23,14 +23,21 @@ Current 52 LPA | Expected 65 LPA | Immediate | +91 8790251698 | rafi.success@gma
 - Must be logged in. If login wall after sync: try INSTAHYRE_EMAIL/PASSWORD secrets if present; else stop and report Instahyre login required — log in via Desktop Chrome Default, sync-chrome-sessions.sh, Save Environment snapshot.
 - Newest first; Hyd then Remote/WFH.
 
+## Apply bias (CRITICAL)
+- Default to APPLY for Hyd/remote Architect / Tech Lead / EM / Principal / Staff / Senior .NET/cloud.
+- When uncertain → APPLY. Title-first skips only. Do not invent applies.
+- Keep sweeping while inventory remains; expand queries beyond exact ".NET" if Hyd/remote senior roles remain.
+
 ## Apply paths
 - In-app Apply / Express interest when it fully submits.
 - Company website / ATS redirects: COMPLETE with Rafi_Resume.docx + 52→65. Do not skip.
 - Cap stuck flows ~3–4 min; continue.
 
 ## Filters
-Prefer .NET/C#/ASP.NET + architect/lead/EM. Skip QA/junior/Salesforce/ServiceNow/SAP-primary/pure AI without .NET/listed max <50L/non-Hyd non-remote.
-HARD skip titles matching Quality Engineering / Quality Assurance / QA Lead / SDET (use `node tools/instahyre/filters.js` / `skipReason`).
+Prefer .NET/C#/ASP.NET + architect/lead/EM. Use `node tools/instahyre/filters.js` / `skipReason`.
+HARD skip titles: Quality Engineering / Quality Assurance / QA Lead / SDET; Salesforce/ServiceNow/SAP-primary; pure AI/data TITLE without .NET on the TITLE; non-Hyd non-remote.
+Skip listed max only if clearly under **35 LPA** (forms always 65 expected).
+Do NOT skip because JD casually mentions Java/Salesforce/data as adjacent tech.
 
 ## Report
 Submitted (path Instahyre vs ATS), skipped, blocked. No invented applies.

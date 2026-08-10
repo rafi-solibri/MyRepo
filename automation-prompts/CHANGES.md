@@ -33,11 +33,20 @@
 - Home Indeed cron publishes JSON counts to branch `automation-results`
 - Notification Job must fetch home results (not cloud Cloudflare stub) for Indeed
 
+## 2026-08-10 volume / false-skip pass
+
+| Portal | Symptom | Fix |
+| --- | --- | --- |
+| LinkedIn | S&P Global .NET Director skipped as `blacklist: Data Engineer`; MAX_APPLY=30 | Title-first blacklist (`tools/linkedin/filters.py`); broader TITLE_OK; MAX_APPLY=50 / MAX_EXTERNAL=25 / 14-day window |
+| Naukri | 0 applies; CTC&lt;50 + skip_no_dotnet on SA cards | CTC floor **35 LPA**; architect/lead without card .NET OK; MAX_APPLIES=60 |
+| Foundit | seniority / CTC&lt;50 / maxExp over-skip | Senior .NET seniority; CTC 35; keep Capgemini 6-9 reject |
+| All prompts | “listed max ~15–50” + soft ~20 stop | Apply-bias + title-first + aim 40–50+ |
+
 ## Manual step required
 
 Cursor Automations API from this agent is **read-only** (`get-automation` only). Paste each `automation-prompts/0N-*.md` fenced `text` block into the matching automation’s Agent instructions and Save.
 
 **You still must** (not fixable in code alone):
 1. Indeed: home Wi‑Fi cron (`scripts/indeed-home-daily.sh`) with push access to `automation-results`
-2. Re-paste updated Notification (+ Indeed) loaders after merge
+2. Re-paste **all** updated apply prompts after merge (LinkedIn/Naukri/Foundit/Instahyre/Cutshort/Indeed + Notification)
 3. Keep General Daily disabled; keep cloud Indeed Daily Off (Cloudflare)

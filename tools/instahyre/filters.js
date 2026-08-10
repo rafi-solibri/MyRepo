@@ -43,7 +43,7 @@ function skipReason(title, { company = "", location = "", skills = "" } = {}) {
     /\b(ai architect|ai engineer|ml engineer|data scientist|data engineer|genai)\b/i.test(
       t
     ) &&
-    !hasDotNet(t, skills)
+    !hasDotNet(t, "") // title-only .NET proof for pure AI/data (skills laundry lists are noisy)
   ) {
     return "pure_ai_data_without_dotnet";
   }
@@ -52,7 +52,7 @@ function skipReason(title, { company = "", location = "", skills = "" } = {}) {
   if (
     /\bjava\b/i.test(t) &&
     !hasDotNet(t, skills) &&
-    !/\b(architect|engineering manager|staff|principal)\b/i.test(t)
+    !/\b(architect|engineering manager|staff|principal|tech(?:nical)?\s+lead)\b/i.test(t)
   ) {
     return "java_primary";
   }
