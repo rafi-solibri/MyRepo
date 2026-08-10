@@ -617,6 +617,123 @@ def _recaptcha_token_present(sb) -> bool:
         return False
 
 
+def _recaptcha_checkbox_checked(sb) -> bool:
+    """Read the checkbox state from Google's cross-origin anchor iframe."""
+    try:
+        sb.driver.switch_to.default_content()
+        frames = sb.driver.find_elements(
+            "css selector",
+            'iframe[title="reCAPTCHA"], iframe[src*="recaptcha/api2/anchor"]',
+        )
+        for frame in frames:
+            try:
+                sb.driver.switch_to.default_content()
+                sb.driver.switch_to.frame(frame)
+                anchor = sb.driver.find_element("css selector", "#recaptcha-anchor")
+                checked = (anchor.get_attribute("aria-checked") or "").lower() == "true"
+                sb.driver.switch_to.default_content()
+                if checked:
+                    return True
+            except Exception:
+                continue
+    except Exception:
+        pass
+    try:
+        sb.driver.switch_to.default_content()
+    except Exception:
+        pass
+    return False
+
+
+def _click_recaptcha_checkbox(sb) -> bool:
+    """Click the reCAPTCHA anchor using DOM first, then a real GUI coordinate."""
+    try:
+        sb.driver.switch_to.default_content()
+        frame = sb.driver.find_element(
+            "css selector",
+            'iframe[title="reCAPTCHA"], iframe[src*="recaptcha/api2/anchor"]',
+        )
+    except Exception as exc:
+        print(f"  recaptcha_frame_missing={exc!s}"[:220], flush=True)
+        return False
+
+    # A Selenium click inside the cross-origin frame is still a trusted browser
+    # input event. On a clean UC/WARP session this often completes immediately.
+    try:
+        sb.driver.switch_to.frame(frame)
+        anchor = sb.driver.find_element("css selector", "#recaptcha-anchor")
+        anchor.click()
+        time.sleep(2)
+        if (anchor.get_attribute("aria-checked") or "").lower() == "true":
+            sb.driver.switch_to.default_content()
+            print("  recaptcha_checkbox=checked_dom", flush=True)
+            return True
+    except Exception as exc:
+        print(f"  recaptcha_dom_click={exc!s}"[:220], flush=True)
+    finally:
+        try:
+            sb.driver.switch_to.default_content()
+        except Exception:
+            pass
+
+    # Fallback: click the checkbox at its on-screen coordinates. This avoids
+    # selector ambiguity when SmartApply also embeds preview/analytics frames.
+    try:
+        import pyautogui
+
+        frame = sb.driver.find_element(
+            "css selector",
+            'iframe[title="reCAPTCHA"], iframe[src*="recaptcha/api2/anchor"]',
+        )
+        sb.driver.execute_script(
+            "arguments[0].scrollIntoView({block:'center', inline:'center'});", frame
+        )
+        time.sleep(0.5)
+        rect = sb.driver.execute_script(
+            """
+            const r = arguments[0].getBoundingClientRect();
+            return {x:r.x, y:r.y, width:r.width, height:r.height};
+            """,
+            frame,
+        )
+        metrics = sb.driver.execute_script(
+            """
+            return {
+              sx: window.screenX,
+              sy: window.screenY,
+              chromeY: Math.max(0, window.outerHeight - window.innerHeight),
+              dpr: window.devicePixelRatio || 1
+            };
+            """
+        )
+        dpr = float(metrics.get("dpr") or 1)
+        x = (
+            float(metrics.get("sx") or 0)
+            + float(rect.get("x") or 0)
+            + 28
+        ) * dpr
+        y = (
+            float(metrics.get("sy") or 0)
+            + float(metrics.get("chromeY") or 0)
+            + float(rect.get("y") or 0)
+            + 35
+        ) * dpr
+        print(
+            f"  recaptcha_gui_click=({round(x)},{round(y)}) "
+            f"frame=({round(rect.get('x', 0))},{round(rect.get('y', 0))},"
+            f"{round(rect.get('width', 0))}x{round(rect.get('height', 0))})",
+            flush=True,
+        )
+        pyautogui.click(x=round(x), y=round(y), duration=0.25)
+        time.sleep(2.5)
+        if _recaptcha_checkbox_checked(sb) or _recaptcha_token_present(sb):
+            print("  recaptcha_checkbox=checked_gui", flush=True)
+            return True
+    except Exception as exc:
+        print(f"  recaptcha_gui_error={exc!s}"[:220], flush=True)
+    return False
+
+
 def clear_recaptcha(sb, attempts: int = 3) -> bool:
     """Clear Google reCAPTCHA on SmartApply review via UC GUI click."""
     frames = (
@@ -635,6 +752,14 @@ def clear_recaptcha(sb, attempts: int = 3) -> bool:
         if not _page_has_recaptcha(sb):
             return True
         print(f"  recaptcha_attempt={n+1}", flush=True)
+        if _click_recaptcha_checkbox(sb):
+            if _recaptcha_token_present(sb):
+                print("  recaptcha_token=ok", flush=True)
+                return True
+            # Checked without a challenge; the callback may hydrate shortly.
+            time.sleep(1)
+            if _recaptcha_checkbox_checked(sb) or _recaptcha_token_present(sb):
+                return True
         # Bring widget into view so PyAutoGUI lands on the checkbox.
         for fr in frames[:3]:
             try:
