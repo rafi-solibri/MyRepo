@@ -21,6 +21,25 @@ function run(cmd, args, timeoutMs = 180000) {
   return spawnSync(cmd, args, { encoding: "utf8", timeout: timeoutMs });
 }
 
+/** UC runner prints progress logs then a final JSON object on stdout. */
+function parseJsonTail(text) {
+  const raw = String(text || "").trim();
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    /* fall through */
+  }
+  const start = raw.lastIndexOf("\n{");
+  const idx = start >= 0 ? start + 1 : raw.lastIndexOf("{");
+  if (idx < 0) return null;
+  try {
+    return JSON.parse(raw.slice(idx));
+  } catch {
+    return null;
+  }
+}
+
 function main() {
   const report = {
     ts: new Date().toISOString(),
@@ -59,14 +78,33 @@ function main() {
   // Cloud path: SeleniumBase UC Easy Apply through WARP SOCKS.
   if (process.env.INDEED_SKIP_UC_APPLY !== "1") {
     const uc = path.join(__dirname, "uc_daily_apply.py");
-    const apply = run("python3", [uc], 900000);
+    // Full inventory can take >15m (search + SmartApply questions per job).
+    const apply = run("python3", [uc], Number(process.env.INDEED_UC_TIMEOUT_MS || 1800000));
     report.ucApplyExit = apply.status;
-    try {
-      report.ucApply = JSON.parse(apply.stdout || "{}");
-    } catch {
+    const parsed = parseJsonTail(apply.stdout || "");
+    if (parsed) {
+      report.ucApply = parsed;
+    } else {
       report.ucApplyRaw = (apply.stdout || apply.stderr || "").slice(0, 2000);
+      // Prefer on-disk artifact written by uc_daily_apply.py.
+      try {
+        const daily = "/opt/cursor/artifacts/indeed-daily-run.json";
+        if (fs.existsSync(daily)) {
+          report.ucApply = JSON.parse(fs.readFileSync(daily, "utf8"));
+        }
+      } catch {
+        /* ignore */
+      }
     }
-    report.ok = apply.status === 0;
+    const counts = report.ucApply && report.ucApply.counts;
+    if (counts) {
+      report.applied = report.ucApply.applied || [];
+      report.skipped = report.ucApply.skipped || [];
+      report.blocked = report.ucApply.blocked || [];
+      report.rejected = report.ucApply.rejected || [];
+      report.counts = counts;
+    }
+    report.ok = apply.status === 0 || Boolean(report.ucApply && report.ucApply.ok);
     fs.mkdirSync(path.dirname(OUT), { recursive: true });
     fs.writeFileSync(OUT, JSON.stringify(report, null, 2));
     console.log(JSON.stringify(report, null, 2));
