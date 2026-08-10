@@ -43,9 +43,20 @@ if [[ "${CHROME_HEADLESS:-auto}" == "1" || ( "${CHROME_HEADLESS:-auto}" == "auto
   headless=(--headless=new)
 fi
 
+proxy_args=()
+# Indeed (and optional others): residential proxy bypasses datacenter Cloudflare.
+if [[ "$portal" == "indeed" && -n "${INDEED_HTTP_PROXY:-}" ]]; then
+  proxy_args=(--proxy-server="${INDEED_HTTP_PROXY}")
+  echo "Using INDEED_HTTP_PROXY for Chrome CDP"
+elif [[ -n "${CHROME_HTTP_PROXY:-}" ]]; then
+  proxy_args=(--proxy-server="${CHROME_HTTP_PROXY}")
+  echo "Using CHROME_HTTP_PROXY for Chrome CDP"
+fi
+
 log="/tmp/cursor/chrome-cdp-${portal}.log"
 nohup "$chrome" \
   "${headless[@]}" \
+  "${proxy_args[@]}" \
   --no-sandbox \
   --disable-gpu \
   --disable-dev-shm-usage \

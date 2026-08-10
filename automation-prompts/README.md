@@ -29,15 +29,17 @@ available in the saved environment snapshot.
 
 ## Naukri daily profile resume refresh
 
-Before job applies, the Naukri automation must re-upload `Rafi_Resume.docx` to the Naukri profile:
+Before job applies, the Naukri automation must re-upload `Rafi_Resume.docx` to the Naukri profile. Prefer:
 
 ```bash
 bash scripts/preflight-portal-run.sh naukri
 bash scripts/launch-chrome-cdp.sh naukri
-node tools/naukri/update_profile_resume.js
+node tools/naukri/daily_apply.js   # runs update_profile_resume.js (STEP 0) then applies
 ```
 
-See STEP 0 in [04-naukri-general.md](04-naukri-general.md).
+Or STEP 0 alone: `node tools/naukri/update_profile_resume.js` (must end with `profileUpdated: true`).
+
+See STEP 0 in [04-naukri-general.md](04-naukri-general.md). Indeed Cloudflare: [INDEED_CLOUDFLARE.md](INDEED_CLOUDFLARE.md).
 
 ## Automations
 

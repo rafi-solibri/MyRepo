@@ -21,12 +21,15 @@ Daily Naukri + company-ATS apply for Mohammed Abdul Rafi Ahmed. Hyd + Remote/WFH
 Goal: recruiters see an updated resume / “Updated today” every morning so the profile looks actively looking and ranks better for interview calls.
 
 1. Confirm Naukri login (Hi / profile name). If login/OTP: use Gmail in same Chrome profile; if impossible, stop and report.
-2. Run: `node tools/naukri/update_profile_resume.js`
-   - Or manually: open https://www.naukri.com/mnjuser/profile → Upload/Update resume → attach **Rafi_Resume.docx** (`#attachCV` / `#lazyAttachCV` / file input) → confirm.
-3. Also soft-touch Resume Headline (open edit → Save same/equivalent headline) so last-updated advances if file upload alone does not.
-4. Verify success: profile shows resume name containing Rafi_Resume / .docx AND/or update date = today. Write result to `/opt/cursor/artifacts/naukri-profile-resume.json`.
-5. If profile resume update fails, report it clearly, then CONTINUE with job applies (do not abort the whole day unless login is missing).
-6. Do this EVERY daily run even if the file content is unchanged — re-upload is the point (freshness signal).
+2. Prefer one command that does STEP 0 + applies: `node tools/naukri/daily_apply.js` (it now runs `update_profile_resume.js` first).
+   Or run alone: `node tools/naukri/update_profile_resume.js`
+   - Must use resume-specific inputs `#attachCV` / `#lazyAttachCV` (never a random page file input).
+   - Soft-touch Resume Headline (edit → Save) so last-updated advances if file upload alone does not.
+   - Retries up to 3 times until `verify.todayHit` / `profileUpdated: true`.
+3. Verify success: `/opt/cursor/artifacts/naukri-profile-resume.json` has `profileUpdated: true` and updateOn / “Updated today”.
+4. If profile resume update still fails after retries, report it clearly (`reason: updated_today_unconfirmed`), then CONTINUE with job applies (do not abort the whole day unless login is missing).
+5. Do this EVERY daily run even if the file content is unchanged — re-upload is the point (freshness signal).
+6. Hirist “On hirist” login walls: SKIP (do not count as hard blocked). Optional: Desktop login to Hirist + re-seed session later.
 
 ## Profile
 Phone +91 8790251698 | rafi.success@gmail.com | Current 52 LPA | Expected 65 LPA | Immediate

@@ -30,6 +30,7 @@ Current 52 LPA | Expected 65 LPA | Immediate | +91 8790251698 | rafi.success@gma
 
 ## Filters
 Prefer .NET/C#/ASP.NET + architect/lead/EM. Skip QA/junior/Salesforce/ServiceNow/SAP-primary/pure AI without .NET/listed max <50L/non-Hyd non-remote.
+HARD skip titles matching Quality Engineering / Quality Assurance / QA Lead / SDET (use `node tools/instahyre/filters.js` / `skipReason`).
 
 ## Report
 Submitted (path Instahyre vs ATS), skipped, blocked. No invented applies.

@@ -21,5 +21,7 @@ module.exports = {
   /** Eligibility: use userJobInfo / applicationStatus — NEVER canJobApply for dry-run. */
   FORBIDDEN_DRY_RUN: "/home/api/canJobApply",
   CHROME_PROFILE: process.env.FOUNDIT_CHROME_PROFILE || "/home/ubuntu/.config/chrome-foundit",
+  /** Shared Raven/Falcon eligibility helpers (title+skills .NET, title exp bands, etc.). */
+  filters: () => require("./filters"),
 };
 if (require.main === module) console.log(JSON.stringify({ resume: findResume() }));

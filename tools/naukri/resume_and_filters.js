@@ -28,7 +28,7 @@ function findResume() {
  * Only skip when title itself is a QA/SDET role.
  */
 const SKIP_TITLE_RE =
-  /\b(qa engineer|quality assurance|quality engineer|sdet|intern(?!et)|fresher|salesforce|servicenow|coupa|pega|guidewire|sap\b|dynamics|workday hms)\b/i;
+  /\b(qa engineer|quality assurance|quality engineer|quality engineering|sdet|intern(?!et)|fresher|salesforce|servicenow|coupa|pega|guidewire|sap\b|dynamics|workday hms|revit|\bbarch\b|hubspot)\b/i;
 
 /** When scanning detail pages, use job panel text only — never document.body. */
 function shouldSkipTitleFromDetail(detailText) {
