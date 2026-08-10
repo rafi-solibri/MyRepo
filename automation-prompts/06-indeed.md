@@ -27,6 +27,11 @@ Current 52 LPA | Expected 65 LPA | Immediate | +91 8790251698 | rafi.success@gma
   2) Set env secret `INDEED_HTTP_PROXY` then `bash scripts/launch-chrome-cdp.sh indeed`.
 - If login missing but page loads: stop and report Indeed login required — Desktop Chrome Default login + sync-chrome-sessions.sh + Save Snapshot.
 
+## Apply bias (CRITICAL)
+- Default to APPLY for Hyd/remote Architect / Tech Lead / EM / Principal / Staff / Senior .NET/cloud.
+- When uncertain → APPLY. Title-first skips only. Do not invent applies.
+- Keep going while inventory remains.
+
 ## Apply paths
 - Prefer Indeed Easy Apply through confirmation.
 - "Apply on company site" / external ATS: FOLLOW and COMPLETE with Rafi_Resume.docx. Do not skip.
@@ -36,7 +41,9 @@ Current 52 LPA | Expected 65 LPA | Immediate | +91 8790251698 | rafi.success@gma
 Hyd/Telangana OR Remote/WFH/India Remote only.
 
 ## Filters
-Prefer .NET/C# evidence; skip Java/Node/Python-mandatory-only, QA/junior, Salesforce/ServiceNow/SAP-primary, listed max <50L.
+Prefer .NET/C# evidence. Skip Java/Node/Python-**mandatory**-only, QA/junior, Salesforce/ServiceNow/SAP-primary titles.
+Skip listed max only if clearly under **35 LPA** (forms always 65 expected).
+Do NOT skip because JD casually mentions Salesforce/Java/data as adjacent tech.
 
 ## Report
 Submitted (Easy Apply vs ATS), rejected, skipped, blocked. No invented applies.

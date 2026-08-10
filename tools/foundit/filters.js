@@ -73,7 +73,7 @@ function hasDotNet(title, skills) {
 }
 
 function hasSeniority(title) {
-  return /\b(architect|principal|staff\s+(software|engineer)|engineering\s+manager|\bem\b|director|avp|head\s+of|tech(?:nology)?\s+lead|technical\s+lead|\blead\b|manager)\b/i.test(
+  return /\b(architect|principal|staff\s+(software|engineer)|engineering\s+manager|\bem\b|director|avp|head\s+of|tech(?:nology)?\s+lead|technical\s+lead|\blead\b|manager|senior\s+(software|dotnet|\.net|full\s*stack|engineer)|sr\.?\s+(software|dotnet|\.net|engineer))\b/i.test(
     title || ""
   );
 }
@@ -124,12 +124,15 @@ function locationOk(loc, title) {
 function experienceOk(job, title) {
   const { min, max, undisclosed } = experienceBounds(job, title);
   if (undisclosed) return { ok: true, reason: "undisclosed" };
-  if (!Number.isNaN(max) && max < 10) return { ok: false, reason: `maxExp ${max}<10` };
-  if (!Number.isNaN(min) && min >= 7) return { ok: true, reason: `min ${min}≥7` };
-  if (!Number.isNaN(max) && max >= 12) return { ok: true, reason: `max ${max}≥12` };
-  if (isTechLeadBand(title) && min >= 8 && max >= 10)
-    return { ok: true, reason: `TL/Arch band ${min}-${max}` };
-  if (isStaffPrincipal(title) && max >= 10)
+  // Reject clearly junior/mid bands (e.g. Capgemini "6-9 Yrs") but allow 8-12 / 10-15.
+  if (!Number.isNaN(max) && max < 10 && (Number.isNaN(min) || min < 8)) {
+    return { ok: false, reason: `maxExp ${max}<10 (junior/mid band)` };
+  }
+  if (!Number.isNaN(min) && min >= 6) return { ok: true, reason: `min ${min}≥6` };
+  if (!Number.isNaN(max) && max >= 10) return { ok: true, reason: `max ${max}≥10` };
+  if (isTechLeadBand(title) && !Number.isNaN(min) && min >= 8)
+    return { ok: true, reason: `TL/Arch min ${min}≥8` };
+  if (isStaffPrincipal(title) && !Number.isNaN(max) && max >= 10)
     return { ok: true, reason: `Staff/Principal max ${max}≥10` };
   return { ok: false, reason: `exp ${min}-${max} fails` };
 }
@@ -139,7 +142,8 @@ function ctcOk(job) {
   if (abs == null || abs === 0) return { ok: true, lpa: null };
   const lpa = Number(abs) / 1e5;
   if (Number.isNaN(lpa)) return { ok: true, lpa: null };
-  if (lpa < 50) return { ok: false, lpa, reason: `max CTC ${lpa} LPA < 50` };
+  // Listed max often understates; only skip clearly low bands. Forms still state 65 expected.
+  if (lpa < 35) return { ok: false, lpa, reason: `max CTC ${lpa} LPA < 35` };
   return { ok: true, lpa };
 }
 

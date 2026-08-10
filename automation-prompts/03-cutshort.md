@@ -9,7 +9,7 @@ FIRST: run `bash scripts/preflight-portal-run.sh cutshort`. Verify questionnaire
 Then run `bash scripts/launch-chrome-cdp.sh cutshort` if using browser/CDP.
 Prefer Chrome CDP profile /home/ubuntu/chrome-cutshort-profile (synced from Desktop Default).
 
-Run the daily Cutshort job-search and apply flow for Rafi Ahmed.
+Run the daily Cutshort job-search and apply flow for Rafi Ahmed. Maximize volume of real qualifying applies.
 
 Profile:
 - Solutions Architect / Technical Lead | 15+ years | .NET/C#, React, AWS/Azure, microservices
@@ -20,12 +20,17 @@ Profile:
 ## Resume (HARD)
 Use only Rafi_Resume.docx from /workspace/resumes or /home/ubuntu/resumes. Never invent stubs.
 
+## Apply bias (CRITICAL)
+- Default to APPLY for Hyd/remote Architect / Tech Lead / EM / Principal / Staff / Senior .NET/cloud.
+- When uncertain → APPLY. Title-first skips only.
+- Do not invent applications. Keep going while inventory remains.
+
 ## Daily order
 1. Newest find-jobs / matchesfor={seekerId}
 2. Tier 1: Architect / Tech Lead / EM / Principal / Staff / Head Eng with .NET/cloud fit
 3. Tier 2: .NET/C#/Azure senior fullstack-backend / platform lead
-4. Tier 3 stretch only if Hyd/remote and CTC band can reach ~55+ (still state 65 expected)
-5. Skip QA/SDET/junior/SAP/Workday-Dynamics-primary/pure data/sales/BD/low YOE/listed max <50L
+4. Tier 3 stretch if Hyd/remote and listed CTC band can reach ~35+ (still state 65 expected)
+5. Skip ONLY clear wrong fits: QA/SDET/junior/SAP/Workday-Dynamics-primary/pure data TITLE/sales/BD/low YOE/listed max clearly under 35L
 6. Answer ALL questionnaires after EACH apply (not in a careless batch)
 7. Report applied / already / failed / questionnaires filled vs locked-empty
 
@@ -35,7 +40,7 @@ Use only Rafi_Resume.docx from /workspace/resumes or /home/ubuntu/resumes. Never
 - NEVER set screeningSubmitted:true until loadthread shows non-empty responses
 - Wrong nested question object + screeningSubmitted returns 200 but locks EMPTY answers (400 retry) — treat that as failure
 - Prefer UI leaf option-div clicks with request capture; verify before submit
-- Notice: immediate. Salary band Yes only if max>=55 else No. Free-text expected 65 LPA.
+- Notice: immediate. Salary band Yes if max>=35 else No (prefer Yes when band can reach ~55+). Free-text expected 65 LPA.
 - Location: Hyderabad/remote
 
 ## Apply notes
@@ -49,4 +54,5 @@ If Cutshort opens company careers, complete with Rafi_Resume.docx then continue.
 - Tighten filters: no bare "platform" match (avoids Mac Admin / IAM false applies)
 - Do not invent applications
 - Count locked-empty questionnaires as failures, not Failed:0
+- Do NOT skip because JD casually mentions Salesforce/Java/data as adjacent tech
 ```

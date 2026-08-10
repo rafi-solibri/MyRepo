@@ -113,7 +113,7 @@ async function main() {
           continue;
         }
         const maxCtc = parseMaxCtcLpa(card.text);
-        if (maxCtc !== null && maxCtc < 50) {
+        if (maxCtc !== null && maxCtc < 35) {
           report.skipped.push({ ...card, reason: `skip_ctc_${maxCtc}` });
           continue;
         }
