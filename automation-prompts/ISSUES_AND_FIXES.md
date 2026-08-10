@@ -88,13 +88,13 @@ opened as a draft PR — not left as report-only notes.
 | Workday / Greenhouse OTP ATS walls | Optional | Keep Gmail logged in same Chrome profile; complete OTP once per ATS |
 | Verified notification sender missing | You | Set secret `RESEND_FROM_EMAIL` to a verified sender; fallback uses `Job Status <onboarding@resend.dev>` |
 | General Daily duplicate | You | Keep disabled: https://cursor.com/automations/30e2c023-9067-11f1-ba66-0e7d0216e441 |
-| Indeed home results → daily mail | You | Keep home cron on; ensure home PC can `git push origin automation-results`; re-paste Notification loader from `ONE_TIME_LOADERS.md` once |
-| Re-paste Agent instructions | You | After merge, paste each `automation-prompts/0N-*.md` fenced block (Automations API is read-only) |
+| Indeed home results → daily mail | You | Keep home cron on; ensure home PC can `git push origin automation-results`; Notification must keep the one-time loader from `ONE_TIME_LOADERS.md` |
+| Automation prompt UI edits | One-time only | Paste each short loader from `ONE_TIME_LOADERS.md` once; after that, prompt updates flow through merged `automation-prompts/*.md` files on `main` |
 
-## After merging this PR
+## After merging prompt/code fixes
 
-1. Re-paste updated prompts from `automation-prompts/0*.md` into each automation (resume section changed).
-2. Merge to `main` (or point automations at this branch) so cron checkouts include `resumes/Rafi_Resume.docx`.
-3. Complete portal logins + snapshot once.
-4. For Indeed: enable private worker.
+1. Merge to `main` so the one-time loaders pull the latest `automation-prompts/*.md`.
+2. Do **not** re-paste full prompt blocks after every merge; only re-install a loader if an Automation UI prompt was manually overwritten.
+3. Complete portal logins + snapshot if auth cookies are missing.
+4. For Indeed: use home cron / private worker / proxy.
 5. For Notification: connect Resend MCP + `RESEND_FROM_EMAIL`.

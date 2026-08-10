@@ -2,9 +2,14 @@
 
 **This cloud agent cannot write automation Agent instructions** (Automations API is read-only).
 
-**Recommended:** paste the short loaders in [ONE_TIME_LOADERS.md](ONE_TIME_LOADERS.md) once. After that, merge PRs and agents pull the latest full prompts from these files automatically.
+**Required for self-updating prompts:** paste the short loaders in
+[ONE_TIME_LOADERS.md](ONE_TIME_LOADERS.md) once. After that, merge PRs and agents
+pull the latest full prompts from these files automatically; no recurring manual
+re-paste is needed when prompts change in code.
 
-Alternatively, paste each file’s full fenced `text` block into the matching automation, then Save.
+Fallback only: paste a file’s full fenced `text` block into the matching
+automation if the loader cannot be used. Full prompt pastes are static and must be
+replaced manually, so prefer the loaders.
 
 ## Shared targets
 

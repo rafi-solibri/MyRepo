@@ -47,12 +47,18 @@
 | Indeed | `chrome_probe.js` + proxy-aware preflight; `daily_apply.js` gate; Windows home task installer; cloud automation stay OFF |
 | Prompts | Apply-bias + title-first + 40–50+ volume; runners referenced; ENV_READINESS updated |
 
-## Manual step required
+## Prompt update policy
 
-Cursor Automations API from this agent is **read-only** (`get-automation` only). Paste each `automation-prompts/0N-*.md` fenced `text` block into the matching automation’s Agent instructions and Save.
+Cursor Automations API from this agent is **read-only** (`get-automation` only),
+so agents cannot paste or save Automation UI instructions. The durable solution is
+the one-time loader pattern in [ONE_TIME_LOADERS.md](ONE_TIME_LOADERS.md):
+paste each short loader once, then future prompt refinements are delivered by
+merging changes to `automation-prompts/*.md` on `main`.
 
-**You still must** (not fixable in code alone):
-1. Keep **cloud Indeed Daily OFF**; use home cron / private worker
-2. Re-paste **all** updated apply prompts after merge
-3. Set `RESEND_FROM_EMAIL` for Notification
-4. Keep General Daily disabled
+**No recurring manual re-paste is required** after prompt files change, as long as
+the matching automation still contains its one-time loader.
+
+Still not fixable from code alone:
+1. Keep **cloud Indeed Daily OFF** unless it runs on home/private worker or via proxy
+2. Set `RESEND_FROM_EMAIL` for Notification
+3. Keep General Daily disabled
