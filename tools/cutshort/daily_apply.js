@@ -324,13 +324,59 @@ async function answerPendingQuestionnaires(page, stats) {
   }
 }
 
+async function dismissOverlays(page) {
+  // InMoment NPS / survey widgets can blank the job view and hide Apply Now.
+  for (let i = 0; i < 3; i++) {
+    await page.evaluate(() => {
+      for (const el of document.querySelectorAll(
+        "button, a, [role=button], [aria-label], .close, .modal-close"
+      )) {
+        const t = ((el.innerText || el.getAttribute("aria-label") || "") + "")
+          .trim()
+          .toLowerCase();
+        if (/^(close|×|x|not now|no thanks|dismiss|maybe later|skip)$/i.test(t)) {
+          try {
+            el.click();
+          } catch {}
+        }
+      }
+      for (const el of document.querySelectorAll(
+        'iframe, [id*="inmoment" i], [class*="inmoment" i], [class*="survey" i]'
+      )) {
+        try {
+          el.style.display = "none";
+          el.remove?.();
+        } catch {}
+      }
+      for (const el of document.querySelectorAll("body *")) {
+        const st = getComputedStyle(el);
+        if (
+          (st.position === "fixed" || st.position === "absolute") &&
+          parseInt(st.zIndex || "0", 10) > 1000
+        ) {
+          const txt = (el.innerText || "").slice(0, 200);
+          if (/recommend Cutshort|InMoment|Not at all likely/i.test(txt)) {
+            el.style.display = "none";
+            try {
+              el.remove();
+            } catch {}
+          }
+        }
+      }
+    });
+    await sleep(350);
+  }
+}
+
 async function applyOne(page, job) {
   const jobId = job._id;
   await page.goto(`https://cutshort.io/profile/view/j/${jobId}`, {
     waitUntil: "domcontentloaded",
     timeout: 60000,
   });
-  await sleep(2500);
+  await sleep(2000);
+  await dismissOverlays(page);
+  await sleep(800);
   let body = await page.evaluate(() => document.body?.innerText || "");
   if (/Candidate login/i.test(body)) return { status: "login_required" };
   if (/view conversation/i.test(body) || /already applied/i.test(body)) {
@@ -341,43 +387,44 @@ async function applyOne(page, job) {
       /^apply now$/i.test((b.innerText || "").trim())
     )
   );
-  if (!hasApply) {
-    const external = /company website|external apply|apply on company/i.test(body);
-    return external ? { status: "external" } : { status: "blocked_no_apply" };
-  }
-
-  await page.evaluate(() => {
-    const btn = [...document.querySelectorAll("button, a, [role=button]")].find((b) =>
-      /^apply now$/i.test((b.innerText || "").trim())
-    );
-    btn?.click();
-  });
-  let ta = null;
-  for (let i = 0; i < 24; i++) {
-    ta = await page.$("textarea");
-    if (ta) break;
-    await sleep(250);
-  }
-  if (!ta) return { status: "failed_no_textarea" };
-
   const firstName = (job.createdBy?.name || "").split(/\s+/)[0] || null;
   const note = noteFor(job, firstName);
-  await ta.click({ clickCount: 3 });
-  await page.keyboard.press("Backspace");
-  await page.keyboard.type(note, { delay: 6 });
-  await sleep(300);
-  await page.evaluate(() => {
-    const btn = [...document.querySelectorAll("button, a, [role=button]")].find((b) =>
-      /^(send|apply|submit|send application)$/i.test((b.innerText || "").trim())
-    );
-    btn?.click();
-  });
-  await sleep(3000);
-  body = await page.evaluate(() => document.body?.innerText || "");
-  if (/view conversation/i.test(body) || /already applied/i.test(body)) {
-    return { status: "applied", firstName, via: "ui" };
+  const external = /company website|external apply|apply on company/i.test(body);
+
+  if (hasApply) {
+    await page.evaluate(() => {
+      const btn = [...document.querySelectorAll("button, a, [role=button]")].find((b) =>
+        /^apply now$/i.test((b.innerText || "").trim())
+      );
+      btn?.click();
+    });
+    let ta = null;
+    for (let i = 0; i < 24; i++) {
+      ta = await page.$("textarea");
+      if (ta) break;
+      await sleep(250);
+    }
+    if (ta) {
+      await ta.click({ clickCount: 3 });
+      await page.keyboard.press("Backspace");
+      await page.keyboard.type(note, { delay: 6 });
+      await sleep(300);
+      await page.evaluate(() => {
+        const btn = [...document.querySelectorAll("button, a, [role=button]")].find((b) =>
+          /^(send|apply|submit|send application)$/i.test((b.innerText || "").trim())
+        );
+        btn?.click();
+      });
+      await sleep(3000);
+      body = await page.evaluate(() => document.body?.innerText || "");
+      if (/view conversation/i.test(body) || /already applied/i.test(body)) {
+        return { status: "applied", firstName, via: "ui" };
+      }
+    }
   }
 
+  // Real API apply fallback when UI is obscured (NPS overlay) or textarea missing.
+  // Do not invent applies — only count success on HTTP 200 from sendreply/jobsignal.
   const apiRes = await api(page, "POST", "/sendreply/jobsignal", {
     signalid: jobId,
     message: note,
@@ -390,6 +437,8 @@ async function applyOne(page, job) {
   if (apiRes.status === 400 && /already/i.test(apiRes.text || "")) {
     return { status: "already_applied", via: "api" };
   }
+  if (external) return { status: "external", apiStatus: apiRes.status };
+  if (!hasApply) return { status: "blocked_no_apply", apiStatus: apiRes.status };
   return { status: "failed_apply", apiStatus: apiRes.status };
 }
 
