@@ -34,4 +34,7 @@ Email delivery:
 - If Resend MCP unavailable but RESEND_API_KEY is set, use scripts/send-job-status-email.mjs as fallback
 - Always write the full report to automation memory
 - Do not invent findings; wait/poll still-running apply agents before sending when possible
+
+## Auto-fix & push (MANDATORY)
+If the mail pipeline itself has a code-fixable bug (fetch-indeed-home-result.sh, send-job-status-email.mjs, prompt formatting), fix under scripts/ or automation-prompts/, append ISSUES_AND_FIXES.md, commit + push a feature branch, open a draft PR to main. Follow automation-prompts/AUTO_FIX.md. Also list any open portal fix PRs from today’s apply agents in the email. Owner-only: missing RESEND secrets / verified domain.
 ```

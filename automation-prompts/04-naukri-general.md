@@ -66,4 +66,7 @@ Hyd/Telangana OR Remote/WFH only.
 1) Profile resume refresh: ok/fail + updateOn text + resume filename shown
 2) Every job submit: company, role, id/URL, location, Naukri vs ATS path, resume file used
 Counts: profileUpdated / applied / external / blocked / skipped
+
+## Auto-fix & push (MANDATORY)
+If you hit a code-fixable blocker (update_profile_resume.js, daily_apply.js, resume_and_filters.js, Hirist skip), fix durable helpers under tools/naukri or scripts/, append automation-prompts/ISSUES_AND_FIXES.md, commit + push a feature branch, open a draft PR to main. Follow automation-prompts/AUTO_FIX.md. Do not invent applies. Owner-only: Naukri login/OTP, snapshot cookies, Hirist login (optional).
 ```
