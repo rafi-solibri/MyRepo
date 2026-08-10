@@ -84,6 +84,7 @@ opened as a draft PR — not left as report-only notes.
 | --- | --- |
 | Google Hotels inventory returned 0 offers from cloud (pages show `$` not `₹`) | `providers/google_hotels.py` parses USD and converts via `DEFAULT_USD_INR` (~87); skips UI chips |
 | Calendars were Kayak-only (missed lower Google ladder rates) | New `calendar_google.py` enriches Qualia/Oak nights; `AUTOMATION_PROVIDERS=("kayak","google")` |
+| Google `$7` UI crumbs became fake ₹609 calendar mins | Reject USD &lt; `$12` / INR &lt; ₹1000 in Google parsers |
 | Same-day Resend idempotency key collision on cron re-run | Idempotency key now includes `HHMMSS` stamp in `automation.py` |
 
 ## Still requires your action (cannot fix from code alone)

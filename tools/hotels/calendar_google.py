@@ -18,7 +18,13 @@ from playwright.sync_api import BrowserContext, Page
 
 from .browser import browser_session, dismiss_overlays
 from .calendar_prices import DayPrice, HotelCalendar
-from .providers.google_hotels import DEFAULT_USD_INR, INR_PRICE_RE, USD_PRICE_RE
+from .providers.google_hotels import (
+    DEFAULT_USD_INR,
+    INR_PRICE_RE,
+    MIN_INR,
+    MIN_USD,
+    USD_PRICE_RE,
+)
 
 log = logging.getLogger(__name__)
 
@@ -57,16 +63,19 @@ def _cut_similar(text: str) -> str:
 
 def _line_prices(line: str) -> list[int]:
     inr_vals = [int(x.replace(",", "")) for x in INR_PRICE_RE.findall(line)]
-    prices = [p for p in inr_vals if 500 <= p <= 200_000]
+    prices = [p for p in inr_vals if MIN_INR <= p <= 200_000]
     if prices:
         return prices
     usd_vals: list[int] = []
     for raw in USD_PRICE_RE.findall(line):
         try:
-            usd_vals.append(int(round(float(raw.replace(",", "")) * DEFAULT_USD_INR)))
+            usd = float(raw.replace(",", ""))
         except ValueError:
-            pass
-    return [p for p in usd_vals if 500 <= p <= 200_000]
+            continue
+        if usd < MIN_USD:
+            continue
+        usd_vals.append(int(round(usd * DEFAULT_USD_INR)))
+    return [p for p in usd_vals if MIN_INR <= p <= 200_000]
 
 
 def _match_provider(line: str) -> str | None:
@@ -107,14 +116,17 @@ def _parse_ladder(text: str) -> dict[str, int]:
                     providers[prev] = price
     if not providers:
         prices = [int(x.replace(",", "")) for x in INR_PRICE_RE.findall(text)]
-        prices = [p for p in prices if 500 <= p <= 200_000]
+        prices = [p for p in prices if MIN_INR <= p <= 200_000]
         if not prices:
             for raw in USD_PRICE_RE.findall(text):
                 try:
-                    p = int(round(float(raw.replace(",", "")) * DEFAULT_USD_INR))
+                    usd = float(raw.replace(",", ""))
                 except ValueError:
                     continue
-                if 500 <= p <= 200_000:
+                if usd < MIN_USD:
+                    continue
+                p = int(round(usd * DEFAULT_USD_INR))
+                if MIN_INR <= p <= 200_000:
                     prices.append(p)
         if prices:
             providers["Google Hotels"] = min(prices)

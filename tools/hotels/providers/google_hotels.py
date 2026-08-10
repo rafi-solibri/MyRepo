@@ -59,6 +59,11 @@ def _url(query: SearchQuery) -> str:
     )
 
 
+# Nightly hotel floors — reject UI crumbs like "$7" taxes/fees (~₹609).
+MIN_INR = 1_000
+MIN_USD = 12.0
+
+
 def _prices_from_text(text: str) -> list[int]:
     """Extract nightly prices in INR from card text (₹ or $)."""
     prices: list[int] = []
@@ -67,7 +72,7 @@ def _prices_from_text(text: str) -> list[int]:
             p = int(raw.replace(",", ""))
         except ValueError:
             continue
-        if 800 <= p <= 200_000:
+        if MIN_INR <= p <= 200_000:
             prices.append(p)
     if prices:
         return prices
@@ -76,8 +81,10 @@ def _prices_from_text(text: str) -> list[int]:
             usd = float(raw.replace(",", ""))
         except ValueError:
             continue
+        if usd < MIN_USD:
+            continue
         inr = int(round(usd * DEFAULT_USD_INR))
-        if 800 <= inr <= 200_000:
+        if MIN_INR <= inr <= 200_000:
             prices.append(inr)
     return prices
 

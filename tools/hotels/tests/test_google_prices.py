@@ -16,6 +16,10 @@ def test_prices_from_text_usd_converts():
     assert prices[0] == int(round(19 * DEFAULT_USD_INR))
 
 
+def test_prices_reject_tiny_usd_fees():
+    assert _prices_from_text("Taxes\n$7\n") == []
+
+
 def test_parse_ladder_cuts_similar_hotels():
     text = (
         "Hotel Qualia Oak\n"
