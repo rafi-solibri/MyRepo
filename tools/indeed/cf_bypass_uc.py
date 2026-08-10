@@ -17,12 +17,24 @@ Exit codes:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import socket
 import sys
 import time
 from pathlib import Path
+
+
+@contextlib.contextmanager
+def _stdout_to_stderr():
+    """Keep final report JSON clean: SeleniumBase may print driver downloads to stdout."""
+    old = sys.stdout
+    sys.stdout = sys.stderr
+    try:
+        yield
+    finally:
+        sys.stdout = old
 
 DEFAULT_URL = os.environ.get("INDEED_PREFLIGHT_URL", "https://in.indeed.com/")
 DEFAULT_PROXY = os.environ.get("INDEED_HTTP_PROXY") or os.environ.get(
@@ -136,12 +148,16 @@ def main() -> int:
         "attempts": [],
     }
 
+    def emit(payload: dict) -> None:
+        # Always write clean JSON to the real stdout (SB may have redirected sys.stdout).
+        print(json.dumps(payload, indent=2), file=sys.__stdout__, flush=True)
+
     if not socks_up(args.proxy):
         report["error"] = "warp_socks_down"
         report["hint"] = "Run: bash scripts/start-warp-proxy.sh"
         OUT.parent.mkdir(parents=True, exist_ok=True)
         OUT.write_text(json.dumps(report, indent=2))
-        print(json.dumps(report, indent=2))
+        emit(report)
         return 2
 
     try:
@@ -151,7 +167,7 @@ def main() -> int:
         report["hint"] = "pip install --user seleniumbase PyAutoGUI"
         OUT.parent.mkdir(parents=True, exist_ok=True)
         OUT.write_text(json.dumps(report, indent=2))
-        print(json.dumps(report, indent=2))
+        emit(report)
         return 2
 
     os.environ.setdefault("DISPLAY", ":1")
@@ -188,48 +204,19 @@ def main() -> int:
 
     # headed UC on existing X display (PyAutoGUI needs a real X server).
     # Do NOT use headless=True — Turnstile GUI click will not work.
-    with SB(
-        uc=True,
-        headed=True,
-        proxy=proxy,
-        user_data_dir=user_data,
-        chromium_arg="--no-sandbox,--disable-dev-shm-usage",
-    ) as sb:
-        for i in range(1, args.attempts + 1):
-            attempt: dict = {"n": i}
-            try:
-                sb.uc_open_with_reconnect(args.url, 5)
-                time.sleep(2)
-                title = sb.get_title() or ""
-                url = sb.get_current_url() or ""
+    # Redirect SB/driver chatter to stderr so Node preflight can JSON.parse stdout.
+    with _stdout_to_stderr():
+        with SB(
+            uc=True,
+            headed=True,
+            proxy=proxy,
+            user_data_dir=user_data,
+            chromium_arg="--no-sandbox,--disable-dev-shm-usage",
+        ) as sb:
+            for i in range(1, args.attempts + 1):
+                attempt: dict = {"n": i}
                 try:
-                    text = sb.get_text("body") or ""
-                except Exception:
-                    text = sb.get_page_source()[:4000]
-                attempt.update({"title": title, "url": url, "textSample": text[:500]})
-                last_title, last_url, last_text = title, url, text
-
-                if looks_healthy(title, text, url):
-                    attempt["result"] = "clear"
-                    report["attempts"].append(attempt)
-                    report["ok"] = True
-                    break
-
-                if blocked_blob(title, text, url):
-                    attempt["result"] = "challenge"
-                    # Primary path that clears Turnstile on this environment.
-                    try:
-                        sb.uc_gui_click_captcha()
-                        attempt["captchaClick"] = "uc_gui_click_captcha"
-                    except Exception as e:
-                        attempt["captchaClickError"] = str(e)[:300]
-                        try:
-                            sb.uc_gui_handle_captcha()
-                            attempt["captchaClick"] = "uc_gui_handle_captcha"
-                        except Exception as e2:
-                            attempt["captchaClickError2"] = str(e2)[:300]
-                    time.sleep(4)
-                    sb.uc_open_with_reconnect(args.url, 4)
+                    sb.uc_open_with_reconnect(args.url, 5)
                     time.sleep(2)
                     title = sb.get_title() or ""
                     url = sb.get_current_url() or ""
@@ -237,28 +224,61 @@ def main() -> int:
                         text = sb.get_text("body") or ""
                     except Exception:
                         text = sb.get_page_source()[:4000]
-                    attempt["afterTitle"] = title
-                    attempt["afterUrl"] = url
-                    attempt["afterTextSample"] = text[:500]
+                    attempt.update(
+                        {"title": title, "url": url, "textSample": text[:500]}
+                    )
                     last_title, last_url, last_text = title, url, text
+
                     if looks_healthy(title, text, url):
-                        attempt["result"] = "cleared"
+                        attempt["result"] = "clear"
                         report["attempts"].append(attempt)
                         report["ok"] = True
                         break
-                else:
-                    attempt["result"] = "unknown"
-                report["attempts"].append(attempt)
-            except Exception as e:
-                attempt["error"] = str(e)[:500]
-                report["attempts"].append(attempt)
 
-        try:
-            SCREENSHOT.parent.mkdir(parents=True, exist_ok=True)
-            sb.save_screenshot(str(SCREENSHOT))
-            report["screenshot"] = str(SCREENSHOT)
-        except Exception as e:
-            report["screenshotError"] = str(e)[:200]
+                    if blocked_blob(title, text, url):
+                        attempt["result"] = "challenge"
+                        # Primary path that clears Turnstile on this environment.
+                        try:
+                            sb.uc_gui_click_captcha()
+                            attempt["captchaClick"] = "uc_gui_click_captcha"
+                        except Exception as e:
+                            attempt["captchaClickError"] = str(e)[:300]
+                            try:
+                                sb.uc_gui_handle_captcha()
+                                attempt["captchaClick"] = "uc_gui_handle_captcha"
+                            except Exception as e2:
+                                attempt["captchaClickError2"] = str(e2)[:300]
+                        time.sleep(4)
+                        sb.uc_open_with_reconnect(args.url, 4)
+                        time.sleep(2)
+                        title = sb.get_title() or ""
+                        url = sb.get_current_url() or ""
+                        try:
+                            text = sb.get_text("body") or ""
+                        except Exception:
+                            text = sb.get_page_source()[:4000]
+                        attempt["afterTitle"] = title
+                        attempt["afterUrl"] = url
+                        attempt["afterTextSample"] = text[:500]
+                        last_title, last_url, last_text = title, url, text
+                        if looks_healthy(title, text, url):
+                            attempt["result"] = "cleared"
+                            report["attempts"].append(attempt)
+                            report["ok"] = True
+                            break
+                    else:
+                        attempt["result"] = "unknown"
+                    report["attempts"].append(attempt)
+                except Exception as e:
+                    attempt["error"] = str(e)[:500]
+                    report["attempts"].append(attempt)
+
+            try:
+                SCREENSHOT.parent.mkdir(parents=True, exist_ok=True)
+                sb.save_screenshot(str(SCREENSHOT))
+                report["screenshot"] = str(SCREENSHOT)
+            except Exception as e:
+                report["screenshotError"] = str(e)[:200]
 
     report["finishedAt"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     report["finalTitle"] = last_title
@@ -270,7 +290,7 @@ def main() -> int:
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(report, indent=2))
-    print(json.dumps(report, indent=2))
+    emit(report)
     return 0 if report["ok"] else 5
 
 

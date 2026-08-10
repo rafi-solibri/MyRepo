@@ -5,6 +5,7 @@ Plain Chrome CDP through WARP still gets Request Blocked. UC mode works.
 """
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import re
@@ -13,6 +14,21 @@ import sys
 import time
 import urllib.parse
 from pathlib import Path
+
+
+@contextlib.contextmanager
+def _stdout_to_stderr():
+    """Keep final report JSON clean when SeleniumBase prints driver downloads."""
+    old = sys.stdout
+    sys.stdout = sys.stderr
+    try:
+        yield
+    finally:
+        sys.stdout = old
+
+
+def _emit(payload: dict) -> None:
+    print(json.dumps(payload, indent=2), file=sys.__stdout__, flush=True)
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = Path(
@@ -913,7 +929,7 @@ def main() -> int:
     os.environ.setdefault("DISPLAY", ":1")
     proxy = ensure_warp()
     if not RESUME.exists():
-        print(json.dumps({"error": "resume_missing", "path": str(RESUME)}))
+        _emit({"error": "resume_missing", "path": str(RESUME)})
         return 2
 
     from seleniumbase import SB
@@ -943,13 +959,14 @@ def main() -> int:
         "ok": False,
     }
 
-    with SB(
+    with _stdout_to_stderr():
+      with SB(
         uc=True,
         headed=True,
         proxy=proxy if proxy.startswith("socks5") else proxy,
         user_data_dir=PROFILE,
         chromium_arg="--no-sandbox,--disable-dev-shm-usage",
-    ) as sb:
+      ) as sb:
         try:
             sb.set_default_timeout(4)
         except Exception:
@@ -962,7 +979,7 @@ def main() -> int:
             report["blockerSummary"] = "indeed_cloudflare_still_blocked"
             OUT.parent.mkdir(parents=True, exist_ok=True)
             OUT.write_text(json.dumps(report, indent=2))
-            print(json.dumps(report, indent=2))
+            _emit(report)
             return 5
 
         seen_keys: set[str] = set()
@@ -1211,7 +1228,7 @@ def main() -> int:
         ],
         check=False,
     )
-    print(json.dumps(report, indent=2))
+    _emit(report)
     return 0 if report["ok"] else 5
 
 

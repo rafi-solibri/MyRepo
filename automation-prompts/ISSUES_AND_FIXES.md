@@ -88,6 +88,12 @@ opened as a draft PR — not left as report-only notes.
 | Agent prompts over-filtering (“listed max ~15–50”, soft stop ~20) | Apply-bias + title-first + aim 40–50+ across `automation-prompts/0*.md` |
 | Stale ENV_READINESS “5/6 missing logins” | Updated for session-seed reality |
 
+## Fixed for 2026-08-10 Indeed preflight false exit 5
+
+| Issue | Fix |
+| --- | --- |
+| Cloud cron stopped with Cloudflare exit 5 even though WARP+UC had already cleared (`Welcome, MOHAMMED`) | SeleniumBase printed `uc_driver` download noise on **stdout** before JSON; `preflight.js` `JSON.parse` failed → false `ucBypass.ok=false`. Now: lenient JSON extract + read `indeed-cf-bypass.json`; `cf_bypass_uc.py` / `uc_daily_apply.py` redirect SB chatter to stderr and emit JSON on `sys.__stdout__` |
+
 ## Fixed for 2026-08-10 Hotel Price Tracker
 
 | Issue | Fix |
@@ -102,7 +108,7 @@ opened as a draft PR — not left as report-only notes.
 | Blocker | Who | What to do |
 | --- | --- | --- |
 | Snapshot missing portal logins | You | `bash scripts/open-portal-login-tabs.sh` → sign in on Desktop → quit Chrome → `bash scripts/verify-portal-logins.sh --strict` → **Save/Update snapshot** |
-| Indeed Cloudflare 403 on datacenter IP | You | Keep **cloud Indeed automation OFF**; run `scripts/indeed-home-daily.sh` (or Windows task) / private residential worker, **or** set secret `INDEED_HTTP_PROXY` |
+| Indeed Cloudflare 403 if WARP+UC fails | You | Prefer cloud path: WARP SOCKS + `cf_bypass_uc.py` (auto in `preflight.js`). Fallback: `scripts/indeed-home-daily.sh` / residential `INDEED_HTTP_PROXY` |
 | Hirist secondary board login | Optional | Log into Hirist in Desktop Chrome and re-seed sessions if you want Hirist applies |
 | Workday / Greenhouse OTP ATS walls | Optional | Keep Gmail logged in same Chrome profile; complete OTP once per ATS |
 | Verified notification sender missing | You | Set secret `RESEND_FROM_EMAIL` to a verified sender; fallback uses `Job Status <onboarding@resend.dev>` |
