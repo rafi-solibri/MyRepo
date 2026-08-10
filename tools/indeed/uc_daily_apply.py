@@ -577,7 +577,11 @@ def _is_submitted(body: str, url: str) -> bool:
             "thank you for applying",
             "we have received your application",
         )
-    ) or ("confirmation" in u and "review" not in u)
+    ) or (
+        ("confirmation" in u and "review" not in u)
+        or "post-apply" in u
+        or "post_apply" in u
+    )
 
 
 def _page_has_recaptcha(sb) -> bool:

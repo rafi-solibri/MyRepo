@@ -14,6 +14,7 @@ opened as a draft PR — not left as report-only notes.
 | Review step clicked **Preview what the employer sees** and trapped in `about:srcdoc` | CTA scorer excludes Preview/Edit/Download; skip `about:` frames; dedicated `submit_review_application()` |
 | `daily_apply.js` timed out / failed to parse UC stdout logs | Parse JSON tail; read `indeed-daily-run.json` artifact; raise UC timeout default to 30m |
 | Google **reCAPTCHA** checkbox on Review opened an image challenge after a direct click | Target/verify the anchor iframe, then use the accessible audio challenge with `SpeechRecognition`; PyAutoGUI remains the coordinate fallback |
+| Successful Submit navigated to SmartApply `/form/post-apply` but was counted incomplete | Treat `post-apply` / `post_apply` as confirmed submission URLs |
 
 ## Fixed in this repo
 
