@@ -40,6 +40,13 @@ Notes:
   `python3 tools/indeed/prepare_uc_profile.py` (keeps CTK/Passport, deletes `cf_*`).
 - Plain Chrome CDP (`launch-chrome-cdp.sh`) through WARP can still show
   **Request Blocked** — apply via `python3 tools/indeed/uc_daily_apply.py`.
+- SmartApply review uses Google **reCAPTCHA Enterprise**. The runner clicks the
+  SmartApply sitekey widget (not the page-footer badge), tries audio solve, then
+  optional token APIs. If Google rate-limits audio on the cloud IP, set one of:
+  - `CAPSOLVER_API_KEY` (CapSolver ReCaptchaV2 Enterprise)
+  - `TWOCAPTCHA_API_KEY` / `TWO_CAPTCHA_API_KEY`
+  Otherwise prefer home/residential cron so checkbox often passes without a
+  challenge.
 
 ## Home daily automation (free schedule)
 

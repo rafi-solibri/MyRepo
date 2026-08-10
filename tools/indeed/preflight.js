@@ -114,6 +114,37 @@ function curlFetch(url, proxy) {
   return { status, text, curlExit: res.status };
 }
 
+/** Extract a JSON object from mixed stdout (SeleniumBase may prepend driver noise). */
+function parseJsonBlob(text, fallbackPaths = []) {
+  const raw = String(text || "").trim();
+  if (raw) {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      /* try braced slice below */
+    }
+    const start = raw.indexOf("{");
+    const end = raw.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      try {
+        return JSON.parse(raw.slice(start, end + 1));
+      } catch {
+        /* fall through to report files */
+      }
+    }
+  }
+  for (const p of fallbackPaths) {
+    if (p && fs.existsSync(p)) {
+      try {
+        return JSON.parse(fs.readFileSync(p, "utf8"));
+      } catch {
+        /* try next */
+      }
+    }
+  }
+  return null;
+}
+
 function chromeProbe(url, proxy) {
   const probe = path.join(__dirname, "chrome_probe.js");
   if (!fs.existsSync(probe)) return null;
@@ -124,36 +155,44 @@ function chromeProbe(url, proxy) {
     env,
     timeout: 120000,
   });
-  try {
-    return JSON.parse(res.stdout || "{}");
-  } catch {
-    return {
-      ok: false,
-      error: (res.stderr || res.stdout || "chrome_probe failed").slice(0, 500),
-      exitCode: res.status,
-    };
-  }
+  const parsed = parseJsonBlob(res.stdout || "");
+  if (parsed) return parsed;
+  return {
+    ok: false,
+    error: (res.stderr || res.stdout || "chrome_probe failed").slice(0, 500),
+    exitCode: res.status,
+  };
 }
 
 function ucBypass(proxy) {
   const script = path.join(__dirname, "cf_bypass_uc.py");
   if (!fs.existsSync(script)) return { ok: false, error: "cf_bypass_uc.py missing" };
+  const reportPath =
+    process.env.INDEED_CF_BYPASS_REPORT ||
+    "/opt/cursor/artifacts/indeed-cf-bypass.json";
+  // Remove stale report so a failed run cannot inherit a prior ok:true.
+  try {
+    if (fs.existsSync(reportPath)) fs.unlinkSync(reportPath);
+  } catch {
+    /* ignore */
+  }
   const env = { ...process.env, INDEED_HTTP_PROXY: proxy || "" };
   const res = spawnSync("python3", [script, "--attempts", "3"], {
     encoding: "utf8",
     env,
     timeout: 240000,
   });
-  try {
-    const parsed = JSON.parse(res.stdout || "{}");
+  const parsed = parseJsonBlob(`${res.stdout || ""}\n${res.stderr || ""}`, [
+    reportPath,
+  ]);
+  if (parsed) {
     return { ...parsed, exitCode: res.status };
-  } catch {
-    return {
-      ok: false,
-      error: (res.stderr || res.stdout || "uc bypass failed").slice(0, 800),
-      exitCode: res.status,
-    };
   }
+  return {
+    ok: false,
+    error: (res.stderr || res.stdout || "uc bypass failed").slice(0, 800),
+    exitCode: res.status,
+  };
 }
 
 function probeOnce(proxy) {

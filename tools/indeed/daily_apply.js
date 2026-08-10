@@ -51,10 +51,21 @@ function main() {
 
   const pre = run(process.execPath, [path.join(__dirname, "preflight.js")]);
   report.preflightExit = pre.status;
-  try {
-    report.preflight = JSON.parse(pre.stdout || pre.stderr || "{}");
-  } catch {
+  const preParsed = parseJsonTail(
+    `${pre.stdout || ""}\n${pre.stderr || ""}`,
+  );
+  if (preParsed) {
+    report.preflight = preParsed;
+  } else {
     report.preflightRaw = (pre.stdout || pre.stderr || "").slice(0, 1000);
+    try {
+      const pf = "/opt/cursor/artifacts/indeed-preflight.json";
+      if (fs.existsSync(pf)) {
+        report.preflight = JSON.parse(fs.readFileSync(pf, "utf8"));
+      }
+    } catch {
+      /* ignore */
+    }
   }
 
   if (pre.status === 5) {
