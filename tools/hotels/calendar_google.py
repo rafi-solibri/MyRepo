@@ -28,6 +28,7 @@ from .providers.google_hotels import (
 
 log = logging.getLogger(__name__)
 
+# Only trust named OTA rows on the deal ladder (not bare "Google Hotels" crumbs).
 PROVIDER_NAMES = (
     "MakeMyTrip",
     "Booking.com",
@@ -38,7 +39,6 @@ PROVIDER_NAMES = (
     "Goibibo",
     "Hotels.com",
     "Expedia",
-    "Google Hotels",
 )
 
 
@@ -114,22 +114,8 @@ def _parse_ladder(text: str) -> dict[str, int]:
                 price = min(prices)
                 if prev not in providers or price < providers[prev]:
                     providers[prev] = price
-    if not providers:
-        prices = [int(x.replace(",", "")) for x in INR_PRICE_RE.findall(text)]
-        prices = [p for p in prices if MIN_INR <= p <= 200_000]
-        if not prices:
-            for raw in USD_PRICE_RE.findall(text):
-                try:
-                    usd = float(raw.replace(",", ""))
-                except ValueError:
-                    continue
-                if usd < MIN_USD:
-                    continue
-                p = int(round(usd * DEFAULT_USD_INR))
-                if MIN_INR <= p <= 200_000:
-                    prices.append(p)
-        if prices:
-            providers["Google Hotels"] = min(prices)
+    # Do NOT fall back to a bare page-min: Google UI crumbs ($7/$12 fees)
+    # otherwise become fake nightly lows after FX conversion.
     return providers
 
 

@@ -59,9 +59,9 @@ def _url(query: SearchQuery) -> str:
     )
 
 
-# Nightly hotel floors — reject UI crumbs like "$7" taxes/fees (~₹609).
-MIN_INR = 1_000
-MIN_USD = 12.0
+# Nightly hotel floors — reject UI crumbs like "$7"/"$12" taxes/fees.
+MIN_INR = 1_500
+MIN_USD = 18.0
 
 
 def _prices_from_text(text: str) -> list[int]:
