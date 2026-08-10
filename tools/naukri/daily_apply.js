@@ -36,7 +36,10 @@ const QUERIES = [
   ".net architect hyderabad",
 ];
 
-const JOB_AGES = [1, 3, 7];
+const JOB_AGES = (process.env.NAUKRI_JOB_AGES || "1,3,7")
+  .split(",")
+  .map((s) => Number(String(s).trim()))
+  .filter((n) => Number.isFinite(n) && n > 0);
 const MAX_APPLIES = Number(process.env.NAUKRI_MAX_APPLIES || 40);
 const MAX_EXTERNAL_MS = 3.5 * 60 * 1000;
 
