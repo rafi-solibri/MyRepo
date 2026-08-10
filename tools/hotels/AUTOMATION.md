@@ -10,7 +10,7 @@ Do not substitute a smoke test or partial area list unless the user explicitly a
 | 0 | **MOST IMPORTANT — Calendars** for **Hotel Qualia Oak** and **Oak Business Hotel**: current month + next month, each day = **lowest price across all hotel providers** (Google Hotels–style calendar in email) | `calendar_prices.py` + `calendar_view.py` (runs first) |
 | 1 | **4★+** hotels only | `min_stars=4.0` (default) |
 | 2 | **Areas** — Madhapur, Kondapur, Gachibowli, Botanical Garden, Ayyappa Society, 100 Feet Road, Raghavendra Colony | `REQUIRED_AREAS` in `requirements_spec.py` |
-| 3 | **Multi-provider prices** (Booking.com, Agoda, Expedia, brand sites, etc.) | Kayak poll / rates JSON |
+| 3 | **Multi-provider prices** (Booking.com, Agoda, Expedia, brand sites, etc.) | Kayak poll / rates JSON **+ Google Hotels** (`AUTOMATION_PROVIDERS`) |
 | 4 | **Every remaining Sat/Sun** of the current month | `weekend_dates(...)` |
 | 5 | **Full inventory** — every matching hotel-night, not a sample | `python -m tools.hotels.automation` |
 | 6 | **Email** leads with calendars, then tabular inventory sorted by **date then ascending price** | `report.py` |

@@ -78,6 +78,15 @@ opened as a draft PR — not left as report-only notes.
 | Agent prompts over-filtering (“listed max ~15–50”, soft stop ~20) | Apply-bias + title-first + aim 40–50+ across `automation-prompts/0*.md` |
 | Stale ENV_READINESS “5/6 missing logins” | Updated for session-seed reality |
 
+## Fixed for 2026-08-10 Hotel Price Tracker
+
+| Issue | Fix |
+| --- | --- |
+| Google Hotels inventory returned 0 offers from cloud (pages show `$` not `₹`) | `providers/google_hotels.py` parses USD and converts via `DEFAULT_USD_INR` (~87); skips UI chips |
+| Calendars were Kayak-only (missed lower Google ladder rates) | New `calendar_google.py` enriches Qualia/Oak nights; `AUTOMATION_PROVIDERS=("kayak","google")` |
+| Google `$7` UI crumbs became fake ₹609 calendar mins | Reject USD &lt; `$12` / INR &lt; ₹1000 in Google parsers |
+| Same-day Resend idempotency key collision on cron re-run | Idempotency key now includes `HHMMSS` stamp in `automation.py` |
+
 ## Still requires your action (cannot fix from code alone)
 
 | Blocker | Who | What to do |

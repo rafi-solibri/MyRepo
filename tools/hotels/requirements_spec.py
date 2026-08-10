@@ -16,9 +16,12 @@ ADULTS: int = 2
 # Remaining Sat/Sun of the current calendar month (India/local date).
 WEEKEND_SCOPE: str = "remaining_sat_sun_current_month"
 
-# Kayak poll already returns Booking.com / Agoda / Expedia / brand OTAs.
-# Direct scrapers are optional extras and often blocked from cloud IPs.
-AUTOMATION_PROVIDERS: tuple[str, ...] = ("kayak",)
+# Kayak poll returns Booking.com / Agoda / Expedia / brand OTAs; Google Hotels
+# is a second aggregator surface (often shows $ from cloud — converted to INR).
+AUTOMATION_PROVIDERS: tuple[str, ...] = ("kayak", "google")
+REQUIRE_GOOGLE_HOTELS_EVERYWHERE: bool = True
+REQUIRE_GOOGLE_HOTELS_IN_CALENDARS: bool = True
+REQUIRE_GOOGLE_HOTELS_IN_INVENTORY: bool = True
 
 # --- MOST IMPORTANT: per-hotel calendars (current + next month) ---
 # Lowest nightly price across all compared hotel providers for each day.

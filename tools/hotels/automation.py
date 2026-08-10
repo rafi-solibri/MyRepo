@@ -22,6 +22,7 @@ import logging
 from datetime import date, datetime
 from pathlib import Path
 
+from .calendar_google import enrich_calendars_with_google
 from .calendar_prices import fetch_tracked_calendars
 from .fetch import fetch_prices, weekend_dates
 from .report import write_report_artifacts
@@ -31,6 +32,7 @@ from .requirements_spec import (
     CALENDAR_HOTELS,
     EMAIL_TO,
     MIN_STARS,
+    REQUIRE_GOOGLE_HOTELS_IN_CALENDARS,
     REQUIRED_AREAS,
 )
 from .send_resend import send_payload_file
@@ -70,6 +72,14 @@ def run_nightly(
             headless=not headed,
             hotels=CALENDAR_HOTELS,
         )
+        if REQUIRE_GOOGLE_HOTELS_IN_CALENDARS:
+            log.info("Enriching calendars with Google Hotels deal ladders")
+            calendars = enrich_calendars_with_google(
+                calendars,
+                CALENDAR_HOTELS,
+                adults=ADULTS,
+                headless=not headed,
+            )
         calendars_payload = [c.to_dict() for c in calendars]
         for c in calendars:
             priced = [d for d in c.days if d.lowest_price_inr is not None]
@@ -131,7 +141,12 @@ def run_nightly(
     if not calendars_payload and not skip_calendars:
         raise RuntimeError("Calendar fetch returned empty — aborting (priority requirement)")
 
-    idem = f"hotel-weekend-prices/{month_label}/{EMAIL_TO}/{run_day}/full-with-calendars"
+    # Unique per wall-clock send so same-day cron re-runs are not idempotent no-ops.
+    run_stamp = datetime.utcnow().strftime("%H%M%S")
+    idem = (
+        f"hotel-weekend-prices/{month_label}/{EMAIL_TO}/{run_day}/"
+        f"full-with-calendars-{run_stamp}"
+    )
     paths = write_report_artifacts(
         payload,
         out_dir,
