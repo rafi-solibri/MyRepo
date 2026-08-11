@@ -12,6 +12,18 @@ if [[ -z "$portal" ]]; then
 fi
 
 bash scripts/bootstrap-job-assets.sh
+# Node portal helpers (foundit/cutshort/…) need playwright-core under tools/.
+if [[ -f tools/package.json ]]; then
+  if [[ ! -d tools/node_modules/playwright-core ]]; then
+    echo "Installing tools/ npm deps (playwright-core)…"
+    (cd tools && npm ci --no-fund --no-audit 2>/dev/null || npm install --no-fund --no-audit)
+  fi
+fi
 bash scripts/sync-chrome-sessions.sh
-python3 tools/resume_paths.py
+PY="$(bash scripts/resolve-python.sh)"
+if [[ "$PY" == "py" ]]; then
+  py -3 tools/resume_paths.py
+else
+  "$PY" tools/resume_paths.py
+fi
 node tools/chrome_session.js check "$portal"

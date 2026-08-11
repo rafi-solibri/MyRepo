@@ -13,19 +13,23 @@ TITLE_BLACKLIST = re.compile(
     r"blockchain|mandarin|biztalk|firmware|\bmes\b|\bror\b|ruby on rails|"
     r"\bsap\b|dynamics\s*365|\bd365\b|esri|\bgis\b|"
     r"java full[- ]?stack|java[- ]?(mandatory|only|required|backend)|"
+    r"\bjava\b(?!.*(?:\.net|dotnet|c#))|"  # Java primary titles (allow if .NET also on title)
     r"node\.?js[- ]?(mandatory|only)|"
     r"python[- ]?(mandatory|only)|principal engineer\s*\(\s*python|"
     r"\bdata engineer\b|\bmachine learning engineer\b|"
     r"big data architect|\bdata architect\b|data warehouse architect|implementation specialist|"
     r"\bphp\b|laravel|"
-    r"interior designer|civil engineer|electrical engineering|golang &|golang and|"
+    r"interior designer|civil engineer|electrical engineering|electrical design|"
+    r"golang &|golang and|"
     r"bpo|call center|marketing cloud|success architect|"
     r"non-?it staffing|us non-?it|staffing recruiter|talent acquisition|"
     r"\brevit\b|\bbarch\b|hubspot|m365 architect|microsoft 365 architect|"
     r"solutions engineer|presales|pre-sales|"
     r"\binfor\b|\berp\b.?primary|dft architect|\beda\b|"
-    r"ai compiler|gen[- ]?ai architect|ai architect(?!.*\.net)|"
-    r"quality engineering|quality assurance|qa engineer|\bsdet\b",
+    r"ai compiler|gen[- ]?ai architect|ai/?\s*ml architect|ai architect(?!.*\.net)|"
+    r"ai technical (lead|architect)|"
+    r"quality engineering|quality assurance|qa engineer|\bsdet\b|"
+    r"netsuite|nice cxone",
     re.I,
 )
 
@@ -84,12 +88,14 @@ def location_allowed(loc: str, workplace: str = "", *, remote_search: bool = Fal
     if not text:
         return False
     remoteish = bool(REMOTE_OK.search(text)) or remote_search
-    if BAD_CITY.search(text) and not REMOTE_OK.search(text):
-        return False
-    if REMOTE_OK.search(text):
-        return True
+    # Hyderabad (even dual-city "Delhi & Hyderabad") is allowed.
     if HYD_OK.search(text):
         return True
+    if REMOTE_OK.search(text):
+        return True
+    # Non-Hyd bad cities without Remote → reject
+    if BAD_CITY.search(text) and not REMOTE_OK.search(text):
+        return False
     if remoteish and INDIA_ONLY.search((loc or "").strip()):
         return True
     if remoteish and re.search(r"\bالهند\b", text) and not BAD_CITY.search(text):
@@ -106,19 +112,26 @@ def jd_blacklist(text: str) -> str | None:
 def skip_reason(role: str, company: str = "", jd: str = "") -> str | None:
     """Return skip reason or None. Title blacklist first; JD only for hard mandatory stacks."""
     title = role or ""
+    company = company or ""
     if re.search(
-        r"\b(ai architect|ai engineer|ml engineer|genai|data scientist|data engineer)\b",
+        r"\b(ai/?\s*ml architect|ai architect|ai engineer|ml engineer|genai|"
+        r"ai technical (lead|architect)|data scientist|data engineer)\b",
         title,
         re.I,
     ) and not re.search(r"\.net|dotnet|\bc#\b", title, re.I):
         return "title: pure AI/data without .NET"
+    # Company-primary wrong stacks (title alone may say System Architect)
+    if re.search(r"pegasystems|\bpega\b", company, re.I) and not re.search(
+        r"\.net|dotnet|\bc#\b", title, re.I
+    ):
+        return "company: Pega/Pegasystems"
     m = TITLE_BLACKLIST.search(title)
     if m:
         return f"title: {m.group(0)}"
     m = JD_HARD_BLACKLIST.search(jd or "")
     if m:
         return f"jd: {m.group(0)}"
-    if not title and company:
+    if company:
         m = TITLE_BLACKLIST.search(company)
         if m:
             return f"company: {m.group(0)}"

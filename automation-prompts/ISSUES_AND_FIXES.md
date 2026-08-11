@@ -18,6 +18,8 @@ opened as a draft PR — not left as report-only notes.
 
 | Issue | Fix |
 | --- | --- |
+| Portal preflight could fail after a crashed runner left CDP Chrome holding a profile (`cp ... Default/WebStorage: File exists`) | `scripts/sync-chrome-sessions.sh` now stops stale `remote-debugging-port=9222` Chrome before syncing and uses a safer merge-copy fallback when `rsync` is unavailable |
+| LinkedIn external helper crashed when Easy Apply wrote legacy list-shaped `apply-report.json` | `tools/linkedin/linkedin_external_apply.py` now normalizes dict and list report shapes before building external candidates, preserving priority-ID fallback |
 | `tools/foundit/daily_apply.js` was login-only scaffold (0 Raven/Falcon applies) | Full runner: Raven public search → `classifyJob` → `userJobInfo`/`applicationStatus` eligibility → Falcon ****** → LinkedIn/ATS handoff; writes `/opt/cursor/artifacts/foundit-apply-report.json` |
 | JD marketing "remote-first" overrode explicit Noida/Bangalore cities | `locationsFrom` only reads Hyd/remote from description when card locations are empty or country-only; test covers Noida false-pass |
 | Runner hung on CDP after scaffold | Playwright `browser.close()` after connectOverCDP (disconnects without killing Chrome) |
@@ -154,6 +156,18 @@ opened as a draft PR — not left as report-only notes.
 | Google `$7` UI crumbs became fake ₹609 calendar mins | Reject USD &lt; `$12` / INR &lt; ₹1000 in Google parsers |
 | Same-day Resend idempotency key collision on cron re-run | Idempotency key now includes `HHMMSS` stamp in `automation.py` |
 
+## Fixed for 2026-08-11 Windows home daily
+
+| Issue | Fix |
+| --- | --- |
+| Home LinkedIn preflight failed: `source Chrome profile missing: /home/ubuntu/.config/google-chrome` | `tools/chrome_session.js` + `sync-chrome-sessions.sh` detect Windows and use `%LOCALAPPDATA%/Google/Chrome/User Data` + `~/.cursor/chrome-cdp-profiles/<portal>` |
+| Cookie auth check missed Chrome 120+ path | Read `Default/Network/Cookies` then `Default/Cookies` |
+| Chrome lock blocked cookie copy mid-sync | Sync may stop `chrome.exe` when `HOME_CHROME_SYNC_ALLOW_KILL=1` (default) so CDP profiles can refresh |
+| `launch-chrome-cdp.sh` could not find Chrome / forced headless on Git Bash | Resolve `chrome.exe` under Program Files; headed by default on Windows |
+| Windows sync hung on full `cp -a` of Chrome Default (multi-GB) | Without rsync, sync only cookies/prefs/Local Storage essentials |
+| Windows Store `python3` stub broke preflight/CDP wait | `scripts/resolve-python.sh` + preflight/launch use real Python314 |
+| Windows Chrome ABE (v20) cookie copy → LinkedIn login wall in CDP | Sync skips Default→CDP cookie copy when `app_bound_encrypted_key` present; one-time headed login per `~/.cursor/chrome-cdp-profiles/<portal>` |
+
 ## Fixed for 2026-08-11 Windows private worker crash
 
 | Issue | Fix |
@@ -161,12 +175,20 @@ opened as a draft PR — not left as report-only notes.
 | `agent worker start` on Windows dies: `better-sqlite3` NODE_MODULE_VERSION **127 vs 137** / `Error starting exec-daemon` | **Not fixable by reinstall** — Cursor Windows worker package bug ([forum](https://forum.cursor.com/t/windows-remote-control-worker-crashes-better-sqlite3-node-module-version-127-vs-137-cursor-3-15-6/167841)). Workaround: run Linux worker under **WSL**. Scripts: `scripts/fix-windows-agent-worker.ps1` (−LaunchWsl) + `scripts/setup-wsl-agent-worker.sh --name job-apply-laptop`. Do not pipe the Linux `curl \| bash` installer in PowerShell ISE. |
 | Wrong installer in PowerShell ISE (`curl … \| bash`) | Docs + repair script point to WSL bash or `irm 'https://cursor.com/install?win32=true' \| iex` |
 
+## Fixed for 2026-08-11 Foundit home CDP
+
+| Issue | Fix |
+| --- | --- |
+| Home Foundit: `MSSOAT` cookie name present but live session → `rio/sign-out` | Cookie-name check is soft; `daily_apply.js` live dashboard probe is authoritative. One-time headed login in CDP Foundit profile |
+| Home `node tools/foundit/daily_apply.js` → missing `playwright-core` | `preflight-portal-run.sh` installs `tools/` npm deps when `playwright-core` is absent; `resume.js` resolves repo `resumes/Rafi_Resume.docx` on Windows |
+
 ## Still requires your action (cannot fix from code alone)
 
 | Blocker | Who | What to do |
 | --- | --- | --- |
 | Windows `agent worker start` ABI crash (127/137) | You | Until Cursor ships a fixed Win package: `wsl --install -d Ubuntu` → `powershell -ExecutionPolicy Bypass -File scripts\fix-windows-agent-worker.ps1 -LaunchWsl` (or `bash scripts/setup-wsl-agent-worker.sh --name job-apply-laptop` inside WSL). Leave WSL terminal open; pick that machine in Agents. |
 | Snapshot missing portal logins | You | `bash scripts/open-portal-login-tabs.sh` → sign in on Desktop → quit Chrome → `bash scripts/verify-portal-logins.sh --strict` → **Save/Update snapshot** |
+| Windows home Foundit CDP login (ABE) | You | `bash scripts/launch-chrome-cdp.sh foundit` → sign in at `https://www.foundit.in/rio/login` in that window → leave profile logged in → re-run Foundit home daily |
 | Cutshort CDP session stale (cookie present, live redirect to Candidate login) | You | `bash scripts/launch-chrome-cdp.sh cutshort` → sign in at cutshort.io in that window → re-run `node tools/cutshort/daily_apply.js` |
 | Indeed Cloudflare 403 if WARP+UC fails | You | Prefer cloud path: WARP SOCKS + `cf_bypass_uc.py` (auto in `preflight.js`). Fallback: `scripts/indeed-home-daily.sh` / residential `INDEED_HTTP_PROXY` |
 | Hirist secondary board login | Optional | Log into Hirist in Desktop Chrome and re-seed sessions if you want Hirist applies |

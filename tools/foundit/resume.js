@@ -2,7 +2,13 @@
 /** Foundit: resume path + never use canJobApply as dry-run (it submits). */
 "use strict";
 const fs = require("fs");
+const path = require("path");
+const { PROFILES } = require("../chrome_session");
+
+const REPO_RESUMES = path.join(__dirname, "..", "..", "resumes");
 const RESUME_CANDIDATES = [
+  path.join(REPO_RESUMES, "Rafi_Resume.docx"),
+  path.join(process.cwd(), "resumes", "Rafi_Resume.docx"),
   "/workspace/resumes/Rafi_Resume.docx",
   "/home/ubuntu/resumes/Rafi_Resume.docx",
   "/home/ubuntu/Documents/Rafi_Resume.docx",
@@ -20,7 +26,10 @@ module.exports = {
   CURRENT_CTC_LPA: 52,
   /** Eligibility: use userJobInfo / applicationStatus — NEVER canJobApply for dry-run. */
   FORBIDDEN_DRY_RUN: "/home/api/canJobApply",
-  CHROME_PROFILE: process.env.FOUNDIT_CHROME_PROFILE || "/home/ubuntu/.config/chrome-foundit",
+  CHROME_PROFILE:
+    process.env.FOUNDIT_CHROME_PROFILE ||
+    PROFILES.foundit ||
+    "/home/ubuntu/.config/chrome-foundit",
   /** Shared Raven/Falcon eligibility helpers (title+skills .NET, title exp bands, etc.). */
   filters: () => require("./filters"),
 };
