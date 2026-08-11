@@ -32,9 +32,31 @@ except Exception:
         raise FileNotFoundError("Rafi_Resume.docx missing")
 
 CDP = os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222")
-REPORT_IN = Path("/opt/cursor/artifacts/apply-report.json")
-REPORT_OUT = Path("/opt/cursor/artifacts/external-apply-report.json")
-SCREEN_DIR = Path("/opt/cursor/artifacts")
+_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _artifacts_dir() -> Path:
+    if os.environ.get("LINKEDIN_ARTIFACTS"):
+        return Path(os.environ["LINKEDIN_ARTIFACTS"])
+    cloud = Path("/opt/cursor/artifacts")
+    if cloud.is_dir():
+        return cloud
+    # Git Bash on Windows: /opt → %LOCALAPPDATA%\Programs\Git\opt (Python does not see POSIX /opt)
+    local = os.environ.get("LOCALAPPDATA") or ""
+    git_opt = Path(local) / "Programs" / "Git" / "opt" / "cursor" / "artifacts"
+    if git_opt.is_dir():
+        return git_opt
+    d = _ROOT / "artifacts"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+_ART = _artifacts_dir()
+REPORT_IN = Path(os.environ.get("LINKEDIN_APPLY_REPORT", str(_ART / "apply-report.json")))
+REPORT_OUT = Path(
+    os.environ.get("LINKEDIN_EXTERNAL_REPORT", str(_ART / "external-apply-report.json"))
+)
+SCREEN_DIR = _ART
 
 PROFILE = {
     "first": "Mohammed Abdul Rafi",
@@ -248,7 +270,18 @@ def process_external(page: Page, job: dict) -> ExtResult:
     jid = res.job_id
     view = f"https://www.linkedin.com/jobs/view/{jid}/"
     print(f"EXTERNAL {res.company} | {res.role} | {jid}", flush=True)
-    page.goto(view, wait_until="domcontentloaded", timeout=60000)
+    try:
+        page.goto(view, wait_until="domcontentloaded", timeout=60000)
+    except Exception as e:
+        # LinkedIn often aborts mid-navigation on SPA redirects; retry once
+        try:
+            time.sleep(1.5)
+            page.goto(view, wait_until="domcontentloaded", timeout=60000)
+        except Exception as e2:
+            res.status = "blocked"
+            res.reason = f"goto failed: {e2}"
+            print(f"  -> blocked: {res.reason}", flush=True)
+            return res
     time.sleep(2.5)
 
     # Location hard check again
@@ -266,13 +299,17 @@ def process_external(page: Page, job: dict) -> ExtResult:
         print(f"  SKIP location {loc[:80]}", flush=True)
         return res
 
-    # Click Apply (not Easy Apply)
+    # Click Apply (not Easy Apply) — 2026 UI uses hashed <a aria-label="Apply on company website">
     apply_btn = None
     for sel in [
+        "a[aria-label*='Apply on company website']",
+        "button[aria-label*='Apply on company website']",
         "button.jobs-apply-button",
         "a.jobs-apply-button",
         "button:has-text('Apply')",
         "a:has-text('Apply')",
+        "a[aria-label*='Apply']",
+        "button[aria-label*='Apply']",
     ]:
         locb = page.locator(sel).first
         try:
@@ -428,13 +465,30 @@ def main() -> None:
             if not job:
                 # Still try priority IDs even if not in today's scan
                 if jid in PRIORITY_IDS:
-                    job = {"job_id": jid, "company": "", "role": "", "location": "", "url": f"https://www.linkedin.com/jobs/view/{jid}/"}
+                    job = {
+                        "job_id": jid,
+                        "company": "",
+                        "role": "",
+                        "location": "",
+                        "url": f"https://www.linkedin.com/jobs/view/{jid}/",
+                    }
                 else:
                     continue
-            r = process_external(page, job)
-            results.append(r)
-            if r.status in ("submitted", "blocked", "skipped"):
+            try:
+                r = process_external(page, job)
+                results.append(r)
+                if r.status in ("submitted", "blocked", "skipped"):
+                    done += 1
+            except Exception as e:
+                results.append(
+                    ExtResult(
+                        status="blocked",
+                        job_id=str(job.get("job_id") or jid),
+                        reason=f"uncaught: {e}",
+                    )
+                )
                 done += 1
+                print(f"  -> blocked uncaught: {e}", flush=True)
             time.sleep(1)
 
     out = {
