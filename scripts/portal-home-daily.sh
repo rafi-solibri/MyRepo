@@ -149,12 +149,18 @@ resolve_agent() {
   local candidates=(
     "$HOME/.cursor/bin/agent"
     "$HOME/.local/bin/agent"
-    "/mnt/c/Users/$USER/AppData/Local/cursor-agent/agent.cmd"
     "/mnt/c/Users/MohammedAhmed/AppData/Local/cursor-agent/agent.cmd"
   )
   # Git Bash on Windows: LOCALAPPDATA path
   if [[ -n "${LOCALAPPDATA:-}" ]]; then
     candidates+=("$LOCALAPPDATA/cursor-agent/agent.cmd")
+  fi
+  if [[ -n "${USERPROFILE:-}" ]]; then
+    candidates+=("$USERPROFILE/AppData/Local/cursor-agent/agent.cmd")
+  fi
+  # WSL path when USER is set
+  if [[ -n "${USER:-}" ]]; then
+    candidates+=("/mnt/c/Users/${USER}/AppData/Local/cursor-agent/agent.cmd")
   fi
   for c in "${candidates[@]}"; do
     if [[ -x "$c" || -f "$c" ]]; then
