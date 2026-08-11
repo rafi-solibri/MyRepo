@@ -6,6 +6,14 @@ See [AUTO_FIX.md](AUTO_FIX.md). Code-fixable blockers discovered during any dail
 automation must be patched in durable helpers, pushed on a feature branch, and
 opened as a draft PR — not left as report-only notes.
 
+## Fixed for 2026-08-11 Foundit daily apply
+
+| Issue | Fix |
+| --- | --- |
+| `tools/foundit/daily_apply.js` was login-only scaffold (0 Raven/Falcon applies) | Full runner: Raven public search → `classifyJob` → `userJobInfo`/`applicationStatus` eligibility → Falcon ****** → LinkedIn/ATS handoff; writes `/opt/cursor/artifacts/foundit-apply-report.json` |
+| JD marketing "remote-first" overrode explicit Noida/Bangalore cities | `locationsFrom` only reads Hyd/remote from description when card locations are empty or country-only; test covers Noida false-pass |
+| Runner hung on CDP after scaffold | Playwright `browser.close()` after connectOverCDP (disconnects without killing Chrome) |
+
 ## 2026-08-11 Hitech City / Knowledge City Daily
 
 | Issue | Fix |

@@ -21,19 +21,30 @@ function skillTexts(job) {
 function locationsFrom(job) {
   const parts = [];
   const locs = job.locations || job.jobLocations || [];
+  let hasSpecificPlace = false;
   if (Array.isArray(locs)) {
     for (const l of locs) {
-      if (typeof l === "string") parts.push(l);
-      else if (l) {
-        parts.push(l.text || l.name || l.city || l.label || "");
+      if (typeof l === "string") {
+        parts.push(l);
+        if (l.trim() && !/^(india|in)$/i.test(l.trim())) hasSpecificPlace = true;
+      } else if (l) {
+        const place = l.text || l.name || l.city || l.label || "";
+        if (place) {
+          parts.push(place);
+          if (!/^(india|in)$/i.test(String(place).trim())) hasSpecificPlace = true;
+        }
         // Country-only rows still expose country; keep for debugging but city may be empty.
         if (!l.city && !l.text && !l.name && l.country) parts.push(String(l.country));
       }
     }
   }
-  if (job.location) parts.push(String(job.location));
-  // Many external cards leave locations=[] / India-only; JD body often has Remote/Hyderabad.
-  if (job.description) {
+  if (job.location) {
+    parts.push(String(job.location));
+    if (!/^(india|in)$/i.test(String(job.location).trim())) hasSpecificPlace = true;
+  }
+  // JD body Remote/Hyd only when card locations are empty or country-only (India).
+  // Do NOT let marketing "remote-first" override an explicit Noida/Bangalore city.
+  if (!hasSpecificPlace && job.description) {
     const desc = String(job.description).replace(/<[^>]+>/g, " ");
     const hits = desc.match(/\b(hyderabad|secunderabad|remote|wfh|work\s*from\s*home)\b/gi);
     if (hits) parts.push(...hits);
