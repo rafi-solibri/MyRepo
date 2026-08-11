@@ -25,21 +25,46 @@ NODE
 
 chrome="${CHROME_BIN:-}"
 if [[ -z "$chrome" ]]; then
-  chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser || command -v google-chrome-stable || true)"
+  for cand in \
+    "/c/Program Files/Google/Chrome/Application/chrome.exe" \
+    "/c/Program Files (x86)/Google/Chrome/Application/chrome.exe" \
+    "$(command -v google-chrome 2>/dev/null || true)" \
+    "$(command -v google-chrome-stable 2>/dev/null || true)" \
+    "$(command -v chromium 2>/dev/null || true)" \
+    "$(command -v chromium-browser 2>/dev/null || true)"; do
+    if [[ -n "$cand" && -f "$cand" ]]; then
+      chrome="$cand"
+      break
+    fi
+  done
 fi
 if [[ -z "$chrome" ]]; then
   echo "ERROR: Chrome/Chromium executable not found" >&2
   exit 1
 fi
 
-mkdir -p "$profile" /opt/cursor/artifacts /tmp/cursor
+mkdir -p "$profile" /tmp/cursor
+mkdir -p /opt/cursor/artifacts 2>/dev/null || mkdir -p "$ROOT/artifacts"
 
 # Daily automations use one portal per pod. Restarting avoids connecting to a
 # CDP process that was launched earlier with a different profile.
-pkill -f "remote-debugging-port=9222" 2>/dev/null || true
+if command -v taskkill.exe >/dev/null 2>&1; then
+  # Only kill Chrome instances that expose CDP :9222 (leave normal browsing alone when possible).
+  powershell.exe -NoProfile -Command \
+    "Get-CimInstance Win32_Process -Filter \"name='chrome.exe'\" | Where-Object { \$_.CommandLine -match 'remote-debugging-port=9222' } | ForEach-Object { Stop-Process -Id \$_.ProcessId -Force -ErrorAction SilentlyContinue }" \
+    >/dev/null 2>&1 || true
+else
+  pkill -f "remote-debugging-port=9222" 2>/dev/null || true
+fi
+sleep 1
 
 headless=()
-if [[ "${CHROME_HEADLESS:-auto}" == "1" || ( "${CHROME_HEADLESS:-auto}" == "auto" && -z "${DISPLAY:-}" ) ]]; then
+# On Windows home (Git Bash), DISPLAY is unset but headed Chrome is preferred.
+is_win=0
+[[ "${OS:-}" == "Windows_NT" || -n "${MSYSTEM:-}" || "$(uname -s 2>/dev/null)" == MINGW* ]] && is_win=1
+if [[ "${CHROME_HEADLESS:-auto}" == "1" ]]; then
+  headless=(--headless=new)
+elif [[ "${CHROME_HEADLESS:-auto}" == "auto" && "$is_win" -eq 0 && -z "${DISPLAY:-}" ]]; then
   headless=(--headless=new)
 fi
 
@@ -66,7 +91,15 @@ nohup "$chrome" \
   --user-data-dir="$profile" \
   about:blank >"$log" 2>&1 &
 
-python3 - <<'PY'
+PY="$(bash "$ROOT/scripts/resolve-python.sh")"
+run_py() {
+  if [[ "$PY" == "py" ]]; then
+    py -3 "$@"
+  else
+    "$PY" "$@"
+  fi
+}
+run_py - <<'PY'
 import sys, time, urllib.request
 
 url = "http://127.0.0.1:9222/json/version"
@@ -77,7 +110,7 @@ for _ in range(30):
         raise SystemExit(0)
     except Exception as exc:
         last = exc
-        time.sleep(0.5)
+    time.sleep(0.5)
 print(f"ERROR: Chrome CDP did not become ready: {last}", file=sys.stderr)
 raise SystemExit(1)
 PY

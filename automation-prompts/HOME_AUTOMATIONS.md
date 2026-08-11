@@ -76,11 +76,19 @@ roles should be skipped. Do not turn cloud off unless you want local-only.
 
 ## Portal login on this PC
 
-Home runs use **your local Chrome**, not the cloud snapshot.
+Home runs use **per-portal CDP profiles** under
+`%USERPROFILE%\.cursor\chrome-cdp-profiles\<portal>` — not a copy of Desktop Chrome.
 
-1. Sign into all 6 portals in Chrome (Default profile).
-2. Optional check: `bash scripts/verify-portal-logins.sh` (when available on this OS).
-3. Before a scheduled window, leave Chrome closed or ensure CDP profiles can launch.
+Chrome 127+ **App-Bound Encryption** prevents copying cookies from Desktop Default into
+another `--user-data-dir`. Do this once per portal:
+
+1. Close all Chrome windows.
+2. `bash scripts/launch-chrome-cdp.sh linkedin` (headed).
+3. Sign into LinkedIn in that window; leave the profile logged in.
+4. Repeat for foundit / cutshort / naukri / instahyre / indeed.
+5. Re-run `bash scripts/preflight-portal-run.sh <portal>` — it should report `destHasAuth: true`.
+
+Do **not** rely on Desktop Default cookie sync on Windows for CDP automation.
 
 ## Notification email
 

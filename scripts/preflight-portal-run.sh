@@ -13,5 +13,10 @@ fi
 
 bash scripts/bootstrap-job-assets.sh
 bash scripts/sync-chrome-sessions.sh
-python3 tools/resume_paths.py
+PY="$(bash scripts/resolve-python.sh)"
+if [[ "$PY" == "py" ]]; then
+  py -3 tools/resume_paths.py
+else
+  "$PY" tools/resume_paths.py
+fi
 node tools/chrome_session.js check "$portal"
