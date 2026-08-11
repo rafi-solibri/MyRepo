@@ -43,20 +43,31 @@ function skipReason(title, { company = "", location = "", skills = "", salary = 
   }
 
   if (
-    /\b(salesforce|servicenow|\bsap\b|coupa|pega|guidewire|hubspot|revit|\bbarch\b)\b/i.test(
+    /\b(salesforce|servicenow|\bsap\b|coupa|pega|guidewire|hubspot|revit|\bbarch\b|anaplan|kinaxis)\b/i.test(
       t
     )
   ) {
     return "wrong_stack_title";
   }
 
+  // Pure AI/data titles — include "Solution/Technical Architect - AI" forms
   if (
-    /\b(ai architect|ai engineer|ml engineer|data scientist|data engineer|genai)\b/i.test(
+    /\b(ai architect|ai engineer|ml engineer|data scientist|data engineer|data analyst|genai|architect\s*[-–:]?\s*ai|ai\s*[-–:]?\s*architect)\b/i.test(
       t
     ) &&
     !hasDotNet(t, "") // title-only .NET proof for pure AI/data (skills laundry lists are noisy)
   ) {
     return "pure_ai_data_without_dotnet";
+  }
+
+  // Non-engineering ops/people titles (title-first; not SA/TL/EM/Staff product eng)
+  if (
+    /\b(operations manager|office manager|hr manager|talent|recruiter|business analyst|scrum master)\b/i.test(
+      t
+    ) &&
+    !/\b(software|engineer|engineering|architect|\.net|platform|devops|sre)\b/i.test(t)
+  ) {
+    return "non_engineering_title";
   }
 
   // Java-primary IC (unless Staff/Lead/Architect with .NET also present)
@@ -93,6 +104,10 @@ if (require.main === module) {
     "Full Stack Lead (Java)",
     "Staff Software Engineer .NET",
     "AI Architect",
+    "Solution Architect - AI",
+    "Lead Anaplan Solution Architect",
+    "Senior Data Analyst",
+    "Operations Manager",
   ];
   for (const title of samples) {
     console.log(title, "→", skipReason(title, { location: "Hyderabad" }));

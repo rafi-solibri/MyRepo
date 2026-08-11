@@ -71,6 +71,14 @@ opened as a draft PR — not left as report-only notes.
 | Hard to complete Desktop logins correctly | `scripts/open-portal-login-tabs.sh` + `scripts/portal-login-checklist.html` open Default Chrome with all 6 portals |
 | “Saved environment” confused with “sessions captured” | Checklist / verify script require auth cookies before declaring ready |
 
+## Fixed for 2026-08-11 Instahyre daily apply
+
+| Issue | Fix |
+| --- | --- |
+| `daily_apply.js` only scaffolded login then hung on CDP | Full job_search + `skipReason` + apply API loop; incremental report; `process.exit` (no `browser.close`/`disconnect` hang) |
+| Filter slips: Anaplan / Kinaxis / `Solution Architect - AI` / Data Analyst / Operations Manager | Tightened `tools/instahyre/filters.js` title-first skips |
+| Spot-check treated Coupang Facebook/Instagram as external ATS | Ignore social hosts; require apply/ATS URL patterns |
+
 ## Fixed for 2026-08-10 blocker pass
 
 | Issue | Fix |
