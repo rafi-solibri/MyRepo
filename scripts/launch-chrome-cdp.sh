@@ -152,20 +152,39 @@ log="/tmp/cursor/chrome-cdp-${portal}.log"
 if [[ "$cdp_ready" -eq 0 ]]; then
   if [[ "$is_win" -eq 1 ]] && command -v powershell.exe >/dev/null 2>&1; then
     # PowerShell Start-Process is more reliable than nohup for Windows Chrome + Default profile.
-    arg_list="--no-sandbox --disable-gpu --disable-dev-shm-usage --disable-extensions --remote-debugging-address=127.0.0.1 --remote-debugging-port=9222 --remote-allow-origins=* --user-data-dir=`"$profile`""
-    if [[ "$system_profile" -eq 1 ]]; then
-      arg_list+=" --profile-directory=${CHROME_PROFILE_DIRECTORY:-Default}"
-    fi
-    if [[ ${#proxy_args[@]} -gt 0 ]]; then
-      arg_list+=" ${proxy_args[*]}"
-    fi
-    if [[ ${#headless[@]} -gt 0 ]]; then
-      arg_list+=" ${headless[*]}"
-    fi
-    arg_list+=" about:blank"
-    powershell.exe -NoProfile -Command \
-      "Start-Process -FilePath '$chrome' -ArgumentList '$arg_list'" \
-      >/dev/null 2>&1 || true
+    ps_file="$(mktemp /tmp/chrome-cdp-launch-XXXXXX.ps1 2>/dev/null || echo "$ROOT/artifacts/_chrome_cdp_launch.ps1")"
+    mkdir -p "$(dirname "$ps_file")" 2>/dev/null || true
+    profile_dir="${CHROME_PROFILE_DIRECTORY:-Default}"
+    {
+      echo "\$chrome = @'"
+      echo "$chrome"
+      echo "'@"
+      echo "\$ud = @'"
+      echo "$profile"
+      echo "'@"
+      echo "\$args = @("
+      echo "  '--no-sandbox',"
+      echo "  '--disable-gpu',"
+      echo "  '--disable-dev-shm-usage',"
+      echo "  '--disable-extensions',"
+      echo "  '--remote-debugging-address=127.0.0.1',"
+      echo "  '--remote-debugging-port=9222',"
+      echo "  '--remote-allow-origins=*',"
+      echo "  \"--user-data-dir=\$ud\""
+      if [[ "$system_profile" -eq 1 ]]; then
+        echo "  ,'--profile-directory=$profile_dir'"
+      fi
+      if [[ ${#proxy_args[@]} -gt 0 ]]; then
+        echo "  ,'${proxy_args[0]}'"
+      fi
+      if [[ ${#headless[@]} -gt 0 ]]; then
+        echo "  ,'${headless[0]}'"
+      fi
+      echo "  ,'about:blank'"
+      echo ")"
+      echo "Start-Process -FilePath \$chrome -ArgumentList \$args"
+    } > "$ps_file"
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$ps_file" >/dev/null 2>&1 || true
   else
     nohup "$chrome" \
       "${headless[@]}" \
