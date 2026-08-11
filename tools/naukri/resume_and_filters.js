@@ -34,6 +34,13 @@ const SKIP_TITLE_RE =
 const PURE_AI_DATA_RE =
   /\b(ai\s+architect|ai\s+engineer|ml\s+engineer|genai|data\s+scientist|data\s+engineer)\b/i;
 
+/**
+ * Primary non-.NET stacks in the TITLE — skip to avoid Java/MEAN ATS dead-ends.
+ * Do not use on full JD blobs (skills lists are noisy).
+ */
+const NON_DOTNET_PRIMARY_RE =
+  /\b(java|j2ee|spring boot|golang|go lang|python|mean\b|mern\b|ruby on rails|php|oracle apps|abap)\b/i;
+
 /** When scanning detail pages, use job panel text only — never document.body. */
 function shouldSkipTitleFromDetail(detailText) {
   const t = String(detailText || "");
@@ -42,6 +49,10 @@ function shouldSkipTitleFromDetail(detailText) {
 }
 
 const DOTNET_RE = /(\.net|dotnet|asp\.?\s*net|c#|csharp)/i;
+
+/** Architect / Lead / EM / Principal / Staff / Director — apply even if card omits .NET. */
+const ARCH_LEAD_RE =
+  /\b(architect|technical lead|tech lead|technology lead|engineering manager|engineering lead|engineer manager|software engineer manager|principal|staff|director|avp|head of|solution architect|cloud architect|azure architect|\.net lead|dotnet lead|lead (software|development|engineer)|software (engineering )?manager|senior manager|manager[, -]?\s*(software|engineering|technology|platform)|senior engineering)\b/i;
 
 function normalizeAspNet(text) {
   return String(text || "").replace(/asp\.?\s*net/gi, "DOTNET");
@@ -52,11 +63,17 @@ function hasDotNet(title, skills) {
   return DOTNET_RE.test(blob);
 }
 
+function isArchLeadTitle(title) {
+  return ARCH_LEAD_RE.test(title || "");
+}
+
 function shouldSkipTitle(title) {
   const t = title || "";
   if (SKIP_TITLE_RE.test(t)) return true;
   // AI Architect without .NET on the title itself (Instahyre/Foundit parity)
   if (PURE_AI_DATA_RE.test(t) && !hasDotNet(t, "")) return true;
+  // Java/MEAN/Python-primary titles without .NET|C# — do not burn ATS time
+  if (NON_DOTNET_PRIMARY_RE.test(t) && !hasDotNet(t, "")) return true;
   return false;
 }
 
@@ -65,7 +82,9 @@ module.exports = {
   hasDotNet,
   shouldSkipTitle,
   shouldSkipTitleFromDetail,
+  isArchLeadTitle,
   normalizeAspNet,
+  ARCH_LEAD_RE,
   RESUME_CANDIDATES,
   EXPECTED_CTC_LPA: 65,
   CURRENT_CTC_LPA: 52,
