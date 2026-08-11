@@ -6,6 +6,14 @@ See [AUTO_FIX.md](AUTO_FIX.md). Code-fixable blockers discovered during any dail
 automation must be patched in durable helpers, pushed on a feature branch, and
 opened as a draft PR — not left as report-only notes.
 
+## Fixed for 2026-08-11 Cutshort home daily
+
+| Issue | Fix |
+| --- | --- |
+| Cutshort `daily_apply.js` exited 2 on login wall without writing `cutshort-daily-run.json` (mail/notification missed blocker) | Runner now writes home-run JSON via `CUTSHORT_HOME_REPORT` / `artifacts/cutshort-daily-run.json` on login wall and at end of run |
+| Login check matched marketing nav “Candidate login” only | Detect logout via `redirect_url` / homepage cues (`isLoggedOut`) |
+| Preflight `destHasAuth: true` with stale `cutshort_authentication` still hits live login wall | Owner: headed re-login in CDP profile (cannot revive dead server session from cookie name alone) |
+
 ## Fixed for 2026-08-11 Foundit daily apply
 
 | Issue | Fix |
@@ -159,6 +167,7 @@ opened as a draft PR — not left as report-only notes.
 | --- | --- | --- |
 | Windows `agent worker start` ABI crash (127/137) | You | Until Cursor ships a fixed Win package: `wsl --install -d Ubuntu` → `powershell -ExecutionPolicy Bypass -File scripts\fix-windows-agent-worker.ps1 -LaunchWsl` (or `bash scripts/setup-wsl-agent-worker.sh --name job-apply-laptop` inside WSL). Leave WSL terminal open; pick that machine in Agents. |
 | Snapshot missing portal logins | You | `bash scripts/open-portal-login-tabs.sh` → sign in on Desktop → quit Chrome → `bash scripts/verify-portal-logins.sh --strict` → **Save/Update snapshot** |
+| Cutshort CDP session stale (cookie present, live redirect to Candidate login) | You | `bash scripts/launch-chrome-cdp.sh cutshort` → sign in at cutshort.io in that window → re-run `node tools/cutshort/daily_apply.js` |
 | Indeed Cloudflare 403 if WARP+UC fails | You | Prefer cloud path: WARP SOCKS + `cf_bypass_uc.py` (auto in `preflight.js`). Fallback: `scripts/indeed-home-daily.sh` / residential `INDEED_HTTP_PROXY` |
 | Hirist secondary board login | Optional | Log into Hirist in Desktop Chrome and re-seed sessions if you want Hirist applies |
 | Workday / Greenhouse OTP ATS walls | Optional | Keep Gmail logged in same Chrome profile; complete OTP once per ATS |

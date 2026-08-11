@@ -26,6 +26,113 @@ const CDP = process.env.CUTSHORT_CDP || "http://127.0.0.1:9222";
 const OUT_DIR = process.env.CUTSHORT_OUT || "/tmp/cutshort-run";
 const TODAY = new Date().toISOString().slice(0, 10);
 const REPORT_DIR = process.env.CUTSHORT_REPORT || path.join("/workspace/reports", TODAY);
+const HOME_REPORT =
+  process.env.CUTSHORT_HOME_REPORT ||
+  (fs.existsSync("/opt/cursor/artifacts")
+    ? "/opt/cursor/artifacts/cutshort-daily-run.json"
+    : path.join(process.cwd(), "artifacts", "cutshort-daily-run.json"));
+
+function writeHomeReport(partial) {
+  const finishedAt = new Date().toISOString();
+  const applied = (partial.applied || []).map((a) => ({
+    id: a.id,
+    title: a.title,
+    company: a.company,
+    tier: a.tier,
+    ctc: a.ctc,
+  }));
+  const external = (partial.external || []).map((a) => ({
+    id: a.id,
+    title: a.title,
+    company: a.company,
+    reason: "external_ats",
+  }));
+  const rejected = (partial.failed || [])
+    .filter((a) => a.result?.status !== "login_required")
+    .map((a) => ({
+      id: a.id,
+      title: a.title,
+      company: a.company,
+      reason: a.result?.status || "failed",
+    }));
+  const blocked = [];
+  if (partial.loginRequired) {
+    blocked.push({
+      reason: "cutshort_login_required",
+      detail:
+        partial.loginDetail ||
+        "Candidate dashboard redirected to login; re-auth CDP profile",
+    });
+  }
+  const skipped = (partial.already || []).map((a) => ({
+    id: a.id,
+    title: a.title,
+    company: a.company,
+    reason: "already_applied",
+  }));
+  const q = partial.q || {};
+  if ((q.lockedEmpty || 0) > 0) {
+    rejected.push({
+      reason: "questionnaire_locked_empty",
+      count: q.lockedEmpty,
+    });
+  }
+  const report = {
+    portal: "cutshort",
+    source: process.env.CUTSHORT_SOURCE || "home-local",
+    date: TODAY,
+    finishedAt,
+    ok: blocked.length === 0 && applied.length > 0,
+    counts: {
+      applied: applied.length,
+      external: external.length,
+      rejected: rejected.length,
+      blocked: blocked.length,
+      skipped: skipped.length,
+      seen: Number(partial.scanned || 0),
+      questionnairesAnswered: Number(q.answered || 0),
+      questionnairesLockedEmpty: Number(q.lockedEmpty || 0),
+    },
+    applied,
+    external,
+    rejected,
+    blocked,
+    skipped,
+    seen: (partial.qualifying || []).map((qrow) => ({
+      id: qrow.id,
+      title: qrow.title,
+      company: qrow.company,
+      tier: qrow.tier,
+    })),
+    blockerSummary: blocked[0]
+      ? `${blocked[0].reason} — ${blocked[0].detail || "re-login via launch-chrome-cdp.sh cutshort"}`
+      : null,
+    notes: [
+      `qualifying=${(partial.qualifying || []).length}`,
+      `q_answered=${q.answered || 0}`,
+      `q_locked_empty=${q.lockedEmpty || 0}`,
+    ],
+  };
+  fs.mkdirSync(path.dirname(HOME_REPORT), { recursive: true });
+  fs.writeFileSync(HOME_REPORT, JSON.stringify(report, null, 2) + "\n");
+  return HOME_REPORT;
+}
+
+function isLoggedOut(url, bodyText) {
+  const u = String(url || "");
+  const text = String(bodyText || "");
+  if (/[?&]redirect_url=/.test(u) || /cutshort\.io\/?\?/.test(u)) return true;
+  if (/\/login|\/signin|\/candidate-login/i.test(u)) return true;
+  // Marketing homepage nav always says "Candidate login"; require logout cues.
+  if (
+    /Candidate login/i.test(text) &&
+    /Employer login/i.test(text) &&
+    /Get started/i.test(text)
+  ) {
+    return true;
+  }
+  return false;
+}
 
 const SKIP_RE =
   /\b(qa engineer|quality assurance|quality engineer|sdet|test engineer|intern|trainee|associate(?!\s+director)|junior|workday|dynamics|[\s/]sap[\s/]|shoppay|shopify|business development|\bbdm\b|recruiter|data architect|data engineer|analytics engineer|penetration|product manager|ios developer|android developer|flutter|php developer|wordpress|game developer|mobile engineer)\b/i;
@@ -367,7 +474,7 @@ async function applyOne(page, job) {
   });
   await sleep(2500);
   let body = await page.evaluate(() => document.body?.innerText || "");
-  if (/Candidate login/i.test(body)) return { status: "login_required" };
+  if (isLoggedOut(page.url(), body)) return { status: "login_required" };
   if (/view conversation/i.test(body) || /already applied/i.test(body)) {
     return { status: "already_applied" };
   }
@@ -476,12 +583,28 @@ async function main() {
     timeout: 60000,
   });
   await sleep(1500);
-  if (await page.evaluate(() => /Candidate login/i.test(document.body?.innerText || ""))) {
-    console.log("LOGIN_REQUIRED");
+  const loginProbe = await page.evaluate(() => ({
+    url: location.href,
+    text: (document.body?.innerText || "").slice(0, 2000),
+  }));
+  if (isLoggedOut(loginProbe.url, loginProbe.text)) {
+    console.log("LOGIN_REQUIRED", loginProbe.url);
     fs.writeFileSync(
       path.join(REPORT_DIR, "cutshort-daily.md"),
-      `# Cutshort daily ${TODAY}\n\n**STOP: Cutshort login/session missing.**\n`
+      `# Cutshort daily ${TODAY}\n\n**STOP: Cutshort login/session missing.**\n\nURL: ${loginProbe.url}\n`
     );
+    const homePath = writeHomeReport({
+      loginRequired: true,
+      loginDetail: `session rejected (url=${loginProbe.url}); cookie may exist but is stale — headed re-login required`,
+      scanned: 0,
+      applied: [],
+      already: [],
+      failed: [],
+      external: [],
+      qualifying: [],
+      q: {},
+    });
+    console.log("home_report:", homePath);
     process.exit(2);
   }
 
@@ -527,6 +650,8 @@ async function main() {
     console.log(" =>", result.status);
     if (result.status === "login_required") {
       stats.failed.push({ ...row, result });
+      stats.loginRequired = true;
+      stats.loginDetail = "Candidate session lost mid-run";
       break;
     }
     if (result.status === "applied") {
@@ -600,7 +725,9 @@ ${stats.failed.map((a) => `- T${a.tier} ${a.title} @ ${a.company} — ${a.result
 `;
   fs.writeFileSync(path.join(REPORT_DIR, "cutshort-daily.md"), report);
   fs.writeFileSync(path.join(OUT_DIR, "stats.json"), JSON.stringify(stats, null, 2));
+  const homePath = writeHomeReport(stats);
   console.log(report);
+  console.log("home_report:", homePath);
   await page.close().catch(() => {});
   await browser.close().catch(() => {});
 }
