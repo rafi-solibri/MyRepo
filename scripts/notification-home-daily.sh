@@ -35,6 +35,7 @@ run and parse the JSON before composing the email:
   bash scripts/fetch-home-result.sh naukri --today
   bash scripts/fetch-home-result.sh instahyre --today
   bash scripts/fetch-home-result.sh indeed --today
+  bash scripts/fetch-home-result.sh hitechcity --today
 
 Also still support the legacy Indeed helper if needed:
   bash scripts/fetch-indeed-home-result.sh --today

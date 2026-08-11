@@ -1,5 +1,15 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-11 Windows owner-action blockers
+
+| Issue | Fix |
+| --- | --- |
+| Windows Chrome ABE blocked Default→CDP cookie copy → every portal needed headed re-login | Home Windows defaults `CHROME_CDP_MODE=system` — launch CDP against real `Chrome\\User Data` + `Default` (PowerShell Start-Process); reuse one Chrome for all portals |
+| Leftover empty CDP on :9222 reused by mistake | `launch-chrome-cdp.sh` verifies system user-data-dir before reuse |
+| Hitech City missing from home schedule / Windows report path | `hitechcity` in portal-home-daily + Task Scheduler; `daily_apply.py` writes `artifacts/hitechcity-daily.json` when `/opt/cursor` absent |
+| Resend email not sent (MCP unauth + no API key) | Authenticate Resend MCP; create sending key; set user env `RESEND_API_KEY` + `RESEND_FROM_EMAIL` |
+| Multi-portal login UX | `scripts/home-headed-login-all.sh` opens all login tabs on system Chrome CDP |
+
 ## Policy: auto-fix, push, and merge every daily run
 
 See [AUTO_FIX.md](AUTO_FIX.md). Code-fixable blockers discovered during any daily

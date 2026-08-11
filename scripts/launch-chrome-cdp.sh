@@ -23,6 +23,15 @@ NODE
   exit 2
 }
 
+# Windows system profile = real Chrome User Data (ABE-safe). Need Default profile dir flag.
+profile_dir_args=()
+system_profile=0
+if node -e "const {useSystemChromeProfile}=require('./tools/chrome_session'); process.exit(useSystemChromeProfile()?0:1)"; then
+  system_profile=1
+  profile_dir_args=(--profile-directory="${CHROME_PROFILE_DIRECTORY:-Default}")
+  echo "NOTE: CHROME_CDP_MODE=system — using Chrome User Data at $profile (ABE cookies decrypt)."
+fi
+
 chrome="${CHROME_BIN:-}"
 if [[ -z "$chrome" ]]; then
   for cand in \
@@ -46,17 +55,54 @@ fi
 mkdir -p "$profile" /tmp/cursor
 mkdir -p /opt/cursor/artifacts 2>/dev/null || mkdir -p "$ROOT/artifacts"
 
-# Daily automations use one portal per pod. Restarting avoids connecting to a
-# CDP process that was launched earlier with a different profile.
-if command -v taskkill.exe >/dev/null 2>&1; then
-  # Only kill Chrome instances that expose CDP :9222 (leave normal browsing alone when possible).
-  powershell.exe -NoProfile -Command \
-    "Get-CimInstance Win32_Process -Filter \"name='chrome.exe'\" | Where-Object { \$_.CommandLine -match 'remote-debugging-port=9222' } | ForEach-Object { Stop-Process -Id \$_.ProcessId -Force -ErrorAction SilentlyContinue }" \
-    >/dev/null 2>&1 || true
-else
-  pkill -f "remote-debugging-port=9222" 2>/dev/null || true
+# If CDP already up on :9222, reuse only when it matches our intended profile mode.
+cdp_ready=0
+if curl -fsS "http://127.0.0.1:9222/json/version" >/dev/null 2>&1; then
+  if [[ "$system_profile" -eq 1 ]]; then
+    # Ensure the listener is the system User Data Chrome, not a leftover empty CDP profile.
+    if command -v powershell.exe >/dev/null 2>&1; then
+      sys_match="$(
+        powershell.exe -NoProfile -Command \
+          "\$p='$profile' -replace '\\\\','\\\\'; Get-CimInstance Win32_Process -Filter \"name='chrome.exe'\" | Where-Object { \$_.CommandLine -match 'remote-debugging-port=9222' -and \$_.CommandLine -like ('*' + \$p + '*') } | Select-Object -First 1 -ExpandProperty ProcessId" \
+          2>/dev/null | tr -d '\r'
+      )"
+      if [[ -n "$sys_match" ]]; then
+        cdp_ready=1
+        echo "Chrome CDP already listening on :9222 with system profile — reusing."
+      else
+        echo "NOTE: :9222 is up but not system Chrome User Data — restarting with Default profile."
+      fi
+    else
+      cdp_ready=1
+      echo "Chrome CDP already listening on :9222 — reusing existing instance."
+    fi
+  else
+    cdp_ready=1
+    echo "Chrome CDP already listening on :9222 — reusing existing instance."
+  fi
 fi
-sleep 1
+
+if [[ "$cdp_ready" -eq 0 ]]; then
+  # Daily automations use one portal per pod. Restarting avoids connecting to a
+  # CDP process that was launched earlier with a different profile.
+  if [[ "$system_profile" -eq 1 ]]; then
+    # System profile is locked by any normal Chrome window — must close Chrome first.
+    echo "Closing existing Chrome so Default profile can open with remote debugging…"
+    if command -v taskkill.exe >/dev/null 2>&1; then
+      taskkill.exe /F /IM chrome.exe >/dev/null 2>&1 || true
+    else
+      pkill -f "chrome" 2>/dev/null || true
+    fi
+  elif command -v taskkill.exe >/dev/null 2>&1; then
+    # Only kill Chrome instances that expose CDP :9222 (leave normal browsing alone when possible).
+    powershell.exe -NoProfile -Command \
+      "Get-CimInstance Win32_Process -Filter \"name='chrome.exe'\" | Where-Object { \$_.CommandLine -match 'remote-debugging-port=9222' } | ForEach-Object { Stop-Process -Id \$_.ProcessId -Force -ErrorAction SilentlyContinue }" \
+      >/dev/null 2>&1 || true
+  else
+    pkill -f "remote-debugging-port=9222" 2>/dev/null || true
+  fi
+  sleep 1
+fi
 
 headless=()
 # On Windows home (Git Bash), DISPLAY is unset but headed Chrome is preferred.
@@ -103,18 +149,39 @@ if [[ "$portal" == "indeed" && "${CHROME_HEADLESS:-auto}" == "auto" && -n "${DIS
 fi
 
 log="/tmp/cursor/chrome-cdp-${portal}.log"
-nohup "$chrome" \
-  "${headless[@]}" \
-  "${proxy_args[@]}" \
-  --no-sandbox \
-  --disable-gpu \
-  --disable-dev-shm-usage \
-  --disable-extensions \
-  --remote-debugging-address=127.0.0.1 \
-  --remote-debugging-port=9222 \
-  --remote-allow-origins='*' \
-  --user-data-dir="$profile" \
-  about:blank >"$log" 2>&1 &
+if [[ "$cdp_ready" -eq 0 ]]; then
+  if [[ "$is_win" -eq 1 ]] && command -v powershell.exe >/dev/null 2>&1; then
+    # PowerShell Start-Process is more reliable than nohup for Windows Chrome + Default profile.
+    arg_list="--no-sandbox --disable-gpu --disable-dev-shm-usage --disable-extensions --remote-debugging-address=127.0.0.1 --remote-debugging-port=9222 --remote-allow-origins=* --user-data-dir=`"$profile`""
+    if [[ "$system_profile" -eq 1 ]]; then
+      arg_list+=" --profile-directory=${CHROME_PROFILE_DIRECTORY:-Default}"
+    fi
+    if [[ ${#proxy_args[@]} -gt 0 ]]; then
+      arg_list+=" ${proxy_args[*]}"
+    fi
+    if [[ ${#headless[@]} -gt 0 ]]; then
+      arg_list+=" ${headless[*]}"
+    fi
+    arg_list+=" about:blank"
+    powershell.exe -NoProfile -Command \
+      "Start-Process -FilePath '$chrome' -ArgumentList '$arg_list'" \
+      >/dev/null 2>&1 || true
+  else
+    nohup "$chrome" \
+      "${headless[@]}" \
+      "${proxy_args[@]}" \
+      --no-sandbox \
+      --disable-gpu \
+      --disable-dev-shm-usage \
+      --disable-extensions \
+      --remote-debugging-address=127.0.0.1 \
+      --remote-debugging-port=9222 \
+      --remote-allow-origins='*' \
+      --user-data-dir="$profile" \
+      "${profile_dir_args[@]}" \
+      about:blank >"$log" 2>&1 &
+  fi
+fi
 
 PY="$(bash "$ROOT/scripts/resolve-python.sh")"
 run_py() {
@@ -129,7 +196,7 @@ import sys, time, urllib.request
 
 url = "http://127.0.0.1:9222/json/version"
 last = None
-for _ in range(30):
+for _ in range(40):
     try:
         print(urllib.request.urlopen(url, timeout=1).read().decode())
         raise SystemExit(0)

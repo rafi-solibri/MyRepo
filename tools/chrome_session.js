@@ -27,6 +27,15 @@ function defaultSourceProfile() {
   return path.join(HOME, ".config", "google-chrome");
 }
 
+function useSystemChromeProfile() {
+  // Windows home: App-Bound Encryption prevents copying Default cookies into a
+  // separate --user-data-dir. Reuse the real Chrome User Data so sessions work.
+  if (process.env.CHROME_CDP_MODE) {
+    return process.env.CHROME_CDP_MODE === "system";
+  }
+  return IS_WIN;
+}
+
 function defaultPortalProfile(portal) {
   const envKey = {
     linkedin: "LINKEDIN_CHROME_PROFILE",
@@ -36,14 +45,20 @@ function defaultPortalProfile(portal) {
     instahyre: "INSTAHYRE_CHROME_PROFILE",
     indeed: "INDEED_CHROME_PROFILE",
     linkedin_alt: "LINKEDIN_CHROME_PROFILE_ALT",
+    hitechcity: "HITECHCITY_CHROME_PROFILE",
   }[portal];
   if (envKey && process.env[envKey]) return process.env[envKey];
+
+  if (useSystemChromeProfile()) {
+    // Same absolute path as interactive Chrome → ABE cookies decrypt.
+    return defaultSourceProfile();
+  }
 
   if (IS_WIN) {
     const root = path.join(HOME, ".cursor", "chrome-cdp-profiles");
     // Prefer linkedin-alt when primary CDP profile has no li_at name but alt does.
     // Live session may still need headed login (ABE / stale encrypted blobs).
-    if (portal === "linkedin") {
+    if (portal === "linkedin" || portal === "hitechcity") {
       const primary = path.join(root, "linkedin");
       const alt = path.join(root, "linkedin-alt");
       // cookieNames is hoisted; avoid AUTH_COOKIES here (defined after PROFILES).
@@ -63,6 +78,7 @@ function defaultPortalProfile(portal) {
     instahyre: "/home/ubuntu/chrome-instahyre-profile",
     indeed: "/home/ubuntu/chrome-indeed-profile",
     linkedin_alt: "/home/ubuntu/chrome-linkedin-profile",
+    hitechcity: "/home/ubuntu/chrome-cdp-profile",
   };
   return linux[portal];
 }
@@ -74,7 +90,7 @@ const PROFILES = {
   hitechcity:
     process.env.HITECHCITY_CHROME_PROFILE ||
     process.env.LINKEDIN_CHROME_PROFILE ||
-    defaultPortalProfile("linkedin"),
+    defaultPortalProfile("hitechcity"),
   naukri: defaultPortalProfile("naukri"),
   foundit: defaultPortalProfile("foundit"),
   cutshort: defaultPortalProfile("cutshort"),
@@ -253,6 +269,8 @@ module.exports = {
   statusReport,
   resolvePython,
   IS_WIN,
+  useSystemChromeProfile,
+  defaultSourceProfile,
 };
 
 if (require.main === module) {
