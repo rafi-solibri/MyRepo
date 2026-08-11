@@ -28,7 +28,7 @@ Current 52 LPA | Expected 65 LPA | Immediate | +91 8790251698 | rafi.success@gma
   1) Home Wi‑Fi / private residential worker (`scripts/indeed-home-daily.sh`), OR
   2) Env secret `INDEED_HTTP_PROXY` (true residential) then re-run preflight / daily_apply.
 - If login missing but page loads: stop and report Indeed login required — Desktop Chrome Default login + sync-chrome-sessions.sh + Save Snapshot.
-- Code-fixable CF/preflight bugs (false exit 5, filelock deadlock, UC helper regressions): fix under tools/indeed or scripts/, append ISSUES_AND_FIXES.md, commit + push + draft PR (AUTO_FIX.md).
+- Code-fixable CF/preflight bugs (false exit 5, filelock deadlock, UC helper regressions): fix under tools/indeed or scripts/, append ISSUES_AND_FIXES.md, commit + push + ready PR + `bash scripts/auto-merge-fix-pr.sh` (AUTO_FIX.md).
 
 ## Apply bias (CRITICAL)
 - Default to APPLY for Hyd/remote Architect / Tech Lead / EM / Principal / Staff / Senior .NET/cloud.
@@ -57,6 +57,6 @@ with counts: applied, external, rejected, blocked, skipped, seen — then
 so the 11 AM Notification Job can include Indeed in the daily mail.
 
 ## Auto-fix & push (MANDATORY)
-If you hit a code-fixable blocker (preflight false exit 5, filelock/UC Turnstile helper, daily_run_report, publish/fetch scripts, Easy Apply helper), fix durable helpers under tools/indeed or scripts/, append automation-prompts/ISSUES_AND_FIXES.md, commit + push a feature branch, open a draft PR to main. Follow automation-prompts/AUTO_FIX.md. Do not invent applies.
+If you hit a code-fixable blocker (preflight false exit 5, filelock/UC Turnstile helper, daily_run_report, publish/fetch scripts, Easy Apply helper), fix durable helpers under tools/indeed or scripts/, append automation-prompts/ISSUES_AND_FIXES.md, commit + push a feature branch, open a ready PR to main and run `bash scripts/auto-merge-fix-pr.sh`. Follow automation-prompts/AUTO_FIX.md. Do not invent applies.
 Hard residual after WARP+UC multi-strategy + IP rotate still exits 5: report home worker / residential INDEED_HTTP_PROXY (not invent applies).
 ```

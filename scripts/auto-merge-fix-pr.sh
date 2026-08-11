@@ -51,6 +51,7 @@ if [[ -z "$PR_URL" ]]; then
 EOF
 )"
   fi
+  # Never open as draft — merge path requires ready PRs.
   PR_URL="$(gh pr create --base main --title "$TITLE" --body "$BODY")"
   echo "Created PR: $PR_URL"
 else
@@ -60,20 +61,26 @@ fi
 # Never leave draft — user wants automatic merge.
 gh pr ready >/dev/null 2>&1 || true
 
-# Prefer squash. Try enable auto-merge first, then immediate merge if allowed.
+# Prefer immediate squash merge. GitHub "auto-merge" queue is optional
+# (this repo has enablePullRequestAutoMerge disabled).
 set +e
-gh pr merge --auto --squash --delete-branch
-auto_rc=$?
-if [[ "$auto_rc" -ne 0 ]]; then
-  gh pr merge --squash --delete-branch
-  merge_rc=$?
-else
-  merge_rc=0
+gh pr merge --squash --delete-branch
+merge_rc=$?
+auto_rc=1
+if [[ "$merge_rc" -ne 0 ]]; then
+  gh pr merge --auto --squash --delete-branch
+  auto_rc=$?
 fi
 set -e
 
 STATE="$(gh pr view --json state,autoMergeRequest,mergeStateStatus -q '{state:.state,auto:.autoMergeRequest.enabledAt,mergeState:.mergeStateStatus}' 2>/dev/null || echo "{}")"
 echo "PR merge status: $STATE"
+
+MERGED="$(gh pr view --json state -q .state 2>/dev/null || true)"
+if [[ "$MERGED" == "MERGED" ]]; then
+  echo "OK: PR merged → $PR_URL"
+  exit 0
+fi
 
 if [[ "$merge_rc" -ne 0 && "$auto_rc" -ne 0 ]]; then
   echo "WARNING: could not merge yet — resolve conflicts/checks, then re-run:"
