@@ -3,7 +3,7 @@
   "source": "home-local",
   "date": "2026-08-11",
   "startedAt": null,
-  "finishedAt": "2026-08-11T06:45:47Z",
+  "finishedAt": "2026-08-11T11:56:08Z",
   "host": "NEM01-GBGR234",
   "ok": false,
   "counts": {
@@ -20,13 +20,14 @@
   "blocked": [
     {
       "reason": "foundit_login_required",
-      "detail": "CDP profile had stale MSSOAT cookie name but live session redirected to rio/sign-out (Logged out Successfully). Headed login wait timed out after 4 minutes. Sign into Foundit once via: bash scripts/launch-chrome-cdp.sh foundit then open https://www.foundit.in/rio/login"
+      "detail": "Windows ABE: CDP profile missing MSSOAT. Headed Chrome opened at https://www.foundit.in/rio/login; no sign-in within 4 minutes.",
+      "hint": "bash scripts/home-headed-login.sh foundit"
     }
   ],
   "skipped": [],
   "seen": [],
-  "blockerSummary": "Windows Chrome ABE: Foundit CDP profile needs one-time headed login at ~/.cursor/chrome-cdp-profiles/foundit (cookie-name check alone is insufficient)",
+  "blockerSummary": "foundit_login_required — run: bash scripts/home-headed-login.sh foundit",
   "notes": [],
   "preflight": null,
-  "logPath": "C:/Users/MohammedAhmed/.cursor/portal-home-logs/foundit/foundit-manual.log"
+  "logPath": null
 }
