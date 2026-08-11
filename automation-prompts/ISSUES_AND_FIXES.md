@@ -101,6 +101,12 @@ opened as a draft PR — not left as report-only notes.
 | --- | --- |
 | Cloud cron stopped with Cloudflare exit 5 even though WARP+UC had already cleared (`Welcome, MOHAMMED`) | SeleniumBase printed `uc_driver` download noise on **stdout** before JSON; `preflight.js` `JSON.parse` failed → false `ucBypass.ok=false`. Now: lenient JSON extract + read `indeed-cf-bypass.json`; `cf_bypass_uc.py` / `uc_daily_apply.py` redirect SB chatter to stderr and emit JSON on `sys.__stdout__` |
 
+## Fixed for 2026-08-11 Indeed Turnstile flaky exit 5
+
+| Issue | Fix |
+| --- | --- |
+| Cloud cron exit 5 after yesterday’s green run: Turnstile widget visible (`Verify you are human`) but clicks did not clear → hard stop | Root cause: **filelock 3.32** deadlocks nested SeleniumBase `uc_gui_*` locks — old patch set `is_singleton` in `__init__` too late (metaclass decides earlier). New `tools/indeed/filelock_patch.py` wraps `FileLockMeta.__call__`. Also: wait for Turnstile, multi-strategy CF clicks + manual XY fallback, window focus, WARP IP **rotate** between rounds, `preflight.js` UC retries. |
+
 ## Fixed for 2026-08-10 Hotel Price Tracker
 
 | Issue | Fix |

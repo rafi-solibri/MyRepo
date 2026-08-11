@@ -36,33 +36,15 @@ def _emit(payload: dict) -> None:
 def _patch_filelock_singleton() -> None:
     """SeleniumBase nests FileLock(pyautogui.lock); filelock 3.20+ deadlocks without singleton."""
     try:
-        import filelock
+        sys.path.insert(0, str(ROOT))
+        from tools.indeed.filelock_patch import patch_filelock_singleton
 
-        if getattr(filelock.FileLock, "_indeed_singleton_patched", False):
-            return
-        _Orig = filelock.FileLock
-
-        class _SingletonFileLock(_Orig):  # type: ignore[misc,valid-type]
-            def __init__(self, *args, **kwargs):
-                kwargs.setdefault("is_singleton", True)
-                super().__init__(*args, **kwargs)
-
-        _SingletonFileLock._indeed_singleton_patched = True  # type: ignore[attr-defined]
-        filelock.FileLock = _SingletonFileLock  # type: ignore[misc,assignment]
+        patch_filelock_singleton(ROOT)
         print("  filelock_singleton=1", flush=True)
     except Exception as exc:
         print(f"  filelock_patch_error={exc!s}"[:180], flush=True)
 
-    # Stale lock files from crashed UC runs.
-    for lock in (
-        ROOT / "downloaded_files" / "pyautogui.lock",
-        Path("downloaded_files/pyautogui.lock"),
-    ):
-        try:
-            if lock.exists():
-                lock.unlink()
-        except Exception:
-            pass
+
 OUT = Path(
     os.environ.get(
         "INDEED_DAILY_REPORT", "/opt/cursor/artifacts/indeed-daily-run.json"
@@ -144,7 +126,21 @@ def prepare_profile() -> dict:
         return {"error": (res.stderr or res.stdout or "")[:400], "exit": res.returncode}
 
 
-def clear_cf(sb, attempts: int = 3) -> bool:
+def clear_cf(sb, attempts: int = 4) -> bool:
+    """Clear Indeed Cloudflare / Turnstile with multiple GUI strategies.
+
+    Yesterday's single `uc_gui_click_captcha()` path is flaky when the widget
+    is visible but the first click does not register — try CF-specific clicks,
+    retry/blind modes, and handle_* before giving up.
+    """
+    strategies = (
+        ("uc_gui_click_cf", lambda: sb.uc_gui_click_cf()),
+        ("uc_gui_click_cf_retry", lambda: sb.uc_gui_click_cf(retry=True)),
+        ("uc_gui_handle_cf", lambda: sb.uc_gui_handle_cf()),
+        ("uc_gui_click_captcha", lambda: sb.uc_gui_click_captcha()),
+        ("uc_gui_click_cf_blind", lambda: sb.uc_gui_click_cf(blind=True)),
+        ("uc_gui_handle_captcha", lambda: sb.uc_gui_handle_captcha()),
+    )
     for _ in range(attempts):
         title = sb.get_title() or ""
         try:
@@ -153,14 +149,31 @@ def clear_cf(sb, attempts: int = 3) -> bool:
             text = ""
         if not blocked(title, text):
             return True
-        try:
-            sb.uc_gui_click_captcha()
-        except Exception:
+        for _name, fn in strategies:
             try:
-                sb.uc_gui_handle_captcha()
+                fn()
+            except Exception:
+                continue
+            time.sleep(6)
+            title = sb.get_title() or ""
+            try:
+                text = sb.get_text("body") or ""
+            except Exception:
+                text = ""
+            if not blocked(title, text):
+                return True
+            try:
+                sb.uc_open_with_reconnect(sb.get_current_url() or "https://in.indeed.com/", 4)
             except Exception:
                 pass
-        time.sleep(4)
+            time.sleep(2)
+            title = sb.get_title() or ""
+            try:
+                text = sb.get_text("body") or ""
+            except Exception:
+                text = ""
+            if not blocked(title, text):
+                return True
     title = sb.get_title() or ""
     try:
         text = sb.get_text("body") or ""
@@ -1752,12 +1765,9 @@ def main() -> int:
 
     # Re-assert singleton FileLock inside already-imported SB modules.
     try:
-        import filelock
-        import seleniumbase.fixtures.page_actions as _pa
-        import seleniumbase.core.sb_cdp as _cdp
-        for mod in (_pa, _cdp):
-            if hasattr(mod, "FileLock"):
-                mod.FileLock = filelock.FileLock
+        from tools.indeed.filelock_patch import rebind_seleniumbase_filelock
+
+        rebind_seleniumbase_filelock()
     except Exception as exc:
         print(f"  filelock_rebind={exc!s}"[:160], flush=True)
 

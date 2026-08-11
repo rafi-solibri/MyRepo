@@ -24,8 +24,8 @@ Current 52 LPA | Expected 65 LPA | Immediate | +91 8790251698 | rafi.success@gma
 
 ## Scope / blockers
 - Primary https://in.indeed.com — logged-in session required.
-- If Cloudflare "Additional Verification Required" / 403 / Request Blocked on datacenter IP: stop and report. Do not invent applies.
-  Fix options (see automation-prompts/INDEED_CLOUDFLARE.md):
+- If Cloudflare "Additional Verification Required" / 403 / Request Blocked: preflight auto-runs WARP SOCKS + multi-strategy UC Turnstile clear + WARP IP rotate. Only stop/report after that exits 5. Do not invent applies.
+  Remaining fix options (see automation-prompts/INDEED_CLOUDFLARE.md):
   1) Run on home Wi‑Fi / private residential worker, OR
   2) Set env secret `INDEED_HTTP_PROXY` then `bash scripts/launch-chrome-cdp.sh indeed`.
 - If login missing but page loads: stop and report Indeed login required — Desktop Chrome Default login + sync-chrome-sessions.sh + Save Snapshot.
