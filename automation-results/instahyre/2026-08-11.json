@@ -3,7 +3,7 @@
   "source": "home-local",
   "date": "2026-08-11",
   "startedAt": null,
-  "finishedAt": "2026-08-11T07:26:34Z",
+  "finishedAt": "2026-08-11T12:50:00.000Z",
   "host": "NEM01-GBGR234",
   "ok": false,
   "counts": {
@@ -20,13 +20,14 @@
   "blocked": [
     {
       "reason": "instahyre_login_required",
-      "detail": "Windows Chrome App-Bound Encryption (v20 cookies): synced cookie names exist but CDP profile cannot decrypt them (sessionLen=0). One-time headed login required at ~/.cursor/chrome-cdp-profiles/instahyre"
+      "detail": "preflight destHasAuth=false; Windows ABE — no sessionid in CDP profile; owner headed login required",
+      "hint": "bash scripts/home-headed-login.sh instahyre"
     }
   ],
   "skipped": [],
   "seen": [],
-  "blockerSummary": "Windows Chrome ABE (v20): Instahyre CDP profile needs one-time headed login at ~/.cursor/chrome-cdp-profiles/instahyre (cookie sync from Default cannot decrypt)",
+  "blockerSummary": "instahyre_login_required — Windows ABE CDP profile missing live sessionid; run bash scripts/home-headed-login.sh instahyre",
   "notes": [],
   "preflight": null,
-  "logPath": "C:/Users/MohammedAhmed/.cursor/portal-home-logs/instahyre/instahyre-20260811T071745Z.log"
+  "logPath": null
 }
