@@ -7,6 +7,12 @@ automation must be patched in durable helpers, pushed on a feature branch, opene
 as a **ready** PR (not draft), and merged with `bash scripts/auto-merge-fix-pr.sh`
 — not left as report-only notes.
 
+## Fixed for 2026-08-11 LinkedIn home (Windows residential)
+
+| Issue | Fix |
+| --- | --- |
+| Home LinkedIn blocked: Windows ABE cannot sync Desktop `li_at`; SQLite “preserved” `linkedin-alt` auth was stale and Chrome dropped it on load | `tools/linkedin/wait_for_cdp_login.js` live CDP probe; `launch-chrome-cdp.sh` opens login + warns; `chrome_session.js` prefers alt only when primary lacks `li_at` name and clarifies ABE headed-login reason; owner: `bash scripts/home-headed-login.sh linkedin` |
+
 ## Fixed for 2026-08-11 Notification home fetch (Windows)
 
 | Issue | Fix |

@@ -141,3 +141,25 @@ raise SystemExit(1)
 PY
 
 echo "Chrome CDP ready for $portal using $profile (log: $log)"
+
+# LinkedIn on Windows ABE: SQLite cookie names can lie. Live-probe CDP when asked.
+if [[ "$portal" == "linkedin" || "$portal" == "hitechcity" ]]; then
+  if [[ "${CDP_LIVE_LOGIN_CHECK:-1}" == "1" ]] && command -v node >/dev/null 2>&1; then
+    export NODE_PATH="$ROOT/tools/node_modules${NODE_PATH:+:$NODE_PATH}"
+    wait_sec="${LINKEDIN_LOGIN_WAIT_SEC:-0}"
+    set +e
+    if [[ "$wait_sec" -gt 0 ]]; then
+      node "$ROOT/tools/linkedin/wait_for_cdp_login.js" --open-login --wait "$wait_sec"
+      live_rc=$?
+    else
+      node "$ROOT/tools/linkedin/wait_for_cdp_login.js" --open-login
+      live_rc=$?
+    fi
+    set -e
+    if [[ "$live_rc" -ne 0 ]]; then
+      echo "WARNING: LinkedIn CDP not logged in (live check exit $live_rc)." >&2
+      echo "         Sign in once: bash scripts/home-headed-login.sh linkedin" >&2
+      echo "         Or set LINKEDIN_LOGIN_WAIT_SEC=300 and re-launch while you sign in." >&2
+    fi
+  fi
+fi
