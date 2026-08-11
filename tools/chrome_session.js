@@ -78,7 +78,7 @@ const AUTH_COOKIES = {
   foundit: ["MSSOAT"],
   cutshort: ["cutshort_authentication"],
   instahyre: ["sessionid"],
-  indeed: ["__Secure-PassportAuthProxy-BearerToken", "CTK"],
+  indeed: ["__Secure-PassportAuthProxy-BearerToken"],
 };
 
 function cookiesDbPath(profileRoot) {
