@@ -60,13 +60,20 @@ New campus-focused automation (same profile/CTC/resume rules as portal dailies):
 | CDP | `hitechcity` portal alias reuses LinkedIn Chrome profile |
 | Notification | `07-notification.md` includes this automation’s totals |
 
+## 2026-08-11 Windows agent worker ABI
+
+- Documented Cursor Windows `better-sqlite3` 127/137 crash (reinstall useless)
+- Added `scripts/fix-windows-agent-worker.ps1` + `scripts/setup-wsl-agent-worker.sh`
+- Prefer WSL private worker (`job-apply-laptop` / `indeed-home`) until Cursor ships a fixed Win package
+
 ## Manual step required
 
 Cursor Automations API from this agent is **read-only** (`get-automation` only). Paste each `automation-prompts/0N-*.md` fenced `text` block into the matching automation’s Agent instructions and Save.
 
 **You still must** (not fixable in code alone):
 1. Keep **cloud Indeed Daily OFF**; use home cron / private worker
-2. Re-paste **all** updated apply prompts after merge (including **08-hitech-city** loader)
-3. Rename Untitled automation → **Hitech City / Knowledge City Daily**
-4. Set `RESEND_FROM_EMAIL` for Notification
-5. Keep General Daily disabled
+2. On Windows laptop: start the worker via **WSL** (not native `agent worker start`) until Cursor fixes the package
+3. Re-paste **all** updated apply prompts after merge (including **08-hitech-city** loader)
+4. Rename Untitled automation → **Hitech City / Knowledge City Daily**
+5. Set `RESEND_FROM_EMAIL` for Notification
+6. Keep General Daily disabled
