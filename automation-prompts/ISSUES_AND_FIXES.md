@@ -161,12 +161,19 @@ opened as a draft PR — not left as report-only notes.
 | `launch-chrome-cdp.sh` missing `chrome.exe` / Store-stub `python3` | Resolve Chrome under Program Files; headed by default on Windows; `py -3` / `Python314` fallbacks |
 | Cookie-name `hasAuth` true but Naukri still on `nlogin` | Chrome **v20 App-Bound Encryption** — profile copy cannot decrypt cookies (owner headed login). Helper: `scripts/home-headed-login.sh naukri` |
 
+## Fixed for 2026-08-11 Instahyre home (Windows residential)
+
+| Issue | Fix |
+| --- | --- |
+| `tools/instahyre/resume.js` only searched `/workspace` + `/home/ubuntu` | Resolve `resumes/Rafi_Resume.docx` from repo/cwd and reuse `chrome_session` `PROFILES.instahyre` |
+| Cookie-name `sessionid` present but live page redirects to `/login/` (`sessionLen=0`) | Same Chrome **v20 ABE** as Naukri — owner headed login via `scripts/home-headed-login.sh instahyre` |
+
 ## Still requires your action (cannot fix from code alone)
 
 | Blocker | Who | What to do |
 | --- | --- | --- |
 | Windows `agent worker start` ABI crash (127/137) | You | Until Cursor ships a fixed Win package: `wsl --install -d Ubuntu` → `powershell -ExecutionPolicy Bypass -File scripts\fix-windows-agent-worker.ps1 -LaunchWsl` (or `bash scripts/setup-wsl-agent-worker.sh --name job-apply-laptop` inside WSL). Leave WSL terminal open; pick that machine in Agents. |
-| Windows home portal CDP login (ABE v20) | You | One-time: `bash scripts/home-headed-login.sh naukri` (and linkedin/foundit/cutshort/…). Sign in in the headed window; do **not** rely on Desktop Default cookie sync. |
+| Windows home portal CDP login (ABE v20) | You | One-time: `bash scripts/home-headed-login.sh instahyre` (also naukri/linkedin/foundit/cutshort/indeed). Sign in in the headed window; do **not** rely on Desktop Default cookie sync. |
 | Snapshot missing portal logins | You | `bash scripts/open-portal-login-tabs.sh` → sign in on Desktop → quit Chrome → `bash scripts/verify-portal-logins.sh --strict` → **Save/Update snapshot** |
 | Indeed Cloudflare 403 if WARP+UC fails | You | Prefer cloud path: WARP SOCKS + `cf_bypass_uc.py` (auto in `preflight.js`). Fallback: `scripts/indeed-home-daily.sh` / residential `INDEED_HTTP_PROXY` |
 | Hirist secondary board login | Optional | Log into Hirist in Desktop Chrome and re-seed sessions if you want Hirist applies |
