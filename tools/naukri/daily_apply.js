@@ -594,7 +594,7 @@ async function handleExternal(context, page, detail, jobMeta, report) {
   }
 
   // Workday dedicated flow (Apply → Autofill/Manual → account → steps)
-  if (/myworkdayjobs\.com|workdayjobs/i.test(newPage.url())) {
+  if (/myworkdayjobs\.com|myworkdaysite\.com|workdayjobs/i.test(newPage.url())) {
     const wd = await completeWorkdayApply(newPage, RESUME, {
       maxMs: Math.max(30_000, MAX_EXTERNAL_MS - (Date.now() - start)),
     });
