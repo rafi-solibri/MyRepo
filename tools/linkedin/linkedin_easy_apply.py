@@ -44,8 +44,27 @@ except Exception:
     )
 
 CDP = os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222")
-OUT = Path("/opt/cursor/artifacts/apply-report.json")
-SCREEN_DIR = Path("/opt/cursor/artifacts")
+_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _artifacts_dir() -> Path:
+    if os.environ.get("LINKEDIN_ARTIFACTS"):
+        return Path(os.environ["LINKEDIN_ARTIFACTS"])
+    cloud = Path("/opt/cursor/artifacts")
+    if cloud.is_dir():
+        return cloud
+    local = os.environ.get("LOCALAPPDATA") or ""
+    git_opt = Path(local) / "Programs" / "Git" / "opt" / "cursor" / "artifacts"
+    if git_opt.is_dir():
+        return git_opt
+    d = _ROOT / "artifacts"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+_ART = _artifacts_dir()
+OUT = Path(os.environ.get("LINKEDIN_APPLY_REPORT", str(_ART / "apply-report.json")))
+SCREEN_DIR = _ART
 RESUME_LABEL = "Rafi_Resume"
 
 # Ensure resume exists before apply batch
