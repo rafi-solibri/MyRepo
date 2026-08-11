@@ -66,4 +66,11 @@ See STEP 0 in [04-naukri-general.md](04-naukri-general.md). Indeed Cloudflare: [
 | Indeed Daily (home local) | [06-indeed.md](06-indeed.md) + [INDEED_HOME_AUTOMATION.md](INDEED_HOME_AUTOMATION.md) |
 | Notification Job 11 AM | [07-notification.md](07-notification.md) |
 
+### Home-local evening replicas (cloud can stay ON)
+
+Run a second pass on this PC at **5 PM** (cloud morning automations stay On):
+
+→ **[HOME_AUTOMATIONS.md](HOME_AUTOMATIONS.md)**  
+→ Windows: `powershell -ExecutionPolicy Bypass -File scripts\install-all-home-tasks.ps1`
+
 See [ISSUES_AND_FIXES.md](ISSUES_AND_FIXES.md) for what was broken in the last cron and what still needs your login/secrets.

@@ -13,13 +13,13 @@ $Script = Join-Path $Root "scripts\indeed-home-daily.sh"
 
 # Prefer Git Bash if present
 $Bash = @(
-  "C:\Program Files\Git\bin\bash.exe",
   "$env:LOCALAPPDATA\Programs\Git\bin\bash.exe",
-  "bash"
-) | Where-Object { $_ -eq "bash" -or (Test-Path $_) } | Select-Object -First 1
+  "C:\Program Files\Git\bin\bash.exe",
+  "$env:ProgramFiles\Git\bin\bash.exe"
+) | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
 
 if (-not $Bash) {
-  throw "Git Bash not found. Install Git for Windows, or run scripts/indeed-home-daily.sh from WSL."
+  throw "Git Bash not found. Install Git for Windows. Prefer: powershell -File scripts\install-all-home-tasks.ps1"
 }
 
 $Action = New-ScheduledTaskAction -Execute $Bash -Argument "`"$Script`"" -WorkingDirectory "$Root"

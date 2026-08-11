@@ -41,3 +41,14 @@ node tools/chrome_session.js status
 
 Disable the duplicate General Daily automation
 `30e2c023-9067-11f1-ba66-0e7d0216e441`; Naukri Daily owns that flow.
+
+## Home-local evening replicas (cloud can stay ON)
+
+Second daily pass at **5 PM** on this PC (Task Scheduler + Cursor CLI). Cloud
+morning automations can remain enabled.
+
+See [`automation-prompts/HOME_AUTOMATIONS.md`](automation-prompts/HOME_AUTOMATIONS.md).
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\install-all-home-tasks.ps1
+```

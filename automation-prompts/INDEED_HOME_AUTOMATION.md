@@ -59,9 +59,11 @@ auth you use for this repo).
 
 ## Also do this in the Cursor UI
 
-1. **Disable** the cloud Indeed Daily automation (it hits Cloudflare):  
-   https://cursor.com/automations/91b09fd7-9093-11f1-ba66-0e7d0216e441 → Off  
-2. Keep LinkedIn / Naukri / Foundit / Cutshort / Instahyre cloud automations On.
+1. Cloud Indeed often hits Cloudflare on public IPs — home evening Indeed is the reliable pass.  
+   Cloud Indeed may stay On if you want; expect Cloudflare stubs there.  
+2. Install **all** home replicas (5 PM stagger):  
+   see [HOME_AUTOMATIONS.md](HOME_AUTOMATIONS.md) / `scripts/install-all-home-tasks.ps1`  
+3. Other portal cloud automations can stay On (morning); home is an evening second pass.
 
 ## If you still want a Cursor dashboard Automation
 
