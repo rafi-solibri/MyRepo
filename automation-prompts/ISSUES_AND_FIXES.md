@@ -6,6 +6,12 @@ See [AUTO_FIX.md](AUTO_FIX.md). Code-fixable blockers discovered during any dail
 automation must be patched in durable helpers, pushed on a feature branch, and
 opened as a draft PR — not left as report-only notes.
 
+## Fixed for 2026-08-11 Notification home fetch (Windows)
+
+| Issue | Fix |
+| --- | --- |
+| `fetch-home-result.sh` wrote under Git `/opt/cursor/artifacts` then Node opened `C:\opt\...` (ENOENT) so Notification Job could not `cat` JSON | On MSYS/MinGW default cache to `$ROOT/artifacts`; pass `cygpath -m` paths into Node via `process.argv` |
+
 ## Fixed for 2026-08-11 Indeed Windows home runner
 
 | Issue | Fix |
