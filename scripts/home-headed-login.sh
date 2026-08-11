@@ -52,7 +52,7 @@ fi
 echo
 read -r -p "Press Enter after you have finished signing in…"
 
-# LinkedIn: prefer dedicated live CDP waiter (ABE-aware messaging).
+# LinkedIn / Cutshort: prefer dedicated live CDP waiter (ABE-aware messaging).
 if [[ "$PORTAL" == "linkedin" && -f "$ROOT/tools/linkedin/wait_for_cdp_login.js" ]]; then
   export NODE_PATH="$ROOT/tools/node_modules${NODE_PATH:+:$NODE_PATH}"
   set +e
@@ -64,6 +64,19 @@ if [[ "$PORTAL" == "linkedin" && -f "$ROOT/tools/linkedin/wait_for_cdp_login.js"
     exit 0
   fi
   echo "WARN: LinkedIn still not logged in (exit $rc). Stay on the Chrome window and retry." >&2
+  exit "$rc"
+fi
+if [[ "$PORTAL" == "cutshort" && -f "$ROOT/tools/cutshort/wait_for_cdp_login.js" ]]; then
+  export NODE_PATH="$ROOT/tools/node_modules${NODE_PATH:+:$NODE_PATH}"
+  set +e
+  node "$ROOT/tools/cutshort/wait_for_cdp_login.js"
+  rc=$?
+  set -e
+  if [[ "$rc" -eq 0 ]]; then
+    echo "OK: Cutshort CDP session is live. Future home dailies can reuse this profile."
+    exit 0
+  fi
+  echo "WARN: Cutshort still not logged in (exit $rc). Stay on the Chrome window and retry." >&2
   exit "$rc"
 fi
 

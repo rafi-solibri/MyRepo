@@ -7,6 +7,12 @@ automation must be patched in durable helpers, pushed on a feature branch, opene
 as a **ready** PR (not draft), and merged with `bash scripts/auto-merge-fix-pr.sh`
 — not left as report-only notes.
 
+## Fixed for 2026-08-11 Cutshort home (Windows residential)
+
+| Issue | Fix |
+| --- | --- |
+| Home Cutshort blocked: SQLite `destHasAuth: true` for `cutshort_authentication` but live CDP redirected to `/?redirect_url=…` (stale session) | `tools/cutshort/wait_for_cdp_login.js` live dashboard probe; `home-headed-login.sh cutshort` uses it; owner: sign in on headed CDP profile |
+
 ## Fixed for 2026-08-11 LinkedIn home (Windows residential)
 
 | Issue | Fix |
