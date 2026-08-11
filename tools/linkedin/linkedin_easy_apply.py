@@ -278,14 +278,259 @@ def extract_job_id(url: str) -> str:
     return m.group(1) if m else ""
 
 
+def _is_ai_job_search(page: Page) -> bool:
+    u = page.url or ""
+    return "search-results" in u or "ai-job-search" in u
+
+
+def ai_job_card_buttons(page: Page):
+    """LinkedIn AI job search cards: div[role=button] inside data-display-contents wrappers."""
+    return page.locator(
+        'div[data-display-contents="true"] div[role="button"]'
+    ).filter(
+        has_text=re.compile(
+            r"(Easy Apply|Applied|ago|Remote|Hybrid|On-site|Hyderabad|India|WFH)",
+            re.I,
+        )
+    )
+
+
+def detail_panel_text(page: Page) -> str:
+    """Top-card / detail pane text only — never full page chrome (filters say Remote)."""
+    try:
+        title_a = page.locator('a[href*="/jobs/view/"]').first
+        if title_a.count():
+            # Climb to a bounded detail root around the selected job title.
+            txt = title_a.evaluate(
+                """(a) => {
+                  let el = a;
+                  for (let i = 0; i < 10 && el; i++) {
+                    const t = (el.innerText || '').trim();
+                    if (t.length > 80 && t.length < 4000 &&
+                        /Easy Apply|Apply|About the job|Hybrid|Remote|On-site/i.test(t)) {
+                      return t.slice(0, 3500);
+                    }
+                    el = el.parentElement;
+                  }
+                  return (a.innerText || '').slice(0, 500);
+                }"""
+            )
+            if txt:
+                return txt
+    except Exception:
+        pass
+    # Classic fallbacks
+    for sel in [
+        ".job-details-jobs-unified-top-card__container",
+        ".jobs-unified-top-card",
+        ".job-details-jobs-unified-top-card",
+        ".jobs-details",
+        ".scaffold-layout__detail",
+    ]:
+        try:
+            loc = page.locator(sel).first
+            if loc.count():
+                t = (loc.inner_text(timeout=1500) or "")[:3500]
+                if t.strip():
+                    return t
+        except Exception:
+            continue
+    return ""
+
+
+def top_card_workplace_text(page: Page, card_text: str = "") -> str:
+    """Location/workplace signal from top card only (strip people/JD chrome)."""
+    detail = detail_panel_text(page)
+    # Cut before sections that often mention other cities (network, JD body)
+    cut = re.split(
+        r"\n\s*(?:People you can reach out to|Meet the hiring team|About the job|Show match details|BETA)\b",
+        detail,
+        maxsplit=1,
+        flags=re.I,
+    )[0]
+    # Keep a short head: title, company, location line, workplace pills
+    head = "\n".join(cut.splitlines()[:18])[:700]
+    if card_text:
+        # Card line like "Hyderabad (On-site)" is the most reliable AI-UI signal
+        head = f"{card_text[:400]}\n{head}"
+    return head[:900]
+
+
+def fill_apply_radios_and_selects(page: Page) -> None:
+    """Fill Yes/No radio groups + proficiency selects on classic modal OR new Apply page."""
+    try:
+        page.evaluate(
+            r"""() => {
+              const heading = [...document.querySelectorAll('h1,h2,h3')]
+                .find(e => /Apply to /i.test(e.innerText || ''));
+              let root = heading;
+              for (let i = 0; i < 12 && root; i++) {
+                if (root.querySelectorAll('input[type=radio], select').length > 0) break;
+                root = root.parentElement;
+              }
+              root = root || document;
+              const questionNear = (el) => {
+                let cur = el;
+                for (let i = 0; i < 8 && cur; i++) {
+                  const t = (cur.innerText || '').replace(/\s+/g, ' ').trim();
+                  if (t.length > 12 && t.length < 500 &&
+                      !/^(Yes|No)(\s+(Yes|No))?$/i.test(t)) {
+                    return t;
+                  }
+                  // Prefer previous sibling blocks for question text
+                  let sib = cur.previousElementSibling;
+                  while (sib) {
+                    const st = (sib.innerText || '').replace(/\s+/g, ' ').trim();
+                    if (st.length > 12 && st.length < 400 &&
+                        !/^(Yes|No)$/i.test(st) &&
+                        !/this field is required/i.test(st)) {
+                      return st;
+                    }
+                    sib = sib.previousElementSibling;
+                  }
+                  cur = cur.parentElement;
+                }
+                return '';
+              };
+              // Group radios by name
+              const radios = [...root.querySelectorAll('input[type=radio]')];
+              const byName = new Map();
+              for (const r of radios) {
+                const n = r.name || r.id || Math.random().toString();
+                if (!byName.has(n)) byName.set(n, []);
+                byName.get(n).push(r);
+              }
+              for (const group of byName.values()) {
+                if (group.some(r => r.checked)) continue;
+                const q = questionNear(group[0]).toLowerCase();
+                let wantYes = true;
+                if (/sponsorship|visa sponsorship|require sponsorship|need sponsorship/.test(q)) {
+                  wantYes = false;
+                }
+                // Map Yes/No via adjacent label text or following text
+                const pick = group.find(r => {
+                  const lab = (r.labels && r.labels[0] && r.labels[0].innerText || '').trim().toLowerCase();
+                  const wrap = (r.closest('label') || r.parentElement);
+                  const wt = (wrap && wrap.innerText || '').trim().toLowerCase();
+                  const marker = lab || wt || '';
+                  return wantYes ? /^yes\b/.test(marker) : /^no\b/.test(marker);
+                }) || (wantYes ? group[0] : group[group.length - 1]);
+                try {
+                  pick.click();
+                  pick.checked = true;
+                  pick.dispatchEvent(new Event('input', {bubbles: true}));
+                  pick.dispatchEvent(new Event('change', {bubbles: true}));
+                } catch (e) {}
+              }
+              // Selects: country code, English proficiency, Yes/No, etc.
+              for (const s of root.querySelectorAll('select')) {
+                const lab = (s.labels && s.labels[0] && s.labels[0].innerText || '') + ' ' + questionNear(s);
+                const blob = lab.toLowerCase();
+                const cur = (s.options[s.selectedIndex] && s.options[s.selectedIndex].text || '').trim();
+                let opt = null;
+                if (/country code|phone country|dial/.test(blob) ||
+                    /\(\+91\)|\(\+376\)|\(\+1\)/.test([...s.options].slice(0,8).map(o=>o.text).join(' '))) {
+                  // Always prefer India (+91) when this looks like a phone country list
+                  const looksPhone = [...s.options].some(o => /\(\+\d+\)/.test(o.text));
+                  if (looksPhone || /country code|phone country/.test(blob)) {
+                    opt = [...s.options].find(o => /india\s*\(\+91\)/i.test(o.text)) ||
+                          [...s.options].find(o => /\+91/.test(o.text));
+                  }
+                }
+                if (!opt && (/english|proficiency|language/.test(blob))) {
+                  if (/select/i.test(cur) || !s.value) {
+                    opt = [...s.options].find(o => /professional|native|bilingual/i.test(o.text));
+                  }
+                }
+                if (!opt && (/notice|availability/.test(blob)) && (/select/i.test(cur) || !s.value)) {
+                  opt = [...s.options].find(o => /^0$|immediate|immediately|yes/i.test(o.text.trim()));
+                }
+                if (!opt && (/select/i.test(cur) || !s.value)) {
+                  opt = [...s.options].find(o => /^yes$/i.test(o.text.trim()));
+                }
+                // Force-correct wrong country codes even if already selected
+                if (!opt && /country code|phone country/.test(blob)) {
+                  opt = [...s.options].find(o => /india\s*\(\+91\)/i.test(o.text));
+                }
+                if (opt && s.value !== opt.value) {
+                  s.value = opt.value;
+                  s.dispatchEvent(new Event('input', {bubbles: true}));
+                  s.dispatchEvent(new Event('change', {bubbles: true}));
+                }
+              }
+            }"""
+        )
+    except Exception:
+        pass
+    # Also click visible Yes/No text next to unanswered required questions (AI UI)
+    try:
+        for qpat, answer in [
+            (r"background check", "Yes"),
+            (r"bachelor.?s degree|level of education", "Yes"),
+            (r"comfortable commuting", "Yes"),
+            (r"hybrid setting", "Yes"),
+            (r"legally authorized to work", "Yes"),
+            (r"require sponsorship|visa sponsorship", "No"),
+            (r"willing to relocate", "Yes"),
+            (r"hyderabad", "Yes"),
+        ]:
+            q = page.get_by_text(re.compile(qpat, re.I)).first
+            if not (q.count() and q.is_visible()):
+                continue
+            # Scope to a nearby container that includes Yes/No
+            box = q.locator(
+                "xpath=ancestor::div[.//text()[normalize-space()='Yes'] and "
+                ".//text()[normalize-space()='No']][1]"
+            )
+            if not box.count():
+                box = q.locator("xpath=ancestor::div[3]")
+            try:
+                # Prefer associated radio input
+                lab = box.locator(f"label:has-text('{answer}')").first
+                if lab.count() and lab.is_visible():
+                    lab.click(timeout=800, force=True)
+                    continue
+            except Exception:
+                pass
+            try:
+                box.get_by_text(answer, exact=True).first.click(timeout=800, force=True)
+            except Exception:
+                pass
+        # English proficiency
+        sel = page.locator("select").filter(
+            has=page.locator("option:has-text('Professional')")
+        ).first
+        if sel.count():
+            try:
+                sel.select_option(label=re.compile(r"Professional|Native", re.I))
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+
 def fill_inputs(page: Page) -> None:
     """Best-effort fill of Easy Apply form fields."""
-    # Text/select/textarea with labels
+    # Radios/selects first — new Apply UI often has unlabeled radio groups
+    fill_apply_radios_and_selects(page)
+
+    # Text/select/textarea with labels (modal OR new full-page Apply UI)
     labels = page.locator(
         ".jobs-easy-apply-modal label, .jobs-easy-apply-content label, "
         "[role='dialog'] label, .artdeco-modal label, form label"
     )
-    count = min(labels.count(), 40)
+    # If classic scopes empty, use any visible labels under Apply heading root
+    try:
+        if labels.count() == 0 and page.get_by_role(
+            "heading", name=re.compile(r"Apply to ", re.I)
+        ).count():
+            labels = page.locator("label")
+    except Exception:
+        pass
+    try:
+        count = min(labels.count(), 40)
+    except Exception:
+        count = 0
     for i in range(count):
         lab = labels.nth(i)
         try:
@@ -391,13 +636,37 @@ def fill_inputs(page: Page) -> None:
                     control.select_option(label=re.compile(r"india|\+91", re.I))
                 except Exception:
                     pass
-        elif any(k in blob for k in ("current ctc", "current salary", "current compensation", "present ctc", "confirm your current ctc")):
+        elif any(
+            k in blob
+            for k in (
+                "current ctc",
+                "current salary",
+                "current annual salary",
+                "current compensation",
+                "present ctc",
+                "confirm your current ctc",
+                "annual salary",
+                "fixed ctc",
+                "salary(fixed)",
+                "salary (fixed)",
+            )
+        ):
             # Forms often ask Lakhs
             if "lakh" in blob:
                 set_val(PROFILE["current_ctc_lakhs"])
             else:
                 set_val(PROFILE["current_ctc"])
-        elif any(k in blob for k in ("expected ctc", "expected salary", "expected compensation", "desired salary")):
+        elif any(
+            k in blob
+            for k in (
+                "expected ctc",
+                "expected salary",
+                "expected annual salary",
+                "expected compensation",
+                "desired salary",
+                "expected fixed",
+            )
+        ):
             if "lakh" in blob:
                 set_val(PROFILE["expected_ctc_lakhs"])
             else:
@@ -524,10 +793,16 @@ def fill_inputs(page: Page) -> None:
                     inp.fill(PROFILE["education_field"])
                 elif re.search(r"manage directly|engineers managed|direct reports|team size|people managed", near):
                     inp.fill(PROFILE["engineers_managed"])
+                elif re.search(r"(current|present).*(ctc|salary)|annual salary|salary\s*\(?fixed\)?", near) and "expect" not in near:
+                    inp.fill(PROFILE["current_ctc_lakhs"] if "lakh" in near else PROFILE["current_ctc"])
+                elif re.search(r"(expected|desired).*(ctc|salary)|expected annual", near):
+                    inp.fill(PROFILE["expected_ctc_lakhs"] if "lakh" in near else PROFILE["expected_ctc"])
                 elif "ctc" in near and "lakh" in near and "current" in near:
                     inp.fill(PROFILE["current_ctc_lakhs"])
                 elif "ctc" in near and "lakh" in near and "expect" in near:
                     inp.fill(PROFILE["expected_ctc_lakhs"])
+                elif "lakh" in near and "salary" in near and "expect" not in near:
+                    inp.fill(PROFILE["current_ctc_lakhs"])
                 elif "notice" in near:
                     inp.fill("1")
                 elif ("years" in near or "experience" in near) and "php" not in near:
@@ -603,6 +878,10 @@ def fill_inputs(page: Page) -> None:
         (r"hyderabad", "Yes"),
         (r"presales", "Yes"),
         (r"government|psu|smart cities", "Yes"),
+        (r"background check", "Yes"),
+        (r"bachelor.?s degree|level of education", "Yes"),
+        (r"comfortable commuting", "Yes"),
+        (r"hybrid setting", "Yes"),
     ]:
         try:
             q = page.get_by_text(re.compile(pair[0], re.I)).first
@@ -610,6 +889,10 @@ def fill_inputs(page: Page) -> None:
                 container = q.locator(
                     "xpath=ancestor::fieldset|ancestor::div[contains(@class,'fb-dash') or contains(@class,'jobs-easy-apply')][1]"
                 )
+                if not container.count():
+                    container = q.locator(
+                        "xpath=ancestor::div[.//input[@type='radio'] or .//select][1]"
+                    )
                 # native select nearby
                 sel = container.locator("select").first
                 if sel.count():
@@ -625,6 +908,9 @@ def fill_inputs(page: Page) -> None:
                     container.get_by_text(pair[1], exact=True).first.click(timeout=1000)
         except Exception:
             pass
+
+    # New LinkedIn Apply page: unlabeled radio groups + proficiency selects
+    fill_apply_radios_and_selects(page)
 
 
 def select_resume(page: Page) -> None:
@@ -642,6 +928,105 @@ def select_resume(page: Page) -> None:
         pass
 
 
+def dismiss_apply_form(page: Page) -> None:
+    """Close Easy Apply modal OR new inline Apply page; discard save prompt if shown."""
+    for sel in [
+        ".jobs-easy-apply-modal button.artdeco-modal__dismiss",
+        "[role='dialog']:has-text('Apply to') button.artdeco-modal__dismiss",
+        "button[aria-label='Dismiss']",
+        "button[aria-label*='Dismiss']",
+    ]:
+        try:
+            b = page.locator(sel).first
+            if b.count() and b.is_visible():
+                # Prefer dismiss near Apply heading
+                b.click(timeout=1500)
+                time.sleep(0.4)
+                break
+        except Exception:
+            continue
+    try:
+        if page.get_by_text("Save this application?").count() and page.get_by_text(
+            "Save this application?"
+        ).first.is_visible():
+            page.get_by_role("button", name="Discard").click(timeout=2000)
+            time.sleep(0.3)
+    except Exception:
+        pass
+
+
+def _application_submitted(page: Page) -> bool:
+    """True when LinkedIn confirms the application (modal toast OR job detail status)."""
+    try:
+        detail = detail_panel_text(page)
+    except Exception:
+        detail = ""
+    try:
+        body = page.locator("body").inner_text()[:6000]
+    except Exception:
+        body = ""
+    text = f"{detail}\n{body}"
+    if re.search(
+        r"application (was )?submitted|"
+        r"application status\s*application submitted|"
+        r"applied to .+ ago|\byou applied\b|"
+        r"applied \d+ (second|minute|hour|day)s? ago|"
+        r"\bapplication sent\b",
+        text,
+        re.I,
+    ):
+        # Avoid false positive from unrelated cards saying Applied
+        if re.search(
+            r"application (was )?submitted|application status|applied \d+ |"
+            r"applied to |\byou applied\b|application sent",
+            detail or body[:2500],
+            re.I,
+        ):
+            return True
+    # Detail pane status chip
+    try:
+        if page.get_by_text(re.compile(r"^Application submitted$", re.I)).count():
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def apply_form_root(page: Page):
+    """Locator for the active Easy Apply form (modal OR new inline Apply page)."""
+    heading = page.get_by_role("heading", name=re.compile(r"Apply to ", re.I))
+    try:
+        if heading.count() and heading.first.is_visible():
+            modal = heading.first.locator(
+                "xpath=ancestor::div[contains(@class,'artdeco-modal') or contains(@class,'easy-apply') or @role='dialog'][1]"
+            )
+            if modal.count():
+                return modal.first
+            # Prefer smallest ancestor that contains Next/Review/Submit *with visible text*
+            rooted = heading.first.locator(
+                "xpath=ancestor::div[.//button[normalize-space()='Next' or normalize-space()='Review' "
+                "or normalize-space()='Submit' or normalize-space()='Submit application' "
+                "or normalize-space()='Continue']][1]"
+            )
+            if rooted.count():
+                return rooted.first
+            return heading.first.locator("xpath=ancestor::div[4]")
+    except Exception:
+        pass
+    for sel in [
+        ".jobs-easy-apply-modal",
+        "[role='dialog']:has-text('Apply to')",
+        "div.artdeco-modal:has-text('Apply to')",
+    ]:
+        loc = page.locator(sel).first
+        try:
+            if loc.count() and loc.is_visible():
+                return loc
+        except Exception:
+            continue
+    return page.locator("body")
+
+
 def _apply_modal(page: Page):
     # New LinkedIn modals may lack .jobs-easy-apply-modal / role=dialog
     heading = page.get_by_role("heading", name=re.compile(r"Apply to ", re.I))
@@ -653,7 +1038,8 @@ def _apply_modal(page: Page):
             if modal.count():
                 return modal
             return heading.first.locator(
-                "xpath=ancestor::div[.//button[contains(.,'Next') or contains(.,'Review') or contains(.,'Submit')]][1]"
+                "xpath=ancestor::div[.//button[normalize-space()='Next' or normalize-space()='Review' "
+                "or normalize-space()='Submit' or normalize-space()='Submit application']][1]"
             )
     except Exception:
         pass
@@ -673,10 +1059,26 @@ def _apply_modal(page: Page):
 
 def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
     close_overlays(page)
-    # Find Easy Apply button in job details (not list)
+    # Find Easy Apply button in job details (not list cards)
     btn = None
-    details = page.locator(".jobs-details, .scaffold-layout__detail, .job-view-layout").first
-    scope = details if details.count() else page
+    details = page.locator(
+        ".jobs-details, .scaffold-layout__detail, .job-view-layout, "
+        "main a[href*='/jobs/view/']"
+    ).first
+    scope = page
+    try:
+        if details.count():
+            # Prefer a nearby ancestor that contains the real Easy Apply <button>
+            scope_candidate = details.locator(
+                "xpath=ancestor::div[.//button[contains(., 'Easy Apply') or "
+                "contains(@aria-label,'Easy Apply')]][1]"
+            )
+            if scope_candidate.count():
+                scope = scope_candidate.first
+            elif page.locator(".jobs-details, .scaffold-layout__detail").count():
+                scope = page.locator(".jobs-details, .scaffold-layout__detail").first
+    except Exception:
+        scope = page
     for sel in [
         "button.jobs-apply-button",
         "button:has-text('Easy Apply')",
@@ -689,15 +1091,37 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
                 if "easy apply" in label:
                     btn = loc
                     break
-                if "apply" in label and "easy" not in label:
-                    job.status = "skipped"
-                    job.reason = "external/non-Easy Apply"
-                    return job
+                if "apply" in label and "easy" not in label and "easy apply" not in label:
+                    # Check page-level for external Apply (company website)
+                    pass
         except Exception:
             continue
     if not btn:
-        body = page.locator("body").inner_text()[:3000]
-        if re.search(r"\bapplied\b|application submitted", body, re.I):
+        # Fallback: first real Easy Apply <button> on page (not div[role=button] cards)
+        try:
+            loc = page.locator("button:has-text('Easy Apply'), button[aria-label*='Easy Apply']").first
+            if loc.count() and loc.is_visible():
+                btn = loc
+        except Exception:
+            pass
+    if not btn:
+        # External / company-website Apply
+        try:
+            ext = page.locator(
+                "button:has-text('Apply'), a:has-text('Apply'), "
+                "button[aria-label*='Apply to'], a[aria-label*='Apply']"
+            ).first
+            if ext.count() and ext.is_visible():
+                label = ((ext.inner_text() or "") + " " + (ext.get_attribute("aria-label") or "")).lower()
+                if "easy apply" not in label and "apply" in label:
+                    job.status = "skipped"
+                    job.reason = "external/non-Easy Apply"
+                    job.path = "external"
+                    return job
+        except Exception:
+            pass
+        detail = detail_panel_text(page)
+        if re.search(r"(?:^|\n)\s*Applied\s*(?:\n|$)|application submitted", detail, re.I):
             job.status = "skipped"
             job.reason = "already applied"
             return job
@@ -744,13 +1168,7 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
             job.status = "blocked"
             job.reason = f"Easy Apply time-cap: {last_err or 'timeout'}"
             shot(page, f"blocked-timeout-{job.job_id}.png")
-            try:
-                page.locator(
-                    ".jobs-easy-apply-modal button.artdeco-modal__dismiss, "
-                    "[role='dialog']:has-text('Apply to') button.artdeco-modal__dismiss"
-                ).first.click(timeout=2000)
-            except Exception:
-                pass
+            dismiss_apply_form(page)
             return job
         # If save dialog appeared mid-flow, discard and reopen apply
         try:
@@ -791,30 +1209,53 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
         select_resume(page)
         fill_inputs(page)
 
-        # Prefer role-based footer actions (works even when role=dialog is missing)
+        # Footer actions MUST be scoped to Apply form — page-level get_by_role('Next')
+        # matches jobs-list pagination (aria-label=Next) and abandons the form.
+        form = apply_form_root(page)
         advanced = False
         for name in ("Submit application", "Submit", "Review", "Next", "Continue"):
             try:
-                btn = page.get_by_role("button", name=name, exact=True)
-                if not btn.count():
-                    btn = page.get_by_role("button", name=re.compile(rf"^{re.escape(name)}$", re.I))
-                for i in range(min(btn.count(), 3)):
+                # Prefer visible button text inside the apply form (not aria-only Next)
+                btn = form.locator(
+                    f"button:text-is('{name}'), button[aria-label='{name}']"
+                )
+                # Exclude empty-text pagination-style controls when name is Next
+                candidates = []
+                for i in range(min(btn.count(), 6)):
                     b = btn.nth(i)
-                    if not (b.is_visible() and b.is_enabled()):
+                    try:
+                        if not (b.is_visible() and b.is_enabled()):
+                            continue
+                        txt = (b.inner_text() or "").strip()
+                        aria = (b.get_attribute("aria-label") or "").strip()
+                        if name == "Next" and not re.search(r"^next$", txt, re.I):
+                            # Skip aria-only "Next" (search pagination)
+                            continue
+                        if txt or aria == name:
+                            candidates.append(b)
+                    except Exception:
                         continue
+                if not candidates:
+                    # Fallback: role within form only
+                    role_btn = form.get_by_role("button", name=name, exact=True)
+                    for i in range(min(role_btn.count(), 3)):
+                        b = role_btn.nth(i)
+                        try:
+                            txt = (b.inner_text() or "").strip()
+                            if b.is_visible() and b.is_enabled() and (
+                                txt == name or name != "Next"
+                            ):
+                                candidates.append(b)
+                        except Exception:
+                            continue
+                for b in candidates[:2]:
                     try:
                         b.click(timeout=3000, force=True)
                     except Exception:
                         b.evaluate("el => el.click()")
                     time.sleep(1.6)
                     advanced = True
-                    body = page.locator("body").inner_text()[:5000]
-                    if re.search(
-                        r"application (was )?submitted|applied to .+ ago|\byou applied\b|"
-                        r"applied \d+ (second|minute|hour|day)s? ago|\bapplication sent\b",
-                        body,
-                        re.I,
-                    ):
+                    if _application_submitted(page):
                         job.status = "submitted"
                         job.reason = "Application submitted"
                         job.path = "Easy Apply"
@@ -833,28 +1274,38 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
                 continue
 
         if advanced:
+            # Form may close after submit without matching earlier — recheck
+            if _application_submitted(page):
+                job.status = "submitted"
+                job.reason = "Application submitted"
+                job.path = "Easy Apply"
+                shot(page, f"submitted-{job.job_id}.png")
+                return job
             continue
 
         try:
-            primary = page.locator("button.artdeco-button--primary").first
+            primary = form.locator(
+                "button.artdeco-button--primary, button:has-text('Next'), "
+                "button:has-text('Review'), button:has-text('Submit')"
+            ).first
             if primary.count() and primary.is_visible():
                 txt = (primary.inner_text() or "").lower()
                 if any(x in txt for x in ("next", "review", "submit", "continue")):
                     primary.click(timeout=3000, force=True)
                     time.sleep(1.4)
+                    if _application_submitted(page):
+                        job.status = "submitted"
+                        job.reason = "Application submitted"
+                        job.path = "Easy Apply"
+                        shot(page, f"submitted-{job.job_id}.png")
+                        return job
                     continue
         except Exception:
             pass
 
         # Success may appear without clicking our Submit handler
         try:
-            body = page.locator("body").inner_text()[:5000]
-            if re.search(
-                r"application (was )?submitted|applied \d+ (second|minute|hour|day)s? ago|"
-                r"\bapplication sent\b",
-                body,
-                re.I,
-            ):
+            if _application_submitted(page):
                 job.status = "submitted"
                 job.reason = "Application submitted"
                 job.path = "Easy Apply"
@@ -885,37 +1336,33 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
         job.status = "blocked"
         job.reason = f"stuck on Easy Apply step {step}: {err or 'no Next/Submit'}"
         shot(page, f"blocked-step-{job.job_id}.png")
-        try:
-            dismiss = page.locator(
-                ".jobs-easy-apply-modal button.artdeco-modal__dismiss, "
-                "[role='dialog']:has-text('Apply to') button.artdeco-modal__dismiss"
-            ).first
-            if dismiss.count():
-                dismiss.click(timeout=2000)
-                time.sleep(0.4)
-            if page.get_by_text("Save this application?").count():
-                page.get_by_role("button", name="Discard").click(timeout=2000)
-        except Exception:
-            pass
+        dismiss_apply_form(page)
         return job
 
     job.status = "blocked"
     job.reason = "exceeded Easy Apply steps"
+    dismiss_apply_form(page)
     return job
 
 
 def parse_card_meta(page: Page) -> tuple[str, str, str]:
     role = company = location = ""
     try:
-        role = page.locator(".job-details-jobs-unified-top-card__job-title, h1.t-24, .jobs-unified-top-card__job-title").first.inner_text(timeout=3000).strip()
+        role = page.locator(
+            ".job-details-jobs-unified-top-card__job-title, h1.t-24, "
+            ".jobs-unified-top-card__job-title, a[href*='/jobs/view/']"
+        ).first.inner_text(timeout=3000).strip()
+        role = re.sub(r"\s+", " ", role).strip()
     except Exception:
         pass
     try:
         company = page.locator(
             ".job-details-jobs-unified-top-card__company-name a, "
             ".job-details-jobs-unified-top-card__company-name, "
-            ".jobs-unified-top-card__company-name a"
+            ".jobs-unified-top-card__company-name a, "
+            "a[href*='/company/']"
         ).first.inner_text(timeout=3000).strip()
+        company = re.sub(r"\s+", " ", company).strip()
     except Exception:
         pass
     try:
@@ -927,6 +1374,40 @@ def parse_card_meta(page: Page) -> tuple[str, str, str]:
         location = re.sub(r"\s+", " ", location)[:200]
     except Exception:
         pass
+    # AI job-search detail pane: parse from bounded detail text when classic nodes missing
+    if not location or not company or not role:
+        detail = detail_panel_text(page)
+        if detail:
+            lines = [ln.strip() for ln in detail.splitlines() if ln.strip()]
+            if not role:
+                for ln in lines[:8]:
+                    if re.search(
+                        r"architect|lead|manager|principal|staff|director|\.net|engineer",
+                        ln,
+                        re.I,
+                    ) and len(ln) < 160:
+                        role = ln
+                        break
+            if not company:
+                for ln in lines[:12]:
+                    if ln == role:
+                        continue
+                    if re.search(
+                        r"ago|applicant|promoted|hybrid|remote|on-site|easy apply|about the job|verified job",
+                        ln,
+                        re.I,
+                    ):
+                        continue
+                    if 1 < len(ln) < 80:
+                        company = ln
+                        break
+            if not location:
+                for ln in lines[:15]:
+                    if "·" in ln or re.search(
+                        r"hyderabad|telangana|india|remote|hybrid|on-site", ln, re.I
+                    ):
+                        location = re.sub(r"\s+", " ", ln)[:200]
+                        break
     return role, company, location
 
 
@@ -948,34 +1429,69 @@ def process_search(
     close_overlays(page)
     shot(page, f"search-{keywords.replace(' ','_')[:30]}-{('remote' if remote else 'hyd')}-{tpr}.png")
 
-    # Collect job cards
-    cards = page.locator(
-        "div.job-card-container, li.jobs-search-results__list-item, "
-        "div.scaffold-layout__list-item, a.job-card-list__title--link"
+    # Classic list items OR LinkedIn AI job-search cards (hashed classes / search-results)
+    list_items = page.locator(
+        "li.scaffold-layout__list-item, li.jobs-search-results__list-item, div.job-card-container"
     )
-    # Prefer list items
-    list_items = page.locator("li.scaffold-layout__list-item, li.jobs-search-results__list-item, div.job-card-container")
+    ai_cards = ai_job_card_buttons(page)
+    use_ai = False
     n = min(list_items.count(), MAX_SCAN_PER_SEARCH)
-    print(f"  cards={n}")
+    if n == 0:
+        n = min(ai_cards.count(), MAX_SCAN_PER_SEARCH)
+        use_ai = n > 0
+    print(f"  cards={n} ai={use_ai or _is_ai_job_search(page)}", flush=True)
     if n == 0:
         # wait/reload once
         time.sleep(3)
         page.reload(wait_until="domcontentloaded")
-        time.sleep(3)
-        list_items = page.locator("li.scaffold-layout__list-item, li.jobs-search-results__list-item, div.job-card-container")
+        time.sleep(4)
+        list_items = page.locator(
+            "li.scaffold-layout__list-item, li.jobs-search-results__list-item, div.job-card-container"
+        )
+        ai_cards = ai_job_card_buttons(page)
         n = min(list_items.count(), MAX_SCAN_PER_SEARCH)
-        print(f"  cards after reload={n}")
+        use_ai = False
+        if n == 0:
+            n = min(ai_cards.count(), MAX_SCAN_PER_SEARCH)
+            use_ai = n > 0
+        print(f"  cards after reload={n} ai={use_ai}", flush=True)
 
     for i in range(n):
         if len([r for r in results if r.status == "submitted"]) >= MAX_APPLY:
             break
-        item = list_items.nth(i)
+        item = ai_cards.nth(i) if use_ai else list_items.nth(i)
+        card_text = ""
         try:
-            item.scroll_into_view_if_needed(timeout=2000)
-            item.click(timeout=3000)
-            time.sleep(1.5)
-        except Exception as e:
-            results.append(JobResult(status="skipped", reason=f"card click failed: {e}"))
+            card_text = (item.inner_text(timeout=2000) or "")[:500]
+        except Exception:
+            card_text = ""
+
+        # Skip already-applied from list card text (AI UI shows Applied on the card)
+        if re.search(r"(?:^|\n)\s*Applied\s*(?:\n|$)", card_text, re.I):
+            results.append(
+                JobResult(
+                    status="skipped",
+                    role=card_text.split("\n")[0][:120],
+                    reason="already applied",
+                )
+            )
+            print(f"  SKIP applied (card) {card_text.splitlines()[0][:80]}", flush=True)
+            continue
+
+        clicked = False
+        for attempt in range(3):
+            try:
+                item.scroll_into_view_if_needed(timeout=2000)
+                item.click(timeout=3000)
+                time.sleep(1.5)
+                clicked = True
+                break
+            except Exception as e:
+                if attempt == 2:
+                    results.append(JobResult(status="skipped", reason=f"card click failed: {e}"))
+                else:
+                    time.sleep(0.6)
+        if not clicked:
             continue
 
         close_overlays(page)
@@ -987,26 +1503,22 @@ def process_search(
             seen.add(jid)
 
         role, company, loc = parse_card_meta(page)
-        # Workplace type ONLY from job top-card (never full page — profile/search chrome
-        # often contains "Hyderabad" and falsely passes the location filter).
-        workplace = ""
-        try:
-            top = page.locator(
-                ".job-details-jobs-unified-top-card__container, "
-                ".jobs-unified-top-card, .job-details-jobs-unified-top-card"
-            ).first
-            if top.count():
-                workplace = (top.inner_text(timeout=2000) or "")[:600]
-        except Exception:
-            workplace = ""
-        # Prefer explicit Remote/On-site/Hybrid pills in top card
+        # Prefer location from selected card text when detail loc is empty/noisy
+        if card_text and (not loc or len(loc) < 4):
+            for ln in card_text.splitlines():
+                ln = ln.strip()
+                if re.search(r"hyderabad|telangana|remote|hybrid|on-site|\bindia\b", ln, re.I):
+                    loc = ln[:200]
+                    break
+
+        # Workplace type ONLY from job top-card (never full page / filter chips /
+        # People-you-can-reach chrome — those false-pass Remote or false-skip Hyd).
+        workplace = top_card_workplace_text(page, card_text)
+        # Classic workplace pills (scoped) when present
         try:
             pills = page.locator(
                 ".job-details-jobs-unified-top-card__workplace-type, "
-                ".jobs-unified-top-card__workplace-type, "
-                "span.tvm__text:has-text('Remote'), "
-                "span.tvm__text:has-text('Hybrid'), "
-                "span.tvm__text:has-text('On-site')"
+                ".jobs-unified-top-card__workplace-type"
             )
             bits = []
             for pi in range(min(pills.count(), 6)):
@@ -1025,9 +1537,13 @@ def process_search(
             url=job_url,
         )
 
-        # Already applied badge
+        # Already applied badge (detail)
         try:
-            if page.get_by_text(re.compile(r"^Applied$", re.I)).count() or page.locator(".jobs-s-apply button:has-text('Applied')").count():
+            detail = workplace or detail_panel_text(page)
+            if (
+                re.search(r"(?:^|\n)\s*Applied\s*(?:\n|$)", detail or "", re.I)
+                or page.locator(".jobs-s-apply button:has-text('Applied')").count()
+            ):
                 job.status = "skipped"
                 job.reason = "already applied"
                 results.append(job)
@@ -1043,7 +1559,7 @@ def process_search(
             print(f"  SKIP location {loc[:80]}", flush=True)
             continue
 
-        # JD text
+        # JD text — prefer About the job from detail pane; never whole body
         jd = ""
         try:
             jd = page.locator(
@@ -1051,10 +1567,11 @@ def process_search(
                 ".jobs-description-content__text"
             ).first.inner_text(timeout=3000)
         except Exception:
-            try:
-                jd = page.locator("article, .jobs-details").first.inner_text(timeout=2000)[:8000]
-            except Exception:
-                jd = ""
+            detail = detail_panel_text(page)
+            if "About the job" in detail:
+                jd = detail.split("About the job", 1)[-1][:8000]
+            else:
+                jd = detail[:8000]
 
         bl = skip_reason(role, company, jd)
         if bl:
@@ -1074,7 +1591,7 @@ def process_search(
         print(f"  APPLY? {company} | {role} | {loc[:60]} | id={jid}", flush=True)
         job = easy_apply_flow(page, job)
         results.append(job)
-        print(f"  -> {job.status}: {job.reason}")
+        print(f"  -> {job.status}: {job.reason}", flush=True)
         time.sleep(1.5)
 
 
@@ -1158,11 +1675,36 @@ def main() -> None:
             page = context.new_page()
         page.bring_to_front()
 
-        # Auth check
-        page.goto("https://www.linkedin.com/feed/", wait_until="domcontentloaded", timeout=60000)
-        time.sleep(2)
-        body = page.locator("body").inner_text()[:1500]
-        if re.search(r"Sign in\n|Email or phone", body) and "Start a post" not in body:
+        # Auth check (retry once — first paint can look like a login wall)
+        signed_in = False
+        for auth_try in range(2):
+            page.goto("https://www.linkedin.com/feed/", wait_until="domcontentloaded", timeout=60000)
+            time.sleep(2 + auth_try)
+            body = page.locator("body").inner_text()[:2000]
+            has_feed = bool(
+                re.search(
+                    r"Start a post|Me\n|My Network|Notifications|linkedin\.com/in/",
+                    body,
+                    re.I,
+                )
+            ) or ("/feed" in (page.url or "") and "login" not in (page.url or "").lower())
+            login_wall = bool(re.search(r"Sign in\n|Email or phone|Welcome Back", body)) and not has_feed
+            # Cookie presence is a strong signal when feed chrome is present
+            try:
+                cookies = context.cookies(["https://www.linkedin.com"])
+                has_li_at = any(c.get("name") == "li_at" for c in cookies)
+            except Exception:
+                has_li_at = False
+            if has_feed and has_li_at and not login_wall:
+                signed_in = True
+                break
+            if has_li_at and "login" not in (page.url or "").lower() and not re.search(
+                r"Email or phone", body
+            ):
+                signed_in = True
+                break
+            time.sleep(2)
+        if not signed_in:
             results.append(JobResult(status="blocked", reason="Not signed in"))
             OUT.write_text(json.dumps([asdict(r) for r in results], indent=2))
             print("BLOCKED: not signed in")
