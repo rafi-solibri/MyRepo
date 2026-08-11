@@ -47,7 +47,12 @@ def _patch_filelock_singleton() -> None:
 
 OUT = Path(
     os.environ.get(
-        "INDEED_DAILY_REPORT", "/opt/cursor/artifacts/indeed-daily-run.json"
+        "INDEED_DAILY_REPORT",
+        str(
+            Path("/opt/cursor/artifacts/indeed-daily-run.json")
+            if Path("/opt/cursor/artifacts").is_dir()
+            else ROOT / "artifacts" / "indeed-daily-run.json"
+        ),
     )
 )
 RESUME = Path(
@@ -59,9 +64,20 @@ RESUME = Path(
 PROXY = os.environ.get("INDEED_HTTP_PROXY", "socks5://127.0.0.1:40000")
 # Hybrid UC profile (auth cookies, CF cookies stripped) — see prepare_uc_profile.py
 PROFILE = os.environ.get("INDEED_UC_PROFILE", "/tmp/cursor/indeed-uc-hybrid")
-SEED_PROFILE = os.environ.get(
-    "INDEED_SEED_PROFILE", "/home/ubuntu/chrome-indeed-profile"
-)
+
+
+def _default_seed_profile() -> str:
+    env = os.environ.get("INDEED_SEED_PROFILE")
+    if env:
+        return env
+    win = Path.home() / ".cursor" / "chrome-cdp-profiles" / "indeed"
+    linux = Path("/home/ubuntu/chrome-indeed-profile")
+    if win.exists():
+        return str(win)
+    return str(linux)
+
+
+SEED_PROFILE = _default_seed_profile()
 MAX_APPLIES = int(os.environ.get("INDEED_MAX_APPLIES", "8"))
 MAX_SEEN = int(os.environ.get("INDEED_MAX_SEEN", "40"))
 
@@ -93,12 +109,28 @@ LOC_HARD_SKIP = re.compile(
 
 
 def ensure_warp() -> str:
+    if os.environ.get("INDEED_SKIP_WARP") == "1":
+        # Home / residential: apply on the machine IP (no WARP SOCKS).
+        proxy = os.environ.get("INDEED_HTTP_PROXY", "")
+        if proxy and "127.0.0.1:40000" in proxy:
+            proxy = ""
+        os.environ["INDEED_HTTP_PROXY"] = proxy
+        print(f"  warp_skipped=1 proxy={proxy or 'direct'}", flush=True)
+        return proxy
+    existing = os.environ.get("INDEED_HTTP_PROXY", "")
+    if existing and "127.0.0.1:40000" not in existing and "localhost:40000" not in existing:
+        return existing
     script = ROOT / "scripts" / "ensure-indeed-warp.sh"
     res = subprocess.run(
         ["bash", str(script)], capture_output=True, text=True, timeout=120
     )
     m = re.search(r"export INDEED_HTTP_PROXY=(.+)", res.stdout or "")
     if res.returncode != 0 or not m:
+        # Windows home fallback: continue without proxy rather than abort.
+        if os.name == "nt" or os.environ.get("OS") == "Windows_NT" or os.environ.get("MSYSTEM"):
+            print("  warp_unavailable_home_fallback=1", flush=True)
+            os.environ["INDEED_HTTP_PROXY"] = ""
+            return ""
         raise SystemExit(f"WARP not ready: {res.stderr or res.stdout}")
     proxy = m.group(1).strip().strip("'\"")
     os.environ["INDEED_HTTP_PROXY"] = proxy
@@ -109,7 +141,7 @@ def prepare_profile() -> dict:
     script = ROOT / "tools" / "indeed" / "prepare_uc_profile.py"
     res = subprocess.run(
         [
-            "python3",
+            sys.executable,
             str(script),
             "--src",
             SEED_PROFILE,
@@ -1774,9 +1806,9 @@ def main() -> int:
     prep = prepare_profile()
     report = {
         "portal": "indeed",
-        "source": "cloud-warp-uc",
+        "source": "home-local" if os.environ.get("INDEED_SKIP_WARP") == "1" else "cloud-warp-uc",
         "startedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "proxy": proxy,
+        "proxy": proxy or "direct",
         "resume": str(RESUME),
         "profilePrep": prep,
         "counts": {
@@ -1796,14 +1828,17 @@ def main() -> int:
         "ok": False,
     }
 
-    with _stdout_to_stderr():
-      with SB(
+    sb_kwargs = dict(
         uc=True,
         headed=True,
-        proxy=proxy if proxy.startswith("socks5") else proxy,
         user_data_dir=PROFILE,
         chromium_arg="--no-sandbox,--disable-dev-shm-usage",
-      ) as sb:
+    )
+    if proxy:
+        sb_kwargs["proxy"] = proxy if proxy.startswith("socks5") else proxy
+
+    with _stdout_to_stderr():
+      with SB(**sb_kwargs) as sb:
         try:
             sb.set_default_timeout(4)
         except Exception:
@@ -2058,6 +2093,9 @@ def main() -> int:
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(report, indent=2))
     # Normalize for notification job
+    source = report.get("source") or (
+        "home-local" if os.environ.get("INDEED_SKIP_WARP") == "1" else "cloud-warp-uc"
+    )
     subprocess.run(
         [
             "node",
@@ -2066,7 +2104,7 @@ def main() -> int:
             "--in",
             str(OUT),
             "--source",
-            "cloud-warp-uc",
+            source,
             "--out",
             str(OUT),
         ],

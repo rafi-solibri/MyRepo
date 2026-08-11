@@ -12,6 +12,7 @@ const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 const { findResume } = require("./resume");
+const { resolvePython } = require("../chrome_session");
 
 const OUT =
   process.env.INDEED_REPORT ||
@@ -19,6 +20,12 @@ const OUT =
 
 function run(cmd, args, timeoutMs = 180000) {
   return spawnSync(cmd, args, { encoding: "utf8", timeout: timeoutMs });
+}
+
+function runPython(args, timeoutMs = 180000) {
+  const py = resolvePython();
+  if (py === "py") return run("py", ["-3", ...args], timeoutMs);
+  return run(py, args, timeoutMs);
 }
 
 /** UC runner prints progress logs then a final JSON object on stdout. */
@@ -87,10 +94,14 @@ function main() {
   }
 
   // Cloud path: SeleniumBase UC Easy Apply through WARP SOCKS.
+  // Home residential: INDEED_SKIP_WARP=1 → UC without proxy.
   if (process.env.INDEED_SKIP_UC_APPLY !== "1") {
     const uc = path.join(__dirname, "uc_daily_apply.py");
     // Full inventory can take >15m (search + SmartApply questions per job).
-    const apply = run("python3", [uc], Number(process.env.INDEED_UC_TIMEOUT_MS || 1800000));
+    const apply = runPython(
+      [uc],
+      Number(process.env.INDEED_UC_TIMEOUT_MS || 1800000),
+    );
     report.ucApplyExit = apply.status;
     const parsed = parseJsonTail(apply.stdout || "");
     if (parsed) {

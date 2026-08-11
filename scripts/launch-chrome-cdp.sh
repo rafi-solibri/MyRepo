@@ -70,13 +70,23 @@ fi
 
 proxy_args=()
 # Indeed: WARP SOCKS (auto) or residential INDEED_HTTP_PROXY bypasses datacenter Cloudflare.
+# Home / residential Windows: skip WARP (INDEED_SKIP_WARP=1) — home IP is the bypass.
 if [[ "$portal" == "indeed" ]]; then
-  if [[ -z "${INDEED_HTTP_PROXY:-}" || "${INDEED_HTTP_PROXY}" == *"127.0.0.1:40000"* ]]; then
+  if [[ "${INDEED_SKIP_WARP:-}" == "1" ]]; then
+    echo "NOTE: INDEED_SKIP_WARP=1 — launching Indeed Chrome without WARP (home/residential)."
+  elif [[ -z "${INDEED_HTTP_PROXY:-}" || "${INDEED_HTTP_PROXY}" == *"127.0.0.1:40000"* ]]; then
     # shellcheck disable=SC1091
-    eval "$(bash "$ROOT/scripts/ensure-indeed-warp.sh")" || {
-      echo "ERROR: Could not start WARP SOCKS for Indeed CDP" >&2
-      exit 1
-    }
+    if eval "$(bash "$ROOT/scripts/ensure-indeed-warp.sh")"; then
+      :
+    else
+      if [[ "$is_win" -eq 1 ]]; then
+        echo "WARNING: WARP SOCKS unavailable on Windows home — continuing without proxy (residential IP)." >&2
+        unset INDEED_HTTP_PROXY || true
+      else
+        echo "ERROR: Could not start WARP SOCKS for Indeed CDP" >&2
+        exit 1
+      fi
+    fi
   fi
   if [[ -n "${INDEED_HTTP_PROXY:-}" ]]; then
     proxy_args=(--proxy-server="${INDEED_HTTP_PROXY}")
@@ -102,6 +112,7 @@ nohup "$chrome" \
   --disable-extensions \
   --remote-debugging-address=127.0.0.1 \
   --remote-debugging-port=9222 \
+  --remote-allow-origins='*' \
   --user-data-dir="$profile" \
   about:blank >"$log" 2>&1 &
 

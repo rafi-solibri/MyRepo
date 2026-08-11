@@ -28,6 +28,34 @@ const PROFILE =
   `/tmp/cursor/indeed-cf-probe-profile-${PORT}`;
 
 function findChrome() {
+  const pathJoin = (...parts) => path.join(...parts);
+  const winPaths = [
+    process.env.CHROME_BIN,
+    process.env.ProgramFiles
+      ? pathJoin(process.env.ProgramFiles, "Google", "Chrome", "Application", "chrome.exe")
+      : null,
+    process.env["ProgramFiles(x86)"]
+      ? pathJoin(
+          process.env["ProgramFiles(x86)"],
+          "Google",
+          "Chrome",
+          "Application",
+          "chrome.exe",
+        )
+      : null,
+    pathJoin("C:", "Program Files", "Google", "Chrome", "Application", "chrome.exe"),
+    pathJoin(
+      "C:",
+      "Program Files (x86)",
+      "Google",
+      "Chrome",
+      "Application",
+      "chrome.exe",
+    ),
+  ].filter(Boolean);
+  for (const p of winPaths) {
+    if (fs.existsSync(p)) return p;
+  }
   const candidates = [
     process.env.CHROME_BIN,
     "google-chrome",
@@ -43,6 +71,22 @@ function findChrome() {
     if (p) return p;
   }
   return null;
+}
+
+function killProbeChrome(port) {
+  if (process.platform === "win32" || process.env.OS === "Windows_NT") {
+    spawnSync(
+      "powershell.exe",
+      [
+        "-NoProfile",
+        "-Command",
+        `Get-CimInstance Win32_Process -Filter "name='chrome.exe'" | Where-Object { $_.CommandLine -match 'remote-debugging-port=${port}' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`,
+      ],
+      { stdio: "ignore" },
+    );
+    return;
+  }
+  spawnSync("pkill", ["-f", `remote-debugging-port=${port}`], { stdio: "ignore" });
 }
 
 function waitCdp(port, ms = 20000) {
@@ -87,16 +131,26 @@ function proxyServerArg(proxyUrl) {
   }
 }
 
+function pythonSpawnArgs(args) {
+  const { resolvePython } = require("../chrome_session");
+  const py = resolvePython();
+  if (py === "py") return { cmd: "py", args: ["-3", ...args] };
+  return { cmd: py, args };
+}
+
 async function cdpEval(wsUrl, expression) {
   // Prefer websocket via python helper to avoid extra Node deps.
-  spawnSync(
-    "python3",
-    ["-c", "import websocket"],
-    { encoding: "utf8" },
-  ).status !== 0 &&
-    spawnSync("python3", ["-m", "pip", "install", "-q", "websocket-client"], {
-      encoding: "utf8",
-    });
+  const check = pythonSpawnArgs(["-c", "import websocket"]);
+  if (spawnSync(check.cmd, check.args, { encoding: "utf8" }).status !== 0) {
+    const pip = pythonSpawnArgs([
+      "-m",
+      "pip",
+      "install",
+      "-q",
+      "websocket-client",
+    ]);
+    spawnSync(pip.cmd, pip.args, { encoding: "utf8" });
+  }
 
   const py = `
 import json, sys, time, websocket
@@ -146,11 +200,11 @@ ws.close()
 `;
   const expr =
     'JSON.stringify({title:document.title,url:location.href,text:(document.body&&document.body.innerText||"").slice(0,400)})';
-  const res = spawnSync(
-    "python3",
-    ["-c", py, wsUrl, URL, expr],
-    { encoding: "utf8", timeout: 90000 },
-  );
+  const run = pythonSpawnArgs(["-c", py, wsUrl, URL, expr]);
+  const res = spawnSync(run.cmd, run.args, {
+    encoding: "utf8",
+    timeout: 90000,
+  });
   if (res.status !== 0) {
     return {
       blocked: true,
@@ -175,7 +229,7 @@ async function main() {
   fs.mkdirSync("/tmp/cursor", { recursive: true });
 
   // Kill any prior probe chrome on this port + clear stale singleton locks.
-  spawnSync("pkill", ["-f", `remote-debugging-port=${PORT}`], { stdio: "ignore" });
+  killProbeChrome(PORT);
   try {
     for (const name of ["SingletonLock", "SingletonCookie", "SingletonSocket"]) {
       fs.rmSync(path.join(PROFILE, name), { force: true });
@@ -228,7 +282,7 @@ async function main() {
     );
     process.exit(1);
   } finally {
-    spawnSync("pkill", ["-f", `remote-debugging-port=${PORT}`], { stdio: "ignore" });
+    killProbeChrome(PORT);
   }
 }
 

@@ -6,6 +6,15 @@ See [AUTO_FIX.md](AUTO_FIX.md). Code-fixable blockers discovered during any dail
 automation must be patched in durable helpers, pushed on a feature branch, and
 opened as a draft PR — not left as report-only notes.
 
+## Fixed for 2026-08-11 Indeed Windows home runner
+
+| Issue | Fix |
+| --- | --- |
+| Home Windows `chrome_probe.js` → `chrome_not_found` (linux-only `command -v`) | Resolve `chrome.exe` under Program Files; Windows probe kill via PowerShell; use `resolvePython()` (not Store stub) |
+| Indeed CDP handshake 403 without `--remote-allow-origins=*` | `launch-chrome-cdp.sh` + probe add `--remote-allow-origins=*` |
+| Home Indeed hard-required WARP SOCKS (unavailable on Windows) → exit 2 / abort | `INDEED_SKIP_WARP=1` on Windows home (`portal-home-daily.sh`); preflight/UC/launch continue direct on residential IP; seed profile from `~/.cursor/chrome-cdp-profiles/indeed` |
+| `daily_apply.js` / UC helpers called Store-stub `python3` | Prefer `C:\Python314\python.exe` / `resolvePython()` / `sys.executable` |
+
 ## Fixed for 2026-08-11 Foundit daily apply
 
 | Issue | Fix |
