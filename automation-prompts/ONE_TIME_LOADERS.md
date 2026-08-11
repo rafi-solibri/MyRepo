@@ -5,7 +5,7 @@ Paste each block below into the matching automation **once**. After that, merge 
 
 **Critical for every portal run:** agents must run `bash scripts/preflight-portal-run.sh <portal>` so Desktop Chrome logins are copied into CDP profiles without clobbering existing authenticated profiles. Without authenticated Default Chrome cookies **inside the saved snapshot**, cron hits login walls. Owner check: `bash scripts/verify-portal-logins.sh --strict`.
 
-**Auto-fix & push:** every run must follow [AUTO_FIX.md](AUTO_FIX.md) — code-fixable blockers get durable helper patches, a feature-branch push, and a draft PR (not silent report-only).
+**Auto-fix & push & merge:** every run must follow [AUTO_FIX.md](AUTO_FIX.md) — code-fixable blockers get durable helper patches, a feature-branch push, a **ready** PR, and `bash scripts/auto-merge-fix-pr.sh` (not silent report-only / not draft-only).
 
 ## LinkedIn Daily 9 AM
 https://cursor.com/automations/beb6ef8e-908f-11f1-ba66-0e7d0216e441

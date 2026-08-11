@@ -100,11 +100,21 @@ fi
 PROMPT="$(cat <<EOF
 You are the ${PORTAL} Daily apply runner on a HOME / residential machine.
 Read and OBEY the full fenced instructions in ${PROMPT_MD}.
+Also OBEY automation-prompts/AUTO_FIX.md for every code-fixable blocker.
 1) bash scripts/preflight-portal-run.sh ${PORTAL}
 ${EXTRA_STEPS}
 2) Execute the daily ${PORTAL} apply job for Mohammed Abdul Rafi Ahmed.
 Use resumes/Rafi_Resume.docx. Hyd/Telangana OR Remote only. Expected CTC 65 LPA.
 Report submitted/skipped/blocked/rejected. Do not invent applies.
+
+AUTO-FIX / PUSH / MERGE (MANDATORY when code-fixable):
+- Patch durable helpers under tools/ or scripts/ or automation-prompts/
+- Append automation-prompts/ISSUES_AND_FIXES.md
+- Feature branch (never commit straight to main), git push
+- Open a READY (non-draft) PR to main, then run: bash scripts/auto-merge-fix-pr.sh
+- If merge conflicts: rebase onto origin/main, push, re-run auto-merge-fix-pr.sh
+- After merge: git fetch origin main && git checkout main && git pull --ff-only
+- Owner-only blockers (login/CAPTCHA/OTP): report + headed login helper if present; still ship any code helpers that make the next login smoother
 
 HARD — write a JSON summary the daily mail can ingest:
 - Prefer writable path: ${REPORT_CLOUD}
