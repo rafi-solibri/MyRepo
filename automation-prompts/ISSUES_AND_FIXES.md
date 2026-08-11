@@ -198,6 +198,7 @@ as a **ready** PR (not draft), and merged with `bash scripts/auto-merge-fix-pr.s
 | --- | --- |
 | `tools/instahyre/resume.js` only searched `/workspace` + `/home/ubuntu` | Resolve `resumes/Rafi_Resume.docx` from repo/cwd and reuse `chrome_session` `PROFILES.instahyre` |
 | Cookie-name `sessionid` present but live page redirects to `/login/` (`sessionLen=0`) | Same Chrome **v20 ABE** as Naukri — owner headed login via `scripts/home-headed-login.sh instahyre` |
+| Home daily stopped with `destHasAuth: false` / no live probe parity with Cutshort | Added `tools/instahyre/wait_for_cdp_login.js` + wired into `scripts/home-headed-login.sh` |
 
 ## Still requires your action (cannot fix from code alone)
 
