@@ -101,6 +101,12 @@ opened as a draft PR — not left as report-only notes.
 | --- | --- |
 | Cloud cron stopped with Cloudflare exit 5 even though WARP+UC had already cleared (`Welcome, MOHAMMED`) | SeleniumBase printed `uc_driver` download noise on **stdout** before JSON; `preflight.js` `JSON.parse` failed → false `ucBypass.ok=false`. Now: lenient JSON extract + read `indeed-cf-bypass.json`; `cf_bypass_uc.py` / `uc_daily_apply.py` redirect SB chatter to stderr and emit JSON on `sys.__stdout__` |
 
+## Fixed for 2026-08-11 Indeed Turnstile flaky exit 5
+
+| Issue | Fix |
+| --- | --- |
+| Cloud cron exit 5 after yesterday’s green run: Turnstile widget visible (`Verify you are human`) but clicks did not clear → hard stop | Root cause: **filelock 3.32** deadlocks nested SeleniumBase `uc_gui_*` locks — old patch set `is_singleton` in `__init__` too late (metaclass decides earlier). New `tools/indeed/filelock_patch.py` wraps `FileLockMeta.__call__`. Also: wait for Turnstile, multi-strategy CF clicks + manual XY fallback, window focus, WARP IP **rotate** between rounds, `preflight.js` UC retries. |
+
 ## Fixed for 2026-08-10 Hotel Price Tracker
 
 | Issue | Fix |
@@ -121,7 +127,7 @@ opened as a draft PR — not left as report-only notes.
 | Verified notification sender missing | You | Set secret `RESEND_FROM_EMAIL` to a verified sender; fallback uses `Job Status <onboarding@resend.dev>` |
 | General Daily duplicate | You | Keep disabled: https://cursor.com/automations/30e2c023-9067-11f1-ba66-0e7d0216e441 |
 | Indeed home results → daily mail | You | Keep home cron on; ensure home PC can `git push origin automation-results`; re-paste Notification loader from `ONE_TIME_LOADERS.md` once |
-| Re-paste Agent instructions | You | After merge, paste each `automation-prompts/0N-*.md` fenced block (Automations API is read-only) |
+| Re-paste Agent instructions | You | Automations API is read-only. For Indeed, paste the short loader from `ONE_TIME_LOADERS.md` (or the full `06-indeed.md` fence) into https://cursor.com/automations/91b09fd7-9093-11f1-ba66-0e7d0216e441 and Save. Morning 2026-08-11 cron still used an older short prompt. |
 
 ## After merging this PR
 

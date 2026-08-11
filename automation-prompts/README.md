@@ -37,8 +37,10 @@ available in the saved environment snapshot.
 `automation-prompts/`, commit, push a feature branch, open a draft PR into `main`,
 and note the fix in [ISSUES_AND_FIXES.md](ISSUES_AND_FIXES.md).
 
-Not auto-fixable from code alone: portal logins/snapshot, Indeed Cloudflare on
-public cloud, missing secrets, CAPTCHA/OTP. Those stay owner actions.
+Not auto-fixable from code alone: portal logins/snapshot, missing secrets,
+CAPTCHA/OTP, and Indeed Cloudflare only after WARP+UC multi-strategy + IP rotate
+still exits 5. Those stay owner actions. Intermittent Turnstile/filelock issues
+are code-fixable — see [AUTO_FIX.md](AUTO_FIX.md) / [INDEED_CLOUDFLARE.md](INDEED_CLOUDFLARE.md).
 
 ## Naukri daily profile resume refresh
 

@@ -8,6 +8,7 @@
 #   bash scripts/start-warp-proxy.sh          # start + connect
 #   bash scripts/start-warp-proxy.sh status   # print status / port check
 #   bash scripts/start-warp-proxy.sh stop     # disconnect (leaves warp-svc up)
+#   bash scripts/start-warp-proxy.sh rotate   # new exit IP (disconnect/reconnect; re-register if sticky)
 set -euo pipefail
 
 PORT="${WARP_PROXY_PORT:-40000}"
@@ -94,6 +95,69 @@ print_status() {
   fi
 }
 
+exit_ip() {
+  if [[ "$(port_open)" != "open" ]]; then
+    echo ""
+    return 0
+  fi
+  curl -sS --max-time 20 -x "$SOCKS" https://www.cloudflare.com/cdn-cgi/trace 2>/dev/null \
+    | awk -F= '/^ip=/{print $2; exit}'
+}
+
+rotate_exit() {
+  # Get a fresh WARP egress IP. Disconnect/reconnect is usually enough; if the
+  # IP sticks (Indeed burned that exit), delete registration and create a new one.
+  ensure_warp_installed
+  ensure_warp_svc
+  local before after
+  before="$(exit_ip || true)"
+  echo "rotate: before_ip=${before:-unknown}"
+  warp-cli --accept-tos disconnect >/dev/null 2>&1 || true
+  sleep 2
+  warp-cli --accept-tos mode proxy
+  warp-cli --accept-tos proxy port "$PORT"
+  warp-cli --accept-tos connect || true
+  for _ in $(seq 1 40); do
+    if [[ "$(port_open)" == "open" ]]; then
+      break
+    fi
+    sleep 0.25
+  done
+  sleep 2
+  after="$(exit_ip || true)"
+  if [[ -n "$before" && -n "$after" && "$before" == "$after" ]]; then
+    echo "rotate: IP sticky (${after}); re-registering WARP device..."
+    warp-cli --accept-tos disconnect >/dev/null 2>&1 || true
+    sleep 1
+    # `registration delete` may prompt; accept-tos + yes where supported.
+    warp-cli --accept-tos registration delete </dev/null >/dev/null 2>&1 || true
+    sleep 1
+    warp-cli --accept-tos registration new || true
+    warp-cli --accept-tos mode proxy
+    warp-cli --accept-tos proxy port "$PORT"
+    warp-cli --accept-tos connect || true
+    for _ in $(seq 1 40); do
+      if [[ "$(port_open)" == "open" ]]; then
+        break
+      fi
+      sleep 0.25
+    done
+    sleep 2
+    after="$(exit_ip || true)"
+  fi
+  if [[ "$(port_open)" != "open" ]]; then
+    echo "ERROR: SOCKS port closed after rotate" >&2
+    configure_and_connect
+  fi
+  echo "rotate: after_ip=${after:-unknown}"
+  if [[ -n "$before" && -n "$after" && "$before" != "$after" ]]; then
+    echo "rotate: ip_changed=1"
+  else
+    echo "rotate: ip_changed=0"
+  fi
+  print_status
+}
+
 case "$cmd" in
   status)
     print_status
@@ -101,6 +165,10 @@ case "$cmd" in
   stop)
     have_cli && warp-cli --accept-tos disconnect || true
     print_status
+    ;;
+  rotate)
+    rotate_exit
+    echo "Ready: export INDEED_HTTP_PROXY=${SOCKS}"
     ;;
   start)
     ensure_warp_installed
@@ -110,7 +178,7 @@ case "$cmd" in
     echo "Ready: export INDEED_HTTP_PROXY=${SOCKS}"
     ;;
   *)
-    echo "Usage: $0 [start|status|stop]" >&2
+    echo "Usage: $0 [start|status|stop|rotate]" >&2
     exit 2
     ;;
 esac
