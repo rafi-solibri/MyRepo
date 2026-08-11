@@ -33,7 +33,7 @@ as a **ready** PR (not draft), and merged with `bash scripts/auto-merge-fix-pr.s
 | Easy Apply CTA is `<a aria-label="Easy Apply to this job">` (hashed classes); helper only matched `<button>` → false `no Easy Apply button` | `linkedin_easy_apply.py` matches anchor CTAs, opens `/jobs/view/{id}`, force/mouse click |
 | Account toast “You reached today’s Easy Apply limit” looked like click no-op | Detect limit toast → `easy_apply_daily_limit` blocked + stop batch; dismiss Got it |
 | External runner crashed when `apply-report.json` missing | `linkedin_external_apply.py` continues with `PRIORITY_IDS` only |
-| Windows Python cannot see Git-Bash `/opt/cursor/artifacts` (`C:\opt\…` ≠ Git `…\Programs\Git\opt\…`) | Shared `_artifacts_dir()` prefers Git opt mount then repo `artifacts/`; goto retry + per-job catch |
+| Windows Python `/opt/cursor` is `C:\opt\…` while Git Bash uses `Programs\Git\opt\…` (split artifact trees) | LinkedIn helpers prefer repo `artifacts/` on Windows; goto retry + per-job catch |
 | External Apply CTA also hashed `<a aria-label="Apply on company website">` | Expanded external button selectors |
 
 ## Fixed for 2026-08-11 Notification home fetch (Windows)
