@@ -24,6 +24,7 @@ done
 PROMPT="$(cat <<'EOF'
 You are the Notification Job runner on a HOME / residential machine.
 Read and OBEY the full fenced instructions in automation-prompts/07-notification.md.
+Also OBEY automation-prompts/AUTO_FIX.md — if the mail pipeline has a code-fixable bug, fix it, push a ready PR, and run bash scripts/auto-merge-fix-pr.sh (do not leave draft-only).
 
 IMPORTANT — all apply portals now run HOME-LOCAL (not cloud). For EACH portal below,
 run and parse the JSON before composing the email:
@@ -40,6 +41,7 @@ Also still support the legacy Indeed helper if needed:
 
 For each portal include: applied, external, rejected, blocked, skipped, blockerSummary,
 and note source home-local. Do not invent applies. Prefer same-day JSON.
+List any fix PRs merged today via AUTO_FIX.
 
 Email delivery:
 - Prefer Resend MCP → rafi.success@gmail.com

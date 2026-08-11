@@ -34,8 +34,9 @@ available in the saved environment snapshot. `hitechcity` reuses the LinkedIn CD
 
 **Yes — for code-fixable blockers.** Every daily automation must follow
 [AUTO_FIX.md](AUTO_FIX.md): patch durable helpers under `tools/` / `scripts/` /
-`automation-prompts/`, commit, push a feature branch, open a draft PR into `main`,
-and note the fix in [ISSUES_AND_FIXES.md](ISSUES_AND_FIXES.md).
+`automation-prompts/`, commit, push a feature branch, open a **ready** PR into `main`,
+and merge via `bash scripts/auto-merge-fix-pr.sh`, and note the fix in
+[ISSUES_AND_FIXES.md](ISSUES_AND_FIXES.md).
 
 Not auto-fixable from code alone: portal logins/snapshot, missing secrets,
 CAPTCHA/OTP, and Indeed Cloudflare only after WARP+UC multi-strategy + IP rotate
