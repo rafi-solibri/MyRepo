@@ -400,7 +400,11 @@ def process_external(page: Page, job: dict) -> ExtResult:
 
 
 def main() -> None:
-    data = json.loads(REPORT_IN.read_text())
+    if REPORT_IN.is_file():
+        data = json.loads(REPORT_IN.read_text())
+    else:
+        print(f"NOTE: missing {REPORT_IN} — using PRIORITY_IDS only", flush=True)
+        data = {"external_candidates": []}
     by_id = {c["job_id"]: c for c in external_candidates_from_report(data) if c.get("job_id")}
     # Priority first (even if missing from today's Easy Apply scan), then remaining externals
     ordered: list[str] = []
