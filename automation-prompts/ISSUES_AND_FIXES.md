@@ -1,10 +1,11 @@
 # Issues from last cron + fixes
 
-## Policy: auto-fix & push every daily run
+## Policy: auto-fix, push, and merge every daily run
 
 See [AUTO_FIX.md](AUTO_FIX.md). Code-fixable blockers discovered during any daily
-automation must be patched in durable helpers, pushed on a feature branch, and
-opened as a draft PR — not left as report-only notes.
+automation must be patched in durable helpers, pushed on a feature branch, opened
+as a **ready** PR (not draft), and merged with `bash scripts/auto-merge-fix-pr.sh`
+— not left as report-only notes.
 
 ## Fixed for 2026-08-11 Notification home fetch (Windows)
 

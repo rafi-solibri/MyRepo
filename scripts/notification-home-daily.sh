@@ -49,6 +49,11 @@ Email delivery:
 - Subject: Job status — YYYY-MM-DD
 - If Resend MCP unavailable but RESEND_API_KEY is set, use scripts/send-job-status-email.mjs
 - Always write the full report to automation memory / artifacts/job-status-YYYY-MM-DD.md
+
+AUTO-FIX / PUSH / MERGE (MANDATORY when code-fixable):
+- Follow automation-prompts/AUTO_FIX.md
+- Feature branch + ready PR + bash scripts/auto-merge-fix-pr.sh
+- Also run bash scripts/merge-open-fix-prs.sh to clear leftover open fix PRs
 EOF
 )"
 
@@ -90,6 +95,12 @@ set +e
 "$AGENT_BIN" -p --force --trust --workspace "$ROOT" "$PROMPT"
 agent_rc=$?
 set -e
+
+bash "$ROOT/scripts/merge-open-fix-prs.sh" || true
+cd "$ROOT"
+git fetch origin main >/dev/null 2>&1 || true
+git checkout -f main >/dev/null 2>&1 || true
+git pull --ff-only origin main >/dev/null 2>&1 || true
 
 echo "=== done; log=$LOG agent_rc=$agent_rc ==="
 exit "$agent_rc"

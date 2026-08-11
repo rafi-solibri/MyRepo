@@ -210,6 +210,13 @@ set +e
 agent_rc=$?
 set -e
 
+# Safety net: merge leftover open fix PRs, then return to main for publish.
+bash "$ROOT/scripts/merge-open-fix-prs.sh" || true
+cd "$ROOT"
+git fetch origin main >/dev/null 2>&1 || true
+git checkout -f main >/dev/null 2>&1 || true
+git pull --ff-only origin main >/dev/null 2>&1 || true
+
 if [[ ! -f "$REPORT_CLOUD" && ! -f "$REPORT_LOCAL" && ! -f "$REPORT_HOME" ]]; then
   echo "WARNING: agent did not write ${PORTAL}-daily-run.json — recording empty/blocked stub"
   write_empty "agent_finished_without_report_exit_${agent_rc}" "$REPORT_LOCAL" || true
