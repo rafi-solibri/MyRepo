@@ -10,6 +10,7 @@ opened as a draft PR — not left as report-only notes.
 
 | Issue | Fix |
 | --- | --- |
+| Portal preflight could fail after a crashed runner left CDP Chrome holding a profile (`cp ... Default/WebStorage: File exists`) | `scripts/sync-chrome-sessions.sh` now stops stale `remote-debugging-port=9222` Chrome before syncing and uses a safer merge-copy fallback when `rsync` is unavailable |
 | LinkedIn external helper crashed when Easy Apply wrote legacy list-shaped `apply-report.json` | `tools/linkedin/linkedin_external_apply.py` now normalizes dict and list report shapes before building external candidates, preserving priority-ID fallback |
 | `tools/foundit/daily_apply.js` was login-only scaffold (0 Raven/Falcon applies) | Full runner: Raven public search → `classifyJob` → `userJobInfo`/`applicationStatus` eligibility → Falcon ****** → LinkedIn/ATS handoff; writes `/opt/cursor/artifacts/foundit-apply-report.json` |
 | JD marketing "remote-first" overrode explicit Noida/Bangalore cities | `locationsFrom` only reads Hyd/remote from description when card locations are empty or country-only; test covers Noida false-pass |
