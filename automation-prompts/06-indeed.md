@@ -2,16 +2,15 @@
 
 Automation: https://cursor.com/automations/91b09fd7-9093-11f1-ba66-0e7d0216e441
 
-Copy everything inside the block below:
+Prefer the short loader in [ONE_TIME_LOADERS.md](ONE_TIME_LOADERS.md) (reads this file each run).  
+If you paste the full block instead, copy everything inside the fence below and Save.
 
 ```text
-FIRST: run `node tools/indeed/preflight.js` (HTTP + Chrome probe; honors `INDEED_HTTP_PROXY`). If it exits 5, stop and report that Indeed needs a private worker / residential IP — do not invent applies.
+FIRST: run `node tools/indeed/preflight.js` (WARP SOCKS + Chrome probe + UC Turnstile clear; honors `INDEED_HTTP_PROXY`). Preflight auto-applies `tools/indeed/filelock_patch.py`, multi-strategy Turnstile clicks, and WARP IP rotate. If it still exits 5, stop and report — do not invent applies.
+Prefer: `node tools/indeed/daily_apply.js` (wraps preflight + `uc_daily_apply.py`). On home Wi‑Fi use `bash scripts/indeed-home-daily.sh`.
 Then run `bash scripts/preflight-portal-run.sh indeed`. Verify `node tools/indeed/resume.js`.
-Prefer: `node tools/indeed/daily_apply.js` (wraps preflight). On home Wi‑Fi use `bash scripts/indeed-home-daily.sh`.
-Then run `bash scripts/launch-chrome-cdp.sh indeed` if using browser/CDP.
+Then run `bash scripts/launch-chrome-cdp.sh indeed` only if using plain Chrome CDP (Easy Apply on cloud should use UC, not CDP).
 Chrome CDP profile: /home/ubuntu/chrome-indeed-profile (synced from Desktop Default).
-
-**Cloud Indeed Daily automation should stay OFF** (datacenter Cloudflare). Prefer home cron / My Machines private worker.
 
 Daily Indeed (in.indeed.com) apply for Mohammed Abdul Rafi Ahmed.
 
@@ -24,11 +23,12 @@ Current 52 LPA | Expected 65 LPA | Immediate | +91 8790251698 | rafi.success@gma
 
 ## Scope / blockers
 - Primary https://in.indeed.com — logged-in session required.
-- If Cloudflare "Additional Verification Required" / 403 / Request Blocked on datacenter IP: stop and report. Do not invent applies.
-  Fix options (see automation-prompts/INDEED_CLOUDFLARE.md):
-  1) Run on home Wi‑Fi / private residential worker, OR
-  2) Set env secret `INDEED_HTTP_PROXY` then `bash scripts/launch-chrome-cdp.sh indeed`.
+- Cloudflare "Additional Verification Required" / 403 / Request Blocked on cloud: preflight must run WARP SOCKS + SeleniumBase UC Turnstile clear (filelock singleton + retry/handle/blind + WARP rotate). Only stop/report after that exits 5. Do not invent applies.
+  Remaining fallbacks (see automation-prompts/INDEED_CLOUDFLARE.md):
+  1) Home Wi‑Fi / private residential worker (`scripts/indeed-home-daily.sh`), OR
+  2) Env secret `INDEED_HTTP_PROXY` (true residential) then re-run preflight / daily_apply.
 - If login missing but page loads: stop and report Indeed login required — Desktop Chrome Default login + sync-chrome-sessions.sh + Save Snapshot.
+- Code-fixable CF/preflight bugs (false exit 5, filelock deadlock, UC helper regressions): fix under tools/indeed or scripts/, append ISSUES_AND_FIXES.md, commit + push + draft PR (AUTO_FIX.md).
 
 ## Apply bias (CRITICAL)
 - Default to APPLY for Hyd/remote Architect / Tech Lead / EM / Principal / Staff / Senior .NET/cloud.
@@ -36,7 +36,7 @@ Current 52 LPA | Expected 65 LPA | Immediate | +91 8790251698 | rafi.success@gma
 - Keep going while inventory remains.
 
 ## Apply paths
-- Prefer Indeed Easy Apply through confirmation.
+- Prefer Indeed Easy Apply through confirmation via `python3 tools/indeed/uc_daily_apply.py` (cloud WARP+UC path).
 - "Apply on company site" / external ATS: FOLLOW and COMPLETE with Rafi_Resume.docx. Do not skip.
 - One job at a time; ~3–4 min CAPTCHA cap; continue.
 
@@ -57,5 +57,6 @@ with counts: applied, external, rejected, blocked, skipped, seen — then
 so the 11 AM Notification Job can include Indeed in the daily mail.
 
 ## Auto-fix & push (MANDATORY)
-If you hit a code-fixable blocker on a residential/home run (preflight false positive, daily_run_report, publish/fetch scripts, Easy Apply helper), fix durable helpers under tools/indeed or scripts/, append automation-prompts/ISSUES_AND_FIXES.md, commit + push a feature branch, open a draft PR to main. Follow automation-prompts/AUTO_FIX.md. Do not invent applies. Cloudflare on public-cloud IP is NOT code-fixable — report home worker / INDEED_HTTP_PROXY only.
+If you hit a code-fixable blocker (preflight false exit 5, filelock/UC Turnstile helper, daily_run_report, publish/fetch scripts, Easy Apply helper), fix durable helpers under tools/indeed or scripts/, append automation-prompts/ISSUES_AND_FIXES.md, commit + push a feature branch, open a draft PR to main. Follow automation-prompts/AUTO_FIX.md. Do not invent applies.
+Hard residual after WARP+UC multi-strategy + IP rotate still exits 5: report home worker / residential INDEED_HTTP_PROXY (not invent applies).
 ```

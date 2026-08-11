@@ -164,7 +164,27 @@ function chromeProbe(url, proxy) {
   };
 }
 
-function ucBypass(proxy) {
+function rotateWarp(proxy) {
+  if (!proxy || !/127\.0\.0\.1:40000|localhost:40000/.test(proxy)) {
+    return { rotated: false, skipped: "external_proxy" };
+  }
+  const script = path.join(ROOT, "scripts/start-warp-proxy.sh");
+  if (!fs.existsSync(script)) {
+    return { rotated: false, error: "start-warp-proxy.sh missing" };
+  }
+  const res = spawnSync("bash", [script, "rotate"], {
+    encoding: "utf8",
+    timeout: 120000,
+    cwd: ROOT,
+  });
+  return {
+    rotated: res.status === 0,
+    exitCode: res.status,
+    log: `${res.stdout || ""}\n${res.stderr || ""}`.slice(-800),
+  };
+}
+
+function ucBypass(proxy, opts = {}) {
   const script = path.join(__dirname, "cf_bypass_uc.py");
   if (!fs.existsSync(script)) return { ok: false, error: "cf_bypass_uc.py missing" };
   const reportPath =
@@ -176,12 +196,25 @@ function ucBypass(proxy) {
   } catch {
     /* ignore */
   }
-  const env = { ...process.env, INDEED_HTTP_PROXY: proxy || "" };
-  const res = spawnSync("python3", [script, "--attempts", "3"], {
-    encoding: "utf8",
-    env,
-    timeout: 240000,
-  });
+  const attempts = String(opts.attempts || process.env.INDEED_CF_ATTEMPTS || "4");
+  const rounds = String(opts.rounds || process.env.INDEED_CF_ROUNDS || "3");
+  const env = {
+    ...process.env,
+    INDEED_HTTP_PROXY: proxy || "",
+    INDEED_CF_ATTEMPTS: attempts,
+    INDEED_CF_ROUNDS: rounds,
+  };
+  // Multi-round bypass (with WARP rotate inside Python) can take several minutes.
+  const timeoutMs = Number(process.env.INDEED_CF_BYPASS_TIMEOUT_MS || 720000);
+  const res = spawnSync(
+    "python3",
+    [script, "--attempts", attempts, "--rounds", rounds],
+    {
+      encoding: "utf8",
+      env,
+      timeout: timeoutMs,
+    },
+  );
   const parsed = parseJsonBlob(`${res.stdout || ""}\n${res.stderr || ""}`, [
     reportPath,
   ]);
@@ -270,19 +303,36 @@ function main() {
     }
 
     // HTTP 403 alone is expected through WARP until Turnstile is cleared in a
-    // real browser — try SeleniumBase UC + uc_gui_click_captcha.
+    // real browser — try SeleniumBase UC (multi-strategy + WARP rotate rounds).
     if (probe.blocked && process.env.INDEED_SKIP_UC_BYPASS !== "1") {
-      report.ucBypass = ucBypass(proxy);
-      if (report.ucBypass && report.ucBypass.ok) {
-        probe = probeOnce(proxy);
-        Object.assign(report, {
-          httpStatus: probe.httpStatus,
-          title: probe.title,
-          bodySample: probe.bodySample,
-          httpBlocked: probe.httpBlocked,
-          chrome: probe.chrome,
+      const maxPreflightRounds = Number(
+        process.env.INDEED_PREFLIGHT_UC_ROUNDS || "2",
+      );
+      report.ucBypassRounds = [];
+      for (let r = 1; r <= maxPreflightRounds; r++) {
+        const bypass = ucBypass(proxy);
+        report.ucBypass = bypass;
+        report.ucBypassRounds.push({
+          n: r,
+          ok: Boolean(bypass && bypass.ok),
+          reason: bypass && (bypass.reason || bypass.error || null),
+          exitIp:
+            bypass &&
+            bypass.rounds &&
+            bypass.rounds[0] &&
+            bypass.rounds[0].exitIp
+              ? bypass.rounds[0].exitIp
+              : null,
         });
-        if (probe.chromeOk || report.ucBypass.ok) {
+        if (bypass && bypass.ok) {
+          probe = probeOnce(proxy);
+          Object.assign(report, {
+            httpStatus: probe.httpStatus,
+            title: probe.title,
+            bodySample: probe.bodySample,
+            httpBlocked: probe.httpBlocked,
+            chrome: probe.chrome,
+          });
           report.ok = true;
           report.reason = probe.chromeOk
             ? "chrome_reachable_after_uc_bypass"
@@ -291,13 +341,18 @@ function main() {
           console.log(JSON.stringify(report, null, 2));
           process.exit(0);
         }
+        // Extra outer rotate between preflight UC invocations (Python also rotates).
+        if (r < maxPreflightRounds) {
+          const rot = rotateWarp(proxy);
+          report.ucBypassRounds[r - 1].warpRotate = rot;
+        }
       }
     }
 
     if (probe.httpBlocked || (probe.chrome && probe.chrome.blocked) || !probe.chromeOk) {
       report.reason = "indeed_cloudflare_still_blocked";
       report.hint =
-        "WARP SOCKS + SeleniumBase UC did not clear Indeed. Retry uc bypass, or set a residential INDEED_HTTP_PROXY. See automation-prompts/INDEED_CLOUDFLARE.md";
+        "WARP SOCKS + SeleniumBase UC (multi-strategy + IP rotate) did not clear Indeed. Set residential INDEED_HTTP_PROXY or run scripts/indeed-home-daily.sh. See automation-prompts/INDEED_CLOUDFLARE.md";
       report.setupDoc = "automation-prompts/INDEED_CLOUDFLARE.md";
       writeReport(report);
       console.error(JSON.stringify(report, null, 2));

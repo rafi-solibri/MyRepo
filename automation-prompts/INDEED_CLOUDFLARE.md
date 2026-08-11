@@ -14,14 +14,22 @@ Verified 2026-08-10 on a Cursor cloud agent (no private/home worker):
 
 1. **Cloudflare WARP in proxy mode** → local SOCKS5 `127.0.0.1:40000`
 2. **SeleniumBase UC Chrome** through that proxy (headed / Xvfb display)
-3. **`uc_gui_click_captcha()`** when the page shows
+3. **Turnstile GUI clear** when the page shows
    `Additional Verification Required` / Turnstile
+   (`uc_gui_click_cf` + retry/handle/blind strategies; not a single click)
 
 That combo clears Turnstile. Plain Chrome clicks, cloudscraper, and WARP alone
 (without UC GUI captcha) did **not**.
 
+Intermittent failures (widget visible, first click fails — seen 2026-08-11 after
+a green 2026-08-10 run) are handled automatically:
+- wait for the Turnstile iframe/checkbox
+- multi-strategy CF clicks with longer settle
+- outer rounds that **rotate the WARP exit IP** and rebuild the hybrid profile
+
 ```bash
 bash scripts/start-warp-proxy.sh          # proxy mode ONLY — never full tunnel
+bash scripts/start-warp-proxy.sh rotate   # fresh exit IP if Turnstile sticks
 eval "$(bash scripts/ensure-indeed-warp.sh)"
 python3 tools/indeed/cf_bypass_uc.py      # clears CF; uses chrome-indeed-profile
 node tools/indeed/preflight.js            # expects exit 0 (auto-starts WARP+UC)
@@ -108,6 +116,11 @@ Use the **same Cursor account** as `mohammed.ahmed@solibri.com`.
 
 #### 1. Install CLI (once)
 
+**Preferred on Windows (Aug 2026):** use **WSL Ubuntu**. The native Windows
+`agent worker start` build is broken (`better-sqlite3` NODE_MODULE_VERSION
+127 vs 137). Reinstall does not fix it — Cursor is tracking the Windows
+package. See `scripts/fix-windows-agent-worker.ps1`.
+
 **macOS / Linux / WSL:**
 
 ```bash
@@ -115,12 +128,17 @@ curl https://cursor.com/install -fsS | bash
 agent --version
 ```
 
-**Windows PowerShell:**
+**Windows PowerShell (CLI only — worker currently broken on native Win):**
 
 ```powershell
 irm 'https://cursor.com/install?win32=true' | iex
 agent --version
+# If worker crashes with better-sqlite3 127/137:
+powershell -ExecutionPolicy Bypass -File scripts\fix-windows-agent-worker.ps1 -LaunchWsl
 ```
+
+Do **not** run `curl … | bash` inside Windows PowerShell ISE — that is the
+Linux installer. Use WSL for bash, or `irm … | iex` for native Windows.
 
 #### 2. Sign in (once)
 
@@ -130,17 +148,23 @@ agent login
 
 #### 3. Clone the repo (once)
 
+On WSL, clone onto the **Linux filesystem** (`~/MyRepo`), not `/mnt/c/…`.
+
 ```bash
-git clone https://github.com/rafi-solibri/MyRepo.git
-cd MyRepo
+git clone https://github.com/rafi-solibri/MyRepo.git ~/MyRepo
+cd ~/MyRepo
 git checkout main
 git pull
 ```
 
-#### 4. Start the worker (every day you want Indeed to run)
+#### 4. Start the worker (every day you want Indeed / private jobs to run)
 
 ```bash
-cd /path/to/MyRepo
+cd ~/MyRepo
+# helper (install + start): bash scripts/setup-wsl-agent-worker.sh --name indeed-home
+# or for the laptop My Machines name used in screenshots:
+bash scripts/setup-wsl-agent-worker.sh --name job-apply-laptop
+# equivalent:
 agent worker start --name indeed-home
 ```
 

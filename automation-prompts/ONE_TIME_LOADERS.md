@@ -42,20 +42,32 @@ https://cursor.com/automations/1d0ea682-9093-11f1-ba66-0e7d0216e441
 Read and OBEY the full instructions in automation-prompts/05-instahyre.md (the fenced text block). Run `bash scripts/preflight-portal-run.sh instahyre` first. Use resumes/Rafi_Resume.docx. Execute the daily Instahyre apply job now.
 ```
 
-## Indeed Daily 9 AM — prefer OFF on public cloud
+## Indeed Daily 9 AM
 https://cursor.com/automations/91b09fd7-9093-11f1-ba66-0e7d0216e441
 
-**Recommendation:** keep this automation **disabled** on public cloud (Cloudflare). Run Indeed via home cron (`scripts/indeed-home-daily.sh` / Windows task `scripts/install-indeed-home-task.ps1`) or a My Machines private/residential worker. If you keep the cloud automation for private-worker use only:
+Cloud path uses WARP SOCKS + SeleniumBase UC (`preflight.js` / `daily_apply.js`) after the filelock singleton fix. Home cron (`scripts/indeed-home-daily.sh`) remains a good fallback. **Re-paste this loader** if the Automations UI still has an older short prompt that stops immediately on exit 5 without reading `06-indeed.md`:
 
 ```text
-Read and OBEY the full instructions in automation-prompts/06-indeed.md (the fenced text block). Run `node tools/indeed/daily_apply.js` (or `node tools/indeed/preflight.js`); if exit 5, report private worker / home cron required and stop. Otherwise run `bash scripts/preflight-portal-run.sh indeed`. Use resumes/Rafi_Resume.docx. Execute the daily Indeed apply job now.
+Read and OBEY automation-prompts/06-indeed.md (fenced block).
+FIRST: `node tools/indeed/preflight.js` (WARP+UC Turnstile clear + filelock patch + IP rotate). If it still exits 5 after that, stop and report — do not invent applies.
+Otherwise: `bash scripts/preflight-portal-run.sh indeed`, then `node tools/indeed/daily_apply.js` (preferred) or `python3 tools/indeed/uc_daily_apply.py`.
+Use resumes/Rafi_Resume.docx. Report submitted/skipped/blocked.
 ```
 
 ## Notification Job 11 AM
 https://cursor.com/automations/8e34696c-90b1-11f1-ba66-0e7d0216e441
 
 ```text
-Read and OBEY the full instructions in automation-prompts/07-notification.md (the fenced text block). Compile status from all apply automations and email rafi.success@gmail.com. For Indeed, run `bash scripts/fetch-indeed-home-result.sh --today` first and include applied/external/rejected/blocked/skipped from that home-local JSON (do not use cloud Cloudflare as Indeed when same-day home results exist).
+Read and OBEY the full instructions in automation-prompts/07-notification.md (the fenced text block). Compile status from all apply automations and email rafi.success@gmail.com. For Indeed, run `bash scripts/fetch-indeed-home-result.sh --today` first and include applied/external/rejected/blocked/skipped from that home-local JSON (do not use cloud Cloudflare as Indeed when same-day home results exist). Include Hitech City / Knowledge City Daily totals from `/opt/cursor/artifacts/hitechcity-daily.json` when present.
+```
+
+## Hitech City / Knowledge City Daily
+https://cursor.com/automations/b65968f7-953d-11f1-ba66-0e7d0216e441
+
+Rename this automation in the UI to **Hitech City / Knowledge City Daily** (it is currently Untitled). Paste once:
+
+```text
+Read and OBEY the full instructions in automation-prompts/08-hitech-city.md (the fenced text block). Run `bash scripts/preflight-portal-run.sh hitechcity` first, then `bash scripts/launch-chrome-cdp.sh hitechcity`. Use resumes/Rafi_Resume.docx. Execute the daily Hitech City / Knowledge City / Madhapur premium-campus career-portal + LinkedIn referral apply job now via `python3 tools/hitechcity/daily_apply.py`.
 ```
 
 ## Optional: General Daily 9 AM — DISABLE THIS
