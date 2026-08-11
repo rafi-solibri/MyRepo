@@ -92,6 +92,7 @@ opened as a draft PR — not left as report-only notes.
 
 | Issue | Fix |
 | --- | --- |
+| Instahyre broad skill waves applied to weak pure AI/frontend/full-stack roles without .NET/cloud proof | `tools/instahyre/filters.js` now hard-skips pure AI/data and frontend-only titles without .NET, and requires .NET/C# or senior cloud/platform evidence for generic engineer/developer titles |
 | `daily_apply.js` only scaffolded login then hung on CDP | Full job_search + `skipReason` + apply API loop; incremental report; `process.exit` (no `browser.close`/`disconnect` hang) |
 | Filter slips: Anaplan / Kinaxis / `Solution Architect - AI` / Data Analyst / Operations Manager | Tightened `tools/instahyre/filters.js` title-first skips |
 | Spot-check treated Coupang Facebook/Instagram as external ATS | Ignore social hosts; require apply/ATS URL patterns |
