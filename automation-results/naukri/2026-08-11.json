@@ -28,5 +28,5 @@
   "blockerSummary": "Windows Chrome ABE (v20): Naukri CDP profile needs one-time headed login at ~/.cursor/chrome-cdp-profiles/naukri (cookie sync from Default cannot decrypt)",
   "notes": [],
   "preflight": null,
-  "logPath": null
+  "logPath": "C:/Users/MohammedAhmed/.cursor/portal-home-logs/naukri/naukri-20260811T070121Z.log"
 }
