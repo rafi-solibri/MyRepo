@@ -2,15 +2,10 @@
 
 Daily JSON summaries published by home/local runners for the Notification Job.
 
-## Indeed home daily
-
-- `indeed/YYYY-MM-DD.json` — dated snapshot
-- `indeed/latest.json` — most recent home run
+Per portal: `<portal>/YYYY-MM-DD.json` and `<portal>/latest.json`.
 
 Schema counts: `applied`, `external`, `rejected`, `blocked`, `skipped`, `seen`.
 
-Fetch from the Notification Job:
-
 ```bash
-bash scripts/fetch-indeed-home-result.sh
+bash scripts/fetch-home-result.sh <portal> --today
 ```

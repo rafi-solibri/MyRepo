@@ -1,0 +1,32 @@
+{
+  "portal": "linkedin",
+  "source": "home-local",
+  "date": "2026-08-11",
+  "startedAt": null,
+  "finishedAt": "2026-08-11T06:36:47Z",
+  "host": "NEM01-GBGR234",
+  "ok": false,
+  "counts": {
+    "applied": 0,
+    "external": 0,
+    "rejected": 0,
+    "blocked": 1,
+    "skipped": 0,
+    "seen": 0
+  },
+  "applied": [],
+  "external": [],
+  "rejected": [],
+  "blocked": [
+    {
+      "reason": "windows_abe_one_time_login_required_in_cdp_profile",
+      "detail": "Chrome App-Bound Encryption prevents copying Desktop Default cookies into CDP user-data-dir. Headed login wait timed out after 4 minutes. Sign into LinkedIn once via: bash scripts/launch-chrome-cdp.sh linkedin"
+    }
+  ],
+  "skipped": [],
+  "seen": [],
+  "blockerSummary": "Windows Chrome ABE: LinkedIn CDP profile needs one-time headed login at ~/.cursor/chrome-cdp-profiles/linkedin",
+  "notes": [],
+  "preflight": null,
+  "logPath": null
+}
