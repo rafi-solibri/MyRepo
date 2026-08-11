@@ -75,7 +75,9 @@ function classify(job) {
       title
     )
   ) {
-    if (!/\b(workday|sap|salesforce)\b/i.test(skills)) return { tier: 1, reason: "tier1" };
+    // Title-first only — SKIP_RE already drops Workday/SAP/Dynamics/QA/data titles.
+    // Do not drop Architect/EM when JD casually lists Salesforce/Java/data skills.
+    return { tier: 1, reason: "tier1" };
   }
   if (
     /\b(\.net|c#|csharp|azure)\b/i.test(blob) &&
@@ -91,9 +93,15 @@ function classify(job) {
   ) {
     return { tier: 2, reason: "tier2-senior-stack" };
   }
+  // Tier 3 stretch: Hyd/remote with band ≥35L — senior/lead + cloud/stack signal.
+  // Prefer APPLY when uncertain (title-first hard-skips already applied above).
   if (
-    /\b(node\.?js|nodejs|typescript|java\b|genai|gen ai|llm|platform engineer)\b/i.test(blob) &&
-    /\b(lead|staff|principal|architect|manager|head|senior)\b/i.test(title) &&
+    /\b(lead|staff|principal|architect|manager|head|senior|fullstack|full\s*-?\s*stack)\b/i.test(
+      title
+    ) &&
+    /\b(\.net|c#|csharp|azure|aws|react|node\.?js|nodejs|typescript|java\b|genai|gen\s*ai|generative\s*ai|llm|microservices|platform engineer)\b/i.test(
+      blob
+    ) &&
     (ctc == null ? !!job?.salaryRange?.hideSalary : ctc >= 35)
   ) {
     return { tier: 3, reason: "tier3-stretch" };
@@ -164,11 +172,35 @@ async function api(page, method, urlPath, body) {
   );
 }
 
+function questionText(q) {
+  return `${
+    q.questionString ||
+    q.question?.questionString ||
+    q.question?.title ||
+    q.questionText ||
+    q.title ||
+    ""
+  }`.toLowerCase();
+}
+
+function questionOptions(q) {
+  return (
+    q.responseOptions ||
+    q.options ||
+    q.question?.options ||
+    q.question?.responseOptions ||
+    []
+  );
+}
+
+function optionText(o) {
+  return String(o.responseString || o.optionString || o.label || o.text || "").toLowerCase();
+}
+
 function pickOption(q) {
-  const text = `${q.questionString || q.question?.questionString || q.questionText || ""}`.toLowerCase();
-  const options = q.responseOptions || q.options || [];
-  const ot = (o) => String(o.responseString || o.optionString || o.text || "").toLowerCase();
-  const find = (p) => options.find((o) => p(ot(o)));
+  const text = questionText(q);
+  const options = questionOptions(q);
+  const find = (p) => options.find((o) => p(optionText(o)));
   if (/notice|availab|join|how soon|immediate/.test(text)) {
     return (
       find((t) => /immediate|served|already|0 day|available now/.test(t)) ||
@@ -176,19 +208,22 @@ function pickOption(q) {
       options[0]
     );
   }
-  if (/salary|ctc|compensation|budget|band|range|pay/.test(text)) {
-    const m = text.match(/(\d+)\s*[–\-to]+\s*(\d+)\s*lpa/) || text.match(/(\d+)\s*lpa/);
+  if (/salary|ctc|compensation|budget|band|range|pay|₹|rs\.?/.test(text)) {
+    const m =
+      text.match(/(\d+)\s*[–\-to]+\s*(\d+)\s*l(?:pa)?/) ||
+      text.match(/₹\s*(\d+)\s*[l]?\s*[–\-to]+\s*₹?\s*(\d+)\s*l/) ||
+      text.match(/(\d+)\s*lpa/);
     const maxBand = m ? Number(m[2] || m[1]) : null;
-    const yes = find((t) => /^(yes|y|ok|okay|works)/.test(t));
-    const no = find((t) => /^(no|n\b|not)/.test(t));
+    const yes = find((t) => /^(yes|y\b|ok|okay|works)|yes, this works|this works/.test(t));
+    const no = find((t) => /^(no|n\b|not)|does not work|doesn't work/.test(t));
     if (maxBand != null) return maxBand >= 35 ? yes || options[0] : no || options[options.length - 1];
     if (yes && /does this work|comfortable|acceptable|ok/.test(text)) return yes;
   }
   if (/location|city|relocat|wfh|remote|hybrid/.test(text)) {
     return (
       find((t) => /hyderabad/.test(t)) ||
-      find((t) => /remote|wfh|anywhere/.test(t)) ||
-      find((t) => /prefer|open|relocat/.test(t)) ||
+      find((t) => /currently in this location|okay with it|remote|wfh|anywhere/.test(t)) ||
+      find((t) => /can relocate|prefer|open|relocat/.test(t)) ||
       options[0]
     );
   }
@@ -206,7 +241,7 @@ function pickOption(q) {
 }
 
 function freeText(q) {
-  const text = `${q.questionString || q.question?.questionString || ""}`.toLowerCase();
+  const text = questionText(q);
   if (/current.*ctc|present.*ctc|current.*salary/.test(text)) return `${CURRENT_CTC_LPA} LPA`;
   if (/expected.*ctc|expected.*salary|expectation/.test(text)) return `${EXPECTED_CTC_LPA} LPA`;
   if (/ctc|salary|compensation/.test(text))
@@ -264,10 +299,10 @@ async function answerPendingQuestionnaires(page, stats) {
 
         const answers = [];
         for (const q of pending) {
-          const options = q.responseOptions || q.options || [];
+          const options = questionOptions(q);
           const answerRowId = q._id;
           const questionId = q.question?._id || q.question || q.questionId;
-          if (!answerRowId || questionId == null) continue;
+          if (!answerRowId || questionId == null || typeof questionId === "object") continue;
           if (options.length) {
             const opt = pickOption(q);
             if (!opt) continue;
@@ -341,9 +376,35 @@ async function applyOne(page, job) {
       /^apply now$/i.test((b.innerText || "").trim())
     )
   );
+  const firstName = (job.createdBy?.name || "").split(/\s+/)[0] || null;
+  const note = noteFor(job, firstName);
+
+  async function applyViaApi(via) {
+    const apiRes = await api(page, "POST", "/sendreply/jobsignal", {
+      signalid: jobId,
+      message: note,
+      seekerSignalContext: SEEKER_ID,
+      type: "jobsignal",
+      source: "all_jobs",
+      urlParams: { jobid: jobId },
+    });
+    if (apiRes.ok) return { status: "applied", firstName, via };
+    if (apiRes.status === 400 && /already/i.test(apiRes.text || "")) {
+      return { status: "already_applied", via };
+    }
+    return {
+      status: "failed_apply",
+      via,
+      apiStatus: apiRes.status,
+      apiText: String(apiRes.text || "").slice(0, 240),
+    };
+  }
+
   if (!hasApply) {
     const external = /company website|external apply|apply on company/i.test(body);
-    return external ? { status: "external" } : { status: "blocked_no_apply" };
+    if (external) return { status: "external" };
+    // UI often blocked by Cloudflare turnstile / partial render — try API.
+    return applyViaApi("api_no_ui_button");
   }
 
   await page.evaluate(() => {
@@ -358,10 +419,8 @@ async function applyOne(page, job) {
     if (ta) break;
     await sleep(250);
   }
-  if (!ta) return { status: "failed_no_textarea" };
+  if (!ta) return applyViaApi("api_no_textarea");
 
-  const firstName = (job.createdBy?.name || "").split(/\s+/)[0] || null;
-  const note = noteFor(job, firstName);
   await ta.click({ clickCount: 3 });
   await page.keyboard.press("Backspace");
   await page.keyboard.type(note, { delay: 6 });
@@ -378,19 +437,7 @@ async function applyOne(page, job) {
     return { status: "applied", firstName, via: "ui" };
   }
 
-  const apiRes = await api(page, "POST", "/sendreply/jobsignal", {
-    signalid: jobId,
-    message: note,
-    seekerSignalContext: SEEKER_ID,
-    type: "jobsignal",
-    source: "all_jobs",
-    urlParams: { jobid: jobId },
-  });
-  if (apiRes.ok) return { status: "applied", firstName, via: "api" };
-  if (apiRes.status === 400 && /already/i.test(apiRes.text || "")) {
-    return { status: "already_applied", via: "api" };
-  }
-  return { status: "failed_apply", apiStatus: apiRes.status };
+  return applyViaApi("api_after_ui");
 }
 
 async function scan(page) {
@@ -408,6 +455,7 @@ async function scan(page) {
     }
   }
   await pull({}, 350, "newest");
+  await pull({ matchesfor: SEEKER_ID }, 40, "matchesfor");
   await pull({ locations: "Hyderabad" }, 61, "hyd");
   for (const skills of ["00001", "00075", "00486", "00054", "00368"]) {
     await pull({ skills }, 50, skills);
@@ -483,17 +531,54 @@ async function main() {
     }
     if (result.status === "applied") {
       stats.applied.push({ ...row, result });
-      // Answer questionnaires after each successful apply batch
-      await answerPendingQuestionnaires(page, stats);
+      // Answer questionnaires after each apply (per-apply pass; audit counts reset in final sweep)
+      const perApplyQ = {
+        awaitingListed: 0,
+        answered: 0,
+        alreadySubmitted: 0,
+        lockedEmpty: 0,
+        saveFailed: 0,
+        submitFailed: 0,
+        verifyEmpty: 0,
+        skippedNoAnswers: 0,
+        skipNotQuestionnaire: 0,
+      };
+      await answerPendingQuestionnaires(page, { q: perApplyQ });
+      stats.q.answered += perApplyQ.answered;
+      stats.q.saveFailed += perApplyQ.saveFailed;
+      stats.q.submitFailed += perApplyQ.submitFailed;
+      stats.q.verifyEmpty += perApplyQ.verifyEmpty;
+      console.log(`[Q] per-apply answered+=${perApplyQ.answered}`);
     } else if (result.status === "already_applied") stats.already.push({ ...row, result });
     else if (result.status === "external") stats.external.push({ ...row, result });
     else stats.failed.push({ ...row, result });
     await sleep(500);
   }
 
-  // Final questionnaire sweep (also covers zero-apply days)
-  await answerPendingQuestionnaires(page, stats);
+  // Final questionnaire audit (unique counts — do not sum across per-apply passes)
+  const auditQ = {
+    awaitingListed: 0,
+    answered: 0,
+    alreadySubmitted: 0,
+    lockedEmpty: 0,
+    saveFailed: 0,
+    submitFailed: 0,
+    verifyEmpty: 0,
+    skippedNoAnswers: 0,
+    skipNotQuestionnaire: 0,
+  };
+  await answerPendingQuestionnaires(page, { q: auditQ });
+  stats.q.answered += auditQ.answered;
+  stats.q.awaitingListed = auditQ.awaitingListed;
+  stats.q.alreadySubmitted = auditQ.alreadySubmitted;
+  stats.q.lockedEmpty = auditQ.lockedEmpty;
+  stats.q.saveFailed += auditQ.saveFailed;
+  stats.q.submitFailed += auditQ.submitFailed;
+  stats.q.verifyEmpty += auditQ.verifyEmpty;
+  stats.q.skippedNoAnswers = auditQ.skippedNoAnswers;
+  stats.q.skipNotQuestionnaire = auditQ.skipNotQuestionnaire;
 
+  const failedTotal = stats.failed.length + stats.q.lockedEmpty + stats.q.verifyEmpty;
   const report = `# Cutshort daily ${TODAY}
 
 ## Counts
@@ -501,13 +586,17 @@ async function main() {
 - Qualifying: **${stats.qualifying.length}**
 - Applied: **${stats.applied.length}**
 - Already: ${stats.already.length}
-- Failed/blocked: ${stats.failed.length}
+- Failed/blocked (apply): ${stats.failed.length}
 - External: ${stats.external.length}
-- Q answered: **${stats.q.answered}** | already: ${stats.q.alreadySubmitted} | locked-empty: ${stats.q.lockedEmpty}
+- Q answered: **${stats.q.answered}** | already-submitted: ${stats.q.alreadySubmitted} | locked-empty: **${stats.q.lockedEmpty}** | verify-empty: ${stats.q.verifyEmpty}
 - Awaiting listed: ${stats.q.awaitingListed}
+- Failures (apply + locked-empty + verify-empty): **${failedTotal}**
 
 ## Applied
-${stats.applied.map((a) => `- T${a.tier} ${a.title} @ ${a.company} (${a.ctc}L) \`${a.id}\``).join("\n") || "_None_"}
+${stats.applied.map((a) => `- T${a.tier} ${a.title} @ ${a.company} (${a.ctc}L) \`${a.id}\` via=${a.result?.via || "?"}`).join("\n") || "_None_"}
+
+## Failed applies
+${stats.failed.map((a) => `- T${a.tier} ${a.title} @ ${a.company} — ${a.result?.status}`).join("\n") || "_None_"}
 `;
   fs.writeFileSync(path.join(REPORT_DIR, "cutshort-daily.md"), report);
   fs.writeFileSync(path.join(OUT_DIR, "stats.json"), JSON.stringify(stats, null, 2));

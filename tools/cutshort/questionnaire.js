@@ -52,10 +52,33 @@ function answersNonEmpty(questions) {
   );
 }
 
+/** Normalize Cutshort loadthread question rows (nested question.title / options[].label). */
+function questionText(q) {
+  return `${
+    q?.questionString ||
+    q?.question?.questionString ||
+    q?.question?.title ||
+    q?.questionText ||
+    q?.title ||
+    ""
+  }`;
+}
+
+function questionOptions(q) {
+  return q?.responseOptions || q?.options || q?.question?.options || q?.question?.responseOptions || [];
+}
+
+function optionText(o) {
+  return String(o?.responseString || o?.optionString || o?.label || o?.text || "");
+}
+
 module.exports = {
   findResume,
   buildAnswerPayload,
   answersNonEmpty,
+  questionText,
+  questionOptions,
+  optionText,
   RESUME_CANDIDATES,
   EXPECTED_CTC_LPA: 65,
   CURRENT_CTC_LPA: 52,
