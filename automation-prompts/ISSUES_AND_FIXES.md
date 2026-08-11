@@ -10,6 +10,7 @@ opened as a draft PR — not left as report-only notes.
 
 | Issue | Fix |
 | --- | --- |
+| Instahyre broad skill waves applied to weak pure AI/frontend/full-stack roles without .NET/cloud proof | `tools/instahyre/filters.js` now hard-skips pure AI/data and frontend-only titles without .NET, and requires .NET/C# or senior cloud/platform evidence for generic engineer/developer titles |
 | Portal preflight could fail after a crashed runner left CDP Chrome holding a profile (`cp ... Default/WebStorage: File exists`) | `scripts/sync-chrome-sessions.sh` now stops stale `remote-debugging-port=9222` Chrome before syncing and uses a safer merge-copy fallback when `rsync` is unavailable |
 | LinkedIn external helper crashed when Easy Apply wrote legacy list-shaped `apply-report.json` | `tools/linkedin/linkedin_external_apply.py` now normalizes dict and list report shapes before building external candidates, preserving priority-ID fallback |
 | `tools/foundit/daily_apply.js` was login-only scaffold (0 Raven/Falcon applies) | Full runner: Raven public search → `classifyJob` → `userJobInfo`/`applicationStatus` eligibility → Falcon ****** → LinkedIn/ATS handoff; writes `/opt/cursor/artifacts/foundit-apply-report.json` |

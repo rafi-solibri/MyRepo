@@ -15,6 +15,18 @@ function locationOk(loc) {
   );
 }
 
+function hasCloudPlatform(title, skills) {
+  return /\b(azure|aws|cloud|microservices|kubernetes|k8s|distributed|platform|backend)\b/i.test(
+    `${title || ""} ${skills || ""}`
+  );
+}
+
+function hasTargetSeniority(title) {
+  return /\b(architect|engineering manager|tech(?:nical)?\s+lead|staff|principal)\b/i.test(
+    title || ""
+  );
+}
+
 /** Parse listed max CTC in LPA from free-text location/salary blurb. */
 function parseMaxCtcLpa(text) {
   const t = String(text || "");
@@ -52,12 +64,25 @@ function skipReason(title, { company = "", location = "", skills = "", salary = 
 
   // Pure AI/data titles — include "Solution/Technical Architect - AI" forms
   if (
-    /\b(ai architect|ai engineer|ml engineer|data scientist|data engineer|data analyst|genai|architect\s*[-–:]?\s*ai|ai\s*[-–:]?\s*architect)\b/i.test(
+    /\b(ai architect|ai engineer|ai scientist|ai developer|ml engineer|ml scientist|machine learning|data scientist|data science|data engineer|data analyst|genai|architect\s*[-–:]?\s*ai|ai\s*[-–:]?\s*architect)\b/i.test(
       t
     ) &&
     !hasDotNet(t, "") // title-only .NET proof for pure AI/data (skills laundry lists are noisy)
   ) {
     return "pure_ai_data_without_dotnet";
+  }
+
+  if (/\b(front[\s-]?end|ui engineer|ui developer)\b/i.test(t) && !hasDotNet(t, skills)) {
+    return "frontend_without_dotnet";
+  }
+
+  if (
+    /\b(software engineer|backend engineer|full[\s-]?stack|developer)\b/i.test(t) &&
+    !hasDotNet(t, skills) &&
+    !hasTargetSeniority(t) &&
+    !hasCloudPlatform(t, skills)
+  ) {
+    return "generic_engineering_without_dotnet_cloud";
   }
 
   // Non-engineering ops/people titles (title-first; not SA/TL/EM/Staff product eng)
@@ -93,6 +118,8 @@ function skipReason(title, { company = "", location = "", skills = "", salary = 
 
 module.exports = {
   hasDotNet,
+  hasCloudPlatform,
+  hasTargetSeniority,
   locationOk,
   parseMaxCtcLpa,
   skipReason,
@@ -107,6 +134,9 @@ if (require.main === module) {
     "Solution Architect - AI",
     "Lead Anaplan Solution Architect",
     "Senior Data Analyst",
+    "AI Scientist",
+    "Frontend Engineer",
+    "Fullstack Engineer",
     "Operations Manager",
   ];
   for (const title of samples) {
