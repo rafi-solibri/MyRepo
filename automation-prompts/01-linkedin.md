@@ -77,5 +77,5 @@ DO NOT skip because the JD casually mentions Salesforce, SAP, Java, Data Enginee
 submitted (company, role, job id, location, Easy Apply vs ATS URL), skipped, blocked. Totals. Call out any false-skip suspects.
 
 ## Auto-fix & push (MANDATORY)
-If you hit a code-fixable blocker (filters, Easy Apply/Greenhouse filler, external ATS helper, CDP/preflight), fix the durable helper under tools/linkedin or scripts/, append a row to automation-prompts/ISSUES_AND_FIXES.md, commit + push a feature branch, open a draft PR to main. Follow automation-prompts/AUTO_FIX.md. Do not invent applies. Owner-only: login walls, CAPTCHA/OTP.
+If you hit a code-fixable blocker (filters, Easy Apply/Greenhouse filler, external ATS helper, CDP/preflight), fix the durable helper under tools/linkedin or scripts/, append a row to automation-prompts/ISSUES_AND_FIXES.md, commit + push a feature branch, open a ready PR to main and run `bash scripts/auto-merge-fix-pr.sh`. Follow automation-prompts/AUTO_FIX.md. Do not invent applies. Owner-only: login walls, CAPTCHA/OTP.
 ```

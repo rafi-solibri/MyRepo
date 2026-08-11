@@ -37,9 +37,7 @@ bash scripts/auto-merge-fix-pr.sh
 # Or manually:
 gh pr create --title "fix(<portal>): …" --body "…" --base main   # skip if PR exists
 gh pr ready                      # if it was opened as draft by mistake
-gh pr merge --auto --squash      # queue auto-merge when checks finish
-# If checks are green / none required and mergeable:
-gh pr merge --squash --delete-branch
+gh pr merge --squash --delete-branch   # this repo: immediate squash (auto-merge queue disabled)
 ```
 
 7. After the PR is merged (or auto-merge is enabled), `git fetch origin main && git checkout main && git pull --ff-only origin main` before continuing applies when safe. Do not invent applies.
