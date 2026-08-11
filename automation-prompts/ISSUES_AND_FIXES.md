@@ -155,12 +155,20 @@ opened as a draft PR — not left as report-only notes.
 | `agent worker start` on Windows dies: `better-sqlite3` NODE_MODULE_VERSION **127 vs 137** / `Error starting exec-daemon` | **Not fixable by reinstall** — Cursor Windows worker package bug ([forum](https://forum.cursor.com/t/windows-remote-control-worker-crashes-better-sqlite3-node-module-version-127-vs-137-cursor-3-15-6/167841)). Workaround: run Linux worker under **WSL**. Scripts: `scripts/fix-windows-agent-worker.ps1` (−LaunchWsl) + `scripts/setup-wsl-agent-worker.sh --name job-apply-laptop`. Do not pipe the Linux `curl \| bash` installer in PowerShell ISE. |
 | Wrong installer in PowerShell ISE (`curl … \| bash`) | Docs + repair script point to WSL bash or `irm 'https://cursor.com/install?win32=true' \| iex` |
 
+## Fixed for 2026-08-11 Foundit home CDP
+
+| Issue | Fix |
+| --- | --- |
+| Home Foundit: `MSSOAT` cookie name present but live session → `rio/sign-out` | Cookie-name check is soft; `daily_apply.js` live dashboard probe is authoritative. One-time headed login in CDP Foundit profile |
+| Home `node tools/foundit/daily_apply.js` → missing `playwright-core` | `preflight-portal-run.sh` installs `tools/` npm deps when `playwright-core` is absent; `resume.js` resolves repo `resumes/Rafi_Resume.docx` on Windows |
+
 ## Still requires your action (cannot fix from code alone)
 
 | Blocker | Who | What to do |
 | --- | --- | --- |
 | Windows `agent worker start` ABI crash (127/137) | You | Until Cursor ships a fixed Win package: `wsl --install -d Ubuntu` → `powershell -ExecutionPolicy Bypass -File scripts\fix-windows-agent-worker.ps1 -LaunchWsl` (or `bash scripts/setup-wsl-agent-worker.sh --name job-apply-laptop` inside WSL). Leave WSL terminal open; pick that machine in Agents. |
 | Snapshot missing portal logins | You | `bash scripts/open-portal-login-tabs.sh` → sign in on Desktop → quit Chrome → `bash scripts/verify-portal-logins.sh --strict` → **Save/Update snapshot** |
+| Windows home Foundit CDP login (ABE) | You | `bash scripts/launch-chrome-cdp.sh foundit` → sign in at `https://www.foundit.in/rio/login` in that window → leave profile logged in → re-run Foundit home daily |
 | Indeed Cloudflare 403 if WARP+UC fails | You | Prefer cloud path: WARP SOCKS + `cf_bypass_uc.py` (auto in `preflight.js`). Fallback: `scripts/indeed-home-daily.sh` / residential `INDEED_HTTP_PROXY` |
 | Hirist secondary board login | Optional | Log into Hirist in Desktop Chrome and re-seed sessions if you want Hirist applies |
 | Workday / Greenhouse OTP ATS walls | Optional | Keep Gmail logged in same Chrome profile; complete OTP once per ATS |
