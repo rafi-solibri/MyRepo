@@ -2,20 +2,32 @@
 # Run one portal's daily apply on THIS machine (home / residential).
 # Usage:
 #   bash scripts/portal-home-daily.sh <portal>
-# Portals: linkedin | foundit | cutshort | naukri | instahyre | indeed
+# Portals: linkedin | foundit | cutshort | naukri | instahyre | indeed | hitechcity
 set -euo pipefail
 
 PORTAL="${1:-}"
 case "$PORTAL" in
-  linkedin|foundit|cutshort|naukri|instahyre|indeed) ;;
+  linkedin|foundit|cutshort|naukri|instahyre|indeed|hitechcity) ;;
   *)
-    echo "Usage: bash scripts/portal-home-daily.sh <linkedin|foundit|cutshort|naukri|instahyre|indeed>"
+    echo "Usage: bash scripts/portal-home-daily.sh <linkedin|foundit|cutshort|naukri|instahyre|indeed|hitechcity>"
     exit 2
     ;;
 esac
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+
+# Windows home: reuse Default Chrome (ABE). Export for child tools.
+if [[ -z "${CHROME_CDP_MODE:-}" ]]; then
+  case "$(uname -s 2>/dev/null)" in
+    MINGW*|MSYS*|CYGWIN*) export CHROME_CDP_MODE=system ;;
+  esac
+  [[ "${OS:-}" == "Windows_NT" ]] && export CHROME_CDP_MODE=system
+fi
+# Indeed on Windows home: skip WARP (corp/Zscaler may still CF-block — see preflight).
+if [[ "$PORTAL" == "indeed" && -z "${INDEED_SKIP_WARP:-}" && "${CHROME_CDP_MODE:-}" == "system" ]]; then
+  export INDEED_SKIP_WARP=1
+fi
 
 prompt_file_for() {
   case "$1" in
@@ -25,6 +37,7 @@ prompt_file_for() {
     naukri) echo "automation-prompts/04-naukri-general.md" ;;
     instahyre) echo "automation-prompts/05-instahyre.md" ;;
     indeed) echo "automation-prompts/06-indeed.md" ;;
+    hitechcity) echo "automation-prompts/08-hitech-city.md" ;;
   esac
 }
 PROMPT_MD="$(prompt_file_for "$PORTAL")"
@@ -97,13 +110,17 @@ fi
 
 EXTRA_STEPS=""
 case "$PORTAL" in
-  linkedin|naukri|indeed)
+  linkedin|naukri|indeed|hitechcity)
     EXTRA_STEPS="Then: bash scripts/launch-chrome-cdp.sh $PORTAL"
     ;;
 esac
 if [[ "$PORTAL" == "naukri" ]]; then
   EXTRA_STEPS="$EXTRA_STEPS
 CRITICAL STEP 0 before applies: node tools/naukri/update_profile_resume.js (profileUpdated: true)."
+fi
+if [[ "$PORTAL" == "hitechcity" ]]; then
+  EXTRA_STEPS="$EXTRA_STEPS
+Run: python tools/hitechcity/daily_apply.py (or py -3). Write artifacts/hitechcity-daily.json AND artifacts/hitechcity-daily-run.json (home schema)."
 fi
 
 PROMPT="$(cat <<EOF

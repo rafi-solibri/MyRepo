@@ -21,9 +21,10 @@ Every run must **auto-fix → push a ready PR → merge** (`AUTO_FIX.md`,
 | HomeDaily-Naukri | 18:00 | `portal-home-daily.sh naukri` |
 | HomeDaily-Instahyre | 18:20 | `portal-home-daily.sh instahyre` |
 | HomeDaily-Indeed | 18:40 | `portal-home-daily.sh indeed` |
+| HomeDaily-HitechCity | 19:00 | `portal-home-daily.sh hitechcity` |
 | HomeDaily-Notification | 19:30 | `notification-home-daily.sh` |
 
-Stagger avoids 6 Chrome/CDP sessions fighting (all portals share CDP `:9222` — run one at a time).
+Stagger avoids fighting over Chrome. On Windows home, all portals share **system Chrome Default** (`CHROME_CDP_MODE=system`) so ABE cookies work — one Chrome with remote debugging.
 
 ## One-time setup (this PC)
 
@@ -66,7 +67,15 @@ powershell -ExecutionPolicy Bypass -File scripts\install-all-home-tasks.ps1 `
 Logs: `~/.cursor/portal-home-logs/<portal>/`  
 JSON: `artifacts/<portal>-daily-run.json` (also published to git branch `automation-results`)
 
-## Keep PC awake
+## Indeed on this work laptop
+
+`ZSATunnel` / Zscaler is often running — Indeed may report Cloudflare even on
+“home” Wi‑Fi because egress looks like a corporate/datacenter IP. For Indeed:
+
+1. Disconnect Zscaler (or use pure home network without corp proxy), **or**
+2. Set `INDEED_HTTP_PROXY` to a residential proxy.
+
+Other portals usually work once signed into system Chrome Default.
 
 Task Scheduler cannot run if the machine is asleep. Use:
 

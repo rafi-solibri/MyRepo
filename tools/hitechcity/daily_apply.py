@@ -23,7 +23,19 @@ if str(_root) not in sys.path:
 from tools.hitechcity.careers_apply import run as run_careers
 from tools.hitechcity.linkedin_target_apply import run as run_linkedin
 
-OUT = Path(os.environ.get("HITECHCITY_REPORT", "/opt/cursor/artifacts/hitechcity-daily.json"))
+OUT_DEFAULT_CLOUD = Path("/opt/cursor/artifacts/hitechcity-daily.json")
+OUT_DEFAULT_LOCAL = _root / "artifacts" / "hitechcity-daily.json"
+
+
+def default_report_path() -> Path:
+    if os.environ.get("HITECHCITY_REPORT"):
+        return Path(os.environ["HITECHCITY_REPORT"])
+    if OUT_DEFAULT_CLOUD.parent.is_dir():
+        return OUT_DEFAULT_CLOUD
+    return OUT_DEFAULT_LOCAL
+
+
+OUT = default_report_path()
 
 
 def main() -> int:

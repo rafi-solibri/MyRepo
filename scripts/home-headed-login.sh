@@ -38,8 +38,13 @@ if [[ -z "${PYTHON_BIN}" && -x /c/Python314/python ]]; then
 fi
 
 echo "Launching headed Chrome CDP for $PORTAL…"
-echo "Sign in in the Chrome window that opens ($LOGIN_URL)."
-echo "When done, leave the window open and press Enter here to verify."
+echo "Sign in in the Chrome window that opens ($LOGIN_URL) if needed."
+# Windows system Chrome profile: sessions already in Default — verify without blocking Enter.
+SYSTEM_MODE=0
+if node -e "const {useSystemChromeProfile}=require('./tools/chrome_session'); process.exit(useSystemChromeProfile()?0:1)" 2>/dev/null; then
+  SYSTEM_MODE=1
+  echo "NOTE: using system Chrome User Data (ABE-safe). If you are already logged in in normal Chrome, this should just work."
+fi
 bash scripts/launch-chrome-cdp.sh "$PORTAL"
 
 # Open login tab via CDP HTTP
@@ -49,8 +54,10 @@ if command -v curl >/dev/null 2>&1; then
     || true
 fi
 
-echo
-read -r -p "Press Enter after you have finished signing in…"
+if [[ "$SYSTEM_MODE" -eq 0 ]]; then
+  echo
+  read -r -p "Press Enter after you have finished signing in…"
+fi
 
 # LinkedIn / Cutshort: prefer dedicated live CDP waiter (ABE-aware messaging).
 if [[ "$PORTAL" == "linkedin" && -f "$ROOT/tools/linkedin/wait_for_cdp_login.js" ]]; then

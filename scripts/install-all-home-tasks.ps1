@@ -57,7 +57,8 @@ $Jobs = @(
   @{ Name = "HomeDaily-Cutshort";   Portal = "cutshort";  Offset = 2 },
   @{ Name = "HomeDaily-Naukri";     Portal = "naukri";    Offset = 3 },
   @{ Name = "HomeDaily-Instahyre";  Portal = "instahyre"; Offset = 4 },
-  @{ Name = "HomeDaily-Indeed";     Portal = "indeed";    Offset = 5 }
+  @{ Name = "HomeDaily-Indeed";     Portal = "indeed";    Offset = 5 },
+  @{ Name = "HomeDaily-HitechCity"; Portal = "hitechcity"; Offset = 6 }
 )
 
 $PortalScript = Join-Path $Root "scripts\portal-home-daily.sh"
@@ -85,6 +86,12 @@ Register-ScheduledTask -TaskName "IndeedHomeDaily" `
   -Trigger (New-ScheduledTaskTrigger -Daily -At $legacyTime) `
   -Settings $Settings -Force | Out-Null
 Write-Host "Updated IndeedHomeDaily daily at $legacyTime (enabled)"
+
+# Notification after last portal (hitechcity offset 6)
+$notifDefault = Add-MinutesToTime $BaseTime (7 * $StaggerMinutes)
+if (-not $PSBoundParameters.ContainsKey('NotificationTime')) {
+  $NotificationTime = $notifDefault
+}
 
 $notifArg = "`"$NotifScript`""
 Register-ScheduledTask -TaskName "HomeDaily-Notification" `
