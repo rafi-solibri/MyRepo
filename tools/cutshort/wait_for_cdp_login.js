@@ -99,15 +99,29 @@ async function main() {
     await page
       .goto(DASH, { waitUntil: "domcontentloaded", timeout: 60000 })
       .catch(() => {});
-    await page.waitForTimeout(2000).catch(() => {});
+    // Stale sessions often land on /profile/... briefly before redirecting home.
+    for (let i = 0; i < 6; i++) {
+      await page.waitForTimeout(1000).catch(() => {});
+      url = page.url() || "";
+      if (/[?&]redirect_url=/.test(url) || /\/login/i.test(url)) break;
+    }
+    await page.waitForTimeout(1500).catch(() => {});
     url = page.url() || "";
     body = await page.evaluate(() => (document.body && document.body.innerText) || "").catch(() => "");
 
     const loggedOut = isLoggedOut(url, body);
-    const ok = hasAuthCookie && !loggedOut && /candidate-dashboard|profile/i.test(url);
+    const onDash = /\/profile\/candidate-dashboard/i.test(url);
+    // Require real dashboard chrome — marketing home also says "Find jobs".
+    const dashSignals =
+      /Matches for you|Recommended jobs|Your profile|Edit profile|Applications|Awaiting response/i.test(
+        body
+      );
+    const ok = hasAuthCookie && !loggedOut && onDash && dashSignals;
     return {
       ok,
       hasAuthCookie,
+      onDash,
+      dashSignals,
       url,
       preview: String(body || "").slice(0, 160),
     };
