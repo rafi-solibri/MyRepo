@@ -47,6 +47,11 @@ if [[ -z "$SRC_COOKIES" ]]; then
   exit 1
 fi
 
+# Preflight sync runs before launching the portal browser. If a previous runner
+# crashed, a stale CDP Chrome can still hold a destination profile open and race
+# the copy below.
+pkill -f "remote-debugging-port=9222" 2>/dev/null || true
+
 STRICT=0
 if [[ "${1:-}" == "--strict" ]]; then
   STRICT=1
@@ -94,6 +99,12 @@ copy_tree() {
       --exclude='ShaderCache' \
       --exclude='BrowserMetrics*' \
       "$src/" "$dest/"
+    return 0
+  elif [[ "${OS:-}" != "Windows_NT" && -z "${MSYSTEM:-}" ]]; then
+    mkdir -p "$dest"
+    cp -a "$src/." "$dest/"
+    rm -f "$dest/SingletonLock" "$dest/SingletonCookie" "$dest/SingletonSocket" \
+      "$dest/lockfile" "$dest/RunningChromeVersion" 2>/dev/null || true
     return 0
   fi
 

@@ -82,6 +82,23 @@ PRIORITY_IDS = [
     "4448938075",  # Hire Feed Solutions Architect Remote
 ]
 
+
+def external_candidates_from_report(data) -> list[dict]:
+    """Normalize current and legacy Easy Apply report shapes."""
+    if isinstance(data, dict):
+        candidates = data.get("external_candidates", [])
+    elif isinstance(data, list):
+        candidates = [
+            item
+            for item in data
+            if isinstance(item, dict)
+            and item.get("job_id")
+            and str(item.get("path", "")).lower() in {"external", "company", "ats", "company_website"}
+        ]
+    else:
+        raise TypeError(f"unsupported LinkedIn report shape: {type(data).__name__}")
+    return [c for c in candidates if isinstance(c, dict)]
+
 SKIP_COMPANY_LOC = re.compile(
     r"pune|noida|bengaluru|bangalore|delhi|chennai|mumbai|gurgaon|gurugram|"
     r"indore|بنغالور|مومباي|دلهي|تشيناي|بوني|إندور",
@@ -384,7 +401,7 @@ def process_external(page: Page, job: dict) -> ExtResult:
 
 def main() -> None:
     data = json.loads(REPORT_IN.read_text())
-    by_id = {c["job_id"]: c for c in data.get("external_candidates", []) if c.get("job_id")}
+    by_id = {c["job_id"]: c for c in external_candidates_from_report(data) if c.get("job_id")}
     # Priority first (even if missing from today's Easy Apply scan), then remaining externals
     ordered: list[str] = []
     for jid in PRIORITY_IDS:

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Indeed daily apply gate: preflight (HTTP + Chrome probe) then login check.
- * Full Easy Apply should run on home Wi‑Fi / private worker (cloud Cloudflare).
+ * Indeed daily apply gate: preflight (WARP SOCKS + Chrome/UC probe) then login check.
+ * Cloud path: scripts/start-warp-proxy.sh + tools/indeed/cf_bypass_uc.py clear Turnstile.
  *
  * Usage:
  *   node tools/indeed/daily_apply.js
@@ -17,8 +17,27 @@ const OUT =
   process.env.INDEED_REPORT ||
   "/opt/cursor/artifacts/indeed-apply-report.json";
 
-function run(cmd, args) {
-  return spawnSync(cmd, args, { encoding: "utf8", timeout: 180000 });
+function run(cmd, args, timeoutMs = 180000) {
+  return spawnSync(cmd, args, { encoding: "utf8", timeout: timeoutMs });
+}
+
+/** UC runner prints progress logs then a final JSON object on stdout. */
+function parseJsonTail(text) {
+  const raw = String(text || "").trim();
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    /* fall through */
+  }
+  const start = raw.lastIndexOf("\n{");
+  const idx = start >= 0 ? start + 1 : raw.lastIndexOf("{");
+  if (idx < 0) return null;
+  try {
+    return JSON.parse(raw.slice(idx));
+  } catch {
+    return null;
+  }
 }
 
 function main() {
@@ -32,16 +51,27 @@ function main() {
 
   const pre = run(process.execPath, [path.join(__dirname, "preflight.js")]);
   report.preflightExit = pre.status;
-  try {
-    report.preflight = JSON.parse(pre.stdout || pre.stderr || "{}");
-  } catch {
+  const preParsed = parseJsonTail(
+    `${pre.stdout || ""}\n${pre.stderr || ""}`,
+  );
+  if (preParsed) {
+    report.preflight = preParsed;
+  } else {
     report.preflightRaw = (pre.stdout || pre.stderr || "").slice(0, 1000);
+    try {
+      const pf = "/opt/cursor/artifacts/indeed-preflight.json";
+      if (fs.existsSync(pf)) {
+        report.preflight = JSON.parse(fs.readFileSync(pf, "utf8"));
+      }
+    } catch {
+      /* ignore */
+    }
   }
 
   if (pre.status === 5) {
     report.blocked.push({
-      reason: "indeed_cloudflare_private_worker_required",
-      hint: "Disable cloud Indeed automation; run scripts/indeed-home-daily.sh on home Wi‑Fi or set INDEED_HTTP_PROXY.",
+      reason: "indeed_cloudflare_still_blocked",
+      hint: "WARP+UC bypass failed. Retry: bash scripts/start-warp-proxy.sh && python3 tools/indeed/cf_bypass_uc.py — or set residential INDEED_HTTP_PROXY.",
     });
     fs.mkdirSync(path.dirname(OUT), { recursive: true });
     fs.writeFileSync(OUT, JSON.stringify(report, null, 2));
@@ -56,9 +86,45 @@ function main() {
     process.exit(pre.status || 1);
   }
 
+  // Cloud path: SeleniumBase UC Easy Apply through WARP SOCKS.
+  if (process.env.INDEED_SKIP_UC_APPLY !== "1") {
+    const uc = path.join(__dirname, "uc_daily_apply.py");
+    // Full inventory can take >15m (search + SmartApply questions per job).
+    const apply = run("python3", [uc], Number(process.env.INDEED_UC_TIMEOUT_MS || 1800000));
+    report.ucApplyExit = apply.status;
+    const parsed = parseJsonTail(apply.stdout || "");
+    if (parsed) {
+      report.ucApply = parsed;
+    } else {
+      report.ucApplyRaw = (apply.stdout || apply.stderr || "").slice(0, 2000);
+      // Prefer on-disk artifact written by uc_daily_apply.py.
+      try {
+        const daily = "/opt/cursor/artifacts/indeed-daily-run.json";
+        if (fs.existsSync(daily)) {
+          report.ucApply = JSON.parse(fs.readFileSync(daily, "utf8"));
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    const counts = report.ucApply && report.ucApply.counts;
+    if (counts) {
+      report.applied = report.ucApply.applied || [];
+      report.skipped = report.ucApply.skipped || [];
+      report.blocked = report.ucApply.blocked || [];
+      report.rejected = report.ucApply.rejected || [];
+      report.counts = counts;
+    }
+    report.ok = apply.status === 0 || Boolean(report.ucApply && report.ucApply.ok);
+    fs.mkdirSync(path.dirname(OUT), { recursive: true });
+    fs.writeFileSync(OUT, JSON.stringify(report, null, 2));
+    console.log(JSON.stringify(report, null, 2));
+    process.exit(apply.status === 0 ? 0 : apply.status || 1);
+  }
+
   report.ok = true;
   report.hint =
-    "Preflight OK. Prefer home cron Easy Apply path. Cloud agents: complete Easy Apply + company ATS with Rafi_Resume.docx; CTC skip only under 35 LPA; title-first filters.";
+    "Preflight OK. Run: python3 tools/indeed/uc_daily_apply.py (WARP+UC). CTC skip only under 35 LPA; title-first filters.";
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report, null, 2));

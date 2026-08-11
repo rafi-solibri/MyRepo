@@ -10,11 +10,16 @@ residential network.
 
 ```bash
 # 1) Install Cursor CLI + login
-curl https://cursor.com/install -fsS | bash   # Windows: irm 'https://cursor.com/install?win32=true' | iex
+#    macOS/Linux/WSL:
+curl https://cursor.com/install -fsS | bash
+#    Native Windows CLI (worker currently broken — prefer WSL):
+#      irm 'https://cursor.com/install?win32=true' | iex
+#    If Windows worker dies with better-sqlite3 NODE_MODULE_VERSION 127/137:
+#      powershell -ExecutionPolicy Bypass -File scripts\fix-windows-agent-worker.ps1 -LaunchWsl
 agent login
 
-# 2) Repo on main
-cd /path/to/MyRepo
+# 2) Repo on main (on WSL use ~/MyRepo — not /mnt/c)
+cd /path/to/MyRepo   # or: cd ~/MyRepo
 git checkout main && git pull
 
 # 3) Optional but recommended for unattended cron: API key

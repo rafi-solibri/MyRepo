@@ -1,0 +1,2084 @@
+#!/usr/bin/env python3
+"""Indeed Easy Apply via SeleniumBase UC + WARP SOCKS (cloud Cloudflare path).
+
+Plain Chrome CDP through WARP still gets Request Blocked. UC mode works.
+"""
+from __future__ import annotations
+
+import contextlib
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+import urllib.parse
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+@contextlib.contextmanager
+def _stdout_to_stderr():
+    """Keep final report JSON clean when SeleniumBase prints driver downloads."""
+    old = sys.stdout
+    sys.stdout = sys.stderr
+    try:
+        yield
+    finally:
+        sys.stdout = old
+
+
+def _emit(payload: dict) -> None:
+    print(json.dumps(payload, indent=2), file=sys.__stdout__, flush=True)
+
+
+def _patch_filelock_singleton() -> None:
+    """SeleniumBase nests FileLock(pyautogui.lock); filelock 3.20+ deadlocks without singleton."""
+    try:
+        sys.path.insert(0, str(ROOT))
+        from tools.indeed.filelock_patch import patch_filelock_singleton
+
+        patch_filelock_singleton(ROOT)
+        print("  filelock_singleton=1", flush=True)
+    except Exception as exc:
+        print(f"  filelock_patch_error={exc!s}"[:180], flush=True)
+
+
+OUT = Path(
+    os.environ.get(
+        "INDEED_DAILY_REPORT", "/opt/cursor/artifacts/indeed-daily-run.json"
+    )
+)
+RESUME = Path(
+    os.environ.get(
+        "RAFI_RESUME",
+        str(ROOT / "resumes" / "Rafi_Resume.docx"),
+    )
+)
+PROXY = os.environ.get("INDEED_HTTP_PROXY", "socks5://127.0.0.1:40000")
+# Hybrid UC profile (auth cookies, CF cookies stripped) — see prepare_uc_profile.py
+PROFILE = os.environ.get("INDEED_UC_PROFILE", "/tmp/cursor/indeed-uc-hybrid")
+SEED_PROFILE = os.environ.get(
+    "INDEED_SEED_PROFILE", "/home/ubuntu/chrome-indeed-profile"
+)
+MAX_APPLIES = int(os.environ.get("INDEED_MAX_APPLIES", "8"))
+MAX_SEEN = int(os.environ.get("INDEED_MAX_SEEN", "40"))
+
+TITLE_OK = re.compile(
+    r"(architect|tech(?:nical)?\s*lead|engineering\s*manager|\bEM\b|"
+    r"principal|staff|senior).{0,40}(\.?\s*net|c#|azure|cloud)|"
+    r"(\.?\s*net|c#|azure).{0,40}(architect|tech(?:nical)?\s*lead|"
+    r"engineering\s*manager|principal|staff)|"
+    r"(solutions?\s*architect|technical\s*architect|software\s*architect|"
+    r"cloud\s*architect|application\s*architect)",
+    re.I,
+)
+TITLE_SKIP = re.compile(
+    r"\b(java|python|node\.?js|golang|ruby|php)\b.{0,20}\b(only|mandatory|must)\b|"
+    r"\b(qa|sdet|quality\s*analyst|intern|junior|graduate|trainee)\b|"
+    r"\b(salesforce|servicenow|\bsap\b)\b.{0,30}\b(developer|admin|consultant)\b|"
+    r"\b(android|ios|flutter|react\s*native)\b.{0,20}\b(developer|engineer)\b",
+    re.I,
+)
+LOC_OK = re.compile(
+    r"hyderabad|telangana|\bhyd\b|remote|work\s*from\s*home|\bwfh\b|india\s*remote",
+    re.I,
+)
+LOC_HARD_SKIP = re.compile(
+    r"\b(bengaluru|bangalore|pune|chennai|mumbai|noida|gurgaon|gurugram|"
+    r"delhi|kolkata|ahmedabad)\b(?!.{0,40}(remote|wfh|hybrid))",
+    re.I,
+)
+
+
+def ensure_warp() -> str:
+    script = ROOT / "scripts" / "ensure-indeed-warp.sh"
+    res = subprocess.run(
+        ["bash", str(script)], capture_output=True, text=True, timeout=120
+    )
+    m = re.search(r"export INDEED_HTTP_PROXY=(.+)", res.stdout or "")
+    if res.returncode != 0 or not m:
+        raise SystemExit(f"WARP not ready: {res.stderr or res.stdout}")
+    proxy = m.group(1).strip().strip("'\"")
+    os.environ["INDEED_HTTP_PROXY"] = proxy
+    return proxy
+
+
+def prepare_profile() -> dict:
+    script = ROOT / "tools" / "indeed" / "prepare_uc_profile.py"
+    res = subprocess.run(
+        [
+            "python3",
+            str(script),
+            "--src",
+            SEED_PROFILE,
+            "--dst",
+            PROFILE,
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    try:
+        return json.loads(res.stdout or "{}")
+    except Exception:
+        return {"error": (res.stderr or res.stdout or "")[:400], "exit": res.returncode}
+
+
+def clear_cf(sb, attempts: int = 4) -> bool:
+    """Clear Indeed Cloudflare / Turnstile with multiple GUI strategies.
+
+    Yesterday's single `uc_gui_click_captcha()` path is flaky when the widget
+    is visible but the first click does not register — try CF-specific clicks,
+    retry/blind modes, and handle_* before giving up.
+    """
+    strategies = (
+        ("uc_gui_click_cf", lambda: sb.uc_gui_click_cf()),
+        ("uc_gui_click_cf_retry", lambda: sb.uc_gui_click_cf(retry=True)),
+        ("uc_gui_handle_cf", lambda: sb.uc_gui_handle_cf()),
+        ("uc_gui_click_captcha", lambda: sb.uc_gui_click_captcha()),
+        ("uc_gui_click_cf_blind", lambda: sb.uc_gui_click_cf(blind=True)),
+        ("uc_gui_handle_captcha", lambda: sb.uc_gui_handle_captcha()),
+    )
+    for _ in range(attempts):
+        title = sb.get_title() or ""
+        try:
+            text = sb.get_text("body") or ""
+        except Exception:
+            text = ""
+        if not blocked(title, text):
+            return True
+        for _name, fn in strategies:
+            try:
+                fn()
+            except Exception:
+                continue
+            time.sleep(6)
+            title = sb.get_title() or ""
+            try:
+                text = sb.get_text("body") or ""
+            except Exception:
+                text = ""
+            if not blocked(title, text):
+                return True
+            try:
+                sb.uc_open_with_reconnect(sb.get_current_url() or "https://in.indeed.com/", 4)
+            except Exception:
+                pass
+            time.sleep(2)
+            title = sb.get_title() or ""
+            try:
+                text = sb.get_text("body") or ""
+            except Exception:
+                text = ""
+            if not blocked(title, text):
+                return True
+    title = sb.get_title() or ""
+    try:
+        text = sb.get_text("body") or ""
+    except Exception:
+        text = ""
+    return not blocked(title, text)
+
+
+def blocked(title: str, text: str) -> bool:
+    blob = f"{title}\n{text}".lower()
+    return any(
+        x in blob
+        for x in (
+            "request blocked",
+            "additional verification required",
+            "just a moment",
+            "security check - indeed",
+            "you have been blocked",
+        )
+    )
+
+
+def skip_reason(title: str, company: str, location: str, snippet: str) -> str | None:
+    t = title or ""
+    if TITLE_SKIP.search(t):
+        return "title_skip"
+    if not TITLE_OK.search(t):
+        # Bias: when uncertain on architect/lead/.NET titles → apply.
+        # Only skip clear non-matches (no senior/architect/lead/.net signal).
+        if not re.search(
+            r"architect|tech(?:nical)?\s*lead|engineering\s*manager|principal|staff|senior|\.net|\bc#\b",
+            t,
+            re.I,
+        ):
+            return "title_not_target"
+    loc = f"{location} {snippet}"
+    if LOC_HARD_SKIP.search(location or "") and not LOC_OK.search(loc):
+        return "location"
+    if location and not LOC_OK.search(loc):
+        # Remote/Hyd hard filter — skip clear other-city-only
+        if re.search(
+            r"bengaluru|bangalore|pune|chennai|mumbai|noida|gurgaon|delhi",
+            location,
+            re.I,
+        ):
+            return "location"
+    return None
+
+
+def search_queries() -> list[tuple[str, str]]:
+    # Prefer homepage form submit (deep /jobs links re-trigger hard CF blocks).
+    return [
+        ("Solutions Architect .NET", "Hyderabad, Telangana"),
+        ("Technical Architect C#", "Hyderabad, Telangana"),
+        ("Engineering Manager .NET", "Hyderabad, Telangana"),
+        ("Principal .NET", "Hyderabad, Telangana"),
+        ("Technical Lead .NET", "Hyderabad, Telangana"),
+        (".NET Architect", "Remote"),
+    ]
+
+
+def run_homepage_search(sb, query: str, location: str) -> bool:
+    sb.uc_open_with_reconnect("https://in.indeed.com/", 5)
+    time.sleep(2)
+    if not clear_cf(sb):
+        return False
+    typed = False
+    for qsel in ("#text-input-what", "input[name='q']"):
+        try:
+            if sb.is_element_visible(qsel):
+                sb.type(qsel, query)
+                typed = True
+                break
+        except Exception:
+            continue
+    for lsel in ("#text-input-where", "input[name='l']"):
+        try:
+            if sb.is_element_visible(lsel):
+                sb.type(lsel, location)
+                break
+        except Exception:
+            continue
+    if not typed:
+        # Fallback deep link (may need captcha again)
+        params = urllib.parse.urlencode(
+            {"q": query, "l": location, "fromage": "7", "sort": "date"}
+        )
+        sb.uc_open_with_reconnect("https://in.indeed.com/jobs?" + params, 5)
+        time.sleep(2)
+        return clear_cf(sb)
+    for sel in (
+        "button.yosegi-InlineWhatWhere-primaryButton",
+        "button[type='submit']",
+        "//button[contains(., 'Find jobs')]",
+    ):
+        try:
+            sb.click(sel)
+            break
+        except Exception:
+            continue
+    time.sleep(3)
+    return clear_cf(sb)
+
+
+def _switch_smartapply_frame(sb) -> None:
+    """SmartApply occasionally mounts the form inside an iframe."""
+    try:
+        sb.driver.switch_to.default_content()
+    except Exception:
+        pass
+    try:
+        frames = sb.driver.find_elements("css selector", "iframe")
+    except Exception:
+        frames = []
+    ranked = []
+    for fr in frames:
+        try:
+            src = ((fr.get_attribute("src") or "") + " " + (fr.get_attribute("id") or "")).lower()
+            ranked.append((0 if re.search(r"smartapply|indeedapply|apply", src) else 1, fr))
+        except Exception:
+            ranked.append((2, fr))
+    ranked.sort(key=lambda x: x[0])
+    for _, fr in ranked:
+        try:
+            sb.driver.switch_to.default_content()
+            sb.driver.switch_to.frame(fr)
+            body = ""
+            try:
+                body = (sb.get_text("body") or "").lower()
+            except Exception:
+                body = ""
+            # Skip nested preview documents (about:srcdoc) — Submit lives on parent.
+            try:
+                fr_url = sb.driver.execute_script("return location.href") or ""
+            except Exception:
+                fr_url = ""
+            if str(fr_url).startswith("about:"):
+                continue
+            if any(
+                x in body
+                for x in (
+                    "continue",
+                    "submit",
+                    "question",
+                    "resume",
+                    "contact",
+                    "review",
+                )
+            ):
+                return
+        except Exception:
+            continue
+    try:
+        sb.driver.switch_to.default_content()
+    except Exception:
+        pass
+
+
+def fill_common_questions(sb) -> None:
+    """Best-effort form fill for smartapply.indeed.com / Easy Apply steps."""
+    _switch_smartapply_frame(sb)
+    # JS fill by label/aria/placeholder — more reliable on SmartApply modules.
+    try:
+        filled = sb.execute_script(
+            """
+            const vals = {
+              first: 'Mohammed Abdul Rafi',
+              last: 'Ahmed',
+              phone: '8790251698',
+              email: 'rafi.success@gmail.com',
+              city: 'Hyderabad',
+              current: '52',
+              expected: '65',
+              notice: 'Immediate',
+              experience: '14'
+            };
+            const setNative = (el, value) => {
+              if (!el) return false;
+              el.focus();
+              const proto = el.tagName === 'TEXTAREA'
+                ? window.HTMLTextAreaElement.prototype
+                : window.HTMLInputElement.prototype;
+              const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
+              if (setter) setter.call(el, value); else el.value = value;
+              el.dispatchEvent(new InputEvent('input', {bubbles:true, cancelable:true, inputType:'insertText', data:String(value)}));
+              el.dispatchEvent(new Event('change', {bubbles:true}));
+              el.blur();
+              return true;
+            };
+            const labelFor = (el) => {
+              const id = el.getAttribute('id');
+              let t = '';
+              if (id) {
+                try {
+                  const lab = document.querySelector(`label[for="${CSS.escape(id)}"]`);
+                  if (lab) t += ' ' + lab.innerText;
+                } catch (e) {}
+              }
+              const wrap = el.closest('label, fieldset, [class*="question"], [data-testid*="question"], .ia-Questions-item, .ia-FormField, li, section, div');
+              if (wrap) t += ' ' + (wrap.innerText || '').slice(0, 220);
+              t += ' ' + (el.getAttribute('aria-label') || '');
+              t += ' ' + (el.getAttribute('name') || '');
+              t += ' ' + (el.getAttribute('placeholder') || '');
+              t += ' ' + (el.getAttribute('autocomplete') || '');
+              return t.toLowerCase();
+            };
+            const wantFromText = (text) => {
+              const t = (text || '').toLowerCase();
+              if (/current.*(ctc|salary|compensation|pay)|ctc.*current|present.*ctc|current.*package/.test(t)) return '52';
+              if (/expected.*(ctc|salary|compensation|pay)|ctc.*expected|desired.*salary|expected.*package/.test(t)) return '65';
+              if (/notice|joining|how soon|availability|immediate|serve notice/.test(t)) return 'Immediate';
+              if (/total.*(experience|exp)|years of experience|overall experience|relevant experience/.test(t)) return '14';
+              if (/relocat|willing to work|hybrid|work from office|bond|service agreement|background check|drug test/.test(t)) return 'yes';
+              if (/authorized|work authori|visa|citizen|india|legally/.test(t)) return 'yes';
+              if (/gender/.test(t)) return 'male';
+              if (/city|current location|prefer.*location|job location|base location/.test(t)) return 'Hyderabad';
+              if (/\\?/.test(t) && /(yes|no)/.test(t)) return 'yes';
+              if (/cover letter|why (do )?you|tell us|about yourself|summary|additional information/.test(t)) {
+                return 'Solutions Architect / Tech Lead with 14+ years in .NET, Azure, microservices. Immediate joiner. Hyd/Remote. Expected 65 LPA.';
+              }
+              return null;
+            };
+            const clickMatching = (root, want) => {
+              const radios = [...root.querySelectorAll('input[type=radio], input[type=checkbox], [role=radio], [role=checkbox]')];
+              for (const r of radios) {
+                const lab = ((r.getAttribute('aria-label')||'') + ' ' + (r.parentElement?.innerText||'') + ' ' + (r.value||'')).toLowerCase().slice(0,160);
+                const hit =
+                  (want === 'yes' && /\\byes\\b|yep|true|agree|available/.test(lab) && !/\\bno\\b/.test(lab)) ||
+                  (want === 'male' && /\\bmale\\b/.test(lab) && !/female/.test(lab)) ||
+                  (want === 'Immediate' && /immediate|0\\s*day|serving|less than|currently serving/.test(lab));
+                if (hit) {
+                  try { r.click(); } catch (e) {}
+                  try { (r.closest('label') || r).click(); } catch (e) {}
+                  return true;
+                }
+              }
+              for (const sel of root.querySelectorAll('select')) {
+                for (const opt of sel.options) {
+                  const t = (opt.text||'').toLowerCase();
+                  if (
+                    (want === 'yes' && /\\byes\\b/.test(t)) ||
+                    (want === 'Immediate' && /immediate|0\\s*day|0-15|less than/.test(t)) ||
+                    (want === 'Hyderabad' && /hyderabad/.test(t)) ||
+                    (want === '52' && /\\b52\\b|50-55|45-55/.test(t)) ||
+                    (want === '65' && /\\b65\\b|60-70|60-65/.test(t)) ||
+                    (want === '14' && /\\b14\\b|12-15|10\\+/.test(t))
+                  ) {
+                    sel.value = opt.value;
+                    sel.dispatchEvent(new Event('change',{bubbles:true}));
+                    return true;
+                  }
+                }
+              }
+              for (const el of root.querySelectorAll('input:not([type=radio]):not([type=checkbox]):not([type=file]):not([type=hidden]), textarea')) {
+                if (el.disabled || el.readOnly) continue;
+                if (want) { setNative(el, want); return true; }
+              }
+              // Custom listbox / button options
+              for (const el of root.querySelectorAll('button, [role=option], li, label, span')) {
+                const t = ((el.innerText||'') + ' ' + (el.getAttribute('aria-label')||'')).trim().toLowerCase();
+                if (!t || t.length > 40) continue;
+                if (want === 'yes' && /\\byes\\b/.test(t) && !/\\bno\\b/.test(t)) { el.click(); return true; }
+                if (want === 'Immediate' && /immediate|0\\s*day/.test(t)) { el.click(); return true; }
+              }
+              return false;
+            };
+            let answered = 0;
+            const roots = [
+              ...document.querySelectorAll('[class*="question"], fieldset, [data-testid*="question"], .ia-Questions-item, .ia-Questions, form, main, [role=main]')
+            ];
+            for (const root of roots) {
+              const want = wantFromText(root.innerText || '');
+              if (want && clickMatching(root, want)) answered += 1;
+            }
+            for (const lab of document.querySelectorAll('label, legend, h1, h2, h3, p, span')) {
+              const t = (lab.innerText||'').trim();
+              if (t.length > 6 && t.length < 220 && /\\?|ctc|salary|notice|experience|relocat|authori|location|package|lpa|gender|hybrid|bond/.test(t.toLowerCase())) {
+                const want = wantFromText(t);
+                if (want && clickMatching(lab.closest('div, fieldset, li, section, [class*="question"]') || lab.parentElement || lab, want)) {
+                  answered += 1;
+                }
+              }
+            }
+            // Profile / contact fields
+            for (const el of document.querySelectorAll('input, textarea')) {
+              const type = (el.getAttribute('type') || '').toLowerCase();
+              if (['hidden','submit','button','file','checkbox','radio'].includes(type)) continue;
+              if (el.disabled || el.readOnly) continue;
+              const lab = labelFor(el);
+              let val = null;
+              if (/first\\s*name|given\\s*name|fname/.test(lab)) val = vals.first;
+              else if (/last\\s*name|surname|family\\s*name|lname/.test(lab)) val = vals.last;
+              else if (/phone|mobile|tel/.test(lab) || type === 'tel') val = vals.phone;
+              else if (/e-?mail/.test(lab) || type === 'email') val = vals.email;
+              else if (/current.*(ctc|salary|compensation|package)|ctc.*current/.test(lab)) val = vals.current;
+              else if (/expected.*(ctc|salary|compensation|package)|ctc.*expected/.test(lab)) val = vals.expected;
+              else if (/notice|joining|availability/.test(lab)) val = vals.notice;
+              else if (/city|location|current\\s*location/.test(lab)) val = vals.city;
+              else if (/experience|years/.test(lab)) val = vals.experience;
+              else if (!(el.value || '').trim()) {
+                const w = wantFromText(lab);
+                if (w) val = w;
+              }
+              if (val != null && (!(el.value || '').trim() || /phone|mobile|tel|first|last|ctc|salary|notice|city|experience|package/.test(lab))) {
+                if (setNative(el, val)) answered += 1;
+              }
+            }
+            // Unchecked radio groups → prefer Yes / Immediate / first option.
+            const names = new Set(
+              [...document.querySelectorAll('input[type=radio]')].map(r => r.name).filter(Boolean)
+            );
+            for (const name of names) {
+              const group = [...document.querySelectorAll(`input[type=radio][name="${CSS.escape(name)}"]`)];
+              if (!group.length || group.some(r => r.checked)) continue;
+              const scored = group.map(r => {
+                const lab = ((r.getAttribute('aria-label')||'') + ' ' + (r.parentElement?.innerText||'') + ' ' + (r.value||'')).toLowerCase();
+                let s = 0;
+                if (/\\byes\\b|immediate|agree|available|hyderabad|male\\b/.test(lab)) s += 3;
+                if (/\\bno\\b|female|not available|never/.test(lab)) s -= 2;
+                return {r, s, lab};
+              }).sort((a,b) => b.s - a.s);
+              try { scored[0].r.click(); answered += 1; } catch (e) {}
+              try { (scored[0].r.closest('label') || scored[0].r).click(); } catch (e) {}
+            }
+            // Required empty selects → first non-placeholder option.
+            for (const sel of document.querySelectorAll('select')) {
+              if (sel.disabled || (sel.value && sel.selectedIndex > 0)) continue;
+              const lab = labelFor(sel);
+              if (/country|dial|phone/.test(lab)) {
+                for (const opt of sel.options) {
+                  if (/india|\\+91|^in$/i.test(opt.text + ' ' + opt.value)) {
+                    sel.value = opt.value;
+                    sel.dispatchEvent(new Event('change', {bubbles:true}));
+                    answered += 1;
+                    break;
+                  }
+                }
+                continue;
+              }
+              for (const opt of [...sel.options].slice(1)) {
+                if ((opt.text || '').trim()) {
+                  sel.value = opt.value;
+                  sel.dispatchEvent(new Event('change', {bubbles:true}));
+                  answered += 1;
+                  break;
+                }
+              }
+            }
+            // Remaining empty required-looking text inputs.
+            for (const el of document.querySelectorAll('input:not([type=hidden]):not([type=file]):not([type=radio]):not([type=checkbox]), textarea')) {
+              if (el.disabled || el.readOnly || (el.value || '').trim()) continue;
+              const lab = labelFor(el);
+              const req = el.required || el.getAttribute('aria-required') === 'true' || /required|\\*/.test(lab);
+              if (!req && !/question|ctc|salary|notice|experience/.test(lab)) continue;
+              const w = wantFromText(lab) || (/how many|years|experience/.test(lab) ? '14' : (/salary|ctc|lpa|package/.test(lab) ? '65' : 'Yes'));
+              if (setNative(el, w)) answered += 1;
+            }
+            return {answered, url: location.href};
+            """
+        )
+        if isinstance(filled, dict):
+            print(f"  fill={filled}", flush=True)
+    except Exception as e:
+        print(f"  fill_error={e!s}"[:200], flush=True)
+
+    # Resume upload
+    if RESUME.exists():
+        try:
+            for f in sb.find_elements("input[type='file']"):
+                f.send_keys(str(RESUME.resolve()))
+                time.sleep(1)
+        except Exception:
+            pass
+
+
+def click_next_or_submit(
+    sb, allow_disabled: bool = False, submit_only: bool = False
+) -> str:
+    # SmartApply primary CTA via JS (visible Continue/Submit).
+    _switch_smartapply_frame(sb)
+    try:
+        clicked = sb.execute_script(
+            """
+            const allowDisabled = Boolean(arguments[0]);
+            const submitOnly = Boolean(arguments[1]);
+            const labels = submitOnly
+              ? ['submit your application','submit application','submit']
+              : [
+                  'submit your application','submit application','submit',
+                  'continue applying','continue','next','save and continue','apply'
+                ];
+            const btns = [...document.querySelectorAll(
+              'button, a[role=button], input[type=submit], [data-testid*="continue"], [data-testid*="submit"], .ia-continueButton'
+            )];
+            const textOf = (el) => ((el.innerText || el.value || el.getAttribute('aria-label') || '')).trim().toLowerCase();
+            const reject = (t) => /close|cancel|report|skip to|view full|back|previous|remove|delete|preview|employer sees|download|edit|save and close/.test(t);
+            const score = (el) => {
+              const t = textOf(el);
+              // Exact / prefix match only — avoid matching "Preview..." via includes('review').
+              const idx = labels.findIndex(l => t === l || t.startsWith(l + ' ') || t.startsWith(l));
+              return idx === -1 ? 999 : idx;
+            };
+            // Include off-screen CTAs — review Submit is often below the fold.
+            const candidates = btns.filter(el => {
+              const r = el.getBoundingClientRect();
+              const t = textOf(el);
+              const disabled = el.disabled || el.getAttribute('aria-disabled') === 'true';
+              const onScreen = r.width > 0 && r.height > 0;
+              return t && !reject(t) && (onScreen || submitOnly)
+                && (allowDisabled || !disabled);
+            }).sort((a,b) => score(a)-score(b));
+            let el = candidates.find(el => score(el) < 999);
+            // On review, prefer an explicit Submit even if Continue also exists.
+            const submitEl = candidates.find(el => /^submit/.test(textOf(el)));
+            if (submitEl) el = submitEl;
+            if (submitOnly && !submitEl) return null;
+            if (!el && allowDisabled && !submitOnly) {
+              el = btns.find(el => {
+                const r = el.getBoundingClientRect();
+                const t = textOf(el);
+                return r.width > 0 && r.height > 0 && /submit|continue|next|apply/.test(t)
+                  && !reject(t);
+              });
+            }
+            if (!el) return null;
+            if (el.disabled || el.getAttribute('aria-disabled') === 'true') {
+              el.disabled = false;
+              el.removeAttribute('disabled');
+              el.setAttribute('aria-disabled', 'false');
+            }
+            el.scrollIntoView({block:'center'});
+            el.click();
+            return (el.innerText || el.value || '').trim().slice(0,80);
+            """,
+            allow_disabled,
+            submit_only,
+        )
+        if clicked:
+            return str(clicked)
+    except Exception:
+        pass
+    for sel in (
+        "button.ia-continueButton",
+        "button.ia-ApplicationConfirmation-button",
+        "button[type='submit']",
+        "[data-testid='continue-button']",
+        "[data-testid='submit-button']",
+    ):
+        try:
+            if sb.is_element_visible(sel, timeout=1):
+                sb.click(sel)
+                return sel
+        except Exception:
+            pass
+    return ""
+
+
+def _is_submitted(body: str, url: str) -> bool:
+    b = (body or "").lower()
+    u = (url or "").lower()
+    return any(
+        x in b
+        for x in (
+            "application submitted",
+            "your application was sent",
+            "applied on indeed",
+            "successfully submitted",
+            "you applied",
+            "application has been submitted",
+            "thanks for applying",
+            "thank you for applying",
+            "we have received your application",
+        )
+    ) or (
+        ("confirmation" in u and "review" not in u)
+        or "post-apply" in u
+        or "post_apply" in u
+    )
+
+
+def _page_has_recaptcha(sb) -> bool:
+    """True only when a SmartApply checkbox widget is present (ignore footer badge text)."""
+    try:
+        body = (sb.get_text("body") or "").lower()
+    except Exception:
+        body = ""
+    if "i'm not a robot" in body or "im not a robot" in body:
+        return True
+    # Prefer live SmartApply frames — page footer always mentions reCAPTCHA.
+    frames = _recaptcha_anchor_frames(sb)
+    if frames:
+        return True
+    try:
+        return bool(
+            sb.execute_script(
+                """
+                const frames=[...document.querySelectorAll('iframe[src*="recaptcha"][src*="anchor"]')];
+                return frames.some(f => {
+                  const src=(f.src||'').toLowerCase();
+                  return src.includes('anchor') && !src.includes('6lcr30spaaaaa');
+                });
+                """
+            )
+        )
+    except Exception:
+        return False
+
+
+def _recaptcha_token_present(sb) -> bool:
+    try:
+        return bool(
+            sb.execute_script(
+                """
+                const ta = document.querySelector(
+                  '#g-recaptcha-response, textarea[name="g-recaptcha-response"]'
+                );
+                return Boolean(ta && (ta.value || '').trim().length > 20);
+                """
+            )
+        )
+    except Exception:
+        return False
+
+
+# Indeed page footer badge sitekey — not the SmartApply review checkbox.
+_FOOTER_RECAPTCHA_KEYS = (
+    "6lcr30spaaaaa",  # sitewide "protected by reCAPTCHA" badge
+)
+
+# Google audio challenges rate-limit aggressively on cloud IPs.
+_AUDIO_RATE_LIMITED = False
+_AUDIO_RATE_LIMITED_AT = 0.0
+
+
+def _recaptcha_anchor_frames(sb):
+    """Find SmartApply Google reCAPTCHA checkbox iframes (skip footer badge)."""
+    try:
+        sb.driver.switch_to.default_content()
+        frames = sb.driver.find_elements(
+            "css selector",
+            'iframe[title="reCAPTCHA"], '
+            'iframe[src*="recaptcha/api2/anchor"], '
+            'iframe[src*="recaptcha/enterprise/anchor"], '
+            'iframe[src*="recaptcha.net"][src*="anchor"]',
+        )
+    except Exception:
+        return []
+    scored = []
+    for fr in frames:
+        try:
+            src = (fr.get_attribute("src") or "").lower()
+            title = (fr.get_attribute("title") or "").lower()
+            if "bframe" in src or "challenge" in title:
+                continue
+            if "anchor" not in src and title != "recaptcha":
+                continue
+            if any(k in src for k in _FOOTER_RECAPTCHA_KEYS):
+                continue
+            rect = sb.driver.execute_script(
+                "const r=arguments[0].getBoundingClientRect();"
+                "return {w:r.width,h:r.height,y:r.y,x:r.x};",
+                fr,
+            ) or {}
+            # Prefer the real checkbox widget (~74–80px tall) over tiny badges.
+            h = float(rect.get("h") or 0)
+            score = 0
+            if 50 <= h <= 100:
+                score += 5
+            if "6ldn8qwp" in src:  # known SmartApply sitekey prefix
+                score += 10
+            # Probe for checkbox node — footer badge has no #recaptcha-anchor.
+            has_anchor = False
+            try:
+                sb.driver.switch_to.frame(fr)
+                has_anchor = bool(
+                    sb.driver.find_elements("css selector", "#recaptcha-anchor, .recaptcha-checkbox, [role=checkbox]")
+                )
+            except Exception:
+                has_anchor = False
+            finally:
+                try:
+                    sb.driver.switch_to.default_content()
+                except Exception:
+                    pass
+            if has_anchor:
+                score += 20
+            else:
+                score -= 20
+            scored.append((score, h, fr))
+        except Exception:
+            continue
+    scored.sort(key=lambda t: (-t[0], -t[1]))
+    # Keep only positively scored frames when available.
+    good = [fr for sc, _h, fr in scored if sc > 0]
+    return good if good else [fr for _sc, _h, fr in scored]
+
+
+
+def _recaptcha_checkbox_checked(sb) -> bool:
+    """Read the checkbox state from Google's cross-origin anchor iframe."""
+    try:
+        frames = _recaptcha_anchor_frames(sb)
+        for frame in frames:
+            try:
+                sb.driver.switch_to.default_content()
+                sb.driver.switch_to.frame(frame)
+                anchor = sb.driver.find_element("css selector", "#recaptcha-anchor")
+                checked = (anchor.get_attribute("aria-checked") or "").lower() == "true"
+                sb.driver.switch_to.default_content()
+                if checked:
+                    return True
+            except Exception:
+                continue
+    except Exception:
+        pass
+    try:
+        sb.driver.switch_to.default_content()
+    except Exception:
+        pass
+    return False
+
+
+
+def _force_recaptcha_onscreen(sb, frame) -> dict:
+    """SmartApply often clips the enterprise widget past the right edge — pin it."""
+    try:
+        sb.driver.switch_to.default_content()
+    except Exception:
+        pass
+    try:
+        sb.set_window_size(1600, 1000)
+    except Exception:
+        pass
+    rect = sb.driver.execute_script(
+        """
+        const f = arguments[0];
+        try { f.scrollIntoView({block:'center', inline:'center'}); } catch (e) {}
+        // Walk scrollable ancestors.
+        let p = f.parentElement;
+        while (p) {
+          try { p.scrollLeft = Math.max(0, (p.scrollWidth - p.clientWidth) / 2); } catch (e) {}
+          p = p.parentElement;
+        }
+        const r0 = f.getBoundingClientRect();
+        const clipped = r0.right > window.innerWidth - 8 || r0.left < 8
+          || r0.bottom > window.innerHeight - 8 || r0.top < 8
+          || r0.width < 10 || r0.height < 10;
+        if (clipped) {
+          f.style.setProperty('position', 'fixed', 'important');
+          f.style.setProperty('left', '80px', 'important');
+          f.style.setProperty('top', '180px', 'important');
+          f.style.setProperty('z-index', '2147483647', 'important');
+          f.style.setProperty('opacity', '1', 'important');
+          f.style.setProperty('visibility', 'visible', 'important');
+          f.style.setProperty('pointer-events', 'auto', 'important');
+          f.style.setProperty('transform', 'none', 'important');
+        }
+        const r = f.getBoundingClientRect();
+        return {
+          x:r.x, y:r.y, width:r.width, height:r.height,
+          vw: window.innerWidth, vh: window.innerHeight,
+          visible: r.width>40 && r.height>40 && r.left>=0 && r.top>=0
+            && r.right <= window.innerWidth && r.bottom <= window.innerHeight,
+          pinned: clipped
+        };
+        """,
+        frame,
+    )
+    time.sleep(0.5)
+    return rect or {}
+
+
+def _click_recaptcha_checkbox(sb) -> bool:
+    """Click the reCAPTCHA anchor using DOM first, then a real GUI coordinate."""
+    # Also search inside SmartApply child frames.
+    try:
+        _switch_smartapply_frame(sb)
+    except Exception:
+        pass
+    try:
+        sb.driver.switch_to.default_content()
+    except Exception:
+        pass
+
+    frames = _recaptcha_anchor_frames(sb)
+    if not frames:
+        # Nested: scan one level of iframes for enterprise anchors.
+        try:
+            parents = sb.driver.find_elements("css selector", "iframe")
+            for parent in parents[:8]:
+                try:
+                    sb.driver.switch_to.default_content()
+                    sb.driver.switch_to.frame(parent)
+                    nested = sb.driver.find_elements(
+                        "css selector",
+                        'iframe[title="reCAPTCHA"], iframe[src*="anchor"]',
+                    )
+                    if nested:
+                        # Click nested from inside parent.
+                        frames = nested
+                        print("  recaptcha_nested=1", flush=True)
+                        break
+                except Exception:
+                    continue
+            sb.driver.switch_to.default_content()
+        except Exception:
+            try:
+                sb.driver.switch_to.default_content()
+            except Exception:
+                pass
+
+    if not frames:
+        print("  recaptcha_frame_missing=no_anchor_iframe", flush=True)
+        return False
+
+    for idx, frame in enumerate(frames):
+        try:
+            sb.driver.switch_to.default_content()
+        except Exception:
+            pass
+        # Re-query to avoid stale element after layout changes.
+        frames = _recaptcha_anchor_frames(sb)
+        if idx >= len(frames):
+            break
+        frame = frames[idx]
+        rect = _force_recaptcha_onscreen(sb, frame)
+        print(
+            f"  recaptcha_onscreen pinned={rect.get('pinned')} "
+            f"visible={rect.get('visible')} "
+            f"rect=({round(rect.get('x',0))},{round(rect.get('y',0))},"
+            f"{round(rect.get('width',0))}x{round(rect.get('height',0))})",
+            flush=True,
+        )
+
+        # DOM click inside the checkbox iframe.
+        try:
+            frames = _recaptcha_anchor_frames(sb)
+            frame = frames[min(idx, len(frames) - 1)]
+            sb.driver.switch_to.frame(frame)
+            time.sleep(0.4)
+            anchor = None
+            for sel in (
+                "#recaptcha-anchor",
+                ".recaptcha-checkbox",
+                "#recaptcha-anchor-label",
+                ".rc-anchor-checkbox",
+                "[role=checkbox]",
+            ):
+                try:
+                    els = sb.driver.find_elements("css selector", sel)
+                    if els:
+                        anchor = els[0]
+                        break
+                except Exception:
+                    continue
+            if anchor is None:
+                # Dump frame HTML length for diagnosis.
+                try:
+                    html_len = len(sb.driver.page_source or "")
+                except Exception:
+                    html_len = -1
+                raise RuntimeError(f"anchor checkbox missing inside frame html_len={html_len}")
+            try:
+                anchor.click()
+            except Exception:
+                sb.driver.execute_script("arguments[0].click()", anchor)
+            time.sleep(2)
+            checked = (anchor.get_attribute("aria-checked") or "").lower() == "true"
+            sb.driver.switch_to.default_content()
+            if checked or _recaptcha_token_present(sb):
+                print("  recaptcha_checkbox=checked_dom", flush=True)
+                return True
+            # Checkbox click may open challenge without aria-checked flipping yet.
+            if _solve_recaptcha_audio(sb):
+                return True
+        except Exception as exc:
+            print(f"  recaptcha_dom_click={exc!s}"[:220], flush=True)
+        finally:
+            try:
+                sb.driver.switch_to.default_content()
+            except Exception:
+                pass
+
+    # Fallback: click the checkbox at its on-screen coordinates.
+    try:
+        import pyautogui
+
+        frames = _recaptcha_anchor_frames(sb)
+        if not frames:
+            return False
+        frame = frames[0]
+        rect = _force_recaptcha_onscreen(sb, frame)
+        metrics = sb.driver.execute_script(
+            """
+            return {
+              sx: window.screenX,
+              sy: window.screenY,
+              chromeY: Math.max(0, window.outerHeight - window.innerHeight)
+            };
+            """
+        )
+        x = float(metrics.get("sx") or 0) + float(rect.get("x") or 0) + 28
+        y = (
+            float(metrics.get("sy") or 0)
+            + float(metrics.get("chromeY") or 0)
+            + float(rect.get("y") or 0)
+            + 28
+        )
+        print(
+            f"  recaptcha_gui_click=({round(x)},{round(y)}) "
+            f"frame=({round(rect.get('x', 0))},{round(rect.get('y', 0))},"
+            f"{round(rect.get('width', 0))}x{round(rect.get('height', 0))}) "
+            f"visible={rect.get('visible')} pinned={rect.get('pinned')}",
+            flush=True,
+        )
+        pyautogui.click(x=round(x), y=round(y), duration=0.2)
+        time.sleep(2.5)
+        if _recaptcha_checkbox_checked(sb) or _recaptcha_token_present(sb):
+            print("  recaptcha_checkbox=checked_gui", flush=True)
+            return True
+        if _solve_recaptcha_audio(sb):
+            return True
+        # Last resort: SeleniumBase UC captcha helpers after pinning.
+        try:
+            sb.uc_gui_click_captcha()
+            time.sleep(2)
+            if _recaptcha_cleared(sb) or _solve_recaptcha_audio(sb):
+                return True
+        except Exception as exc:
+            print(f"  recaptcha_uc_gui={exc!s}"[:180], flush=True)
+    except Exception as exc:
+        print(f"  recaptcha_gui_error={exc!s}"[:220], flush=True)
+    return False
+
+
+def _solve_recaptcha_audio(sb) -> bool:
+    """Solve an opened reCAPTCHA audio challenge and verify its token."""
+    global _AUDIO_RATE_LIMITED, _AUDIO_RATE_LIMITED_AT
+    if _AUDIO_RATE_LIMITED and (time.time() - _AUDIO_RATE_LIMITED_AT) < 180:
+        print("  recaptcha_audio=skip_rate_limited", flush=True)
+        return False
+    if _AUDIO_RATE_LIMITED and (time.time() - _AUDIO_RATE_LIMITED_AT) >= 180:
+        _AUDIO_RATE_LIMITED = False
+    try:
+        import requests
+        import speech_recognition as sr
+    except Exception as exc:
+        print(f"  recaptcha_audio_dependency={exc!s}"[:220], flush=True)
+        return False
+
+    challenge_selector = (
+        'iframe[title*="challenge"], iframe[src*="recaptcha/api2/bframe"], '
+        'iframe[src*="recaptcha/enterprise/bframe"], '
+        'iframe[src*="/bframe"]'
+    )
+    try:
+        sb.driver.switch_to.default_content()
+        all_frames = sb.driver.find_elements("css selector", "iframe")
+        frame_meta = []
+        for iframe in all_frames:
+            try:
+                rect = sb.driver.execute_script(
+                    """
+                    const r=arguments[0].getBoundingClientRect();
+                    return {x:r.x,y:r.y,w:r.width,h:r.height};
+                    """,
+                    iframe,
+                )
+                frame_meta.append(
+                    {
+                        "title": (iframe.get_attribute("title") or "")[:60],
+                        "src": (iframe.get_attribute("src") or "")[:100],
+                        "rect": rect,
+                        "visible": iframe.is_displayed(),
+                    }
+                )
+            except Exception:
+                continue
+        print(
+            f"  recaptcha_frames={json.dumps(frame_meta, separators=(',', ':'))[:1000]}",
+            flush=True,
+        )
+        frames = sb.driver.find_elements("css selector", challenge_selector)
+    except Exception as exc:
+        print(f"  recaptcha_challenge_frame={exc!s}"[:220], flush=True)
+        return False
+    if not frames:
+        return False
+
+    challenge = None
+    for frame in frames:
+        try:
+            if frame.is_displayed():
+                challenge = frame
+                break
+        except Exception:
+            continue
+    challenge = challenge or frames[0]
+
+    try:
+        sb.driver.switch_to.frame(challenge)
+        # Switch from image tiles to the audio challenge.
+        audio_button = None
+        for _ in range(12):
+            for selector in (
+                "#recaptcha-audio-button",
+                ".rc-button-audio",
+                'button[title*="audio" i]',
+                '[aria-label*="audio" i]',
+            ):
+                try:
+                    candidate = sb.driver.find_element("css selector", selector)
+                    if candidate.is_displayed():
+                        audio_button = candidate
+                        break
+                except Exception:
+                    continue
+            if audio_button is not None:
+                break
+            time.sleep(0.5)
+        if audio_button is None:
+            raise RuntimeError("audio challenge button not found")
+        try:
+            audio_button.click()
+        except Exception:
+            sb.driver.execute_script("arguments[0].click()", audio_button)
+
+        body = ""
+        source = ""
+        for _ in range(20):
+            time.sleep(0.5)
+            try:
+                body = sb.driver.find_element("css selector", "body").text
+            except Exception:
+                body = ""
+            if re.search(
+                r"try again later|automated queries|unusual traffic", body, re.I
+            ):
+                print("  recaptcha_audio=rate_limited", flush=True)
+                _AUDIO_RATE_LIMITED = True
+                _AUDIO_RATE_LIMITED_AT = time.time()
+                try:
+                    # Reload captcha so the next checkbox click can pass cleanly.
+                    reload_btn = sb.driver.find_element(
+                        "css selector", "#recaptcha-reload-button, .rc-button-reload"
+                    )
+                    reload_btn.click()
+                except Exception:
+                    pass
+                try:
+                    sb.driver.switch_to.default_content()
+                except Exception:
+                    pass
+                return False
+            for selector in ("#audio-source", "audio source", "audio"):
+                try:
+                    media = sb.driver.find_element("css selector", selector)
+                    source = (
+                        media.get_attribute("src")
+                        or media.get_attribute("data-src")
+                        or ""
+                    )
+                    if source:
+                        break
+                except Exception:
+                    continue
+            if source:
+                break
+        if re.search(r"try again later|automated queries|unusual traffic", body, re.I):
+            print("  recaptcha_audio=rate_limited", flush=True)
+            return False
+        if not source:
+            print(
+                f"  recaptcha_audio=no_source body={body[:400]!r}", flush=True
+            )
+            return False
+    except Exception as exc:
+        print(f"  recaptcha_audio_open={exc!s}"[:220], flush=True)
+        return False
+    finally:
+        try:
+            sb.driver.switch_to.default_content()
+        except Exception:
+            pass
+
+    audio_dir = Path("/tmp/cursor/indeed-recaptcha-audio")
+    audio_dir.mkdir(parents=True, exist_ok=True)
+    mp3 = audio_dir / "challenge.mp3"
+    wav = audio_dir / "challenge.wav"
+    proxy = os.environ.get("INDEED_HTTP_PROXY", PROXY)
+    proxies = {"http": proxy, "https": proxy} if proxy else None
+    try:
+        response = requests.get(source, proxies=proxies, timeout=30)
+        response.raise_for_status()
+        mp3.write_bytes(response.content)
+        converted = subprocess.run(
+            [
+                "ffmpeg",
+                "-loglevel",
+                "error",
+                "-y",
+                "-i",
+                str(mp3),
+                "-ar",
+                "16000",
+                "-ac",
+                "1",
+                str(wav),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if converted.returncode != 0:
+            print(f"  recaptcha_audio_ffmpeg={converted.stderr!s}"[:220], flush=True)
+            return False
+    except Exception as exc:
+        print(f"  recaptcha_audio_download={exc!s}"[:220], flush=True)
+        return False
+
+    try:
+        recognizer = sr.Recognizer()
+        with sr.AudioFile(str(wav)) as audio_file:
+            audio = recognizer.record(audio_file)
+        answer = recognizer.recognize_google(audio).strip()
+        answer = re.sub(r"[^A-Za-z0-9 ]+", " ", answer)
+        answer = re.sub(r"\s+", " ", answer).strip()
+        if not answer:
+            return False
+        print(f"  recaptcha_audio_answer={answer!r}", flush=True)
+    except Exception as exc:
+        print(f"  recaptcha_audio_transcribe={exc!s}"[:220], flush=True)
+        return False
+
+    try:
+        sb.driver.switch_to.default_content()
+        frames = sb.driver.find_elements("css selector", challenge_selector)
+        challenge = next((f for f in frames if f.is_displayed()), frames[0])
+        sb.driver.switch_to.frame(challenge)
+        field = sb.driver.find_element("css selector", "#audio-response")
+        field.clear()
+        field.send_keys(answer)
+        sb.driver.find_element(
+            "css selector", "#recaptcha-verify-button"
+        ).click()
+        time.sleep(2.5)
+    except Exception as exc:
+        print(f"  recaptcha_audio_submit={exc!s}"[:220], flush=True)
+        return False
+    finally:
+        try:
+            sb.driver.switch_to.default_content()
+        except Exception:
+            pass
+
+    if _recaptcha_token_present(sb) or _recaptcha_checkbox_checked(sb):
+        print("  recaptcha_audio=solved", flush=True)
+        return True
+    print("  recaptcha_audio=incorrect", flush=True)
+    return False
+
+
+def _recaptcha_cleared(sb) -> bool:
+    return _recaptcha_token_present(sb) or _recaptcha_checkbox_checked(sb)
+
+
+
+def _smartapply_sitekey(sb) -> str | None:
+    try:
+        sb.driver.switch_to.default_content()
+        srcs = sb.execute_script(
+            """
+            return [...document.querySelectorAll('iframe[src*="recaptcha"][src*="anchor"]')]
+              .map(f => f.src || '');
+            """
+        ) or []
+    except Exception:
+        srcs = []
+    for src in srcs:
+        low = (src or "").lower()
+        if any(k in low for k in _FOOTER_RECAPTCHA_KEYS):
+            continue
+        m = re.search(r"[?&]k=([^&]+)", src)
+        if m:
+            return m.group(1)
+    return None
+
+
+def _solve_recaptcha_via_api(sb) -> bool:
+    """Optional CapSolver / 2Captcha when audio is rate-limited on cloud IPs."""
+    api_key = (
+        os.environ.get("CAPSOLVER_API_KEY")
+        or os.environ.get("TWOCAPTCHA_API_KEY")
+        or os.environ.get("TWO_CAPTCHA_API_KEY")
+        or ""
+    ).strip()
+    if not api_key:
+        return False
+    sitekey = _smartapply_sitekey(sb)
+    try:
+        pageurl = sb.get_current_url() or "https://smartapply.indeed.com/"
+    except Exception:
+        pageurl = "https://smartapply.indeed.com/"
+    if not sitekey:
+        print("  recaptcha_api=no_sitekey", flush=True)
+        return False
+    print(f"  recaptcha_api=start sitekey={sitekey[:12]}…", flush=True)
+    try:
+        import requests
+    except Exception as exc:
+        print(f"  recaptcha_api_dep={exc!s}"[:160], flush=True)
+        return False
+
+    token = None
+    # CapSolver
+    if os.environ.get("CAPSOLVER_API_KEY"):
+        try:
+            create = requests.post(
+                "https://api.capsolver.com/createTask",
+                json={
+                    "clientKey": api_key,
+                    "task": {
+                        "type": "ReCaptchaV2EnterpriseTaskProxyLess",
+                        "websiteURL": pageurl,
+                        "websiteKey": sitekey,
+                    },
+                },
+                timeout=60,
+            ).json()
+            task_id = create.get("taskId")
+            if not task_id:
+                print(f"  recaptcha_api_create={create}"[:220], flush=True)
+            for _ in range(40):
+                time.sleep(3)
+                res = requests.post(
+                    "https://api.capsolver.com/getTaskResult",
+                    json={"clientKey": api_key, "taskId": task_id},
+                    timeout=60,
+                ).json()
+                if res.get("status") == "ready":
+                    token = (res.get("solution") or {}).get("gRecaptchaResponse")
+                    break
+                if res.get("status") == "failed" or res.get("errorId"):
+                    print(f"  recaptcha_api_fail={res}"[:220], flush=True)
+                    break
+        except Exception as exc:
+            print(f"  recaptcha_capsolver={exc!s}"[:200], flush=True)
+    # 2Captcha fallback
+    if not token and (
+        os.environ.get("TWOCAPTCHA_API_KEY") or os.environ.get("TWO_CAPTCHA_API_KEY")
+    ):
+        try:
+            create = requests.get(
+                "https://2captcha.com/in.php",
+                params={
+                    "key": api_key,
+                    "method": "userrecaptcha",
+                    "googlekey": sitekey,
+                    "pageurl": pageurl,
+                    "enterprise": 1,
+                    "json": 1,
+                },
+                timeout=60,
+            ).json()
+            if create.get("status") != 1:
+                print(f"  recaptcha_2c_create={create}"[:220], flush=True)
+            else:
+                req_id = create.get("request")
+                for _ in range(40):
+                    time.sleep(5)
+                    res = requests.get(
+                        "https://2captcha.com/res.php",
+                        params={
+                            "key": api_key,
+                            "action": "get",
+                            "id": req_id,
+                            "json": 1,
+                        },
+                        timeout=60,
+                    ).json()
+                    if res.get("status") == 1:
+                        token = res.get("request")
+                        break
+                    if res.get("request") not in ("CAPCHA_NOT_READY", "CAPTCHA_NOT_READY"):
+                        print(f"  recaptcha_2c_fail={res}"[:220], flush=True)
+                        break
+        except Exception as exc:
+            print(f"  recaptcha_2captcha={exc!s}"[:200], flush=True)
+
+    if not token or len(token) < 20:
+        return False
+    try:
+        sb.driver.switch_to.default_content()
+        sb.execute_script(
+            """
+            const token = arguments[0];
+            for (const sel of ['#g-recaptcha-response','textarea[name="g-recaptcha-response"]']) {
+              let el = document.querySelector(sel);
+              if (!el) {
+                el = document.createElement('textarea');
+                el.id = 'g-recaptcha-response';
+                el.name = 'g-recaptcha-response';
+                el.style.display = 'block';
+                document.body.appendChild(el);
+              }
+              el.value = token;
+              el.innerHTML = token;
+              el.dispatchEvent(new Event('input', {bubbles:true}));
+              el.dispatchEvent(new Event('change', {bubbles:true}));
+            }
+            try {
+              if (window.___grecaptcha_cfg) {
+                const clients = window.___grecaptcha_cfg.clients || {};
+                // Best-effort callback invoke
+                JSON.stringify(clients, (k,v) => {
+                  if (v && typeof v === 'object') {
+                    for (const val of Object.values(v)) {
+                      if (typeof val === 'function' && val.length === 1) {
+                        try { val(token); } catch (e) {}
+                      }
+                    }
+                  }
+                  return v;
+                });
+              }
+            } catch (e) {}
+            return true;
+            """,
+            token,
+        )
+        time.sleep(1)
+        if _recaptcha_token_present(sb):
+            print("  recaptcha_api=token_injected", flush=True)
+            return True
+    except Exception as exc:
+        print(f"  recaptcha_api_inject={exc!s}"[:200], flush=True)
+    return False
+
+
+def _dismiss_recaptcha_challenge(sb) -> None:
+    """Close a stuck/rate-limited bframe so the next checkbox click is clean."""
+    try:
+        sb.driver.switch_to.default_content()
+        sb.press_keys("body", "\ue00c")  # ESC
+    except Exception:
+        pass
+    try:
+        sb.execute_script(
+            """
+            for (const f of document.querySelectorAll('iframe[src*="bframe"]')) {
+              try { f.remove(); } catch (e) {}
+            }
+            """
+        )
+    except Exception:
+        pass
+
+
+def clear_recaptcha(sb, attempts: int = 3) -> bool:
+    """Clear Google reCAPTCHA on SmartApply review.
+
+    Prefer a single PyAutoGUI/DOM checkbox click + at most one audio solve.
+    Nested SeleniumBase uc_gui_* FileLocks deadlock on filelock>=3.20.
+    """
+    global _AUDIO_RATE_LIMITED, _AUDIO_RATE_LIMITED_AT
+    for n in range(attempts):
+        try:
+            sb.driver.switch_to.default_content()
+        except Exception:
+            pass
+        if _recaptcha_cleared(sb):
+            return True
+        if not _page_has_recaptcha(sb):
+            return True
+        print(f"  recaptcha_attempt={n+1}", flush=True)
+
+        # If a prior challenge is rate-limited, dismiss it before re-clicking.
+        if _AUDIO_RATE_LIMITED:
+            _dismiss_recaptcha_challenge(sb)
+            elapsed = time.time() - _AUDIO_RATE_LIMITED_AT
+            if elapsed < 240:
+                wait_s = int(240 - elapsed)
+                print(f"  recaptcha_cooldown_s={wait_s}", flush=True)
+                time.sleep(wait_s)
+                _AUDIO_RATE_LIMITED = False
+
+        # Direct DOM + PyAutoGUI click on the SmartApply (non-footer) widget.
+        clicked = _click_recaptcha_checkbox(sb)
+        if _recaptcha_cleared(sb):
+            print("  recaptcha_token=ok", flush=True)
+            return True
+        time.sleep(1.5)
+        if _recaptcha_cleared(sb):
+            return True
+
+        # One audio attempt only when a challenge is open and not rate-limited.
+        if clicked or _page_has_recaptcha(sb):
+            if _solve_recaptcha_audio(sb):
+                return True
+            if _solve_recaptcha_via_api(sb):
+                return True
+
+        if _AUDIO_RATE_LIMITED:
+            _dismiss_recaptcha_challenge(sb)
+            # Don't burn remaining attempts during the cool-down window.
+            break
+    return _recaptcha_cleared(sb)
+
+
+
+def submit_review_application(sb) -> bool:
+    """On review-module: solve reCAPTCHA, tick cert boxes, force Submit."""
+    try:
+        sb.driver.switch_to.default_content()
+    except Exception:
+        pass
+    # Submit CTA is below the fold on many SmartApply review pages.
+    try:
+        sb.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    except Exception:
+        pass
+    # Always try to clear captcha on review — widget can hydrate after first paint.
+    for _ in range(8):
+        if _page_has_recaptcha(sb) or _smartapply_sitekey(sb):
+            break
+        time.sleep(0.5)
+    if (_page_has_recaptcha(sb) or _smartapply_sitekey(sb)) and not _recaptcha_cleared(sb):
+        clear_recaptcha(sb, attempts=3)
+        if not _recaptcha_cleared(sb):
+            _solve_recaptcha_via_api(sb)
+    try:
+        sb.execute_script(
+            """
+            for (const c of document.querySelectorAll('input[type=checkbox]')) {
+              if (!c.checked) {
+                try { c.click(); } catch (e) {}
+                try { (c.closest('label') || c).click(); } catch (e) {}
+              }
+            }
+            window.scrollTo(0, document.body.scrollHeight);
+            """
+        )
+    except Exception:
+        pass
+    # Prefer SeleniumBase click (fires trusted events) over bare JS click.
+    clicked_sel = ""
+    for sel in (
+        "//button[normalize-space()='Submit your application']",
+        "//button[contains(normalize-space(.), 'Submit your application')]",
+        "//button[contains(normalize-space(.), 'Submit application')]",
+        "//button[normalize-space()='Submit']",
+        "button.ia-continueButton",
+    ):
+        try:
+            if sb.is_element_present(sel):
+                try:
+                    sb.scroll_to(sel)
+                except Exception:
+                    pass
+                try:
+                    sb.uc_click(sel)
+                except Exception:
+                    try:
+                        sb.click(sel)
+                    except Exception:
+                        continue
+                clicked_sel = sel
+                print(f"  review_click={sel!r}", flush=True)
+                break
+        except Exception:
+            continue
+    if not clicked_sel:
+        # JS fallback — finds Submit even when off-screen / aria-disabled.
+        try:
+            clicked_sel = sb.execute_script(
+                """
+                window.scrollTo(0, document.body.scrollHeight);
+                const btns=[...document.querySelectorAll('button, a[role=button], [role=button], input[type=submit]')];
+                const textOf = (b) => ((b.innerText||b.value||b.getAttribute('aria-label')||'')).trim().toLowerCase();
+                const el = btns
+                  .map(b => ({b, t: textOf(b), r: b.getBoundingClientRect()}))
+                  .filter(x => x.r.width+x.r.height > 0 && /submit/.test(x.t) && !/preview|employer sees/.test(x.t))
+                  .sort((a,b) => (/your application/.test(a.t)?0:1) - (/your application/.test(b.t)?0:1))
+                  [0]?.b;
+                if (!el) return null;
+                el.disabled=false; el.removeAttribute('disabled');
+                el.setAttribute('aria-disabled','false');
+                el.scrollIntoView({block:'center'});
+                el.click();
+                return (el.innerText||el.value||'').trim().slice(0,80);
+                """
+            )
+            print(f"  review_js_submit={clicked_sel!r}", flush=True)
+        except Exception:
+            clicked_sel = None
+    if not clicked_sel:
+        clicked = click_next_or_submit(
+            sb, allow_disabled=True, submit_only=True
+        )
+        print(f"  review_js_click={clicked!r}", flush=True)
+        if not clicked:
+            return False
+
+    # Poll for confirmation / navigation away from review.
+    for i in range(28):
+        time.sleep(0.5)
+        try:
+            sb.driver.switch_to.default_content()
+        except Exception:
+            pass
+        try:
+            url = sb.get_current_url() or ""
+            body = (sb.get_text("body") or "")
+        except Exception:
+            url, body = "", ""
+        if _is_submitted(body, url):
+            return True
+        if "review-module" not in url.lower() and "smartapply" not in url.lower():
+            if not re.search(r"something went wrong|unable to submit|try again", body, re.I):
+                return True
+        # reCAPTCHA may reappear / remain unsolved after a dead Submit click.
+        if i in (3, 8, 14, 20) and _page_has_recaptcha(sb) and not _recaptcha_cleared(sb):
+            clear_recaptcha(sb, attempts=2)
+            try:
+                sb.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            except Exception:
+                pass
+            click_next_or_submit(sb, allow_disabled=True, submit_only=True)
+        try:
+            sb.press_keys("body", "\ue00c")  # ESC preview overlays
+        except Exception:
+            pass
+    return False
+
+
+def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> str:
+    """Returns 'submitted' | 'external' | 'failed' | 'recaptcha'."""
+    stuck_questions = 0
+    review_submit_attempts = 0
+    for step in range(max_steps):
+        if deadline and time.time() > deadline:
+            return "failed"
+        time.sleep(0.8)
+        # SmartApply often navigates to smartapply.indeed.com modules.
+        try:
+            sb.driver.switch_to.default_content()
+        except Exception:
+            pass
+        body = ""
+        url = ""
+        try:
+            url = sb.get_current_url() or ""
+            body = (sb.get_text("body") or "").lower()
+        except Exception:
+            pass
+        if _is_submitted(body, url):
+            return "submitted"
+        if "apply on company site" in body and "indeed apply" not in body:
+            return "external"
+        # Review page: dedicated submit path (JS click alone often no-ops).
+        if "review-module" in url.lower() or (
+            "review" in url.lower() and "question" not in url.lower()
+        ):
+            review_submit_attempts += 1
+            print(f"  ea_step={step} review_submit attempt={review_submit_attempts} url={url[:90]}", flush=True)
+            if submit_review_application(sb):
+                return "submitted"
+            # CAPTCHA wall: don't burn the whole job budget (AUTO_FIX ~3–4 min).
+            captcha_unsolved = (
+                _page_has_recaptcha(sb) and not _recaptcha_cleared(sb)
+            )
+            if review_submit_attempts >= 3 and captcha_unsolved:
+                try:
+                    sample = (sb.get_text("body") or "")[:500].replace("\n", " | ")
+                    print(f"  review_recaptcha_blocked sample={sample!r}", flush=True)
+                    sb.save_screenshot("/opt/cursor/artifacts/indeed-review-stuck.png")
+                except Exception:
+                    pass
+                return "recaptcha"
+            if review_submit_attempts >= 5:
+                try:
+                    sample = (sb.get_text("body") or "")[:500].replace("\n", " | ")
+                    print(f"  review_stuck sample={sample!r}", flush=True)
+                    sb.save_screenshot("/opt/cursor/artifacts/indeed-review-stuck.png")
+                except Exception:
+                    pass
+                return "failed"
+            continue
+        fill_common_questions(sb)
+        # Resume card: prefer an existing Rafi resume if shown.
+        if "resume-selection" in url or "resume" in url.lower():
+            try:
+                sb.execute_script(
+                    """
+                    const cards=[...document.querySelectorAll('button, [role=button], label, div, li')];
+                    const el=cards.find(e => /rafi_resume|rafi resume|\\.docx/i.test(e.innerText||''));
+                    if (el) el.click();
+                    """
+                )
+            except Exception:
+                pass
+        clicked = click_next_or_submit(sb, allow_disabled=False)
+        print(f"  ea_step={step} clicked={clicked!r} url={url[:90]}", flush=True)
+        if not clicked:
+            # Review / questions: fill again, wait for CTA enable, then force-click.
+            time.sleep(1.5)
+            fill_common_questions(sb)
+            time.sleep(0.8)
+            if "review" in url.lower() or "question" in url.lower():
+                try:
+                    sb.driver.switch_to.default_content()
+                except Exception:
+                    pass
+                try:
+                    clicked = sb.execute_script(
+                        """
+                        const btns=[...document.querySelectorAll('button, [role=button], input[type=submit]')];
+                        const textOf = (b) => ((b.innerText||b.value||b.getAttribute('aria-label')||'')).trim().toLowerCase();
+                        const reject = (t) => /close|cancel|back|previous|preview|employer sees|download|edit/.test(t);
+                        const scored = btns.map(b => {
+                          const t=textOf(b);
+                          const r=b.getBoundingClientRect();
+                          let s = 999;
+                          if (/^submit your application|^submit application|^submit$/.test(t)) s = 0;
+                          else if (/^continue/.test(t)) s = 1;
+                          else if (/^next|^apply$/.test(t)) s = 2;
+                          return {b,t,r,s};
+                        }).filter(x => x.r.width>0 && x.r.height>0 && x.s<999 && !reject(x.t))
+                          .sort((a,b) => a.s-b.s);
+                        const el = scored[0]?.b;
+                        if(!el) return null;
+                        el.disabled=false; el.removeAttribute('disabled');
+                        el.setAttribute('aria-disabled','false');
+                        el.click();
+                        return (el.innerText||el.value||'').trim().slice(0,80);
+                        """
+                    )
+                except Exception:
+                    clicked = None
+            if not clicked:
+                try:
+                    sb.driver.switch_to.default_content()
+                except Exception:
+                    pass
+                clicked = click_next_or_submit(sb, allow_disabled=True)
+            if not clicked and "review" not in url.lower() and "questions" not in url.lower():
+                break
+            if not clicked:
+                stuck_questions += 1
+                if stuck_questions >= 6:
+                    try:
+                        sample = (sb.get_text("body") or "")[:400].replace("\n", " | ")
+                        print(f"  questions_stuck sample={sample!r}", flush=True)
+                        sb.save_screenshot(
+                            "/opt/cursor/artifacts/indeed-questions-stuck.png"
+                        )
+                    except Exception:
+                        pass
+                    break
+                continue
+            stuck_questions = 0
+        else:
+            stuck_questions = 0
+        time.sleep(1.5)
+        try:
+            body = sb.get_text("body") or ""
+            url = sb.get_current_url() or ""
+        except Exception:
+            body, url = "", ""
+        if _is_submitted(body, url):
+            return "submitted"
+        # Landed on review after Continue — dedicated submit next loop.
+        if "review-module" in (url or "").lower() or (
+            "review" in (url or "").lower() and "question" not in (url or "").lower()
+        ):
+            continue
+    return "failed"
+
+
+def main() -> int:
+    os.environ.setdefault("DISPLAY", ":1")
+    _patch_filelock_singleton()
+    proxy = ensure_warp()
+    if not RESUME.exists():
+        _emit({"error": "resume_missing", "path": str(RESUME)})
+        return 2
+
+    from seleniumbase import SB
+
+    # Re-assert singleton FileLock inside already-imported SB modules.
+    try:
+        from tools.indeed.filelock_patch import rebind_seleniumbase_filelock
+
+        rebind_seleniumbase_filelock()
+    except Exception as exc:
+        print(f"  filelock_rebind={exc!s}"[:160], flush=True)
+
+    prep = prepare_profile()
+    report = {
+        "portal": "indeed",
+        "source": "cloud-warp-uc",
+        "startedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "proxy": proxy,
+        "resume": str(RESUME),
+        "profilePrep": prep,
+        "counts": {
+            "applied": 0,
+            "external": 0,
+            "rejected": 0,
+            "blocked": 0,
+            "skipped": 0,
+            "seen": 0,
+        },
+        "applied": [],
+        "external": [],
+        "rejected": [],
+        "blocked": [],
+        "skipped": [],
+        "seen": [],
+        "ok": False,
+    }
+
+    with _stdout_to_stderr():
+      with SB(
+        uc=True,
+        headed=True,
+        proxy=proxy if proxy.startswith("socks5") else proxy,
+        user_data_dir=PROFILE,
+        chromium_arg="--no-sandbox,--disable-dev-shm-usage",
+      ) as sb:
+        try:
+            sb.set_default_timeout(4)
+        except Exception:
+            pass
+        try:
+            sb.set_window_size(1600, 1000)
+            sb.set_window_position(20, 40)
+        except Exception:
+            pass
+        sb.uc_open_with_reconnect("https://in.indeed.com/", 5)
+        time.sleep(2)
+        if not clear_cf(sb):
+            report["blocked"].append({"reason": "still_blocked_after_uc"})
+            report["counts"]["blocked"] = 1
+            report["blockerSummary"] = "indeed_cloudflare_still_blocked"
+            OUT.parent.mkdir(parents=True, exist_ok=True)
+            OUT.write_text(json.dumps(report, indent=2))
+            _emit(report)
+            return 5
+
+        seen_keys: set[str] = set()
+        for query, location in search_queries():
+            if report["counts"]["applied"] + report["counts"]["external"] >= MAX_APPLIES:
+                break
+            if report["counts"]["seen"] >= MAX_SEEN:
+                break
+            if not run_homepage_search(sb, query, location):
+                report["blocked"].append(
+                    {"reason": "search_blocked", "query": query, "location": location}
+                )
+                report["counts"]["blocked"] += 1
+                continue
+
+            # Collect job cards
+            cards = []
+            for sel in (
+                "a.jcs-JobTitle",
+                "h2.jobTitle a",
+                "a[data-jk]",
+                "a[href*='jk=']",
+            ):
+                try:
+                    cards = sb.find_elements(sel)
+                    if cards:
+                        break
+                except Exception:
+                    continue
+
+            hrefs = []
+            for c in cards:
+                try:
+                    href = c.get_attribute("href") or ""
+                    jk = c.get_attribute("data-jk") or ""
+                    t = (c.text or "").strip()
+                    if href:
+                        hrefs.append((t, href, jk))
+                except Exception:
+                    continue
+
+            for title_t, href, jk in hrefs[:12]:
+                if report["counts"]["applied"] + report["counts"]["external"] >= MAX_APPLIES:
+                    break
+                if report["counts"]["seen"] >= MAX_SEEN:
+                    break
+                key = jk or href.split("?")[0]
+                if key in seen_keys:
+                    continue
+                seen_keys.add(key)
+                report["counts"]["seen"] += 1
+                # Persist progress for the notification job even if interrupted.
+                try:
+                    OUT.parent.mkdir(parents=True, exist_ok=True)
+                    OUT.write_text(json.dumps(report, indent=2))
+                except Exception:
+                    pass
+
+                try:
+                    sb.uc_open_with_reconnect(href, 4)
+                    time.sleep(2)
+                    clear_cf(sb, attempts=2)
+                except Exception as e:
+                    report["rejected"].append({"title": title_t, "error": str(e)[:160]})
+                    report["counts"]["rejected"] += 1
+                    continue
+
+                page_title = sb.get_title() or title_t
+                try:
+                    body = sb.get_text("body") or ""
+                except Exception:
+                    body = ""
+                if blocked(page_title, body):
+                    report["blocked"].append({"reason": "job_page_blocked", "title": title_t})
+                    report["counts"]["blocked"] += 1
+                    continue
+                # location heuristic
+                loc_m = re.search(
+                    r"([A-Za-z].{0,40}(Hyderabad|Telangana|Remote|Bengaluru|Bangalore|Pune|Chennai|Mumbai|Noida|Gurgaon|Delhi)[^\n]{0,40})",
+                    body,
+                )
+                location = loc_m.group(1).strip() if loc_m else ""
+                company = ""
+                try:
+                    company = sb.get_text(
+                        "[data-company-name], .jobsearch-InlineCompanyRating a, [data-testid='inlineHeader-companyName']"
+                    )
+                except Exception:
+                    pass
+
+                item = {
+                    "title": page_title[:160],
+                    "company": (company or "")[:120],
+                    "location": location[:120],
+                    "url": sb.get_current_url(),
+                }
+                report["seen"].append(item)
+
+                reason = skip_reason(page_title, company, location, body[:1500])
+                if reason:
+                    item["reason"] = reason
+                    report["skipped"].append(item)
+                    report["counts"]["skipped"] += 1
+                    continue
+
+                print(
+                    f"JOB seen={report['counts']['seen']} title={page_title[:80]!r}",
+                    flush=True,
+                )
+                job_deadline = time.time() + int(
+                    os.environ.get("INDEED_JOB_TIMEOUT_SEC", "240")
+                )
+
+                # Prefer Easy Apply ("Apply with Indeed" is the current IN CTA).
+                applied = False
+                for sel in (
+                    "button.indeed-apply-button",
+                    "#indeedApplyButton",
+                    "button:contains('Apply with Indeed')",
+                    "button:contains('Easily apply')",
+                    "button:contains('Apply now')",
+                    "//button[contains(., 'Apply with Indeed') or contains(., 'Easily apply') or contains(., 'Apply now')]",
+                    "//a[contains(., 'Apply with Indeed') or contains(., 'Easily apply') or contains(., 'Apply now')]",
+                ):
+                    try:
+                        if sb.is_element_visible(sel, timeout=2):
+                            sb.click(sel)
+                            applied = True
+                            break
+                    except Exception:
+                        continue
+                if not applied:
+                    # JS fallback — SeleniumBase text selectors miss some CTA variants.
+                    try:
+                        clicked = sb.execute_script(
+                            """
+                            const cands=[...document.querySelectorAll('button, a, [role=button]')];
+                            const el=cands.find(e => /apply with indeed|easily apply|apply now/i.test(
+                              ((e.innerText||'') + ' ' + (e.getAttribute('aria-label')||'')).trim()
+                            ));
+                            if(!el) return null;
+                            el.click();
+                            return (el.innerText||el.getAttribute('aria-label')||'').slice(0,80);
+                            """
+                        )
+                        if clicked:
+                            applied = True
+                            print("JS_APPLY_CLICK", clicked, flush=True)
+                    except Exception:
+                        pass
+
+                if not applied:
+                    # Company site — open and mark external (full ATS fill is best-effort)
+                    for sel in (
+                        "button:contains('Apply on company site')",
+                        "a:contains('Apply on company site')",
+                        "//a[contains(., 'Apply on company site')]",
+                        "//button[contains(., 'Apply on company site')]",
+                    ):
+                        try:
+                            if sb.is_element_visible(sel, timeout=2):
+                                sb.click(sel)
+                                item["path"] = "external_opened"
+                                report["external"].append(item)
+                                report["counts"]["external"] += 1
+                                time.sleep(2)
+                                fill_common_questions(sb)
+                                applied = True
+                                print("EXTERNAL", page_title[:80], flush=True)
+                                break
+                        except Exception:
+                            continue
+                    if not applied:
+                        item["reason"] = "no_apply_button"
+                        report["skipped"].append(item)
+                        report["counts"]["skipped"] += 1
+                    continue
+
+                # Wait for SmartApply module navigation / modal hydration.
+                for _ in range(10):
+                    try:
+                        cur = sb.get_current_url() or ""
+                        txt = (sb.get_text("body") or "").lower()
+                    except Exception:
+                        cur, txt = "", ""
+                    if "smartapply.indeed.com" in cur or "indeedapply" in cur or "contact information" in txt or "continue" in txt:
+                        break
+                    time.sleep(0.5)
+                result = easy_apply_flow(sb, deadline=job_deadline)
+                item["path"] = "easy_apply"
+                item["result"] = result
+                if result == "submitted":
+                    report["applied"].append(item)
+                    report["counts"]["applied"] += 1
+                    print("APPLIED", page_title[:80], flush=True)
+                elif result == "external":
+                    report["external"].append(item)
+                    report["counts"]["external"] += 1
+                    print("EXTERNAL", page_title[:80], flush=True)
+                elif result == "recaptcha":
+                    item["reason"] = "easy_apply_recaptcha"
+                    report["blocked"].append(item)
+                    report["counts"]["blocked"] += 1
+                    print("RECAPTCHA", page_title[:80], flush=True)
+                else:
+                    item["reason"] = "easy_apply_incomplete"
+                    report["rejected"].append(item)
+                    report["counts"]["rejected"] += 1
+                    print("INCOMPLETE", page_title[:80], flush=True)
+
+                # Close Easy Apply modal / extra windows so the next job is clean.
+                try:
+                    sb.press_keys("body", "\ue00c")  # ESC
+                except Exception:
+                    pass
+                try:
+                    handles = sb.driver.window_handles
+                    if len(handles) > 1:
+                        current = sb.driver.current_window_handle
+                        for h in handles:
+                            if h != current:
+                                sb.driver.switch_to.window(h)
+                                sb.driver.close()
+                        sb.driver.switch_to.window(sb.driver.window_handles[0])
+                except Exception:
+                    pass
+                time.sleep(1)
+
+    report["finishedAt"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    applied_n = report["counts"]["applied"] + report["counts"]["external"]
+    # Success = at least one real apply; residual reCAPTCHA on later jobs is ok.
+    report["ok"] = applied_n > 0
+    report["date"] = report["finishedAt"][:10]
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    OUT.write_text(json.dumps(report, indent=2))
+    # Normalize for notification job
+    subprocess.run(
+        [
+            "node",
+            str(ROOT / "tools/indeed/daily_run_report.js"),
+            "write",
+            "--in",
+            str(OUT),
+            "--source",
+            "cloud-warp-uc",
+            "--out",
+            str(OUT),
+        ],
+        check=False,
+    )
+    _emit(report)
+    if applied_n > 0:
+        return 0
+    if report["counts"]["blocked"] > 0:
+        return 5
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

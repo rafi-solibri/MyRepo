@@ -1,13 +1,13 @@
 # Auto-fix & push (every daily automation run)
 
-**Mandatory for LinkedIn, Foundit, Cutshort, Naukri, Instahyre, Indeed (home), Notification, and Hotel Price Tracker.**
+**Mandatory for LinkedIn, Hitech City / Knowledge City, Foundit, Cutshort, Naukri, Instahyre, Indeed (home), Notification, and Hotel Price Tracker.**
 
 When a run hits a **code-fixable** issue or blocker, do not only report it. Fix the durable helper, push to the repo, and open a PR so the next cron picks it up from `main` (via ONE_TIME_LOADERS).
 
 ## Do this every run when applicable
 
 1. Prefer fixing under durable paths:
-   - `tools/{linkedin,foundit,cutshort,naukri,instahyre,indeed,hotels}/…`
+   - `tools/{linkedin,hitechcity,foundit,cutshort,naukri,instahyre,indeed,hotels}/…`
    - `scripts/*.sh` / `scripts/*.mjs`
    - `automation-prompts/*.md` (prompt corrections)
 2. Keep the change minimal and portal-scoped. Add/adjust a small test when filters/classifiers change.
@@ -45,7 +45,8 @@ git push -u origin HEAD
 | Blocker | Report only (owner action) |
 | --- | --- |
 | Portal Sign-in / missing cookies in snapshot | Desktop login → `verify-portal-logins.sh --strict` → Save snapshot |
-| Indeed Cloudflare on public-cloud IP | Home cron / My Machines `indeed-home` / `INDEED_HTTP_PROXY` |
+| Indeed Cloudflare hard-block after WARP+UC multi-strategy + IP rotate still exits 5 | Home cron / My Machines `indeed-home` / residential `INDEED_HTTP_PROXY` (intermittent Turnstile misses are code-fixed via `cf_bypass_uc.py`) |
+| Windows `agent worker` better-sqlite3 127/137 | Cursor packaging bug — use WSL (`scripts/fix-windows-agent-worker.ps1 -LaunchWsl`) |
 | Missing secrets (`RESEND_*`, proxy creds) | Set in Cursor secrets / dashboard |
 | CAPTCHA / email OTP / SMS walls | Cap ~3–4 min, mark blocked, continue |
 | Automations UI Agent instructions | API is read-only — rely on ONE_TIME_LOADERS + merge to `main` |

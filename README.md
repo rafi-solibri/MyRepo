@@ -16,6 +16,8 @@ See [`automation-prompts/README.md`](automation-prompts/README.md).
 
 Shared targets: **Expected CTC 65 LPA**, **Hyderabad + Remote/WFH**, **Rafi_Resume.docx**, company-website/ATS completion (not Easy Apply only).
 
+Campus-focused daily: **Hitech City / Knowledge City** (`automation-prompts/08-hitech-city.md`, `tools/hitechcity/`) — Knowledge City, Knowledge Park, Mindspace Madhapur and peer Grade-A Madhapur tenants via career portals + LinkedIn referrals.
+
 Issue log: [`automation-prompts/ISSUES_AND_FIXES.md`](automation-prompts/ISSUES_AND_FIXES.md).
 
 ## Portal login (required for daily cron)
@@ -52,3 +54,14 @@ See [`automation-prompts/HOME_AUTOMATIONS.md`](automation-prompts/HOME_AUTOMATIO
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\install-all-home-tasks.ps1
 ```
+
+## Windows private worker (My Machines)
+
+Native Windows `agent worker start` currently crashes with `better-sqlite3`
+NODE_MODULE_VERSION 127 vs 137. Use WSL:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\fix-windows-agent-worker.ps1 -LaunchWsl
+```
+
+Or inside Ubuntu WSL: `bash scripts/setup-wsl-agent-worker.sh --name job-apply-laptop`

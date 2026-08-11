@@ -10,6 +10,14 @@ Send a status email to rafi.success@gmail.com covering today’s results from AL
 Preferred source: HOME-LOCAL Task Scheduler runs (see automation-prompts/HOME_AUTOMATIONS.md).
 For EACH portal, load same-day JSON before composing the mail:
 
+Cloud automations to include:
+- LinkedIn Daily 9 AM (beb6ef8e-908f-11f1-ba66-0e7d0216e441)
+- Foundit Daily 9 AM (5d1b07b2-90a9-11f1-ba66-0e7d0216e441)
+- Cutshort Daily 9 AM (d6ba8b9d-9094-11f1-ba66-0e7d0216e441)
+- Naukri Daily 9 AM (003b88eb-909a-11f1-ba66-0e7d0216e441)
+- Instahyre Daily 9 AM (1d0ea682-9093-11f1-ba66-0e7d0216e441)
+- Hitech City / Knowledge City Daily (b65968f7-953d-11f1-ba66-0e7d0216e441) — campus career portals + LinkedIn referrals; read `/opt/cursor/artifacts/hitechcity-daily.json` / agent run when available
+
   bash scripts/fetch-home-result.sh linkedin --today
   bash scripts/fetch-home-result.sh foundit --today
   bash scripts/fetch-home-result.sh cutshort --today

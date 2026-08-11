@@ -22,13 +22,27 @@ PIP_INSTALL=("$PY" -m pip install --user --upgrade)
 if "$PY" -m pip install --help 2>/dev/null | grep -q -- '--break-system-packages'; then
   PIP_INSTALL+=(--break-system-packages)
 fi
-"${PIP_INSTALL[@]}" playwright beautifulsoup4 lxml requests pytest
+"${PIP_INSTALL[@]}" playwright beautifulsoup4 lxml requests pytest seleniumbase PyAutoGUI pysocks SpeechRecognition pydub
 
 # install-deps shells out to apt (escalating with sudo itself) and is
 # best-effort: if sudo/apt are unavailable the base image already ships the
 # needed libraries.
 "$PY" -m playwright install-deps chromium || true
 "$PY" -m playwright install chromium
+
+# Indeed Cloudflare bypass on public cloud: WARP SOCKS + SeleniumBase UC.
+# Best-effort — pods without apt/sudo still work once the package is snapshotted.
+if ! command -v warp-cli >/dev/null 2>&1; then
+  curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg \
+    | sudo gpg --yes --dearmor -o /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" \
+      | sudo tee /etc/apt/sources.list.d/cloudflare-client.list >/dev/null \
+    && sudo apt-get update -qq \
+    && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y cloudflare-warp python3-tk \
+    || echo "WARNING: cloudflare-warp install failed; Indeed cloud bypass needs it."
+else
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y python3-tk >/dev/null 2>&1 || true
+fi
 
 # --- 2. Resume assets -------------------------------------------------------
 bash scripts/bootstrap-job-assets.sh

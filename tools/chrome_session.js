@@ -59,6 +59,11 @@ function defaultPortalProfile(portal) {
 const PROFILES = {
   source: defaultSourceProfile(),
   linkedin: defaultPortalProfile("linkedin"),
+  // Hitech City campus flow reuses LinkedIn CDP (careers browse + referrals).
+  hitechcity:
+    process.env.HITECHCITY_CHROME_PROFILE ||
+    process.env.LINKEDIN_CHROME_PROFILE ||
+    defaultPortalProfile("linkedin"),
   naukri: defaultPortalProfile("naukri"),
   foundit: defaultPortalProfile("foundit"),
   cutshort: defaultPortalProfile("cutshort"),
@@ -68,6 +73,7 @@ const PROFILES = {
 
 const AUTH_COOKIES = {
   linkedin: ["li_at"],
+  hitechcity: ["li_at"],
   naukri: ["nauk_rt", "nauk_at"],
   foundit: ["MSSOAT"],
   cutshort: ["cutshort_authentication"],
