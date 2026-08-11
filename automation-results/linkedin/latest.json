@@ -3,7 +3,7 @@
   "source": "home-local",
   "date": "2026-08-11",
   "startedAt": null,
-  "finishedAt": "2026-08-11T11:46:34Z",
+  "finishedAt": "2026-08-11T06:36:47Z",
   "host": "NEM01-GBGR234",
   "ok": false,
   "counts": {
@@ -19,15 +19,14 @@
   "rejected": [],
   "blocked": [
     {
-      "reason": "linkedin_login_required",
-      "detail": "Windows ABE: Desktop cookies cannot sync into CDP profile. Primary linkedin and linkedin-alt both lacked a live li_at after CDP launch. Headed login opened; owner did not complete sign-in within wait window.",
-      "action": "bash scripts/home-headed-login.sh linkedin"
+      "reason": "windows_abe_one_time_login_required_in_cdp_profile",
+      "detail": "Chrome App-Bound Encryption prevents copying Desktop Default cookies into CDP user-data-dir. Headed login wait timed out after 4 minutes. Sign into LinkedIn once via: bash scripts/launch-chrome-cdp.sh linkedin"
     }
   ],
   "skipped": [],
   "seen": [],
-  "blockerSummary": "linkedin_login_required — run: bash scripts/home-headed-login.sh linkedin",
+  "blockerSummary": "Windows Chrome ABE: LinkedIn CDP profile needs one-time headed login at ~/.cursor/chrome-cdp-profiles/linkedin",
   "notes": [],
   "preflight": null,
-  "logPath": null
+  "logPath": "C:/Users/MohammedAhmed/.cursor/portal-home-logs/linkedin/linkedin-20260811T061123Z.log"
 }
