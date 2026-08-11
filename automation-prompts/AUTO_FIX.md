@@ -1,13 +1,13 @@
 # Auto-fix & push (every daily automation run)
 
-**Mandatory for LinkedIn, Foundit, Cutshort, Naukri, Instahyre, Indeed (home), Notification, and Hotel Price Tracker.**
+**Mandatory for LinkedIn, Hitech City / Knowledge City, Foundit, Cutshort, Naukri, Instahyre, Indeed (home), Notification, and Hotel Price Tracker.**
 
 When a run hits a **code-fixable** issue or blocker, do not only report it. Fix the durable helper, push to the repo, and open a PR so the next cron picks it up from `main` (via ONE_TIME_LOADERS).
 
 ## Do this every run when applicable
 
 1. Prefer fixing under durable paths:
-   - `tools/{linkedin,foundit,cutshort,naukri,instahyre,indeed,hotels}/…`
+   - `tools/{linkedin,hitechcity,foundit,cutshort,naukri,instahyre,indeed,hotels}/…`
    - `scripts/*.sh` / `scripts/*.mjs`
    - `automation-prompts/*.md` (prompt corrections)
 2. Keep the change minimal and portal-scoped. Add/adjust a small test when filters/classifiers change.

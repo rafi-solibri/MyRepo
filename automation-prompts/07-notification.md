@@ -13,6 +13,7 @@ Cloud automations to include:
 - Cutshort Daily 9 AM (d6ba8b9d-9094-11f1-ba66-0e7d0216e441)
 - Naukri Daily 9 AM (003b88eb-909a-11f1-ba66-0e7d0216e441)
 - Instahyre Daily 9 AM (1d0ea682-9093-11f1-ba66-0e7d0216e441)
+- Hitech City / Knowledge City Daily (b65968f7-953d-11f1-ba66-0e7d0216e441) — campus career portals + LinkedIn referrals; read `/opt/cursor/artifacts/hitechcity-daily.json` / agent run when available
 
 Indeed (IMPORTANT — home/local, not cloud Cloudflare):
 - Indeed runs on the home PC via `scripts/indeed-home-daily.sh` (residential IP).

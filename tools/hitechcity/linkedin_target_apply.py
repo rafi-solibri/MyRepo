@@ -1,0 +1,678 @@
+#!/usr/bin/env python3
+"""LinkedIn apply + referral outreach for premium Madhapur / Knowledge City companies."""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import time
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+from urllib.parse import quote
+
+from playwright.sync_api import Page, sync_playwright
+
+from tools.hitechcity.ats_fill import attempt_ats_apply, resume_path
+from tools.hitechcity.filters import (
+    company_name_match,
+    location_or_campus_ok,
+    skip_reason,
+    title_matches_senior_stack,
+)
+
+try:
+    from tools.linkedin.filters import location_allowed
+except Exception:
+    from linkedin.filters import location_allowed  # type: ignore
+
+CDP = os.environ.get("HITECHCITY_CDP") or os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222")
+COMPANIES_PATH = Path(__file__).with_name("companies.json")
+REPORT = Path(
+    os.environ.get("HITECHCITY_LINKEDIN_REPORT", "/opt/cursor/artifacts/hitechcity-linkedin.json")
+)
+MAX_APPLY = int(os.environ.get("HITECHCITY_MAX_APPLY", "35"))
+MAX_REFERRALS = int(os.environ.get("HITECHCITY_MAX_REFERRALS", "12"))
+MAX_SCAN = int(os.environ.get("HITECHCITY_MAX_SCAN", "40"))
+TPR = os.environ.get("HITECHCITY_TPR", "r1209600")  # 14 days
+
+TITLES = [
+    "Solution Architect",
+    "Technical Architect",
+    "Software Architect",
+    "Technical Lead",
+    "Engineering Manager",
+    "Principal .NET",
+    ".NET Architect",
+    "Azure Architect",
+]
+
+REFERRAL_NOTE = (
+    "Hi {first} — I'm a Principal Analyst (.NET/Azure, ~15 yrs) targeting senior architect/"
+    "tech-lead roles in Hyderabad (Madhapur / Knowledge City). I applied for {role} at {company}. "
+    "If you're open to it, I'd appreciate a referral or a brief 15–20 min screen. Thanks!"
+)
+
+
+@dataclass
+class LiReport:
+    startedAt: str
+    finishedAt: str = ""
+    applied: list[dict[str, Any]] = field(default_factory=list)
+    external: list[dict[str, Any]] = field(default_factory=list)
+    referrals: list[dict[str, Any]] = field(default_factory=list)
+    blocked: list[dict[str, Any]] = field(default_factory=list)
+    skipped: list[dict[str, Any]] = field(default_factory=list)
+
+
+def load_companies() -> list[dict[str, Any]]:
+    data = json.loads(COMPANIES_PATH.read_text())
+    return sorted(data.get("companies", []), key=lambda c: (c.get("priority", 9), c.get("name", "")))
+
+
+def dismiss(page: Page) -> None:
+    for sel in (
+        "button.artdeco-modal__dismiss",
+        "button[aria-label='Dismiss']",
+        "button:has-text('Not now')",
+        "button:has-text('No thanks')",
+    ):
+        try:
+            el = page.locator(sel).first
+            if el.count() and el.is_visible():
+                el.click(timeout=800)
+        except Exception:
+            pass
+
+
+def company_jobs_url(slug: str, title: str) -> str:
+    return (
+        f"https://www.linkedin.com/company/{slug}/jobs/"
+        f"?keywords={quote(title)}&location={quote('Hyderabad')}"
+    )
+
+
+def extract_job_ids(page: Page) -> list[str]:
+    try:
+        html = page.content()
+    except Exception:
+        html = ""
+    ids = []
+    seen = set()
+    for m in re.finditer(r"(?:jobPosting:|/jobs/view/|currentJobId=)(\d{6,})", html):
+        jid = m.group(1)
+        if jid not in seen:
+            seen.add(jid)
+            ids.append(jid)
+    return ids[:MAX_SCAN]
+
+
+def card_meta(page: Page) -> dict[str, str]:
+    try:
+        return page.evaluate(
+            """() => {
+              const bodyHead = (document.body.innerText || '').slice(0, 2500);
+              const lines = bodyHead.split('\\n').map(s => s.trim()).filter(Boolean);
+              const skip = /^(home|my network|jobs|messaging|notifications|more|me|for business|learning|\\d+|\\d+ notifications?)$/i;
+              const content = lines.filter(l => !skip.test(l) && !/^skip to\\b/i.test(l) && l.length > 1);
+              let role = '';
+              let company = '';
+              // Title format: "Role | Company | LinkedIn"
+              const dt = (document.title || '').replace(/\\s*\\|\\s*LinkedIn\\s*$/i, '');
+              const parts = dt.split('|').map(s => s.trim()).filter(Boolean);
+              if (parts.length >= 2) {
+                role = parts[0];
+                company = parts[1];
+              }
+              const a = document.querySelector(
+                '.job-details-jobs-unified-top-card__company-name a, .jobs-unified-top-card__company-name a'
+              );
+              if (a && (a.innerText || '').trim()) company = (a.innerText || '').trim();
+              if (!company && content[0] && content[0].length < 80) company = content[0];
+              if (!role && content[1] && content[1].length < 160) role = content[1];
+              if (!role) {
+                const hit = content.find(l => /architect|engineer|manager|lead|principal|staff|director|consultant/i.test(l));
+                if (hit) role = hit;
+              }
+              let locText = '';
+              for (const l of content.slice(0, 15)) {
+                // Prefer explicit city / India / remote lines (never bare Hybrid/On-site alone).
+                if (/(hyderabad|telangana|madhapur|bengaluru|bangalore|chennai|pune|gachibowli|\\bremote\\b|\\bindia\\b)/i.test(l)
+                    && l.length < 180) {
+                  locText = l.slice(0, 220);
+                  break;
+                }
+              }
+              const easy = /easy apply/i.test(bodyHead);
+              const m = window.location.href.match(/\\/jobs\\/view\\/(\\d+)/);
+              return {
+                role: role || '',
+                company: company || '',
+                location: locText,
+                easy: easy ? '1' : '0',
+                job_id: m ? m[1] : '',
+                url: window.location.href,
+                bodyHead: bodyHead.slice(0, 500)
+              };
+            }"""
+        )
+    except Exception:
+        return {}
+
+
+def fill_easy_apply(page: Page) -> tuple[str, str]:
+    """Minimal Easy Apply walker — confirm submitted only."""
+    # Prefer existing durable helper if importable as subprocess would be heavy; keep local.
+    try:
+        from tools.resume_paths import ensure_resume_aliases
+
+        ensure_resume_aliases()
+    except Exception:
+        pass
+
+    for _ in range(10):
+        dismiss(page)
+        body = ""
+        try:
+            body = page.locator("body").inner_text()[:5000]
+        except Exception:
+            pass
+        if re.search(r"application (sent|submitted)|applied to ", body, re.I):
+            return "applied", "easy_apply_submitted"
+
+        # Resume choose / upload
+        try:
+            if page.get_by_text(re.compile(r"Rafi_Resume", re.I)).count():
+                page.get_by_text(re.compile(r"Rafi_Resume", re.I)).first.click(timeout=1000)
+        except Exception:
+            pass
+        try:
+            for inp in page.locator("input[type='file']").all()[:2]:
+                inp.set_input_files(resume_path())
+        except Exception:
+            pass
+
+        # Common fields
+        for label, val in (
+            (r"phone|mobile", "8790251698"),
+            (r"email", "rafi.success@gmail.com"),
+            (r"current.*(ctc|salary|compensation)", "5200000"),
+            (r"expected.*(ctc|salary|compensation)", "6500000"),
+            (r"notice", "0"),
+            (r"years of experience|total experience", "15"),
+            (r"linkedin", "https://linkedin.com/in/rafi-ahmed-mohammed-abdul-151644ba"),
+            (r"city", "Hyderabad"),
+        ):
+            try:
+                labs = page.locator("label")
+                for i in range(min(labs.count(), 40)):
+                    t = (labs.nth(i).inner_text(timeout=300) or "").strip().lower()
+                    if re.search(label, t, re.I):
+                        fid = labs.nth(i).get_attribute("for")
+                        ctrl = (
+                            page.locator(f"#{fid}").first
+                            if fid
+                            else labs.nth(i).locator("xpath=following::input[1]").first
+                        )
+                        if ctrl.count():
+                            ctrl.fill(val)
+                        break
+            except Exception:
+                pass
+
+        # Next / Review / Submit
+        clicked = False
+        for name in ("Submit application", "Review", "Next", "Continue", "Send application"):
+            try:
+                btn = page.get_by_role("button", name=re.compile(rf"^{re.escape(name)}$", re.I))
+                if btn.count() and btn.first.is_visible() and btn.first.is_enabled():
+                    btn.first.click(timeout=2500, force=True)
+                    clicked = True
+                    time.sleep(1.3)
+                    break
+            except Exception:
+                continue
+        if not clicked:
+            break
+    body = ""
+    try:
+        body = page.locator("body").inner_text()[:5000]
+    except Exception:
+        pass
+    if re.search(r"application (sent|submitted)|applied to ", body, re.I):
+        return "applied", "easy_apply_submitted"
+    return "blocked", "easy_apply_incomplete"
+
+
+def follow_external(page: Page, meta: dict[str, str]) -> dict[str, Any]:
+    row = {
+        "company": meta.get("company", ""),
+        "role": meta.get("role", ""),
+        "job_id": meta.get("job_id", ""),
+        "url": meta.get("url", ""),
+        "path": "linkedin-external-ats",
+        "status": "blocked",
+        "reason": "",
+    }
+    apply_btn = None
+    # New LinkedIn job view often uses <a aria-label="Apply on company website">Apply</a>.
+    for sel in (
+        "a[aria-label*='Apply on company website']",
+        "button[aria-label*='Apply on company website']",
+        "button.jobs-apply-button",
+        "a.jobs-apply-button",
+        "button.artdeco-button--primary:has-text('Apply')",
+        "a:text-is('Apply')",
+    ):
+        locb = page.locator(sel).first
+        try:
+            if locb.count() and locb.is_visible():
+                label = ((locb.inner_text() or "") + " " + (locb.get_attribute("aria-label") or "")).strip().lower()
+                if "easy apply" in label and "company website" not in label:
+                    row["status"] = "skipped"
+                    row["reason"] = "easy_apply_not_external"
+                    return row
+                if "apply" in label:
+                    apply_btn = locb
+                    break
+        except Exception:
+            continue
+    if not apply_btn:
+        try:
+            exact = page.get_by_role("link", name=re.compile(r"^Apply$", re.I))
+            if exact.count() and exact.first.is_visible():
+                apply_btn = exact.first
+        except Exception:
+            pass
+    if not apply_btn:
+        try:
+            exact = page.get_by_role("button", name=re.compile(r"^Apply$", re.I))
+            if exact.count() and exact.first.is_visible():
+                apply_btn = exact.first
+        except Exception:
+            pass
+    if not apply_btn:
+        row["status"] = "skipped"
+        row["reason"] = "no_apply_button"
+        return row
+
+    before = set(page.context.pages)
+    try:
+        with page.context.expect_page(timeout=8000) as ni:
+            apply_btn.click(timeout=4000)
+        ats = ni.value
+    except Exception:
+        time.sleep(2)
+        ats = page
+        for p2 in page.context.pages:
+            if p2 not in before and p2 != page:
+                ats = p2
+                break
+    try:
+        ats.wait_for_load_state("domcontentloaded", timeout=30000)
+    except Exception:
+        pass
+    time.sleep(1.5)
+    status, reason = attempt_ats_apply(ats, time_cap_s=180)
+    row["status"] = status
+    row["reason"] = reason
+    row["atsUrl"] = ats.url
+    if ats != page:
+        try:
+            ats.close()
+        except Exception:
+            pass
+    return row
+
+
+def message_poster(page: Page, company: str, role: str) -> dict[str, Any]:
+    row = {"company": company, "role": role, "status": "blocked", "reason": "", "path": "poster-message"}
+    try:
+        # Poster / hiring team message CTA near job
+        btn = page.locator(
+            "button:has-text('Message'), a:has-text('Message'), "
+            ".jobs-poster__name button, .hirer-card button:has-text('Message')"
+        ).first
+        if not (btn.count() and btn.is_visible()):
+            row["status"] = "skipped"
+            row["reason"] = "no_poster_message"
+            return row
+        btn.click(timeout=3000)
+        time.sleep(1.2)
+        first = "there"
+        note = REFERRAL_NOTE.format(first=first, role=role, company=company)
+        box = page.locator("div.msg-form__contenteditable, div[role='textbox']").first
+        if not box.count():
+            row["reason"] = "no_compose_box"
+            return row
+        box.click()
+        box.fill(note[:280] if len(note) > 280 else note)
+        send = page.locator("button.msg-form__send-button, button:has-text('Send')").first
+        if send.count() and send.is_enabled():
+            send.click(timeout=2500)
+            time.sleep(1.0)
+            row["status"] = "sent"
+            row["reason"] = "poster_message"
+            return row
+        row["reason"] = "send_disabled"
+        return row
+    except Exception as e:
+        row["reason"] = f"message_error:{e}"
+        return row
+
+
+def referral_people_search(page: Page, company: str, role: str) -> dict[str, Any]:
+    """Send one connection note to a senior engineer / recruiter at company (soft referral)."""
+    row = {
+        "company": company,
+        "role": role,
+        "status": "blocked",
+        "reason": "",
+        "path": "people-referral",
+    }
+    q = f"{company} Hyderabad (Engineering Manager OR Architect OR Recruiter OR Talent)"
+    url = f"https://www.linkedin.com/search/results/people/?keywords={quote(q)}&origin=GLOBAL_SEARCH_HEADER"
+    try:
+        page.goto(url, wait_until="domcontentloaded", timeout=60000)
+    except Exception as e:
+        row["reason"] = f"people_nav:{e}"
+        return row
+    time.sleep(2.5)
+    dismiss(page)
+    # Prefer Connect with note
+    try:
+        connect = page.get_by_role("button", name=re.compile(r"^Connect$", re.I)).first
+        if not (connect.count() and connect.is_visible()):
+            # Try More → Connect on first result
+            more = page.get_by_role("button", name=re.compile(r"More", re.I)).first
+            if more.count() and more.is_visible():
+                more.click(timeout=1500)
+                time.sleep(0.5)
+            connect = page.get_by_role("button", name=re.compile(r"Connect", re.I)).first
+        if not (connect.count() and connect.is_visible()):
+            row["status"] = "skipped"
+            row["reason"] = "no_connect_cta"
+            return row
+        connect.click(timeout=2500)
+        time.sleep(1.0)
+        add_note = page.get_by_role("button", name=re.compile(r"Add a note", re.I)).first
+        if add_note.count() and add_note.is_visible():
+            add_note.click(timeout=1500)
+            time.sleep(0.6)
+        note = REFERRAL_NOTE.format(first="there", role=role or "a senior role", company=company)
+        ta = page.locator("textarea[name='message'], textarea#custom-message, textarea").first
+        if ta.count():
+            ta.fill(note[:300])
+        send = page.get_by_role("button", name=re.compile(r"^Send$", re.I)).first
+        if send.count() and send.is_enabled():
+            send.click(timeout=2500)
+            time.sleep(1.0)
+            row["status"] = "sent"
+            row["reason"] = "connection_note"
+            return row
+        # Without premium, Send without note may be only option
+        send2 = page.get_by_role("button", name=re.compile(r"^Send$", re.I)).first
+        if send2.count() and send2.is_enabled():
+            send2.click(timeout=2000)
+            row["status"] = "sent"
+            row["reason"] = "connection_no_note"
+            return row
+        row["reason"] = "invite_incomplete"
+        return row
+    except Exception as e:
+        row["reason"] = f"referral_error:{e}"
+        return row
+
+
+def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
+    companies = companies or load_companies()
+    # Focus priority 1–2 first
+    companies = [c for c in companies if int(c.get("priority", 9)) <= 2][:22]
+    report = LiReport(startedAt=datetime.now(timezone.utc).isoformat())
+    seen_jobs: set[str] = set()
+    applied = 0
+    referrals = 0
+
+    with sync_playwright() as p:
+        browser = p.chromium.connect_over_cdp(CDP)
+        context = browser.contexts[0]
+        page = context.pages[0] if context.pages else context.new_page()
+        page.set_default_timeout(45000)
+
+        page.goto("https://www.linkedin.com/feed/", wait_until="domcontentloaded", timeout=60000)
+        time.sleep(2.5)
+        url_l = (page.url or "").lower()
+        logged_in = bool(
+            page.locator(
+                "img.global-nav__me-photo, button.global-nav__primary-link-me-menu-trigger, "
+                ".global-nav__me, a[data-control-name='identity_welcome_message']"
+            ).count()
+        ) or bool(re.search(r"/feed|/in/", url_l))
+        login_wall = any(
+            x in url_l for x in ("/login", "/uas/login", "/checkpoint", "authwall", "/signup")
+        )
+        if login_wall or not logged_in:
+            # Avoid false positives from footer "Sign in" text when already authenticated.
+            body_head = ""
+            try:
+                body_head = page.locator("body").inner_text()[:500]
+            except Exception:
+                pass
+            if login_wall or re.search(r"sign in to linkedin|join linkedin|welcome back", body_head, re.I):
+                report.blocked.append({"reason": "linkedin_login_required", "url": page.url})
+                report.finishedAt = datetime.now(timezone.utc).isoformat()
+                REPORT.write_text(json.dumps(asdict(report), indent=2))
+                print(json.dumps({"error": "linkedin_login_required", "url": page.url}))
+                return report
+
+        for company in companies:
+            if applied >= MAX_APPLY:
+                break
+            name = company["name"]
+            slug = company.get("linkedinSlug") or ""
+            if not slug:
+                report.skipped.append({"company": name, "reason": "missing_linkedin_slug"})
+                continue
+
+            job_ids: list[str] = []
+            for title in TITLES[:5]:
+                if len(job_ids) >= MAX_SCAN:
+                    break
+                url = company_jobs_url(slug, title)
+                print(f"LI COMPANY JOBS {name} | {title}", flush=True)
+                try:
+                    page.goto(url, wait_until="domcontentloaded", timeout=70000)
+                except Exception as e:
+                    report.blocked.append({"company": name, "title": title, "reason": f"search_nav:{e}"})
+                    continue
+                time.sleep(2.5)
+                dismiss(page)
+                for jid in extract_job_ids(page):
+                    if jid not in seen_jobs:
+                        job_ids.append(jid)
+                        seen_jobs.add(jid)
+
+            job_ids = job_ids[: min(len(job_ids), MAX_SCAN)]
+            print(f"LI IDS {name} count={len(job_ids)}", flush=True)
+            for jid in job_ids:
+                if applied >= MAX_APPLY:
+                    break
+                view = f"https://www.linkedin.com/jobs/view/{jid}/"
+                try:
+                    page.goto(view, wait_until="domcontentloaded", timeout=60000)
+                except Exception as e:
+                    report.blocked.append({"company": name, "job_id": jid, "reason": f"view_nav:{e}"})
+                    continue
+                time.sleep(2.0)
+                dismiss(page)
+                meta = card_meta(page) or {}
+                company_found = meta.get("company") or name
+                role = meta.get("role") or ""
+                loc = meta.get("location") or ""
+                meta["job_id"] = jid
+                meta["url"] = view
+
+                if not company_name_match(name, company_found) and not company_name_match(
+                    name, meta.get("bodyHead") or ""
+                ):
+                    print(f"LI SKIP company_mismatch {company_found!r} | {role[:60]}", flush=True)
+                    report.skipped.append(
+                        {
+                            "target": name,
+                            "company": company_found,
+                            "role": role,
+                            "job_id": jid,
+                            "reason": "company_mismatch",
+                        }
+                    )
+                    continue
+                reason = skip_reason(role, company_found)
+                if reason:
+                    print(f"LI SKIP {reason} | {role[:60]}", flush=True)
+                    report.skipped.append(
+                        {"company": company_found, "role": role, "job_id": jid, "reason": reason}
+                    )
+                    continue
+                if not title_matches_senior_stack(role):
+                    print(f"LI SKIP title_not_senior | {role[:60]}", flush=True)
+                    report.skipped.append(
+                        {
+                            "company": company_found,
+                            "role": role,
+                            "job_id": jid,
+                            "reason": "title_not_senior",
+                        }
+                    )
+                    continue
+                loc_blob = f"{loc} {meta.get('bodyHead') or ''}"
+                if not location_allowed(loc) and not location_or_campus_ok(loc, "", loc_blob):
+                    print(f"LI SKIP location | {loc[:80]} | {role[:50]}", flush=True)
+                    report.skipped.append(
+                        {
+                            "company": company_found,
+                            "role": role,
+                            "location": loc,
+                            "job_id": jid,
+                            "reason": "location",
+                        }
+                    )
+                    continue
+
+                try:
+                    top = page.locator("body").inner_text()[:1800]
+                    if re.search(r"\bApplied\b", top) and not re.search(r"Easy Apply", top[:500], re.I):
+                        report.skipped.append(
+                            {
+                                "company": company_found,
+                                "role": role,
+                                "job_id": jid,
+                                "reason": "already_applied",
+                            }
+                        )
+                        continue
+                except Exception:
+                    pass
+
+                easy = page.locator(
+                    "button.jobs-apply-button:has-text('Easy Apply'), "
+                    "button[aria-label*='Easy Apply'], button:has-text('Easy Apply')"
+                ).first
+                if easy.count() and easy.is_visible():
+                    print(f"LI EASY {company_found} | {role} | {jid}", flush=True)
+                    try:
+                        easy.click(timeout=3000)
+                    except Exception:
+                        report.blocked.append(
+                            {
+                                "company": company_found,
+                                "role": role,
+                                "job_id": jid,
+                                "reason": "easy_click_failed",
+                            }
+                        )
+                        continue
+                    time.sleep(1.2)
+                    status, why = fill_easy_apply(page)
+                    row = {
+                        "company": company_found or name,
+                        "role": role,
+                        "job_id": jid,
+                        "location": loc,
+                        "url": view,
+                        "path": "linkedin-easy-apply",
+                        "status": status,
+                        "reason": why,
+                        "campusCompany": name,
+                    }
+                    if status == "applied":
+                        report.applied.append(row)
+                        applied += 1
+                        if referrals < MAX_REFERRALS:
+                            msg = message_poster(page, company_found or name, role)
+                            report.referrals.append(msg)
+                            if msg.get("status") == "sent":
+                                referrals += 1
+                            elif referrals < MAX_REFERRALS:
+                                ref = referral_people_search(page, company_found or name, role)
+                                report.referrals.append(ref)
+                                if ref.get("status") == "sent":
+                                    referrals += 1
+                    else:
+                        report.blocked.append(row)
+                    dismiss(page)
+                    try:
+                        page.keyboard.press("Escape")
+                    except Exception:
+                        pass
+                    continue
+
+                print(f"LI EXT {company_found} | {role} | {jid}", flush=True)
+                ext = follow_external(page, meta)
+                ext["campusCompany"] = name
+                ext["location"] = loc
+                if ext["status"] == "applied":
+                    report.external.append(ext)
+                    report.applied.append(ext)
+                    applied += 1
+                    if referrals < MAX_REFERRALS:
+                        ref = referral_people_search(page, company_found or name, role)
+                        report.referrals.append(ref)
+                        if ref.get("status") == "sent":
+                            referrals += 1
+                elif ext["status"] == "skipped":
+                    report.skipped.append(ext)
+                else:
+                    report.blocked.append(ext)
+
+        # Extra referral sweep for priority-1 companies even if thin inventory
+        for company in companies:
+            if referrals >= MAX_REFERRALS:
+                break
+            if int(company.get("priority", 9)) > 1:
+                continue
+            ref = referral_people_search(page, company["name"], "Solution Architect / Technical Lead")
+            report.referrals.append(ref)
+            if ref.get("status") == "sent":
+                referrals += 1
+
+    report.finishedAt = datetime.now(timezone.utc).isoformat()
+    REPORT.parent.mkdir(parents=True, exist_ok=True)
+    REPORT.write_text(json.dumps(asdict(report), indent=2))
+    print(
+        json.dumps(
+            {
+                "applied": len(report.applied),
+                "external": len(report.external),
+                "referrals": sum(1 for r in report.referrals if r.get("status") == "sent"),
+                "blocked": len(report.blocked),
+                "skipped": len(report.skipped),
+            }
+        )
+    )
+    return report
+
+
+if __name__ == "__main__":
+    run()

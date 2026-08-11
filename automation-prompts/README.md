@@ -17,7 +17,7 @@ Alternatively, paste each file’s full fenced `text` block into the matching au
 | Locations | Hyderabad / Telangana **or** Remote / WFH |
 | Apply bias | When uncertain on Hyd/remote senior .NET/cloud → **APPLY** |
 | Apply paths | Easy/Quick Apply **and** company website / ATS |
-| Durable runners | `tools/{linkedin,naukri,cutshort,foundit,instahyre,indeed}/…` |
+| Durable runners | `tools/{linkedin,hitechcity,naukri,cutshort,foundit,instahyre,indeed}/…` |
 
 ## First command every run
 
@@ -25,10 +25,10 @@ Alternatively, paste each file’s full fenced `text` block into the matching au
 bash scripts/preflight-portal-run.sh <portal>
 ```
 
-Use one of: `linkedin`, `foundit`, `cutshort`, `naukri`, `instahyre`, `indeed`.
+Use one of: `linkedin`, `hitechcity`, `foundit`, `cutshort`, `naukri`, `instahyre`, `indeed`.
 The preflight bootstraps the resume, syncs Chrome sessions without clobbering
 existing authenticated CDP profiles, and fails fast if the portal login is not
-available in the saved environment snapshot.
+available in the saved environment snapshot. `hitechcity` reuses the LinkedIn CDP profile.
 
 ## Auto-fix & push (every run)
 
@@ -65,5 +65,6 @@ See STEP 0 in [04-naukri-general.md](04-naukri-general.md). Indeed Cloudflare: [
 | Instahyre Daily 9 AM | [05-instahyre.md](05-instahyre.md) |
 | Indeed Daily (home local) | [06-indeed.md](06-indeed.md) + [INDEED_HOME_AUTOMATION.md](INDEED_HOME_AUTOMATION.md) |
 | Notification Job 11 AM | [07-notification.md](07-notification.md) |
+| Hitech City / Knowledge City Daily | [08-hitech-city.md](08-hitech-city.md) |
 
 See [ISSUES_AND_FIXES.md](ISSUES_AND_FIXES.md) for what was broken in the last cron and what still needs your login/secrets.

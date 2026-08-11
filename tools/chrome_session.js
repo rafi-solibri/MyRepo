@@ -12,6 +12,8 @@ const HOME = process.env.HOME || os.homedir();
 const PROFILES = {
   source: process.env.CHROME_SOURCE_PROFILE || path.join(HOME, ".config/google-chrome"),
   linkedin: process.env.LINKEDIN_CHROME_PROFILE || "/home/ubuntu/chrome-cdp-profile",
+  // Hitech City campus flow reuses LinkedIn CDP (careers browse + referrals).
+  hitechcity: process.env.HITECHCITY_CHROME_PROFILE || process.env.LINKEDIN_CHROME_PROFILE || "/home/ubuntu/chrome-cdp-profile",
   naukri: process.env.NAUKRI_CHROME_PROFILE || "/home/ubuntu/.naukri-chrome-profile",
   foundit: process.env.FOUNDIT_CHROME_PROFILE || "/home/ubuntu/.config/chrome-foundit",
   cutshort: process.env.CUTSHORT_CHROME_PROFILE || "/home/ubuntu/chrome-cutshort-profile",
@@ -21,6 +23,7 @@ const PROFILES = {
 
 const AUTH_COOKIES = {
   linkedin: ["li_at"],
+  hitechcity: ["li_at"],
   naukri: ["nauk_rt", "nauk_at"],
   foundit: ["MSSOAT"],
   cutshort: ["cutshort_authentication"],

@@ -55,7 +55,16 @@ Read and OBEY the full instructions in automation-prompts/06-indeed.md (the fenc
 https://cursor.com/automations/8e34696c-90b1-11f1-ba66-0e7d0216e441
 
 ```text
-Read and OBEY the full instructions in automation-prompts/07-notification.md (the fenced text block). Compile status from all apply automations and email rafi.success@gmail.com. For Indeed, run `bash scripts/fetch-indeed-home-result.sh --today` first and include applied/external/rejected/blocked/skipped from that home-local JSON (do not use cloud Cloudflare as Indeed when same-day home results exist).
+Read and OBEY the full instructions in automation-prompts/07-notification.md (the fenced text block). Compile status from all apply automations and email rafi.success@gmail.com. For Indeed, run `bash scripts/fetch-indeed-home-result.sh --today` first and include applied/external/rejected/blocked/skipped from that home-local JSON (do not use cloud Cloudflare as Indeed when same-day home results exist). Include Hitech City / Knowledge City Daily totals from `/opt/cursor/artifacts/hitechcity-daily.json` when present.
+```
+
+## Hitech City / Knowledge City Daily
+https://cursor.com/automations/b65968f7-953d-11f1-ba66-0e7d0216e441
+
+Rename this automation in the UI to **Hitech City / Knowledge City Daily** (it is currently Untitled). Paste once:
+
+```text
+Read and OBEY the full instructions in automation-prompts/08-hitech-city.md (the fenced text block). Run `bash scripts/preflight-portal-run.sh hitechcity` first, then `bash scripts/launch-chrome-cdp.sh hitechcity`. Use resumes/Rafi_Resume.docx. Execute the daily Hitech City / Knowledge City / Madhapur premium-campus career-portal + LinkedIn referral apply job now via `python3 tools/hitechcity/daily_apply.py`.
 ```
 
 ## Optional: General Daily 9 AM — DISABLE THIS
