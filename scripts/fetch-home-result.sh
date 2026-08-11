@@ -34,12 +34,30 @@ for arg in "$@"; do
   esac
 done
 
-OUT_DIR="${HOME_RESULT_CACHE:-/opt/cursor/artifacts}"
-if [[ ! -d "$OUT_DIR" ]]; then
+# Cloud agents use /opt/cursor/artifacts. On Windows (MSYS/MinGW), that path is
+# Git's virtual /opt and Node resolves bare /opt/... to C:\opt\... — different
+# trees. Prefer repo artifacts on Windows unless HOME_RESULT_CACHE is set.
+if [[ -n "${HOME_RESULT_CACHE:-}" ]]; then
+  OUT_DIR="$HOME_RESULT_CACHE"
+elif [[ "${OSTYPE:-}" == msys* || "${OSTYPE:-}" == cygwin* || "${OSTYPE:-}" == mingw* ]]; then
+  OUT_DIR="$ROOT/artifacts"
+elif [[ -d /opt/cursor/artifacts ]]; then
+  OUT_DIR="/opt/cursor/artifacts"
+else
   OUT_DIR="$ROOT/artifacts"
 fi
 mkdir -p "$OUT_DIR"
 OUT="$OUT_DIR/${PORTAL}-home-result.json"
+
+# Node on Windows needs a drive path; bash /opt/... is not the same as C:\opt\...
+node_fs_path() {
+  local p="$1"
+  if command -v cygpath >/dev/null 2>&1; then
+    cygpath -m "$p"
+  else
+    printf '%s' "$p"
+  fi
+}
 
 empty_json() {
   local reason="$1"
@@ -68,18 +86,20 @@ git show "$REMOTE/$BRANCH:$TARGET_BLOB" > "$OUT" 2>/dev/null
 show_ok=$?
 set -e
 
+OUT_NODE="$(node_fs_path "$OUT")"
+
 if [[ "$show_ok" -ne 0 && "$WANT_TODAY" -eq 1 ]]; then
   if git show "$REMOTE/$BRANCH:automation-results/$PORTAL/latest.json" > "$OUT" 2>/dev/null; then
     node -e "
       const fs=require('fs');
-      const p='$OUT';
+      const p=process.argv[1];
       const r=JSON.parse(fs.readFileSync(p,'utf8'));
       r.notes = Array.isArray(r.notes) ? r.notes : [];
       r.notes.push('no_same_day_home_result_for_$TODAY');
       r.sameDay = false;
       r.requestedDate = '$TODAY';
       fs.writeFileSync(p, JSON.stringify(r, null, 2) + '\n');
-    "
+    " "$OUT_NODE"
   else
     echo "ERROR: no $PORTAL home result on $REMOTE/$BRANCH" >&2
     empty_json "${PORTAL}_home_result_missing" > "$OUT"
@@ -95,12 +115,12 @@ fi
 
 node -e "
   const fs=require('fs');
-  const p='$OUT';
+  const p=process.argv[1];
   const r=JSON.parse(fs.readFileSync(p,'utf8'));
   r.sameDay = r.date === '$TODAY';
   r.fetchedAt = new Date().toISOString();
   fs.writeFileSync(p, JSON.stringify(r, null, 2) + '\n');
-"
+" "$OUT_NODE"
 
 if [[ "$PATH_ONLY" -eq 1 ]]; then
   echo "$OUT"
