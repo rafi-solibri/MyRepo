@@ -41,6 +41,17 @@ function defaultPortalProfile(portal) {
 
   if (IS_WIN) {
     const root = path.join(HOME, ".cursor", "chrome-cdp-profiles");
+    // Prefer linkedin-alt when primary CDP profile has no li_at name but alt does.
+    // Live session may still need headed login (ABE / stale encrypted blobs).
+    if (portal === "linkedin") {
+      const primary = path.join(root, "linkedin");
+      const alt = path.join(root, "linkedin-alt");
+      // cookieNames is hoisted; avoid AUTH_COOKIES here (defined after PROFILES).
+      const primaryOk = cookieNames(primary).includes("li_at");
+      const altOk = cookieNames(alt).includes("li_at");
+      if (!primaryOk && altOk) return alt;
+      return primary;
+    }
     return path.join(root, portal === "linkedin_alt" ? "linkedin-alt" : portal);
   }
 
@@ -170,11 +181,15 @@ function portalStatus(portal) {
   const sourceLocked =
     fs.existsSync(sourceDb) && sourceNames.size === 0 && !destHasAuth;
   let reason = "login_required_sync_desktop_chrome_and_save_snapshot";
-  if (destHasAuth) reason = "ok";
-  else if (sourceLocked) reason = "chrome_cookies_locked_close_chrome_and_resync";
+  if (destHasAuth) {
+    // Name presence in SQLite ≠ live decryptable session on Windows ABE.
+    reason = IS_WIN
+      ? "sqlite_auth_cookie_present_verify_live_cdp"
+      : "ok";
+  } else if (sourceLocked) reason = "chrome_cookies_locked_close_chrome_and_resync";
   else if (IS_WIN)
     reason =
-      "windows_abe_one_time_login_required_in_cdp_profile_launch_chrome_cdp";
+      "windows_abe_one_time_login_required_run_home_headed_login_sh";
   return {
     ok: destHasAuth,
     portal,
@@ -187,6 +202,9 @@ function portalStatus(portal) {
     need,
     isWindows: IS_WIN,
     reason,
+    liveHint: IS_WIN
+      ? "bash scripts/home-headed-login.sh " + portal
+      : undefined,
   };
 }
 

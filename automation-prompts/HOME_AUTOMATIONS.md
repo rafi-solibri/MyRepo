@@ -87,12 +87,15 @@ Chrome 127+ **App-Bound Encryption** prevents copying cookies from Desktop Defau
 another `--user-data-dir`. Do this once per portal:
 
 1. Close all Chrome windows.
-2. `bash scripts/launch-chrome-cdp.sh linkedin` (headed).
-3. Sign into LinkedIn in that window; leave the profile logged in.
+2. Prefer: `bash scripts/home-headed-login.sh linkedin` (opens login, waits for Enter, live-verifies).
+   Or: `bash scripts/launch-chrome-cdp.sh linkedin` then sign in in the headed window.
+3. Leave that CDP profile logged in (`%USERPROFILE%\.cursor\chrome-cdp-profiles\linkedin`).
 4. Repeat for foundit / cutshort / naukri / instahyre / indeed.
-5. Re-run `bash scripts/preflight-portal-run.sh <portal>` — it should report `destHasAuth: true`.
+5. Re-run `bash scripts/preflight-portal-run.sh <portal>` — SQLite may show `destHasAuth: true`, but
+   LinkedIn also needs a live CDP check (`node tools/linkedin/wait_for_cdp_login.js`).
 
 Do **not** rely on Desktop Default cookie sync on Windows for CDP automation.
+SQLite cookie **names** alone can be stale under App-Bound Encryption — Chrome may drop them on load.
 
 ## Notification email
 
