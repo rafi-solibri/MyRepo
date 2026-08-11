@@ -3,7 +3,7 @@
   "source": "home-local",
   "date": "2026-08-11",
   "startedAt": null,
-  "finishedAt": "2026-08-11T07:15:50Z",
+  "finishedAt": "2026-08-11T12:32:26.619Z",
   "host": "NEM01-GBGR234",
   "ok": false,
   "counts": {
@@ -19,14 +19,13 @@
   "rejected": [],
   "blocked": [
     {
-      "reason": "naukri_login_required",
-      "detail": "Windows Chrome App-Bound Encryption (v20 cookies): synced cookie names exist but CDP profile cannot decrypt them. Default user-data-dir rejects DevTools. One-time headed login required at ~/.cursor/chrome-cdp-profiles/naukri"
+      "reason": "naukri_login_required_run_home-headed-login.sh"
     }
   ],
   "skipped": [],
   "seen": [],
-  "blockerSummary": "Windows Chrome ABE (v20): Naukri CDP profile needs one-time headed login at ~/.cursor/chrome-cdp-profiles/naukri (cookie sync from Default cannot decrypt)",
+  "blockerSummary": "naukri_login_required_run_home-headed-login.sh",
   "notes": [],
   "preflight": null,
-  "logPath": "C:/Users/MohammedAhmed/.cursor/portal-home-logs/naukri/naukri-20260811T070121Z.log"
+  "logPath": null
 }
