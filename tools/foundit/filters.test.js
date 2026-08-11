@@ -61,7 +61,22 @@ assert.strictEqual(
     maximumExperience: { years: 15 },
   }).pass,
   true,
-  "remote in description should satisfy location"
+  "remote in description should satisfy location when card is country-only"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 3.1,
+    title: ".NET Technical Architect with Azure",
+    companyName: "Example",
+    locations: [{ city: "Noida", country: "India" }],
+    description: "Our remote-first approach gives flexibility. .NET Core Azure.",
+    skills: [{ text: ".NET Core" }],
+    minimumExperience: { years: 15 },
+    maximumExperience: { years: 17 },
+  }).pass,
+  false,
+  "JD remote-first must not override explicit non-Hyd city"
 );
 
 assert.strictEqual(
