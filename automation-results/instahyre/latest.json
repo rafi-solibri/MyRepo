@@ -1,0 +1,32 @@
+{
+  "portal": "instahyre",
+  "source": "home-local",
+  "date": "2026-08-11",
+  "startedAt": null,
+  "finishedAt": "2026-08-11T07:26:34Z",
+  "host": "NEM01-GBGR234",
+  "ok": false,
+  "counts": {
+    "applied": 0,
+    "external": 0,
+    "rejected": 0,
+    "blocked": 1,
+    "skipped": 0,
+    "seen": 0
+  },
+  "applied": [],
+  "external": [],
+  "rejected": [],
+  "blocked": [
+    {
+      "reason": "instahyre_login_required",
+      "detail": "Windows Chrome App-Bound Encryption (v20 cookies): synced cookie names exist but CDP profile cannot decrypt them (sessionLen=0). One-time headed login required at ~/.cursor/chrome-cdp-profiles/instahyre"
+    }
+  ],
+  "skipped": [],
+  "seen": [],
+  "blockerSummary": "Windows Chrome ABE (v20): Instahyre CDP profile needs one-time headed login at ~/.cursor/chrome-cdp-profiles/instahyre (cookie sync from Default cannot decrypt)",
+  "notes": [],
+  "preflight": null,
+  "logPath": "C:/Users/MohammedAhmed/.cursor/portal-home-logs/instahyre/instahyre-20260811T071745Z.log"
+}
