@@ -58,7 +58,7 @@ PYTHONPATH=. python3 -c "from pathlib import Path; from tools.hotels.send_resend
 - [ ] Emailed HTML with calendars **first** + CSVs to `rafi.success@gmail.com`
 - [ ] Confirmed delivery via `get-email`
 - [ ] Updated automation memory with the new Resend email id
-- [ ] If a code-fixable scraper/report/send bug was hit: patch `tools/hotels/`, follow `automation-prompts/AUTO_FIX.md` (commit + push + draft PR)
+- [ ] If a code-fixable scraper/report/send bug was hit: patch `tools/hotels/`, follow `automation-prompts/AUTO_FIX.md` (commit + push + ready PR + `bash scripts/auto-merge-fix-pr.sh`)
 
 ## Auto-fix & push (MANDATORY)
 

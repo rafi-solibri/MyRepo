@@ -19,6 +19,7 @@ for p in "${PORTALS[@]}"; do
   bash "$ROOT/scripts/portal-home-daily.sh" "$p"
   rc=$?
   set -e
+  bash "$ROOT/scripts/merge-open-fix-prs.sh" || true
   restore_main
   echo "######## END $p rc=$rc ########"
   [[ "$rc" -eq 0 ]] || FAILED+=("$p:$rc")
@@ -30,6 +31,7 @@ set +e
 bash "$ROOT/scripts/notification-home-daily.sh"
 nrc=$?
 set -e
+bash "$ROOT/scripts/merge-open-fix-prs.sh" || true
 restore_main
 echo "######## END notification rc=$nrc ########"
 [[ "$nrc" -eq 0 ]] || FAILED+=("notification:$nrc")

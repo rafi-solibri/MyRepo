@@ -7,6 +7,10 @@ replicas** run in the evening on your residential IP + local Chrome logins via:
 2. Cursor CLI (`agent`) on this machine
 3. Same prompts as cloud (`automation-prompts/0*.md`)
 
+Every run must **auto-fix → push a ready PR → merge** (`AUTO_FIX.md`,
+`scripts/auto-merge-fix-pr.sh`). Batch runners also sweep leftovers with
+`scripts/merge-open-fix-prs.sh`.
+
 ## What gets installed
 
 | Scheduled task | Default time (local) | Script |

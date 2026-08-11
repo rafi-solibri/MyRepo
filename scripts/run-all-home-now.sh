@@ -20,9 +20,11 @@ echo "root=$ROOT log=$BATCH_LOG"
 
 restore_main() {
   cd "$ROOT" || return 1
-  # Detach from agent fix-branches so scripts/ stay available.
+  # Detach from agent fix-branches so scripts/ stay available; pick up merges.
   if git rev-parse --git-dir >/dev/null 2>&1; then
+    git fetch origin main >/dev/null 2>&1 || true
     git checkout -f main >/dev/null 2>&1 || git checkout -f master >/dev/null 2>&1 || true
+    git pull --ff-only origin main >/dev/null 2>&1 || true
   fi
   if [[ ! -f "$ROOT/scripts/portal-home-daily.sh" ]]; then
     echo "ERROR: missing $ROOT/scripts/portal-home-daily.sh after checkout"
@@ -43,6 +45,8 @@ for p in "${PORTALS[@]}"; do
   bash "$ROOT/scripts/portal-home-daily.sh" "$p"
   rc=$?
   set -e
+  # Safety net: merge any leftover open fix PRs the agent pushed but did not merge.
+  bash "$ROOT/scripts/merge-open-fix-prs.sh" || true
   restore_main || true
   echo "######## END $p rc=$rc ########"
   if [[ "$rc" -ne 0 ]]; then
