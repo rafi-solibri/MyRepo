@@ -8,17 +8,67 @@ const path = require("path");
 const { execFileSync } = require("child_process");
 
 const HOME = process.env.HOME || os.homedir();
+const IS_WIN =
+  process.platform === "win32" ||
+  process.env.OS === "Windows_NT" ||
+  Boolean(process.env.MSYSTEM);
+
+function windowsLocalAppData() {
+  if (process.env.LOCALAPPDATA) return process.env.LOCALAPPDATA;
+  const up = process.env.USERPROFILE || HOME;
+  return path.join(up, "AppData", "Local");
+}
+
+function defaultSourceProfile() {
+  if (process.env.CHROME_SOURCE_PROFILE) return process.env.CHROME_SOURCE_PROFILE;
+  if (IS_WIN) {
+    return path.join(windowsLocalAppData(), "Google", "Chrome", "User Data");
+  }
+  return path.join(HOME, ".config", "google-chrome");
+}
+
+function defaultPortalProfile(portal) {
+  const envKey = {
+    linkedin: "LINKEDIN_CHROME_PROFILE",
+    naukri: "NAUKRI_CHROME_PROFILE",
+    foundit: "FOUNDIT_CHROME_PROFILE",
+    cutshort: "CUTSHORT_CHROME_PROFILE",
+    instahyre: "INSTAHYRE_CHROME_PROFILE",
+    indeed: "INDEED_CHROME_PROFILE",
+    linkedin_alt: "LINKEDIN_CHROME_PROFILE_ALT",
+  }[portal];
+  if (envKey && process.env[envKey]) return process.env[envKey];
+
+  if (IS_WIN) {
+    const root = path.join(HOME, ".cursor", "chrome-cdp-profiles");
+    return path.join(root, portal === "linkedin_alt" ? "linkedin-alt" : portal);
+  }
+
+  const linux = {
+    linkedin: "/home/ubuntu/chrome-cdp-profile",
+    naukri: "/home/ubuntu/.naukri-chrome-profile",
+    foundit: "/home/ubuntu/.config/chrome-foundit",
+    cutshort: "/home/ubuntu/chrome-cutshort-profile",
+    instahyre: "/home/ubuntu/chrome-instahyre-profile",
+    indeed: "/home/ubuntu/chrome-indeed-profile",
+    linkedin_alt: "/home/ubuntu/chrome-linkedin-profile",
+  };
+  return linux[portal];
+}
 
 const PROFILES = {
-  source: process.env.CHROME_SOURCE_PROFILE || path.join(HOME, ".config/google-chrome"),
-  linkedin: process.env.LINKEDIN_CHROME_PROFILE || "/home/ubuntu/chrome-cdp-profile",
+  source: defaultSourceProfile(),
+  linkedin: defaultPortalProfile("linkedin"),
   // Hitech City campus flow reuses LinkedIn CDP (careers browse + referrals).
-  hitechcity: process.env.HITECHCITY_CHROME_PROFILE || process.env.LINKEDIN_CHROME_PROFILE || "/home/ubuntu/chrome-cdp-profile",
-  naukri: process.env.NAUKRI_CHROME_PROFILE || "/home/ubuntu/.naukri-chrome-profile",
-  foundit: process.env.FOUNDIT_CHROME_PROFILE || "/home/ubuntu/.config/chrome-foundit",
-  cutshort: process.env.CUTSHORT_CHROME_PROFILE || "/home/ubuntu/chrome-cutshort-profile",
-  instahyre: process.env.INSTAHYRE_CHROME_PROFILE || "/home/ubuntu/chrome-instahyre-profile",
-  indeed: process.env.INDEED_CHROME_PROFILE || "/home/ubuntu/chrome-indeed-profile",
+  hitechcity:
+    process.env.HITECHCITY_CHROME_PROFILE ||
+    process.env.LINKEDIN_CHROME_PROFILE ||
+    defaultPortalProfile("linkedin"),
+  naukri: defaultPortalProfile("naukri"),
+  foundit: defaultPortalProfile("foundit"),
+  cutshort: defaultPortalProfile("cutshort"),
+  instahyre: defaultPortalProfile("instahyre"),
+  indeed: defaultPortalProfile("indeed"),
 };
 
 const AUTH_COOKIES = {
@@ -31,18 +81,58 @@ const AUTH_COOKIES = {
   indeed: ["__Secure-PassportAuthProxy-BearerToken", "CTK"],
 };
 
+function cookiesDbPath(profileRoot) {
+  const candidates = [
+    path.join(profileRoot, "Default", "Network", "Cookies"),
+    path.join(profileRoot, "Default", "Cookies"),
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  return candidates[0];
+}
+
+function resolvePython() {
+  if (process.env.PYTHON_BIN) return process.env.PYTHON_BIN;
+  const candidates = IS_WIN
+    ? ["py", "python", "python3", "C:\\Python314\\python.exe", "C:\\Python313\\python.exe"]
+    : ["python3", "python"];
+  for (const bin of candidates) {
+    try {
+      const args = bin === "py" ? ["-3", "-c", "print(1)"] : ["-c", "print(1)"];
+      execFileSync(bin, args, { stdio: "ignore" });
+      return bin;
+    } catch {
+      /* try next */
+    }
+  }
+  return "python3";
+}
+
 function cookieNames(profileRoot) {
-  const db = path.join(profileRoot, "Default", "Cookies");
+  const db = cookiesDbPath(profileRoot);
   if (!fs.existsSync(db)) return [];
-  const tmp = path.join(os.tmpdir(), `cookies-check-${process.pid}.db`);
-  fs.copyFileSync(db, tmp);
+  const tmp = path.join(os.tmpdir(), `cookies-check-${process.pid}-${Date.now()}.db`);
   try {
-    // Prefer python sqlite (always present); avoid adding better-sqlite3 dep.
-    const out = execFileSync(
-      "python3",
-      ["-c", `import sqlite3; c=sqlite3.connect(${JSON.stringify(tmp)}); print("\\n".join(r[0] for r in c.execute("select name from cookies"))); c.close()`],
-      { encoding: "utf8" }
-    );
+    fs.copyFileSync(db, tmp);
+  } catch (err) {
+    // Chrome locks Network/Cookies while running — caller must close Chrome or kill for sync.
+    return [];
+  }
+  try {
+    const py = resolvePython();
+    const pyArgs =
+      py === "py"
+        ? [
+            "-3",
+            "-c",
+            `import sqlite3; c=sqlite3.connect(${JSON.stringify(tmp)}); print("\\n".join(r[0] for r in c.execute("select name from cookies"))); c.close()`,
+          ]
+        : [
+            "-c",
+            `import sqlite3; c=sqlite3.connect(${JSON.stringify(tmp)}); print("\\n".join(r[0] for r in c.execute("select name from cookies"))); c.close()`,
+          ];
+    const out = execFileSync(py, pyArgs, { encoding: "utf8" });
     return out.split("\n").map((s) => s.trim()).filter(Boolean);
   } catch {
     return [];
@@ -76,6 +166,15 @@ function portalStatus(portal) {
   const need = AUTH_COOKIES[portal];
   const sourceHasAuth = need.some((n) => sourceNames.has(n));
   const destHasAuth = need.some((n) => destNames.has(n));
+  const sourceDb = cookiesDbPath(PROFILES.source);
+  const sourceLocked =
+    fs.existsSync(sourceDb) && sourceNames.size === 0 && !destHasAuth;
+  let reason = "login_required_sync_desktop_chrome_and_save_snapshot";
+  if (destHasAuth) reason = "ok";
+  else if (sourceLocked) reason = "chrome_cookies_locked_close_chrome_and_resync";
+  else if (IS_WIN)
+    reason =
+      "windows_abe_one_time_login_required_in_cdp_profile_launch_chrome_cdp";
   return {
     ok: destHasAuth,
     portal,
@@ -83,10 +182,11 @@ function portalStatus(portal) {
     source: PROFILES.source,
     sourceHasAuth,
     destHasAuth,
+    sourceCookiesDb: sourceDb,
+    sourcePossiblyLocked: sourceLocked,
     need,
-    reason: destHasAuth
-      ? "ok"
-      : "login_required_sync_desktop_chrome_and_save_snapshot",
+    isWindows: IS_WIN,
+    reason,
   };
 }
 
@@ -104,7 +204,12 @@ function syncSessions() {
 
 function statusReport() {
   const sourceNames = new Set(cookieNames(PROFILES.source));
-  const report = { source: PROFILES.source, portals: {} };
+  const report = {
+    source: PROFILES.source,
+    sourceCookiesDb: cookiesDbPath(PROFILES.source),
+    isWindows: IS_WIN,
+    portals: {},
+  };
   for (const [portal, need] of Object.entries(AUTH_COOKIES)) {
     const dest = PROFILES[portal];
     const destNames = new Set(cookieNames(dest));
@@ -121,12 +226,14 @@ function statusReport() {
 module.exports = {
   PROFILES,
   AUTH_COOKIES,
+  cookiesDbPath,
   cookieNames,
   hasAuth,
   portalStatus,
   checkPortal,
   syncSessions,
   statusReport,
+  IS_WIN,
 };
 
 if (require.main === module) {
@@ -135,6 +242,23 @@ if (require.main === module) {
     syncSessions();
   } else if (cmd === "check") {
     process.exit(checkPortal(process.argv[3] || ""));
+  } else if (cmd === "path") {
+    const key = process.argv[3] || "source";
+    const p = PROFILES[key];
+    if (!p) {
+      console.error(`Unknown profile key: ${key}`);
+      process.exit(2);
+    }
+    process.stdout.write(p);
+  } else if (cmd === "cookies-db") {
+    const key = process.argv[3] || "source";
+    const root = PROFILES[key];
+    if (!root) {
+      console.error(`Unknown profile key: ${key}`);
+      process.exit(2);
+    }
+    process.stdout.write(cookiesDbPath(root));
+  } else {
+    console.log(JSON.stringify(statusReport(), null, 2));
   }
-  console.log(JSON.stringify(statusReport(), null, 2));
 }

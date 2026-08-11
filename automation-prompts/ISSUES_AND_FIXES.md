@@ -148,6 +148,18 @@ opened as a draft PR — not left as report-only notes.
 | Google `$7` UI crumbs became fake ₹609 calendar mins | Reject USD &lt; `$12` / INR &lt; ₹1000 in Google parsers |
 | Same-day Resend idempotency key collision on cron re-run | Idempotency key now includes `HHMMSS` stamp in `automation.py` |
 
+## Fixed for 2026-08-11 Windows home daily
+
+| Issue | Fix |
+| --- | --- |
+| Home LinkedIn preflight failed: `source Chrome profile missing: /home/ubuntu/.config/google-chrome` | `tools/chrome_session.js` + `sync-chrome-sessions.sh` detect Windows and use `%LOCALAPPDATA%/Google/Chrome/User Data` + `~/.cursor/chrome-cdp-profiles/<portal>` |
+| Cookie auth check missed Chrome 120+ path | Read `Default/Network/Cookies` then `Default/Cookies` |
+| Chrome lock blocked cookie copy mid-sync | Sync may stop `chrome.exe` when `HOME_CHROME_SYNC_ALLOW_KILL=1` (default) so CDP profiles can refresh |
+| `launch-chrome-cdp.sh` could not find Chrome / forced headless on Git Bash | Resolve `chrome.exe` under Program Files; headed by default on Windows |
+| Windows sync hung on full `cp -a` of Chrome Default (multi-GB) | Without rsync, sync only cookies/prefs/Local Storage essentials |
+| Windows Store `python3` stub broke preflight/CDP wait | `scripts/resolve-python.sh` + preflight/launch use real Python314 |
+| Windows Chrome ABE (v20) cookie copy → LinkedIn login wall in CDP | Sync skips Default→CDP cookie copy when `app_bound_encrypted_key` present; one-time headed login per `~/.cursor/chrome-cdp-profiles/<portal>` |
+
 ## Fixed for 2026-08-11 Windows private worker crash
 
 | Issue | Fix |

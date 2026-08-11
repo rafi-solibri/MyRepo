@@ -69,4 +69,11 @@ See STEP 0 in [04-naukri-general.md](04-naukri-general.md). Indeed Cloudflare: [
 | Notification Job 11 AM | [07-notification.md](07-notification.md) |
 | Hitech City / Knowledge City Daily | [08-hitech-city.md](08-hitech-city.md) |
 
+### Home-local evening replicas (cloud can stay ON)
+
+Run a second pass on this PC at **5 PM** (cloud morning automations stay On):
+
+→ **[HOME_AUTOMATIONS.md](HOME_AUTOMATIONS.md)**  
+→ Windows: `powershell -ExecutionPolicy Bypass -File scripts\install-all-home-tasks.ps1`
+
 See [ISSUES_AND_FIXES.md](ISSUES_AND_FIXES.md) for what was broken in the last cron and what still needs your login/secrets.
