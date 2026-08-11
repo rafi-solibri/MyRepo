@@ -38,14 +38,18 @@ _ROOT = Path(__file__).resolve().parents[2]
 def _artifacts_dir() -> Path:
     if os.environ.get("LINKEDIN_ARTIFACTS"):
         return Path(os.environ["LINKEDIN_ARTIFACTS"])
+    # Windows: Git Bash `/opt/cursor` ≠ Python `C:\opt\cursor`. Prefer repo artifacts.
+    if (
+        os.name == "nt"
+        or os.environ.get("OS") == "Windows_NT"
+        or bool(os.environ.get("MSYSTEM"))
+    ):
+        d = _ROOT / "artifacts"
+        d.mkdir(parents=True, exist_ok=True)
+        return d
     cloud = Path("/opt/cursor/artifacts")
     if cloud.is_dir():
         return cloud
-    # Git Bash on Windows: /opt → %LOCALAPPDATA%\Programs\Git\opt (Python does not see POSIX /opt)
-    local = os.environ.get("LOCALAPPDATA") or ""
-    git_opt = Path(local) / "Programs" / "Git" / "opt" / "cursor" / "artifacts"
-    if git_opt.is_dir():
-        return git_opt
     d = _ROOT / "artifacts"
     d.mkdir(parents=True, exist_ok=True)
     return d
