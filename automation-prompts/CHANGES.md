@@ -47,6 +47,19 @@
 | Indeed | `chrome_probe.js` + proxy-aware preflight; `daily_apply.js` gate; Windows home task installer; cloud automation stay OFF |
 | Prompts | Apply-bias + title-first + 40–50+ volume; runners referenced; ENV_READINESS updated |
 
+## 2026-08-11 Hitech City / Knowledge City Daily
+
+New campus-focused automation (same profile/CTC/resume rules as portal dailies):
+
+| Area | Detail |
+| --- | --- |
+| Automation | `b65968f7-953d-11f1-ba66-0e7d0216e441` (rename Untitled → **Hitech City / Knowledge City Daily**) |
+| Prompt | `automation-prompts/08-hitech-city.md` + ONE_TIME_LOADERS entry |
+| Company list | `tools/hitechcity/companies.json` — Knowledge City / Knowledge Park / Mindspace Madhapur / The V / Cyber Pearl / peer Grade-A tenants |
+| Runner | `python3 tools/hitechcity/daily_apply.py` — career portals first, then LinkedIn company applies + referral notes |
+| CDP | `hitechcity` portal alias reuses LinkedIn Chrome profile |
+| Notification | `07-notification.md` includes this automation’s totals |
+
 ## 2026-08-11 Windows agent worker ABI
 
 - Documented Cursor Windows `better-sqlite3` 127/137 crash (reinstall useless)
@@ -60,6 +73,7 @@ Cursor Automations API from this agent is **read-only** (`get-automation` only).
 **You still must** (not fixable in code alone):
 1. Keep **cloud Indeed Daily OFF**; use home cron / private worker
 2. On Windows laptop: start the worker via **WSL** (not native `agent worker start`) until Cursor fixes the package
-3. Re-paste **all** updated apply prompts after merge
-4. Set `RESEND_FROM_EMAIL` for Notification
-5. Keep General Daily disabled
+3. Re-paste **all** updated apply prompts after merge (including **08-hitech-city** loader)
+4. Rename Untitled automation → **Hitech City / Knowledge City Daily**
+5. Set `RESEND_FROM_EMAIL` for Notification
+6. Keep General Daily disabled

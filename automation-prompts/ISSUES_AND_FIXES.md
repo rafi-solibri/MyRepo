@@ -6,6 +6,20 @@ See [AUTO_FIX.md](AUTO_FIX.md). Code-fixable blockers discovered during any dail
 automation must be patched in durable helpers, pushed on a feature branch, and
 opened as a draft PR — not left as report-only notes.
 
+## 2026-08-11 Hitech City / Knowledge City Daily
+
+| Issue | Fix |
+| --- | --- |
+| No campus-focused daily (Knowledge City / Knowledge Park / Mindspace Madhapur) | Added `tools/hitechcity/` + `automation-prompts/08-hitech-city.md` for automation `b65968f7-953d-11f1-ba66-0e7d0216e441` |
+| Career portals ignored vs job boards | `daily_apply.py` runs LinkedIn company-targeted applies + referrals, then company careers ATS |
+| Untitled automation / missing loader | Documented rename + ONE_TIME_LOADERS paste (owner must paste — API read-only) |
+| False `linkedin_login_required` from footer “Sign in” text | Login check uses nav/me photo + URL walls (`/login`, authwall), not body substring |
+| Career scraper opened US roles / Amazon passport walls | Bad-city link filter + `passport.amazon.jobs` auth-host detection; skip non-Hyd before ATS burn |
+| LinkedIn AI job search removed classic `job-card-container` list | `linkedin_target_apply.py` uses `/company/{slug}/jobs/` HTML job IDs → `/jobs/view/{id}` apply path |
+| `card_meta` JS shadowed `location` / empty role on new job view | Renamed to `locText`; parse `document.title` + content lines under nav chrome |
+| Location false-skip: bare `hitec` matched inside “Architect” | Word-boundary / `hitec city` tokens only; prefer explicit city lines |
+| External Apply missed on new job view | Match `<a aria-label="Apply on company website">` + exact Apply link/button |
+
 ## Fixed for 2026-08-10 Indeed SmartApply (post-Cloudflare)
 
 | Issue | Fix |
