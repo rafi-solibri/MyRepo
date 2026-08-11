@@ -29,6 +29,10 @@ as a **ready** PR (not draft), and merged with `bash scripts/auto-merge-fix-pr.s
 | Issue | Fix |
 | --- | --- |
 | Home LinkedIn blocked: Windows ABE cannot sync Desktop `li_at`; SQLite “preserved” `linkedin-alt` auth was stale and Chrome dropped it on load | `tools/linkedin/wait_for_cdp_login.js` live CDP probe; `launch-chrome-cdp.sh` opens login + warns; `chrome_session.js` prefers alt only when primary lacks `li_at` name and clarifies ABE headed-login reason; owner: `bash scripts/home-headed-login.sh linkedin` |
+| Preflight `chrome_session check linkedin` exit 3 while live CDP has `li_at` (Cookies DB locked / ABE) | `checkPortal` falls back to `wait_for_cdp_login.js` live probe on Windows / locked SQLite |
+| Easy Apply CTA is `<a aria-label="Easy Apply to this job">` (hashed classes); helper only matched `<button>` → false `no Easy Apply button` | `linkedin_easy_apply.py` matches anchor CTAs, opens `/jobs/view/{id}`, force/mouse click |
+| Account toast “You reached today’s Easy Apply limit” looked like click no-op | Detect limit toast → `easy_apply_daily_limit` blocked + stop batch; dismiss Got it |
+| External runner crashed when `apply-report.json` missing | `linkedin_external_apply.py` continues with `PRIORITY_IDS` only |
 
 ## Fixed for 2026-08-11 Notification home fetch (Windows)
 

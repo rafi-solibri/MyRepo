@@ -224,8 +224,33 @@ function portalStatus(portal) {
   };
 }
 
-function checkPortal(portal) {
+def checkPortal(portal) {
   const result = portalStatus(portal);
+  // Windows ABE / locked Cookies DB: SQLite names lie while Chrome is open.
+  // Prefer a live CDP probe when LinkedIn/Hitech City check would false-fail.
+  if (
+    !result.ok &&
+    (portal === "linkedin" || portal === "hitechcity") &&
+    (result.sourcePossiblyLocked || result.isWindows)
+  ) {
+    try {
+      const script = path.join(__dirname, "linkedin", "wait_for_cdp_login.js");
+      if (fs.existsSync(script)) {
+        execFileSync(process.execPath, [script], {
+          stdio: ["ignore", "pipe", "pipe"],
+          timeout: 45000,
+          env: { ...process.env, NODE_PATH: path.join(__dirname, "node_modules") },
+        });
+        result.ok = true;
+        result.destHasAuth = true;
+        result.reason = "live_cdp_li_at_ok";
+        result.liveVerified = true;
+      }
+    } catch (err) {
+      result.liveVerified = false;
+      result.liveError = String(err && err.message ? err.message : err).slice(0, 240);
+    }
+  }
   console.log(JSON.stringify(result, null, 2));
   if (result.reason === "unknown_portal") return 2;
   return result.ok ? 0 : 3;

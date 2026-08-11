@@ -1057,9 +1057,81 @@ def _apply_modal(page: Page):
     return page.locator("[role='dialog']").first
 
 
+def _easy_apply_daily_limit_hit(page: Page) -> bool:
+    """Account cap — CTA still renders but LinkedIn shows a limit toast instead of the form."""
+    try:
+        body = (page.locator("body").inner_text(timeout=2000) or "")[:2500]
+    except Exception:
+        body = ""
+    return bool(
+        re.search(
+            r"You reached today.?s Easy Apply limit|limit Easy Apply submissions|"
+            r"continue applying tomorrow",
+            body,
+            re.I,
+        )
+    )
+
+
+def _dismiss_easy_apply_limit_toast(page: Page) -> None:
+    for sel in ("button:has-text('Got it')", "button:has-text('Got It')"):
+        try:
+            loc = page.locator(sel).first
+            if loc.count() and loc.is_visible():
+                loc.click(timeout=1500)
+                time.sleep(0.4)
+                return
+        except Exception:
+            continue
+
+
+def _easy_apply_cta(scope, page: Page):
+    """2026 job view uses <a aria-label='Easy Apply to this job'>, not only buttons."""
+    selectors = [
+        "a[aria-label*='Easy Apply to this job']",
+        "a[aria-label*='Easy Apply']",
+        "button.jobs-apply-button",
+        "button:has-text('Easy Apply')",
+        "button[aria-label*='Easy Apply']",
+    ]
+    for root in (scope, page):
+        for sel in selectors:
+            loc = root.locator(sel).first
+            try:
+                if loc.count() and loc.is_visible():
+                    label = (
+                        (loc.inner_text() or "")
+                        + " "
+                        + (loc.get_attribute("aria-label") or "")
+                    ).lower()
+                    if "easy apply" in label:
+                        return loc
+            except Exception:
+                continue
+    return None
+
+
 def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
     close_overlays(page)
-    # Find Easy Apply button in job details (not list cards)
+    # Stable CTA is on classic /jobs/view/{id} (AI search split-pane often hides it)
+    if job.job_id and "/jobs/view/" not in (page.url or ""):
+        try:
+            page.goto(
+                f"https://www.linkedin.com/jobs/view/{job.job_id}/",
+                wait_until="domcontentloaded",
+                timeout=60000,
+            )
+            time.sleep(2.5)
+            close_overlays(page)
+        except Exception:
+            pass
+
+    if _easy_apply_daily_limit_hit(page):
+        _dismiss_easy_apply_limit_toast(page)
+        job.status = "blocked"
+        job.reason = "easy_apply_daily_limit"
+        return job
+
     btn = None
     details = page.locator(
         ".jobs-details, .scaffold-layout__detail, .job-view-layout, "
@@ -1068,10 +1140,9 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
     scope = page
     try:
         if details.count():
-            # Prefer a nearby ancestor that contains the real Easy Apply <button>
             scope_candidate = details.locator(
-                "xpath=ancestor::div[.//button[contains(., 'Easy Apply') or "
-                "contains(@aria-label,'Easy Apply')]][1]"
+                "xpath=ancestor::div[.//a[contains(@aria-label,'Easy Apply')] | "
+                ".//button[contains(., 'Easy Apply') or contains(@aria-label,'Easy Apply')]][1]"
             )
             if scope_candidate.count():
                 scope = scope_candidate.first
@@ -1079,37 +1150,15 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
                 scope = page.locator(".jobs-details, .scaffold-layout__detail").first
     except Exception:
         scope = page
-    for sel in [
-        "button.jobs-apply-button",
-        "button:has-text('Easy Apply')",
-        "button[aria-label*='Easy Apply']",
-    ]:
-        loc = scope.locator(sel).first
-        try:
-            if loc.count() and loc.is_visible():
-                label = ((loc.inner_text() or "") + " " + (loc.get_attribute("aria-label") or "")).lower()
-                if "easy apply" in label:
-                    btn = loc
-                    break
-                if "apply" in label and "easy" not in label and "easy apply" not in label:
-                    # Check page-level for external Apply (company website)
-                    pass
-        except Exception:
-            continue
-    if not btn:
-        # Fallback: first real Easy Apply <button> on page (not div[role=button] cards)
-        try:
-            loc = page.locator("button:has-text('Easy Apply'), button[aria-label*='Easy Apply']").first
-            if loc.count() and loc.is_visible():
-                btn = loc
-        except Exception:
-            pass
+
+    btn = _easy_apply_cta(scope, page)
     if not btn:
         # External / company-website Apply
         try:
             ext = page.locator(
                 "button:has-text('Apply'), a:has-text('Apply'), "
-                "button[aria-label*='Apply to'], a[aria-label*='Apply']"
+                "button[aria-label*='Apply to'], a[aria-label*='Apply'], "
+                "a[aria-label*='Apply on company website']"
             ).first
             if ext.count() and ext.is_visible():
                 label = ((ext.inner_text() or "") + " " + (ext.get_attribute("aria-label") or "")).lower()
@@ -1130,10 +1179,14 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
         return job
 
     try:
-        btn.click(timeout=5000)
+        btn.click(timeout=5000, force=True)
     except Exception:
         try:
-            btn.evaluate("el => el.click()")
+            box = btn.bounding_box()
+            if box:
+                page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+            else:
+                btn.evaluate("el => el.click()")
         except Exception as e:
             job.status = "blocked"
             job.reason = f"Easy Apply click failed: {e}"
@@ -1142,19 +1195,36 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
     time.sleep(1.5)
     close_overlays(page)
 
+    if _easy_apply_daily_limit_hit(page):
+        _dismiss_easy_apply_limit_toast(page)
+        job.status = "blocked"
+        job.reason = "easy_apply_daily_limit"
+        return job
+
     modal = _apply_modal(page)
     try:
         modal.wait_for(state="visible", timeout=10000)
     except PWTimeout:
-        # reload once if empty
-        page.reload(wait_until="domcontentloaded")
-        time.sleep(2)
-        close_overlays(page)
+        # Full-page apply chrome (no classic modal) OR empty detail — retry once
         try:
-            scope.locator("button:has-text('Easy Apply')").first.click(timeout=5000)
-            time.sleep(1.5)
-            modal = _apply_modal(page)
-            modal.wait_for(state="visible", timeout=8000)
+            body = (page.locator("body").inner_text(timeout=2000) or "")[:3000]
+            if re.search(r"Apply to |Contact info|Submit application", body, re.I):
+                pass
+            else:
+                page.reload(wait_until="domcontentloaded")
+                time.sleep(2)
+                close_overlays(page)
+                cta = _easy_apply_cta(page, page)
+                if cta:
+                    cta.click(timeout=5000, force=True)
+                    time.sleep(1.5)
+                if _easy_apply_daily_limit_hit(page):
+                    _dismiss_easy_apply_limit_toast(page)
+                    job.status = "blocked"
+                    job.reason = "easy_apply_daily_limit"
+                    return job
+                modal = _apply_modal(page)
+                modal.wait_for(state="visible", timeout=8000)
         except Exception:
             job.status = "blocked"
             job.reason = "Easy Apply modal did not open"
@@ -1176,8 +1246,10 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
                 page.get_by_role("button", name="Discard").click(timeout=2000)
                 time.sleep(0.8)
                 try:
-                    scope.locator("button:has-text('Easy Apply')").first.click(timeout=4000)
-                    time.sleep(1)
+                    cta = _easy_apply_cta(scope, page)
+                    if cta:
+                        cta.click(timeout=4000, force=True)
+                        time.sleep(1)
                 except Exception:
                     pass
         except Exception:
@@ -1592,6 +1664,9 @@ def process_search(
         job = easy_apply_flow(page, job)
         results.append(job)
         print(f"  -> {job.status}: {job.reason}", flush=True)
+        if job.reason == "easy_apply_daily_limit":
+            print("  STOP: LinkedIn Easy Apply daily limit reached", flush=True)
+            return
         time.sleep(1.5)
 
 
@@ -1712,8 +1787,13 @@ def main() -> None:
 
         ensure_english_ui(page)
 
+        def hit_daily_limit() -> bool:
+            return any(r.reason == "easy_apply_daily_limit" for r in results)
+
         for tpr in TPR_WINDOWS:
             if len([r for r in results if r.status == "submitted"]) >= MAX_APPLY:
+                break
+            if hit_daily_limit():
                 break
             # Hyderabad first
             for title in TITLES:
@@ -1728,15 +1808,21 @@ def main() -> None:
                 )
                 if len([r for r in results if r.status == "submitted"]) >= MAX_APPLY:
                     break
+                if hit_daily_limit():
+                    break
 
             # Remote India
             if len([r for r in results if r.status == "submitted"]) >= MAX_APPLY:
+                break
+            if hit_daily_limit():
                 break
             for title in TITLES[:5]:
                 process_search(
                     page, title, "India", remote=True, results=results, seen=seen, tpr=tpr
                 )
                 if len([r for r in results if r.status == "submitted"]) >= MAX_APPLY:
+                    break
+                if hit_daily_limit():
                     break
 
     report = {
