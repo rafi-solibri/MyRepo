@@ -79,6 +79,19 @@ if [[ "$PORTAL" == "cutshort" && -f "$ROOT/tools/cutshort/wait_for_cdp_login.js"
   echo "WARN: Cutshort still not logged in (exit $rc). Stay on the Chrome window and retry." >&2
   exit "$rc"
 fi
+if [[ "$PORTAL" == "instahyre" && -f "$ROOT/tools/instahyre/wait_for_cdp_login.js" ]]; then
+  export NODE_PATH="$ROOT/tools/node_modules${NODE_PATH:+:$NODE_PATH}"
+  set +e
+  node "$ROOT/tools/instahyre/wait_for_cdp_login.js"
+  rc=$?
+  set -e
+  if [[ "$rc" -eq 0 ]]; then
+    echo "OK: Instahyre CDP session is live. Future home dailies can reuse this profile."
+    exit 0
+  fi
+  echo "WARN: Instahyre still not logged in (exit $rc). Stay on the Chrome window and retry." >&2
+  exit "$rc"
+fi
 
 # Portal-specific smoke check via Node + playwright when available
 if [[ -d "$ROOT/tools/node_modules/playwright-core" ]]; then
