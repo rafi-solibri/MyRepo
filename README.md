@@ -41,3 +41,14 @@ node tools/chrome_session.js status
 
 Disable the duplicate General Daily automation
 `30e2c023-9067-11f1-ba66-0e7d0216e441`; Naukri Daily owns that flow.
+
+## Windows private worker (My Machines)
+
+Native Windows `agent worker start` currently crashes with `better-sqlite3`
+NODE_MODULE_VERSION 127 vs 137. Use WSL:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\fix-windows-agent-worker.ps1 -LaunchWsl
+```
+
+Or inside Ubuntu WSL: `bash scripts/setup-wsl-agent-worker.sh --name job-apply-laptop`

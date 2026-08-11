@@ -47,12 +47,19 @@
 | Indeed | `chrome_probe.js` + proxy-aware preflight; `daily_apply.js` gate; Windows home task installer; cloud automation stay OFF |
 | Prompts | Apply-bias + title-first + 40–50+ volume; runners referenced; ENV_READINESS updated |
 
+## 2026-08-11 Windows agent worker ABI
+
+- Documented Cursor Windows `better-sqlite3` 127/137 crash (reinstall useless)
+- Added `scripts/fix-windows-agent-worker.ps1` + `scripts/setup-wsl-agent-worker.sh`
+- Prefer WSL private worker (`job-apply-laptop` / `indeed-home`) until Cursor ships a fixed Win package
+
 ## Manual step required
 
 Cursor Automations API from this agent is **read-only** (`get-automation` only). Paste each `automation-prompts/0N-*.md` fenced `text` block into the matching automation’s Agent instructions and Save.
 
 **You still must** (not fixable in code alone):
 1. Keep **cloud Indeed Daily OFF**; use home cron / private worker
-2. Re-paste **all** updated apply prompts after merge
-3. Set `RESEND_FROM_EMAIL` for Notification
-4. Keep General Daily disabled
+2. On Windows laptop: start the worker via **WSL** (not native `agent worker start`) until Cursor fixes the package
+3. Re-paste **all** updated apply prompts after merge
+4. Set `RESEND_FROM_EMAIL` for Notification
+5. Keep General Daily disabled
