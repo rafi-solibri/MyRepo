@@ -3,7 +3,7 @@
   "source": "home-local",
   "date": "2026-08-11",
   "startedAt": null,
-  "finishedAt": "2026-08-11T07:52:20Z",
+  "finishedAt": "2026-08-11T13:12:49.880Z",
   "host": "NEM01-GBGR234",
   "ok": false,
   "counts": {
@@ -19,17 +19,13 @@
   "rejected": [],
   "blocked": [
     {
-      "reason": "indeed_login_required",
-      "hint": "Headed CDP reached in.indeed.com (Zscaler egress IP blocks headless). Passport session missing. Run: bash scripts/home-headed-login.sh indeed — sign in as rafi.success@gmail.com, then re-run daily apply.",
-      "egressIp": "167.103.20.91",
-      "egressOrg": "AS53813 ZSCALER, INC.",
-      "fixesMerged": "https://github.com/rafi-solibri/MyRepo/pull/64"
+      "reason": "indeed_cloudflare_private_worker_required"
     }
   ],
   "skipped": [],
   "seen": [],
-  "blockerSummary": "indeed_login_required",
+  "blockerSummary": "indeed_cloudflare_private_worker_required",
   "notes": [],
   "preflight": null,
-  "logPath": "C:/Users/MohammedAhmed/.cursor/portal-home-logs/indeed/indeed-20260811T072945Z.log"
+  "logPath": "C:/Users/MohammedAhmed/.cursor/portal-home-logs/indeed/indeed-20260811T131002Z.log"
 }
