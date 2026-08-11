@@ -116,6 +116,11 @@ Use the **same Cursor account** as `mohammed.ahmed@solibri.com`.
 
 #### 1. Install CLI (once)
 
+**Preferred on Windows (Aug 2026):** use **WSL Ubuntu**. The native Windows
+`agent worker start` build is broken (`better-sqlite3` NODE_MODULE_VERSION
+127 vs 137). Reinstall does not fix it — Cursor is tracking the Windows
+package. See `scripts/fix-windows-agent-worker.ps1`.
+
 **macOS / Linux / WSL:**
 
 ```bash
@@ -123,12 +128,17 @@ curl https://cursor.com/install -fsS | bash
 agent --version
 ```
 
-**Windows PowerShell:**
+**Windows PowerShell (CLI only — worker currently broken on native Win):**
 
 ```powershell
 irm 'https://cursor.com/install?win32=true' | iex
 agent --version
+# If worker crashes with better-sqlite3 127/137:
+powershell -ExecutionPolicy Bypass -File scripts\fix-windows-agent-worker.ps1 -LaunchWsl
 ```
+
+Do **not** run `curl … | bash` inside Windows PowerShell ISE — that is the
+Linux installer. Use WSL for bash, or `irm … | iex` for native Windows.
 
 #### 2. Sign in (once)
 
@@ -138,17 +148,23 @@ agent login
 
 #### 3. Clone the repo (once)
 
+On WSL, clone onto the **Linux filesystem** (`~/MyRepo`), not `/mnt/c/…`.
+
 ```bash
-git clone https://github.com/rafi-solibri/MyRepo.git
-cd MyRepo
+git clone https://github.com/rafi-solibri/MyRepo.git ~/MyRepo
+cd ~/MyRepo
 git checkout main
 git pull
 ```
 
-#### 4. Start the worker (every day you want Indeed to run)
+#### 4. Start the worker (every day you want Indeed / private jobs to run)
 
 ```bash
-cd /path/to/MyRepo
+cd ~/MyRepo
+# helper (install + start): bash scripts/setup-wsl-agent-worker.sh --name indeed-home
+# or for the laptop My Machines name used in screenshots:
+bash scripts/setup-wsl-agent-worker.sh --name job-apply-laptop
+# equivalent:
 agent worker start --name indeed-home
 ```
 

@@ -116,10 +116,18 @@ opened as a draft PR — not left as report-only notes.
 | Google `$7` UI crumbs became fake ₹609 calendar mins | Reject USD &lt; `$12` / INR &lt; ₹1000 in Google parsers |
 | Same-day Resend idempotency key collision on cron re-run | Idempotency key now includes `HHMMSS` stamp in `automation.py` |
 
+## Fixed for 2026-08-11 Windows private worker crash
+
+| Issue | Fix |
+| --- | --- |
+| `agent worker start` on Windows dies: `better-sqlite3` NODE_MODULE_VERSION **127 vs 137** / `Error starting exec-daemon` | **Not fixable by reinstall** — Cursor Windows worker package bug ([forum](https://forum.cursor.com/t/windows-remote-control-worker-crashes-better-sqlite3-node-module-version-127-vs-137-cursor-3-15-6/167841)). Workaround: run Linux worker under **WSL**. Scripts: `scripts/fix-windows-agent-worker.ps1` (−LaunchWsl) + `scripts/setup-wsl-agent-worker.sh --name job-apply-laptop`. Do not pipe the Linux `curl \| bash` installer in PowerShell ISE. |
+| Wrong installer in PowerShell ISE (`curl … \| bash`) | Docs + repair script point to WSL bash or `irm 'https://cursor.com/install?win32=true' \| iex` |
+
 ## Still requires your action (cannot fix from code alone)
 
 | Blocker | Who | What to do |
 | --- | --- | --- |
+| Windows `agent worker start` ABI crash (127/137) | You | Until Cursor ships a fixed Win package: `wsl --install -d Ubuntu` → `powershell -ExecutionPolicy Bypass -File scripts\fix-windows-agent-worker.ps1 -LaunchWsl` (or `bash scripts/setup-wsl-agent-worker.sh --name job-apply-laptop` inside WSL). Leave WSL terminal open; pick that machine in Agents. |
 | Snapshot missing portal logins | You | `bash scripts/open-portal-login-tabs.sh` → sign in on Desktop → quit Chrome → `bash scripts/verify-portal-logins.sh --strict` → **Save/Update snapshot** |
 | Indeed Cloudflare 403 if WARP+UC fails | You | Prefer cloud path: WARP SOCKS + `cf_bypass_uc.py` (auto in `preflight.js`). Fallback: `scripts/indeed-home-daily.sh` / residential `INDEED_HTTP_PROXY` |
 | Hirist secondary board login | Optional | Log into Hirist in Desktop Chrome and re-seed sessions if you want Hirist applies |

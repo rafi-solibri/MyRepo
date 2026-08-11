@@ -46,6 +46,7 @@ git push -u origin HEAD
 | --- | --- |
 | Portal Sign-in / missing cookies in snapshot | Desktop login → `verify-portal-logins.sh --strict` → Save snapshot |
 | Indeed Cloudflare hard-block after WARP+UC multi-strategy + IP rotate still exits 5 | Home cron / My Machines `indeed-home` / residential `INDEED_HTTP_PROXY` (intermittent Turnstile misses are code-fixed via `cf_bypass_uc.py`) |
+| Windows `agent worker` better-sqlite3 127/137 | Cursor packaging bug — use WSL (`scripts/fix-windows-agent-worker.ps1 -LaunchWsl`) |
 | Missing secrets (`RESEND_*`, proxy creds) | Set in Cursor secrets / dashboard |
 | CAPTCHA / email OTP / SMS walls | Cap ~3–4 min, mark blocked, continue |
 | Automations UI Agent instructions | API is read-only — rely on ONE_TIME_LOADERS + merge to `main` |
