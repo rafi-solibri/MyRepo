@@ -12,6 +12,7 @@ as a **ready** PR (not draft), and merged with `bash scripts/auto-merge-fix-pr.s
 | Issue | Fix |
 | --- | --- |
 | Home Cutshort blocked: SQLite `destHasAuth: true` for `cutshort_authentication` but live CDP redirected to `/?redirect_url=…` (stale session) | `tools/cutshort/wait_for_cdp_login.js` live dashboard probe; `home-headed-login.sh cutshort` uses it; owner: sign in on headed CDP profile |
+| Waiter false-green: brief `/profile/candidate-dashboard` URL before redirect + sparse "Find jobs" text | Waiter settles URL ~6s and requires dashboard body signals (Matches/Applications/Edit profile), not marketing chrome |
 
 ## Fixed for 2026-08-11 LinkedIn home (Windows residential)
 
