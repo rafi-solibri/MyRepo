@@ -46,6 +46,27 @@ assert_true(
     skip_reason("AI Architect", "Wipro", "Azure and .NET in skills laundry list") is not None,
     "pure AI title without .NET on title must skip",
 )
+assert_true(
+    skip_reason("Java Technical Lead", "Avensys", "") is not None,
+    "Java primary title must skip",
+)
+assert_true(
+    skip_reason("Lead System Architect", "Pegasystems", "") is not None,
+    "Pegasystems company must skip",
+)
+assert_true(
+    skip_reason(
+        "Engineering Manager - Data Center Electrical Design - AI/Hyperscale",
+        "Sunstripe",
+        "",
+    )
+    is not None,
+    "electrical design EM must skip",
+)
+assert_true(
+    skip_reason("AI/ML Architect", "ToggleNow", "") is not None,
+    "AI/ML Architect title must skip",
+)
 
 for title in [
     "Director, Senior Engineering (.Net FullStack + AI/ML)",
