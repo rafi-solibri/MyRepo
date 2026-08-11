@@ -76,6 +76,21 @@ function ensureWarpProxy(currentProxy) {
     proxy = m[1].replace(/^\$'|'$/g, "").replace(/^'|'$/g, "").replace(/^"|"$/g, "");
   }
   if (res.status !== 0 || !proxy) {
+    // Windows home / residential: continue without WARP rather than hard-fail.
+    const isWin =
+      process.platform === "win32" ||
+      process.env.OS === "Windows_NT" ||
+      Boolean(process.env.MSYSTEM);
+    if (isWin && !currentProxy) {
+      return {
+        proxy: "",
+        started: false,
+        skipped: true,
+        error: out.slice(0, 800),
+        exitCode: res.status,
+        homeFallback: true,
+      };
+    }
     return {
       proxy: currentProxy || "",
       started: false,
@@ -206,10 +221,21 @@ function ucBypass(proxy, opts = {}) {
   };
   // Multi-round bypass (with WARP rotate inside Python) can take several minutes.
   const timeoutMs = Number(process.env.INDEED_CF_BYPASS_TIMEOUT_MS || 720000);
-  const res = spawnSync(
-    "python3",
-    [script, "--attempts", attempts, "--rounds", rounds],
-    {
+  let cmd = "python3";
+  let args = [script, "--attempts", attempts, "--rounds", rounds];
+  try {
+    const { resolvePython } = require("../chrome_session");
+    const py = resolvePython();
+    if (py === "py") {
+      cmd = "py";
+      args = ["-3", ...args];
+    } else {
+      cmd = py;
+    }
+  } catch {
+    /* keep python3 */
+  }
+  const res = spawnSync(cmd, args, {
       encoding: "utf8",
       env,
       timeout: timeoutMs,
@@ -276,7 +302,7 @@ function main() {
     report.proxyConfigured = Boolean(proxy);
     report.proxyHost = proxy ? proxy.replace(/\/\/.*@/, "//***@") : null;
 
-    if (warp.error && !proxy) {
+    if (warp.error && !proxy && !warp.skipped && !warp.homeFallback) {
       report.reason = "warp_proxy_failed";
       report.hint =
         "Could not start Cloudflare WARP SOCKS. Install cloudflare-warp or set INDEED_HTTP_PROXY.";

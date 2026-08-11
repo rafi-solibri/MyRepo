@@ -69,6 +69,15 @@ normalize_report() {
 }
 
 # Indeed Cloudflare gate (residential IP required).
+# Home Windows: skip WARP — residential IP is the Cloudflare bypass.
+if [[ "$PORTAL" == "indeed" ]]; then
+  is_win=0
+  [[ "${OS:-}" == "Windows_NT" || -n "${MSYSTEM:-}" || "$(uname -s 2>/dev/null)" == MINGW* ]] && is_win=1
+  if [[ "$is_win" -eq 1 ]]; then
+    export INDEED_SKIP_WARP="${INDEED_SKIP_WARP:-1}"
+    echo "NOTE: Windows home Indeed — INDEED_SKIP_WARP=${INDEED_SKIP_WARP}"
+  fi
+fi
 if [[ "$PORTAL" == "indeed" ]] && command -v node >/dev/null 2>&1 && [[ -f tools/indeed/preflight.js ]]; then
   set +e
   node tools/indeed/preflight.js

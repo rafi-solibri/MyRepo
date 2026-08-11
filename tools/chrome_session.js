@@ -233,6 +233,7 @@ module.exports = {
   checkPortal,
   syncSessions,
   statusReport,
+  resolvePython,
   IS_WIN,
 };
 
