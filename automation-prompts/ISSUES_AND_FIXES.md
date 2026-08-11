@@ -127,7 +127,7 @@ opened as a draft PR — not left as report-only notes.
 | Verified notification sender missing | You | Set secret `RESEND_FROM_EMAIL` to a verified sender; fallback uses `Job Status <onboarding@resend.dev>` |
 | General Daily duplicate | You | Keep disabled: https://cursor.com/automations/30e2c023-9067-11f1-ba66-0e7d0216e441 |
 | Indeed home results → daily mail | You | Keep home cron on; ensure home PC can `git push origin automation-results`; re-paste Notification loader from `ONE_TIME_LOADERS.md` once |
-| Re-paste Agent instructions | You | After merge, paste each `automation-prompts/0N-*.md` fenced block (Automations API is read-only) |
+| Re-paste Agent instructions | You | Automations API is read-only. For Indeed, paste the short loader from `ONE_TIME_LOADERS.md` (or the full `06-indeed.md` fence) into https://cursor.com/automations/91b09fd7-9093-11f1-ba66-0e7d0216e441 and Save. Morning 2026-08-11 cron still used an older short prompt. |
 
 ## After merging this PR
 
