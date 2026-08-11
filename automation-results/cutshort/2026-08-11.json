@@ -3,7 +3,7 @@
   "source": "home-local",
   "date": "2026-08-11",
   "startedAt": null,
-  "finishedAt": "2026-08-11T06:54:28Z",
+  "finishedAt": "2026-08-11T06:57:11.258Z",
   "host": "NEM01-GBGR234",
   "ok": false,
   "counts": {
@@ -20,13 +20,17 @@
   "blocked": [
     {
       "reason": "cutshort_login_required",
-      "detail": "cutshort_authentication cookie present in CDP profile but session rejected; redirected to /?redirect_url=/profile/candidate-dashboard with Candidate login"
+      "detail": "session rejected (url=https://cutshort.io/?redirect_url=%2Fprofile%2Fcandidate-dashboard); cookie may exist but is stale — headed re-login required"
     }
   ],
   "skipped": [],
   "seen": [],
-  "blockerSummary": "cutshort_login_required — re-login in headed CDP profile: bash scripts/launch-chrome-cdp.sh cutshort then sign in at cutshort.io",
-  "notes": [],
+  "blockerSummary": "cutshort_login_required — session rejected (url=https://cutshort.io/?redirect_url=%2Fprofile%2Fcandidate-dashboard); cookie may exist but is stale — headed re-login required",
+  "notes": [
+    "qualifying=0",
+    "q_answered=0",
+    "q_locked_empty=0"
+  ],
   "preflight": null,
   "logPath": null
 }
