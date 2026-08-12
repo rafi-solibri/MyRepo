@@ -39,6 +39,7 @@
 | Issue | Fix |
 | --- | --- |
 | Preflight `chrome_session check cutshort` crashed: `SyntaxError: Unexpected identifier 'checkPortal'` at `tools/chrome_session.js:227` (`def checkPortal`) | Restored valid JS `function checkPortal(portal)` so portal auth checks and Cutshort preflight can run |
+| `classify` used `\bc#\b` / `\b\.net\b` → never matched skills/titles like `C#` / `Senior .NET` → 0 qualifying after 1958 scan | `NET_STACK_RE` / `STACK_SIGNAL_RE` without broken `#` word-boundaries; expand tier1 for `Engineering Leader` / `Head of Engineering`; `\bsap\b` hard-skip; `tools/cutshort/test_filters.js` |
 
 ## Fixed for 2026-08-12 Foundit daily (cloud)
 
