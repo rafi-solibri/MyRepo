@@ -231,6 +231,7 @@ const LIVE_CDP_WAITERS = {
   cutshort: path.join(__dirname, "cutshort", "wait_for_cdp_login.js"),
   foundit: path.join(__dirname, "foundit", "wait_for_cdp_login.js"),
   instahyre: path.join(__dirname, "instahyre", "wait_for_cdp_login.js"),
+  naukri: path.join(__dirname, "naukri", "wait_for_cdp_login.js"),
 };
 
 function checkPortal(portal) {

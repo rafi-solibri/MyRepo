@@ -8,16 +8,21 @@
 
 const fs = require("fs");
 
+const path = require("path");
 const RESUME_CANDIDATES = [
+  path.join(__dirname, "..", "..", "resumes", "Rafi_Resume.docx"),
   "/workspace/resumes/Rafi_Resume.docx",
   "/home/ubuntu/resumes/Rafi_Resume.docx",
   "/home/ubuntu/Documents/Rafi_Resume.docx",
+  path.join(__dirname, "..", "..", "resumes", "Rafi_Resume_Architect.docx"),
   "/workspace/resumes/Rafi_Resume_Architect.docx",
 ];
 
 function findResume() {
   for (const p of RESUME_CANDIDATES) {
-    if (fs.existsSync(p) && fs.statSync(p).size > 1000) return p;
+    try {
+      if (fs.existsSync(p) && fs.statSync(p).size > 1000) return p;
+    } catch (_) {}
   }
   return null;
 }
@@ -28,7 +33,7 @@ function findResume() {
  * Only skip when title itself is a QA/SDET role.
  */
 const SKIP_TITLE_RE =
-  /\b(qa engineer|quality assurance|quality engineer|quality engineering|sdet|intern(?!et)|fresher|salesforce|servicenow|coupa|pega|guidewire|sap\b|dynamics|workday hms|revit|\bbarch\b|hubspot)\b/i;
+  /\b(qa engineer|quality assurance|quality engineer|quality engineering|sdet|intern(?!et)|fresher|salesforce|servicenow|coupa|pega|guidewire|sap\b|dynamics|workday hms|revit|\bbarch\b|hubspot|\bsre\b|site reliability|devops engineer|devops lead|platform sre)\b/i;
 
 /** Pure AI/data titles need .NET|C# on the TITLE (skills laundry lists are noisy). */
 const PURE_AI_DATA_RE =

@@ -1,5 +1,15 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-12 Naukri home (Windows residential)
+
+| Issue | Fix |
+| --- | --- |
+| Preflight exit 3 (`chrome_cookies_locked` / no SQLite `nauk_rt`) while live Naukri homepage was already logged in | Added `tools/naukri/wait_for_cdp_login.js`; wired into `chrome_session` LIVE_CDP_WAITERS + `home-headed-login.sh naukri` |
+| Hirist CTAs stuck as `external_link_not_opened` (“Apply on hirist.com Apply attempted”) | Soft-skip `hirist_login_required_skip` when CTA mentions hirist before hard-block |
+| SRE/DevOps-primary titles burned ATS time (Apple SRE EM, Arcesium Principal SRE) | `shouldSkipTitle` skips `\bsre\b` / site reliability / devops engineer|lead |
+| Workday Autofill chooser + cookie banner timed out; branded hosts (`jobs.rsmus.com`) missed Workday helper | Stronger cookie dismiss, Autofill→Manual fallback, detect Workday UI via `data-automation-id` / chooser text |
+| Home resume path preferred `/workspace/...` stub | `findResume` prefers repo `resumes/Rafi_Resume.docx` |
+
 ## Fixed for 2026-08-12 Cutshort home (Windows residential)
 
 | Issue | Fix |

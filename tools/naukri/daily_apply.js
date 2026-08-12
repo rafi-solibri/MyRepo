@@ -607,6 +607,17 @@ async function handleExternal(context, page, detail, jobMeta, report) {
     }
   }
   if (!newPage) {
+    // Hirist "Apply on hirist.com Apply attempted" — soft-skip (owner Hirist login optional).
+    const ctaBlob = String(detail.cta || jobMeta.cta || "");
+    if (/hirist/i.test(ctaBlob)) {
+      report.skipped.push({
+        ...jobMeta,
+        reason: "hirist_login_required_skip",
+        path: "hirist",
+        cta: detail.cta,
+      });
+      return;
+    }
     report.blocked.push({
       ...jobMeta,
       reason: "external_link_not_opened",
@@ -662,7 +673,18 @@ async function handleExternal(context, page, detail, jobMeta, report) {
   }
 
   // Workday dedicated flow (Apply → Autofill/Manual → account → steps)
-  if (/myworkdayjobs\.com|myworkdaysite\.com|workdayjobs/i.test(newPage.url())) {
+  // Also catch branded hosts that redirect into Workday Candidate Home UI.
+  const looksWorkdayUrl = /myworkdayjobs\.com|myworkdaysite\.com|workdayjobs/i.test(
+    newPage.url()
+  );
+  const looksWorkdayUi = await newPage
+    .evaluate(() =>
+      /Autofill with Resume|Apply Manually|data-automation-id/i.test(
+        document.body?.innerText || ""
+      ) || !!document.querySelector("[data-automation-id]")
+    )
+    .catch(() => false);
+  if (looksWorkdayUrl || looksWorkdayUi) {
     const wd = await completeWorkdayApply(newPage, RESUME, {
       maxMs: Math.max(30_000, MAX_EXTERNAL_MS - (Date.now() - start)),
     });
