@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-12 Foundit home (Windows residential)
+
+| Issue | Fix |
+| --- | --- |
+| Home Foundit daily stopped: live CDP had no `MSSOAT`; unauthenticated UI kept landing on `/rio/sign-out` (“Logged out Successfully”) after ~4 min poll | Added `tools/foundit/wait_for_cdp_login.js` + wired `home-headed-login.sh foundit`; owner must sign in once in headed system Chrome |
+
 ## Fixed for 2026-08-12 Naukri daily (cloud) — company-site CTA
 
 | Issue | Fix |
