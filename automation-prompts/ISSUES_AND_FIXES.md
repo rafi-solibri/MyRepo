@@ -5,6 +5,7 @@
 | Issue | Fix |
 | --- | --- |
 | `tools/chrome_session.js` used Python `def checkPortal` → SyntaxError; every portal preflight failed | Restored valid JS `function checkPortal` so `preflight-portal-run.sh` / `chrome_session.js check` load again |
+| `scripts/resolve-python.sh` expanded unset `$LOCALAPPDATA` under `set -u` → cloud preflight/launch aborted | Use `${LOCALAPPDATA:-}` / conditional candidates so Linux skips Windows paths |
 
 ## Fixed for 2026-08-11 Windows owner-action blockers
 
