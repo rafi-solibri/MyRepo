@@ -1,5 +1,12 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-12 Hitech City cloud cron
+
+| Issue | Fix |
+| --- | --- |
+| `tools/chrome_session.js` `checkPortal` used Python `def` → `SyntaxError` broke `preflight-portal-run.sh hitechcity` | Restored JS `function checkPortal(portal)` |
+| `scripts/resolve-python.sh` expanded bare `$LOCALAPPDATA` under `set -u` → preflight aborted on Linux after cookie sync | Guard with `${LOCALAPPDATA:-}` / skip empty Windows candidate paths |
+
 ## Fixed for 2026-08-12 Indeed daily (cloud)
 
 | Issue | Fix |
