@@ -27,6 +27,7 @@
 | Review screenshot showed green reCAPTCHA + Submit but still `easy_apply_incomplete` (JS/SB click no-op) | Add `_gui_click_submit` PyAutoGUI trusted click when captcha already cleared |
 | Voluntary self-ID / long employer privacy walls (e.g. Mattel) stuck Continue | Prefer Decline/Prefer-not answers; scroll past legal wall before fill/Continue |
 | Questions CTA **"Review your application"** never clicked; required privacy ack checkboxes left unchecked → `questions_stuck` at 90% | Add CTA label; tick confirm/agree/privacy checkboxes in `fill_common_questions`; loosen reject regex so `edit` does not match unrelated CTAs |
+| Demographic module clicked **Review your application** 20+ times without navigation (validation wall) | Abort Easy Apply after 3 identical CTA/url streaks (`cta_stuck`) |
 | `tools/chrome_session.js` used Python `def checkPortal` → SyntaxError; Indeed portal preflight + `daily_apply.js` could not load `resolvePython` | Restored valid JS `function checkPortal` (same as Foundit/Cutshort/Instahyre) |
 
 ## Fixed for 2026-08-12 Instahyre daily (cloud)

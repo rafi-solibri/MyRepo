@@ -1753,6 +1753,8 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
     """Returns 'submitted' | 'external' | 'failed' | 'recaptcha'."""
     stuck_questions = 0
     review_submit_attempts = 0
+    same_cta_streak = 0
+    last_cta_key = ""
     for step in range(max_steps):
         if deadline and time.time() > deadline:
             return "failed"
@@ -1839,6 +1841,24 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
                 pass
         clicked = click_next_or_submit(sb, allow_disabled=False)
         print(f"  ea_step={step} clicked={clicked!r} url={url[:90]}", flush=True)
+        # Same CTA on same module without navigation → validation wall; abort early.
+        cta_key = f"{(url or '').split('?')[0]}|{(clicked or '').lower()}"
+        if clicked and cta_key == last_cta_key:
+            same_cta_streak += 1
+        else:
+            same_cta_streak = 0
+            last_cta_key = cta_key if clicked else ""
+        if same_cta_streak >= 3:
+            try:
+                sample = (sb.get_text("body") or "")[:400].replace("\n", " | ")
+                print(
+                    f"  cta_stuck streak={same_cta_streak} cta={clicked!r} sample={sample!r}",
+                    flush=True,
+                )
+                sb.save_screenshot("/opt/cursor/artifacts/indeed-questions-stuck.png")
+            except Exception:
+                pass
+            return "failed"
         if not clicked:
             # Review / questions: fill again, wait for CTA enable, then force-click.
             time.sleep(1.5)
