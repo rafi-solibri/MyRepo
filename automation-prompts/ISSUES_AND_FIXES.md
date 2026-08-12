@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-12 Hitech City cloud cron
+
+| Issue | Fix |
+| --- | --- |
+| `tools/chrome_session.js` `checkPortal` used Python `def` → `SyntaxError` broke `preflight-portal-run.sh hitechcity` | Restored JS `function checkPortal(portal)` |
+
 ## Fixed for 2026-08-11 Windows owner-action blockers
 
 | Issue | Fix |
