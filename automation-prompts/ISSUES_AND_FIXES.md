@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-12 LinkedIn home (Windows residential)
+
+| Issue | Fix |
+| --- | --- |
+| Home LinkedIn blocked on Security Verification; `--open-login` navigated away from checkpoint CAPTCHA tabs onto `/login` | `wait_for_cdp_login.js` prefers existing LinkedIn challenge tabs and never leaves checkpoint/challenge; system-mode hint |
+
 ## Fixed for 2026-08-12 Foundit home (Windows residential)
 
 | Issue | Fix |
