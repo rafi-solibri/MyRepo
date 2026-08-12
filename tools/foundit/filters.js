@@ -84,7 +84,9 @@ function hasDotNet(title, skills) {
 }
 
 function hasSeniority(title) {
-  return /\b(architect|principal|staff\s+(software|engineer)|engineering\s+manager|\bem\b|director|avp|head\s+of|tech(?:nology)?\s+lead|technical\s+lead|\blead\b|manager|senior\s+(software|dotnet|\.net|full\s*stack|engineer)|sr\.?\s+(software|dotnet|\.net|engineer))\b/i.test(
+  // Accept Senior/.NET Senior/Senior Backend (not only "Senior .NET …" word-order).
+  // Apply bias: uncertain → apply; still gated by .NET + Hyd/remote + exp elsewhere.
+  return /\b(architect|principal|staff\s+(software|engineer)|engineering\s+manager|\bem\b|director|avp|head\s+of|tech(?:nology)?\s+lead|technical\s+lead|\blead\b|manager|\bsenior\b|\bsr\.?\b)\b/i.test(
     title || ""
   );
 }

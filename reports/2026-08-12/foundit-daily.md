@@ -1,31 +1,29 @@
 # Foundit daily 2026-08-12
 
 ## Counts
-- Login: **Hi, Rafi Ahmed Mohammed Abdul** (after confirmLogin harden)
-- Applied tab: **455 → 458** (+3)
-- Intentional applies: **3**
-- Duplicates (`userJobInfo`): **32**
-- Skipped: **510** (location 172 / no .NET 150 / no seniority 129 / junior-mid / CTC / other)
-- Blocked: **0**
+- Login: **Hi, Rafi Ahmed Mohammed Abdul** (MSSOAT JWT OK)
+- Applied tab: **458 → 459** (+1 this run; earlier same-day run was 455→458)
+- Intentional applies (this run): **1**
+- Duplicates (`userJobInfo` / Falcon): **35**
+- Skipped: **508** (location ~183 / no .NET 150 / no seniority 110 / exp 46 / CTC 10 / other)
+- Blocked (Foundit): **0**
 - Age window used: **3650d** (expanded after thin fresh Hyd/remote senior .NET inventory)
-- Resume: `resumes/Rafi_Resume.docx`
-- Artifact: `/opt/cursor/artifacts/foundit-apply-report.json`
+- Resume: `resumes/Rafi_Resume.docx` (52 → 65 LPA)
+- Artifact: `/opt/cursor/artifacts/foundit-daily-run.json`
 - No `canJobApply` calls
 
-## Applied
-1. embrace software inc — Lead Engineer/ Architect (.NET) - Industrial — Foundit Falcon `APPLY_REDIRECT_STAGE_ONE` → LinkedIn `4451558712` (`linkedin_no_easy_apply`) — remote
-2. embrace software inc — Tech Lead (.NET) — Foundit Falcon → LinkedIn `4448783234` (`linkedin_no_easy_apply`) — remote
-3. Globallogic India — Senior .NET Lead (Principal Engineer) IRC296130 — Foundit Falcon → LinkedIn `4451191928` (`linkedin_no_easy_apply`) — Hyderabad
+## Applied (this run)
+1. Aveva — Senior Consultant - System Platform — Foundit Falcon `APPLY_REDIRECT_STAGE_ONE` (200) → Workday Hyderabad `R014980` — Falcon registered on Foundit; Workday stopped at **Create Account/Sign In** (`ats_login_wall`, owner)
 
 ## Blocked / owner
-- None this run (MSSOAT OK). LinkedIn Easy Apply unavailable on SCRAPPING redirects (expected).
+- Aveva Workday account wall after Apply Manually (evidence: `/opt/cursor/artifacts/foundit-aveva-ats.json`)
+- Remaining eligible Hyd/remote senior .NET inventory exhausted (duplicates) after age expand
 
-## Code fixes shipped
-- #79 `chrome_session.js`: restore JS `function checkPortal` (preflight SyntaxError)
-- `resolve-python.sh` unset `LOCALAPPDATA` under `set -u` (merged via parallel Instahyre fix on main)
-- #87 `daily_apply.js` `confirmLogin`: poll dashboard + `/home/user` fallback (ignore transient `Hi, Seeker`)
+## Code fixes (branch `cursor/foundit-fix-seniority-c8ce`)
+- `filters.js` `hasSeniority`: accept `\bsenior\b` / `\bsr.?` (fixes `.Net Senior Developer` / `Senior Backend Developer (.NET)` false skips) + tests
+- `daily_apply.js` ATS: Workday Apply → Apply Manually + Next/Submit; detect Create Account/Sign In as login wall
+- Logged in `automation-prompts/ISSUES_AND_FIXES.md`
+- **PR:** push OK; `gh pr create` / REST returned **403 Resource not accessible by integration** (token cannot open PRs). Ready for parent/owner: open PR from branch → `bash scripts/auto-merge-fix-pr.sh`
 
-## Top 3 LinkedIn referral drafts
-1. embrace / Lead Engineer/ Architect (.NET) - Industrial — ask for HM referral; 52→65 LPA, immediate, Rafi_Resume.docx
-2. embrace / Tech Lead (.NET) — same
-3. Globallogic / Senior .NET Lead (Principal Engineer) IRC296130 — same
+## Top LinkedIn referral drafts
+1. Aveva / Senior Consultant - System Platform — ask for HM referral; 52→65 LPA, immediate, Rafi_Resume.docx
