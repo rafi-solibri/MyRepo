@@ -1,10 +1,18 @@
 # Issues from last cron + fixes
 
+<<<<<<< HEAD
 ## Fixed for 2026-08-12 Cutshort daily (cloud)
 
 | Issue | Fix |
 | --- | --- |
 | Preflight `chrome_session check cutshort` crashed: `SyntaxError: Unexpected identifier 'checkPortal'` at `tools/chrome_session.js:227` (`def checkPortal`) | Restored valid JS `function checkPortal(portal)` so portal auth checks and Cutshort preflight can run |
+=======
+## Fixed for 2026-08-12 Foundit daily (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| `tools/chrome_session.js` used Python `def checkPortal` → SyntaxError; every portal preflight failed | Restored valid JS `function checkPortal` so `preflight-portal-run.sh` / `chrome_session.js check` load again |
+>>>>>>> origin/main
 
 ## Fixed for 2026-08-11 Windows owner-action blockers
 
