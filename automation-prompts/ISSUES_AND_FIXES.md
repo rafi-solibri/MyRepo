@@ -5,6 +5,7 @@
 | Issue | Fix |
 | --- | --- |
 | `tools/chrome_session.js` `checkPortal` used Python `def` → `SyntaxError` broke `preflight-portal-run.sh hitechcity` | Restored JS `function checkPortal(portal)` |
+| `scripts/resolve-python.sh` expanded bare `$LOCALAPPDATA` under `set -u` → preflight aborted on Linux after cookie sync | Use `${LOCALAPPDATA:-}` so cloud/Linux falls through to `python3` |
 
 ## Fixed for 2026-08-11 Windows owner-action blockers
 
