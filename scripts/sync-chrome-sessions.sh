@@ -50,7 +50,8 @@ fi
 # Preflight sync runs before launching the portal browser. If a previous runner
 # crashed, a stale CDP Chrome can still hold a destination profile open and race
 # the copy below.
-pkill -f "remote-debugging-port=9222" 2>/dev/null || true
+# Do not `pkill -f remote-debugging-port=9222` — it matches the agent shell cmdline.
+bash "$ROOT/scripts/kill-chrome-cdp.sh" cdp 2>/dev/null || true
 
 STRICT=0
 if [[ "${1:-}" == "--strict" ]]; then
@@ -209,7 +210,7 @@ ensure_source_readable() {
   if command -v taskkill.exe >/dev/null 2>&1; then
     taskkill.exe //F //IM chrome.exe >/dev/null 2>&1 || true
   else
-    pkill -f "Google/Chrome|chrome.exe|google-chrome" 2>/dev/null || true
+    bash "$ROOT/scripts/kill-chrome-cdp.sh" all 2>/dev/null || true
   fi
   sleep 2
   set +e
