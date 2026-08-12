@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-12 Indeed daily (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| `tools/chrome_session.js` used Python `def checkPortal` → SyntaxError; Indeed portal preflight + `daily_apply.js` could not load `resolvePython` | Restored valid JS `function checkPortal` (same as Foundit/Cutshort/Instahyre) |
+
 ## Fixed for 2026-08-12 Instahyre daily (cloud)
 
 | Issue | Fix |
