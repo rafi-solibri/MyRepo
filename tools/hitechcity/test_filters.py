@@ -8,6 +8,7 @@ from tools.hitechcity.filters import (
     skip_reason,
     title_matches_senior_stack,
 )
+from tools.hitechcity.linkedin_target_apply import LI_TITLE_SKIP
 
 
 def test_title_ok():
@@ -17,6 +18,11 @@ def test_title_ok():
     assert skip_reason("QA Engineer") is not None
     assert CAREERS_TITLE_SKIP.search("Staff Project Analyst")
     assert CAREERS_TITLE_SKIP.search("Embedded Software - System Test Architect")
+    assert CAREERS_TITLE_SKIP.search("Product Manager, Principal")
+    assert LI_TITLE_SKIP.search("Staff/Principal GPU/CPU Kernel Optimization Engineer")
+    assert LI_TITLE_SKIP.search("Network Architect")
+    assert not LI_TITLE_SKIP.search("Software Engineer, Principal - C#")
+    assert not LI_TITLE_SKIP.search("Solution Architect")
 
 
 def test_campus_location():

@@ -54,7 +54,8 @@ CAREERS_TITLE_SKIP = re.compile(
     r"system\s*test|quality\s*(platform|assurance|engineering)|threat\s*detection|"
     r"project\s*analyst|industrial\s*design|hardware\s*architect|"
     r"machine\s*learning\s*hardware|gpu\s*software|embedded\s*software|"
-    r"field\s*robotics|platform\s*power|network\s*hardware",
+    r"field\s*robotics|platform\s*power|network\s*hardware|"
+    r"product\s*manager|network\s*architect",
     re.I,
 )
 AUTH_HOST = re.compile(

@@ -57,6 +57,29 @@ def looks_submitted(page: Page) -> bool:
 
 
 def blocked_wall(page: Page) -> str | None:
+    # Frame/iframe CAPTCHA first — body text often omits "captcha" while reCAPTCHA blocks submit.
+    try:
+        for fr in page.frames:
+            u = (fr.url or "").lower()
+            if any(
+                x in u
+                for x in (
+                    "recaptcha",
+                    "hcaptcha",
+                    "challenges.cloudflare.com",
+                    "geetest",
+                    "funcaptcha",
+                )
+            ):
+                return "CAPTCHA/bot wall"
+        if page.locator(
+            "iframe[src*='recaptcha'], iframe[src*='hcaptcha'], "
+            "iframe[title*='reCAPTCHA'], iframe[title*='captcha'], "
+            ".g-recaptcha, [data-sitekey]"
+        ).count():
+            return "CAPTCHA/bot wall"
+    except Exception:
+        pass
     try:
         body = page.locator("body").inner_text()[:4500]
     except Exception:
@@ -68,7 +91,7 @@ def blocked_wall(page: Page) -> str | None:
         re.I,
     ):
         return "job_closed"
-    if re.search(r"captcha|verify you are human|cloudflare|attention required", body, re.I):
+    if re.search(r"captcha|verify you are human|cloudflare|attention required|i'?m not a robot", body, re.I):
         return "CAPTCHA/bot wall"
     if re.search(r"sign in to continue|log in to apply|create an account|sign in to apply", body, re.I):
         if page.locator("input[type='file'], input[type='email']").count() == 0:
@@ -205,13 +228,32 @@ def try_submit(page: Page) -> bool:
     )
 
 
-def attempt_ats_apply(page: Page, time_cap_s: int = 210) -> tuple[str, str]:
+def attempt_ats_apply(page: Page, time_cap_s: int = 180) -> tuple[str, str]:
     """Fill + submit current ATS page. Returns (status, reason)."""
     start = time.time()
-    upload_resume(page)
-    fill_common(page)
+    # Bail before expensive fill loops when CAPTCHA/login already present.
+    wall = blocked_wall(page)
+    if wall:
+        status = "skipped" if wall == "job_closed" else "blocked"
+        return status, wall
+    if looks_submitted(page):
+        return "applied", "confirmation"
+    try:
+        upload_resume(page)
+    except Exception:
+        pass
+    if time.time() - start >= time_cap_s:
+        return "blocked", "ats_time_cap"
+    wall = blocked_wall(page)
+    if wall:
+        status = "skipped" if wall == "job_closed" else "blocked"
+        return status, wall
+    try:
+        fill_common(page)
+    except Exception:
+        pass
     steps = 0
-    while time.time() - start < time_cap_s and steps < 12:
+    while time.time() - start < time_cap_s and steps < 8:
         wall = blocked_wall(page)
         if wall:
             status = "skipped" if wall == "job_closed" else "blocked"
@@ -220,10 +262,15 @@ def attempt_ats_apply(page: Page, time_cap_s: int = 210) -> tuple[str, str]:
             return "applied", "confirmation"
         if not try_submit(page):
             break
-        upload_resume(page)
-        fill_common(page)
+        try:
+            upload_resume(page)
+            fill_common(page)
+        except Exception:
+            pass
         steps += 1
-        time.sleep(1.0)
+        time.sleep(0.8)
     if looks_submitted(page):
         return "applied", "confirmation"
+    if time.time() - start >= time_cap_s:
+        return "blocked", "ats_time_cap"
     return "blocked", "ats_incomplete_or_stuck"

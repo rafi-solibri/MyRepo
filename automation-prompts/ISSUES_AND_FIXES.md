@@ -14,6 +14,10 @@
 
 | Issue | Fix |
 | --- | --- |
+| LinkedIn external ATS hung on Phenom reCAPTCHA iframes (body text missed “captcha”) → Blackbaud grind burned the run | `ats_fill.blocked_wall` detects reCAPTCHA/hCAPTCHA frames first; `attempt_ats_apply` bails before fill; EXT time cap 90s |
+| After 2 CAPTCHA/login walls still opened every company-website apply for same tenant | Cap EXT walls per company (`HITECHCITY_MAX_EXT_WALLS`, default 2) and skip remaining EXT |
+| Product Manager / Network Architect / GPU-kernel titles matched `TITLE_OK` via principal/architect | `LI_TITLE_SKIP` + careers skip for those stacks |
+| Location check used `bodyHead` (sidebar/footer) contrary to top-card HARD rule; empty loc over-skipped | Top-card-only location; empty loc → apply bias |
 | `tools/chrome_session.js` `checkPortal` used Python `def` → `SyntaxError` broke `preflight-portal-run.sh hitechcity` | Restored JS `function checkPortal(portal)` |
 | `scripts/resolve-python.sh` expanded bare `$LOCALAPPDATA` under `set -u` → preflight aborted on Linux after cookie sync | Guard with `${LOCALAPPDATA:-}` / skip empty Windows candidate paths |
 | Careers scraper opened US cards (Meta Austin/Seattle, MSFT Redmond, ModMed Boca) because full-page body “India” bypassed location HARD filter | `card_location_ok` uses role + top-card only; expand `BAD_LOC_HINT`; drop body-India bypass; skip wrong titles (system test / project analyst / …) |

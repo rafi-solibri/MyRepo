@@ -49,11 +49,23 @@ TITLES = [
     "Azure Architect",
 ]
 
+# Title matches TITLE_OK via architect/principal/staff but are wrong for this .NET campus run.
+LI_TITLE_SKIP = re.compile(
+    r"product\s*manager|network\s*architect|system\s*test|quality\s*(platform|assurance|engineering)|"
+    r"threat\s*detection|industrial\s*design|hardware\s*architect|machine\s*learning\s*hardware|"
+    r"gpu\s*software|embedded\s*software|field\s*robotics|platform\s*power|network\s*hardware|"
+    r"kernel\s*optimization|rtl\s*design|physical\s*design",
+    re.I,
+)
+
 REFERRAL_NOTE = (
     "Hi {first} — I'm a Principal Analyst (.NET/Azure, ~15 yrs) targeting senior architect/"
     "tech-lead roles in Hyderabad (Madhapur / Knowledge City). I applied for {role} at {company}. "
     "If you're open to it, I'd appreciate a referral or a brief 15–20 min screen. Thanks!"
 )
+# After this many CAPTCHA/login walls on company-website ATS, skip further EXT for that company.
+MAX_EXT_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "2"))
+EXT_ATS_TIME_CAP_S = int(os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S", "90"))
 
 
 @dataclass
@@ -85,6 +97,15 @@ def dismiss(page: Page) -> None:
                 el.click(timeout=800)
         except Exception:
             pass
+    # "Did you finish applying?" tracker modal — dismiss so Apply is not blocked.
+    try:
+        body = page.locator("body").inner_text()[:1200]
+        if re.search(r"did you finish applying|you'?ll find this job under In progress", body, re.I):
+            no_btn = page.get_by_role("button", name=re.compile(r"^No$", re.I)).first
+            if no_btn.count() and no_btn.is_visible():
+                no_btn.click(timeout=800)
+    except Exception:
+        pass
 
 
 def company_jobs_url(slug: str, title: str) -> str:
@@ -113,7 +134,22 @@ def card_meta(page: Page) -> dict[str, str]:
     try:
         return page.evaluate(
             """() => {
-              const bodyHead = (document.body.innerText || '').slice(0, 2500);
+              const pick = (sel) => {
+                const el = document.querySelector(sel);
+                return el ? (el.innerText || '').trim().replace(/\\s+/g, ' ') : '';
+              };
+              // TOP CARD only for location — never full page body (sidebar/footer contaminate).
+              const topCard =
+                pick('.job-details-jobs-unified-top-card__container') ||
+                pick('.jobs-unified-top-card') ||
+                pick('.job-view-layout') ||
+                '';
+              const topPrimary =
+                pick('.job-details-jobs-unified-top-card__primary-description-container') ||
+                pick('.jobs-unified-top-card__primary-description') ||
+                pick('.job-details-jobs-unified-top-card__tertiary-description-container') ||
+                '';
+              const bodyHead = (topCard || (document.body.innerText || '')).slice(0, 1800);
               const lines = bodyHead.split('\\n').map(s => s.trim()).filter(Boolean);
               const skip = /^(home|my network|jobs|messaging|notifications|more|me|for business|learning|\\d+|\\d+ notifications?)$/i;
               const content = lines.filter(l => !skip.test(l) && !/^skip to\\b/i.test(l) && l.length > 1);
@@ -137,12 +173,18 @@ def card_meta(page: Page) -> dict[str, str]:
                 if (hit) role = hit;
               }
               let locText = '';
-              for (const l of content.slice(0, 15)) {
-                // Prefer explicit city / India / remote lines (never bare Hybrid/On-site alone).
-                if (/(hyderabad|telangana|madhapur|bengaluru|bangalore|chennai|pune|gachibowli|\\bremote\\b|\\bindia\\b)/i.test(l)
-                    && l.length < 180) {
-                  locText = l.slice(0, 220);
-                  break;
+              const locBlob = (topPrimary || content.slice(0, 12).join(' \\n ')).slice(0, 400);
+              const locMatch = locBlob.match(
+                /([A-Za-z .]+(?:,\\s*)?(?:Telangana|Karnataka|Maharashtra|Tamil Nadu|Haryana|India)[^·\\n]{0,60}|\\bRemote\\b[^·\\n]{0,40}|\\bWFH\\b[^·\\n]{0,40})/i
+              );
+              if (locMatch) locText = locMatch[0].trim().slice(0, 220);
+              if (!locText) {
+                for (const l of (topPrimary ? [topPrimary] : []).concat(content.slice(0, 12))) {
+                  if (/(hyderabad|telangana|madhapur|bengaluru|bangalore|chennai|pune|gachibowli|gurugram|gurgaon|noida|\\bremote\\b|\\bwfh\\b|\\bindia\\b)/i.test(l)
+                      && l.length < 180) {
+                    locText = l.slice(0, 220);
+                    break;
+                  }
                 }
               }
               const easy = /easy apply/i.test(bodyHead);
@@ -315,7 +357,7 @@ def follow_external(page: Page, meta: dict[str, str]) -> dict[str, Any]:
     except Exception:
         pass
     time.sleep(1.5)
-    status, reason = attempt_ats_apply(ats, time_cap_s=180)
+    status, reason = attempt_ats_apply(ats, time_cap_s=EXT_ATS_TIME_CAP_S)
     row["status"] = status
     row["reason"] = reason
     row["atsUrl"] = ats.url
@@ -475,6 +517,7 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
             if not slug:
                 report.skipped.append({"company": name, "reason": "missing_linkedin_slug"})
                 continue
+            ext_walls = 0
 
             job_ids: list[str] = []
             for title in TITLES[:5]:
@@ -535,6 +578,17 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                         {"company": company_found, "role": role, "job_id": jid, "reason": reason}
                     )
                     continue
+                if LI_TITLE_SKIP.search(role or ""):
+                    print(f"LI SKIP wrong_title_stack | {role[:60]}", flush=True)
+                    report.skipped.append(
+                        {
+                            "company": company_found,
+                            "role": role,
+                            "job_id": jid,
+                            "reason": "wrong_title_stack",
+                        }
+                    )
+                    continue
                 if not title_matches_senior_stack(role):
                     print(f"LI SKIP title_not_senior | {role[:60]}", flush=True)
                     report.skipped.append(
@@ -546,19 +600,21 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                         }
                     )
                     continue
-                loc_blob = f"{loc} {meta.get('bodyHead') or ''}"
-                if not location_allowed(loc) and not location_or_campus_ok(loc, "", loc_blob):
-                    print(f"LI SKIP location | {loc[:80]} | {role[:50]}", flush=True)
-                    report.skipped.append(
-                        {
-                            "company": company_found,
-                            "role": role,
-                            "location": loc,
-                            "job_id": jid,
-                            "reason": "location",
-                        }
-                    )
-                    continue
+                # HARD: top-card location only — never bodyHead (sidebar/footer contaminate).
+                # Empty location → apply bias (uncertain between skip and apply → APPLY).
+                if (loc or "").strip():
+                    if not location_allowed(loc) and not location_or_campus_ok(loc, "", ""):
+                        print(f"LI SKIP location | {loc[:80]} | {role[:50]}", flush=True)
+                        report.skipped.append(
+                            {
+                                "company": company_found,
+                                "role": role,
+                                "location": loc,
+                                "job_id": jid,
+                                "reason": "location",
+                            }
+                        )
+                        continue
 
                 try:
                     top = page.locator("body").inner_text()[:1800]
@@ -628,6 +684,22 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                         pass
                     continue
 
+                if ext_walls >= MAX_EXT_WALLS_PER_COMPANY:
+                    print(
+                        f"LI SKIP ext_wall_cap | {company_found} | {role[:50]} | {jid}",
+                        flush=True,
+                    )
+                    report.skipped.append(
+                        {
+                            "company": company_found,
+                            "role": role,
+                            "job_id": jid,
+                            "reason": "ext_wall_cap",
+                            "location": loc,
+                        }
+                    )
+                    continue
+
                 print(f"LI EXT {company_found} | {role} | {jid}", flush=True)
                 ext = follow_external(page, meta)
                 ext["campusCompany"] = name
@@ -645,6 +717,13 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                     report.skipped.append(ext)
                 else:
                     report.blocked.append(ext)
+                    why = (ext.get("reason") or "").lower()
+                    if "captcha" in why or "login" in why or "account wall" in why:
+                        ext_walls += 1
+                        print(
+                            f"LI EXT WALL {company_found} walls={ext_walls}/{MAX_EXT_WALLS_PER_COMPANY} | {why}",
+                            flush=True,
+                        )
 
         # Extra referral sweep for priority-1 companies even if thin inventory
         for company in companies:
