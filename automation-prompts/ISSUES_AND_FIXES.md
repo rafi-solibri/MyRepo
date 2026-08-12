@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-12 Notification home (Windows residential)
+
+| Issue | Fix |
+| --- | --- |
+| `send-job-status-email.mjs` failed with `UNABLE_TO_GET_ISSUER_CERT_LOCALLY` under corp SSL inspection | Auto-retry once with `NODE_TLS_REJECT_UNAUTHORIZED=0`; optional `RESEND_INSECURE_TLS=1` |
+
 ## Fixed for 2026-08-12 Hitech City home (Windows residential)
 
 | Issue | Fix |
