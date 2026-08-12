@@ -1520,7 +1520,26 @@ def process_search(
         return
     url = search_url(keywords, location, remote=remote, tpr=tpr)
     print(f"SEARCH {keywords!r} loc={location!r} remote={remote} tpr={tpr} -> {url}")
-    page.goto(url, wait_until="domcontentloaded", timeout=60000)
+    navigated = False
+    last_nav_err = ""
+    for nav_try in range(3):
+        try:
+            page.goto(url, wait_until="domcontentloaded", timeout=60000)
+            navigated = True
+            break
+        except Exception as e:
+            last_nav_err = str(e)[:200]
+            # LinkedIn rate-limit / transient HTTP failures (e.g. 429/999)
+            print(f"  WARN: search goto failed (try {nav_try + 1}/3): {last_nav_err}", flush=True)
+            time.sleep(4 + nav_try * 6)
+            try:
+                page.goto("https://www.linkedin.com/feed/", wait_until="domcontentloaded", timeout=45000)
+                time.sleep(2)
+            except Exception:
+                pass
+    if not navigated:
+        print(f"  SKIP search: navigation failed: {last_nav_err}", flush=True)
+        return
     time.sleep(3)
     close_overlays(page)
     shot(page, f"search-{keywords.replace(' ','_')[:30]}-{('remote' if remote else 'hyd')}-{tpr}.png")
@@ -1792,6 +1811,36 @@ def main() -> None:
         "4450121325",  # Evernorth submitted
         "4452362389",  # aha submitted
         "4453067852",  # NationsBenefits blocked / exceeded steps
+        # 2026-08-12 resumed batch (before nav-retry fix)
+        "4453072505",
+        "4453079159",
+        "4452356075",
+        "4451675940",
+        "4452367116",
+        "4451660547",
+        "4452335747",
+        "4449839825",
+        "4451673152",
+        "4451900087",
+        "4452360082",
+        "4452414600",
+        "4452452320",
+        "4452192346",
+        "4452440592",
+        "4452357739",
+        "4452372538",
+        "4452419731",
+        "4449874108",
+        "4453035603",
+        "4453048524",
+        "4453053540",
+        "4451664963",
+        "4452483183",
+        "4451659579",
+        "4453055195",
+        "4451931992",
+        "4444523612",  # Cyara blocked
+        "4452340803",  # MyCareernet blocked
     }
     with sync_playwright() as p:
         browser = p.chromium.connect_over_cdp(CDP)
@@ -1849,58 +1898,64 @@ def main() -> None:
         def hit_daily_limit() -> bool:
             return any(r.reason == "easy_apply_daily_limit" for r in results)
 
-        for tpr in TPR_WINDOWS:
-            if len([r for r in results if r.status == "submitted"]) >= MAX_APPLY:
-                break
-            if hit_daily_limit():
-                break
-            # Hyderabad first
-            for title in TITLES:
-                process_search(
-                    page,
-                    title,
-                    "Hyderabad, Telangana, India",
-                    remote=False,
-                    results=results,
-                    seen=seen,
-                    tpr=tpr,
-                )
+        def write_report() -> None:
+            report = {
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "submitted": [asdict(r) for r in results if r.status == "submitted"],
+                "skipped": [asdict(r) for r in results if r.status == "skipped"],
+                "blocked": [asdict(r) for r in results if r.status == "blocked"],
+                "external_candidates": [
+                    asdict(r)
+                    for r in results
+                    if r.status == "skipped" and "external" in (r.reason or "").lower()
+                ],
+                "all": [asdict(r) for r in results],
+            }
+            OUT.write_text(json.dumps(report, indent=2))
+            print("=== SUMMARY ===")
+            print("submitted", len(report["submitted"]))
+            print("skipped", len(report["skipped"]))
+            print("blocked", len(report["blocked"]))
+            print("external_candidates", len(report["external_candidates"]))
+            print("wrote", OUT)
+
+        try:
+            for tpr in TPR_WINDOWS:
                 if len([r for r in results if r.status == "submitted"]) >= MAX_APPLY:
                     break
                 if hit_daily_limit():
                     break
+                # Hyderabad first
+                for title in TITLES:
+                    process_search(
+                        page,
+                        title,
+                        "Hyderabad, Telangana, India",
+                        remote=False,
+                        results=results,
+                        seen=seen,
+                        tpr=tpr,
+                    )
+                    if len([r for r in results if r.status == "submitted"]) >= MAX_APPLY:
+                        break
+                    if hit_daily_limit():
+                        break
 
-            # Remote India
-            if len([r for r in results if r.status == "submitted"]) >= MAX_APPLY:
-                break
-            if hit_daily_limit():
-                break
-            for title in TITLES[:5]:
-                process_search(
-                    page, title, "India", remote=True, results=results, seen=seen, tpr=tpr
-                )
+                # Remote India
                 if len([r for r in results if r.status == "submitted"]) >= MAX_APPLY:
                     break
                 if hit_daily_limit():
                     break
-
-    report = {
-        "ts": datetime.now(timezone.utc).isoformat(),
-        "submitted": [asdict(r) for r in results if r.status == "submitted"],
-        "skipped": [asdict(r) for r in results if r.status == "skipped"],
-        "blocked": [asdict(r) for r in results if r.status == "blocked"],
-        "external_candidates": [
-            asdict(r) for r in results if r.status == "skipped" and "external" in (r.reason or "").lower()
-        ],
-        "all": [asdict(r) for r in results],
-    }
-    OUT.write_text(json.dumps(report, indent=2))
-    print("=== SUMMARY ===")
-    print("submitted", len(report["submitted"]))
-    print("skipped", len(report["skipped"]))
-    print("blocked", len(report["blocked"]))
-    print("external_candidates", len(report["external_candidates"]))
-    print("wrote", OUT)
+                for title in TITLES[:5]:
+                    process_search(
+                        page, title, "India", remote=True, results=results, seen=seen, tpr=tpr
+                    )
+                    if len([r for r in results if r.status == "submitted"]) >= MAX_APPLY:
+                        break
+                    if hit_daily_limit():
+                        break
+        finally:
+            write_report()
 
 
 if __name__ == "__main__":

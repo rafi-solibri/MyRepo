@@ -60,6 +60,7 @@
 | Preflight crashed: `scripts/resolve-python.sh` expanded unset `LOCALAPPDATA` under `set -u` on Linux | Guard with `${LOCALAPPDATA:-}` / skip empty Windows candidates (also on main via Instahyre #82) |
 | `pkill -f chrome` / `pkill -f remote-debugging-port=9222` matched the agent bash cmdline and aborted CDP launch/sync mid-run | Added `scripts/kill-chrome-cdp.sh` (exe+/proc filter); launch + sync use it; reuse CDP only when user-data-dir matches |
 | Easy Apply hung after first `/jobs/view/{id}` navigation: search-card locators went stale and next-card loop sat in `ep_poll` | `process_search` restores the search URL + rebinds card locators after each apply/block |
+| Mid-batch crash on `Page.goto` `net::ERR_HTTP_RESPONSE_CODE_FAILURE` (LinkedIn 429/999) left no `apply-report.json` | Retry search navigation 3× with feed cool-down; always write report in `finally` |
 
 
 ## Fixed for 2026-08-11 Windows owner-action blockers
