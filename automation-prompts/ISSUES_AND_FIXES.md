@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-12 Cutshort home (Windows residential)
+
+| Issue | Fix |
+| --- | --- |
+| Preflight `chrome_session check cutshort` exit 3 (`chrome_cookies_locked` / no SQLite `cutshort_authentication`) while live CDP dashboard was already logged in | `checkPortal` live-CDP fallback now covers cutshort/foundit/instahyre (same pattern as LinkedIn) via each portal’s `wait_for_cdp_login.js` |
+
 ## Fixed for 2026-08-12 LinkedIn home (Windows residential)
 
 | Issue | Fix |
