@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Small unit tests for Hitech City filters."""
 
-from tools.hitechcity.careers_apply import CAREERS_TITLE_SKIP, card_location_ok
+from tools.hitechcity.careers_apply import CAREERS_TITLE_SKIP, card_location_ok, url_loc_hint
 from tools.hitechcity.filters import (
     company_name_match,
     location_or_campus_ok,
@@ -42,6 +42,10 @@ def test_careers_card_location():
         "Senior Lead Engineer – AI Platform Architecture Hyderabad, Telangana, India"
     )
     assert card_location_ok("Solutions Architect", "Hyderabad, Telangana, India")
+    # Workday URL encodes workplace when card title omits city.
+    modmed = "https://modmed.wd501.myworkdayjobs.com/en-US/ModMed12/job/Boca-Raton-FL/Cloud-Engineering-Manager_R4806"
+    assert "boca" in url_loc_hint(modmed).lower()
+    assert not card_location_ok("Cloud Engineering Manager", url_loc_hint(modmed))
 
 
 def test_company_match():

@@ -7,6 +7,7 @@
 | `tools/chrome_session.js` `checkPortal` used Python `def` → `SyntaxError` broke `preflight-portal-run.sh hitechcity` | Restored JS `function checkPortal(portal)` |
 | `scripts/resolve-python.sh` expanded bare `$LOCALAPPDATA` under `set -u` → preflight aborted on Linux after cookie sync | Guard with `${LOCALAPPDATA:-}` / skip empty Windows candidate paths |
 | Careers scraper opened US cards (Meta Austin/Seattle, MSFT Redmond, ModMed Boca) because full-page body “India” bypassed location HARD filter | `card_location_ok` uses role + top-card only; expand `BAD_LOC_HINT`; drop body-India bypass; skip wrong titles (system test / project analyst / …) |
+| ModMed Workday URL `/Boca-Raton-FL/` still opened when title omitted city; Amazon apply ended on passport as `ats_incomplete_or_stuck` | Decode URL path via `url_loc_hint` into location check; classify `passport.amazon.jobs` as login/account wall |
 
 ## Fixed for 2026-08-12 Indeed daily (cloud)
 
