@@ -20,6 +20,12 @@
 | `tools/chrome_session.js` used Python `def checkPortal` → SyntaxError; every portal preflight failed | Restored valid JS `function checkPortal` so `preflight-portal-run.sh` / `chrome_session.js check` load again |
 | `confirmLogin` on `/seeker/dashboard` false-failed (`Hi, Seeker` before header personalizes) despite live MSSOAT + `/home/user` Hi Rafi | Poll dashboard then fall back to `/home/user`; ignore transient Seeker greeting |
 
+## Fixed for 2026-08-12 Naukri daily (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Same `LOCALAPPDATA` unbound abort hit Naukri preflight before STEP 0 | Confirmed Instahyre/main guard (`${LOCALAPPDATA:-}` / skip empty Windows paths); Naukri cron continued after merge |
+
 ## Fixed for 2026-08-11 Windows owner-action blockers
 
 | Issue | Fix |
