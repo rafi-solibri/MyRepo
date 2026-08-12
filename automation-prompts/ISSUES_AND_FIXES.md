@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-12 Naukri daily (cloud) — company-site CTA
+
+| Issue | Fix |
+| --- | --- |
+| Company-ATS jobs blocked as `external_link_not_opened` because TopTier uses **Go to company site** (window.open) while **Apply on company site** is often disabled (“Apply attempted”) | `daily_apply.js` `handleExternal`: prefer Go-to CTA, skip disabled Apply, hook `window.open`, treat new non-Naukri pages as ATS; card/detail collectors match Go/Apply-on company site |
+
 ## Fixed for 2026-08-12 Naukri daily (cloud)
 
 | Issue | Fix |
