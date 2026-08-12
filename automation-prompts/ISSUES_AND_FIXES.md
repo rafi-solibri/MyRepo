@@ -5,6 +5,7 @@
 | Issue | Fix |
 | --- | --- |
 | Preflight `node tools/chrome_session.js check instahyre` crashed: `SyntaxError: Unexpected identifier 'checkPortal'` (`def checkPortal`) | Restored JS `function checkPortal(portal)` in `tools/chrome_session.js` |
+| Preflight aborted after sync: `scripts/resolve-python.sh: LOCALAPPDATA: unbound variable` (`set -u` on Linux) | Guard with `${LOCALAPPDATA:-}` / skip empty Windows candidate paths |
 
 ## Fixed for 2026-08-11 Windows owner-action blockers
 
