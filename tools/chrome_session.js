@@ -224,7 +224,7 @@ function portalStatus(portal) {
   };
 }
 
-def checkPortal(portal) {
+function checkPortal(portal) {
   const result = portalStatus(portal);
   // Windows ABE / locked Cookies DB: SQLite names lie while Chrome is open.
   // Prefer a live CDP probe when LinkedIn/Hitech City check would false-fail.

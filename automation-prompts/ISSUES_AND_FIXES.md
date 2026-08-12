@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-12 Instahyre daily (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Preflight `node tools/chrome_session.js check instahyre` crashed: `SyntaxError: Unexpected identifier 'checkPortal'` (`def checkPortal`) | Restored JS `function checkPortal(portal)` in `tools/chrome_session.js` |
+
 ## Fixed for 2026-08-11 Windows owner-action blockers
 
 | Issue | Fix |
