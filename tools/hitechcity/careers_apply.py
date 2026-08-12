@@ -44,7 +44,8 @@ LOC_HINT = re.compile(
 BAD_LOC_HINT = re.compile(
     r"\b(austin|seattle|sunnyvale|redmond|boca\s*raton|st\.?\s*louis|london|new york|"
     r"toronto|dublin|san\s*francisco|mountain\s*view|cupertino|menlo\s*park|"
-    r"united\s*states|\busa\b|\buk\b|washington,\s*redmond|multiple\s*locations|"
+    r"united\s*states|united\s*kingdom|\busa\b|\buk\b|berkshire|reading|"
+    r"washington,\s*redmond|multiple\s*locations|"
     r"bengaluru|bangalore|pune|chennai|mumbai|noida|gurgaon|gurugram|"
     r"tx|wa|ca|fl|ny|il|ga|nc|ma)\b",
     re.I,

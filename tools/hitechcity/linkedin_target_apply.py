@@ -84,6 +84,28 @@ def load_companies() -> list[dict[str, Any]]:
     return sorted(data.get("companies", []), key=lambda c: (c.get("priority", 9), c.get("name", "")))
 
 
+def goto_retry(page: Page, url: str, *, timeout: int = 70000, attempts: int = 3) -> None:
+    """Navigate with backoff on LinkedIn HTTP throttle / transient failures."""
+    last: Exception | None = None
+    for i in range(attempts):
+        try:
+            page.goto(url, wait_until="domcontentloaded", timeout=timeout)
+            # Soft throttle signal in URL/title
+            u = (page.url or "").lower()
+            if any(x in u for x in ("/authwall", "/checkpoint/challenge", "unavailable")):
+                time.sleep(2.5 + i * 2.0)
+            return
+        except Exception as e:
+            last = e
+            msg = str(e)
+            if "ERR_HTTP_RESPONSE_CODE_FAILURE" in msg or "Timeout" in msg or "net::ERR_" in msg:
+                time.sleep(3.0 + i * 3.5)
+                continue
+            raise
+    assert last is not None
+    raise last
+
+
 def dismiss(page: Page) -> None:
     for sel in (
         "button.artdeco-modal__dismiss",
@@ -214,8 +236,20 @@ def fill_easy_apply(page: Page) -> tuple[str, str]:
     except Exception:
         pass
 
-    for _ in range(10):
+    start = time.time()
+    time_cap = int(os.environ.get("HITECHCITY_EASY_TIME_CAP_S", "120"))
+    for _ in range(8):
+        if time.time() - start >= time_cap:
+            return "blocked", "easy_apply_time_cap"
         dismiss(page)
+        # LinkedIn Easy Apply sometimes embeds reCAPTCHA in the modal.
+        try:
+            for fr in page.frames:
+                u = (fr.url or "").lower()
+                if "/recaptcha/" in u or "hcaptcha.com" in u:
+                    return "blocked", "easy_apply_recaptcha"
+        except Exception:
+            pass
         body = ""
         try:
             body = page.locator("body").inner_text()[:5000]
@@ -249,8 +283,8 @@ def fill_easy_apply(page: Page) -> tuple[str, str]:
         ):
             try:
                 labs = page.locator("label")
-                for i in range(min(labs.count(), 40)):
-                    t = (labs.nth(i).inner_text(timeout=300) or "").strip().lower()
+                for i in range(min(labs.count(), 25)):
+                    t = (labs.nth(i).inner_text(timeout=200) or "").strip().lower()
                     if re.search(label, t, re.I):
                         fid = labs.nth(i).get_attribute("for")
                         ctrl = (
@@ -272,7 +306,7 @@ def fill_easy_apply(page: Page) -> tuple[str, str]:
                 if btn.count() and btn.first.is_visible() and btn.first.is_enabled():
                     btn.first.click(timeout=2500, force=True)
                     clicked = True
-                    time.sleep(1.3)
+                    time.sleep(1.0)
                     break
             except Exception:
                 continue
@@ -417,7 +451,7 @@ def referral_people_search(page: Page, company: str, role: str) -> dict[str, Any
     q = f"{company} Hyderabad (Engineering Manager OR Architect OR Recruiter OR Talent)"
     url = f"https://www.linkedin.com/search/results/people/?keywords={quote(q)}&origin=GLOBAL_SEARCH_HEADER"
     try:
-        page.goto(url, wait_until="domcontentloaded", timeout=60000)
+        goto_retry(page, url, timeout=60000)
     except Exception as e:
         row["reason"] = f"people_nav:{e}"
         return row
@@ -483,7 +517,7 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
         page = context.pages[0] if context.pages else context.new_page()
         page.set_default_timeout(45000)
 
-        page.goto("https://www.linkedin.com/feed/", wait_until="domcontentloaded", timeout=60000)
+        goto_retry(page, "https://www.linkedin.com/feed/", timeout=60000)
         time.sleep(2.5)
         url_l = (page.url or "").lower()
         logged_in = bool(
@@ -526,7 +560,7 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                 url = company_jobs_url(slug, title)
                 print(f"LI COMPANY JOBS {name} | {title}", flush=True)
                 try:
-                    page.goto(url, wait_until="domcontentloaded", timeout=70000)
+                    goto_retry(page, url, timeout=70000)
                 except Exception as e:
                     report.blocked.append({"company": name, "title": title, "reason": f"search_nav:{e}"})
                     continue
@@ -544,7 +578,7 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                     break
                 view = f"https://www.linkedin.com/jobs/view/{jid}/"
                 try:
-                    page.goto(view, wait_until="domcontentloaded", timeout=60000)
+                    goto_retry(page, view, timeout=60000)
                 except Exception as e:
                     report.blocked.append({"company": name, "job_id": jid, "reason": f"view_nav:{e}"})
                     continue

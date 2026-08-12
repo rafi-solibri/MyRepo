@@ -44,6 +44,9 @@ def test_careers_card_location():
         "Principal Architect, Azure Management Solutions United States, Washington, Redmond"
     )
     assert not card_location_ok("Cloud Engineering Manager", "Boca Raton, FL")
+    assert not card_location_ok(
+        "ACSM Solution Architect Manager United Kingdom, Berkshire, Reading + 3 more"
+    )
     assert card_location_ok(
         "Senior Lead Engineer – AI Platform Architecture Hyderabad, Telangana, India"
     )

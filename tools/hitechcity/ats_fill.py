@@ -58,26 +58,32 @@ def looks_submitted(page: Page) -> bool:
 
 def blocked_wall(page: Page) -> str | None:
     # Frame/iframe CAPTCHA first — body text often omits "captcha" while reCAPTCHA blocks submit.
+    # Do NOT treat bare [data-sitekey] as a wall (many ATS pages embed dormant sitekeys).
     try:
         for fr in page.frames:
             u = (fr.url or "").lower()
             if any(
                 x in u
                 for x in (
-                    "recaptcha",
-                    "hcaptcha",
+                    "/recaptcha/",
+                    "recaptcha/enterprise",
+                    "hcaptcha.com",
                     "challenges.cloudflare.com",
                     "geetest",
                     "funcaptcha",
                 )
             ):
                 return "CAPTCHA/bot wall"
-        if page.locator(
-            "iframe[src*='recaptcha'], iframe[src*='hcaptcha'], "
-            "iframe[title*='reCAPTCHA'], iframe[title*='captcha'], "
-            ".g-recaptcha, [data-sitekey]"
-        ).count():
-            return "CAPTCHA/bot wall"
+        # Visible challenge iframes only
+        for sel in (
+            "iframe[src*='recaptcha/']",
+            "iframe[src*='hcaptcha.com']",
+            "iframe[title*='reCAPTCHA']",
+            "iframe[title*='captcha']",
+        ):
+            loc = page.locator(sel)
+            if loc.count() and loc.first.is_visible():
+                return "CAPTCHA/bot wall"
     except Exception:
         pass
     try:
