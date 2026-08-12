@@ -219,7 +219,9 @@ function portalStatus(portal) {
     isWindows: IS_WIN,
     reason,
     liveHint: IS_WIN
-      ? "bash scripts/home-headed-login.sh " + portal
+      ? "bash scripts/home-headed-login.sh " +
+        (portal === "hitechcity" ? "linkedin" : portal) +
+        (portal === "hitechcity" ? "  # or: bash scripts/home-headed-login.sh hitechcity" : "")
       : undefined,
   };
 }

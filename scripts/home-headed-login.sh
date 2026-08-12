@@ -12,17 +12,18 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 PORTAL="${1:-}"
+# hitechcity reuses the LinkedIn CDP session for campus applies + referrals.
 case "$PORTAL" in
-  linkedin|foundit|cutshort|naukri|instahyre|indeed) ;;
+  linkedin|hitechcity|foundit|cutshort|naukri|instahyre|indeed) ;;
   *)
-    echo "Usage: bash scripts/home-headed-login.sh <linkedin|foundit|cutshort|naukri|instahyre|indeed>" >&2
+    echo "Usage: bash scripts/home-headed-login.sh <linkedin|hitechcity|foundit|cutshort|naukri|instahyre|indeed>" >&2
     exit 2
     ;;
 esac
 
 LOGIN_URL="$(
   case "$PORTAL" in
-    linkedin) echo "https://www.linkedin.com/login" ;;
+    linkedin|hitechcity) echo "https://www.linkedin.com/login" ;;
     foundit) echo "https://www.foundit.in/rio/login" ;;
     cutshort) echo "https://cutshort.io/login" ;;
     naukri) echo "https://www.naukri.com/nlogin/login" ;;
@@ -59,18 +60,19 @@ if [[ "$SYSTEM_MODE" -eq 0 ]]; then
   read -r -p "Press Enter after you have finished signing in…"
 fi
 
-# LinkedIn / Cutshort: prefer dedicated live CDP waiter (ABE-aware messaging).
-if [[ "$PORTAL" == "linkedin" && -f "$ROOT/tools/linkedin/wait_for_cdp_login.js" ]]; then
+# LinkedIn / HitechCity / Cutshort: prefer dedicated live CDP waiter (ABE-aware messaging).
+if [[ "$PORTAL" == "linkedin" || "$PORTAL" == "hitechcity" ]] && [[ -f "$ROOT/tools/linkedin/wait_for_cdp_login.js" ]]; then
   export NODE_PATH="$ROOT/tools/node_modules${NODE_PATH:+:$NODE_PATH}"
   set +e
   node "$ROOT/tools/linkedin/wait_for_cdp_login.js"
   rc=$?
   set -e
   if [[ "$rc" -eq 0 ]]; then
-    echo "OK: LinkedIn CDP session has li_at. Future home dailies can reuse this profile."
+    echo "OK: LinkedIn CDP session has li_at (also used by hitechcity). Future home dailies can reuse this profile."
     exit 0
   fi
   echo "WARN: LinkedIn still not logged in (exit $rc). Stay on the Chrome window and retry." >&2
+  echo "Hint: bash scripts/home-headed-login.sh linkedin   # same session as hitechcity" >&2
   exit "$rc"
 fi
 if [[ "$PORTAL" == "cutshort" && -f "$ROOT/tools/cutshort/wait_for_cdp_login.js" ]]; then
