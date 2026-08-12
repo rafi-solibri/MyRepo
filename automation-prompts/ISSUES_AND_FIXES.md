@@ -1,10 +1,10 @@
 # Issues from last cron + fixes
 
-## Fixed for 2026-08-12 Indeed daily (cloud)
+## Fixed for 2026-08-12 chrome_session checkPortal (cloud)
 
 | Issue | Fix |
 | --- | --- |
-| `tools/chrome_session.js` had Python `def checkPortal` → SyntaxError; portal preflight + `daily_apply.js` could not load `resolvePython` | Restored JS `function checkPortal` |
+| `tools/chrome_session.js` used Python `def checkPortal` → SyntaxError; Indeed/Cutshort/Foundit (and every portal) preflight failed | Restored valid JS `function checkPortal` so `preflight-portal-run.sh` / `chrome_session.js check` / Indeed `daily_apply.js` `resolvePython` load again |
 
 ## Fixed for 2026-08-11 Windows owner-action blockers
 
