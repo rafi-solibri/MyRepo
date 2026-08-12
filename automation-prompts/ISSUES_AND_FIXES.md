@@ -1,5 +1,13 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-12 Naukri daily (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Workday Candidate Home SSO chooser hid email/password → helper skipped auth and timed out on Next | `workday_apply.js`: click **Sign in with email**, prefer **Create Account**, use `signInSubmitButton` / create submit |
+| `NAUKRI_WORKDAY_PASSWORD` (9 chars) fails Synchrony/etc Create Account (min 12 + complexity) | Detect `ats_password_policy`; owner must set a 12+ char Workday password in secrets |
+| Workday host match missed `*.myworkdaysite.com` | `daily_apply.js` includes `myworkdaysite.com` in Workday ATS path |
+
 ## Fixed for 2026-08-12 Hitech City cloud cron
 
 | Issue | Fix |
