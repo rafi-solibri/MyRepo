@@ -1691,6 +1691,32 @@ def process_search(
         if job.reason == "easy_apply_daily_limit":
             print("  STOP: LinkedIn Easy Apply daily limit reached", flush=True)
             return
+        # easy_apply_flow often navigates to /jobs/view/{id}. Stale search-card
+        # locators then hang (ep_poll) on the next iteration — restore the list.
+        try:
+            on_view = "/jobs/view/" in (page.url or "")
+            list_alive = False
+            try:
+                list_alive = list_items.count() > 0 and not on_view
+            except Exception:
+                list_alive = False
+            if on_view or not list_alive:
+                page.goto(url, wait_until="domcontentloaded", timeout=60000)
+                time.sleep(2.2)
+                close_overlays(page)
+                list_items = page.locator(
+                    "li.scaffold-layout__list-item, li.jobs-search-results__list-item, "
+                    "div.job-card-container"
+                )
+                ai_cards = ai_job_card_buttons(page)
+                if use_ai or list_items.count() == 0:
+                    use_ai = ai_cards.count() > 0
+                n = min(
+                    (ai_cards.count() if use_ai else list_items.count()),
+                    MAX_SCAN_PER_SEARCH,
+                )
+        except Exception as e:
+            print(f"  WARN: restore search after apply failed: {e}", flush=True)
         time.sleep(1.5)
 
 
@@ -1761,6 +1787,11 @@ def main() -> None:
         "4450682491",
         "4415350173",
         "4270943974",
+        # 2026-08-12 partial run (before stale-search-card restore fix)
+        "4451697452",  # ANSR submitted
+        "4450121325",  # Evernorth submitted
+        "4452362389",  # aha submitted
+        "4453067852",  # NationsBenefits blocked / exceeded steps
     }
     with sync_playwright() as p:
         browser = p.chromium.connect_over_cdp(CDP)
@@ -1773,6 +1804,10 @@ def main() -> None:
         if page is None:
             page = context.new_page()
         page.bring_to_front()
+        try:
+            page.set_default_timeout(20000)
+        except Exception:
+            pass
 
         # Auth check (retry once — first paint can look like a login wall)
         signed_in = False
