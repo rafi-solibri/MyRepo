@@ -62,13 +62,32 @@ async function main() {
   }
 
   const ctx = browser.contexts()[0] || (await browser.newContext());
-  const page = ctx.pages()[0] || (await ctx.newPage());
+
+  function pickLinkedInPage() {
+    const pages = ctx.pages() || [];
+    const li = pages.filter((p) => /linkedin\.com/i.test(p.url() || ""));
+    const challenge = li.find((p) =>
+      /checkpoint|challenge|security.?verif/i.test(p.url() || "")
+    );
+    if (challenge) return challenge;
+    const feedish = li.find((p) =>
+      /\/feed|\/jobs|\/in\//i.test(p.url() || "")
+    );
+    if (feedish) return feedish;
+    if (li[0]) return li[0];
+    return pages[0] || null;
+  }
+
+  let page = pickLinkedInPage() || (await ctx.newPage());
 
   async function probe() {
     const cookies = await ctx.cookies("https://www.linkedin.com");
     const has_li_at = cookies.some((c) => c.name === "li_at");
+    page = pickLinkedInPage() || page;
     let url = page.url() || "";
-    if (openLogin || (!has_li_at && !/linkedin\.com/i.test(url))) {
+    const onChallenge = /checkpoint|challenge/i.test(url);
+    // Never navigate away from Security Verification / CAPTCHA — owner must finish it.
+    if (!onChallenge && (openLogin || (!has_li_at && !/linkedin\.com/i.test(url)))) {
       await page
         .goto("https://www.linkedin.com/login", {
           waitUntil: "domcontentloaded",
@@ -77,7 +96,7 @@ async function main() {
         .catch(() => {});
       url = page.url() || "";
     }
-    if (has_li_at) {
+    if (has_li_at && !onChallenge) {
       await page
         .goto("https://www.linkedin.com/feed/", {
           waitUntil: "domcontentloaded",
@@ -86,8 +105,13 @@ async function main() {
         .catch(() => {});
       url = page.url() || "";
     }
-    const loginish = /\/login|authwall/i.test(url);
-    return { ok: has_li_at && !loginish, has_li_at, url };
+    const loginish = /\/login|authwall|checkpoint|challenge/i.test(url);
+    return {
+      ok: has_li_at && !loginish,
+      has_li_at,
+      url,
+      onChallenge,
+    };
   }
 
   const deadline = Date.now() + Math.max(0, waitSec) * 1000;
@@ -97,10 +121,15 @@ async function main() {
     process.exit(0);
   }
 
+  const systemHint =
+    process.env.CHROME_CDP_MODE === "system"
+      ? "system Chrome Default (CHROME_CDP_MODE=system)"
+      : "profile under ~/.cursor/chrome-cdp-profiles/linkedin";
+
   if (waitSec > 0) {
     console.error(
-      "LinkedIn CDP login required — sign in in the headed Chrome window " +
-        "(profile under ~/.cursor/chrome-cdp-profiles/linkedin). " +
+      "LinkedIn CDP login required — complete sign-in / Security Verification in the headed Chrome window " +
+        `(${systemHint}). ` +
         `Waiting up to ${waitSec}s…`
     );
     console.error("Or: bash scripts/home-headed-login.sh linkedin");
