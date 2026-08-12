@@ -274,18 +274,31 @@ def process_external(page: Page, job: dict) -> ExtResult:
     jid = res.job_id
     view = f"https://www.linkedin.com/jobs/view/{jid}/"
     print(f"EXTERNAL {res.company} | {res.role} | {jid}", flush=True)
-    try:
-        page.goto(view, wait_until="domcontentloaded", timeout=60000)
-    except Exception as e:
-        # LinkedIn often aborts mid-navigation on SPA redirects; retry once
+    navigated = False
+    last_err = ""
+    for nav_try in range(3):
         try:
-            time.sleep(1.5)
             page.goto(view, wait_until="domcontentloaded", timeout=60000)
-        except Exception as e2:
-            res.status = "blocked"
-            res.reason = f"goto failed: {e2}"
-            print(f"  -> blocked: {res.reason}", flush=True)
-            return res
+            navigated = True
+            break
+        except Exception as e:
+            last_err = str(e)[:220]
+            print(f"  WARN: job view goto failed (try {nav_try + 1}/3): {last_err}", flush=True)
+            time.sleep(3 + nav_try * 5)
+            try:
+                page.goto(
+                    "https://www.linkedin.com/feed/",
+                    wait_until="domcontentloaded",
+                    timeout=45000,
+                )
+                time.sleep(2)
+            except Exception:
+                pass
+    if not navigated:
+        res.status = "blocked"
+        res.reason = f"goto failed: {last_err}"
+        print(f"  -> blocked: {res.reason}", flush=True)
+        return res
     time.sleep(2.5)
 
     # Location hard check again
