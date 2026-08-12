@@ -9,8 +9,9 @@ for cand in \
   /c/Python314/python.exe \
   /c/Python313/python.exe \
   /c/Python312/python.exe \
-  "$LOCALAPPDATA/Programs/Python/Python314/python.exe" \
-  "$LOCALAPPDATA/Programs/Python/Python313/python.exe"; do
+  "${LOCALAPPDATA:-}/Programs/Python/Python314/python.exe" \
+  "${LOCALAPPDATA:-}/Programs/Python/Python313/python.exe"; do
+  # ${LOCALAPPDATA:-} keeps set -u safe on Linux/cloud (path becomes /Programs/... and -x fails).
   if [[ -n "$cand" && -x "$cand" ]]; then
     echo "$cand"
     exit 0

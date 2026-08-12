@@ -6,6 +6,12 @@
 | --- | --- |
 | `tools/chrome_session.js` used Python `def checkPortal` → SyntaxError; every portal preflight failed | Restored valid JS `function checkPortal` so `preflight-portal-run.sh` / `chrome_session.js check` load again |
 
+## Fixed for 2026-08-12 Naukri daily preflight (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| `preflight-portal-run.sh` aborted on Linux under `set -u` when `resolve-python.sh` expanded bare `$LOCALAPPDATA` | Use `${LOCALAPPDATA:-}` so cloud/Linux preflight reaches resume path + `chrome_session check` |
+
 ## Fixed for 2026-08-11 Windows owner-action blockers
 
 | Issue | Fix |
