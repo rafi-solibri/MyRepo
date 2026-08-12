@@ -368,9 +368,11 @@ async function handleExternalAts(context, resumePath, job, report) {
         return { status: "ats_captcha", url: page.url() };
       }
       if (
-        /sign in|log in|create account|sso/i.test(body) &&
-        /password/i.test(body) &&
-        !/apply manually|autofill with resume/i.test(body)
+        (/sign in|log in|create account|sso/i.test(body) &&
+          /password/i.test(body) &&
+          !/apply manually|autofill with resume/i.test(body)) ||
+        (/create account\/sign in|create account\/sign-in/i.test(body) &&
+          /current step/i.test(body))
       ) {
         return { status: "ats_login_wall", url: page.url() };
       }
