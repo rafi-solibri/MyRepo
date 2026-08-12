@@ -1,9 +1,9 @@
 {
   "portal": "foundit",
   "source": "home-local",
-  "date": "2026-08-12",
+  "date": "2026-08-11",
   "startedAt": null,
-  "finishedAt": "2026-08-12T11:57:47Z",
+  "finishedAt": "2026-08-11T11:56:08Z",
   "host": "NEM01-GBGR234",
   "ok": false,
   "counts": {
@@ -20,14 +20,14 @@
   "blocked": [
     {
       "reason": "foundit_login_required",
-      "detail": "Live CDP on system Chrome Default: no MSSOAT; Foundit redirected seeker/dashboard to /rio/sign-out (Logged out Successfully). Polled ~4 min with login tab open.",
+      "detail": "Windows ABE: CDP profile missing MSSOAT. Headed Chrome opened at https://www.foundit.in/rio/login; no sign-in within 4 minutes.",
       "hint": "bash scripts/home-headed-login.sh foundit"
     }
   ],
   "skipped": [],
   "seen": [],
-  "blockerSummary": "foundit_login_required — sign in via bash scripts/home-headed-login.sh foundit",
+  "blockerSummary": "foundit_login_required — run: bash scripts/home-headed-login.sh foundit",
   "notes": [],
   "preflight": null,
-  "logPath": null
+  "logPath": "C:/Users/MohammedAhmed/.cursor/portal-home-logs/foundit/foundit-20260811T115002Z.log"
 }
