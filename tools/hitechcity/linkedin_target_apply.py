@@ -49,11 +49,25 @@ TITLES = [
     "Azure Architect",
 ]
 
+# Title matches TITLE_OK via architect/principal/staff but are wrong for this .NET campus run.
+LI_TITLE_SKIP = re.compile(
+    r"product\s*manager|network\s*architect|system\s*test|quality\s*(platform|assurance|engineering)|"
+    r"threat\s*detection|industrial\s*design|hardware\s*architect|machine\s*learning\s*hardware|"
+    r"gpu\s*software|embedded\s*software|field\s*robotics|platform\s*power|network\s*hardware|"
+    r"kernel\s*optimization|rtl\s*design|physical\s*design",
+    re.I,
+)
+
 REFERRAL_NOTE = (
     "Hi {first} — I'm a Principal Analyst (.NET/Azure, ~15 yrs) targeting senior architect/"
     "tech-lead roles in Hyderabad (Madhapur / Knowledge City). I applied for {role} at {company}. "
     "If you're open to it, I'd appreciate a referral or a brief 15–20 min screen. Thanks!"
 )
+# After this many CAPTCHA/login walls on company-website ATS, skip further EXT for that company.
+MAX_EXT_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "2"))
+# Hard cap on external ATS attempts per company (incomplete Phenom/guest forms burn the run).
+MAX_EXT_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "3"))
+EXT_ATS_TIME_CAP_S = int(os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S", "75"))
 
 
 @dataclass
@@ -72,6 +86,28 @@ def load_companies() -> list[dict[str, Any]]:
     return sorted(data.get("companies", []), key=lambda c: (c.get("priority", 9), c.get("name", "")))
 
 
+def goto_retry(page: Page, url: str, *, timeout: int = 70000, attempts: int = 3) -> None:
+    """Navigate with backoff on LinkedIn HTTP throttle / transient failures."""
+    last: Exception | None = None
+    for i in range(attempts):
+        try:
+            page.goto(url, wait_until="domcontentloaded", timeout=timeout)
+            # Soft throttle signal in URL/title
+            u = (page.url or "").lower()
+            if any(x in u for x in ("/authwall", "/checkpoint/challenge", "unavailable")):
+                time.sleep(2.5 + i * 2.0)
+            return
+        except Exception as e:
+            last = e
+            msg = str(e)
+            if "ERR_HTTP_RESPONSE_CODE_FAILURE" in msg or "Timeout" in msg or "net::ERR_" in msg:
+                time.sleep(3.0 + i * 3.5)
+                continue
+            raise
+    assert last is not None
+    raise last
+
+
 def dismiss(page: Page) -> None:
     for sel in (
         "button.artdeco-modal__dismiss",
@@ -85,6 +121,15 @@ def dismiss(page: Page) -> None:
                 el.click(timeout=800)
         except Exception:
             pass
+    # "Did you finish applying?" tracker modal — dismiss so Apply is not blocked.
+    try:
+        body = page.locator("body").inner_text()[:1200]
+        if re.search(r"did you finish applying|you'?ll find this job under In progress", body, re.I):
+            no_btn = page.get_by_role("button", name=re.compile(r"^No$", re.I)).first
+            if no_btn.count() and no_btn.is_visible():
+                no_btn.click(timeout=800)
+    except Exception:
+        pass
 
 
 def company_jobs_url(slug: str, title: str) -> str:
@@ -113,7 +158,22 @@ def card_meta(page: Page) -> dict[str, str]:
     try:
         return page.evaluate(
             """() => {
-              const bodyHead = (document.body.innerText || '').slice(0, 2500);
+              const pick = (sel) => {
+                const el = document.querySelector(sel);
+                return el ? (el.innerText || '').trim().replace(/\\s+/g, ' ') : '';
+              };
+              // TOP CARD only for location — never full page body (sidebar/footer contaminate).
+              const topCard =
+                pick('.job-details-jobs-unified-top-card__container') ||
+                pick('.jobs-unified-top-card') ||
+                pick('.job-view-layout') ||
+                '';
+              const topPrimary =
+                pick('.job-details-jobs-unified-top-card__primary-description-container') ||
+                pick('.jobs-unified-top-card__primary-description') ||
+                pick('.job-details-jobs-unified-top-card__tertiary-description-container') ||
+                '';
+              const bodyHead = (topCard || (document.body.innerText || '')).slice(0, 1800);
               const lines = bodyHead.split('\\n').map(s => s.trim()).filter(Boolean);
               const skip = /^(home|my network|jobs|messaging|notifications|more|me|for business|learning|\\d+|\\d+ notifications?)$/i;
               const content = lines.filter(l => !skip.test(l) && !/^skip to\\b/i.test(l) && l.length > 1);
@@ -137,12 +197,18 @@ def card_meta(page: Page) -> dict[str, str]:
                 if (hit) role = hit;
               }
               let locText = '';
-              for (const l of content.slice(0, 15)) {
-                // Prefer explicit city / India / remote lines (never bare Hybrid/On-site alone).
-                if (/(hyderabad|telangana|madhapur|bengaluru|bangalore|chennai|pune|gachibowli|\\bremote\\b|\\bindia\\b)/i.test(l)
-                    && l.length < 180) {
-                  locText = l.slice(0, 220);
-                  break;
+              const locBlob = (topPrimary || content.slice(0, 12).join(' \\n ')).slice(0, 400);
+              const locMatch = locBlob.match(
+                /([A-Za-z .]+(?:,\\s*)?(?:Telangana|Karnataka|Maharashtra|Tamil Nadu|Haryana|India)[^·\\n]{0,60}|\\bRemote\\b[^·\\n]{0,40}|\\bWFH\\b[^·\\n]{0,40})/i
+              );
+              if (locMatch) locText = locMatch[0].trim().slice(0, 220);
+              if (!locText) {
+                for (const l of (topPrimary ? [topPrimary] : []).concat(content.slice(0, 12))) {
+                  if (/(hyderabad|telangana|madhapur|bengaluru|bangalore|chennai|pune|gachibowli|gurugram|gurgaon|noida|\\bremote\\b|\\bwfh\\b|\\bindia\\b)/i.test(l)
+                      && l.length < 180) {
+                    locText = l.slice(0, 220);
+                    break;
+                  }
                 }
               }
               const easy = /easy apply/i.test(bodyHead);
@@ -172,8 +238,20 @@ def fill_easy_apply(page: Page) -> tuple[str, str]:
     except Exception:
         pass
 
-    for _ in range(10):
+    start = time.time()
+    time_cap = int(os.environ.get("HITECHCITY_EASY_TIME_CAP_S", "120"))
+    for _ in range(8):
+        if time.time() - start >= time_cap:
+            return "blocked", "easy_apply_time_cap"
         dismiss(page)
+        # LinkedIn Easy Apply sometimes embeds reCAPTCHA in the modal.
+        try:
+            for fr in page.frames:
+                u = (fr.url or "").lower()
+                if "/recaptcha/" in u or "hcaptcha.com" in u:
+                    return "blocked", "easy_apply_recaptcha"
+        except Exception:
+            pass
         body = ""
         try:
             body = page.locator("body").inner_text()[:5000]
@@ -207,8 +285,8 @@ def fill_easy_apply(page: Page) -> tuple[str, str]:
         ):
             try:
                 labs = page.locator("label")
-                for i in range(min(labs.count(), 40)):
-                    t = (labs.nth(i).inner_text(timeout=300) or "").strip().lower()
+                for i in range(min(labs.count(), 25)):
+                    t = (labs.nth(i).inner_text(timeout=200) or "").strip().lower()
                     if re.search(label, t, re.I):
                         fid = labs.nth(i).get_attribute("for")
                         ctrl = (
@@ -230,7 +308,7 @@ def fill_easy_apply(page: Page) -> tuple[str, str]:
                 if btn.count() and btn.first.is_visible() and btn.first.is_enabled():
                     btn.first.click(timeout=2500, force=True)
                     clicked = True
-                    time.sleep(1.3)
+                    time.sleep(1.0)
                     break
             except Exception:
                 continue
@@ -315,7 +393,7 @@ def follow_external(page: Page, meta: dict[str, str]) -> dict[str, Any]:
     except Exception:
         pass
     time.sleep(1.5)
-    status, reason = attempt_ats_apply(ats, time_cap_s=180)
+    status, reason = attempt_ats_apply(ats, time_cap_s=EXT_ATS_TIME_CAP_S)
     row["status"] = status
     row["reason"] = reason
     row["atsUrl"] = ats.url
@@ -375,7 +453,7 @@ def referral_people_search(page: Page, company: str, role: str) -> dict[str, Any
     q = f"{company} Hyderabad (Engineering Manager OR Architect OR Recruiter OR Talent)"
     url = f"https://www.linkedin.com/search/results/people/?keywords={quote(q)}&origin=GLOBAL_SEARCH_HEADER"
     try:
-        page.goto(url, wait_until="domcontentloaded", timeout=60000)
+        goto_retry(page, url, timeout=60000)
     except Exception as e:
         row["reason"] = f"people_nav:{e}"
         return row
@@ -441,7 +519,7 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
         page = context.pages[0] if context.pages else context.new_page()
         page.set_default_timeout(45000)
 
-        page.goto("https://www.linkedin.com/feed/", wait_until="domcontentloaded", timeout=60000)
+        goto_retry(page, "https://www.linkedin.com/feed/", timeout=60000)
         time.sleep(2.5)
         url_l = (page.url or "").lower()
         logged_in = bool(
@@ -475,6 +553,8 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
             if not slug:
                 report.skipped.append({"company": name, "reason": "missing_linkedin_slug"})
                 continue
+            ext_walls = 0
+            ext_attempts = 0
 
             job_ids: list[str] = []
             for title in TITLES[:5]:
@@ -483,7 +563,7 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                 url = company_jobs_url(slug, title)
                 print(f"LI COMPANY JOBS {name} | {title}", flush=True)
                 try:
-                    page.goto(url, wait_until="domcontentloaded", timeout=70000)
+                    goto_retry(page, url, timeout=70000)
                 except Exception as e:
                     report.blocked.append({"company": name, "title": title, "reason": f"search_nav:{e}"})
                     continue
@@ -501,7 +581,7 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                     break
                 view = f"https://www.linkedin.com/jobs/view/{jid}/"
                 try:
-                    page.goto(view, wait_until="domcontentloaded", timeout=60000)
+                    goto_retry(page, view, timeout=60000)
                 except Exception as e:
                     report.blocked.append({"company": name, "job_id": jid, "reason": f"view_nav:{e}"})
                     continue
@@ -535,6 +615,17 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                         {"company": company_found, "role": role, "job_id": jid, "reason": reason}
                     )
                     continue
+                if LI_TITLE_SKIP.search(role or ""):
+                    print(f"LI SKIP wrong_title_stack | {role[:60]}", flush=True)
+                    report.skipped.append(
+                        {
+                            "company": company_found,
+                            "role": role,
+                            "job_id": jid,
+                            "reason": "wrong_title_stack",
+                        }
+                    )
+                    continue
                 if not title_matches_senior_stack(role):
                     print(f"LI SKIP title_not_senior | {role[:60]}", flush=True)
                     report.skipped.append(
@@ -546,19 +637,21 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                         }
                     )
                     continue
-                loc_blob = f"{loc} {meta.get('bodyHead') or ''}"
-                if not location_allowed(loc) and not location_or_campus_ok(loc, "", loc_blob):
-                    print(f"LI SKIP location | {loc[:80]} | {role[:50]}", flush=True)
-                    report.skipped.append(
-                        {
-                            "company": company_found,
-                            "role": role,
-                            "location": loc,
-                            "job_id": jid,
-                            "reason": "location",
-                        }
-                    )
-                    continue
+                # HARD: top-card location only — never bodyHead (sidebar/footer contaminate).
+                # Empty location → apply bias (uncertain between skip and apply → APPLY).
+                if (loc or "").strip():
+                    if not location_allowed(loc) and not location_or_campus_ok(loc, "", ""):
+                        print(f"LI SKIP location | {loc[:80]} | {role[:50]}", flush=True)
+                        report.skipped.append(
+                            {
+                                "company": company_found,
+                                "role": role,
+                                "location": loc,
+                                "job_id": jid,
+                                "reason": "location",
+                            }
+                        )
+                        continue
 
                 try:
                     top = page.locator("body").inner_text()[:1800]
@@ -628,7 +721,29 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                         pass
                     continue
 
+                if ext_walls >= MAX_EXT_WALLS_PER_COMPANY or ext_attempts >= MAX_EXT_ATTEMPTS_PER_COMPANY:
+                    reason_cap = (
+                        "ext_wall_cap"
+                        if ext_walls >= MAX_EXT_WALLS_PER_COMPANY
+                        else "ext_attempt_cap"
+                    )
+                    print(
+                        f"LI SKIP {reason_cap} | {company_found} | {role[:50]} | {jid}",
+                        flush=True,
+                    )
+                    report.skipped.append(
+                        {
+                            "company": company_found,
+                            "role": role,
+                            "job_id": jid,
+                            "reason": reason_cap,
+                            "location": loc,
+                        }
+                    )
+                    continue
+
                 print(f"LI EXT {company_found} | {role} | {jid}", flush=True)
+                ext_attempts += 1
                 ext = follow_external(page, meta)
                 ext["campusCompany"] = name
                 ext["location"] = loc
@@ -645,6 +760,21 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                     report.skipped.append(ext)
                 else:
                     report.blocked.append(ext)
+                    why = (ext.get("reason") or "").lower()
+                    if (
+                        "captcha" in why
+                        or "login" in why
+                        or "account wall" in why
+                        or "incomplete" in why
+                        or "time_cap" in why
+                        or "stuck" in why
+                    ):
+                        ext_walls += 1
+                        print(
+                            f"LI EXT WALL {company_found} walls={ext_walls}/{MAX_EXT_WALLS_PER_COMPANY} "
+                            f"attempts={ext_attempts}/{MAX_EXT_ATTEMPTS_PER_COMPANY} | {why}",
+                            flush=True,
+                        )
 
         # Extra referral sweep for priority-1 companies even if thin inventory
         for company in companies:
