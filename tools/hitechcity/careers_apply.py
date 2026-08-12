@@ -36,12 +36,25 @@ TITLE_HINT = re.compile(
     re.I,
 )
 LOC_HINT = re.compile(
-    r"hyderabad|telangana|madhapur|hitec|hitech|gachibowli|raidurg|india|remote|wfh",
+    r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|gachibowli|raidurg|"
+    r"\bindia\b|\bremote\b|\bwfh\b|work from home",
     re.I,
 )
+# Explicit non-Hyd workplace signals on the card / title (never rely on page footer "India").
 BAD_LOC_HINT = re.compile(
-    r"\b(austin|seattle|sunnyvale|st\.?\s*louis|london|new york|toronto|dublin|"
-    r"bengaluru|bangalore|pune|chennai|mumbai|noida|gurgaon)\b",
+    r"\b(austin|seattle|sunnyvale|redmond|boca\s*raton|st\.?\s*louis|london|new york|"
+    r"toronto|dublin|san\s*francisco|mountain\s*view|cupertino|menlo\s*park|"
+    r"united\s*states|\busa\b|\buk\b|washington,\s*redmond|multiple\s*locations|"
+    r"bengaluru|bangalore|pune|chennai|mumbai|noida|gurgaon|gurugram|"
+    r"tx|wa|ca|fl|ny|il|ga|nc|ma)\b",
+    re.I,
+)
+# Titles that match broad TITLE_OK (staff/principal/architect) but are wrong for this run.
+CAREERS_TITLE_SKIP = re.compile(
+    r"system\s*test|quality\s*(platform|assurance|engineering)|threat\s*detection|"
+    r"project\s*analyst|industrial\s*design|hardware\s*architect|"
+    r"machine\s*learning\s*hardware|gpu\s*software|embedded\s*software|"
+    r"field\s*robotics|platform\s*power|network\s*hardware",
     re.I,
 )
 AUTH_HOST = re.compile(
@@ -101,13 +114,34 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
         reason = skip_reason(text, company)
         if reason:
             continue
+        if CAREERS_TITLE_SKIP.search(text):
+            continue
         if not title_matches_senior_stack(text) and not prefer_dotnet(text):
             continue
-        # Prefer Hyd/India/remote signals in card text; skip clear non-Hyd cities.
-        if BAD_LOC_HINT.search(text) and not LOC_HINT.search(text):
+        # Card text only — skip clear non-Hyd cities even when search URL said Hyderabad.
+        if not card_location_ok(text):
             continue
         jobs.append({"role": text, "url": href, "company": company})
     return jobs
+
+
+def card_location_ok(role_text: str, top_card: str = "") -> bool:
+    """HARD: judge workplace from card/title/top pills — never full page body/footer."""
+    blob = f"{role_text or ''} {top_card or ''}".strip()
+    if not blob:
+        # Unknown location on card: allow open; apply_job re-checks top card.
+        return True
+    if BAD_LOC_HINT.search(blob) and not LOC_HINT.search(blob):
+        return False
+    # Explicit US / non-India city in title wins even if "India" also appears elsewhere later.
+    if BAD_LOC_HINT.search(role_text or "") and not LOC_HINT.search(role_text or ""):
+        return False
+    if LOC_HINT.search(blob) or location_or_campus_ok(blob, "", ""):
+        return True
+    # No Hyd/remote signal and a bad-city signal → reject.
+    if BAD_LOC_HINT.search(blob):
+        return False
+    return True
 
 
 def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
@@ -121,6 +155,11 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         "reason": "",
     }
     print(f"CAREERS OPEN {job['company']} | {job['role'][:80]}", flush=True)
+    # Role/title location first (before navigation wastes ATS time on US cards).
+    if not card_location_ok(job.get("role") or ""):
+        row["status"] = "skipped"
+        row["reason"] = "location_non_hyd_city"
+        return row
     try:
         page.goto(job["url"], wait_until="domcontentloaded", timeout=60000)
     except Exception as e:
@@ -137,24 +176,42 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         row["finalUrl"] = page.url
         return row
 
-    # Location / campus check from page top
+    # Location from TOP CARD / workplace pills only — not full page body (footers say India).
     try:
-        snip = page.locator("body").inner_text()[:2500]
+        top = page.evaluate(
+            """() => {
+              const pick = (sel) => {
+                const el = document.querySelector(sel);
+                return el ? (el.innerText || '').trim() : '';
+              };
+              const chunks = [
+                pick('[data-automation-id="locations"]'),
+                pick('[class*="location"]'),
+                pick('[class*="Location"]'),
+                pick('h1'),
+                pick('[data-testid="job-location"]'),
+                pick('.job-location'),
+              ];
+              const body = (document.body && document.body.innerText) || '';
+              const lines = body.split('\\n').map(s => s.trim()).filter(Boolean).slice(0, 12);
+              return (chunks.filter(Boolean).join(' ') + ' ' + lines.join(' ')).slice(0, 700);
+            }"""
+        )
     except Exception:
-        snip = ""
-    role_loc = f"{job.get('role','')} {snip[:500]}"
-    if BAD_LOC_HINT.search(role_loc) and not LOC_HINT.search(role_loc):
+        top = ""
+    role = job.get("role") or ""
+    if not card_location_ok(role, top or ""):
         row["status"] = "skipped"
         row["reason"] = "location_non_hyd_city"
         row["finalUrl"] = page.url
         return row
-    if not location_or_campus_ok(snip[:400], "", snip):
-        # Still allow if company is on our campus list and page mentions India / Hyderabad weakly
-        if not re.search(r"hyderabad|telangana|india|madhapur|hitec|hitech|gachibowli|remote|wfh", snip, re.I):
-            row["status"] = "skipped"
-            row["reason"] = "location_not_hyd_or_campus"
-            row["finalUrl"] = page.url
-            return row
+    # Require an explicit Hyd/campus/remote/India signal on role or top card.
+    loc_blob = f"{role} {top or ''}"
+    if not LOC_HINT.search(loc_blob) and not location_or_campus_ok(loc_blob, "", ""):
+        row["status"] = "skipped"
+        row["reason"] = "location_not_hyd_or_campus"
+        row["finalUrl"] = page.url
+        return row
 
     # Click apply if listing page
     try_click_named(page, ("Apply now", "Apply Now", "Apply", "Start application", "I'm interested"))
