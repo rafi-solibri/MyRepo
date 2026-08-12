@@ -16,3 +16,17 @@
 
 ## Failed applies
 _None_
+
+## Questionnaires
+- Answered this run: 1 (`6a7c2b110163a46c72749b24`)
+- Already submitted (non-empty): 29
+- Locked-empty (historical; cannot unlock in code): **323** — counted as failures
+
+## Code fix (this run)
+- Pre-fix scan: qualifying=0 because `classify` used `\bc#\b` / `\b\.net\b` (never matches `C#` / `Senior .NET`)
+- Branch: `cursor/cutshort-fix-csharp-filter-c8ce` (pushed)
+- PR create blocked: GitHub token `403 Resource not accessible by integration` (no ManagePullRequest MCP in this env)
+- Artifact: `/opt/cursor/artifacts/cutshort-daily-run.json`
+
+## Profile
+- Resume: `Rafi_Resume.docx` | Expected 65 LPA | Current 52 LPA | Hyd + Remote
