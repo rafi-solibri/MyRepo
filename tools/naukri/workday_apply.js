@@ -39,7 +39,14 @@ async function typeInto(page, selector, value) {
   if (!(await el.isVisible().catch(() => false))) return false;
   await el.click({ force: true }).catch(() => {});
   await el.fill("").catch(() => {});
-  await page.keyboard.type(String(value), { delay: 15 });
+  // pressSequentially keeps React controlled inputs + special chars (e.g. %) reliable.
+  if (typeof el.pressSequentially === "function") {
+    await el.pressSequentially(String(value), { delay: 25 }).catch(async () => {
+      await el.fill(String(value)).catch(() => {});
+    });
+  } else {
+    await el.fill(String(value)).catch(() => {});
+  }
   return true;
 }
 
@@ -290,35 +297,57 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
     }
   }
 
-  // If bounced to /login or still on SSO chooser, reveal email form and retry once
+  // If bounced to /login or still on SSO chooser, reveal email form and Sign In
+  // (do NOT click Create Account again — post-create redirects land here).
   {
     const chooserText = await pageAuthText();
     if (/\/login/i.test(page.url()) || /Sign in with email/i.test(chooserText)) {
       emailVisible = await revealEmailAuth();
       if (PASS && emailVisible) {
-        const createLink = page
-          .locator("[data-automation-id='createAccountLink']")
-          .first();
-        if (await createLink.isVisible().catch(() => false)) {
-          await createLink.click({ force: true }).catch(() => {});
-          await sleep(1200);
-        }
-        if (
-          await page
-            .locator("[data-automation-id='verifyPassword']")
-            .first()
-            .isVisible()
-            .catch(() => false)
-        ) {
-          await submitCreateAccount();
-        } else {
-          await submitSignIn();
-        }
+        await submitSignIn();
       }
       const loginText = await pageAuthText();
       const fail = authFailureReason(loginText);
       if (fail) {
-        return { ok: false, reason: fail, url: page.url() };
+        // Account may not exist on this tenant — one Create Account attempt.
+        if (fail === "ats_login_wall") {
+          const createLink = page
+            .locator("[data-automation-id='createAccountLink']")
+            .first();
+          if (await createLink.isVisible().catch(() => false)) {
+            await createLink.click({ force: true }).catch(() => {});
+            await sleep(1200);
+            if (
+              await page
+                .locator("[data-automation-id='verifyPassword']")
+                .first()
+                .isVisible()
+                .catch(() => false)
+            ) {
+              await submitCreateAccount();
+              const createText = await pageAuthText();
+              const createFail = authFailureReason(createText);
+              if (createFail) {
+                return { ok: false, reason: createFail, url: page.url() };
+              }
+              // After create, tenant often redirects to /login — sign in once more.
+              if (/\/login/i.test(page.url()) || /Sign in with email/i.test(createText)) {
+                await revealEmailAuth();
+                await submitSignIn();
+                const again = authFailureReason(await pageAuthText());
+                if (again) {
+                  return { ok: false, reason: again, url: page.url() };
+                }
+              }
+            } else {
+              return { ok: false, reason: fail, url: page.url() };
+            }
+          } else {
+            return { ok: false, reason: fail, url: page.url() };
+          }
+        } else {
+          return { ok: false, reason: fail, url: page.url() };
+        }
       }
     }
   }
