@@ -55,7 +55,7 @@ Solutions Architect & Technical Lead - 15+ Yrs - .NET Core, Microservices, AWS&A
 
 ## Apply paths (CRITICAL)
 - Naukri Quick Apply when it submits on Naukri.
-- If "On company site" / Workday / Greenhouse / Lever / SmartRecruiters / SuccessFactors / etc.: OPEN and COMPLETE with Rafi_Resume.docx + 52/65/immediate/Hyd. Log each redirect URL + outcome.
+- If "Go to company site" / "On company site" / "Apply on company site" / Workday / Greenhouse / Lever / SmartRecruiters / SuccessFactors / etc.: OPEN and COMPLETE with Rafi_Resume.docx + 52/65/immediate/Hyd. Prefer **Go to company site** when Apply-on is disabled (“Apply attempted”). Log each redirect URL + outcome.
 - Cap CAPTCHA/login walls ~3–4 min → blocked → continue.
 - After apply, attempt contact recruiter / chat with 15–20 min screen ask.
 

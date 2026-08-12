@@ -76,6 +76,14 @@ function isJunkAtsUrl(url) {
   return /careers\.infoedge\.com|infoedge\.in\/?$|infoedge\.com\/?$/i.test(u);
 }
 
+/** TopTier CTA copy varies: "On company site", "Go to company site", "Apply on company site". */
+const COMPANY_SITE_CTA_RE =
+  /Go to company site|On company site|Apply on company(?:\s+site)?|On hirist/i;
+
+function isCompanySiteCta(text) {
+  return COMPANY_SITE_CTA_RE.test(String(text || ""));
+}
+
 function preferAtsLinks(links) {
   const list = [...new Set((links || []).filter(Boolean))];
   const real = list.filter(
@@ -96,6 +104,15 @@ function preferAtsLinks(links) {
     return score(a) - score(b);
   });
   return real;
+}
+
+function isExternalAtsUrl(url) {
+  const u = String(url || "");
+  if (!/^https?:/i.test(u) || isJunkAtsUrl(u) || /naukri\.com/i.test(u))
+    return false;
+  return /myworkdayjobs|myworkdaysite|greenhouse|lever\.co|smartrecruiters|successfactors|icims|taleo|ashby|phenom|oraclecloud|hirist|careers\.|jobs\.|workdayjobs/i.test(
+    u
+  );
 }
 
 /** STEP 0 — always refresh Naukri profile resume before applies. */
@@ -237,9 +254,13 @@ function searchUrls(q, age) {
 
 async function collectCards(page) {
   const raw = await page.evaluate(() => {
+    const siteRe =
+      /Go to company site|On company site|Apply on company(?:\s+site)?|On hirist/i;
     const nodes = [...document.querySelectorAll("div.cursor-pointer")].filter(
       (c) =>
-        /Quick apply|Applied|On company site|On hirist/i.test(c.innerText || "")
+        /Quick apply|Applied|Go to company site|On company site|Apply on company|On hirist/i.test(
+          c.innerText || ""
+        )
     );
     return nodes.map((c, idx) => {
       const text = (c.innerText || "").replace(/\r/g, "").trim();
@@ -250,7 +271,9 @@ async function collectCards(page) {
       let company = lines[0] || "";
       company = company.replace(/\s+\d\.\d.*$/, "").trim();
       const applyIdx = lines.findIndex((l) =>
-        /Quick apply|Applied|On company site|On hirist/i.test(l)
+        /Quick apply|Applied|Go to company site|On company site|Apply on company|On hirist/i.test(
+          l
+        )
       );
       let role = "";
       let location = "";
@@ -258,7 +281,7 @@ async function collectCards(page) {
         role = lines[applyIdx + 1] || "";
         location = lines[applyIdx + 2] || "";
       }
-      const companySite = /On company site|On hirist/i.test(text);
+      const companySite = siteRe.test(text);
       const quick = /Quick apply/i.test(text);
       return {
         idx,
@@ -283,7 +306,8 @@ async function collectCards(page) {
 
 async function openCard(context, page, idx) {
   const cards = page.locator("div.cursor-pointer").filter({
-    hasText: /Quick apply|Applied|On company site|On hirist/i,
+    hasText:
+      /Quick apply|Applied|Go to company site|On company site|Apply on company|On hirist/i,
   });
   const card = cards.nth(idx);
   await card.scrollIntoViewIfNeeded().catch(() => {});
@@ -332,11 +356,16 @@ async function readDetail(page) {
           .trim()
       )
       .filter((t) =>
-        /Quick apply|Apply|Applied|On company site|Apply on company/i.test(t)
+        /Quick apply|Apply|Applied|Go to company site|On company site|Apply on company|On hirist/i.test(
+          t
+        )
       );
     const preferred =
       ctas.find((t) => /Quick apply\s*Applied|^Applied$/i.test(t)) ||
-      ctas.find((t) => /On company site|Apply on company/i.test(t)) ||
+      ctas.find((t) => /Go to company site/i.test(t)) ||
+      ctas.find((t) =>
+        /On company site|Apply on company(?:\s+site)?|On hirist/i.test(t)
+      ) ||
       ctas.find((t) => /Quick apply/i.test(t)) ||
       ctas[0] ||
       "";
@@ -496,41 +525,79 @@ async function handleExternal(context, page, detail, jobMeta, report) {
   const start = Date.now();
   const candidateLinks = preferAtsLinks(detail.links || []);
   let atsUrl = candidateLinks[0] || null;
-  const cta = page
-    .locator(
-      "a:has-text('On company site'), button:has-text('On company site'), a:has-text('Apply on company'), button:has-text('Apply on company')"
-    )
-    .first();
+
+  // Naukri "Go to company site" opens via window.open — hook to capture URL if popup is missed.
+  await page
+    .evaluate(() => {
+      if (window.__naukriOpenHooked) return;
+      window.__naukriOpenHooked = true;
+      window.__naukriOpenedUrls = window.__naukriOpenedUrls || [];
+      const orig = window.open;
+      window.open = function (url, ...rest) {
+        try {
+          if (url) window.__naukriOpenedUrls.push(String(url));
+        } catch (_) {}
+        return orig.apply(this, [url, ...rest]);
+      };
+    })
+    .catch(() => {});
+
+  // Prefer "Go to company site" — "Apply on company site" is often disabled ("Apply attempted").
+  const ctaSelectors = [
+    "button:has-text('Go to company site')",
+    "a:has-text('Go to company site')",
+    "button:has-text('On company site'):not([disabled])",
+    "a:has-text('On company site')",
+    "button:has-text('Apply on company site'):not([disabled])",
+    "button:has-text('Apply on company'):not([disabled])",
+    "a:has-text('Apply on company site')",
+    "a:has-text('Apply on company')",
+  ];
+
   let newPage = null;
-  if (await cta.isVisible().catch(() => false)) {
-    const beforeUrls = new Set(context.pages().map((p) => p.url()));
+  const beforePages = new Set(context.pages());
+  const beforeUrls = new Set(context.pages().map((p) => p.url()));
+
+  for (const sel of ctaSelectors) {
+    const cta = page.locator(sel).first();
+    if (!(await cta.isVisible().catch(() => false))) continue;
+    if (await cta.isDisabled().catch(() => false)) continue;
+
     const popupPromise = context
       .waitForEvent("page", { timeout: 12000 })
       .catch(() => null);
     await cta.click({ force: true }).catch(() => {});
     newPage = await popupPromise;
     await sleep(2500);
+
     if (!newPage) {
-      // Popup event can miss; pick a newly opened non-Naukri / ATS tab.
+      // Prefer truly new Page objects, then new non-Naukri / ATS URLs.
       newPage =
+        context.pages().find((p) => !beforePages.has(p)) ||
         context.pages().find((p) => {
           const u = p.url();
-          return (
-            !beforeUrls.has(u) &&
-            /myworkdayjobs|myworkdaysite|greenhouse|lever\.co|smartrecruiters|successfactors|icims|taleo|ashby|phenom|oraclecloud|hirist|careers\.|jobs\./i.test(
-              u
-            ) &&
-            !isJunkAtsUrl(u)
-          );
-        }) || null;
+          return !beforeUrls.has(u) && isExternalAtsUrl(u);
+        }) ||
+        null;
+    }
+
+    if (newPage) break;
+
+    const opened = await page
+      .evaluate(() => window.__naukriOpenedUrls || [])
+      .catch(() => []);
+    if (opened && opened.length) {
+      atsUrl =
+        preferAtsLinks(opened)[0] ||
+        opened.find((u) => isExternalAtsUrl(u)) ||
+        opened[opened.length - 1] ||
+        atsUrl;
+      break;
     }
   }
+
   if (!newPage) {
-    if (
-      /myworkdayjobs|greenhouse|lever|smartrecruiters|icims|taleo|ashby|phenom|hirist|oraclecloud/i.test(
-        page.url()
-      )
-    ) {
+    if (isExternalAtsUrl(page.url())) {
       newPage = page;
     } else if (atsUrl) {
       newPage = await context.newPage();
@@ -544,6 +611,7 @@ async function handleExternal(context, page, detail, jobMeta, report) {
       ...jobMeta,
       reason: "external_link_not_opened",
       path: "company_ATS",
+      cta: detail.cta,
     });
     return;
   }
@@ -927,7 +995,7 @@ async function processCard(context, page, card, i, jobMeta, report) {
     return;
   }
 
-  if (card.companySite || /On company site|Apply on company/i.test(detail.cta)) {
+  if (card.companySite || isCompanySiteCta(detail.cta)) {
     await handleExternal(context, detailPage, detail, jobMeta, report);
     await page.bringToFront().catch(() => {});
     await closeDetail();
