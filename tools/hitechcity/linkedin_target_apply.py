@@ -65,7 +65,9 @@ REFERRAL_NOTE = (
 )
 # After this many CAPTCHA/login walls on company-website ATS, skip further EXT for that company.
 MAX_EXT_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "2"))
-EXT_ATS_TIME_CAP_S = int(os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S", "90"))
+# Hard cap on external ATS attempts per company (incomplete Phenom/guest forms burn the run).
+MAX_EXT_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "3"))
+EXT_ATS_TIME_CAP_S = int(os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S", "75"))
 
 
 @dataclass
@@ -552,6 +554,7 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                 report.skipped.append({"company": name, "reason": "missing_linkedin_slug"})
                 continue
             ext_walls = 0
+            ext_attempts = 0
 
             job_ids: list[str] = []
             for title in TITLES[:5]:
@@ -718,9 +721,14 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                         pass
                     continue
 
-                if ext_walls >= MAX_EXT_WALLS_PER_COMPANY:
+                if ext_walls >= MAX_EXT_WALLS_PER_COMPANY or ext_attempts >= MAX_EXT_ATTEMPTS_PER_COMPANY:
+                    reason_cap = (
+                        "ext_wall_cap"
+                        if ext_walls >= MAX_EXT_WALLS_PER_COMPANY
+                        else "ext_attempt_cap"
+                    )
                     print(
-                        f"LI SKIP ext_wall_cap | {company_found} | {role[:50]} | {jid}",
+                        f"LI SKIP {reason_cap} | {company_found} | {role[:50]} | {jid}",
                         flush=True,
                     )
                     report.skipped.append(
@@ -728,13 +736,14 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                             "company": company_found,
                             "role": role,
                             "job_id": jid,
-                            "reason": "ext_wall_cap",
+                            "reason": reason_cap,
                             "location": loc,
                         }
                     )
                     continue
 
                 print(f"LI EXT {company_found} | {role} | {jid}", flush=True)
+                ext_attempts += 1
                 ext = follow_external(page, meta)
                 ext["campusCompany"] = name
                 ext["location"] = loc
@@ -752,10 +761,18 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                 else:
                     report.blocked.append(ext)
                     why = (ext.get("reason") or "").lower()
-                    if "captcha" in why or "login" in why or "account wall" in why:
+                    if (
+                        "captcha" in why
+                        or "login" in why
+                        or "account wall" in why
+                        or "incomplete" in why
+                        or "time_cap" in why
+                        or "stuck" in why
+                    ):
                         ext_walls += 1
                         print(
-                            f"LI EXT WALL {company_found} walls={ext_walls}/{MAX_EXT_WALLS_PER_COMPANY} | {why}",
+                            f"LI EXT WALL {company_found} walls={ext_walls}/{MAX_EXT_WALLS_PER_COMPANY} "
+                            f"attempts={ext_attempts}/{MAX_EXT_ATTEMPTS_PER_COMPANY} | {why}",
                             flush=True,
                         )
 

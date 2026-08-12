@@ -20,6 +20,7 @@
 | Location check used `bodyHead` (sidebar/footer) contrary to top-card HARD rule; empty loc over-skipped | Top-card-only location; empty loc → apply bias |
 | Bare `[data-sitekey]` false-positive CAPTCHA blocked Qualcomm Hyd careers; MSFT UK Reading card slipped | Visible reCAPTCHA iframe only; `BAD_LOC_HINT` adds United Kingdom/Berkshire/Reading |
 | LinkedIn `ERR_HTTP_RESPONSE_CODE_FAILURE` wiped company searches + referrals; Easy Apply hung | `goto_retry` backoff; Easy Apply 120s time cap + recaptcha detect |
+| Blackbaud Phenom `ats_incomplete_or_stuck` loop burned the run (wall cap ignored incompletes) | Count incomplete/time_cap toward walls; hard `MAX_EXT_ATTEMPTS` per company (default 3) |
 | `tools/chrome_session.js` `checkPortal` used Python `def` → `SyntaxError` broke `preflight-portal-run.sh hitechcity` | Restored JS `function checkPortal(portal)` |
 | `scripts/resolve-python.sh` expanded bare `$LOCALAPPDATA` under `set -u` → preflight aborted on Linux after cookie sync | Guard with `${LOCALAPPDATA:-}` / skip empty Windows candidate paths |
 | Careers scraper opened US cards (Meta Austin/Seattle, MSFT Redmond, ModMed Boca) because full-page body “India” bypassed location HARD filter | `card_location_ok` uses role + top-card only; expand `BAD_LOC_HINT`; drop body-India bypass; skip wrong titles (system test / project analyst / …) |
