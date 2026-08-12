@@ -418,6 +418,11 @@ def fill_common_questions(sb) -> None:
               if (/expected.*(ctc|salary|compensation|pay)|ctc.*expected|desired.*salary|expected.*package/.test(t)) return '65';
               if (/notice|joining|how soon|availability|immediate|serve notice/.test(t)) return 'Immediate';
               if (/total.*(experience|exp)|years of experience|overall experience|relevant experience/.test(t)) return '14';
+              // Voluntary self-ID / EEO — prefer decline (required fields on Mattel etc.).
+              if (/voluntary self|self.?identif|gender identity|race|ethnicity|hispanic|latino|veteran|disability|disabled|lgbt|sexual orientation|pronoun/.test(t)
+                  && !/authorized|work authori|visa|citizen/.test(t)) {
+                return 'decline';
+              }
               if (/relocat|willing to work|hybrid|work from office|bond|service agreement|background check|drug test/.test(t)) return 'yes';
               if (/authorized|work authori|visa|citizen|india|legally/.test(t)) return 'yes';
               if (/gender/.test(t)) return 'male';
@@ -435,7 +440,8 @@ def fill_common_questions(sb) -> None:
                 const hit =
                   (want === 'yes' && /\\byes\\b|yep|true|agree|available/.test(lab) && !/\\bno\\b/.test(lab)) ||
                   (want === 'male' && /\\bmale\\b/.test(lab) && !/female/.test(lab)) ||
-                  (want === 'Immediate' && /immediate|0\\s*day|serving|less than|currently serving/.test(lab));
+                  (want === 'Immediate' && /immediate|0\\s*day|serving|less than|currently serving/.test(lab)) ||
+                  (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not|do not want/.test(lab));
                 if (hit) {
                   try { r.click(); } catch (e) {}
                   try { (r.closest('label') || r).click(); } catch (e) {}
@@ -451,7 +457,8 @@ def fill_common_questions(sb) -> None:
                     (want === 'Hyderabad' && /hyderabad/.test(t)) ||
                     (want === '52' && /\\b52\\b|50-55|45-55/.test(t)) ||
                     (want === '65' && /\\b65\\b|60-70|60-65/.test(t)) ||
-                    (want === '14' && /\\b14\\b|12-15|10\\+/.test(t))
+                    (want === '14' && /\\b14\\b|12-15|10\\+/.test(t)) ||
+                    (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not/.test(t))
                   ) {
                     sel.value = opt.value;
                     sel.dispatchEvent(new Event('change',{bubbles:true}));
@@ -461,14 +468,18 @@ def fill_common_questions(sb) -> None:
               }
               for (const el of root.querySelectorAll('input:not([type=radio]):not([type=checkbox]):not([type=file]):not([type=hidden]), textarea')) {
                 if (el.disabled || el.readOnly) continue;
+                if (want === 'decline') continue;
                 if (want) { setNative(el, want); return true; }
               }
               // Custom listbox / button options
               for (const el of root.querySelectorAll('button, [role=option], li, label, span')) {
                 const t = ((el.innerText||'') + ' ' + (el.getAttribute('aria-label')||'')).trim().toLowerCase();
-                if (!t || t.length > 40) continue;
+                if (!t || t.length > 80) continue;
                 if (want === 'yes' && /\\byes\\b/.test(t) && !/\\bno\\b/.test(t)) { el.click(); return true; }
                 if (want === 'Immediate' && /immediate|0\\s*day/.test(t)) { el.click(); return true; }
+                if (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not/.test(t)) {
+                  el.click(); return true;
+                }
               }
               return false;
             };
@@ -482,7 +493,7 @@ def fill_common_questions(sb) -> None:
             }
             for (const lab of document.querySelectorAll('label, legend, h1, h2, h3, p, span')) {
               const t = (lab.innerText||'').trim();
-              if (t.length > 6 && t.length < 220 && /\\?|ctc|salary|notice|experience|relocat|authori|location|package|lpa|gender|hybrid|bond/.test(t.toLowerCase())) {
+              if (t.length > 6 && t.length < 220 && /\\?|ctc|salary|notice|experience|relocat|authori|location|package|lpa|gender|hybrid|bond|veteran|disability|ethnicity|race|hispanic|voluntary|self.?ident/.test(t.toLowerCase())) {
                 const want = wantFromText(t);
                 if (want && clickMatching(lab.closest('div, fieldset, li, section, [class*="question"]') || lab.parentElement || lab, want)) {
                   answered += 1;
@@ -523,6 +534,7 @@ def fill_common_questions(sb) -> None:
               const scored = group.map(r => {
                 const lab = ((r.getAttribute('aria-label')||'') + ' ' + (r.parentElement?.innerText||'') + ' ' + (r.value||'')).toLowerCase();
                 let s = 0;
+                if (/decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not/.test(lab)) s += 4;
                 if (/\\byes\\b|immediate|agree|available|hyderabad|male\\b/.test(lab)) s += 3;
                 if (/\\bno\\b|female|not available|never/.test(lab)) s -= 2;
                 return {r, s, lab};
@@ -1469,6 +1481,10 @@ def clear_recaptcha(sb, attempts: int = 3) -> bool:
 
     Prefer a single PyAutoGUI/DOM checkbox click + at most one audio solve.
     Nested SeleniumBase uc_gui_* FileLocks deadlock on filelock>=3.20.
+
+    Never sleep through Google audio rate-limit cooldowns — that hung daily
+    apply for 4+ minutes per review job. Bail fast so the runner can mark
+    `easy_apply_recaptcha` and continue inventory.
     """
     global _AUDIO_RATE_LIMITED, _AUDIO_RATE_LIMITED_AT
     for n in range(attempts):
@@ -1482,15 +1498,17 @@ def clear_recaptcha(sb, attempts: int = 3) -> bool:
             return True
         print(f"  recaptcha_attempt={n+1}", flush=True)
 
-        # If a prior challenge is rate-limited, dismiss it before re-clicking.
+        # Rate-limited: dismiss challenge and exit — do NOT sleep 240s.
         if _AUDIO_RATE_LIMITED:
             _dismiss_recaptcha_challenge(sb)
             elapsed = time.time() - _AUDIO_RATE_LIMITED_AT
-            if elapsed < 240:
-                wait_s = int(240 - elapsed)
-                print(f"  recaptcha_cooldown_s={wait_s}", flush=True)
-                time.sleep(wait_s)
-                _AUDIO_RATE_LIMITED = False
+            print(
+                f"  recaptcha_rate_limited skip_cooldown elapsed={int(elapsed)}s",
+                flush=True,
+            )
+            if _solve_recaptcha_via_api(sb):
+                return True
+            break
 
         # Direct DOM + PyAutoGUI click on the SmartApply (non-footer) widget.
         clicked = _click_recaptcha_checkbox(sb)
@@ -1515,8 +1533,63 @@ def clear_recaptcha(sb, attempts: int = 3) -> bool:
     return _recaptcha_cleared(sb)
 
 
+def _gui_click_submit(sb) -> bool:
+    """Trusted OS-level click on Submit when captcha is already cleared."""
+    try:
+        import pyautogui
+    except Exception as exc:
+        print(f"  review_gui_submit_dep={exc!s}"[:160], flush=True)
+        return False
+    try:
+        sb.driver.switch_to.default_content()
+    except Exception:
+        pass
+    try:
+        sb.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    except Exception:
+        pass
+    time.sleep(0.3)
+    try:
+        rect = sb.execute_script(
+            """
+            const btns=[...document.querySelectorAll('button, a[role=button], input[type=submit]')];
+            const textOf = (b) => ((b.innerText||b.value||b.getAttribute('aria-label')||'')).trim().toLowerCase();
+            const el = btns
+              .map(b => ({b, t: textOf(b), r: b.getBoundingClientRect()}))
+              .filter(x => x.r.width>40 && x.r.height>10 && /submit/.test(x.t) && !/preview|employer sees/.test(x.t))
+              .sort((a,b) => (/your application/.test(a.t)?0:1) - (/your application/.test(b.t)?0:1))
+              [0];
+            if (!el) return null;
+            el.b.scrollIntoView({block:'center'});
+            const r = el.b.getBoundingClientRect();
+            return {x: r.left + r.width/2, y: r.top + r.height/2, t: el.t, w: r.width, h: r.height};
+            """
+        )
+    except Exception as exc:
+        print(f"  review_gui_submit_rect={exc!s}"[:160], flush=True)
+        return False
+    if not rect:
+        return False
+    try:
+        win = sb.driver.get_window_position()
+        # Chrome content offset under title bar (headed UC on Xvfb).
+        chrome_y = 85
+        x = int(win.get("x", 0) + rect["x"])
+        y = int(win.get("y", 0) + chrome_y + rect["y"])
+        print(
+            f"  review_gui_submit=({x},{y}) label={rect.get('t')!r}",
+            flush=True,
+        )
+        pyautogui.moveTo(x, y, duration=0.15)
+        pyautogui.click()
+        time.sleep(0.6)
+        return True
+    except Exception as exc:
+        print(f"  review_gui_submit_err={exc!s}"[:180], flush=True)
+        return False
 
-def submit_review_application(sb) -> bool:
+
+def submit_review_application(sb, deadline: float | None = None) -> bool:
     """On review-module: solve reCAPTCHA, tick cert boxes, force Submit."""
     try:
         sb.driver.switch_to.default_content()
@@ -1529,17 +1602,25 @@ def submit_review_application(sb) -> bool:
         pass
     # Always try to clear captcha on review — widget can hydrate after first paint.
     for _ in range(8):
+        if deadline and time.time() > deadline:
+            return False
         if _page_has_recaptcha(sb) or _smartapply_sitekey(sb):
             break
         time.sleep(0.5)
-    if (_page_has_recaptcha(sb) or _smartapply_sitekey(sb)) and not _recaptcha_cleared(sb):
-        clear_recaptcha(sb, attempts=3)
+    captcha_needed = (_page_has_recaptcha(sb) or _smartapply_sitekey(sb)) and not _recaptcha_cleared(sb)
+    if captcha_needed:
+        # Cap attempts; never enter multi-minute cooldown sleeps.
+        clear_recaptcha(sb, attempts=2)
         if not _recaptcha_cleared(sb):
             _solve_recaptcha_via_api(sb)
+        if not _recaptcha_cleared(sb) and _AUDIO_RATE_LIMITED:
+            print("  review_submit=abort_rate_limited", flush=True)
+            return False
     try:
         sb.execute_script(
             """
             for (const c of document.querySelectorAll('input[type=checkbox]')) {
+              // Skip anything inside recaptcha iframes (not in this document).
               if (!c.checked) {
                 try { c.click(); } catch (e) {}
                 try { (c.closest('label') || c).click(); } catch (e) {}
@@ -1606,11 +1687,19 @@ def submit_review_application(sb) -> bool:
             sb, allow_disabled=True, submit_only=True
         )
         print(f"  review_js_click={clicked!r}", flush=True)
-        if not clicked:
-            return False
+        clicked_sel = clicked or ""
+    # When captcha is already green-checked, JS/SB clicks often no-op —
+    # use a trusted GUI click on the Submit CTA (seen 2026-08-12).
+    if _recaptcha_cleared(sb) or not captcha_needed:
+        if _gui_click_submit(sb):
+            clicked_sel = clicked_sel or "gui_submit"
+    if not clicked_sel:
+        return False
 
     # Poll for confirmation / navigation away from review.
-    for i in range(28):
+    for i in range(20):
+        if deadline and time.time() > deadline:
+            return False
         time.sleep(0.5)
         try:
             sb.driver.switch_to.default_content()
@@ -1627,13 +1716,22 @@ def submit_review_application(sb) -> bool:
             if not re.search(r"something went wrong|unable to submit|try again", body, re.I):
                 return True
         # reCAPTCHA may reappear / remain unsolved after a dead Submit click.
-        if i in (3, 8, 14, 20) and _page_has_recaptcha(sb) and not _recaptcha_cleared(sb):
-            clear_recaptcha(sb, attempts=2)
+        # Never re-enter a long captcha loop when audio is rate-limited.
+        if (
+            i in (3, 8, 14)
+            and _page_has_recaptcha(sb)
+            and not _recaptcha_cleared(sb)
+            and not _AUDIO_RATE_LIMITED
+        ):
+            clear_recaptcha(sb, attempts=1)
             try:
                 sb.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             except Exception:
                 pass
             click_next_or_submit(sb, allow_disabled=True, submit_only=True)
+            _gui_click_submit(sb)
+        elif i in (3, 8) and _recaptcha_cleared(sb):
+            _gui_click_submit(sb)
         try:
             sb.press_keys("body", "\ue00c")  # ESC preview overlays
         except Exception:
@@ -1671,12 +1769,23 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
         ):
             review_submit_attempts += 1
             print(f"  ea_step={step} review_submit attempt={review_submit_attempts} url={url[:90]}", flush=True)
-            if submit_review_application(sb):
+            if submit_review_application(sb, deadline=deadline):
                 return "submitted"
             # CAPTCHA wall: don't burn the whole job budget (AUTO_FIX ~3–4 min).
             captcha_unsolved = (
                 _page_has_recaptcha(sb) and not _recaptcha_cleared(sb)
             )
+            # Audio rate-limit → bail after 1–2 attempts (no 240s sleeps).
+            if captcha_unsolved and (
+                _AUDIO_RATE_LIMITED or review_submit_attempts >= 2
+            ):
+                try:
+                    sample = (sb.get_text("body") or "")[:500].replace("\n", " | ")
+                    print(f"  review_recaptcha_blocked sample={sample!r}", flush=True)
+                    sb.save_screenshot("/opt/cursor/artifacts/indeed-review-stuck.png")
+                except Exception:
+                    pass
+                return "recaptcha"
             if review_submit_attempts >= 3 and captcha_unsolved:
                 try:
                     sample = (sb.get_text("body") or "")[:500].replace("\n", " | ")
@@ -1685,7 +1794,7 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
                 except Exception:
                     pass
                 return "recaptcha"
-            if review_submit_attempts >= 5:
+            if review_submit_attempts >= 4:
                 try:
                     sample = (sb.get_text("body") or "")[:500].replace("\n", " | ")
                     print(f"  review_stuck sample={sample!r}", flush=True)
@@ -1694,6 +1803,17 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
                     pass
                 return "failed"
             continue
+        # Long employer privacy / EEO walls hide fields + Continue below the fold.
+        try:
+            sb.execute_script(
+                """
+                const main = document.querySelector('main, [role=main], .ia-BasePage-content, form') || document.scrollingElement;
+                if (main) main.scrollTop = main.scrollHeight;
+                window.scrollBy(0, Math.min(900, document.body.scrollHeight));
+                """
+            )
+        except Exception:
+            pass
         fill_common_questions(sb)
         # Resume card: prefer an existing Rafi resume if shown.
         if "resume-selection" in url or "resume" in url.lower():

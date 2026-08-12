@@ -23,6 +23,9 @@
 
 | Issue | Fix |
 | --- | --- |
+| SmartApply review hung 4+ min per job: `clear_recaptcha` slept through Google audio rate-limit (240s) inside `submit_review_application`, so inventory stalled on one `review-module` | Drop cooldown sleep; bail with `easy_apply_recaptcha` after 1–2 attempts; honor job deadline; try CapSolver/2Captcha only when keyed |
+| Review screenshot showed green reCAPTCHA + Submit but still `easy_apply_incomplete` (JS/SB click no-op) | Add `_gui_click_submit` PyAutoGUI trusted click when captcha already cleared |
+| Voluntary self-ID / long employer privacy walls (e.g. Mattel) stuck Continue | Prefer Decline/Prefer-not answers; scroll past legal wall before fill/Continue |
 | `tools/chrome_session.js` used Python `def checkPortal` → SyntaxError; Indeed portal preflight + `daily_apply.js` could not load `resolvePython` | Restored valid JS `function checkPortal` (same as Foundit/Cutshort/Instahyre) |
 
 ## Fixed for 2026-08-12 Instahyre daily (cloud)
