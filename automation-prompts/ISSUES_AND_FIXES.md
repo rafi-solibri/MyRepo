@@ -1,11 +1,27 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-12 Hitech City cloud cron
+
+| Issue | Fix |
+| --- | --- |
+| `tools/chrome_session.js` `checkPortal` used Python `def` → `SyntaxError` broke `preflight-portal-run.sh hitechcity` | Restored JS `function checkPortal(portal)` |
+| `scripts/resolve-python.sh` expanded bare `$LOCALAPPDATA` under `set -u` → preflight aborted on Linux after cookie sync | Guard with `${LOCALAPPDATA:-}` / skip empty Windows candidate paths |
+| Careers scraper opened US cards (Meta Austin/Seattle, MSFT Redmond, ModMed Boca) because full-page body “India” bypassed location HARD filter | `card_location_ok` uses role + top-card only; expand `BAD_LOC_HINT`; drop body-India bypass; skip wrong titles (system test / project analyst / …) |
+| ModMed Workday URL `/Boca-Raton-FL/` still opened when title omitted city; Amazon apply ended on passport as `ats_incomplete_or_stuck` | Decode URL path via `url_loc_hint` into location check; classify `passport.amazon.jobs` as login/account wall |
+
+## Fixed for 2026-08-12 Indeed daily (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| `tools/chrome_session.js` used Python `def checkPortal` → SyntaxError; Indeed portal preflight + `daily_apply.js` could not load `resolvePython` | Restored valid JS `function checkPortal` (same as Foundit/Cutshort/Instahyre) |
+
 ## Fixed for 2026-08-12 Instahyre daily (cloud)
 
 | Issue | Fix |
 | --- | --- |
 | Preflight `node tools/chrome_session.js check instahyre` crashed: `SyntaxError: Unexpected identifier 'checkPortal'` (`def checkPortal`) | Restored JS `function checkPortal(portal)` in `tools/chrome_session.js` (same fix as Foundit/Cutshort) |
 | Preflight aborted after sync: `scripts/resolve-python.sh: LOCALAPPDATA: unbound variable` (`set -u` on Linux) | Guard with `${LOCALAPPDATA:-}` / skip empty Windows candidate paths |
+| Search-apply slipped AWS Administrator / Azure Virtualisation / Data Specialist (cloud keyword bypassed generic IC skip) | `filters.js`: hard-skip `ops_admin_title` + `data specialist` in pure AI/data gate |
 
 ## Fixed for 2026-08-12 Cutshort daily (cloud)
 
@@ -18,6 +34,22 @@
 | Issue | Fix |
 | --- | --- |
 | `tools/chrome_session.js` used Python `def checkPortal` → SyntaxError; every portal preflight failed | Restored valid JS `function checkPortal` so `preflight-portal-run.sh` / `chrome_session.js check` load again |
+| `confirmLogin` on `/seeker/dashboard` false-failed (`Hi, Seeker` before header personalizes) despite live MSSOAT + `/home/user` Hi Rafi | Poll dashboard then fall back to `/home/user`; ignore transient Seeker greeting |
+
+## Fixed for 2026-08-12 Naukri daily (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Same `LOCALAPPDATA` unbound abort hit Naukri preflight before STEP 0 | Confirmed Instahyre/main guard (`${LOCALAPPDATA:-}` / skip empty Windows paths); Naukri cron continued after merge |
+
+## Fixed for 2026-08-12 LinkedIn cloud cron
+
+| Issue | Fix |
+| --- | --- |
+| Preflight crashed: `tools/chrome_session.js` had Python `def checkPortal` inside Node → SyntaxError before cookie check | Restored `function checkPortal(portal)` (also fixed via Foundit PR #79) |
+| Preflight crashed: `scripts/resolve-python.sh` expanded unset `LOCALAPPDATA` under `set -u` on Linux | Guard with `${LOCALAPPDATA:-}` / skip empty Windows candidates (also on main via Instahyre #82) |
+| `pkill -f chrome` / `pkill -f remote-debugging-port=9222` matched the agent bash cmdline and aborted CDP launch/sync mid-run | Added `scripts/kill-chrome-cdp.sh` (exe+/proc filter); launch + sync use it; reuse CDP only when user-data-dir matches |
+
 
 ## Fixed for 2026-08-11 Windows owner-action blockers
 

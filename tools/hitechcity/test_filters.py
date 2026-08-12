@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Small unit tests for Hitech City filters."""
 
+from tools.hitechcity.careers_apply import CAREERS_TITLE_SKIP, card_location_ok, url_loc_hint
 from tools.hitechcity.filters import (
     company_name_match,
     location_or_campus_ok,
@@ -14,6 +15,8 @@ def test_title_ok():
     assert title_matches_senior_stack("Engineering Manager")
     assert skip_reason("Salesforce Developer") is not None
     assert skip_reason("QA Engineer") is not None
+    assert CAREERS_TITLE_SKIP.search("Staff Project Analyst")
+    assert CAREERS_TITLE_SKIP.search("Embedded Software - System Test Architect")
 
 
 def test_campus_location():
@@ -23,6 +26,26 @@ def test_campus_location():
     assert not location_or_campus_ok("Bengaluru, Karnataka")
     # Regression: bare "hitec" must not match inside "Architect"
     assert not location_or_campus_ok("Solutions Architect", "", "Solutions Architect role summary")
+
+
+def test_careers_card_location():
+    # US workplace in title must skip even if page chrome later mentions India.
+    assert not card_location_ok(
+        "Solutions Architect Austin, TX +3 locations",
+        "Careers India footer language picker",
+    )
+    assert not card_location_ok(
+        "Principal Architect, Azure Management Solutions United States, Washington, Redmond"
+    )
+    assert not card_location_ok("Cloud Engineering Manager", "Boca Raton, FL")
+    assert card_location_ok(
+        "Senior Lead Engineer – AI Platform Architecture Hyderabad, Telangana, India"
+    )
+    assert card_location_ok("Solutions Architect", "Hyderabad, Telangana, India")
+    # Workday URL encodes workplace when card title omits city.
+    modmed = "https://modmed.wd501.myworkdayjobs.com/en-US/ModMed12/job/Boca-Raton-FL/Cloud-Engineering-Manager_R4806"
+    assert "boca" in url_loc_hint(modmed).lower()
+    assert not card_location_ok("Cloud Engineering Manager", url_loc_hint(modmed))
 
 
 def test_company_match():
@@ -35,5 +58,6 @@ def test_company_match():
 if __name__ == "__main__":
     test_title_ok()
     test_campus_location()
+    test_careers_card_location()
     test_company_match()
     print("ok")

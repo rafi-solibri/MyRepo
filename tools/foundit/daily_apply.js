@@ -196,20 +196,36 @@ async function readAppliedCount(page) {
   });
 }
 
+function readLoginSignals() {
+  const text = document.body?.innerText || "";
+  // Prefer real greeting; ignore transient "Hi, Seeker" placeholders.
+  const hits = [...text.matchAll(/Hi,\s*([^\n]+)/gi)].map((m) => m[1].trim());
+  const hasRafi = hits.some((h) => /rafi/i.test(h));
+  const loginWall = /sign in|log in|login/i.test(text) && !hasRafi;
+  return { hits, hasRafi, loginWall };
+}
+
 async function confirmLogin(page) {
-  await page.goto("https://www.foundit.in/seeker/dashboard", {
-    waitUntil: "domcontentloaded",
-    timeout: 60000,
-  });
-  await sleep(2000);
-  return page.evaluate(() => {
-    const text = document.body?.innerText || "";
-    const hits = [...text.matchAll(/Hi,\s*([^\n]+)/gi)].map((m) => m[1].trim());
-    const hasRafi = hits.some((h) => /rafi/i.test(h));
-    const loginWall =
-      /sign in|log in|login/i.test(text) && !hasRafi;
-    return { hits, hasRafi, loginWall };
-  });
+  const urls = [
+    "https://www.foundit.in/seeker/dashboard",
+    "https://www.foundit.in/home/user",
+  ];
+  let last = { hits: [], hasRafi: false, loginWall: true };
+  for (const url of urls) {
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
+    // Header personalization can lag; poll so we do not false-fail on "Hi, Seeker".
+    const deadline = Date.now() + 12000;
+    while (Date.now() < deadline) {
+      last = await page.evaluate(readLoginSignals);
+      if (last.hasRafi && !last.loginWall) {
+        last.url = url;
+        return last;
+      }
+      await sleep(800);
+    }
+    last.url = url;
+  }
+  return last;
 }
 
 async function tryDismissScreening(page) {

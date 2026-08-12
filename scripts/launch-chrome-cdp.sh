@@ -55,43 +55,45 @@ fi
 mkdir -p "$profile" /tmp/cursor
 mkdir -p /opt/cursor/artifacts 2>/dev/null || mkdir -p "$ROOT/artifacts"
 
-# If CDP already up on :9222, reuse only when it matches our intended profile mode.
+# If CDP already up on :9222, reuse only when it matches our intended user-data-dir.
 cdp_ready=0
 if curl -fsS "http://127.0.0.1:9222/json/version" >/dev/null 2>&1; then
-  if [[ "$system_profile" -eq 1 ]]; then
-    # Ensure the listener is the system User Data Chrome, not a leftover empty CDP profile.
-    if command -v powershell.exe >/dev/null 2>&1; then
-      sys_match="$(
-        powershell.exe -NoProfile -Command \
-          "\$p='$profile' -replace '\\\\','\\\\'; Get-CimInstance Win32_Process -Filter \"name='chrome.exe'\" | Where-Object { \$_.CommandLine -match 'remote-debugging-port=9222' -and \$_.CommandLine -like ('*' + \$p + '*') } | Select-Object -First 1 -ExpandProperty ProcessId" \
-          2>/dev/null | tr -d '\r'
-      )"
-      if [[ -n "$sys_match" ]]; then
-        cdp_ready=1
-        echo "Chrome CDP already listening on :9222 with system profile — reusing."
-      else
-        echo "NOTE: :9222 is up but not system Chrome User Data — restarting with Default profile."
-      fi
-    else
-      cdp_ready=1
-      echo "Chrome CDP already listening on :9222 — reusing existing instance."
-    fi
-  else
+  profile_match=0
+  # Prefer /proc exe+cmdline so we never confuse agent shells with Chrome.
+  for pid in /proc/[0-9]*; do
+    pid="${pid#/proc/}"
+    [[ "$pid" =~ ^[0-9]+$ ]] || continue
+    exe="$(readlink -f "/proc/$pid/exe" 2>/dev/null || true)"
+    case "$exe" in
+      */chrome|*/google-chrome*|*/chromium*) ;;
+      *) continue ;;
+    esac
+    cmd="$(tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null || true)"
+    [[ "$cmd" == *remote-debugging-port=9222* ]] || continue
+    [[ "$cmd" == *"--user-data-dir=$profile"* || "$cmd" == *"--user-data-dir=$profile "* ]] || continue
+    profile_match=1
+    break
+  done
+  if [[ "$profile_match" -eq 1 ]]; then
     cdp_ready=1
-    echo "Chrome CDP already listening on :9222 — reusing existing instance."
+    echo "Chrome CDP already listening on :9222 with $profile — reusing."
+  else
+    echo "NOTE: :9222 is up but not user-data-dir=$profile — restarting."
   fi
 fi
 
 if [[ "$cdp_ready" -eq 0 ]]; then
   # Daily automations use one portal per pod. Restarting avoids connecting to a
   # CDP process that was launched earlier with a different profile.
+  # NEVER use `pkill -f chrome` / `pkill -f remote-debugging-port=9222` — those
+  # patterns match the agent shell's own command line and abort the launcher.
   if [[ "$system_profile" -eq 1 ]]; then
     # System profile is locked by any normal Chrome window — must close Chrome first.
     echo "Closing existing Chrome so Default profile can open with remote debugging…"
     if command -v taskkill.exe >/dev/null 2>&1; then
       taskkill.exe /F /IM chrome.exe >/dev/null 2>&1 || true
     else
-      pkill -f "chrome" 2>/dev/null || true
+      bash "$ROOT/scripts/kill-chrome-cdp.sh" all || true
     fi
   elif command -v taskkill.exe >/dev/null 2>&1; then
     # Only kill Chrome instances that expose CDP :9222 (leave normal browsing alone when possible).
@@ -99,7 +101,7 @@ if [[ "$cdp_ready" -eq 0 ]]; then
       "Get-CimInstance Win32_Process -Filter \"name='chrome.exe'\" | Where-Object { \$_.CommandLine -match 'remote-debugging-port=9222' } | ForEach-Object { Stop-Process -Id \$_.ProcessId -Force -ErrorAction SilentlyContinue }" \
       >/dev/null 2>&1 || true
   else
-    pkill -f "remote-debugging-port=9222" 2>/dev/null || true
+    bash "$ROOT/scripts/kill-chrome-cdp.sh" cdp || true
   fi
   sleep 1
 fi
