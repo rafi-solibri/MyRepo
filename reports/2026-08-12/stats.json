@@ -1,0 +1,19 @@
+{
+  "scanned": 1973,
+  "applied": [],
+  "already": [],
+  "failed": [],
+  "external": [],
+  "qualifying": [],
+  "q": {
+    "awaitingListed": 356,
+    "answered": 0,
+    "alreadySubmitted": 29,
+    "lockedEmpty": 323,
+    "saveFailed": 0,
+    "submitFailed": 0,
+    "verifyEmpty": 0,
+    "skippedNoAnswers": 0,
+    "skipNotQuestionnaire": 3
+  }
+}
