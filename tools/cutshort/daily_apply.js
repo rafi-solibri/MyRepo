@@ -135,7 +135,14 @@ function isLoggedOut(url, bodyText) {
 }
 
 const SKIP_RE =
-  /\b(qa engineer|quality assurance|quality engineer|sdet|test engineer|intern|trainee|associate(?!\s+director)|junior|workday|dynamics|[\s/]sap[\s/]|shoppay|shopify|business development|\bbdm\b|recruiter|data architect|data engineer|analytics engineer|penetration|product manager|ios developer|android developer|flutter|php developer|wordpress|game developer|mobile engineer)\b/i;
+  /\b(qa engineer|quality assurance|quality engineer|sdet|test engineer|intern|trainee|associate(?!\s+director)|junior|workday|dynamics|\bsap\b|shoppay|shopify|business development|\bbdm\b|recruiter|data architect|data engineer|analytics engineer|penetration|product manager|ios developer|android developer|flutter|php developer|wordpress|game developer|mobile engineer)\b/i;
+
+/** C# / .NET need non-\b patterns: `\bc#\b` never matches "C#" (# is non-word). */
+const NET_STACK_RE = /(\.net|\bdotnet\b|asp\.?\s*net|c#|\bcsharp\b|\bazure\b)/i;
+const STACK_SIGNAL_RE =
+  /(\.net|\bdotnet\b|asp\.?\s*net|c#|\bcsharp\b|\bazure\b|\baws\b|\breact\b|microservices|\bnode\.?js\b|\bnodejs\b|\btypescript\b|\bjava\b|genai|gen\s*ai|generative\s*ai|\bllm\b|platform engineer)/i;
+const TIER1_TITLE_RE =
+  /\b(solutions?\s*architect|technical\s*architect|cloud\s*architect|platform\s*architect|enterprise\s*architect|application\s*architect|tech(?:nical)?\s*lead|engineering\s*manager|engineering\s*leader|principal|staff|head of eng(?:ineering)?|director of eng(?:ineering)?|delivery lead|engineering lead|architect)\b/i;
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -177,17 +184,13 @@ function classify(job) {
   if (ctc != null && ctc < 35) return null;
   if (!isHydOrRemote(job)) return null;
 
-  if (
-    /\b(solutions?\s*architect|technical\s*architect|cloud\s*architect|platform\s*architect|enterprise\s*architect|application\s*architect|tech(?:nical)?\s*lead|engineering\s*manager|principal|staff|head of eng|director of eng|delivery lead|engineering lead|architect)\b/i.test(
-      title
-    )
-  ) {
+  if (TIER1_TITLE_RE.test(title)) {
     // Title-first only — SKIP_RE already drops Workday/SAP/Dynamics/QA/data titles.
     // Do not drop Architect/EM when JD casually lists Salesforce/Java/data skills.
     return { tier: 1, reason: "tier1" };
   }
   if (
-    /\b(\.net|c#|csharp|azure)\b/i.test(blob) &&
+    NET_STACK_RE.test(blob) &&
     /\b(senior|lead|principal|staff|architect|full\s*-?\s*stack|backend)\b/i.test(title + " " + blob)
   ) {
     return { tier: 2, reason: "tier2-net" };
@@ -196,7 +199,7 @@ function classify(job) {
     /\b(senior\s*(full\s*-?\s*stack|fullstack|backend|software)|full\s*-?\s*stack|platform lead|backend lead|lead (engineer|developer))\b/i.test(
       title
     ) &&
-    /\b(\.net|c#|csharp|azure|aws|react|microservices)\b/i.test(blob)
+    STACK_SIGNAL_RE.test(blob)
   ) {
     return { tier: 2, reason: "tier2-senior-stack" };
   }
@@ -206,9 +209,7 @@ function classify(job) {
     /\b(lead|staff|principal|architect|manager|head|senior|fullstack|full\s*-?\s*stack)\b/i.test(
       title
     ) &&
-    /\b(\.net|c#|csharp|azure|aws|react|node\.?js|nodejs|typescript|java\b|genai|gen\s*ai|generative\s*ai|llm|microservices|platform engineer)\b/i.test(
-      blob
-    ) &&
+    STACK_SIGNAL_RE.test(blob) &&
     (ctc == null ? !!job?.salaryRange?.hideSalary : ctc >= 35)
   ) {
     return { tier: 3, reason: "tier3-stretch" };
