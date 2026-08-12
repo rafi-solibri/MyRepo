@@ -146,6 +146,142 @@ async function fetchFilterCounts(page) {
   return res.json?.status_counts || res.json || null;
 }
 
+/**
+ * Recommended / undecided opportunities (status=0) are NOT always in job_search.
+ * e.g. Uber Hyd Senior Staff Engineer only appeared on /candidate/opportunities/.
+ */
+function normalizeOpportunity(opp) {
+  const job = opp?.job || {};
+  const employer = opp?.employer || {};
+  const id = job.id || job.job_id;
+  if (!id) return null;
+  const path = job.opportunity_url || "";
+  const public_url = path
+    ? path.startsWith("http")
+      ? path
+      : `https://www.instahyre.com${path}`
+    : null;
+  return {
+    id,
+    title: job.title || job.candidate_title || "",
+    job_title: job.title || job.candidate_title || "",
+    locations: job.locations || "",
+    keywords: job.keywords || [],
+    employer: { company_name: employer.company_name || job.hiring_company_name || "" },
+    company_name: employer.company_name || job.hiring_company_name || "",
+    public_url,
+    interview_status: opp.interview_status,
+    is_interested: opp.is_interested || opp.interview_status === 1,
+    opportunity_id: opp.id,
+    _source: "opportunities",
+  };
+}
+
+async function fetchUndecidedOpportunities(page, report) {
+  const jobs = [];
+  let offset = 0;
+  const limit = 50;
+  let pages = 0;
+  while (pages < 6) {
+    const url =
+      `https://www.instahyre.com/api/v1/candidate_opportunities/candidate_opportunity/` +
+      `?status=0&limit=${limit}&offset=${offset}`;
+    let res;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      res = await apiGet(page, url);
+      if (res.status !== 429) break;
+      report.rateLimited = (report.rateLimited || 0) + 1;
+      await sleep(4000 + attempt * 2000);
+    }
+    if (res.status !== 200) {
+      report.searchErrors.push({ skill: "opportunities:undecided", status: res.status });
+      break;
+    }
+    const objects = res.json?.objects || [];
+    for (const opp of objects) {
+      const job = normalizeOpportunity(opp);
+      if (job) jobs.push(job);
+    }
+    pages += 1;
+    const next = res.json?.meta?.next;
+    if (!next || objects.length < limit) break;
+    offset += limit;
+    await sleep(800);
+  }
+  return jobs;
+}
+
+function enqueueJob(job, seen, candidates, report) {
+  const id = job.id || job.job_id;
+  if (!id || seen.has(id)) return;
+  seen.add(id);
+  const title = job.title || job.job_title || "";
+  const location = locationsOf(job);
+  const skills = skillsOf(job);
+  const company = companyOf(job);
+  const salary = String(job.salary || job.ctc || "");
+
+  if (job.interview_status === 1 || job.is_interested) {
+    report.skipped.push({
+      id,
+      title,
+      company,
+      location,
+      reason: "already_interested",
+      source: job._source || "job_search",
+    });
+    return;
+  }
+
+  if (!locationOk(location)) {
+    report.skipped.push({
+      id,
+      title,
+      company,
+      location,
+      reason: "location_not_hyd_remote",
+      source: job._source || "job_search",
+    });
+    return;
+  }
+
+  const hard = shouldHardSkipTitle(title);
+  if (hard) {
+    report.skipped.push({
+      id,
+      title,
+      company,
+      location,
+      reason: hard,
+      source: job._source || "job_search",
+    });
+    return;
+  }
+
+  const reason = skipReason(title, { company, location, skills, salary });
+  if (reason) {
+    report.skipped.push({
+      id,
+      title,
+      company,
+      location,
+      reason,
+      source: job._source || "job_search",
+    });
+    return;
+  }
+
+  candidates.push({
+    job,
+    id,
+    title,
+    company,
+    location,
+    skills,
+    score: preferScore(title, skills) + (job._source === "opportunities" ? 15 : 0),
+  });
+}
+
 async function searchSkill(page, skill, location, report) {
   const jobs = [];
   let offset = 0;
@@ -293,66 +429,27 @@ async function main() {
     const seen = new Set();
     const candidates = [];
 
+    // Recommended feed first — job_search often omits these Hyd matches.
+    console.error("[instahyre] fetch undecided opportunities");
+    const oppJobs = await fetchUndecidedOpportunities(page, report);
+    report.opportunitiesUndecided = oppJobs.length;
+    for (const job of oppJobs) enqueueJob(job, seen, candidates, report);
+    if (candidates.length > 0) {
+      candidates.sort((a, b) => b.score - a.score);
+      for (const c of candidates) {
+        if (report.applied.length >= MAX_APPLIES) break;
+        await maybeApply(page, c, report);
+      }
+      candidates.length = 0;
+    }
+
     for (const wave of SKILL_WAVES) {
       if (report.applied.length >= MAX_APPLIES) break;
       for (const skill of wave) {
         for (const loc of ["Hyderabad", "Work From Home"]) {
           console.error(`[instahyre] search skill=${skill} loc=${loc}`);
           const jobs = await searchSkill(page, skill, loc, report);
-          for (const job of jobs) {
-            const id = job.id || job.job_id;
-            if (!id || seen.has(id)) continue;
-            seen.add(id);
-            const title = job.title || job.job_title || "";
-            const location = locationsOf(job);
-            const skills = skillsOf(job);
-            const company = companyOf(job);
-            const salary = String(job.salary || job.ctc || "");
-
-            if (job.interview_status === 1 || job.is_interested) {
-              report.skipped.push({
-                id,
-                title,
-                company,
-                location,
-                reason: "already_interested",
-              });
-              continue;
-            }
-
-            if (!locationOk(location)) {
-              report.skipped.push({
-                id,
-                title,
-                company,
-                location,
-                reason: "location_not_hyd_remote",
-              });
-              continue;
-            }
-
-            const hard = shouldHardSkipTitle(title);
-            if (hard) {
-              report.skipped.push({ id, title, company, location, reason: hard });
-              continue;
-            }
-
-            const reason = skipReason(title, { company, location, skills, salary });
-            if (reason) {
-              report.skipped.push({ id, title, company, location, reason });
-              continue;
-            }
-
-            candidates.push({
-              job,
-              id,
-              title,
-              company,
-              location,
-              skills,
-              score: preferScore(title, skills),
-            });
-          }
+          for (const job of jobs) enqueueJob(job, seen, candidates, report);
           await sleep(2500);
         }
       }
@@ -403,7 +500,8 @@ async function main() {
       skipped: report.skipped.length,
       blocked: report.blocked.length,
       uniqueJobsSeen: seen.size,
-      path: "Instahyre in-app API (candidate_opportunity/apply)",
+      opportunitiesUndecided: report.opportunitiesUndecided || 0,
+      path: "Instahyre opportunities feed + job_search API (candidate_opportunity/apply)",
     };
 
     fs.mkdirSync(path.dirname(OUT), { recursive: true });
