@@ -5,13 +5,14 @@ if [[ -n "${PYTHON_BIN:-}" && -x "${PYTHON_BIN}" ]]; then
   echo "$PYTHON_BIN"
   exit 0
 fi
+# LOCALAPPDATA is Windows-only; under `set -u` an unset var must not abort Linux preflight.
+localapp="${LOCALAPPDATA:-}"
 for cand in \
   /c/Python314/python.exe \
   /c/Python313/python.exe \
   /c/Python312/python.exe \
-  "${LOCALAPPDATA:-}/Programs/Python/Python314/python.exe" \
-  "${LOCALAPPDATA:-}/Programs/Python/Python313/python.exe"; do
-  # ${LOCALAPPDATA:-} keeps set -u happy on Linux/macOS when unset.
+  "${localapp:+$localapp/Programs/Python/Python314/python.exe}" \
+  "${localapp:+$localapp/Programs/Python/Python313/python.exe}"; do
   if [[ -n "$cand" && -x "$cand" ]]; then
     echo "$cand"
     exit 0
