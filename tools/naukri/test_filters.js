@@ -56,5 +56,15 @@ assert.strictEqual(
   true,
   "Senior Manager - Technology is senior apply title"
 );
+assert.strictEqual(
+  shouldSkipTitle("SRE Engineering Manager"),
+  true,
+  "SRE-primary must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Principal Engineer - SRE"),
+  true,
+  "SRE suffix must skip"
+);
 assert.strictEqual(isArchLeadTitle("Dot Net Fullstack Developer"), false);
 console.log("resume_and_filters self-test OK");

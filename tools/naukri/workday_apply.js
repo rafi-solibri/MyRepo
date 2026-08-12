@@ -51,10 +51,28 @@ async function typeInto(page, selector, value) {
 }
 
 async function dismissCookies(page) {
-  for (const t of ["Accept Cookies", "Accept", "Decline"]) {
+  for (const t of [
+    "Accept All Cookies",
+    "Accept Cookies",
+    "Accept all",
+    "Accept",
+    "Decline",
+  ]) {
     const b = page.locator(`button:has-text('${t}')`).first();
     if (await b.isVisible().catch(() => false)) {
-      await b.click().catch(() => {});
+      await b.click({ force: true }).catch(() => {});
+      await sleep(400);
+    }
+  }
+  // Workday cookie banner sometimes uses data-automation / link-style controls.
+  for (const sel of [
+    "[data-automation-id='legalNoticeAcceptButton']",
+    "button[id*='cookie' i]",
+    "button[class*='cookie' i]",
+  ]) {
+    const el = page.locator(sel).first();
+    if (await el.isVisible().catch(() => false)) {
+      await el.click({ force: true }).catch(() => {});
       await sleep(300);
     }
   }
@@ -89,13 +107,31 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
 
   const autofill = page.getByText("Autofill with Resume", { exact: false }).first();
   const manual = page.getByText("Apply Manually", { exact: false }).first();
+  const startApp = page.getByText("Start Your Application", { exact: false }).first();
+  if (await startApp.isVisible().catch(() => false)) {
+    // Some tenants show chooser under this heading — click Autofill/Manual below.
+  }
   if (await autofill.isVisible().catch(() => false)) {
-    await autofill.click().catch(() => {});
-    await sleep(1500);
-  } else if (await manual.isVisible().catch(() => false)) {
-    await manual.click().catch(() => {});
+    await autofill.click({ force: true }).catch(() => {});
+    await sleep(2000);
+  }
+  // If Autofill did not leave the chooser (cookie overlay / dead click), try Manual.
+  const stillChooser = await page
+    .getByText("Autofill with Resume", { exact: false })
+    .first()
+    .isVisible()
+    .catch(() => false);
+  if (stillChooser && (await manual.isVisible().catch(() => false))) {
+    await manual.click({ force: true }).catch(() => {});
+    await sleep(2000);
+  } else if (
+    !(await autofill.isVisible().catch(() => false)) &&
+    (await manual.isVisible().catch(() => false))
+  ) {
+    await manual.click({ force: true }).catch(() => {});
     await sleep(1500);
   }
+  await dismissCookies(page);
 
   // Newer Workday Candidate Home hides email/password behind SSO chooser.
   // Must click "Sign in with email" (or Create Account) before fields mount.

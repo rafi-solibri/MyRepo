@@ -112,6 +112,19 @@ if [[ "$PORTAL" == "foundit" && -f "$ROOT/tools/foundit/wait_for_cdp_login.js" ]
   echo "WARN: Foundit still not logged in (exit $rc). Stay on the Chrome window and retry." >&2
   exit "$rc"
 fi
+if [[ "$PORTAL" == "naukri" && -f "$ROOT/tools/naukri/wait_for_cdp_login.js" ]]; then
+  export NODE_PATH="$ROOT/tools/node_modules${NODE_PATH:+:$NODE_PATH}"
+  set +e
+  node "$ROOT/tools/naukri/wait_for_cdp_login.js" --wait "${NAUKRI_LOGIN_WAIT_SEC:-120}"
+  rc=$?
+  set -e
+  if [[ "$rc" -eq 0 ]]; then
+    echo "OK: Naukri CDP session has nauk_rt/nauk_at. Future home dailies can reuse this profile."
+    exit 0
+  fi
+  echo "WARN: Naukri still not logged in (exit $rc). Stay on the Chrome window and retry." >&2
+  exit "$rc"
+fi
 
 # Portal-specific smoke check via Node + playwright when available
 if [[ -d "$ROOT/tools/node_modules/playwright-core" ]]; then
