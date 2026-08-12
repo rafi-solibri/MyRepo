@@ -566,6 +566,15 @@ def fill_common_questions(sb) -> None:
                 }
               }
             }
+            // Required acknowledgment / privacy checkboxes (Mattel etc.).
+            for (const c of document.querySelectorAll('input[type=checkbox]')) {
+              if (c.checked || c.disabled) continue;
+              const lab = labelFor(c);
+              if (/confirm|agree|privacy|notice|terms|read.*understand|i have read|by checking/.test(lab)) {
+                try { c.click(); answered += 1; } catch (e) {}
+                try { (c.closest('label') || c).click(); } catch (e) {}
+              }
+            }
             // Remaining empty required-looking text inputs.
             for (const el of document.querySelectorAll('input:not([type=hidden]):not([type=file]):not([type=radio]):not([type=checkbox]), textarea')) {
               if (el.disabled || el.readOnly || (el.value || '').trim()) continue;
@@ -607,13 +616,14 @@ def click_next_or_submit(
               ? ['submit your application','submit application','submit']
               : [
                   'submit your application','submit application','submit',
-                  'continue applying','continue','next','save and continue','apply'
+                  'review your application','continue applying','continue',
+                  'next','save and continue','apply'
                 ];
             const btns = [...document.querySelectorAll(
               'button, a[role=button], input[type=submit], [data-testid*="continue"], [data-testid*="submit"], .ia-continueButton'
             )];
             const textOf = (el) => ((el.innerText || el.value || el.getAttribute('aria-label') || '')).trim().toLowerCase();
-            const reject = (t) => /close|cancel|report|skip to|view full|back|previous|remove|delete|preview|employer sees|download|edit|save and close/.test(t);
+            const reject = (t) => /close|cancel|report|skip to|view full|back|previous|remove|delete|preview what|employer sees|download|edit resume|save and close/.test(t);
             const score = (el) => {
               const t = textOf(el);
               // Exact / prefix match only — avoid matching "Preview..." via includes('review').
@@ -1850,8 +1860,9 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
                           const r=b.getBoundingClientRect();
                           let s = 999;
                           if (/^submit your application|^submit application|^submit$/.test(t)) s = 0;
-                          else if (/^continue/.test(t)) s = 1;
-                          else if (/^next|^apply$/.test(t)) s = 2;
+                          else if (/^review your application/.test(t)) s = 1;
+                          else if (/^continue/.test(t)) s = 2;
+                          else if (/^next|^apply$/.test(t)) s = 3;
                           return {b,t,r,s};
                         }).filter(x => x.r.width>0 && x.r.height>0 && x.s<999 && !reject(x.t))
                           .sort((a,b) => a.s-b.s);
