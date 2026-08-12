@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-12 Hitech City home (Windows residential)
+
+| Issue | Fix |
+| --- | --- |
+| Preflight `liveHint` / docs said `home-headed-login.sh hitechcity` but the script rejected that portal (usage exit 2) | Accept `hitechcity` as LinkedIn alias (same CDP session + `wait_for_cdp_login.js`); hint also points at `linkedin` |
+
 ## Fixed for 2026-08-12 Naukri home (Windows residential)
 
 | Issue | Fix |
