@@ -224,26 +224,35 @@ function portalStatus(portal) {
   };
 }
 
+/** Live CDP waiters — SQLite cookie names are unreliable on Windows ABE / locked DB. */
+const LIVE_CDP_WAITERS = {
+  linkedin: path.join(__dirname, "linkedin", "wait_for_cdp_login.js"),
+  hitechcity: path.join(__dirname, "linkedin", "wait_for_cdp_login.js"),
+  cutshort: path.join(__dirname, "cutshort", "wait_for_cdp_login.js"),
+  foundit: path.join(__dirname, "foundit", "wait_for_cdp_login.js"),
+  instahyre: path.join(__dirname, "instahyre", "wait_for_cdp_login.js"),
+};
+
 function checkPortal(portal) {
   const result = portalStatus(portal);
   // Windows ABE / locked Cookies DB: SQLite names lie while Chrome is open.
-  // Prefer a live CDP probe when LinkedIn/Hitech City check would false-fail.
+  // Prefer a live CDP probe when the portal check would false-fail.
+  const waiter = LIVE_CDP_WAITERS[portal];
   if (
     !result.ok &&
-    (portal === "linkedin" || portal === "hitechcity") &&
+    waiter &&
     (result.sourcePossiblyLocked || result.isWindows)
   ) {
     try {
-      const script = path.join(__dirname, "linkedin", "wait_for_cdp_login.js");
-      if (fs.existsSync(script)) {
-        execFileSync(process.execPath, [script], {
+      if (fs.existsSync(waiter)) {
+        execFileSync(process.execPath, [waiter], {
           stdio: ["ignore", "pipe", "pipe"],
           timeout: 45000,
           env: { ...process.env, NODE_PATH: path.join(__dirname, "node_modules") },
         });
         result.ok = true;
         result.destHasAuth = true;
-        result.reason = "live_cdp_li_at_ok";
+        result.reason = `live_cdp_${portal}_ok`;
         result.liveVerified = true;
       }
     } catch (err) {
