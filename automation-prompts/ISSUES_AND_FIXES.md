@@ -19,6 +19,7 @@
 | --- | --- |
 | Preflight `node tools/chrome_session.js check instahyre` crashed: `SyntaxError: Unexpected identifier 'checkPortal'` (`def checkPortal`) | Restored JS `function checkPortal(portal)` in `tools/chrome_session.js` (same fix as Foundit/Cutshort) |
 | Preflight aborted after sync: `scripts/resolve-python.sh: LOCALAPPDATA: unbound variable` (`set -u` on Linux) | Guard with `${LOCALAPPDATA:-}` / skip empty Windows candidate paths |
+| Search-apply slipped AWS Administrator / Azure Virtualisation / Data Specialist (cloud keyword bypassed generic IC skip) | `filters.js`: hard-skip `ops_admin_title` + `data specialist` in pure AI/data gate |
 
 ## Fixed for 2026-08-12 Cutshort daily (cloud)
 
