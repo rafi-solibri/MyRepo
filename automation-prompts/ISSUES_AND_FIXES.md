@@ -43,6 +43,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| `hasSeniority` required `Senior` before software/.NET/engineer only → false skips for `.Net Senior Developer`, `Senior Backend Developer (.NET)` | Broaden to `\bsenior\b` / `\bsr\.?\b` (still gated by .NET + Hyd/remote + exp) in `tools/foundit/filters.js` + tests |
 | `tools/chrome_session.js` used Python `def checkPortal` → SyntaxError; every portal preflight failed | Restored valid JS `function checkPortal` so `preflight-portal-run.sh` / `chrome_session.js check` load again |
 | `confirmLogin` on `/seeker/dashboard` false-failed (`Hi, Seeker` before header personalizes) despite live MSSOAT + `/home/user` Hi Rafi | Poll dashboard then fall back to `/home/user`; ignore transient Seeker greeting |
 

@@ -137,4 +137,46 @@ assert.strictEqual(
   "Senior .NET should count as seniority"
 );
 
+assert.strictEqual(
+  classifyJob({
+    jobId: 8,
+    title: ".Net Senior Developer",
+    companyName: "Infosys",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: ".NET" }],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 12 },
+  }).pass,
+  true,
+  ".Net Senior Developer word-order must count as seniority"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 9,
+    title: "Senior Backend Developer (.NET)",
+    companyName: "Example",
+    locations: [{ text: "Remote" }],
+    skills: [{ text: ".NET Core" }],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 12 },
+  }).pass,
+  true,
+  "Senior Backend Developer (.NET) must count as seniority"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 10,
+    title: ".Net Developer",
+    companyName: "Example",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: ".NET" }],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 12 },
+  }).pass,
+  false,
+  "plain .Net Developer still lacks seniority"
+);
+
 console.log("filters.test.js OK");
