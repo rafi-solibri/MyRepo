@@ -118,15 +118,27 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
             continue
         if not title_matches_senior_stack(text) and not prefer_dotnet(text):
             continue
-        # Card text only — skip clear non-Hyd cities even when search URL said Hyderabad.
-        if not card_location_ok(text):
+        # Card text + URL path — skip clear non-Hyd cities even when search URL said Hyderabad.
+        if not card_location_ok(text, url_loc_hint(href)):
             continue
         jobs.append({"role": text, "url": href, "company": company})
     return jobs
 
 
+def url_loc_hint(url: str) -> str:
+    """Decode path/query workplace tokens (e.g. Boca-Raton-FL) into readable location text."""
+    if not url:
+        return ""
+    try:
+        parts = urlparse(url)
+        raw = f"{parts.path} {parts.query}".replace("-", " ").replace("_", " ").replace("%2C", " ")
+        return re.sub(r"[+/]+", " ", raw)
+    except Exception:
+        return url
+
+
 def card_location_ok(role_text: str, top_card: str = "") -> bool:
-    """HARD: judge workplace from card/title/top pills — never full page body/footer."""
+    """HARD: judge workplace from card/title/top pills/URL — never full page body/footer."""
     blob = f"{role_text or ''} {top_card or ''}".strip()
     if not blob:
         # Unknown location on card: allow open; apply_job re-checks top card.
@@ -155,8 +167,8 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         "reason": "",
     }
     print(f"CAREERS OPEN {job['company']} | {job['role'][:80]}", flush=True)
-    # Role/title location first (before navigation wastes ATS time on US cards).
-    if not card_location_ok(job.get("role") or ""):
+    # Role/title + URL path location first (before navigation wastes ATS time on US cards).
+    if not card_location_ok(job.get("role") or "", url_loc_hint(job.get("url") or "")):
         row["status"] = "skipped"
         row["reason"] = "location_non_hyd_city"
         return row
@@ -216,7 +228,16 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
     # Click apply if listing page
     try_click_named(page, ("Apply now", "Apply Now", "Apply", "Start application", "I'm interested"))
     time.sleep(1.5)
+    if AUTH_HOST.search(page.url or ""):
+        row["reason"] = "login/account wall"
+        row["finalUrl"] = page.url
+        return row
     status, reason = attempt_ats_apply(page, time_cap_s=TIME_CAP_S)
+    if AUTH_HOST.search(page.url or "") or "passport.amazon.jobs" in (page.url or ""):
+        row["status"] = "blocked"
+        row["reason"] = "login/account wall"
+        row["finalUrl"] = page.url
+        return row
     row["status"] = status
     row["reason"] = reason
     row["finalUrl"] = page.url
