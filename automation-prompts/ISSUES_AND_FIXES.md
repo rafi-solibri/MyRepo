@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-12 Indeed daily (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| `tools/chrome_session.js` had Python `def checkPortal` → SyntaxError; portal preflight + `daily_apply.js` could not load `resolvePython` | Restored JS `function checkPortal` |
+
 ## Fixed for 2026-08-11 Windows owner-action blockers
 
 | Issue | Fix |
