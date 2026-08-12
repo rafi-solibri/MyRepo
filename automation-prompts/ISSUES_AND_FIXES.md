@@ -34,8 +34,6 @@
 | Preflight aborted after sync: `scripts/resolve-python.sh: LOCALAPPDATA: unbound variable` (`set -u` on Linux) | Guard with `${LOCALAPPDATA:-}` / skip empty Windows candidate paths |
 | Search-apply slipped AWS Administrator / Azure Virtualisation / Data Specialist (cloud keyword bypassed generic IC skip) | `filters.js`: hard-skip `ops_admin_title` + `data specialist` in pure AI/data gate |
 
-## Fixed for 2026-08-12 Instahyre daily (cloud) — earlier
-
 ## Fixed for 2026-08-12 Cutshort daily (cloud)
 
 | Issue | Fix |
