@@ -99,6 +99,19 @@ if [[ "$PORTAL" == "instahyre" && -f "$ROOT/tools/instahyre/wait_for_cdp_login.j
   echo "WARN: Instahyre still not logged in (exit $rc). Stay on the Chrome window and retry." >&2
   exit "$rc"
 fi
+if [[ "$PORTAL" == "foundit" && -f "$ROOT/tools/foundit/wait_for_cdp_login.js" ]]; then
+  export NODE_PATH="$ROOT/tools/node_modules${NODE_PATH:+:$NODE_PATH}"
+  set +e
+  node "$ROOT/tools/foundit/wait_for_cdp_login.js" --open-login --wait "${FOUNDIT_LOGIN_WAIT_SEC:-180}"
+  rc=$?
+  set -e
+  if [[ "$rc" -eq 0 ]]; then
+    echo "OK: Foundit CDP session has MSSOAT. Future home dailies can reuse this profile."
+    exit 0
+  fi
+  echo "WARN: Foundit still not logged in (exit $rc). Stay on the Chrome window and retry." >&2
+  exit "$rc"
+fi
 
 # Portal-specific smoke check via Node + playwright when available
 if [[ -d "$ROOT/tools/node_modules/playwright-core" ]]; then

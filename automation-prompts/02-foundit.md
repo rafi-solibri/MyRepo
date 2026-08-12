@@ -24,7 +24,7 @@ Daily Foundit job-apply agent for Mohammed Abdul Rafi Ahmed (Solutions Architect
 ## Scope
 - Primary: https://www.foundit.in
 - If redirected to LinkedIn/Workday/Greenhouse/company careers — FOLLOW and COMPLETE, then return to Foundit.
-- Confirm logged in (Hi, Rafi). If not after sync: stop and report Foundit login required — log in via Desktop Chrome Default, re-run sync-chrome-sessions.sh, Save Environment snapshot.
+- Confirm logged in (Hi, Rafi). Live check: `node tools/foundit/wait_for_cdp_login.js` (or `--wait 180 --open-login`). If not: stop and report Foundit login required — `bash scripts/home-headed-login.sh foundit` (Windows home / ABE). Cloud: Desktop Chrome Default → sync-chrome-sessions.sh → Save Environment snapshot.
 
 ## Apply bias (CRITICAL — volume)
 - Default to APPLY for Hyd/remote .NET/cloud Architect / Lead / EM / Principal / Staff / Senior roles.
