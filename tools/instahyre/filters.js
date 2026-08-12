@@ -64,7 +64,7 @@ function skipReason(title, { company = "", location = "", skills = "", salary = 
 
   // Pure AI/data titles — include "Solution/Technical Architect - AI" forms
   if (
-    /\b(ai architect|ai engineer|ai scientist|ai developer|ml engineer|ml scientist|machine learning|data scientist|data science|data engineer|data analyst|genai|architect\s*[-–:]?\s*ai|ai\s*[-–:]?\s*architect)\b/i.test(
+    /\b(ai architect|ai engineer|ai scientist|ai developer|ml engineer|ml scientist|machine learning|data scientist|data science|data engineer|data analyst|data specialist|genai|architect\s*[-–:]?\s*ai|ai\s*[-–:]?\s*architect)\b/i.test(
       t
     ) &&
     !hasDotNet(t, "") // title-only .NET proof for pure AI/data (skills laundry lists are noisy)
@@ -74,6 +74,16 @@ function skipReason(title, { company = "", location = "", skills = "", salary = 
 
   if (/\b(front[\s-]?end|ui engineer|ui developer)\b/i.test(t) && !hasDotNet(t, skills)) {
     return "frontend_without_dotnet";
+  }
+
+  // Cloud/sysadmin ops IC — not SA/TL/EM/Staff product engineering
+  if (
+    /\b(administrator|sysadmin|system admin|desktop support|help\s*desk|virtualisation engineer|virtualization engineer)\b/i.test(
+      t
+    ) &&
+    !hasTargetSeniority(t)
+  ) {
+    return "ops_admin_title";
   }
 
   if (
@@ -138,6 +148,10 @@ if (require.main === module) {
     "Frontend Engineer",
     "Fullstack Engineer",
     "Operations Manager",
+    "AWS Administrator",
+    "AWS - Data Specialist",
+    "Azure Virtualisation Engineer",
+    "Tech Lead",
   ];
   for (const title of samples) {
     console.log(title, "→", skipReason(title, { location: "Hyderabad" }));
