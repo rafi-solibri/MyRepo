@@ -5,6 +5,7 @@
 | Issue | Fix |
 | --- | --- |
 | Preflight `liveHint` / docs said `home-headed-login.sh hitechcity` but the script rejected that portal (usage exit 2) | Accept `hitechcity` as LinkedIn alias (same CDP session + `wait_for_cdp_login.js`); hint also points at `linkedin` |
+| Careers mid-run crash on Windows cp1252 console: `UnicodeEncodeError` printing role with `ā` (Qualcomm) aborted whole careers phase | `configure_windows_stdio` in `daily_apply.py` + `_safe_print` in `careers_apply.py` |
 
 ## Fixed for 2026-08-12 Naukri home (Windows residential)
 

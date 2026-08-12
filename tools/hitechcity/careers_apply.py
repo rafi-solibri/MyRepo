@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -22,6 +23,14 @@ from tools.hitechcity.filters import (
     skip_reason,
     title_matches_senior_stack,
 )
+
+
+def _safe_print(msg: str) -> None:
+    try:
+        print(msg, flush=True)
+    except UnicodeEncodeError:
+        enc = getattr(sys.stdout, "encoding", None) or "utf-8"
+        print(msg.encode(enc, errors="replace").decode(enc, errors="replace"), flush=True)
 
 CDP = os.environ.get("HITECHCITY_CDP") or os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222")
 COMPANIES_PATH = Path(__file__).with_name("companies.json")
@@ -169,7 +178,7 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         "status": "blocked",
         "reason": "",
     }
-    print(f"CAREERS OPEN {job['company']} | {job['role'][:80]}", flush=True)
+    _safe_print(f"CAREERS OPEN {job['company']} | {job['role'][:80]}")
     # Role/title + URL path location first (before navigation wastes ATS time on US cards).
     if not card_location_ok(job.get("role") or "", url_loc_hint(job.get("url") or "")):
         row["status"] = "skipped"
@@ -263,7 +272,7 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
             name = company["name"]
             campuses = ",".join(company.get("campuses") or [])
             urls = company.get("careersUrls") or []
-            print(f"CAREERS SCAN {name}", flush=True)
+            _safe_print(f"CAREERS SCAN {name}")
             company_applied = 0
             for url in urls:
                 try:

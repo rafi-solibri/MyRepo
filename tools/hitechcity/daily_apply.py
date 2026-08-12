@@ -27,6 +27,17 @@ OUT_DEFAULT_CLOUD = Path("/opt/cursor/artifacts/hitechcity-daily.json")
 OUT_DEFAULT_LOCAL = _root / "artifacts" / "hitechcity-daily.json"
 
 
+def configure_windows_stdio() -> None:
+    """Avoid UnicodeEncodeError on Windows cp1252 consoles (job titles with ā etc.)."""
+    if sys.platform != "win32":
+        return
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
+
 def default_report_path() -> Path:
     if os.environ.get("HITECHCITY_REPORT"):
         return Path(os.environ["HITECHCITY_REPORT"])
@@ -39,6 +50,7 @@ OUT = default_report_path()
 
 
 def main() -> int:
+    configure_windows_stdio()
     started = datetime.now(timezone.utc).isoformat()
     summary: dict = {
         "startedAt": started,
