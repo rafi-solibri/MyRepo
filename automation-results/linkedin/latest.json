@@ -1,17 +1,17 @@
 {
   "portal": "linkedin",
   "source": "home-local",
-  "date": "2026-08-12",
+  "date": "2026-08-11",
   "startedAt": null,
-  "finishedAt": "2026-08-12T11:59:04Z",
+  "finishedAt": "2026-08-11T17:10:02.933884+00:00",
   "host": "NEM01-GBGR234",
   "ok": false,
   "counts": {
     "applied": 0,
     "external": 0,
     "rejected": 0,
-    "blocked": 1,
-    "skipped": 0,
+    "blocked": 12,
+    "skipped": 6,
     "seen": 0
   },
   "applied": [],
@@ -19,14 +19,97 @@
   "rejected": [],
   "blocked": [
     {
-      "reason": "linkedin_login_required",
-      "detail": "System Chrome CDP opened LinkedIn Security Verification / CAPTCHA (checkpoint/challenge). Waited 240s; no li_at. Owner must complete verification in headed Chrome: bash scripts/home-headed-login.sh linkedin (CHROME_CDP_MODE=system). Cloud morning pass already submitted 35 Easy Applies today and hit daily Easy Apply limit."
+      "reason": "easy_apply_daily_limit",
+      "detail": "LinkedIn toast: You reached today's Easy Apply limit. CTA click shows limit instead of form. Retry tomorrow after reset."
+    },
+    {
+      "reason": "external_priority_ids_no_ats_exit",
+      "detail": "PRIORITY_IDS external run: submitted=0 blocked=19 skipped=6. Most stayed on LinkedIn (Easy Apply / no company-site Apply)."
+    },
+    {
+      "job_id": "4443293962",
+      "reason": "did not leave LinkedIn",
+      "path": "https://www.linkedin.com/jobs/view/4443293962/"
+    },
+    {
+      "job_id": "4448608798",
+      "reason": "did not leave LinkedIn",
+      "path": "https://www.linkedin.com/jobs/view/4448608798/"
+    },
+    {
+      "job_id": "4400708113",
+      "reason": "did not leave LinkedIn",
+      "path": "https://www.linkedin.com/jobs/view/4400708113/"
+    },
+    {
+      "job_id": "4405159441",
+      "reason": "did not leave LinkedIn",
+      "path": "https://www.linkedin.com/jobs/view/4405159441/"
+    },
+    {
+      "job_id": "4442580526",
+      "reason": "did not leave LinkedIn",
+      "path": "https://www.linkedin.com/jobs/view/4442580526/"
+    },
+    {
+      "job_id": "4433879078",
+      "reason": "did not leave LinkedIn",
+      "path": "https://www.linkedin.com/jobs/view/4433879078/"
+    },
+    {
+      "job_id": "4270943974",
+      "reason": "did not leave LinkedIn",
+      "path": "https://www.linkedin.com/jobs/view/4270943974/"
+    },
+    {
+      "job_id": "4442700522",
+      "reason": "goto failed: Page.goto: Navigation to \"https://www.linkedin.com/jobs/view/4442700522/\" is interrupted by another navigation to \"https://www.linkedin.com/jobs/search/?keywords=Software%20Architect&location=India&sortBy=DD&f_TPR=r86400&f_AL=true&f_WT=2\"\nCall log:\n  - navigating to \"https://www.linkedin.com/jobs/view/4442700522/\", waiting until \"domcontentloaded\"\n",
+      "path": ""
+    },
+    {
+      "job_id": "4438407299",
+      "reason": "did not leave LinkedIn",
+      "path": "https://www.linkedin.com/jobs/view/4438407299/"
+    },
+    {
+      "job_id": "4446911955",
+      "reason": "did not leave LinkedIn",
+      "path": "https://www.linkedin.com/jobs/view/4446911955/"
     }
   ],
-  "skipped": [],
+  "skipped": [
+    {
+      "reason": "no external Apply button",
+      "job_id": "4451327394"
+    },
+    {
+      "reason": "no external Apply button",
+      "job_id": "4415350173"
+    },
+    {
+      "reason": "became Easy Apply",
+      "job_id": "4450682491"
+    },
+    {
+      "reason": "no external Apply button",
+      "job_id": "4450035921"
+    },
+    {
+      "reason": "no external Apply button",
+      "job_id": "3963509343"
+    },
+    {
+      "reason": "no external Apply button",
+      "job_id": "4401736196"
+    }
+  ],
   "seen": [],
-  "blockerSummary": "LinkedIn Security Verification / CAPTCHA on home system Chrome — owner login required",
-  "notes": [],
+  "blockerSummary": "LinkedIn Easy Apply daily account limit hit on home Windows session; external PRIORITY_IDS did not leave LinkedIn (mostly Easy Apply). Code fixes merged: #76 CTA anchor+limit detect, #77 resilient external, #78 repo artifacts on Windows.",
+  "notes": [
+    "Live CDP li_at OK despite preflight SQLite false-fail (ABE/locked cookies).",
+    "Merged PRs: https://github.com/rafi-solibri/MyRepo/pull/76 https://github.com/rafi-solibri/MyRepo/pull/77 https://github.com/rafi-solibri/MyRepo/pull/78",
+    "Owner: Easy Apply resumes after LinkedIn daily limit resets (tomorrow)."
+  ],
   "preflight": null,
-  "logPath": null
+  "logPath": "C:/Users/MohammedAhmed/.cursor/portal-home-logs/linkedin/linkedin-20260812T113002Z.log"
 }
