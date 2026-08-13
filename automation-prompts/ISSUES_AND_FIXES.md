@@ -6,6 +6,12 @@
 | --- | --- |
 | After a code-fixable blocker was patched and merged, that day's automation stopped — applies only happened on the next cron | `scripts/rerun-daily-after-fix.sh` runs after `auto-merge-fix-pr.sh` / `merge-open-fix-prs.sh`: pull `main`, launch a fresh cloud job (needs `CURSOR_API_KEY`) or re-exec the durable helper in-session. Cap 5 re-runs/portal/IST day. Wired for LinkedIn, Foundit, Cutshort, Naukri, Instahyre, Indeed, Hitech City, Notification, Hotels, and home-local replicas. |
 
+## Fixed for 2026-08-13 LinkedIn cloud cron (pagination Next)
+
+| Issue | Fix |
+| --- | --- |
+| After modal closed, apply_form_root fell back to body and clicked jobs-search pagination Next → exceeded Easy Apply steps | Require real easy-apply modal; match Continue to next step; never click list pagination Next |
+
 ## Fixed for 2026-08-13 LinkedIn cloud cron (Easy Apply Next)
 
 | Issue | Fix |
