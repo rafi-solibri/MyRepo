@@ -9,3 +9,6 @@ hotel_prices*.csv
 mcp_send_email_args*.json
 artifacts/
 downloaded_files/
+# Local secrets for LinkedIn/Workday/Resend — never commit.
+.cursor/job-apply-secrets.env
+**/job-apply-secrets.env

@@ -4,6 +4,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+# Optional local secrets (LINKEDIN_PASSWORD etc.) — never committed.
+# shellcheck disable=SC1091
+source "$ROOT/scripts/load-job-secrets.sh" || true
 
 portal="${1:-}"
 if [[ -z "$portal" ]]; then
