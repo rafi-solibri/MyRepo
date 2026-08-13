@@ -944,37 +944,51 @@ async function clickQuickApply(page) {
   };
 }
 
+async function waitForAppliedCta(page, { timeoutMs = 12000 } = {}) {
+  const start = Date.now();
+  let last = null;
+  while (Date.now() - start < timeoutMs) {
+    await page.bringToFront().catch(() => {});
+    last = await readVisibleApplyCta(page).catch(() => null);
+    if (last?.state === "applied") return last;
+    const toast = await page
+      .evaluate(() => {
+        const t = document.body.innerText || "";
+        if (
+          /applied successfully|application sent|successfully applied|thank you for your responses|thank you for applying/i.test(
+            t
+          )
+        )
+          return "toast";
+        return "";
+      })
+      .catch(() => "");
+    if (toast) return { state: "applied", label: toast, raw: toast };
+    await sleep(400);
+  }
+  return last;
+}
+
 async function confirmApplied(page, chatHint = null) {
   if (
     chatHint?.reason === "success" ||
     chatHint?.reason === "responses_thanks"
   ) {
     // Chatbot completion often precedes CTA layer flip — count as applied.
-    const visibleEarly = await waitForVisibleApplyCta(page, { timeoutMs: 4000 });
+    const visibleEarly = await waitForAppliedCta(page, { timeoutMs: 5000 });
     if (visibleEarly?.state === "applied") {
       return { ok: true, cta: "Applied" };
     }
     return { ok: true, cta: `chatbot:${chatHint.reason}` };
   }
-  const visible = await waitForVisibleApplyCta(page, { timeoutMs: 5000 });
+  // Instant Quick Apply (no chatbot): CTA animates Quick→Applied. Do NOT
+  // return early on "quick" — wait specifically for Applied / toast.
+  const visible = await waitForAppliedCta(page, { timeoutMs: 12000 });
   if (visible?.state === "applied") {
-    return { ok: true, cta: "Applied" };
+    return { ok: true, cta: visible.label || "Applied" };
   }
   const detail = await readDetail(page);
-  const toast = await page
-    .evaluate(() => {
-      const t = document.body.innerText || "";
-      if (
-        /applied successfully|application sent|successfully applied|thank you for your responses|thank you for applying/i.test(
-          t
-        )
-      )
-        return "toast";
-      return "";
-    })
-    .catch(() => "");
-  if (toast) return { ok: true, cta: toast };
-  return { ok: false, cta: detail.cta };
+  return { ok: false, cta: detail.cta || visible?.label || "" };
 }
 
 async function tryContactRecruiter(page) {

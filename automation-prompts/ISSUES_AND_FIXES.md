@@ -9,6 +9,7 @@
 | Detail CTA empty / `quick_apply_not_found` on slow tabs; chatbot done but CTA lag → `apply_unconfirmed` | `waitForVisibleApplyCta`; evaluate click fallback; confirmApplied accepts chatbot success |
 | Mass `ctaState=missing` with 50+ tabs — background tab 0×0 rects broke layer detection; popup `about:blank` race | Prefer transform over rect; `bringToFront`; wait popup URL; prune stale job/ATS tabs |
 | Chatbot free-text years (`contenteditable`) + bands like `13-15` / `>15` exhausted steps | Score highest band; type `15` into `.textArea`; 20-step loop |
+| Instant Quick Apply (no chat) still `apply_unconfirmed` — confirm polled CTA and returned on lingering `quick` before Applied animation | `waitForAppliedCta` waits for Applied/toast only |
 
 ## Fixed for 2026-08-13 Naukri daily re-run (cloud) — dual-layer CTA
 
