@@ -256,16 +256,21 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
   }
 
   function authFailureReason(text) {
+    const t = text || "";
+    // Only real validation errors — NOT the static "Password Requirements:" checklist
+    // (that list always contains "minimum of N characters" and false-triggered exits).
     if (
-      /Password must include|minimum of \d+ characters|password requirements/i.test(
-        text || ""
-      )
+      /Password must include|password does not meet|doesn't meet the password|password is (too short|invalid)|choose a (stronger|different) password|password.*(too weak|not strong)/i.test(
+        t
+      ) ||
+      (/error/i.test(t) &&
+        /password.*(minimum|must include|requirements)/i.test(t))
     ) {
       return "ats_password_policy";
     }
     if (
-      /wrong email address or password|account might be locked|incorrect|not recognize|invalid email or password/i.test(
-        text || ""
+      /wrong email address or password|account might be locked|incorrect email or password|not recognize|invalid email or password/i.test(
+        t
       )
     ) {
       return "ats_login_wall";
@@ -620,46 +625,107 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
     }
   }
 
+  async function selectListboxShort(formFieldId, typeText, acceptRe) {
+    const root = page.locator(`[data-automation-id='${formFieldId}']`).first();
+    if (!(await root.isVisible().catch(() => false))) return false;
+    const cur = ((await root.innerText().catch(() => "")) || "").trim();
+    if (acceptRe.test(cur) && !/Select One/i.test(cur)) return true;
+    const btn = root.locator("button[aria-haspopup='listbox']").first();
+    if (!(await btn.isVisible().catch(() => false))) return false;
+    await btn.click({ force: true }).catch(() => {});
+    await sleep(500);
+    await page.keyboard.type(String(typeText), { delay: 40 }).catch(() => {});
+    await page.keyboard.press("Enter").catch(() => {});
+    await sleep(500);
+    const after = ((await root.innerText().catch(() => "")) || "").trim();
+    return acceptRe.test(after) && !/Select One/i.test(after);
+  }
+
   async function fillEducation() {
     const schoolRoot = page.locator("[data-automation-id='formField-schoolName']");
     if (!(await schoolRoot.isVisible().catch(() => false))) return;
-    // School is often a typeahead/multiselect prompt.
-    const schoolOpen = schoolRoot
-      .locator(
-        "[data-automation-id='multiselectInputContainer'], input, button"
-      )
-      .first();
-    await schoolOpen.click({ force: true }).catch(() => {});
-    await sleep(400);
-    await page.keyboard.type("Acharya Nagarjuna University", { delay: 25 }).catch(() => {});
-    await sleep(900);
-    const schoolOpt = page
-      .locator("[data-automation-id='promptOption']")
-      .filter({ hasText: /Acharya Nagarjuna/i })
-      .first();
-    if (await schoolOpt.isVisible().catch(() => false)) {
-      const box = await schoolOpt.boundingBox().catch(() => null);
-      if (box) await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-      else await schoolOpt.click({ force: true }).catch(() => {});
-    } else {
-      await fillFieldInput("formField-schoolName", "Acharya Nagarjuna University");
+    const schoolText = ((await schoolRoot.innerText().catch(() => "")) || "");
+    if (!/Acharya Nagarjuna|University/i.test(schoolText) || /required/i.test(schoolText)) {
+      const schoolOpen = schoolRoot
+        .locator(
+          "[data-automation-id='multiselectInputContainer'], input, button"
+        )
+        .first();
+      await schoolOpen.click({ force: true }).catch(() => {});
+      await sleep(400);
+      await page.keyboard
+        .type("Acharya Nagarjuna University", { delay: 25 })
+        .catch(() => {});
+      await sleep(900);
+      const schoolOpt = page
+        .locator("[data-automation-id='promptOption']")
+        .filter({ hasText: /Acharya Nagarjuna/i })
+        .first();
+      if (await schoolOpt.isVisible().catch(() => false)) {
+        const box = await schoolOpt.boundingBox().catch(() => null);
+        if (box) await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+        else await schoolOpt.click({ force: true }).catch(() => {});
+      } else {
+        await fillFieldInput("formField-schoolName", "Acharya Nagarjuna University");
+      }
+      await page.keyboard.press("Escape").catch(() => {});
+      await sleep(300);
     }
-    await page.keyboard.press("Escape").catch(() => {});
-    await sleep(300);
 
-    await pickPromptOption("formField-degree", [
-      /^BS$/i,
-      /^Bachelor of Science/i,
-      /^BA$/i,
-      /B\.?\s*Tech/i,
-      /^Bachelor/i,
-    ]);
+    // SS&C / US Workday degree list is BA/BS/MS — type short code (most reliable).
+    if (!(await selectListboxShort("formField-degree", "BS", /\bBS\b/i))) {
+      await pickPromptOption("formField-degree", [
+        /^BS$/i,
+        /^Bachelor of Science/i,
+        /^BA$/i,
+        /B\.?\s*Tech/i,
+        /^Bachelor/i,
+      ]);
+    }
     await pickPromptOption("formField-fieldOfStudy", [
       /Information Technology/i,
       /Computer Science/i,
       /Computer Engineering/i,
       /IT\b/i,
     ]);
+  }
+
+  async function fillVoluntaryAndQuestions() {
+    // Prefer-not-to-answer / decline self-ID where present.
+    for (const re of [
+      /Prefer not to answer/i,
+      /I Decline/i,
+      /Decline To Self Identify/i,
+      /^No$/i,
+    ]) {
+      const opts = page.getByText(re);
+      const n = await opts.count().catch(() => 0);
+      for (let i = 0; i < Math.min(n, 8); i++) {
+        const el = opts.nth(i);
+        if (await el.isVisible().catch(() => false)) {
+          await el.click({ force: true }).catch(() => {});
+          await sleep(200);
+        }
+      }
+    }
+    // Common Yes/No application questions — answer No for prior worker / conviction, Yes for work auth.
+    const pairs = [
+      [/authorized to work|legally authorized/i, /^Yes$/i],
+      [/require sponsorship|visa sponsorship/i, /^No$/i],
+      [/previously (worked|employed)|former employee|conflict of interest/i, /^No$/i],
+      [/relatives? (employed|work)/i, /^No$/i],
+      [/criminal|conviction|felony/i, /^No$/i],
+      [/export control|ITAR/i, /^No$/i],
+    ];
+    for (const [qRe, aRe] of pairs) {
+      const block = page.locator("fieldset, div, li").filter({ hasText: qRe }).first();
+      if (!(await block.isVisible().catch(() => false))) continue;
+      const ans = block.getByText(aRe).first();
+      if (await ans.isVisible().catch(() => false)) {
+        await ans.click({ force: true }).catch(() => {});
+        await sleep(200);
+      }
+    }
   }
 
   async function clickAdvance() {
@@ -704,6 +770,9 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
 
     await fillMyInformation();
     await fillEducation();
+    if (/Voluntary Disclosure|Application Question|Self Identify|Review/i.test(text)) {
+      await fillVoluntaryAndQuestions();
+    }
 
     let advanced = await clickAdvance();
     if (advanced) {
@@ -717,6 +786,11 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
     // Still loading / animating — keep waiting within budget.
     if (/\bLoading\b/i.test(text2.slice(0, 900))) {
       await sleep(2000);
+      continue;
+    }
+    // Validation errors: keep filling within budget instead of bailing once.
+    if (/Errors Found|is required and must have a value/i.test(text2)) {
+      await sleep(800);
       continue;
     }
     return {

@@ -56,7 +56,8 @@ function parseJobAges() {
 
 const JOB_AGES = parseJobAges();
 const MAX_APPLIES = Number(process.env.NAUKRI_MAX_APPLIES || 60);
-const MAX_EXTERNAL_MS = 3.5 * 60 * 1000;
+const MAX_EXTERNAL_MS = Number(process.env.NAUKRI_MAX_EXTERNAL_MS || 5 * 60 * 1000);
+const MAX_WORKDAY_MS = Number(process.env.NAUKRI_MAX_WORKDAY_MS || 6.5 * 60 * 1000);
 const SKIP_PROFILE_REFRESH = process.env.NAUKRI_SKIP_PROFILE_REFRESH === "1";
 const AUTO_EXPAND_AGES =
   process.env.NAUKRI_AUTO_EXPAND_AGES !== "0"
@@ -202,15 +203,33 @@ function fingerprint(company, role) {
     .trim()}`;
 }
 
+/** TopTier sidebar filter chip "Applied (N)" is NOT per-job status. */
+function isAppliedFilterChip(text) {
+  const t = String(text || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return /^Applied\s*\(\d+\)\s*$/i.test(t);
+}
+
 /** TopTier often shows multiline CTA text: "Quick apply\\nApplied". */
 function isAlreadyAppliedCta(text) {
   const t = String(text || "")
     .replace(/\s+/g, " ")
     .trim();
   if (!t) return false;
+  // Never treat the Applied (N) filter chip as already-applied.
+  if (isAppliedFilterChip(t)) return false;
   if (/Quick apply\s*Applied/i.test(t)) return true;
   if (/^Applied$/i.test(t)) return true;
-  if (/\bApplied\b/i.test(t) && !/^Quick apply$/i.test(t)) return true;
+  // Only short CTA chips — never treat long JD/body text containing "Applied".
+  if (
+    t.length < 48 &&
+    /\bApplied\b/i.test(t) &&
+    !/^Quick apply$/i.test(t) &&
+    !/^Applied\s*\(/i.test(t)
+  ) {
+    return true;
+  }
   return false;
 }
 
@@ -256,11 +275,27 @@ async function collectCards(page) {
   const raw = await page.evaluate(() => {
     const siteRe =
       /Go to company site|On company site|Apply on company(?:\s+site)?|On hirist/i;
+    const isFilterChip = (text) =>
+      /^Applied\s*\(\d+\)\s*$/i.test(String(text || "").replace(/\s+/g, " ").trim());
     const nodes = [...document.querySelectorAll("div.cursor-pointer")].filter(
-      (c) =>
-        /Quick apply|Applied|Go to company site|On company site|Apply on company|On hirist/i.test(
-          c.innerText || ""
-        )
+      (c) => {
+        const text = (c.innerText || "").replace(/\s+/g, " ").trim();
+        if (!text || text.length < 40) return false;
+        if (isFilterChip(text)) return false;
+        // Must look like a job card: apply CTA + role/years signal.
+        if (
+          !/Quick apply|Go to company site|On company site|Apply on company|On hirist/i.test(
+            text
+          )
+        ) {
+          return false;
+        }
+        // Exclude pure filter chrome even if it mentions Applied.
+        if (/^Applied\b/i.test(text) && !/Quick apply|company site|hirist/i.test(text)) {
+          return false;
+        }
+        return true;
+      }
     );
     return nodes.map((c, idx) => {
       const text = (c.innerText || "").replace(/\r/g, "").trim();
@@ -271,7 +306,7 @@ async function collectCards(page) {
       let company = lines[0] || "";
       company = company.replace(/\s+\d\.\d.*$/, "").trim();
       const applyIdx = lines.findIndex((l) =>
-        /Quick apply|Applied|Go to company site|On company site|Apply on company|On hirist/i.test(
+        /Quick apply|Go to company site|On company site|Apply on company|On hirist/i.test(
           l
         )
       );
@@ -281,6 +316,8 @@ async function collectCards(page) {
         role = lines[applyIdx + 1] || "";
         location = lines[applyIdx + 2] || "";
       }
+      // Per-job already-applied is "Quick apply Applied" on the card CTA line only.
+      const ctaLine = applyIdx >= 0 ? lines[applyIdx] : "";
       const companySite = siteRe.test(text);
       const quick = /Quick apply/i.test(text);
       return {
@@ -289,13 +326,14 @@ async function collectCards(page) {
         role,
         location,
         text: text.slice(0, 600),
+        ctaLine,
         companySite,
         quick,
       };
     });
   });
   return raw.map((c) => {
-    const already = isAlreadyAppliedCta(c.text);
+    const already = isAlreadyAppliedCta(c.ctaLine || c.text);
     return {
       ...c,
       already,
@@ -305,17 +343,29 @@ async function collectCards(page) {
 }
 
 async function openCard(context, page, idx) {
-  const cards = page.locator("div.cursor-pointer").filter({
-    hasText:
-      /Quick apply|Applied|Go to company site|On company site|Apply on company|On hirist/i,
-  });
-  const card = cards.nth(idx);
-  await card.scrollIntoViewIfNeeded().catch(() => {});
+  // Click the same filtered job-card list as collectCards (never Applied (N) chips).
   const before = new Set(context.pages().map((p) => p.url()));
   const popupPromise = context
     .waitForEvent("page", { timeout: 5000 })
     .catch(() => null);
-  await card.click({ timeout: 10000 });
+  const clicked = await page.evaluate((cardIdx) => {
+    const isFilterChip = (text) =>
+      /^Applied\s*\(\d+\)\s*$/i.test(String(text || "").replace(/\s+/g, " ").trim());
+    const nodes = [...document.querySelectorAll("div.cursor-pointer")].filter((c) => {
+      const text = (c.innerText || "").replace(/\s+/g, " ").trim();
+      if (!text || text.length < 40) return false;
+      if (isFilterChip(text)) return false;
+      return /Quick apply|Go to company site|On company site|Apply on company|On hirist/i.test(
+        text
+      );
+    });
+    const el = nodes[cardIdx];
+    if (!el) return false;
+    el.scrollIntoView({ block: "center" });
+    el.click();
+    return true;
+  }, idx);
+  if (!clicked) throw new Error(`job card idx ${idx} not found`);
   const popup = await popupPromise;
   await sleep(2000);
   // TopTier often opens /job-listings-... in a new tab — apply there.
@@ -355,11 +405,12 @@ async function readDetail(page) {
           .replace(/\s+/g, " ")
           .trim()
       )
-      .filter((t) =>
-        /Quick apply|Apply|Applied|Go to company site|On company site|Apply on company|On hirist/i.test(
+      .filter((t) => {
+        if (!t || /^Applied\s*\(\d+\)\s*$/i.test(t)) return false; // filter chip
+        return /Quick apply|Apply|Applied|Go to company site|On company site|Apply on company|On hirist/i.test(
           t
-        )
-      );
+        );
+      });
     const preferred =
       ctas.find((t) => /Quick apply\s*Applied|^Applied$/i.test(t)) ||
       ctas.find((t) => /Go to company site/i.test(t)) ||
@@ -686,7 +737,7 @@ async function handleExternal(context, page, detail, jobMeta, report) {
     .catch(() => false);
   if (looksWorkdayUrl || looksWorkdayUi) {
     const wd = await completeWorkdayApply(newPage, RESUME, {
-      maxMs: Math.max(30_000, MAX_EXTERNAL_MS - (Date.now() - start)),
+      maxMs: Math.max(60_000, MAX_WORKDAY_MS - (Date.now() - start)),
     });
     if (wd.ok) {
       report.external.push({
@@ -729,7 +780,11 @@ async function handleExternal(context, page, detail, jobMeta, report) {
     const text = await newPage
       .evaluate(() => (document.body?.innerText || "").slice(0, 2500))
       .catch(() => "");
-    if (/captcha|verify you are human|cloudflare/i.test(text)) {
+    const hasRecaptcha =
+      /captcha|verify you are human|cloudflare|hcaptcha|datadome/i.test(text) ||
+      (await newPage.locator("iframe[src*='recaptcha'], iframe[src*='hcaptcha'], .g-recaptcha, #g-recaptcha-response").count()) >
+        0;
+    if (hasRecaptcha) {
       report.blocked.push({
         ...jobMeta,
         reason: "captcha_wall",
@@ -756,6 +811,21 @@ async function handleExternal(context, page, detail, jobMeta, report) {
           reason: "hirist_login_required_skip",
           url,
           path: "hirist",
+        });
+        if (newPage !== page) safeClose(newPage);
+        return;
+      }
+      // Accenture / Azure B2C and similar SSO walls — do not burn the full external budget.
+      if (
+        /b2clogin\.com|login\.microsoftonline\.com|accounts\.google\.com|okta\.com|auth0\.com/i.test(
+          url
+        )
+      ) {
+        report.blocked.push({
+          ...jobMeta,
+          reason: "ats_login_wall",
+          url,
+          path: "company_ATS",
         });
         if (newPage !== page) safeClose(newPage);
         return;
@@ -805,22 +875,82 @@ async function handleExternal(context, page, detail, jobMeta, report) {
       if (nFiles) await sleep(1200);
     }
 
-    // Greenhouse / generic ATS named fields
+    // Greenhouse / Infor / generic ATS named fields
     for (const [sel, val] of [
-      ["input[name='first_name'], #first_name", "Mohammed Abdul Rafi"],
-      ["input[name='last_name'], #last_name", "Ahmed"],
-      ["input[name='email'], #email, input[type='email']", "rafi.success@gmail.com"],
-      ["input[name='phone'], #phone, input[type='tel']", "8790251698"],
+      [
+        "input[name='first_name'], #first_name, input[name*='first_name'], input[placeholder='First name' i]",
+        "Mohammed Abdul Rafi",
+      ],
+      [
+        "input[name='last_name'], #last_name, input[name*='last_name'], input[placeholder='Last name' i]",
+        "Ahmed",
+      ],
+      [
+        "input[name='email'], #email, input[type='email'], input[name*='[email]']",
+        "rafi.success@gmail.com",
+      ],
+      [
+        "input[name='phone'], #phone, input[type='tel'], input[name*='[phone]']",
+        "8790251698",
+      ],
+      ["#address1, input[name*='[address1]']", "Hyderabad"],
+      ["#town, input[name*='[town]']", "Hyderabad"],
+      ["#postcode, input[name*='[postcode]']", "500032"],
     ]) {
       const el = newPage.locator(sel).first();
       if (await el.isVisible().catch(() => false)) {
         await el.fill(val).catch(() => {});
       }
     }
+    // Infor / Phenom-style Yes/No radios + acknowledgement.
+    for (const [qRe, yes] of [
+      [/at least 18/i, true],
+      [/legally authorised|legally authorized|authorised to work|authorized to work/i, true],
+      [/relatives who are currently employed/i, false],
+      [/non-compete|previously worked for/i, false],
+    ]) {
+      const block = newPage.locator("fieldset, div, li, section").filter({ hasText: qRe }).first();
+      if (!(await block.isVisible().catch(() => false))) continue;
+      const choice = block
+        .locator(yes ? "label:has-text('Yes'), input[value='true']" : "label:has-text('No'), input[value='false']")
+        .first();
+      await choice.click({ force: true }).catch(() => {});
+    }
+    const ack = newPage.locator("select").filter({ hasText: /I confirm/i }).first();
+    if (await ack.count().catch(() => 0)) {
+      await ack.selectOption({ label: "I confirm" }).catch(() => {});
+    }
+    const ackText = newPage
+      .locator("#application_form_application_answers_attributes_5_text_answer, input[aria-label*='Acknowledgement' i]")
+      .first();
+    if (await ackText.isVisible().catch(() => false)) {
+      await ackText.fill("I confirm").catch(() => {});
+    }
+    const countrySel = newPage.locator("select[aria-label='Country'], select#application_form\\[application\\]\\[country\\]").first();
+    if (await countrySel.isVisible().catch(() => false)) {
+      await countrySel.selectOption({ label: "India" }).catch(() => {});
+    }
 
-    // Greenhouse job-board required combobox questions (country/state/visa/etc.)
-    if (/greenhouse\.io|job-boards\.greenhouse/i.test(newPage.url())) {
+    // Greenhouse / SmartRecruiters / generic boards — required comboboxes & selects.
+    if (
+      /greenhouse\.io|job-boards\.greenhouse|smartrecruiters\.com|lever\.co|ashbyhq\.com/i.test(
+        newPage.url()
+      )
+    ) {
       await fillCommonAtsQuestions(newPage).catch(() => {});
+    }
+
+    // SmartRecruiters often needs an explicit "Submit" after consent checkbox.
+    if (/smartrecruiters\.com/i.test(newPage.url())) {
+      const consent = newPage
+        .locator(
+          "input[type='checkbox'], [role='checkbox']"
+        )
+        .first();
+      if (await consent.isVisible().catch(() => false)) {
+        await consent.check({ force: true }).catch(() => {});
+        await consent.click({ force: true }).catch(() => {});
+      }
     }
 
     await newPage
@@ -966,7 +1096,7 @@ function decideSkip(card, { detailMode = false } = {}) {
 }
 
 async function processCard(context, page, card, i, jobMeta, report) {
-  const detailPage = await openCard(context, page, i);
+  const detailPage = await openCard(context, page, card.idx != null ? card.idx : i);
   const openedTab = detailPage !== page;
   const detail = await readDetail(detailPage);
   // Detail re-check: location/CTC/.NET only — skip_title already decided from card role.

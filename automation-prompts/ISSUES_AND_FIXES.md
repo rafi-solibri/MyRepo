@@ -1,5 +1,15 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-13 Naukri daily re-run (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| **TopTier `Applied (N)` filter chip** collected as a job card / preferred CTA → mass false `already_applied_detail` and 0 Quick Applies | Ignore `/^Applied\s*\(\d+\)$/`; collectCards requires real Quick apply/company-site CTA + length≥40; openCard never matches filter chip; per-job already uses CTA line only |
+| Workday stalled on Degree “Select One” (BA/BS list) and bailed after one failed Next while Errors Found still fixable | `selectListboxShort` types `BS`+Enter; retry fill loop on Errors Found; voluntary/application question defaults; Workday budget 6.5m |
+| SmartRecruiters / Lever / Ashby never got Greenhouse-style question fill; Accenture B2C burned full external timeout | `fillCommonAtsQuestions` on those hosts; fail-fast `b2clogin`/`microsoftonline` as `ats_login_wall`; external budget 5m |
+| Infor Phenom form + invisible reCAPTCHA timed out; Amgen Anaplan / Epam Quality Architect / Power Platform burned attempts | Infor field fills + early `g-recaptcha` wall; skip Anaplan/Celonis/Power Platform/Quality Architect titles |
+| Workday helper false-exited `ats_password_policy` because Create Account page always shows “Password Requirements / minimum of N characters” | `authFailureReason` only matches real password **errors**, not the static requirements checklist |
+
 ## Fixed for 2026-08-13 Naukri daily (cloud)
 
 | Issue | Fix |

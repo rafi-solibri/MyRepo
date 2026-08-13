@@ -33,7 +33,7 @@ function findResume() {
  * Only skip when title itself is a QA/SDET role.
  */
 const SKIP_TITLE_RE =
-  /\b(qa engineer|quality assurance|quality engineer|quality engineering|sdet|intern(?!et)|fresher|salesforce|servicenow|coupa|pega|appian|guidewire|sap\b|dynamics|workday hms|revit|\bbarch\b|hubspot|\bsre\b|site reliability|devops engineer|devops lead|platform sre|network operations|network ops)\b/i;
+  /\b(qa engineer|quality assurance|quality engineer|quality engineering|quality architect|quality solution architect|sdet|intern(?!et)|fresher|salesforce|servicenow|coupa|pega|appian|anaplan|celonis|power platform|guidewire|sap\b|dynamics|workday hms|revit|\bbarch\b|hubspot|\bsre\b|site reliability|devops engineer|devops lead|platform sre|network operations|network ops)\b/i;
 
 /** Pure AI/data titles need .NET|C# on the TITLE (skills laundry lists are noisy). */
 const PURE_AI_DATA_RE =
