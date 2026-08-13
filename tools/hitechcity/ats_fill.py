@@ -71,6 +71,9 @@ def blocked_wall(page: Page) -> str | None:
                     "challenges.cloudflare.com",
                     "geetest",
                     "funcaptcha",
+                    "captcha-delivery.com",  # DataDome (SmartRecruiters / Experian)
+                    "geo.captcha-delivery.com",
+                    "datadome.co",
                 )
             ):
                 return "CAPTCHA/bot wall"
@@ -78,8 +81,11 @@ def blocked_wall(page: Page) -> str | None:
         for sel in (
             "iframe[src*='recaptcha/']",
             "iframe[src*='hcaptcha.com']",
+            "iframe[src*='captcha-delivery.com']",
+            "iframe[src*='datadome']",
             "iframe[title*='reCAPTCHA']",
             "iframe[title*='captcha']",
+            "iframe[title*='Verification']",
         ):
             loc = page.locator(sel)
             if loc.count() and loc.first.is_visible():
@@ -97,7 +103,12 @@ def blocked_wall(page: Page) -> str | None:
         re.I,
     ):
         return "job_closed"
-    if re.search(r"captcha|verify you are human|cloudflare|attention required|i'?m not a robot", body, re.I):
+    if re.search(
+        r"captcha|verify you are human|cloudflare|attention required|i'?m not a robot|"
+        r"verification required|datadome|press and hold",
+        body,
+        re.I,
+    ):
         return "CAPTCHA/bot wall"
     if re.search(r"sign in to continue|log in to apply|create an account|sign in to apply", body, re.I):
         if page.locator("input[type='file'], input[type='email']").count() == 0:
