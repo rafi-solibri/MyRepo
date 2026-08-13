@@ -56,28 +56,51 @@ def looks_submitted(page: Page) -> bool:
     )
 
 
+# DataDome / hCaptcha / CF / recaptcha *challenge* frames. Dormant recaptcha
+# api2/anchor badges (0×0, visibility:hidden) are NOT walls — Microsoft/Qualcomm
+# apply pages embed them next to a Sign-in form.
+_CAPTCHA_CHALLENGE_HOSTS = (
+    "hcaptcha.com",
+    "challenges.cloudflare.com",
+    "geetest",
+    "funcaptcha",
+    "captcha-delivery.com",  # DataDome (SmartRecruiters / Experian)
+    "geo.captcha-delivery.com",
+    "datadome.co",
+)
+
+
+def frame_url_is_captcha_challenge(url: str) -> bool:
+    """True for bot-challenge frames, not hidden reCAPTCHA badges."""
+    u = (url or "").lower()
+    if any(x in u for x in _CAPTCHA_CHALLENGE_HOSTS):
+        return True
+    if "recaptcha" in u and ("/bframe" in u or "challenge" in u):
+        return True
+    return False
+
+
+def iframe_looks_onscreen(el) -> bool:
+    """reCAPTCHA checkbox/challenge is on-screen; 0×0 hidden badges are not."""
+    try:
+        if not el.is_visible():
+            return False
+        box = el.bounding_box()
+        if not box:
+            return False
+        return float(box.get("width") or 0) >= 20 and float(box.get("height") or 0) >= 20
+    except Exception:
+        return False
+
+
 def blocked_wall(page: Page) -> str | None:
-    # Frame/iframe CAPTCHA first — body text often omits "captcha" while reCAPTCHA blocks submit.
-    # Do NOT treat bare [data-sitekey] as a wall (many ATS pages embed dormant sitekeys).
+    # Frame/iframe CAPTCHA first — body text often omits "captcha" while a real
+    # challenge blocks submit. Do NOT treat bare [data-sitekey] or hidden
+    # recaptcha/api2/anchor badges as a wall (many ATS pages embed them).
     try:
         for fr in page.frames:
-            u = (fr.url or "").lower()
-            if any(
-                x in u
-                for x in (
-                    "/recaptcha/",
-                    "recaptcha/enterprise",
-                    "hcaptcha.com",
-                    "challenges.cloudflare.com",
-                    "geetest",
-                    "funcaptcha",
-                    "captcha-delivery.com",  # DataDome (SmartRecruiters / Experian)
-                    "geo.captcha-delivery.com",
-                    "datadome.co",
-                )
-            ):
+            if frame_url_is_captcha_challenge(fr.url or ""):
                 return "CAPTCHA/bot wall"
-        # Visible challenge iframes only
         for sel in (
             "iframe[src*='recaptcha/']",
             "iframe[src*='hcaptcha.com']",
@@ -88,8 +111,16 @@ def blocked_wall(page: Page) -> str | None:
             "iframe[title*='Verification']",
         ):
             loc = page.locator(sel)
-            if loc.count() and loc.first.is_visible():
-                return "CAPTCHA/bot wall"
+            n = min(loc.count(), 8)
+            for i in range(n):
+                el = loc.nth(i)
+                src = (el.get_attribute("src") or "").lower()
+                title = (el.get_attribute("title") or "").lower()
+                if frame_url_is_captcha_challenge(src) or "datadome" in src or "captcha-delivery" in src:
+                    return "CAPTCHA/bot wall"
+                if "recaptcha" in src or "captcha" in title or "verification" in title:
+                    if iframe_looks_onscreen(el):
+                        return "CAPTCHA/bot wall"
     except Exception:
         pass
     try:
@@ -110,8 +141,19 @@ def blocked_wall(page: Page) -> str | None:
         re.I,
     ):
         return "CAPTCHA/bot wall"
-    if re.search(r"sign in to continue|log in to apply|create an account|sign in to apply", body, re.I):
-        if page.locator("input[type='file'], input[type='email']").count() == 0:
+    if re.search(
+        r"sign in to continue|log in to apply|create an account|sign in to apply|"
+        r"sign in using (microsoft|google)|employees must sign in|"
+        r"select a method below to sign in",
+        body,
+        re.I,
+    ):
+        # Email-only SSO is not guest apply (Qualcomm/Microsoft Eightfold).
+        try:
+            has_resume = page.locator("input[type='file']").count() > 0
+        except Exception:
+            has_resume = False
+        if not has_resume:
             return "login/account wall"
     return None
 

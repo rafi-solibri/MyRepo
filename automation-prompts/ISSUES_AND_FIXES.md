@@ -57,6 +57,8 @@
 | SmartRecruiters DataDome (`captcha-delivery.com`) reported as `ats_incomplete_or_stuck` | Detect DataDome iframe/host in `blocked_wall` as CAPTCHA/bot wall |
 | ModMed Workday card poisoned with `· Hyderabad` from page chrome nearestLoc | Restrict location-group annotation to SmartRecruiters hosts; URL BAD_LOC wins |
 | `CDP_REQUIRE_LIVE_LOGIN=1` hard-failed `launch-chrome-cdp.sh hitechcity` so careers never started | Hard-fail only for `linkedin`; hitechcity warns and continues for career-portal applies |
+| Oracle Cloud HCM `closest('[class*="job"]')` matched empty `<a class="job-grid-item__link">` so JPMC/Oracle `jobCount: 0`; listing `?location=Hyderabad` poisoned URL loc hint; hidden recaptcha/api2/anchor flagged Microsoft/Qualcomm as CAPTCHA; Hyland `/en/about/careers` 404; Intel search landed on Workday marketing page; Solera dropped at MAX_COMPANIES=18 | Walk parent cards for Oracle/JPMC titles; path-only `url_loc_hint`; challenge-only CAPTCHA (bframe/DataDome/visible widget); Hyland iCIMS + Intel Workday search URLs; cookie Accept; MAX_COMPANIES=24 |
+| LinkedIn-blocked hitechcity CDP kept WARP SOCKS → Solera/Accenture `ERR_SOCKS_CONNECTION_FAILED`; Qualcomm email SSO classified as guest apply (`ats_incomplete`); Intel `US-Oregon-Hillsboro` paths not BAD_LOC; Hyland iCIMS jobs live in iframe | Relaunch Chrome without WARP after LinkedIn fail; login wall if Sign-in copy and no resume upload; US-state Workday path BAD_LOC; extract job links from all frames |
 
 ## Fixed for 2026-08-13 LinkedIn cloud cron
 

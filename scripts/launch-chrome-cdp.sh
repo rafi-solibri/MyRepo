@@ -314,6 +314,39 @@ if [[ "$portal" == "linkedin" || "$portal" == "hitechcity" ]]; then
       fi
       if [[ "$portal" == "hitechcity" ]]; then
         echo "NOTE: Continuing hitechcity CDP for career-portal applies (LinkedIn blocked)." >&2
+        # WARP SOCKS is for LinkedIn AWS-IP checkpoints. Career ATS hosts often
+        # fail with ERR_SOCKS_CONNECTION_FAILED (Solera/Accenture/Cognizant).
+        if [[ "${HITECHCITY_CAREERS_NO_WARP:-1}" == "1" && ${#proxy_args[@]} -gt 0 ]]; then
+          echo "NOTE: Relaunching Chrome without WARP for career-portal applies." >&2
+          bash "$ROOT/scripts/kill-chrome-cdp.sh" cdp || true
+          sleep 1
+          nohup "$chrome" \
+            "${headless[@]}" \
+            --no-sandbox \
+            --disable-gpu \
+            --disable-dev-shm-usage \
+            --disable-extensions \
+            --remote-debugging-address=127.0.0.1 \
+            --remote-debugging-port=9222 \
+            --remote-allow-origins='*' \
+            --user-data-dir="$profile" \
+            "${profile_dir_args[@]}" \
+            about:blank >>"$log" 2>&1 &
+          run_py - <<'PY'
+import sys, time, urllib.request
+url = "http://127.0.0.1:9222/json/version"
+last = None
+for _ in range(40):
+    try:
+        print(urllib.request.urlopen(url, timeout=1).read().decode())
+        raise SystemExit(0)
+    except Exception as exc:
+        last = exc
+    time.sleep(0.5)
+print(f"ERROR: Chrome CDP did not become ready after no-WARP relaunch: {last}", file=sys.stderr)
+raise SystemExit(1)
+PY
+        fi
       fi
     fi
   fi
