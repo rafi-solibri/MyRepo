@@ -76,7 +76,17 @@ CAREERS_TITLE_SKIP = re.compile(
     r"chemical\s*mechanical|planarization|\bcmp\b|soc\s*compute|"
     r"memory\s*subsystem|foundry\s*solutions|"
     r"sales\s*specialist|especialista|"
-    r"\bai\s*native\b|\bdata\s*&\s*ai\b|staff\s*engineer\s*\(\s*ai",
+    r"\bai\s*native\b|\bdata\s*&\s*ai\b|staff\s*engineer\s*\(\s*ai|"
+    r"engineer in test|\bsdet\b|cyber\s*security|cybersecurity|"
+    r"database engineer",
+    re.I,
+)
+# JD snippets that mean the role is wrong-stack even when the TITLE is generic Architect.
+JD_WRONG_STACK = re.compile(
+    r"salesforce solutions|sfdc development|sfdc lightning|omnistudio|"
+    r"mandatory[:\s]+(java|python|node|salesforce)|"
+    r"required[:\s]+(java|python|node|salesforce)|"
+    r"only\s+(java|python|node|salesforce)\b",
     re.I,
 )
 AUTH_HOST = re.compile(
@@ -429,6 +439,17 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
     if not LOC_HINT.search(loc_blob) and not location_or_campus_ok(loc_blob, "", ""):
         row["status"] = "skipped"
         row["reason"] = "location_not_hyd_or_campus"
+        row["finalUrl"] = page.url
+        return row
+
+    # Title-generic Architect roles that are clearly Salesforce/wrong-stack in the JD.
+    try:
+        jd_snip = (page.locator("body").inner_text(timeout=2500) or "")[:2500]
+    except Exception:
+        jd_snip = top or ""
+    if JD_WRONG_STACK.search(jd_snip) and not prefer_dotnet(role, jd_snip):
+        row["status"] = "skipped"
+        row["reason"] = "jd_wrong_stack"
         row["finalUrl"] = page.url
         return row
 
