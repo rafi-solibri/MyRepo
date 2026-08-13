@@ -273,13 +273,18 @@ async function readVisibleApplyCta(page) {
       if (!/Quick apply|Applied/i.test(raw)) continue;
       if (/company site|hirist/i.test(raw)) continue;
 
-      const spans = [...btn.querySelectorAll("span")];
-      const quickOn = spans.some(
+      // Only the absolute slide overlays decide state (nested text spans are always "on").
+      const overlays = [...btn.querySelectorAll("span")].filter((s) => {
+        const st = window.getComputedStyle(s);
+        return st.position === "absolute" || /absolute|inset-0/i.test(s.className || "");
+      });
+      const layerPool = overlays.length ? overlays : [...btn.querySelectorAll("span")];
+      const quickOn = layerPool.some(
         (s) =>
           /^Quick apply$/i.test((s.innerText || "").replace(/\s+/g, " ").trim()) &&
           layerOnScreen(s)
       );
-      const appliedOn = spans.some(
+      const appliedOn = layerPool.some(
         (s) =>
           /^Applied$/i.test((s.innerText || "").replace(/\s+/g, " ").trim()) &&
           layerOnScreen(s)
@@ -519,7 +524,115 @@ async function readDetail(page) {
   return { ...base, ctaState: visible?.state || "unknown" };
 }
 
+async function answerNaukriChatbot(page) {
+  for (let step = 0; step < 12; step++) {
+    const chatText = await page
+      .evaluate(
+        () =>
+          document.querySelector(
+            ".chatbot_Drawer, ._chatBotContainer, #desktopChatBotContainer"
+          )?.innerText || ""
+      )
+      .catch(() => "");
+    if (!chatText || chatText.length < 20) return { done: true, reason: "no_chat" };
+    if (
+      /successfully applied|application sent|has been submitted|thank you for applying/i.test(
+        chatText
+      )
+    ) {
+      return { done: true, reason: "success" };
+    }
+    if (
+      /thank you for your responses/i.test(chatText) &&
+      !/How many years|Are you|Do you|\?/i.test(chatText.split("Thank you for your responses")[1] || "")
+    ) {
+      // Final ack — click Save once more if present, then done.
+      await page
+        .evaluate(() => {
+          document.querySelector(".chatbot_Drawer .send")?.classList.remove("disabled");
+          document.querySelector(".chatbot_Drawer .sendMsg")?.click();
+        })
+        .catch(() => {});
+      await sleep(1500);
+      return { done: true, reason: "responses_thanks" };
+    }
+
+    const picked = await page
+      .evaluate(() => {
+        const root = document.querySelector(".chatbot_Drawer") || document;
+        const radios = [...root.querySelectorAll('input[type="radio"]')];
+        if (!radios.length) return null;
+        const prefer = [
+          ">12 years",
+          "11-12 years",
+          "9-11 years",
+          "Yes",
+          "7-9 years",
+        ];
+        let target = null;
+        for (const p of prefer) {
+          target = radios.find((r) => (r.value || r.id) === p);
+          if (target) break;
+        }
+        if (!target) target = radios[radios.length - 1];
+        const native = Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          "checked"
+        );
+        native?.set?.call(target, true);
+        target.dispatchEvent(new Event("click", { bubbles: true }));
+        target.dispatchEvent(new Event("input", { bubbles: true }));
+        target.dispatchEvent(new Event("change", { bubbles: true }));
+        try {
+          const lab = root.querySelector(
+            `label[for="${CSS.escape(target.id)}"]`
+          );
+          lab?.click();
+        } catch (_) {}
+        return target.value || target.id;
+      })
+      .catch(() => null);
+    if (!picked) break;
+    await sleep(400);
+    await page
+      .evaluate(() => {
+        document.querySelector(".chatbot_Drawer .send")?.classList.remove("disabled");
+        document.querySelector(".chatbot_Drawer .sendMsg")?.click();
+      })
+      .catch(() => {});
+    await sleep(2200);
+  }
+  return { done: false, reason: "chat_steps_exhausted" };
+}
+
 async function fillApplyForm(page) {
+  // TopTier recruiter chatbot (Yes/No + experience bands) — must answer to finish apply.
+  const chat = await answerNaukriChatbot(page).catch(() => null);
+  if (chat?.reason === "success" || chat?.reason === "responses_thanks") {
+    await sleep(1000);
+    return;
+  }
+  // Recruiter Yes/No questions (TopTier uses label[for=Yes]/No] chips).
+  await page
+    .evaluate(() => {
+      const setChecked = (inp) => {
+        if (!inp) return;
+        const native = Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          "checked"
+        );
+        native?.set?.call(inp, true);
+        inp.dispatchEvent(new Event("click", { bubbles: true }));
+        inp.dispatchEvent(new Event("input", { bubbles: true }));
+        inp.dispatchEvent(new Event("change", { bubbles: true }));
+      };
+      const yes = document.querySelector('#Yes, input[value="Yes"]');
+      setChecked(yes);
+      document.querySelector('label[for="Yes"]')?.click();
+    })
+    .catch(() => {});
+  await sleep(400);
+
   await page
     .evaluate(
       ({ cur, exp }) => {
@@ -562,16 +675,29 @@ async function fillApplyForm(page) {
     "button:has-text('Save')",
     "button:has-text('Continue')",
     "button:has-text('Send')",
+    ".sendMsgbtn_container",
+    ".sendMsg",
+    "div.send:has-text('Save')",
     "button:has-text('Apply')",
   ]) {
     const b = page.locator(sel).first();
     if (await b.isVisible().catch(() => false)) {
-      const t = ((await b.innerText()) || "").trim();
-      if (/Applied/i.test(t)) break;
-      await b.click().catch(() => {});
+      const t = ((await b.innerText().catch(() => "")) || "").trim();
+      if (/Applied/i.test(t) && /Quick apply/i.test(t)) continue;
+      if (/^Applied$/i.test(t)) break;
+      await b.click({ force: true }).catch(() => {});
       await sleep(1500);
     }
   }
+  // Fallback: click TopTier chat/save div by exact text.
+  await page
+    .evaluate(() => {
+      const el = [...document.querySelectorAll("div.sendMsg, div.send, div.sendMsgbtn_container")]
+        .find((e) => /^Save$/i.test((e.innerText || "").trim()));
+      if (el) el.click();
+    })
+    .catch(() => {});
+  await sleep(1200);
 }
 
 async function clickQuickApply(page) {
