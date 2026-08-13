@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-13 Naukri daily re-run (cloud) — dual-layer CTA
+
+| Issue | Fix |
+| --- | --- |
+| TopTier Quick-apply button DOM always concatenates **Quick apply** + **Applied** (slide layers) → every detail looked `already_applied` / `quick_apply_not_found` | `readVisibleApplyCta` uses transform translateY to detect on-screen layer; only skip when Applied layer is visible |
+
 ## Fixed for 2026-08-13 Naukri daily re-run (cloud)
 
 | Issue | Fix |

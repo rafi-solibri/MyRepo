@@ -211,17 +211,21 @@ function isAppliedFilterChip(text) {
   return /^Applied\s*\(\d+\)\s*$/i.test(t);
 }
 
-/** TopTier often shows multiline CTA text: "Quick apply\\nApplied". */
+/**
+ * TopTier Quick-apply buttons use dual absolute layers ("Quick apply" + "Applied").
+ * button.innerText always concatenates to "Quick apply Applied" even when only one
+ * layer is on-screen — the off state translates the Applied layer by ~button height.
+ */
 function isAlreadyAppliedCta(text) {
   const t = String(text || "")
     .replace(/\s+/g, " ")
     .trim();
   if (!t) return false;
-  // Never treat the Applied (N) filter chip as already-applied.
   if (isAppliedFilterChip(t)) return false;
-  if (/Quick apply\s*Applied/i.test(t)) return true;
+  // Dual-layer buttons: do NOT treat concatenated "Quick apply Applied" as applied.
+  // Callers must use readVisibleApplyCta(page) for live buttons.
+  if (/Quick apply/i.test(t) && /Applied/i.test(t)) return false;
   if (/^Applied$/i.test(t)) return true;
-  // Only short CTA chips — never treat long JD/body text containing "Applied".
   if (
     t.length < 48 &&
     /\bApplied\b/i.test(t) &&
@@ -231,6 +235,75 @@ function isAlreadyAppliedCta(text) {
     return true;
   }
   return false;
+}
+
+/** Read the on-screen Quick apply / Applied state from dual-layer TopTier buttons. */
+async function readVisibleApplyCta(page) {
+  return page.evaluate(() => {
+    function layerOnScreen(el) {
+      const st = window.getComputedStyle(el);
+      if (
+        st.display === "none" ||
+        st.visibility === "hidden" ||
+        Number(st.opacity) < 0.2
+      ) {
+        return false;
+      }
+      const r = el.getBoundingClientRect();
+      if (r.width < 2 || r.height < 2) return false;
+      let ty = 0;
+      const m = /matrix\(([^)]+)\)/.exec(st.transform || "");
+      if (m) {
+        const parts = m[1].split(",").map((x) => Number(x.trim()));
+        ty = parts[5] || 0;
+      }
+      // Off-screen slide animation: |ty| ~= button height.
+      if (Math.abs(ty) > Math.max(12, r.height * 0.35)) return false;
+      return true;
+    }
+
+    const buttons = [
+      ...document.querySelectorAll("button, a, [role='button']"),
+    ];
+    for (const btn of buttons) {
+      const raw = (btn.innerText || btn.getAttribute("aria-label") || "")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (!raw || /^Applied\s*\(\d+\)\s*$/i.test(raw)) continue;
+      if (!/Quick apply|Applied/i.test(raw)) continue;
+      if (/company site|hirist/i.test(raw)) continue;
+
+      const spans = [...btn.querySelectorAll("span")];
+      const quickOn = spans.some(
+        (s) =>
+          /^Quick apply$/i.test((s.innerText || "").replace(/\s+/g, " ").trim()) &&
+          layerOnScreen(s)
+      );
+      const appliedOn = spans.some(
+        (s) =>
+          /^Applied$/i.test((s.innerText || "").replace(/\s+/g, " ").trim()) &&
+          layerOnScreen(s)
+      );
+      if (appliedOn && !quickOn) {
+        return { state: "applied", label: "Applied", raw };
+      }
+      if (quickOn && !appliedOn) {
+        return { state: "quick", label: "Quick apply", raw };
+      }
+      if (quickOn && appliedOn) {
+        // Both claim on-screen — prefer Quick apply (try apply) unless disabled.
+        return {
+          state: btn.disabled ? "applied" : "quick",
+          label: btn.disabled ? "Applied" : "Quick apply",
+          raw,
+        };
+      }
+      // No layered spans — fall back to plain label.
+      if (/^Applied$/i.test(raw)) return { state: "applied", label: raw, raw };
+      if (/^Quick apply$/i.test(raw)) return { state: "quick", label: raw, raw };
+    }
+    return { state: "missing", label: "", raw: "" };
+  });
 }
 
 async function dismiss(page) {
@@ -391,14 +464,13 @@ async function openCard(context, page, idx) {
 }
 
 async function readDetail(page) {
-  return page.evaluate(() => {
+  const base = await page.evaluate(() => {
     const body = document.body.innerText || "";
     const panel =
       document.querySelector(
         "[class*='detail'], [class*='Detail'], aside, [role='dialog']"
       ) || document.body;
     const ptext = panel.innerText || body;
-    // Prefer real apply buttons; normalize multiline "Quick apply\\nApplied".
     const ctas = [...document.querySelectorAll("button, a, div[role='button']")]
       .map((e) =>
         (e.innerText || e.getAttribute("aria-label") || "")
@@ -412,12 +484,13 @@ async function readDetail(page) {
         );
       });
     const preferred =
-      ctas.find((t) => /Quick apply\s*Applied|^Applied$/i.test(t)) ||
       ctas.find((t) => /Go to company site/i.test(t)) ||
       ctas.find((t) =>
         /On company site|Apply on company(?:\s+site)?|On hirist/i.test(t)
       ) ||
+      ctas.find((t) => /^Quick apply$/i.test(t)) ||
       ctas.find((t) => /Quick apply/i.test(t)) ||
+      ctas.find((t) => /^Applied$/i.test(t)) ||
       ctas[0] ||
       "";
     const links = [...document.querySelectorAll("a[href]")]
@@ -436,6 +509,14 @@ async function readDetail(page) {
       url: location.href,
     };
   });
+  const visible = await readVisibleApplyCta(page).catch(() => null);
+  if (visible && visible.state === "applied") {
+    return { ...base, cta: "Applied", ctaState: "applied" };
+  }
+  if (visible && visible.state === "quick") {
+    return { ...base, cta: "Quick apply", ctaState: "quick" };
+  }
+  return { ...base, ctaState: visible?.state || "unknown" };
 }
 
 async function fillApplyForm(page) {
@@ -494,6 +575,10 @@ async function fillApplyForm(page) {
 }
 
 async function clickQuickApply(page) {
+  const visible = await readVisibleApplyCta(page).catch(() => null);
+  if (visible?.state === "applied") {
+    return { already: true, label: visible.label || "Applied" };
+  }
   const selectors = [
     "button:has-text('Quick apply')",
     "button:has-text('Quick Apply')",
@@ -507,38 +592,33 @@ async function clickQuickApply(page) {
       const label = ((await btn.innerText().catch(() => "")) || "")
         .replace(/\s+/g, " ")
         .trim();
-      if (isAlreadyAppliedCta(label)) {
+      if (/company site|on company/i.test(label)) continue;
+      // Dual-layer buttons always include both words — click unless visible state is applied.
+      if (/^Applied$/i.test(label) && !/Quick apply/i.test(label)) {
         return { already: true, label };
       }
-      if (/company site|on company/i.test(label)) continue;
-      await btn.click().catch(() => {});
+      await btn.click({ force: true }).catch(() => {});
       await sleep(2500);
       await dismiss(page);
       await fillApplyForm(page);
-      return { clicked: true, label };
+      return { clicked: true, label: visible?.label || label };
     }
   }
   return { clicked: false };
 }
 
 async function confirmApplied(page) {
-  const detail = await readDetail(page);
-  const cta = (detail.cta || "").replace(/\s+/g, " ").trim();
-  if (isAlreadyAppliedCta(cta)) {
-    return { ok: true, cta };
+  const visible = await readVisibleApplyCta(page).catch(() => null);
+  if (visible?.state === "applied") {
+    return { ok: true, cta: "Applied" };
   }
+  const detail = await readDetail(page);
   const toast = await page
     .evaluate(() => {
       const t = document.body.innerText || "";
       if (/applied successfully|application sent|successfully applied/i.test(t))
         return "toast";
-      const hit = [...document.querySelectorAll("button, a, div")]
-        .map((e) => (e.innerText || "").replace(/\s+/g, " ").trim())
-        .find(
-          (x) =>
-            /Quick apply\s*Applied|^Applied$/i.test(x) && x.length < 40
-        );
-      return hit || "";
+      return "";
     })
     .catch(() => "");
   if (toast) return { ok: true, cta: toast };
@@ -1126,12 +1206,18 @@ async function processCard(context, page, card, i, jobMeta, report) {
     await closeDetail();
     return;
   }
-  if (isAlreadyAppliedCta(detail.cta)) {
+  const detailApplied =
+    detail.ctaState === "applied" ||
+    (detail.ctaState !== "quick" &&
+      detail.ctaState !== "unknown" &&
+      isAlreadyAppliedCta(detail.cta));
+  if (detailApplied) {
     report.skipped.push({
       ...jobMeta,
       reason: "already_applied_detail",
       naukriJobUrl: detail.url,
       cta: detail.cta,
+      ctaState: detail.ctaState,
     });
     // Interview-call maximization: still try recruiter note on prior applies.
     const rec = await tryContactRecruiter(detailPage);
