@@ -211,17 +211,21 @@ function isAppliedFilterChip(text) {
   return /^Applied\s*\(\d+\)\s*$/i.test(t);
 }
 
-/** TopTier often shows multiline CTA text: "Quick apply\\nApplied". */
+/**
+ * TopTier Quick-apply buttons use dual absolute layers ("Quick apply" + "Applied").
+ * button.innerText always concatenates to "Quick apply Applied" even when only one
+ * layer is on-screen — the off state translates the Applied layer by ~button height.
+ */
 function isAlreadyAppliedCta(text) {
   const t = String(text || "")
     .replace(/\s+/g, " ")
     .trim();
   if (!t) return false;
-  // Never treat the Applied (N) filter chip as already-applied.
   if (isAppliedFilterChip(t)) return false;
-  if (/Quick apply\s*Applied/i.test(t)) return true;
+  // Dual-layer buttons: do NOT treat concatenated "Quick apply Applied" as applied.
+  // Callers must use readVisibleApplyCta(page) for live buttons.
+  if (/Quick apply/i.test(t) && /Applied/i.test(t)) return false;
   if (/^Applied$/i.test(t)) return true;
-  // Only short CTA chips — never treat long JD/body text containing "Applied".
   if (
     t.length < 48 &&
     /\bApplied\b/i.test(t) &&
@@ -231,6 +235,80 @@ function isAlreadyAppliedCta(text) {
     return true;
   }
   return false;
+}
+
+/** Read the on-screen Quick apply / Applied state from dual-layer TopTier buttons. */
+async function readVisibleApplyCta(page) {
+  return page.evaluate(() => {
+    function layerOnScreen(el) {
+      const st = window.getComputedStyle(el);
+      if (
+        st.display === "none" ||
+        st.visibility === "hidden" ||
+        Number(st.opacity) < 0.2
+      ) {
+        return false;
+      }
+      const r = el.getBoundingClientRect();
+      if (r.width < 2 || r.height < 2) return false;
+      let ty = 0;
+      const m = /matrix\(([^)]+)\)/.exec(st.transform || "");
+      if (m) {
+        const parts = m[1].split(",").map((x) => Number(x.trim()));
+        ty = parts[5] || 0;
+      }
+      // Off-screen slide animation: |ty| ~= button height.
+      if (Math.abs(ty) > Math.max(12, r.height * 0.35)) return false;
+      return true;
+    }
+
+    const buttons = [
+      ...document.querySelectorAll("button, a, [role='button']"),
+    ];
+    for (const btn of buttons) {
+      const raw = (btn.innerText || btn.getAttribute("aria-label") || "")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (!raw || /^Applied\s*\(\d+\)\s*$/i.test(raw)) continue;
+      if (!/Quick apply|Applied/i.test(raw)) continue;
+      if (/company site|hirist/i.test(raw)) continue;
+
+      // Only the absolute slide overlays decide state (nested text spans are always "on").
+      const overlays = [...btn.querySelectorAll("span")].filter((s) => {
+        const st = window.getComputedStyle(s);
+        return st.position === "absolute" || /absolute|inset-0/i.test(s.className || "");
+      });
+      const layerPool = overlays.length ? overlays : [...btn.querySelectorAll("span")];
+      const quickOn = layerPool.some(
+        (s) =>
+          /^Quick apply$/i.test((s.innerText || "").replace(/\s+/g, " ").trim()) &&
+          layerOnScreen(s)
+      );
+      const appliedOn = layerPool.some(
+        (s) =>
+          /^Applied$/i.test((s.innerText || "").replace(/\s+/g, " ").trim()) &&
+          layerOnScreen(s)
+      );
+      if (appliedOn && !quickOn) {
+        return { state: "applied", label: "Applied", raw };
+      }
+      if (quickOn && !appliedOn) {
+        return { state: "quick", label: "Quick apply", raw };
+      }
+      if (quickOn && appliedOn) {
+        // Both claim on-screen — prefer Quick apply (try apply) unless disabled.
+        return {
+          state: btn.disabled ? "applied" : "quick",
+          label: btn.disabled ? "Applied" : "Quick apply",
+          raw,
+        };
+      }
+      // No layered spans — fall back to plain label.
+      if (/^Applied$/i.test(raw)) return { state: "applied", label: raw, raw };
+      if (/^Quick apply$/i.test(raw)) return { state: "quick", label: raw, raw };
+    }
+    return { state: "missing", label: "", raw: "" };
+  });
 }
 
 async function dismiss(page) {
@@ -391,14 +469,13 @@ async function openCard(context, page, idx) {
 }
 
 async function readDetail(page) {
-  return page.evaluate(() => {
+  const base = await page.evaluate(() => {
     const body = document.body.innerText || "";
     const panel =
       document.querySelector(
         "[class*='detail'], [class*='Detail'], aside, [role='dialog']"
       ) || document.body;
     const ptext = panel.innerText || body;
-    // Prefer real apply buttons; normalize multiline "Quick apply\\nApplied".
     const ctas = [...document.querySelectorAll("button, a, div[role='button']")]
       .map((e) =>
         (e.innerText || e.getAttribute("aria-label") || "")
@@ -412,12 +489,13 @@ async function readDetail(page) {
         );
       });
     const preferred =
-      ctas.find((t) => /Quick apply\s*Applied|^Applied$/i.test(t)) ||
       ctas.find((t) => /Go to company site/i.test(t)) ||
       ctas.find((t) =>
         /On company site|Apply on company(?:\s+site)?|On hirist/i.test(t)
       ) ||
+      ctas.find((t) => /^Quick apply$/i.test(t)) ||
       ctas.find((t) => /Quick apply/i.test(t)) ||
+      ctas.find((t) => /^Applied$/i.test(t)) ||
       ctas[0] ||
       "";
     const links = [...document.querySelectorAll("a[href]")]
@@ -436,9 +514,206 @@ async function readDetail(page) {
       url: location.href,
     };
   });
+  const visible = await readVisibleApplyCta(page).catch(() => null);
+  if (visible && visible.state === "applied") {
+    return { ...base, cta: "Applied", ctaState: "applied" };
+  }
+  if (visible && visible.state === "quick") {
+    return { ...base, cta: "Quick apply", ctaState: "quick" };
+  }
+  return { ...base, ctaState: visible?.state || "unknown" };
+}
+
+async function waitForVisibleApplyCta(page, { timeoutMs = 10000 } = {}) {
+  const start = Date.now();
+  let last = null;
+  while (Date.now() - start < timeoutMs) {
+    last = await readVisibleApplyCta(page).catch(() => null);
+    if (last && (last.state === "quick" || last.state === "applied")) return last;
+    await sleep(400);
+  }
+  return last;
+}
+
+async function answerNaukriChatbot(page) {
+  // Drawer can mount a beat after Quick apply — wait before declaring no_chat.
+  {
+    const start = Date.now();
+    while (Date.now() - start < 6000) {
+      const ready = await page
+        .evaluate(() => {
+          const el = document.querySelector(
+            ".chatbot_Drawer, ._chatBotContainer, #desktopChatBotContainer"
+          );
+          const t = (el?.innerText || "").trim();
+          return t.length >= 20;
+        })
+        .catch(() => false);
+      if (ready) break;
+      await sleep(350);
+    }
+  }
+
+  for (let step = 0; step < 14; step++) {
+    const chatText = await page
+      .evaluate(
+        () =>
+          document.querySelector(
+            ".chatbot_Drawer, ._chatBotContainer, #desktopChatBotContainer"
+          )?.innerText || ""
+      )
+      .catch(() => "");
+    if (!chatText || chatText.length < 20) return { done: true, reason: "no_chat" };
+    if (
+      /successfully applied|application sent|has been submitted|thank you for applying|application has been submitted/i.test(
+        chatText
+      )
+    ) {
+      return { done: true, reason: "success" };
+    }
+    if (
+      /thank you for your responses/i.test(chatText) &&
+      !/How many years|Are you|Do you|\?/i.test(chatText.split(/thank you for your responses/i)[1] || "")
+    ) {
+      // Final ack — click Save once more if present, then done.
+      await page
+        .evaluate(() => {
+          const root = document.querySelector(".chatbot_Drawer") || document;
+          root.querySelector(".send")?.classList.remove("disabled");
+          root.querySelector(".sendMsg")?.click();
+          const save = [...root.querySelectorAll("div.sendMsg, div.send, button")]
+            .find((e) => /^Save$/i.test((e.innerText || "").trim()));
+          save?.click();
+        })
+        .catch(() => {});
+      await sleep(1500);
+      return { done: true, reason: "responses_thanks" };
+    }
+
+    const picked = await page
+      .evaluate(() => {
+        const root =
+          document.querySelector(".chatbot_Drawer, ._chatBotContainer") ||
+          document;
+        const radios = [...root.querySelectorAll('input[type="radio"]')];
+        const prefer = [
+          ">12 years",
+          "11-12 years",
+          "9-11 years",
+          "Yes",
+          "7-9 years",
+        ];
+        const setChecked = (inp) => {
+          if (!inp) return;
+          const native = Object.getOwnPropertyDescriptor(
+            HTMLInputElement.prototype,
+            "checked"
+          );
+          native?.set?.call(inp, true);
+          inp.dispatchEvent(new Event("click", { bubbles: true }));
+          inp.dispatchEvent(new Event("input", { bubbles: true }));
+          inp.dispatchEvent(new Event("change", { bubbles: true }));
+        };
+        if (radios.length) {
+          let target = null;
+          for (const p of prefer) {
+            target = radios.find(
+              (r) =>
+                (r.value || r.id) === p ||
+                new RegExp(`^${p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i").test(
+                  (r.value || r.id || "").trim()
+                )
+            );
+            if (target) break;
+          }
+          if (!target) {
+            // Prefer Yes / highest band by label text near radio.
+            target =
+              radios.find((r) => {
+                const lab =
+                  root.querySelector(`label[for="${r.id}"]`)?.innerText ||
+                  r.closest("label")?.innerText ||
+                  "";
+                return />12|Yes/i.test(lab);
+              }) || radios[radios.length - 1];
+          }
+          setChecked(target);
+          try {
+            const lab = root.querySelector(
+              `label[for="${CSS.escape(target.id)}"]`
+            );
+            lab?.click();
+          } catch (_) {}
+          return target.value || target.id || "radio";
+        }
+        // Chip / button answers (no radio inputs).
+        const chips = [
+          ...root.querySelectorAll(
+            "label, button, [role='button'], div[class*='chip'], span[class*='chip']"
+          ),
+        ].filter((e) => {
+          const t = (e.innerText || "").replace(/\s+/g, " ").trim();
+          return t && t.length < 40 && /^(Yes|No|>12 years|11-12 years|9-11 years|7-9 years|5-7 years)$/i.test(t);
+        });
+        for (const p of prefer) {
+          const hit = chips.find(
+            (c) => (c.innerText || "").replace(/\s+/g, " ").trim() === p
+          );
+          if (hit) {
+            hit.click();
+            return p;
+          }
+        }
+        return null;
+      })
+      .catch(() => null);
+    if (!picked) break;
+    await sleep(450);
+    await page
+      .evaluate(() => {
+        const root = document.querySelector(".chatbot_Drawer") || document;
+        root.querySelector(".send")?.classList.remove("disabled");
+        const sendWrap = root.querySelector(".send");
+        if (sendWrap) sendWrap.classList.remove("disabled");
+        root.querySelector(".sendMsg")?.click();
+        const save = [...root.querySelectorAll("div.sendMsg, div.send, button")]
+          .find((e) => /^Save$/i.test((e.innerText || "").trim()));
+        save?.click();
+      })
+      .catch(() => {});
+    await sleep(2200);
+  }
+  return { done: false, reason: "chat_steps_exhausted" };
 }
 
 async function fillApplyForm(page) {
+  // TopTier recruiter chatbot (Yes/No + experience bands) — must answer to finish apply.
+  const chat = await answerNaukriChatbot(page).catch(() => null);
+  if (chat?.reason === "success" || chat?.reason === "responses_thanks") {
+    await sleep(1000);
+    return chat;
+  }
+  // Recruiter Yes/No questions (TopTier uses label[for=Yes]/No] chips).
+  await page
+    .evaluate(() => {
+      const setChecked = (inp) => {
+        if (!inp) return;
+        const native = Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          "checked"
+        );
+        native?.set?.call(inp, true);
+        inp.dispatchEvent(new Event("click", { bubbles: true }));
+        inp.dispatchEvent(new Event("input", { bubbles: true }));
+        inp.dispatchEvent(new Event("change", { bubbles: true }));
+      };
+      const yes = document.querySelector('#Yes, input[value="Yes"]');
+      setChecked(yes);
+      document.querySelector('label[for="Yes"]')?.click();
+    })
+    .catch(() => {});
+  await sleep(400);
+
   await page
     .evaluate(
       ({ cur, exp }) => {
@@ -481,19 +756,37 @@ async function fillApplyForm(page) {
     "button:has-text('Save')",
     "button:has-text('Continue')",
     "button:has-text('Send')",
+    ".sendMsgbtn_container",
+    ".sendMsg",
+    "div.send:has-text('Save')",
     "button:has-text('Apply')",
   ]) {
     const b = page.locator(sel).first();
     if (await b.isVisible().catch(() => false)) {
-      const t = ((await b.innerText()) || "").trim();
-      if (/Applied/i.test(t)) break;
-      await b.click().catch(() => {});
+      const t = ((await b.innerText().catch(() => "")) || "").trim();
+      if (/Applied/i.test(t) && /Quick apply/i.test(t)) continue;
+      if (/^Applied$/i.test(t)) break;
+      await b.click({ force: true }).catch(() => {});
       await sleep(1500);
     }
   }
+  // Fallback: click TopTier chat/save div by exact text.
+  await page
+    .evaluate(() => {
+      const el = [...document.querySelectorAll("div.sendMsg, div.send, div.sendMsgbtn_container")]
+        .find((e) => /^Save$/i.test((e.innerText || "").trim()));
+      if (el) el.click();
+    })
+    .catch(() => {});
+  await sleep(1200);
+  return chat || { done: false, reason: "form_fill" };
 }
 
 async function clickQuickApply(page) {
+  let visible = await waitForVisibleApplyCta(page, { timeoutMs: 8000 });
+  if (visible?.state === "applied") {
+    return { already: true, label: visible.label || "Applied" };
+  }
   const selectors = [
     "button:has-text('Quick apply')",
     "button:has-text('Quick Apply')",
@@ -501,44 +794,122 @@ async function clickQuickApply(page) {
     "[role='button']:has-text('Quick apply')",
     "button:has-text('Apply')",
   ];
+  let clicked = false;
+  let label = visible?.label || "";
   for (const sel of selectors) {
     const btn = page.locator(sel).first();
     if (await btn.isVisible().catch(() => false)) {
-      const label = ((await btn.innerText().catch(() => "")) || "")
+      label = ((await btn.innerText().catch(() => "")) || "")
         .replace(/\s+/g, " ")
         .trim();
-      if (isAlreadyAppliedCta(label)) {
+      if (/company site|on company/i.test(label)) continue;
+      // Dual-layer buttons always include both words — click unless visible state is applied.
+      if (/^Applied$/i.test(label) && !/Quick apply/i.test(label)) {
         return { already: true, label };
       }
-      if (/company site|on company/i.test(label)) continue;
-      await btn.click().catch(() => {});
-      await sleep(2500);
-      await dismiss(page);
-      await fillApplyForm(page);
-      return { clicked: true, label };
+      await btn.click({ force: true }).catch(() => {});
+      clicked = true;
+      break;
     }
   }
-  return { clicked: false };
+  // Evaluate fallback: Playwright text match can miss dual-layer / nested spans.
+  if (!clicked) {
+    const viaEval = await page
+      .evaluate(() => {
+        const layerOnScreen = (el) => {
+          const st = window.getComputedStyle(el);
+          if (
+            st.display === "none" ||
+            st.visibility === "hidden" ||
+            Number(st.opacity) < 0.2
+          ) {
+            return false;
+          }
+          const r = el.getBoundingClientRect();
+          if (r.width < 2 || r.height < 2) return false;
+          let ty = 0;
+          const m = /matrix\(([^)]+)\)/.exec(st.transform || "");
+          if (m) {
+            const parts = m[1].split(",").map((x) => Number(x.trim()));
+            ty = parts[5] || 0;
+          }
+          if (Math.abs(ty) > Math.max(12, r.height * 0.35)) return false;
+          return true;
+        };
+        const buttons = [
+          ...document.querySelectorAll("button, a, [role='button']"),
+        ];
+        for (const btn of buttons) {
+          const raw = (btn.innerText || btn.getAttribute("aria-label") || "")
+            .replace(/\s+/g, " ")
+            .trim();
+          if (!/Quick apply/i.test(raw)) continue;
+          if (/company site|hirist/i.test(raw)) continue;
+          const overlays = [...btn.querySelectorAll("span")].filter((s) => {
+            const st = window.getComputedStyle(s);
+            return (
+              st.position === "absolute" ||
+              /absolute|inset-0/i.test(s.className || "")
+            );
+          });
+          const pool = overlays.length ? overlays : [...btn.querySelectorAll("span")];
+          const quickOn = pool.some(
+            (s) =>
+              /^Quick apply$/i.test((s.innerText || "").replace(/\s+/g, " ").trim()) &&
+              layerOnScreen(s)
+          );
+          if (quickOn || /^Quick apply$/i.test(raw)) {
+            btn.scrollIntoView({ block: "center" });
+            btn.click();
+            return raw || "Quick apply";
+          }
+        }
+        return "";
+      })
+      .catch(() => "");
+    if (viaEval) {
+      clicked = true;
+      label = viaEval;
+    }
+  }
+  if (!clicked) return { clicked: false };
+  await sleep(2500);
+  await dismiss(page);
+  const chat = await fillApplyForm(page);
+  return {
+    clicked: true,
+    label: visible?.label || label || "Quick apply",
+    chat,
+  };
 }
 
-async function confirmApplied(page) {
-  const detail = await readDetail(page);
-  const cta = (detail.cta || "").replace(/\s+/g, " ").trim();
-  if (isAlreadyAppliedCta(cta)) {
-    return { ok: true, cta };
+async function confirmApplied(page, chatHint = null) {
+  if (
+    chatHint?.reason === "success" ||
+    chatHint?.reason === "responses_thanks"
+  ) {
+    // Chatbot completion often precedes CTA layer flip — count as applied.
+    const visibleEarly = await waitForVisibleApplyCta(page, { timeoutMs: 4000 });
+    if (visibleEarly?.state === "applied") {
+      return { ok: true, cta: "Applied" };
+    }
+    return { ok: true, cta: `chatbot:${chatHint.reason}` };
   }
+  const visible = await waitForVisibleApplyCta(page, { timeoutMs: 5000 });
+  if (visible?.state === "applied") {
+    return { ok: true, cta: "Applied" };
+  }
+  const detail = await readDetail(page);
   const toast = await page
     .evaluate(() => {
       const t = document.body.innerText || "";
-      if (/applied successfully|application sent|successfully applied/i.test(t))
+      if (
+        /applied successfully|application sent|successfully applied|thank you for your responses|thank you for applying/i.test(
+          t
+        )
+      )
         return "toast";
-      const hit = [...document.querySelectorAll("button, a, div")]
-        .map((e) => (e.innerText || "").replace(/\s+/g, " ").trim())
-        .find(
-          (x) =>
-            /Quick apply\s*Applied|^Applied$/i.test(x) && x.length < 40
-        );
-      return hit || "";
+      return "";
     })
     .catch(() => "");
   if (toast) return { ok: true, cta: toast };
@@ -1098,7 +1469,9 @@ function decideSkip(card, { detailMode = false } = {}) {
 async function processCard(context, page, card, i, jobMeta, report) {
   const detailPage = await openCard(context, page, card.idx != null ? card.idx : i);
   const openedTab = detailPage !== page;
-  const detail = await readDetail(detailPage);
+  // Detail CTA layers can mount late — wait before already/missing decisions.
+  await waitForVisibleApplyCta(detailPage, { timeoutMs: 8000 });
+  let detail = await readDetail(detailPage);
   // Detail re-check: location/CTC/.NET only — skip_title already decided from card role.
   const detailSkip = decideSkip(
     {
@@ -1126,12 +1499,19 @@ async function processCard(context, page, card, i, jobMeta, report) {
     await closeDetail();
     return;
   }
-  if (isAlreadyAppliedCta(detail.cta)) {
+  const detailApplied =
+    detail.ctaState === "applied" ||
+    (detail.ctaState !== "quick" &&
+      detail.ctaState !== "unknown" &&
+      detail.ctaState !== "missing" &&
+      isAlreadyAppliedCta(detail.cta));
+  if (detailApplied) {
     report.skipped.push({
       ...jobMeta,
       reason: "already_applied_detail",
       naukriJobUrl: detail.url,
       cta: detail.cta,
+      ctaState: detail.ctaState,
     });
     // Interview-call maximization: still try recruiter note on prior applies.
     const rec = await tryContactRecruiter(detailPage);
@@ -1167,18 +1547,27 @@ async function processCard(context, page, card, i, jobMeta, report) {
     return;
   }
   if (!click.clicked) {
+    // One more CTA poll — slow TopTier detail tabs.
+    detail = await readDetail(detailPage);
+    if (card.companySite || isCompanySiteCta(detail.cta)) {
+      await handleExternal(context, detailPage, detail, jobMeta, report);
+      await page.bringToFront().catch(() => {});
+      await closeDetail();
+      return;
+    }
     report.blocked.push({
       ...jobMeta,
       reason: "quick_apply_not_found",
       path: "Naukri",
       naukriJobUrl: detail.url,
       cta: detail.cta,
+      ctaState: detail.ctaState,
     });
     await closeDetail();
     return;
   }
   await sleep(2000);
-  const conf = await confirmApplied(detailPage);
+  const conf = await confirmApplied(detailPage, click.chat);
   if (conf.ok) {
     const rec = await tryContactRecruiter(detailPage);
     report.applied.push({
@@ -1195,6 +1584,7 @@ async function processCard(context, page, card, i, jobMeta, report) {
       cta: conf.cta,
       path: "Naukri",
       naukriJobUrl: detail.url,
+      chat: click.chat || null,
     });
   }
   await closeDetail();
