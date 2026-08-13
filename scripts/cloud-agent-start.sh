@@ -12,6 +12,10 @@
 # Must never block a boot: no `set -e`; restore/sync are best-effort.
 set -uo pipefail
 cd "$(dirname "$0")/.."
+# Optional local secrets for LinkedIn/Workday/Resend (gitignored file or ~/.cursor).
+# Prefer Cursor Environment Secrets for cron durability.
+# shellcheck disable=SC1091
+source scripts/load-job-secrets.sh 2>/dev/null || true
 
 bash scripts/restore-portal-sessions.sh || echo "start: session restore failed (non-fatal); continuing boot."
 

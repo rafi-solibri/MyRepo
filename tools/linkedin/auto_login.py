@@ -58,7 +58,13 @@ def _url_loginish(url: str) -> bool:
 
 
 def _close_stale_auth_tabs(ctx) -> None:
-    for p in list(ctx.pages or []):
+    """Close leftover challenge/Google chooser tabs, but never the last tab."""
+    pages = list(ctx.pages or [])
+    if len(pages) <= 1:
+        return
+    for p in pages:
+        if len(list(ctx.pages or [])) <= 1:
+            break
         u = p.url or ""
         if re.search(r"checkpoint|challenge|accounts\.google\.com/gsi/select", u, re.I):
             try:
@@ -115,9 +121,23 @@ def _pick_linkedin_page(ctx):
         if re.search(r"/feed|/jobs|/in/", p.url or "", re.I):
             return p
     for p in pages:
+        if "linkedin.com" in (p.url or "") and not re.search(
+            r"checkpoint|challenge", p.url or "", re.I
+        ):
+            return p
+    for p in pages:
         if "linkedin.com" in (p.url or ""):
             return p
-    return pages[0] if pages else ctx.new_page()
+    if pages:
+        return pages[0]
+    try:
+        return ctx.new_page()
+    except Exception:
+        # Browser may refuse new tabs mid-challenge — reuse any open page.
+        pages = list(ctx.pages or [])
+        if pages:
+            return pages[0]
+        raise
 
 
 def _click_continue_google(ctx, page) -> bool:
@@ -203,32 +223,145 @@ def _click_continue_google(ctx, page) -> bool:
     return True
 
 
+def _visible_locator(page, selectors: str):
+    """Return first visible locator for comma-separated CSS selectors.
+
+    LinkedIn login ships duplicate hidden email/password inputs with obfuscated
+    ids; `.first` often hits a non-visible field and the Sign-in submit no-ops
+    or trips challenge_global_internal_error.
+    """
+    for sel in [s.strip() for s in selectors.split(",") if s.strip()]:
+        loc = page.locator(sel)
+        try:
+            n = min(loc.count(), 8)
+        except Exception:
+            continue
+        for i in range(n):
+            try:
+                el = loc.nth(i)
+                if el.is_visible():
+                    return el
+            except Exception:
+                continue
+    return None
+
+
 def _password_login(page, email: str, password: str) -> bool:
     try:
-        email_box = page.locator("#username, input[name='session_key']").first
-        pass_box = page.locator("#password, input[name='session_password'], input[type='password']").first
-        if email_box.count() and email_box.is_visible():
+        email_box = _visible_locator(
+            page,
+            "#username, input[name='session_key'], input[type='email'], input[autocomplete='username']",
+        )
+        pass_box = _visible_locator(
+            page,
+            "#password, input[name='session_password'], input[type='password'], input[autocomplete='current-password']",
+        )
+        if email_box is not None and email:
             try:
                 cur = email_box.input_value()
             except Exception:
                 cur = ""
-            if email and (not cur or "@" not in cur):
+            if not cur or "@" not in cur:
                 email_box.fill(email)
-        if not pass_box.count():
+        if pass_box is None:
             return False
-        pass_box.fill(password)
+        # pressSequentially avoids mangling special chars like '%' in passwords.
+        try:
+            pass_box.click(timeout=3000)
+            pass_box.fill("")
+            pass_box.press_sequentially(password, delay=25)
+        except Exception:
+            pass_box.fill(password)
+        # Keep me signed in when shown (reduces next-day checkpoint rate).
+        try:
+            keep = _visible_locator(page, "input[type='checkbox']")
+            if keep is not None and not keep.is_checked():
+                keep.check(force=True)
+        except Exception:
+            pass
         btn = page.get_by_role("button", name=re.compile(r"^Sign in$", re.I))
         if btn.count() == 0:
             btn = page.locator("button[type='submit']")
-        btn.first.click(timeout=5000)
+        # Prefer a visible Sign in button.
+        clicked = False
+        try:
+            n = min(btn.count(), 6)
+            for i in range(n):
+                if btn.nth(i).is_visible():
+                    btn.nth(i).click(timeout=5000)
+                    clicked = True
+                    break
+        except Exception:
+            pass
+        if not clicked:
+            btn.first.click(timeout=5000)
         return True
     except Exception:
         return False
 
 
+def _goto_login_clean(ctx, page):
+    """Leave checkpoint/Google tabs and open a fresh /login form."""
+    _close_stale_auth_tabs(ctx)
+    page = _pick_linkedin_page(ctx)
+    try:
+        page.goto(
+            "https://www.linkedin.com/uas/login",
+            wait_until="domcontentloaded",
+            timeout=60000,
+        )
+        time.sleep(1.5)
+        # Prefer classic /login form when available.
+        if "login" not in (page.url or "").lower() or "checkpoint" in (page.url or "").lower():
+            page.goto(
+                "https://www.linkedin.com/login",
+                wait_until="domcontentloaded",
+                timeout=60000,
+            )
+            time.sleep(2)
+    except Exception:
+        try:
+            page.goto(
+                "https://www.linkedin.com/login",
+                wait_until="domcontentloaded",
+                timeout=60000,
+            )
+            time.sleep(2)
+        except Exception:
+            pass
+    return _pick_linkedin_page(ctx)
+
+
+def _wait_signed_in(ctx, page, deadline: float, via: str, out: dict) -> int | None:
+    """Poll until signed in / captcha / timeout. Returns exit code or None to continue."""
+    while time.time() < deadline:
+        page = _pick_linkedin_page(ctx)
+        if _cookies_has_li_at(ctx) and _is_signed_in(ctx, page):
+            out.update(ok=True, reason=via, url=page.url)
+            print(json.dumps(out))
+            return 0
+        if _on_captcha(page) and not _cookies_has_li_at(ctx):
+            out.update(ok=False, reason="captcha_checkpoint", url=page.url, via=via)
+            try:
+                page.screenshot(path=str(_art() / "linkedin-auto-login-captcha.png"), timeout=8000)
+            except Exception:
+                pass
+            # Caller may still try another method — signal with return 6 only
+            # when no further fallback exists.
+            return 6
+        time.sleep(2)
+    out["attempts"].append({"step": via, "timed_out": True})
+    return None
+
+
 def main() -> int:
     out: dict = {"ok": False, "attempts": []}
     deadline = time.time() + TIMEOUT_S
+    email = EMAIL or DEFAULT_EMAIL
+    # Cloud datacenter IPs often CAPTCHA Google SSO; prefer password when set.
+    prefer_password = bool(PASSWORD) and os.environ.get(
+        "LINKEDIN_PREFER_PASSWORD", "1"
+    ).strip() not in ("0", "false", "no")
 
     with sync_playwright() as p:
         try:
@@ -256,98 +389,50 @@ def main() -> int:
             print(json.dumps(out))
             return 0
 
-        # If only a CAPTCHA tab exists and no Google/password path can proceed, report.
-        if _on_captcha(page) and not _cookies_has_li_at(ctx):
-            # Still try login page via Google — sometimes checkpoint is stale.
-            try:
-                page.goto("https://www.linkedin.com/login", wait_until="domcontentloaded", timeout=60000)
-                time.sleep(2)
-            except Exception:
-                pass
-            if _on_captcha(page):
-                out.update(ok=False, reason="captcha_checkpoint", url=page.url)
-                try:
-                    page.screenshot(path=str(_art() / "linkedin-auto-login-captcha.png"), timeout=8000)
-                except Exception:
-                    pass
-                print(json.dumps(out))
-                return 6
+        page = _goto_login_clean(ctx, page)
 
-        if not re.search(r"/login", (page.url or ""), re.I):
-            try:
-                page.goto("https://www.linkedin.com/login", wait_until="domcontentloaded", timeout=60000)
-                time.sleep(2)
-            except Exception as e:
-                out["attempts"].append({"step": "goto_login", "error": str(e)[:120]})
-
-        # 1) Google SSO
-        out["attempts"].append({"step": "google_sso", "started": True})
-        if _click_continue_google(ctx, page):
-            while time.time() < deadline:
-                page = _pick_linkedin_page(ctx)
-                if _cookies_has_li_at(ctx) and _is_signed_in(ctx, page):
-                    out.update(ok=True, reason="google_sso", url=page.url)
-                    print(json.dumps(out))
-                    return 0
-                # CAPTCHA after SSO only blocks if we still lack li_at
-                if _on_captcha(page) and not _cookies_has_li_at(ctx):
-                    out.update(ok=False, reason="captcha_checkpoint", url=page.url, via="google_sso")
-                    try:
-                        page.screenshot(
-                            path=str(_art() / "linkedin-auto-login-captcha.png"), timeout=8000
-                        )
-                    except Exception:
-                        pass
-                    print(json.dumps(out))
-                    return 6
-                time.sleep(2)
-            out["attempts"].append({"step": "google_sso", "timed_out": True})
-        else:
-            out["attempts"].append({"step": "google_sso", "clicked": False})
-
-        # 2) Password secrets
-        email = EMAIL or DEFAULT_EMAIL
-        if PASSWORD:
+        def try_password() -> int | None:
+            if not PASSWORD:
+                out["attempts"].append(
+                    {
+                        "step": "password",
+                        "skipped": True,
+                        "hint": "Set Cursor secrets LINKEDIN_EMAIL + LINKEDIN_PASSWORD for password fallback",
+                    }
+                )
+                return None
+            nonlocal_page = _goto_login_clean(ctx, _pick_linkedin_page(ctx))
             out["attempts"].append({"step": "password", "email": email[:3] + "***"})
-            try:
-                if not re.search(r"/login", (page.url or ""), re.I):
-                    page.goto(
-                        "https://www.linkedin.com/login",
-                        wait_until="domcontentloaded",
-                        timeout=60000,
-                    )
-                    time.sleep(2)
-            except Exception:
-                pass
-            if _password_login(page, email, PASSWORD):
-                while time.time() < deadline:
-                    page = _pick_linkedin_page(ctx)
-                    if _cookies_has_li_at(ctx) and _is_signed_in(ctx, page):
-                        out.update(ok=True, reason="password", url=page.url)
-                        print(json.dumps(out))
-                        return 0
-                    if _on_captcha(page) and not _cookies_has_li_at(ctx):
-                        out.update(
-                            ok=False, reason="captcha_checkpoint", url=page.url, via="password"
-                        )
-                        print(json.dumps(out))
-                        return 6
-                    time.sleep(2)
-        else:
-            out["attempts"].append(
-                {
-                    "step": "password",
-                    "skipped": True,
-                    "hint": "Set Cursor secrets LINKEDIN_EMAIL + LINKEDIN_PASSWORD for password fallback",
-                }
-            )
+            if not _password_login(nonlocal_page, email, PASSWORD):
+                out["attempts"].append({"step": "password", "submitted": False})
+                return None
+            return _wait_signed_in(ctx, nonlocal_page, deadline, "password", out)
+
+        def try_google() -> int | None:
+            nonlocal_page = _goto_login_clean(ctx, _pick_linkedin_page(ctx))
+            out["attempts"].append({"step": "google_sso", "started": True})
+            if not _click_continue_google(ctx, nonlocal_page):
+                out["attempts"].append({"step": "google_sso", "clicked": False})
+                return None
+            return _wait_signed_in(ctx, nonlocal_page, deadline, "google_sso", out)
+
+        order = ("password", "google_sso") if prefer_password else ("google_sso", "password")
+        captcha_seen = False
+        for step in order:
+            rc = try_password() if step == "password" else try_google()
+            if rc == 0:
+                return 0
+            if rc == 6:
+                captcha_seen = True
+                # Do not hard-stop — try the other method (password after SSO CAPTCHA).
+                continue
 
         page = _pick_linkedin_page(ctx)
         if _cookies_has_li_at(ctx) and _is_signed_in(ctx, page):
             out.update(ok=True, reason="recovered", url=page.url)
             print(json.dumps(out))
             return 0
-        if _on_captcha(page) and not _cookies_has_li_at(ctx):
+        if captcha_seen or (_on_captcha(page) and not _cookies_has_li_at(ctx)):
             out.update(ok=False, reason="captcha_checkpoint", url=page.url)
             print(json.dumps(out))
             return 6
@@ -357,7 +442,7 @@ def main() -> int:
             reason="linkedin_login_required",
             url=page.url,
             has_li_at=_cookies_has_li_at(ctx),
-            hint="CAPTCHA/checkpoint or Google SSO failed; LINKEDIN_PASSWORD secret is optional fallback",
+            hint="CAPTCHA/checkpoint or Google SSO failed; set Cursor secret LINKEDIN_PASSWORD and re-run",
         )
         print(json.dumps(out))
         return 5

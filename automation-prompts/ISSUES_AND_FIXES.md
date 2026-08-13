@@ -1,5 +1,15 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-13 LinkedIn password auto-login
+
+| Issue | Fix |
+| --- | --- |
+| Auto-login tried Google SSO first, hit CAPTCHA, **returned before password** even when `LINKEDIN_PASSWORD` was set | Prefer password when set (`LINKEDIN_PREFER_PASSWORD=1`); fall through to the other method on CAPTCHA instead of hard-stopping |
+| Login fill hit **hidden** duplicate email/password inputs → submit no-op / `challenge_global_internal_error` | `_visible_locator` + `press_sequentially` (keeps `%` in passwords); Keep-me-signed-in |
+| Closing last checkpoint tab crashed `BrowserContext.new_page` | Never close the last tab; navigate it to `/login` |
+| Password not durable across cron boots | `scripts/load-job-secrets.sh` + gitignored `.cursor/job-apply-secrets.env`; docs: set Cursor Environment Secrets `LINKEDIN_EMAIL`/`LINKEDIN_PASSWORD` |
+| Remaining | Cloud AWS IP still often shows LinkedIn “quick security check” reCAPTCHA after password — owner: one headed login + Save snapshot, or CapSolver key |
+
 ## Fixed for 2026-08-13 volume pass (Indeed soft-cap + Cutshort over-filter)
 
 | Issue | Fix |
