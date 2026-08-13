@@ -95,6 +95,7 @@
 | LinkedIn-blocked hitechcity CDP kept WARP SOCKS → Solera/Accenture `ERR_SOCKS_CONNECTION_FAILED`; Qualcomm email SSO classified as guest apply (`ats_incomplete`); Intel `US-Oregon-Hillsboro` paths not BAD_LOC; Hyland iCIMS jobs live in iframe | Relaunch Chrome without WARP after LinkedIn fail; login wall if Sign-in copy and no resume upload; US-state Workday path BAD_LOC; extract job links from all frames |
 | `careers.solera.com` → `ERR_NAME_NOT_RESOLVED`; Accenture `chrome-error` poisoned Cognizant→Deloitte→Fiserv→Gartner with cascading `interrupted by another navigation`; Microsoft Hyd `Principal Project Manager` matched Principal; Fiserv `www.` host 301 churn | Solera → Workday `solera.wd5…?q=architect`; `scan_goto` + `about:blank`/new-page recovery; skip `project manager` titles; Fiserv → `careers.fiserv.com` |
 | Solera Workday `applyManually` Create Account/Sign In (no resume) reported `ats_incomplete_or_stuck`; Cognizant Salesforce-primary Architect + SDET/DB/Cyber titles burned ATS budget | Detect Workday create-account wall as `login/account wall`; skip engineer-in-test/SDET/cybersecurity/database-engineer titles; JD Salesforce/SFDC hard-skip when no .NET |
+| `rerun-daily-after-fix.sh --portal …` exited “no portal detected” because `IFS=',' read … <<<` returns 1 at EOF under `set -e` | `read … \|\| true` in `collect_portals`; protect title/file portal appends |
 
 ## Fixed for 2026-08-13 LinkedIn cloud cron
 

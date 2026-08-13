@@ -554,7 +554,8 @@ collect_portals() {
   fi
 
   if [[ -n "$PORTAL_ARG" ]]; then
-    IFS=',' read -r -a found <<<"$PORTAL_ARG"
+    # `read` returns 1 at EOF even on success — must not trip `set -e`.
+    IFS=',' read -r -a found <<<"$PORTAL_ARG" || true
   fi
   if [[ -n "${PORTAL:-}" ]]; then
     found+=("$PORTAL")
@@ -577,17 +578,19 @@ collect_portals() {
   fi
 
   if [[ -n "$title" ]]; then
-    found+=($(portals_from_title "$title"))
+    # shellcheck disable=SC2207
+    found+=($(portals_from_title "$title" || true))
   fi
   if [[ -n "$files" ]]; then
-    # shellcheck disable=SC2086
-    found+=($(portals_from_files $files))
+    # shellcheck disable=SC2086,SC2207
+    found+=($(portals_from_files $files || true))
   fi
 
   local branch
   branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
   if [[ -n "$branch" ]]; then
-    found+=($(portals_from_title "$branch"))
+    # shellcheck disable=SC2207
+    found+=($(portals_from_title "$branch" || true))
   fi
 
   uniq_portals "${found[@]}"
