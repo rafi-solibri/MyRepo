@@ -48,7 +48,7 @@ gh pr merge --squash --delete-branch   # this repo: immediate squash (auto-merge
    2. `git fetch origin main && git checkout main && git pull --ff-only origin main`.
    3. On cloud: launches a **fresh** Cursor cloud agent on `main` (needs secret `CURSOR_API_KEY` from [Cursor Dashboard → API Keys](https://cursor.com/dashboard/api)) with `POST_FIX_RERUN=1`. That new job runs the portal's daily apply prompt with the merged code.
    4. If no API key, or on home-local (`HOME_LOCAL=1`): **re-executes** the durable apply helper in this session (`daily_apply.js` / LinkedIn helpers / `hitechcity/daily_apply.py` / hotel automation).
-   5. Caps at **2** same-day post-fix re-runs per portal (IST date) so a new blocker cannot loop forever.
+   5. Caps at **5** same-day post-fix re-runs per portal (IST date) so a new blocker cannot loop forever.
 
    If you merged without the helper:
 

@@ -13,6 +13,7 @@
 #   bash scripts/rerun-daily-after-fix.sh --detect-from-title "fix(naukri): …"
 #   bash scripts/rerun-daily-after-fix.sh --detect-from-files file1 file2
 #   bash scripts/rerun-daily-after-fix.sh --dry-run --portal linkedin
+# Cap: 5 same-day re-runs per portal (IST). Override with POST_FIX_RERUN_MAX.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -20,7 +21,7 @@ cd "$ROOT"
 
 API_BASE="${CURSOR_API_BASE_URL:-https://api.cursor.com}"
 ENV_NAME="${CURSOR_CLOUD_ENV_NAME:-rafi-solibri/myrepo}"
-MAX_RERUNS="${POST_FIX_RERUN_MAX:-2}"
+MAX_RERUNS="${POST_FIX_RERUN_MAX:-5}"
 TODAY="${POST_FIX_RERUN_DATE:-$(TZ=Asia/Kolkata date +%Y-%m-%d)}"
 DRY_RUN=0
 NO_EXEC=0
