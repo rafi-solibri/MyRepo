@@ -7,6 +7,7 @@ Copy everything inside the block below:
 ```text
 FIRST: run `bash scripts/preflight-portal-run.sh linkedin` so resume + portal cookies are ready and verified.
 Then run `bash scripts/launch-chrome-cdp.sh linkedin`.
+Launch auto-heals LinkedIn login: WARP SOCKS on cloud + `tools/linkedin/auto_login.py` (Continue with Google; optional secrets LINKEDIN_EMAIL/LINKEDIN_PASSWORD) + `scripts/refresh-portal-session-seed.sh` on success. Do not ask the owner to headed-login unless auto-login exits CAPTCHA (6) with no Google session.
 Use helpers: `python3 tools/linkedin/linkedin_easy_apply.py` and `python3 tools/linkedin/linkedin_external_apply.py`.
 Never use the Default google-chrome profile for CDP — sync copies logins into chrome-cdp-profile.
 
