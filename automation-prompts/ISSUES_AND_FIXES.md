@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-13 same-day post-fix re-run (all daily jobs)
+
+| Issue | Fix |
+| --- | --- |
+| After a code-fixable blocker was patched and merged, that day's automation stopped — applies only happened on the next cron | `scripts/rerun-daily-after-fix.sh` runs after `auto-merge-fix-pr.sh` / `merge-open-fix-prs.sh`: pull `main`, launch a fresh cloud job (needs `CURSOR_API_KEY`) or re-exec the durable helper in-session. Cap 5 re-runs/portal/IST day. Wired for LinkedIn, Foundit, Cutshort, Naukri, Instahyre, Indeed, Hitech City, Notification, Hotels, and home-local replicas. |
+
 ## Fixed for 2026-08-13 LinkedIn cloud cron (pagination Next)
 
 | Issue | Fix |
@@ -201,8 +207,9 @@
 
 See [AUTO_FIX.md](AUTO_FIX.md). Code-fixable blockers discovered during any daily
 automation must be patched in durable helpers, pushed on a feature branch, opened
-as a **ready** PR (not draft), and merged with `bash scripts/auto-merge-fix-pr.sh`
-— not left as report-only notes.
+as a **ready** PR (not draft), merged with `bash scripts/auto-merge-fix-pr.sh`,
+and **same-day re-run** with `scripts/rerun-daily-after-fix.sh` so that day's
+applies use the fix — not left as report-only notes and not deferred to tomorrow's cron.
 
 ## Fixed for 2026-08-11 Cutshort home (Windows residential)
 

@@ -2,7 +2,7 @@
 
 **Mandatory for LinkedIn, Hitech City / Knowledge City, Foundit, Cutshort, Naukri, Instahyre, Indeed (home), Notification, Hotel Price Tracker, and all home-local evening replicas.**
 
-When a run hits a **code-fixable** issue or blocker, do not only report it. Fix the durable helper, push a feature branch, open a PR, and **merge it into `main` automatically** so the next cron/home run picks it up.
+When a run hits a **code-fixable** issue or blocker, do not only report it. Fix the durable helper, push a feature branch, open a PR, **merge it into `main` automatically**, and **same-day re-run that portal's job** so today's applies use the fix — do not wait for tomorrow's cron.
 
 ## Do this every run when applicable
 
@@ -40,8 +40,27 @@ gh pr ready                      # if it was opened as draft by mistake
 gh pr merge --squash --delete-branch   # this repo: immediate squash (auto-merge queue disabled)
 ```
 
-7. After the PR is merged (or auto-merge is enabled), `git fetch origin main && git checkout main && git pull --ff-only origin main` before continuing applies when safe. Do not invent applies.
-8. Home batch runners call `restore_main` between portals — still push+merge your fix first so `main` has it for the next portal.
+7. **Same-day re-run (required)** — merging is not the end of the job. Today's applies must use the fix; do not wait for tomorrow's cron.
+
+   `bash scripts/auto-merge-fix-pr.sh` already calls `scripts/rerun-daily-after-fix.sh` after a successful merge. That helper:
+
+   1. Detects which daily job(s) the fix belongs to (PR title `fix(naukri): …`, paths under `tools/<portal>/`, or **all apply portals** when shared infra like `tools/chrome_session.js` changed).
+   2. `git fetch origin main && git checkout main && git pull --ff-only origin main`.
+   3. On cloud: launches a **fresh** Cursor cloud agent on `main` (needs secret `CURSOR_API_KEY` from [Cursor Dashboard → API Keys](https://cursor.com/dashboard/api)) with `POST_FIX_RERUN=1`. That new job runs the portal's daily apply prompt with the merged code.
+   4. If no API key, or on home-local (`HOME_LOCAL=1`): **re-executes** the durable apply helper in this session (`daily_apply.js` / LinkedIn helpers / `hitechcity/daily_apply.py` / hotel automation).
+   5. Caps at **5** same-day post-fix re-runs per portal (IST date) so a new blocker cannot loop forever.
+
+   If you merged without the helper:
+
+```bash
+bash scripts/rerun-daily-after-fix.sh --portal <portal>
+# or, after a merged PR:
+bash scripts/rerun-daily-after-fix.sh --merged-pr https://github.com/rafi-solibri/myrepo/pull/NNN
+```
+
+   Jobs: `linkedin` `foundit` `cutshort` `naukri` `instahyre` `indeed` `hitechcity` `notification` `hotels`.
+
+8. After the re-run is launched or the helper is re-executing, do not invent applies. Skip jobs already submitted today. Home batch runners call `restore_main` between portals — still push+merge+re-run your fix first so `main` has it.
 
 ## What counts as code-fixable
 
@@ -70,6 +89,10 @@ gh pr merge --squash --delete-branch   # this repo: immediate squash (auto-merge
 
 Each portal agent uses its **own** feature branch/PR. Do not force-push shared branches. Notification Job may link today’s merged fix PRs in the daily mail but should not invent apply counts from them.
 
+## Owner secret for same-day cloud re-runs
+
+Set **`CURSOR_API_KEY`** on the Cloud Agent environment (and optionally GitHub Actions) so a merged fix can launch a **new** cloud job on `main` the same day. Create a key at https://cursor.com/dashboard/api. Without it, `scripts/rerun-daily-after-fix.sh` still re-executes the durable helper in the current session.
+
 ## Failure mode
 
-If `gh pr merge` fails (conflicts, required reviews, failing checks): resolve conflicts on the branch, push, re-run `bash scripts/auto-merge-fix-pr.sh`. Do not leave the fix as draft-only.
+If `gh pr merge` fails (conflicts, required reviews, failing checks): resolve conflicts on the branch, push, re-run `bash scripts/auto-merge-fix-pr.sh`. Do not leave the fix as draft-only. Do not skip the same-day re-run once merge succeeds.
