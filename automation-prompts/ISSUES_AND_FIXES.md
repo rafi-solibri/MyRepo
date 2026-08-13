@@ -7,7 +7,7 @@
 | Indeed cron soft-stopped at **MAX_APPLIES=8** / **MAX_SEEN=40** → left Hyd inventory unapplied | Defaults **40 / 120**; more search queries; 30 cards/SERP; broader Easy Apply CTA (`Indeed Apply`, `data-indeed-apply-button`) |
 | 8× `easy_apply_incomplete` (Frontline/Mattel/TechVedika/ProArch/…) stuck on employer questions | Expand `wantFromText`: years-with-.NET/Blazor/FHIR, current employer, LinkedIn URL, education/B.Tech, Expert proficiency; incomplete rows now log `lastUrl`+sample |
 | TITLE_OK missed Enterprise/System Architect as primary match | Add `enterprise`/`system`/`platform` architect to TITLE_OK |
-| Cutshort scanned ~1974 with **0 qualifying** after apply burst; maxExp&lt;8 dropped 5–7 Architect bands; Hyd-only location missed title-remote | Tier1 allows maxExp≥6; title/Telangana/remote location bias; keyword scan waves (`architect` / `tech lead` / `.net` / EM); stop counting historical locked-empty Qs as rejected |
+| Cutshort scanned ~1974 with **0 qualifying** after apply burst; maxExp&lt;8 dropped 5–7 Architect bands; Hyd-only location missed title-remote | Tier1 allows maxExp≥6; title/Telangana/remote location bias; extra skill pages + Telangana location pull; cap newest pages at 120 so runs finish; stop counting historical locked-empty Qs as rejected |
 
 ## Fixed for 2026-08-13 Naukri daily re-run (cloud) — dual-layer CTA + chatbot
 
