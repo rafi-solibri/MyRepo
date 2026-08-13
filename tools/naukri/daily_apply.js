@@ -240,6 +240,13 @@ function isAlreadyAppliedCta(text) {
 /** Read the on-screen Quick apply / Applied state from dual-layer TopTier buttons. */
 async function readVisibleApplyCta(page) {
   return page.evaluate(() => {
+    function layerTranslateY(el) {
+      const st = window.getComputedStyle(el);
+      const m = /matrix\(([^)]+)\)/.exec(st.transform || "");
+      if (!m) return 0;
+      const parts = m[1].split(",").map((x) => Number(x.trim()));
+      return parts[5] || 0;
+    }
     function layerOnScreen(el) {
       const st = window.getComputedStyle(el);
       if (
@@ -249,16 +256,15 @@ async function readVisibleApplyCta(page) {
       ) {
         return false;
       }
+      const ty = layerTranslateY(el);
       const r = el.getBoundingClientRect();
-      if (r.width < 2 || r.height < 2) return false;
-      let ty = 0;
-      const m = /matrix\(([^)]+)\)/.exec(st.transform || "");
-      if (m) {
-        const parts = m[1].split(",").map((x) => Number(x.trim()));
-        ty = parts[5] || 0;
+      // Off-screen slide: |ty| ~= button height. Prefer transform over rect —
+      // background tabs often report 0x0 rects while transforms stay correct.
+      if (st.transform && st.transform !== "none") {
+        if (Math.abs(ty) > 12) return false;
+        return true;
       }
-      // Off-screen slide animation: |ty| ~= button height.
-      if (Math.abs(ty) > Math.max(12, r.height * 0.35)) return false;
+      if (r.width < 2 || r.height < 2) return false;
       return true;
     }
 
@@ -306,6 +312,10 @@ async function readVisibleApplyCta(page) {
       // No layered spans — fall back to plain label.
       if (/^Applied$/i.test(raw)) return { state: "applied", label: raw, raw };
       if (/^Quick apply$/i.test(raw)) return { state: "quick", label: raw, raw };
+      // Dual-layer concatenates both words; if transforms were unreadable, try apply.
+      if (/Quick apply/i.test(raw) && !btn.disabled) {
+        return { state: "quick", label: "Quick apply", raw };
+      }
     }
     return { state: "missing", label: "", raw: "" };
   });
@@ -420,11 +430,47 @@ async function collectCards(page) {
   });
 }
 
+async function waitForDetailApplyReady(detailPage, { timeoutMs = 18000 } = {}) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    await detailPage.bringToFront().catch(() => {});
+    const ready = await detailPage
+      .evaluate(() =>
+        [...document.querySelectorAll("button, a, [role='button']")].some((b) =>
+          /Quick apply|Go to company site|On company site|Apply on company|On hirist|Applied/i.test(
+            (b.innerText || b.getAttribute("aria-label") || "").replace(/\s+/g, " ")
+          )
+        )
+      )
+      .catch(() => false);
+    if (ready) return true;
+    await sleep(400);
+  }
+  return false;
+}
+
+function pruneStaleApplyTabs(context, keepPages = []) {
+  const keep = new Set(keepPages.filter(Boolean));
+  for (const p of context.pages()) {
+    if (keep.has(p)) continue;
+    const u = p.url() || "";
+    if (
+      /naukri\.com\/job-listings/i.test(u) ||
+      /myworkdayjobs|myworkdaysite|greenhouse|lever\.co|smartrecruiters|successfactors|icims|ashbyhq/i.test(
+        u
+      )
+    ) {
+      safeClose(p);
+    }
+  }
+}
+
 async function openCard(context, page, idx) {
   // Click the same filtered job-card list as collectCards (never Applied (N) chips).
-  const before = new Set(context.pages().map((p) => p.url()));
+  pruneStaleApplyTabs(context, [page]);
+  const beforeUrls = new Set(context.pages().map((p) => p.url()));
   const popupPromise = context
-    .waitForEvent("page", { timeout: 5000 })
+    .waitForEvent("page", { timeout: 8000 })
     .catch(() => null);
   const clicked = await page.evaluate((cardIdx) => {
     const isFilterChip = (text) =>
@@ -444,26 +490,29 @@ async function openCard(context, page, idx) {
     return true;
   }, idx);
   if (!clicked) throw new Error(`job card idx ${idx} not found`);
-  const popup = await popupPromise;
-  await sleep(2000);
-  // TopTier often opens /job-listings-... in a new tab — apply there.
+  let popup = await popupPromise;
+  // Popup often starts as about:blank — wait for job-listings navigation.
+  if (popup) {
+    await popup
+      .waitForURL(/naukri\.com\/job-listings/i, { timeout: 15000 })
+      .catch(() => {});
+    await popup.waitForLoadState("domcontentloaded").catch(() => {});
+    await sleep(800);
+  }
   let detailPage = page;
   if (popup && /naukri\.com\/job-listings/i.test(popup.url())) {
     detailPage = popup;
-    await detailPage.waitForLoadState("domcontentloaded").catch(() => {});
-    await sleep(1500);
   } else {
     const fresh = context
       .pages()
       .find(
         (p) =>
-          /naukri\.com\/job-listings/i.test(p.url()) && !before.has(p.url())
+          /naukri\.com\/job-listings/i.test(p.url()) && !beforeUrls.has(p.url())
       );
-    if (fresh) {
-      detailPage = fresh;
-      await sleep(1000);
-    }
+    if (fresh) detailPage = fresh;
   }
+  await detailPage.bringToFront().catch(() => {});
+  await waitForDetailApplyReady(detailPage, { timeoutMs: 18000 });
   await dismiss(detailPage);
   return detailPage;
 }
@@ -535,6 +584,23 @@ async function waitForVisibleApplyCta(page, { timeoutMs = 10000 } = {}) {
   return last;
 }
 
+async function clickChatbotSave(page) {
+  await page
+    .evaluate(() => {
+      const root =
+        document.querySelector(".chatbot_Drawer, ._chatBotContainer") || document;
+      root.querySelector(".chatbot_Overlay")?.classList.remove("show");
+      const sendWrap = root.querySelector(".send");
+      sendWrap?.classList.remove("disabled");
+      root.querySelector(".sendMsg")?.click();
+      const save = [...root.querySelectorAll("div.sendMsg, div.send, button")].find(
+        (e) => /^Save$/i.test((e.innerText || "").trim())
+      );
+      save?.click();
+    })
+    .catch(() => {});
+}
+
 async function answerNaukriChatbot(page) {
   // Drawer can mount a beat after Quick apply — wait before declaring no_chat.
   {
@@ -554,7 +620,8 @@ async function answerNaukriChatbot(page) {
     }
   }
 
-  for (let step = 0; step < 14; step++) {
+  for (let step = 0; step < 20; step++) {
+    await page.bringToFront().catch(() => {});
     const chatText = await page
       .evaluate(
         () =>
@@ -573,19 +640,11 @@ async function answerNaukriChatbot(page) {
     }
     if (
       /thank you for your responses/i.test(chatText) &&
-      !/How many years|Are you|Do you|\?/i.test(chatText.split(/thank you for your responses/i)[1] || "")
+      !/How many years|Are you|Do you|\?/i.test(
+        chatText.split(/thank you for your responses/i)[1] || ""
+      )
     ) {
-      // Final ack — click Save once more if present, then done.
-      await page
-        .evaluate(() => {
-          const root = document.querySelector(".chatbot_Drawer") || document;
-          root.querySelector(".send")?.classList.remove("disabled");
-          root.querySelector(".sendMsg")?.click();
-          const save = [...root.querySelectorAll("div.sendMsg, div.send, button")]
-            .find((e) => /^Save$/i.test((e.innerText || "").trim()));
-          save?.click();
-        })
-        .catch(() => {});
+      await clickChatbotSave(page);
       await sleep(1500);
       return { done: true, reason: "responses_thanks" };
     }
@@ -595,14 +654,18 @@ async function answerNaukriChatbot(page) {
         const root =
           document.querySelector(".chatbot_Drawer, ._chatBotContainer") ||
           document;
-        const radios = [...root.querySelectorAll('input[type="radio"]')];
-        const prefer = [
-          ">12 years",
-          "11-12 years",
-          "9-11 years",
-          "Yes",
-          "7-9 years",
-        ];
+        root.querySelector(".chatbot_Overlay")?.classList.remove("show");
+
+        const scoreBand = (v) => {
+          const s = String(v || "").trim();
+          if (/^yes$/i.test(s)) return 10_000;
+          if (/^no$/i.test(s)) return -1;
+          const nums = (s.match(/\d+/g) || []).map(Number);
+          if (!nums.length) return 0;
+          const top = Math.max(...nums);
+          if (/>|plus|\+/i.test(s)) return top + 50;
+          return top;
+        };
         const setChecked = (inp) => {
           if (!inp) return;
           const native = Object.getOwnPropertyDescriptor(
@@ -610,77 +673,74 @@ async function answerNaukriChatbot(page) {
             "checked"
           );
           native?.set?.call(inp, true);
-          inp.dispatchEvent(new Event("click", { bubbles: true }));
+          inp.dispatchEvent(new MouseEvent("click", { bubbles: true }));
           inp.dispatchEvent(new Event("input", { bubbles: true }));
           inp.dispatchEvent(new Event("change", { bubbles: true }));
-        };
-        if (radios.length) {
-          let target = null;
-          for (const p of prefer) {
-            target = radios.find(
-              (r) =>
-                (r.value || r.id) === p ||
-                new RegExp(`^${p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i").test(
-                  (r.value || r.id || "").trim()
-                )
-            );
-            if (target) break;
-          }
-          if (!target) {
-            // Prefer Yes / highest band by label text near radio.
-            target =
-              radios.find((r) => {
-                const lab =
-                  root.querySelector(`label[for="${r.id}"]`)?.innerText ||
-                  r.closest("label")?.innerText ||
-                  "";
-                return />12|Yes/i.test(lab);
-              }) || radios[radios.length - 1];
-          }
-          setChecked(target);
           try {
             const lab = root.querySelector(
-              `label[for="${CSS.escape(target.id)}"]`
+              `label[for="${CSS.escape(inp.id)}"]`
             );
             lab?.click();
           } catch (_) {}
+          inp.closest(".ssrc__radio-btn-container")?.click();
+        };
+
+        const radios = [...root.querySelectorAll('input[type="radio"]')];
+        if (radios.length) {
+          const yes = radios.find((r) => /^yes$/i.test(r.value || r.id));
+          const target =
+            yes ||
+            [...radios].sort(
+              (a, b) => scoreBand(b.value || b.id) - scoreBand(a.value || a.id)
+            )[0];
+          setChecked(target);
           return target.value || target.id || "radio";
         }
-        // Chip / button answers (no radio inputs).
+
+        // Free-text / contenteditable years questions.
+        const box = root.querySelector(
+          '.textArea[contenteditable="true"], [contenteditable="true"].textArea, div.textArea[contenteditable="true"]'
+        );
+        if (box && box.offsetParent !== null) {
+          const q = (root.innerText || "").slice(-400);
+          let answer = "15";
+          if (/relocat|hyderabad|willing|notice|immediate/i.test(q)) answer = "Yes";
+          else if (/ctc|salary|lpa|compensation/i.test(q)) answer = "65";
+          else if (/notice/i.test(q)) answer = "0";
+          box.focus();
+          box.textContent = answer;
+          box.dispatchEvent(new InputEvent("input", { bubbles: true, data: answer }));
+          box.dispatchEvent(new Event("change", { bubbles: true }));
+          return `text:${answer}`;
+        }
+
         const chips = [
           ...root.querySelectorAll(
-            "label, button, [role='button'], div[class*='chip'], span[class*='chip']"
+            "label, button, [role='button'], div[class*='chip'], span[class*='chip'], span.ssrc__label"
           ),
         ].filter((e) => {
           const t = (e.innerText || "").replace(/\s+/g, " ").trim();
-          return t && t.length < 40 && /^(Yes|No|>12 years|11-12 years|9-11 years|7-9 years|5-7 years)$/i.test(t);
-        });
-        for (const p of prefer) {
-          const hit = chips.find(
-            (c) => (c.innerText || "").replace(/\s+/g, " ").trim() === p
+          return (
+            t &&
+            t.length < 40 &&
+            /^(Yes|No|>?\d+.*years|\d+\s*-\s*\d+\s*years)$/i.test(t)
           );
-          if (hit) {
-            hit.click();
-            return p;
-          }
+        });
+        if (chips.length) {
+          const ranked = [...chips].sort(
+            (a, b) =>
+              scoreBand((b.innerText || "").trim()) -
+              scoreBand((a.innerText || "").trim())
+          );
+          ranked[0].click();
+          return (ranked[0].innerText || "").trim();
         }
         return null;
       })
       .catch(() => null);
     if (!picked) break;
-    await sleep(450);
-    await page
-      .evaluate(() => {
-        const root = document.querySelector(".chatbot_Drawer") || document;
-        root.querySelector(".send")?.classList.remove("disabled");
-        const sendWrap = root.querySelector(".send");
-        if (sendWrap) sendWrap.classList.remove("disabled");
-        root.querySelector(".sendMsg")?.click();
-        const save = [...root.querySelectorAll("div.sendMsg, div.send, button")]
-          .find((e) => /^Save$/i.test((e.innerText || "").trim()));
-        save?.click();
-      })
-      .catch(() => {});
+    await sleep(400);
+    await clickChatbotSave(page);
     await sleep(2200);
   }
   return { done: false, reason: "chat_steps_exhausted" };
@@ -783,7 +843,8 @@ async function fillApplyForm(page) {
 }
 
 async function clickQuickApply(page) {
-  let visible = await waitForVisibleApplyCta(page, { timeoutMs: 8000 });
+  await page.bringToFront().catch(() => {});
+  let visible = await waitForVisibleApplyCta(page, { timeoutMs: 12000 });
   if (visible?.state === "applied") {
     return { already: true, label: visible.label || "Applied" };
   }
@@ -1469,8 +1530,9 @@ function decideSkip(card, { detailMode = false } = {}) {
 async function processCard(context, page, card, i, jobMeta, report) {
   const detailPage = await openCard(context, page, card.idx != null ? card.idx : i);
   const openedTab = detailPage !== page;
+  await detailPage.bringToFront().catch(() => {});
   // Detail CTA layers can mount late — wait before already/missing decisions.
-  await waitForVisibleApplyCta(detailPage, { timeoutMs: 8000 });
+  await waitForVisibleApplyCta(detailPage, { timeoutMs: 12000 });
   let detail = await readDetail(detailPage);
   // Detail re-check: location/CTC/.NET only — skip_title already decided from card role.
   const detailSkip = decideSkip(
