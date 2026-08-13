@@ -1016,14 +1016,25 @@ def _application_submitted(page: Page) -> bool:
     return False
 
 
+def _easy_apply_modal_ancestor(heading_loc):
+    """Full Easy Apply modal — never artdeco-modal__header (substring false match)."""
+    # Token-match 'artdeco-modal' so artdeco-modal__header / __content are skipped.
+    return heading_loc.locator(
+        "xpath=ancestor::div["
+        "@role='dialog' or "
+        "contains(@class,'jobs-easy-apply-modal') or "
+        "contains(@class,'easy-apply-modal') or "
+        "contains(concat(' ', normalize-space(@class), ' '), ' artdeco-modal ')"
+        "][1]"
+    )
+
+
 def apply_form_root(page: Page):
     """Locator for the active Easy Apply form (modal OR new inline Apply page)."""
     heading = page.get_by_role("heading", name=re.compile(r"Apply to ", re.I))
     try:
         if heading.count() and heading.first.is_visible():
-            modal = heading.first.locator(
-                "xpath=ancestor::div[contains(@class,'artdeco-modal') or contains(@class,'easy-apply') or @role='dialog'][1]"
-            )
+            modal = _easy_apply_modal_ancestor(heading.first)
             if modal.count():
                 return modal.first
             # Prefer smallest ancestor that contains Next/Review/Submit *with visible text*
@@ -1056,9 +1067,7 @@ def _apply_modal(page: Page):
     heading = page.get_by_role("heading", name=re.compile(r"Apply to ", re.I))
     try:
         if heading.count() and heading.first.is_visible():
-            modal = heading.first.locator(
-                "xpath=ancestor::div[contains(@class,'artdeco-modal') or contains(@class,'easy-apply') or @role='dialog'][1]"
-            )
+            modal = _easy_apply_modal_ancestor(heading.first)
             if modal.count():
                 return modal
             return heading.first.locator(

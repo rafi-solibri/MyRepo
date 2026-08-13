@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-13 LinkedIn cloud cron (Easy Apply Next)
+
+| Issue | Fix |
+| --- | --- |
+| Easy Apply stuck no Next/Submit — apply_form_root matched artdeco-modal__header via contains(@class,artdeco-modal) so footer Next was out of scope | Token-match full artdeco-modal / jobs-easy-apply-modal / role=dialog in _easy_apply_modal_ancestor |
+
 ## Fixed for 2026-08-13 LinkedIn cloud cron (session clobber)
 
 | Issue | Fix |
