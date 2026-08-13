@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-13 LinkedIn cloud cron (pagination Next)
+
+| Issue | Fix |
+| --- | --- |
+| After modal closed, apply_form_root fell back to body and clicked jobs-search pagination Next → exceeded Easy Apply steps | Require real easy-apply modal; match Continue to next step; never click list pagination Next |
+
 ## Fixed for 2026-08-13 LinkedIn cloud cron (Easy Apply Next)
 
 | Issue | Fix |
