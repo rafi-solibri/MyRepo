@@ -10,8 +10,11 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import time
+import urllib.error
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -56,26 +59,97 @@ def _max_for(portal: str) -> str:
     return os.environ.get(env_key, defaults.get(portal, "10"))
 
 
+def resolve_bash() -> str:
+    """Prefer Git Bash on Windows — bare `bash` can hit the WSL MSI stub (REGDB_E_CLASSNOTREG)."""
+    override = (os.environ.get("GIT_BASH") or os.environ.get("BASH_PATH") or "").strip()
+    if override and Path(override).is_file():
+        return override
+
+    local = os.environ.get("LOCALAPPDATA") or ""
+    roots = [
+        Path(local) / "Programs" / "Git" if local else None,
+        Path(os.environ.get("ProgramFiles") or r"C:\Program Files") / "Git",
+        Path(os.environ.get("ProgramFiles(x86)") or r"C:\Program Files (x86)") / "Git",
+    ]
+    candidates: list[Path] = []
+    for root in roots:
+        if root is None:
+            continue
+        candidates.extend([root / "bin" / "bash.exe", root / "usr" / "bin" / "bash.exe"])
+
+    seen: set[str] = set()
+    for c in candidates:
+        key = str(c).lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        if c.is_file():
+            return str(c)
+
+    which = shutil.which("bash")
+    if which:
+        # Avoid WindowsApps / System32 WSL stubs that raise REGDB_E_CLASSNOTREG.
+        low = which.lower().replace("/", "\\")
+        if "windowsapps" in low or low.endswith(r"\system32\bash.exe"):
+            raise FileNotFoundError(
+                "bash resolved to WSL/WindowsApps stub; install Git for Windows or set GIT_BASH"
+            )
+        return which
+    raise FileNotFoundError("bash not found — install Git for Windows or set GIT_BASH")
+
+
+def _cdp_up(port: int = 9222) -> bool:
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/json/version", timeout=2) as resp:
+            return resp.status == 200
+    except (urllib.error.URLError, TimeoutError, OSError):
+        return False
+
+
 def _preflight_and_launch(portal: str) -> dict[str, Any]:
+    bash = resolve_bash()
+    # Reuse already-running system Chrome CDP on home (careers phase left :9222 up).
+    reuse = os.environ.get("HITECHCITY_BOARD_REUSE_CDP", "1") == "1"
+    system = (os.environ.get("CHROME_CDP_MODE") or "").lower() == "system"
+    if reuse and system and _cdp_up():
+        return {
+            "preflightRc": 0,
+            "launchRc": 0,
+            "preflightTail": "skipped_preflight_reuse_cdp",
+            "launchTail": "skipped_launch_reuse_cdp",
+            "bash": bash,
+            "reusedCdp": True,
+        }
+
+    env = {
+        **os.environ,
+        "CHROME_CDP_MODE": os.environ.get(
+            "CHROME_CDP_MODE", "system" if os.name == "nt" else ""
+        ),
+    }
     pre = subprocess.run(
-        ["bash", str(ROOT / "scripts/preflight-portal-run.sh"), portal],
+        [bash, str(ROOT / "scripts/preflight-portal-run.sh"), portal],
         cwd=str(ROOT),
         capture_output=True,
         text=True,
         timeout=180,
+        env=env,
     )
     launch = subprocess.run(
-        ["bash", str(ROOT / "scripts/launch-chrome-cdp.sh"), portal],
+        [bash, str(ROOT / "scripts/launch-chrome-cdp.sh"), portal],
         cwd=str(ROOT),
         capture_output=True,
         text=True,
         timeout=300,
+        env=env,
     )
     return {
         "preflightRc": pre.returncode,
         "launchRc": launch.returncode,
-        "preflightTail": (pre.stdout or "")[-500:],
-        "launchTail": (launch.stdout or launch.stderr or "")[-800:],
+        "preflightTail": ((pre.stdout or "") + (pre.stderr or ""))[-500:],
+        "launchTail": ((launch.stdout or "") + (launch.stderr or ""))[-800:],
+        "bash": bash,
+        "reusedCdp": False,
     }
 
 
@@ -88,15 +162,29 @@ def _run_portal(portal: str, allowlist: Path, env_base: dict[str, str]) -> dict[
         "blocked": 0,
         "skipped": 0,
     }
-    setup = _preflight_and_launch(portal)
-    row["setup"] = {k: setup[k] for k in ("preflightRc", "launchRc")}
-    if setup["preflightRc"] not in (0,):
-        # preflight 3 = missing auth — continue others
+    try:
+        setup = _preflight_and_launch(portal)
+    except FileNotFoundError as e:
+        row["reason"] = "bash_not_found"
+        row["setupTail"] = str(e)[:300]
+        return row
+    row["setup"] = {
+        k: setup[k]
+        for k in ("preflightRc", "launchRc", "reusedCdp", "bash")
+        if k in setup
+    }
+    # preflight 0 = ok; 3 = missing auth (skip this portal, continue others).
+    # Other non-zero (e.g. broken bash stub rc 1) previously masked all boards.
+    if setup["preflightRc"] not in (0,) and not setup.get("reusedCdp"):
         row["reason"] = f"preflight_rc_{setup['preflightRc']}"
         row["setupTail"] = setup.get("preflightTail", "")[-300:]
         return row
-    if setup["launchRc"] not in (0,):
+    if setup["launchRc"] not in (0,) and not setup.get("reusedCdp"):
         # hitechcity-style continue: some launches warn but still serve CDP
+        if not _cdp_up():
+            row["reason"] = f"launch_rc_{setup['launchRc']}"
+            row["launchWarning"] = setup.get("launchTail", "")[-300:]
+            return row
         row["launchWarning"] = setup.get("launchTail", "")[-300:]
 
     env = dict(env_base)

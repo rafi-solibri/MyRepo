@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-13 Hitech City home boards (Windows)
+
+| Issue | Fix |
+| --- | --- |
+| Home `board_campus_apply` marked all boards `preflight_rc_1` with UTF-16 `REGDB_E_CLASSNOTREG` (WSL `bash` MSI stub via bare `bash` from Python subprocess) | `resolve_bash()` prefers Git Bash / `GIT_BASH`; reuse system Chrome CDP (`HITECHCITY_BOARD_REUSE_CDP=1`) after careers so boards skip broken relaunch; continue when launch warns but `:9222` is up |
+
 ## Fixed for 2026-08-13 LinkedIn home (Windows residential)
 
 | Issue | Fix |
