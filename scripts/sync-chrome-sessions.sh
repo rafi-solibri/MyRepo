@@ -223,6 +223,43 @@ ensure_source_readable() {
   fi
 }
 
+# Return 0 when dest's cookie expiry for $2 is strictly newer than source's.
+# Used so a freshly auto-logged CDP profile is not wiped by a stale Desktop li_at.
+dest_cookie_newer_than_source() {
+  local src_root="$1" dest_root="$2" cookie_name="$3"
+  "$PYTHON_BIN" "${PYTHON_ARGS[@]}" - "$src_root" "$dest_root" "$cookie_name" <<'PY'
+import os, shutil, sqlite3, sys, tempfile
+
+def expires(root, name):
+    for rel in ("Default/Network/Cookies", "Default/Cookies"):
+        db = os.path.join(root, rel)
+        if not os.path.exists(db):
+            continue
+        tmp = tempfile.mktemp(suffix=".db")
+        try:
+            shutil.copy2(db, tmp)
+            con = sqlite3.connect(tmp)
+            row = con.execute(
+                "SELECT expires_utc FROM cookies WHERE name=? ORDER BY expires_utc DESC LIMIT 1",
+                (name,),
+            ).fetchone()
+            con.close()
+            return int(row[0]) if row and row[0] else 0
+        except Exception:
+            return 0
+        finally:
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
+    return 0
+
+src, dest, name = sys.argv[1], sys.argv[2], sys.argv[3]
+se, de = expires(src, name), expires(dest, name)
+raise SystemExit(0 if de > se > 0 or (de > 0 and se == 0) else 1)
+PY
+}
+
 echo "Source: $SRC_DEFAULT (cookies: $SRC_COOKIES)"
 
 # Chrome 127+ Windows App-Bound Encryption (v20 cookies): blobs from Desktop
@@ -282,6 +319,16 @@ for i in "${!PORTALS[@]}"; do
   set -e
 
   if [[ "$src_rc" -eq 0 ]]; then
+    # Do not clobber a fresher CDP session (e.g. LinkedIn auto-login) with stale Desktop cookies.
+    marker="${cookies[0]}"
+    set +e
+    dest_cookie_newer_than_source "$SRC_ROOT" "$dest" "$marker"
+    newer_rc=$?
+    set -e
+    if [[ "$newer_rc" -eq 0 ]]; then
+      echo "preserved $portal -> dest $marker newer than source; skipped overwrite of $dest"
+      continue
+    fi
     sync_one "$portal" "$dest" "${cookies[@]}"
     continue
   fi

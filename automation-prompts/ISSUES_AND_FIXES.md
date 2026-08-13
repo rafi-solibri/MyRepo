@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-13 LinkedIn cloud cron (session clobber)
+
+| Issue | Fix |
+| --- | --- |
+| Preflight `sync-chrome-sessions` overwrote a live auto-login CDP `li_at` with stale Desktop source cookies → next launch lost session | Preserve dest when its auth cookie expires later than source; `refresh-portal-session-seed.sh` also updates live Desktop Cookies |
+
 ## Fixed for 2026-08-13 LinkedIn cloud cron (auto-login follow-up)
 
 | Issue | Fix |
