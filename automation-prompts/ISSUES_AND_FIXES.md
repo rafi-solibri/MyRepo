@@ -26,6 +26,7 @@
 | Experian Hyd .NET SA skipped (`location_not_hyd_or_campus`) — title lacked city; Brazil/Malaysia cards leaked | Annotate SmartRecruiters cards with nearest location group; expand BAD_LOC (Brazil/Malaysia/etc.) |
 | SmartRecruiters DataDome (`captcha-delivery.com`) reported as `ats_incomplete_or_stuck` | Detect DataDome iframe/host in `blocked_wall` as CAPTCHA/bot wall |
 | ModMed Workday card poisoned with `· Hyderabad` from page chrome nearestLoc | Restrict location-group annotation to SmartRecruiters hosts; URL BAD_LOC wins |
+| `CDP_REQUIRE_LIVE_LOGIN=1` hard-failed `launch-chrome-cdp.sh hitechcity` so careers never started | Hard-fail only for `linkedin`; hitechcity warns and continues for career-portal applies |
 
 ## Fixed for 2026-08-13 LinkedIn cloud cron
 
