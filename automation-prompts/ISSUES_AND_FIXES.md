@@ -1,6 +1,13 @@
 # Issues from last cron + fixes
 
-<<<<<<< HEAD
+## Fixed for 2026-08-13 Naukri daily (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Workday Create Account (Wells Fargo etc.) never toggled consent — label is “Yes, I have **reviewed** the above and consent…”, helper only matched “read”; `.check()` alone left box unchecked → silent stay / fake redirect → `external_incomplete_or_timeout` | `workday_apply.js`: click consent label (reviewed/read), verify `createAccountCheckbox` checked before submit; classify Sign-In wrong-password / stuck auth as `ats_login_wall` |
+| SS&C Workday already signed in but helper bailed during Autofill **Loading** spinner; My Information / Experience need Candidate Home fields (source multi-select, previous-worker No, city/postal, phone type, school/degree) + `pageFooterNextButton` | Wait out Loading; fill formField-* + promptLeafNode clicks; education Acharya Nagarjuna / B.Tech IT; avoid re-uploading resume each loop |
+| Oracle Fusion / Oracle DBA / Appian / Network Operations / Data & AI titles burned 3.5m ATS budgets | `resume_and_filters.js` + `test_filters.js`: expand `SKIP_TITLE_RE` / `NON_DOTNET_PRIMARY_RE` / `PURE_AI_DATA_RE` |
+
 ## Fixed for 2026-08-13 Hitech City cloud cron
 
 | Issue | Fix |
@@ -13,7 +20,7 @@
 | Experian Hyd .NET SA skipped (`location_not_hyd_or_campus`) — title lacked city; Brazil/Malaysia cards leaked | Annotate SmartRecruiters cards with nearest location group; expand BAD_LOC (Brazil/Malaysia/etc.) |
 | SmartRecruiters DataDome (`captcha-delivery.com`) reported as `ats_incomplete_or_stuck` | Detect DataDome iframe/host in `blocked_wall` as CAPTCHA/bot wall |
 | ModMed Workday card poisoned with `· Hyderabad` from page chrome nearestLoc | Restrict location-group annotation to SmartRecruiters hosts; URL BAD_LOC wins |
-=======
+
 ## Fixed for 2026-08-13 LinkedIn cloud cron
 
 | Issue | Fix |
@@ -26,7 +33,6 @@
 | --- | --- |
 | Raven `minimumExperience/maximumExperience` `0-0` (undisclosed) with no title band was kept as `max=0` → false skip `maxExp 0<10` (e.g. Senior Software Architect - .NET) | `experienceBounds` returns NaN/NaN + `undisclosed:true` when Raven is 0-0 and title has no band; still overlays title bands like 6-9 / 8-12 |
 | Country-only `locations: India` failed as `location not Hyd/remote: India` without JD enrich → missed Remote/Hyd in description | `classifyJob` sets `needsEnrich` for empty/country-only India when description missing |
->>>>>>> origin/main
 
 ## Fixed for 2026-08-12 Notification home (Windows residential)
 
