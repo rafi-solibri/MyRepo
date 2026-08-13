@@ -58,5 +58,5 @@ If Cutshort opens company careers, complete with Rafi_Resume.docx then continue.
 - Do NOT skip because JD casually mentions Salesforce/Java/data as adjacent tech
 
 ## Auto-fix & push (MANDATORY)
-If you hit a code-fixable blocker (questionnaire.js payload, daily_apply.js overlay/API apply, filters), fix durable helpers under tools/cutshort or scripts/, append automation-prompts/ISSUES_AND_FIXES.md, commit + push a feature branch, open a ready PR to main and run `bash scripts/auto-merge-fix-pr.sh`. Follow automation-prompts/AUTO_FIX.md. Do not invent applies. Owner-only: login walls, CAPTCHA/OTP. Historical locked-empty Qs cannot be unlocked in code — document only.
+If you hit a code-fixable blocker (questionnaire.js payload, daily_apply.js overlay/API apply, filters), fix durable helpers under tools/cutshort or scripts/, append automation-prompts/ISSUES_AND_FIXES.md, commit + push a feature branch, open a ready PR to main and run `bash scripts/auto-merge-fix-pr.sh`. That merge helper then same-day re-runs this Cutshort job with the fix (`scripts/rerun-daily-after-fix.sh`) — do not wait for tomorrow's cron. Follow automation-prompts/AUTO_FIX.md. Do not invent applies. Owner-only: login walls, CAPTCHA/OTP. Historical locked-empty Qs cannot be unlocked in code — document only.
 ```

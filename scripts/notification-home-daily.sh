@@ -21,6 +21,10 @@ for p in "${PORTALS[@]}"; do
   bash scripts/fetch-home-result.sh "$p" --today || true
 done
 
+# Home-local evening replica.
+export HOME_LOCAL=1
+export PORTAL=notification
+
 PROMPT="$(cat <<'EOF'
 You are the Notification Job runner on a HOME / residential machine.
 Read and OBEY the full fenced instructions in automation-prompts/07-notification.md.
@@ -54,6 +58,7 @@ Email delivery:
 AUTO-FIX / PUSH / MERGE (MANDATORY when code-fixable):
 - Follow automation-prompts/AUTO_FIX.md
 - Feature branch + ready PR + bash scripts/auto-merge-fix-pr.sh
+- After merge, scripts/rerun-daily-after-fix.sh must re-run this Notification Job the same day so the mail goes out with the fix
 - Also run bash scripts/merge-open-fix-prs.sh to clear leftover open fix PRs
 EOF
 )"

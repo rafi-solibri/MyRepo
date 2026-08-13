@@ -52,6 +52,7 @@ bash scripts/preflight-portal-run.sh <portal>
 | Indeed Cloudflare on public cloud IP | Keep **cloud Indeed automation OFF**; use home cron / private worker / `INDEED_HTTP_PROXY` |
 | General Daily 9 AM | Keep **disabled** (research-only, 0 applies) |
 | Notification sender | Set secret `RESEND_FROM_EMAIL` (verified) + Resend MCP |
+| Same-day post-fix re-run | Set secret `CURSOR_API_KEY` (https://cursor.com/dashboard/api) so `scripts/rerun-daily-after-fix.sh` can launch a fresh cloud job on `main` after a merge. Without it, the helper re-executes the durable apply runner in the current session. |
 
 ## Environment commands (dashboard)
 
