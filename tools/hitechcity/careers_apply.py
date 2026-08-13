@@ -69,7 +69,7 @@ BAD_LOC_HINT = re.compile(
 # Titles that match broad TITLE_OK (staff/principal/architect) but are wrong for this run.
 CAREERS_TITLE_SKIP = re.compile(
     r"system\s*test|quality\s*(platform|assurance|engineering)|threat\s*detection|"
-    r"project\s*analyst|industrial\s*design|hardware\s*architect|"
+    r"project\s*analyst|project\s*manager|industrial\s*design|hardware\s*architect|"
     r"machine\s*learning\s*hardware|gpu\s*software|embedded\s*software|"
     r"field\s*robotics|platform\s*power|network\s*hardware|"
     r"product\s*manager|network\s*architect|"
@@ -305,6 +305,64 @@ def dismiss_cookie_banners(page: Page) -> None:
             continue
 
 
+def _reset_page_nav(page: Page) -> None:
+    """Stop in-flight navigations so the next company goto is not interrupted."""
+    try:
+        page.evaluate("window.stop()")
+    except Exception:
+        pass
+    try:
+        page.goto("about:blank", wait_until="domcontentloaded", timeout=15000)
+    except Exception:
+        pass
+
+
+def scan_goto(page: Page, url: str, *, timeout: int = 75000, attempts: int = 3) -> None:
+    """Listing-page navigate with recovery from chrome-error / interrupted redirects.
+
+    Priority-2 boards (Accenture → Cognizant → Deloitte → Fiserv → Gartner) were
+    cascading: one failed goto left a pending navigation that aborted every next
+    company with 'interrupted by another navigation'.
+    """
+    last: Exception | None = None
+    for i in range(attempts):
+        try:
+            if i > 0:
+                _reset_page_nav(page)
+                time.sleep(0.8 + i * 0.6)
+            else:
+                try:
+                    page.evaluate("window.stop()")
+                except Exception:
+                    pass
+            page.goto(url, wait_until="domcontentloaded", timeout=timeout)
+            u = (page.url or "").strip()
+            if u.startswith("chrome-error://"):
+                raise RuntimeError(f"chrome-error landing for {url}")
+            return
+        except Exception as e:
+            last = e
+            msg = str(e)
+            retryable = any(
+                x in msg
+                for x in (
+                    "interrupted by another navigation",
+                    "net::ERR_",
+                    "Timeout",
+                    "chrome-error",
+                    "Navigation to",
+                )
+            )
+            if retryable and i + 1 < attempts:
+                time.sleep(1.2 + i * 1.5)
+                continue
+            if retryable:
+                break
+            raise
+    assert last is not None
+    raise last
+
+
 def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
     row = {
         "company": job["company"],
@@ -413,9 +471,16 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
             company_applied = 0
             for url in urls:
                 try:
-                    page.goto(url, wait_until="domcontentloaded", timeout=75000)
+                    scan_goto(page, url, timeout=75000)
                 except Exception as e:
                     report.blocked.append({"company": name, "url": url, "reason": f"scan_nav:{e}"})
+                    # Clear poisoned/in-flight navigations before the next company.
+                    _reset_page_nav(page)
+                    try:
+                        page = context.new_page()
+                        page.set_default_timeout(45000)
+                    except Exception:
+                        pass
                     continue
                 time.sleep(2.2)
                 dismiss_cookie_banners(page)
