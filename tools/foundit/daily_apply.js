@@ -23,6 +23,7 @@ const {
   CURRENT_CTC_LPA,
   FORBIDDEN_DRY_RUN,
 } = require("./resume");
+const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
 
 const CDP = process.env.FOUNDIT_CDP || "http://127.0.0.1:9222";
 const OUT =
@@ -662,6 +663,17 @@ async function main() {
             title: job.title || "",
             company: job.companyName || job.company?.name || "",
             reason: verdict.reason,
+          });
+          continue;
+        }
+
+        const companyName = job.companyName || job.company?.name || verdict.company || "";
+        if (allowlistActive() && !companyAllowed(companyName)) {
+          report.skipped.push({
+            jobId: String(job.jobId || job.id),
+            title: job.title || "",
+            company: companyName,
+            reason: "hitechcity_campus_allowlist",
           });
           continue;
         }

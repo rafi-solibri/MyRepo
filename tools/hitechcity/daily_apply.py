@@ -2,9 +2,10 @@
 """Daily Hitech City / Knowledge City / Madhapur premium-campus apply orchestrator.
 
 Priority order:
-1) Company career portals for curated campus tenants
-2) LinkedIn company-targeted Easy Apply + external ATS
-3) Referral / poster outreach on LinkedIn
+0) Discover / refresh campus software tenants → companies.json
+1) LinkedIn company-targeted Easy Apply + external ATS + referrals (PRIMARY)
+2) Official company career portals (PRIMARY)
+3) Board browse with campus allowlist: Naukri, Foundit, Cutshort, Instahyre, Indeed
 """
 
 from __future__ import annotations
@@ -20,7 +21,9 @@ _root = Path(__file__).resolve().parents[2]
 if str(_root) not in sys.path:
     sys.path.insert(0, str(_root))
 
-from tools.hitechcity.careers_apply import run as run_careers
+from tools.hitechcity.board_campus_apply import run as run_boards
+from tools.hitechcity.careers_apply import load_companies, run as run_careers
+from tools.hitechcity.discover_tenants import run as run_discovery
 from tools.hitechcity.linkedin_target_apply import run as run_linkedin
 
 OUT_DEFAULT_CLOUD = Path("/opt/cursor/artifacts/hitechcity-daily.json")
@@ -55,20 +58,43 @@ def main() -> int:
     summary: dict = {
         "startedAt": started,
         "focus": "Knowledge City / Knowledge Park / Mindspace Madhapur / premium HITEC buildings",
+        "discovery": {},
         "careers": {},
         "linkedin": {},
+        "boards": {},
         "totals": {},
         "errors": [],
     }
 
     careers_rep = None
     linkedin_rep = None
+    companies = None
 
-    # LinkedIn company-targeted applies + referrals first (highest yield with saved session),
-    # then company career portals for ATS that allow guest/session apply.
+    # 0) Discover campus tenants first so LinkedIn/careers/boards share a fresh list.
     try:
-        print("=== HitechCity LinkedIn + referrals ===", flush=True)
-        linkedin_rep = run_linkedin()
+        print("=== HitechCity discovery (campus tenants) ===", flush=True)
+        disc = run_discovery(persist=True)
+        summary["discovery"] = {
+            "added": len(disc.get("added") or []),
+            "updated": len(disc.get("updated") or []),
+            "total": disc.get("afterCount"),
+            "linkedinError": disc.get("linkedinError"),
+            "report": disc.get("report"),
+            "addedNames": (disc.get("added") or [])[:40],
+        }
+        companies = load_companies()
+    except Exception as e:
+        summary["errors"].append({"phase": "discovery", "error": str(e), "trace": traceback.format_exc()[-1500:]})
+        print("DISCOVERY ERROR", e, flush=True)
+        try:
+            companies = load_companies()
+        except Exception:
+            companies = None
+
+    # 1) LinkedIn company-targeted applies + referrals (PRIMARY)
+    try:
+        print("=== HitechCity LinkedIn + referrals (PRIMARY) ===", flush=True)
+        linkedin_rep = run_linkedin(companies)
         summary["linkedin"] = {
             "applied": len(linkedin_rep.applied),
             "external": len(linkedin_rep.external),
@@ -83,9 +109,10 @@ def main() -> int:
         summary["errors"].append({"phase": "linkedin", "error": str(e), "trace": traceback.format_exc()[-1500:]})
         print("LINKEDIN ERROR", e, flush=True)
 
+    # 2) Official career portals (PRIMARY)
     try:
-        print("=== HitechCity careers portals ===", flush=True)
-        careers_rep = run_careers()
+        print("=== HitechCity careers portals (PRIMARY) ===", flush=True)
+        careers_rep = run_careers(companies)
         summary["careers"] = {
             "applied": len(careers_rep.applied),
             "blocked": len(careers_rep.blocked),
@@ -97,14 +124,46 @@ def main() -> int:
         summary["errors"].append({"phase": "careers", "error": str(e), "trace": traceback.format_exc()[-1500:]})
         print("CAREERS ERROR", e, flush=True)
 
-    applied = (summary.get("careers", {}).get("applied") or 0) + (summary.get("linkedin", {}).get("applied") or 0)
+    # 3) Job boards — campus allowlist (secondary but required path)
+    try:
+        print("=== HitechCity board browse (Naukri/Foundit/Cutshort/Instahyre/Indeed) ===", flush=True)
+        boards_rep = run_boards(companies)
+        summary["boards"] = {
+            "applied": (boards_rep.get("totals") or {}).get("applied") or 0,
+            "blocked": (boards_rep.get("totals") or {}).get("blocked") or 0,
+            "skipped": (boards_rep.get("totals") or {}).get("skipped") or 0,
+            "portals": [
+                {
+                    "portal": p.get("portal"),
+                    "status": p.get("status"),
+                    "applied": p.get("applied"),
+                    "reason": p.get("reason"),
+                    "rc": p.get("rc"),
+                }
+                for p in (boards_rep.get("portals") or [])
+            ],
+            "report": boards_rep.get("report"),
+            "skippedPhase": boards_rep.get("skipped"),
+        }
+    except Exception as e:
+        summary["errors"].append({"phase": "boards", "error": str(e), "trace": traceback.format_exc()[-1500:]})
+        print("BOARDS ERROR", e, flush=True)
+
+    applied = (
+        (summary.get("careers", {}).get("applied") or 0)
+        + (summary.get("linkedin", {}).get("applied") or 0)
+        + (summary.get("boards", {}).get("applied") or 0)
+    )
     summary["totals"] = {
         "applied": applied,
         "referralsSent": summary.get("linkedin", {}).get("referralsSent") or 0,
         "blocked": (summary.get("careers", {}).get("blocked") or 0)
-        + (summary.get("linkedin", {}).get("blocked") or 0),
+        + (summary.get("linkedin", {}).get("blocked") or 0)
+        + (summary.get("boards", {}).get("blocked") or 0),
         "skipped": (summary.get("careers", {}).get("skipped") or 0)
-        + (summary.get("linkedin", {}).get("skipped") or 0),
+        + (summary.get("linkedin", {}).get("skipped") or 0)
+        + (summary.get("boards", {}).get("skipped") or 0),
+        "discoveryAdded": summary.get("discovery", {}).get("added") or 0,
     }
     summary["finishedAt"] = datetime.now(timezone.utc).isoformat()
     OUT.parent.mkdir(parents=True, exist_ok=True)

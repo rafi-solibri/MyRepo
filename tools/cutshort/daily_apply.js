@@ -20,9 +20,11 @@ const {
   CURRENT_CTC_LPA,
   findResume,
 } = require("./questionnaire.js");
+const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
 
 const SEEKER_ID = "6a3e4526cc1fad8f39dccc0f";
 const CDP = process.env.CUTSHORT_CDP || "http://127.0.0.1:9222";
+const MAX_APPLIES = Number(process.env.CUTSHORT_MAX_APPLIES || process.env.HITECHCITY_CUTSHORT_MAX || 40);
 const OUT_DIR = process.env.CUTSHORT_OUT || "/tmp/cutshort-run";
 const TODAY = new Date().toISOString().slice(0, 10);
 const REPORT_DIR = process.env.CUTSHORT_REPORT || path.join("/workspace/reports", TODAY);
@@ -179,6 +181,12 @@ function classify(job) {
   const ctc = maxCtcLpa(job);
   const skills = skillsText(job);
   const blob = `${title} ${skills}`;
+  const company =
+    (typeof job.company === "string" && job.company) ||
+    job.companyDetails?.name ||
+    job.companyId?.name ||
+    "";
+  if (allowlistActive() && !companyAllowed(company)) return null;
   if (SKIP_RE.test(title)) return null;
   if (job?.expRange?.max != null && job.expRange.max < 8) return null;
   if (ctc != null && ctc < 35) return null;
@@ -641,6 +649,10 @@ async function main() {
   console.log(`[filter] scanned=${jobs.length} qualifying=${qual.length}`);
 
   for (const { job, row } of qual) {
+    if (stats.applied.length >= MAX_APPLIES) {
+      console.log(`[cutshort] hit CUTSHORT_MAX_APPLIES=${MAX_APPLIES}`);
+      break;
+    }
     console.log(`\n[apply] T${row.tier} ${row.title} @ ${row.company} ctc=${row.ctc}`);
     let result;
     try {

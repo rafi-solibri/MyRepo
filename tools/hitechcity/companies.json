@@ -1,7 +1,14 @@
 {
   "meta": {
-    "focus": "Premium Madhapur / HITEC City campuses only — Knowledge City, Knowledge Park, Mindspace Madhapur, The V, Cyber Pearl and peer Grade-A buildings",
-    "locationBias": ["Hyderabad", "Madhapur", "HITEC City", "Gachibowli", "Raidurg", "Telangana"],
+    "focus": "Premium Madhapur / HITEC City campuses only \u2014 Knowledge City, Knowledge Park, Mindspace Madhapur, The V, Cyber Pearl and peer Grade-A buildings",
+    "locationBias": [
+      "Hyderabad",
+      "Madhapur",
+      "HITEC City",
+      "Gachibowli",
+      "Raidurg",
+      "Telangana"
+    ],
     "roleBias": [
       "Solution Architect",
       "Technical Architect",
@@ -13,65 +20,78 @@
       ".NET Architect",
       "Azure Architect",
       "Cloud Architect"
-    ]
+    ],
+    "lastDiscoveryAt": "2026-08-13T08:49:08.784118+00:00"
   },
   "campuses": [
     {
       "id": "sattva-knowledge-city",
       "name": "Sattva Knowledge City",
-      "aliases": ["Knowledge City", "Salarpuria Sattva Knowledge City", "Octave"],
+      "aliases": [
+        "Knowledge City",
+        "Salarpuria Sattva Knowledge City",
+        "Octave"
+      ],
       "area": "HITEC City / Madhapur"
     },
     {
       "id": "sattva-knowledge-park",
       "name": "Sattva Knowledge Park",
-      "aliases": ["Knowledge Park"],
+      "aliases": [
+        "Knowledge Park"
+      ],
       "area": "HITEC City / Madhapur"
     },
     {
       "id": "mindspace-madhapur",
       "name": "Mindspace Madhapur (Raheja Mindspace)",
-      "aliases": ["Raheja Mindspace", "Mindspace"],
+      "aliases": [
+        "Raheja Mindspace",
+        "Mindspace"
+      ],
       "area": "Madhapur"
     },
     {
       "id": "the-v",
       "name": "The V IT Park (Ascendas)",
-      "aliases": ["The V", "Ascendas The V"],
+      "aliases": [
+        "The V",
+        "Ascendas The V"
+      ],
       "area": "Madhapur"
     },
     {
       "id": "cyber-pearl",
       "name": "Cyber Pearl",
-      "aliases": ["CyberPearl"],
+      "aliases": [
+        "CyberPearl"
+      ],
       "area": "Madhapur / HITEC City"
     },
     {
       "id": "dlf-cyber-city",
       "name": "DLF Cyber City Hyderabad",
-      "aliases": ["DLF IT SEZ", "DLF Cybercity"],
+      "aliases": [
+        "DLF IT SEZ",
+        "DLF Cybercity"
+      ],
       "area": "Gachibowli / HITEC corridor"
     },
     {
       "id": "divyasree-orion",
       "name": "Divyasree Orion",
-      "aliases": ["Orion"],
+      "aliases": [
+        "Orion"
+      ],
       "area": "Raidurg / HITEC corridor"
     }
   ],
   "companies": [
     {
-      "name": "Microsoft",
-      "campuses": ["sattva-knowledge-city", "the-v", "mindspace-madhapur"],
-      "linkedinSlug": "microsoft",
-      "careersUrls": [
-        "https://apply.careers.microsoft.com/careers?keywords=architect&location=Hyderabad%2C+Telangana%2C+India"
-      ],
-      "priority": 1
-    },
-    {
       "name": "Amazon",
-      "campuses": ["mindspace-madhapur"],
+      "campuses": [
+        "mindspace-madhapur"
+      ],
       "linkedinSlug": "amazon",
       "careersUrls": [
         "https://www.amazon.jobs/en/search?base_query=architect&loc_query=Hyderabad%2C+Telangana%2C+India"
@@ -79,35 +99,10 @@
       "priority": 1
     },
     {
-      "name": "Apple",
-      "campuses": ["sattva-knowledge-city"],
-      "linkedinSlug": "apple",
-      "careersUrls": [
-        "https://jobs.apple.com/en-in/search?search=architect&location=hyderabad-HST430090"
-      ],
-      "priority": 1
-    },
-    {
-      "name": "Oracle",
-      "campuses": ["sattva-knowledge-city"],
-      "linkedinSlug": "oracle",
-      "careersUrls": [
-        "https://careers.oracle.com/en/sites/jobsearch/jobs?keyword=architect&location=Hyderabad%2C+Telangana%2C+India"
-      ],
-      "priority": 1
-    },
-    {
-      "name": "Intel",
-      "campuses": ["sattva-knowledge-city"],
-      "linkedinSlug": "intel-corporation",
-      "careersUrls": [
-        "https://intel.wd1.myworkdayjobs.com/External?q=architect"
-      ],
-      "priority": 1
-    },
-    {
       "name": "AMD",
-      "campuses": ["sattva-knowledge-city"],
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
       "linkedinSlug": "amd",
       "careersUrls": [
         "https://careers.amd.com/careers-home/jobs?keywords=architect&location=Hyderabad"
@@ -116,17 +111,68 @@
       "notes": "Includes former Xilinx India footprint in Knowledge City Octave"
     },
     {
-      "name": "JPMorgan Chase",
-      "campuses": ["sattva-knowledge-city", "mindspace-madhapur"],
-      "linkedinSlug": "jpmorganchase",
+      "name": "Apple",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "apple",
       "careersUrls": [
-        "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/requisitions?keyword=architect&location=Hyderabad%2C+Telangana%2C+India"
+        "https://jobs.apple.com/en-in/search?search=architect&location=hyderabad-HST430090"
+      ],
+      "priority": 1
+    },
+    {
+      "name": "Blackbaud",
+      "campuses": [
+        "mindspace-madhapur",
+        "cyber-pearl"
+      ],
+      "linkedinSlug": "blackbaud",
+      "careersUrls": [
+        "https://careers.blackbaud.com/search/?createNewAlert=false&q=architect&locationsearch=Hyderabad"
+      ],
+      "priority": 1
+    },
+    {
+      "name": "Blue Yonder",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "blue-yonder",
+      "careersUrls": [
+        "https://careers.blueyonder.com/search/?createNewAlert=false&q=architect&locationsearch=Hyderabad"
+      ],
+      "priority": 1
+    },
+    {
+      "name": "Experian",
+      "campuses": [
+        "mindspace-madhapur",
+        "cyber-pearl"
+      ],
+      "linkedinSlug": "experian",
+      "careersUrls": [
+        "https://careers.smartrecruiters.com/Experian?search=architect"
+      ],
+      "priority": 1
+    },
+    {
+      "name": "GE Vernova",
+      "campuses": [
+        "mindspace-madhapur",
+        "dlf-cyber-city"
+      ],
+      "linkedinSlug": "gevernova",
+      "careersUrls": [
+        "https://careers.gevernova.com/global/en/search-results?keywords=architect"
       ],
       "priority": 1
     },
     {
       "name": "Goldman Sachs",
-      "campuses": ["sattva-knowledge-city"],
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
       "linkedinSlug": "goldman-sachs",
       "careersUrls": [
         "https://higher.gs.com/results?keyword=architect"
@@ -134,17 +180,56 @@
       "priority": 1
     },
     {
-      "name": "Qualcomm",
-      "campuses": ["mindspace-madhapur"],
-      "linkedinSlug": "qualcomm",
+      "name": "HighRadius",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "highradius",
+      "careersUrls": [],
+      "priority": 1,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "Hyland",
+      "campuses": [
+        "mindspace-madhapur",
+        "cyber-pearl"
+      ],
+      "linkedinSlug": "hyland-software",
       "careersUrls": [
-        "https://careers.qualcomm.com/careers?query=architect&location=Hyderabad"
+        "https://careers-hyland.icims.com/jobs/search?ss=1&searchKeyword=architect"
+      ],
+      "priority": 1
+    },
+    {
+      "name": "Intel",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "intel-corporation",
+      "careersUrls": [
+        "https://intel.wd1.myworkdayjobs.com/External?q=architect"
+      ],
+      "priority": 1
+    },
+    {
+      "name": "JPMorgan Chase",
+      "campuses": [
+        "sattva-knowledge-city",
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "jpmorganchase",
+      "careersUrls": [
+        "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/requisitions?keyword=architect&location=Hyderabad%2C+Telangana%2C+India"
       ],
       "priority": 1
     },
     {
       "name": "Meta",
-      "campuses": ["mindspace-madhapur"],
+      "campuses": [
+        "mindspace-madhapur"
+      ],
       "linkedinSlug": "meta",
       "careersUrls": [
         "https://www.metacareers.com/jobs?q=architect&location=Hyderabad"
@@ -152,8 +237,360 @@
       "priority": 1
     },
     {
+      "name": "Microsoft",
+      "campuses": [
+        "sattva-knowledge-city",
+        "the-v",
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "microsoft",
+      "careersUrls": [
+        "https://apply.careers.microsoft.com/careers?keywords=architect&location=Hyderabad%2C+Telangana%2C+India"
+      ],
+      "priority": 1
+    },
+    {
+      "name": "ModMed",
+      "campuses": [
+        "mindspace-madhapur",
+        "cyber-pearl"
+      ],
+      "linkedinSlug": "modernizing-medicine",
+      "careersUrls": [
+        "https://www.modmed.com/careers/"
+      ],
+      "priority": 1
+    },
+    {
+      "name": "Optum",
+      "campuses": [
+        "dlf-cyber-city",
+        "divyasree-orion"
+      ],
+      "linkedinSlug": "optum",
+      "careersUrls": [
+        "https://careers.unitedhealthgroup.com/search-jobs/Hyderabad/?orgIds=1759&alp=false&alt=false"
+      ],
+      "priority": 1
+    },
+    {
+      "name": "Oracle",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "oracle",
+      "careersUrls": [
+        "https://careers.oracle.com/en/sites/jobsearch/jobs?keyword=architect&location=Hyderabad%2C+Telangana%2C+India"
+      ],
+      "priority": 1
+    },
+    {
+      "name": "Palo Alto Networks",
+      "campuses": [
+        "divyasree-orion",
+        "dlf-cyber-city"
+      ],
+      "linkedinSlug": "palo-alto-networks",
+      "careersUrls": [
+        "https://jobs.paloaltonetworks.com/en/search-jobs/Hyderabad"
+      ],
+      "priority": 1
+    },
+    {
+      "name": "Qualcomm",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "qualcomm",
+      "careersUrls": [
+        "https://careers.qualcomm.com/careers?query=architect&location=Hyderabad"
+      ],
+      "priority": 1
+    },
+    {
+      "name": "Solera",
+      "campuses": [
+        "mindspace-madhapur",
+        "cyber-pearl"
+      ],
+      "linkedinSlug": "solera-holdings",
+      "careersUrls": [
+        "https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site?q=architect"
+      ],
+      "priority": 1
+    },
+    {
+      "name": "Accenture",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "accenture",
+      "careersUrls": [
+        "https://www.accenture.com/in-en/careers/jobsearch?jk=architect&lc=Hyderabad"
+      ],
+      "priority": 2
+    },
+    {
+      "name": "ADP",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "adp",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "Broadridge",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "broadridge",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "Capgemini",
+      "campuses": [
+        "mindspace-madhapur",
+        "the-v"
+      ],
+      "linkedinSlug": "capgemini",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "Cognizant",
+      "campuses": [
+        "mindspace-madhapur",
+        "the-v"
+      ],
+      "linkedinSlug": "cognizant",
+      "careersUrls": [
+        "https://careers.cognizant.com/global-en/jobs/?keyword=architect&location=Hyderabad"
+      ],
+      "priority": 2
+    },
+    {
+      "name": "Deloitte",
+      "campuses": [
+        "the-v",
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "deloitte",
+      "careersUrls": [
+        "https://apply.deloitte.com/en_US/careers/SearchJobs/?9257=%5B99705%5D&9257_format=898&listFilterMode=1&jobRecordsPerPage=20&"
+      ],
+      "priority": 2
+    },
+    {
+      "name": "Fiserv",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "fiserv",
+      "careersUrls": [
+        "https://careers.fiserv.com/search/?createNewAlert=false&q=architect&locationsearch=Hyderabad"
+      ],
+      "priority": 2
+    },
+    {
+      "name": "Gartner",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "gartner",
+      "careersUrls": [
+        "https://jobs.gartner.com/search/?createNewAlert=false&q=architect&locationsearch=Hyderabad"
+      ],
+      "priority": 2
+    },
+    {
+      "name": "Hexaware",
+      "campuses": [
+        "sattva-knowledge-park"
+      ],
+      "linkedinSlug": "hexaware-technologies",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "IBM",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "ibm",
+      "careersUrls": [
+        "https://www.ibm.com/careers/search?q=architect&loc=Hyderabad"
+      ],
+      "priority": 2
+    },
+    {
+      "name": "Infor",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "infor",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "Invesco",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "invesco",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "MathWorks",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "the-mathworks",
+      "careersUrls": [
+        "https://www.mathworks.com/company/jobs/opportunities.html"
+      ],
+      "priority": 2
+    },
+    {
+      "name": "McAfee",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "mcafee",
+      "careersUrls": [
+        "https://careers.mcafee.com/search/?createNewAlert=false&q=architect&locationsearch=Hyderabad"
+      ],
+      "priority": 2
+    },
+    {
+      "name": "Micron Technology",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "micron-technology",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "NCR Voyix",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "ncr-voyix",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "Novartis",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "novartis",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "OpenText",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "opentext",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "PayPal",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "paypal",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "Progress Software",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "progress-software",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "PwC",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "pwc",
+      "careersUrls": [
+        "https://www.pwc.com/gx/en/careers.html"
+      ],
+      "priority": 2
+    },
+    {
+      "name": "Qentelli",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "qentelli",
+      "careersUrls": [
+        "https://www.qentelli.com/careers"
+      ],
+      "priority": 2
+    },
+    {
+      "name": "RealPage",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "realpage",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "S&P Global",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "s-and-p-global",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
       "name": "Salesforce",
-      "campuses": ["mindspace-madhapur"],
+      "campuses": [
+        "mindspace-madhapur"
+      ],
       "linkedinSlug": "salesforce",
       "careersUrls": [
         "https://careers.salesforce.com/en/jobs/?search=architect&country=India&city=Hyderabad"
@@ -162,179 +599,21 @@
       "notes": "Skip Salesforce-product-primary titles via title blacklist; keep .NET/cloud architect roles"
     },
     {
-      "name": "Deloitte",
-      "campuses": ["the-v", "mindspace-madhapur"],
-      "linkedinSlug": "deloitte",
-      "careersUrls": [
-        "https://apply.deloitte.com/en_US/careers/SearchJobs/?9257=%5B99705%5D&9257_format=898&listFilterMode=1&jobRecordsPerPage=20&"
+      "name": "ServiceNow",
+      "campuses": [
+        "sattva-knowledge-city"
       ],
-      "priority": 2
-    },
-    {
-      "name": "PwC",
-      "campuses": ["sattva-knowledge-city"],
-      "linkedinSlug": "pwc",
-      "careersUrls": [
-        "https://www.pwc.com/gx/en/careers.html"
-      ],
-      "priority": 2
-    },
-    {
-      "name": "Accenture",
-      "campuses": ["mindspace-madhapur"],
-      "linkedinSlug": "accenture",
-      "careersUrls": [
-        "https://www.accenture.com/in-en/careers/jobsearch?jk=architect&lc=Hyderabad"
-      ],
-      "priority": 2
-    },
-    {
-      "name": "Cognizant",
-      "campuses": ["mindspace-madhapur", "the-v"],
-      "linkedinSlug": "cognizant",
-      "careersUrls": [
-        "https://careers.cognizant.com/global-en/jobs/?keyword=architect&location=Hyderabad"
-      ],
-      "priority": 2
-    },
-    {
-      "name": "IBM",
-      "campuses": ["mindspace-madhapur"],
-      "linkedinSlug": "ibm",
-      "careersUrls": [
-        "https://www.ibm.com/careers/search?q=architect&loc=Hyderabad"
-      ],
-      "priority": 2
-    },
-    {
-      "name": "Verizon",
-      "campuses": ["mindspace-madhapur"],
-      "linkedinSlug": "verizon",
-      "careersUrls": [
-        "https://www.verizon.com/about/work/search/jobs?q=architect&location=Hyderabad"
-      ],
-      "priority": 2
-    },
-    {
-      "name": "Fiserv",
-      "campuses": ["mindspace-madhapur"],
-      "linkedinSlug": "fiserv",
-      "careersUrls": [
-        "https://careers.fiserv.com/search/?createNewAlert=false&q=architect&locationsearch=Hyderabad"
-      ],
-      "priority": 2
-    },
-    {
-      "name": "Blue Yonder",
-      "campuses": ["sattva-knowledge-city"],
-      "linkedinSlug": "blue-yonder",
-      "careersUrls": [
-        "https://careers.blueyonder.com/search/?createNewAlert=false&q=architect&locationsearch=Hyderabad"
-      ],
-      "priority": 1
-    },
-    {
-      "name": "McAfee",
-      "campuses": ["sattva-knowledge-city"],
-      "linkedinSlug": "mcafee",
-      "careersUrls": [
-        "https://careers.mcafee.com/search/?createNewAlert=false&q=architect&locationsearch=Hyderabad"
-      ],
-      "priority": 2
-    },
-    {
-      "name": "MathWorks",
-      "campuses": ["sattva-knowledge-city"],
-      "linkedinSlug": "the-mathworks",
-      "careersUrls": [
-        "https://www.mathworks.com/company/jobs/opportunities.html"
-      ],
-      "priority": 2
-    },
-    {
-      "name": "Gartner",
-      "campuses": ["sattva-knowledge-city"],
-      "linkedinSlug": "gartner",
-      "careersUrls": [
-        "https://jobs.gartner.com/search/?createNewAlert=false&q=architect&locationsearch=Hyderabad"
-      ],
-      "priority": 2
-    },
-    {
-      "name": "Optum",
-      "campuses": ["dlf-cyber-city", "divyasree-orion"],
-      "linkedinSlug": "optum",
-      "careersUrls": [
-        "https://careers.unitedhealthgroup.com/search-jobs/Hyderabad/?orgIds=1759&alp=false&alt=false"
-      ],
-      "priority": 1
-    },
-    {
-      "name": "Palo Alto Networks",
-      "campuses": ["divyasree-orion", "dlf-cyber-city"],
-      "linkedinSlug": "palo-alto-networks",
-      "careersUrls": [
-        "https://jobs.paloaltonetworks.com/en/search-jobs/Hyderabad"
-      ],
-      "priority": 1
-    },
-    {
-      "name": "Experian",
-      "campuses": ["mindspace-madhapur", "cyber-pearl"],
-      "linkedinSlug": "experian",
-      "careersUrls": [
-        "https://careers.smartrecruiters.com/Experian?search=architect"
-      ],
-      "priority": 1
-    },
-    {
-      "name": "Blackbaud",
-      "campuses": ["mindspace-madhapur", "cyber-pearl"],
-      "linkedinSlug": "blackbaud",
-      "careersUrls": [
-        "https://careers.blackbaud.com/search/?createNewAlert=false&q=architect&locationsearch=Hyderabad"
-      ],
-      "priority": 1
-    },
-    {
-      "name": "Hyland",
-      "campuses": ["mindspace-madhapur", "cyber-pearl"],
-      "linkedinSlug": "hyland-software",
-      "careersUrls": [
-        "https://careers-hyland.icims.com/jobs/search?ss=1&searchKeyword=architect"
-      ],
-      "priority": 1
-    },
-    {
-      "name": "GE Vernova",
-      "campuses": ["mindspace-madhapur", "dlf-cyber-city"],
-      "linkedinSlug": "gevernova",
-      "careersUrls": [
-        "https://careers.gevernova.com/global/en/search-results?keywords=architect"
-      ],
-      "priority": 1
-    },
-    {
-      "name": "Solera",
-      "campuses": ["mindspace-madhapur", "cyber-pearl"],
-      "linkedinSlug": "solera-holdings",
-      "careersUrls": [
-        "https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site?q=architect"
-      ],
-      "priority": 1
-    },
-    {
-      "name": "ModMed",
-      "campuses": ["mindspace-madhapur", "cyber-pearl"],
-      "linkedinSlug": "modernizing-medicine",
-      "careersUrls": [
-        "https://www.modmed.com/careers/"
-      ],
-      "priority": 1
+      "linkedinSlug": "servicenow",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
     },
     {
       "name": "Storable",
-      "campuses": ["mindspace-madhapur"],
+      "campuses": [
+        "mindspace-madhapur"
+      ],
       "linkedinSlug": "storable",
       "careersUrls": [
         "https://www.storable.com/careers/"
@@ -342,8 +621,101 @@
       "priority": 2
     },
     {
+      "name": "Tech Mahindra",
+      "campuses": [
+        "sattva-knowledge-park",
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "tech-mahindra",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "Thomson Reuters",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "thomson-reuters",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "Uber",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "uber-com",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "UnitedHealth Group",
+      "campuses": [
+        "dlf-cyber-city",
+        "divyasree-orion"
+      ],
+      "linkedinSlug": "unitedhealth-group",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "ValueLabs",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "valuelabs",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "Verizon",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "verizon",
+      "careersUrls": [
+        "https://www.verizon.com/about/work/search/jobs?q=architect&location=Hyderabad"
+      ],
+      "priority": 2
+    },
+    {
+      "name": "Virtusa",
+      "campuses": [
+        "sattva-knowledge-park",
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "virtusa",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "Wells Fargo",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "wells-fargo",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
       "name": "DXC Technology",
-      "campuses": ["mindspace-madhapur"],
+      "campuses": [
+        "mindspace-madhapur"
+      ],
       "linkedinSlug": "dxc-technology",
       "careersUrls": [
         "https://careers.dxc.com/global/en/search-results?keywords=architect"
@@ -351,8 +723,43 @@
       "priority": 3
     },
     {
+      "name": "HCLTech",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "hcltech",
+      "careersUrls": [],
+      "priority": 3,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "Infosys",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "infosys",
+      "careersUrls": [],
+      "priority": 3,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "Kony / Temenos",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "temenos",
+      "careersUrls": [],
+      "priority": 3,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
+    },
+    {
       "name": "Larsen & Toubro",
-      "campuses": ["mindspace-madhapur"],
+      "campuses": [
+        "mindspace-madhapur"
+      ],
       "linkedinSlug": "larsen-&-toubro",
       "careersUrls": [
         "https://larsentoubrocareers.peoplestrong.com/"
@@ -361,7 +768,9 @@
     },
     {
       "name": "TCS",
-      "campuses": ["the-v"],
+      "campuses": [
+        "the-v"
+      ],
       "linkedinSlug": "tata-consultancy-services",
       "careersUrls": [
         "https://www.tcs.com/careers"
@@ -369,13 +778,15 @@
       "priority": 3
     },
     {
-      "name": "Qentelli",
-      "campuses": ["sattva-knowledge-city"],
-      "linkedinSlug": "qentelli",
-      "careersUrls": [
-        "https://www.qentelli.com/careers"
+      "name": "Wipro",
+      "campuses": [
+        "mindspace-madhapur"
       ],
-      "priority": 2
+      "linkedinSlug": "wipro",
+      "careersUrls": [],
+      "priority": 3,
+      "source": "seed",
+      "discoveredAt": "2026-08-13"
     }
   ]
 }

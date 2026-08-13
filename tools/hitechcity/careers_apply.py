@@ -36,8 +36,8 @@ CDP = os.environ.get("HITECHCITY_CDP") or os.environ.get("LINKEDIN_CDP", "http:/
 COMPANIES_PATH = Path(__file__).with_name("companies.json")
 REPORT = Path(os.environ.get("HITECHCITY_CAREERS_REPORT", "/opt/cursor/artifacts/hitechcity-careers.json"))
 MAX_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_PER_COMPANY", "4"))
-# 24 covers all priority-1 campus tenants (Solera was dropped at 18).
-MAX_COMPANIES = int(os.environ.get("HITECHCITY_MAX_COMPANIES", "24"))
+# Raised for discovery-expanded campus tenant list (still priority-sorted).
+MAX_COMPANIES = int(os.environ.get("HITECHCITY_MAX_COMPANIES", "40"))
 TIME_CAP_S = int(os.environ.get("HITECHCITY_ATS_TIME_CAP_S", "180"))
 
 TITLE_HINT = re.compile(

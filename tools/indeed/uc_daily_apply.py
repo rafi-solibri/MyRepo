@@ -228,8 +228,22 @@ def blocked(title: str, text: str) -> bool:
     )
 
 
+def _campus_allowlist_blocks(company: str) -> bool:
+    """When Hitech City board mode sets HITECHCITY_COMPANY_ALLOWLIST, enforce it."""
+    if not os.environ.get("HITECHCITY_COMPANY_ALLOWLIST"):
+        return False
+    try:
+        from tools.hitechcity.campus_allowlist import company_allowed
+
+        return not company_allowed(company or "")
+    except Exception:
+        return False
+
+
 def skip_reason(title: str, company: str, location: str, snippet: str) -> str | None:
     t = title or ""
+    if _campus_allowlist_blocks(company):
+        return "hitechcity_campus_allowlist"
     if TITLE_SKIP.search(t):
         return "title_skip"
     if not TITLE_OK.search(t):
