@@ -12,7 +12,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 
 from playwright.sync_api import Page, sync_playwright
 
@@ -36,7 +36,8 @@ CDP = os.environ.get("HITECHCITY_CDP") or os.environ.get("LINKEDIN_CDP", "http:/
 COMPANIES_PATH = Path(__file__).with_name("companies.json")
 REPORT = Path(os.environ.get("HITECHCITY_CAREERS_REPORT", "/opt/cursor/artifacts/hitechcity-careers.json"))
 MAX_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_PER_COMPANY", "4"))
-MAX_COMPANIES = int(os.environ.get("HITECHCITY_MAX_COMPANIES", "18"))
+# 24 covers all priority-1 campus tenants (Solera was dropped at 18).
+MAX_COMPANIES = int(os.environ.get("HITECHCITY_MAX_COMPANIES", "24"))
 TIME_CAP_S = int(os.environ.get("HITECHCITY_ATS_TIME_CAP_S", "180"))
 
 TITLE_HINT = re.compile(
@@ -78,6 +79,17 @@ CAREERS_TITLE_SKIP = re.compile(
 AUTH_HOST = re.compile(
     r"passport\.amazon\.jobs|login\.microsoftonline|accounts\.google|"
     r"auth\.|signin\.|sso\.|okta\.com|login\.microsoft",
+    re.I,
+)
+NAV_CHROME_RE = re.compile(
+    r"skip to (main )?content|^jobs?\s+\d+|turn on job alerts|go to home|"
+    r"^sitemap$|^manage profile$|^sign in$|^careers home$|^see all jobs$",
+    re.I,
+)
+JOB_ID_HREF_RE = re.compile(
+    r"/jobs?/\d|/job/\d|gh_jid=|[?&](jobId|pid|reqId)=\d|/jobs/\d{4,}|"
+    r"smartrecruiters\.com/[^/]+/\d{6,}|myworkdayjobs\.com/.+/job/|"
+    r"icims\.com/jobs/\d+",
     re.I,
 )
 
@@ -127,12 +139,14 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
               for (const a of anchors) {
                 const href = a.href || '';
                 const h = href.toLowerCase();
-                const looksJob = /job|career|requisition|opening|position|gh_jid|lever|workday|smartrecruiters|icims|taleo|greenhouse/.test(h)
+                const looksJobId = /\\/jobs?\\/\\d+|\\/job\\/\\d+|gh_jid=|[?&](?:jobId|pid|reqId)=\\d+|smartrecruiters\\.com\\/[^/]+\\/\\d{6,}|myworkdayjobs\\.com\\/.+\\/job\\/|icims\\.com\\/jobs\\/\\d+/i.test(h);
+                const looksJob = looksJobId
+                  || /job|career|requisition|opening|position|gh_jid|lever|workday|smartrecruiters|icims|taleo|greenhouse/.test(h)
                   || /\\/jobs?\\//.test(h);
                 if (!looksJob) continue;
                 // Skip bare search/list hubs (no job id) that only match because of "jobs" in path.
                 if (/architecture-jobs\\/?$/i.test(h) || /\\/search-jobs\\/?(\\?|$)/i.test(h)) continue;
-                if (/\\/jobs\\/?(\\?|$|#)/i.test(h) && !/\\/jobs?\\/[^/?#]+/.test(h) && !/[?&](gh_jid|jobId|pid)=/i.test(h)) {
+                if (!looksJobId && /\\/jobs\\/?(\\?|$|#)/i.test(h) && !/\\/jobs?\\/[^/?#]+/.test(h) && !/[?&](gh_jid|jobId|pid)=/i.test(h)) {
                   // allow SmartRecruiters / Experian style .../Company/744...-slug
                   if (!/smartrecruiters\\.com\\/[^/]+\\/\\d{6,}/i.test(h)) continue;
                 }
@@ -142,15 +156,30 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
                 let text = (a.innerText || a.textContent || a.getAttribute('aria-label') || a.getAttribute('title') || '')
                   .trim().replace(/\\s+/g, ' ');
                 if (!text || text.length < 8) {
-                  const parent = a.closest('li, article, tr, [class*="job"], [data-qa], [data-automation-id]');
-                  const parentText = parent ? (parent.innerText || '').trim().replace(/\\s+/g, ' ') : '';
-                  if (parentText && parentText.length >= 8) text = parentText.slice(0, 160);
+                  // Oracle Cloud HCM / JPMC: <a class="job-grid-item__link"> has empty innerText.
+                  // closest('[class*="job"]') matches the anchor itself — walk parents instead.
+                  let n = a.parentElement;
+                  let parentText = '';
+                  for (let i = 0; i < 8 && n; i++, n = n.parentElement) {
+                    const t = (n.innerText || '').trim().replace(/\\s+/g, ' ');
+                    if (t && t.length >= 12 && t.length < 600) {
+                      parentText = t;
+                      break;
+                    }
+                  }
+                  if (parentText) text = parentText.slice(0, 180);
                 }
-                if (!text || text.length < 8 || text.length > 180) continue;
-                // Prefer a short title line when parent card dumped a long blurb.
+                if (/skip to (main )?content|go to home page|^sitemap$|^manage profile$|^sign in$/i.test(text)) continue;
+                if (!text || text.length < 8 || text.length > 220) continue;
+                // Prefer a short title + workplace when parent card dumped a long blurb.
                 if (text.length > 120) {
-                  const first = text.split(/\\s{2,}|\\n/).map(s => s.trim()).filter(Boolean)[0] || text;
-                  text = first.slice(0, 160);
+                  const locM = text.match(/(.{8,100}?)\\s+((?:Hyderabad|Bengaluru|Bangalore|Remote|United States)[^,]{0,48})/i);
+                  if (locM) {
+                    text = (locM[1] + ' ' + locM[2]).replace(/\\s+/g, ' ').slice(0, 160);
+                  } else {
+                    const first = text.split(/\\s{2,}|\\n/).map(s => s.trim()).filter(Boolean)[0] || text;
+                    text = first.slice(0, 160);
+                  }
                 }
                 // Only SmartRecruiters location groups are reliable for nearestLoc
                 // (ModMed/global pages can mention Hyderabad in chrome and poison titles).
@@ -176,6 +205,8 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
         text = item.get("text") or ""
         href = item.get("href") or ""
         if re.search(r"^\d+\s+jobs?\b|turn on job alerts", text, re.I):
+            continue
+        if NAV_CHROME_RE.search(text.strip()):
             continue
         if not TITLE_HINT.search(text):
             continue
@@ -203,12 +234,14 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
 
 
 def url_loc_hint(url: str) -> str:
-    """Decode path/query workplace tokens (e.g. Boca-Raton-FL) into readable location text."""
+    """Decode path workplace tokens (e.g. Boca-Raton-FL). Ignore listing query ?location=."""
     if not url:
         return ""
     try:
         parts = urlparse(url)
-        raw = f"{parts.path} {parts.query}".replace("-", " ").replace("_", " ").replace("%2C", " ")
+        # Path only: Oracle/JPMC job links inherit the search `?location=Hyderabad`
+        # even when the card is Bengaluru. Workday/PAN encode city in the path.
+        raw = parts.path.replace("-", " ").replace("_", " ").replace("%2C", " ")
         return re.sub(r"[+/]+", " ", raw)
     except Exception:
         return url
@@ -233,6 +266,26 @@ def card_location_ok(role_text: str, top_card: str = "") -> bool:
     if LOC_HINT.search(blob) or location_or_campus_ok(blob, "", ""):
         return True
     return True
+
+
+def dismiss_cookie_banners(page: Page) -> None:
+    """Optum/Intel/Hyland cookie walls hide job cards until Accept."""
+    for name in (
+        "Accept All Cookies",
+        "Accept Cookies",
+        "Accept All",
+        "Accept",
+        "I Accept",
+        "Agree",
+    ):
+        try:
+            btn = page.get_by_role("button", name=re.compile(rf"^{re.escape(name)}$", re.I))
+            if btn.count() and btn.first.is_visible():
+                btn.first.click(timeout=1500)
+                time.sleep(1.0)
+                return
+        except Exception:
+            continue
 
 
 def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
@@ -348,6 +401,7 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                     report.blocked.append({"company": name, "url": url, "reason": f"scan_nav:{e}"})
                     continue
                 time.sleep(2.2)
+                dismiss_cookie_banners(page)
                 # Oracle Cloud HCM / Workday-style boards lazy-render cards; nudge into view.
                 try:
                     for _ in range(3):
