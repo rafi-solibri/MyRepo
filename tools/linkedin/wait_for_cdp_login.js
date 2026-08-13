@@ -63,17 +63,21 @@ async function main() {
 
   const ctx = browser.contexts()[0] || (await browser.newContext());
 
-  function pickLinkedInPage() {
+  function pickLinkedInPage(preferChallenge = false) {
     const pages = ctx.pages() || [];
     const li = pages.filter((p) => /linkedin\.com/i.test(p.url() || ""));
-    const challenge = li.find((p) =>
-      /checkpoint|challenge|security.?verif/i.test(p.url() || "")
-    );
-    if (challenge) return challenge;
     const feedish = li.find((p) =>
       /\/feed|\/jobs|\/in\//i.test(p.url() || "")
     );
+    const challenge = li.find((p) =>
+      /checkpoint|challenge|security.?verif/i.test(p.url() || "")
+    );
+    // Prefer feed/jobs when a session exists; only stick to challenge when
+    // there is no li_at yet (owner must finish CAPTCHA). Leftover challenge
+    // tabs after Google SSO must not false-fail a good session.
+    if (preferChallenge && challenge) return challenge;
     if (feedish) return feedish;
+    if (challenge) return challenge;
     if (li[0]) return li[0];
     return pages[0] || null;
   }
@@ -83,11 +87,12 @@ async function main() {
   async function probe() {
     const cookies = await ctx.cookies("https://www.linkedin.com");
     const has_li_at = cookies.some((c) => c.name === "li_at");
-    page = pickLinkedInPage() || page;
+    page = pickLinkedInPage(!has_li_at) || page;
     let url = page.url() || "";
     const onChallenge = /checkpoint|challenge/i.test(url);
-    // Never navigate away from Security Verification / CAPTCHA — owner must finish it.
-    if (!onChallenge && (openLogin || (!has_li_at && !/linkedin\.com/i.test(url)))) {
+    // Never navigate away from Security Verification / CAPTCHA — owner must finish it
+    // when there is no session yet.
+    if (!has_li_at && !onChallenge && (openLogin || !/linkedin\.com/i.test(url))) {
       await page
         .goto("https://www.linkedin.com/login", {
           waitUntil: "domcontentloaded",
@@ -96,7 +101,15 @@ async function main() {
         .catch(() => {});
       url = page.url() || "";
     }
-    if (has_li_at && !onChallenge) {
+    if (has_li_at) {
+      // Close stale challenge/GSI tabs so they don't confuse later probes.
+      for (const p of ctx.pages() || []) {
+        const u = p.url() || "";
+        if (/checkpoint|challenge|accounts\.google\.com\/gsi\/select/i.test(u)) {
+          await p.close().catch(() => {});
+        }
+      }
+      page = pickLinkedInPage(false) || page || (await ctx.newPage());
       await page
         .goto("https://www.linkedin.com/feed/", {
           waitUntil: "domcontentloaded",
@@ -110,7 +123,7 @@ async function main() {
       ok: has_li_at && !loginish,
       has_li_at,
       url,
-      onChallenge,
+      onChallenge: /checkpoint|challenge/i.test(url),
     };
   }
 

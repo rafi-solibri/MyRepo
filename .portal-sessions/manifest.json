@@ -7,7 +7,10 @@
     "foundit": true,
     "cutshort": true,
     "instahyre": true,
-    "indeed": true
+    "indeed": true,
+    "linkedin_alt": true
   },
-  "note": "Private session seed for Cloud Agent install restore. Do not share publicly."
+  "note": "Private session seed for Cloud Agent install restore. Do not share publicly.",
+  "updatedAt": "2026-08-13T05:22:59Z",
+  "updatedPortal": "linkedin"
 }

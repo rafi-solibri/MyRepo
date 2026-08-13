@@ -1,0 +1,38 @@
+# Manual same-day re-run of a daily automation after a merged fix.
+# Automatic path is scripts/auto-merge-fix-pr.sh → rerun-daily-after-fix.sh
+# (runs inside the cloud/home agent). This workflow is owner-triggered only so
+# GitHub runners never exec portal applies (no Chrome).
+name: Post-fix daily re-run
+
+on:
+  workflow_dispatch:
+    inputs:
+      portal:
+        description: Daily job to re-run on main with the merged fix
+        required: true
+        type: choice
+        options:
+          - linkedin
+          - foundit
+          - cutshort
+          - naukri
+          - instahyre
+          - indeed
+          - hitechcity
+          - notification
+          - hotels
+
+jobs:
+  launch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Launch cloud post-fix re-run
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: |
+          if [[ -z "${CURSOR_API_KEY}" ]]; then
+            echo "Set repository secret CURSOR_API_KEY (https://cursor.com/dashboard/api) to launch a cloud job."
+            exit 1
+          fi
+          bash scripts/rerun-daily-after-fix.sh --portal "${{ inputs.portal }}" --no-exec

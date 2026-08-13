@@ -241,18 +241,35 @@ def skip_reason(title: str, company: str, location: str, snippet: str) -> str | 
             re.I,
         ):
             return "title_not_target"
-    loc = f"{location} {snippet}"
-    if LOC_HARD_SKIP.search(location or "") and not LOC_OK.search(loc):
+    loc_field = location or ""
+    # Job location + title decide Hyd/Remote. Do not let SERP chrome
+    # ("Find remote jobs") in the snippet override a Bengaluru-only posting.
+    loc_blob = f"{loc_field} {t}"
+    if LOC_HARD_SKIP.search(loc_blob) and not LOC_OK.search(loc_blob):
         return "location"
-    if location and not LOC_OK.search(loc):
-        # Remote/Hyd hard filter — skip clear other-city-only
+    if loc_field and not LOC_OK.search(loc_blob):
         if re.search(
             r"bengaluru|bangalore|pune|chennai|mumbai|noida|gurgaon|delhi",
-            location,
+            loc_field,
             re.I,
         ):
             return "location"
     return None
+
+
+def already_applied(body: str, url: str = "") -> bool:
+    """True when the job-view page shows this listing was already submitted."""
+    b = (body or "").lower()
+    u = (url or "").lower()
+    if "smartapply" in u or "indeedapply" in u:
+        return False
+    return bool(
+        re.search(
+            r"you applied to this job|already applied to this|"
+            r"you have already applied|application submitted on",
+            b,
+        )
+    )
 
 
 def search_queries() -> list[tuple[str, str]]:
@@ -414,7 +431,11 @@ def fill_common_questions(sb) -> None:
             };
             const wantFromText = (text) => {
               const t = (text || '').toLowerCase();
-              if (/current.*(ctc|salary|compensation|pay)|ctc.*current|present.*ctc|current.*package/.test(t)) return '52';
+              if (/current.*(position|role|title|designation)|present.*(position|role|title)|job title/.test(t)
+                  && !/salary|ctc|compensation|pay/.test(t)) {
+                return 'Solutions Architect';
+              }
+              if (/current.*(ctc|salary|compensation|pay)|ctc.*current|present.*ctc|current.*package|current salary/.test(t)) return '52';
               if (/expected.*(ctc|salary|compensation|pay)|ctc.*expected|desired.*salary|expected.*package/.test(t)) return '65';
               if (/notice|joining|how soon|availability|immediate|serve notice/.test(t)) return 'Immediate';
               if (/total.*(experience|exp)|years of experience|overall experience|relevant experience/.test(t)) return '14';
@@ -422,6 +443,10 @@ def fill_common_questions(sb) -> None:
               if (/voluntary self|self.?identif|gender identity|race|ethnicity|hispanic|latino|veteran|disability|disabled|lgbt|sexual orientation|pronoun/.test(t)
                   && !/authorized|work authori|visa|citizen/.test(t)) {
                 return 'decline';
+              }
+              if (/privacy notice|declare that you have read and agree|agree to the (privacy|terms)|consent to (the )?privacy/.test(t)
+                  && !/gender identity|ethnicity|hispanic|veteran|disability/.test(t)) {
+                return 'yes';
               }
               if (/relocat|willing to work|hybrid|work from office|bond|service agreement|background check|drug test/.test(t)) return 'yes';
               if (/authorized|work authori|visa|citizen|india|legally/.test(t)) return 'yes';
@@ -488,7 +513,10 @@ def fill_common_questions(sb) -> None:
               ...document.querySelectorAll('[class*="question"], fieldset, [data-testid*="question"], .ia-Questions-item, .ia-Questions, form, main, [role=main]')
             ];
             for (const root of roots) {
-              const want = wantFromText(root.innerText || '');
+              const text = root.innerText || '';
+              // Page/form roots mix EEO + privacy; question-sized nodes only.
+              if (text.length > 800) continue;
+              const want = wantFromText(text);
               if (want && clickMatching(root, want)) answered += 1;
             }
             for (const lab of document.querySelectorAll('label, legend, h1, h2, h3, p, span')) {
@@ -511,7 +539,8 @@ def fill_common_questions(sb) -> None:
               else if (/last\\s*name|surname|family\\s*name|lname/.test(lab)) val = vals.last;
               else if (/phone|mobile|tel/.test(lab) || type === 'tel') val = vals.phone;
               else if (/e-?mail/.test(lab) || type === 'email') val = vals.email;
-              else if (/current.*(ctc|salary|compensation|package)|ctc.*current/.test(lab)) val = vals.current;
+              else if (/current.*(position|role|title|designation)|job title/.test(lab) && !/salary|ctc/.test(lab)) val = 'Solutions Architect';
+              else if (/current.*(ctc|salary|compensation|package)|ctc.*current|current salary/.test(lab)) val = vals.current;
               else if (/expected.*(ctc|salary|compensation|package)|ctc.*expected/.test(lab)) val = vals.expected;
               else if (/notice|joining|availability/.test(lab)) val = vals.notice;
               else if (/city|location|current\\s*location/.test(lab)) val = vals.city;
@@ -566,13 +595,14 @@ def fill_common_questions(sb) -> None:
                 }
               }
             }
-            // Required acknowledgment / privacy checkboxes (Mattel etc.).
-            for (const c of document.querySelectorAll('input[type=checkbox]')) {
-              if (c.checked || c.disabled) continue;
-              const lab = labelFor(c);
-              if (/confirm|agree|privacy|notice|terms|read.*understand|i have read|by checking/.test(lab)) {
+            // Required acknowledgment / privacy checkboxes (Mattel / Nagarro etc.).
+            // Click the input ONCE — also clicking the wrapping label unchecks it.
+            for (const c of document.querySelectorAll('input[type=checkbox], [role=checkbox]')) {
+              if (c.disabled) continue;
+              if (c.checked || c.getAttribute('aria-checked') === 'true') continue;
+              const lab = labelFor(c) + ' ' + (c.innerText || '') + ' ' + (c.value || '');
+              if (/confirm|agree|privacy|notice|terms|read.*understand|i have read|by checking|consent/.test(lab)) {
                 try { c.click(); answered += 1; } catch (e) {}
-                try { (c.closest('label') || c).click(); } catch (e) {}
               }
             }
             // Remaining empty required-looking text inputs.
@@ -600,6 +630,84 @@ def fill_common_questions(sb) -> None:
                 time.sleep(1)
         except Exception:
             pass
+    tick_required_agreements(sb)
+
+
+def tick_required_agreements(sb) -> dict:
+    """Tick employer privacy/EEO Agree options without double-toggling.
+
+    Nagarro/Mattel SmartApply pages show a required 'Agree' checkbox (native,
+    role=checkbox, or a short label). Clicking input then label unchecks it.
+    Also recovers the 'Choose an option to continue' validation wall.
+    """
+    _switch_smartapply_frame(sb)
+    try:
+        result = sb.execute_script(
+            r"""
+            const clicked = [];
+            const seen = new Set();
+            const isOn = (el) => {
+              if (!el) return false;
+              if (el.checked === true) return true;
+              return (el.getAttribute('aria-checked') || '').toLowerCase() === 'true';
+            };
+            const tick = (el, why) => {
+              if (!el || seen.has(el) || isOn(el) || el.disabled) return false;
+              seen.add(el);
+              try { el.scrollIntoView({block:'center'}); } catch (e) {}
+              try { el.click(); } catch (e) {}
+              clicked.push(String(why || 'tick').slice(0, 60));
+              return true;
+            };
+            const associatedBox = (el) => {
+              if (!el) return null;
+              if (el.matches?.('input[type=checkbox], input[type=radio], [role=checkbox], [role=radio]')) return el;
+              return el.querySelector?.('input[type=checkbox], input[type=radio], [role=checkbox]')
+                || (el.getAttribute('for') ? document.getElementById(el.getAttribute('for')) : null)
+                || el.closest?.('label')?.querySelector('input[type=checkbox], input[type=radio], [role=checkbox]');
+            };
+            const nearby = (el) => {
+              const wrap = el.closest('label, fieldset, [class*="question"], [class*="Question"], li, section, div') || el.parentElement || el;
+              return ((el.getAttribute('aria-label') || '') + ' ' + (el.innerText || '') + ' ' + (el.value || '') + ' ' + (wrap.innerText || '')).toLowerCase().slice(0, 500);
+            };
+            for (const el of document.querySelectorAll('input[type=checkbox], input[type=radio], [role=checkbox], [role=radio]')) {
+              if (isOn(el) || el.disabled) continue;
+              const t = nearby(el);
+              const short = ((el.getAttribute('aria-label') || '') + ' ' + (el.parentElement?.innerText || '') + ' ' + (el.value || '')).toLowerCase().slice(0, 80);
+              if (/\bagree\b/.test(short) || /privacy notice|declare that you have read|terms and conditions|i have read|by checking this|consent to/.test(t)) {
+                tick(el, 'box:' + short.slice(0, 40));
+              }
+            }
+            for (const el of document.querySelectorAll('label, button, [role=button], [role=option]')) {
+              const t = ((el.innerText || '') + ' ' + (el.getAttribute('aria-label') || '')).trim();
+              if (!/^agree\b/i.test(t) || t.length > 48) continue;
+              const box = associatedBox(el);
+              if (box) {
+                if (!isOn(box)) tick(box, 'label-for:' + t.slice(0, 40));
+                continue;
+              }
+              tick(el, 'label:' + t.slice(0, 40));
+            }
+            const err = [...document.querySelectorAll('[class*="error"], [role=alert], span, p, div')]
+              .find(e => /choose an option to continue/i.test(e.innerText || ''));
+            if (err) {
+              const root = err.closest('fieldset, [class*="question"], [class*="Question"], li, section, form, div') || document.body;
+              const opt = [...root.querySelectorAll('label, button, [role=option], [role=radio], [role=checkbox], input')]
+                .find(e => /^agree\b|^yes\b/i.test(((e.innerText || '') + ' ' + (e.getAttribute('aria-label') || '') + ' ' + (e.value || '')).trim()));
+              if (opt) {
+                const box = associatedBox(opt) || opt;
+                if (!isOn(box)) tick(box, 'validation-agree');
+              }
+            }
+            return {clicked, url: location.href};
+            """
+        )
+        if isinstance(result, dict) and result.get("clicked"):
+            print(f"  agreements={result}", flush=True)
+        return result if isinstance(result, dict) else {}
+    except Exception as e:
+        print(f"  agreements_error={e!s}"[:200], flush=True)
+        return {}
 
 
 def click_next_or_submit(
@@ -1629,12 +1737,12 @@ def submit_review_application(sb, deadline: float | None = None) -> bool:
     try:
         sb.execute_script(
             """
-            for (const c of document.querySelectorAll('input[type=checkbox]')) {
-              // Skip anything inside recaptcha iframes (not in this document).
-              if (!c.checked) {
-                try { c.click(); } catch (e) {}
-                try { (c.closest('label') || c).click(); } catch (e) {}
-              }
+            for (const c of document.querySelectorAll('input[type=checkbox], [role=checkbox]')) {
+              // Skip recaptcha (cross-origin iframe, not this document).
+              // Click once — input+label double-click toggles the box back off.
+              if (c.disabled) continue;
+              if (c.checked || c.getAttribute('aria-checked') === 'true') continue;
+              try { c.click(); } catch (e) {}
             }
             window.scrollTo(0, document.body.scrollHeight);
             """
@@ -1848,6 +1956,8 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
         else:
             same_cta_streak = 0
             last_cta_key = cta_key if clicked else ""
+        if same_cta_streak >= 2:
+            tick_required_agreements(sb)
         if same_cta_streak >= 3:
             try:
                 sample = (sb.get_text("body") or "")[:400].replace("\n", " | ")
@@ -2106,6 +2216,13 @@ def main() -> int:
                 }
                 report["seen"].append(item)
 
+                if already_applied(body, item.get("url") or ""):
+                    item["reason"] = "already_applied"
+                    report["skipped"].append(item)
+                    report["counts"]["skipped"] += 1
+                    print("SKIP already_applied", page_title[:80], flush=True)
+                    continue
+
                 reason = skip_reason(page_title, company, location, body[:1500])
                 if reason:
                     item["reason"] = reason
@@ -2160,12 +2277,37 @@ def main() -> int:
                         pass
 
                 if not applied:
+                    # Applied badge replaces Easy Apply on already-submitted jobs.
+                    try:
+                        badge = sb.execute_script(
+                            """
+                            const els=[...document.querySelectorAll('button, a, [role=button], span')];
+                            const el=els.find(e => {
+                              const s=((e.innerText||'')+' '+(e.getAttribute('aria-label')||'')).trim();
+                              return /^applied$/i.test(s) || /^applied on /i.test(s);
+                            });
+                            return el ? ((el.innerText||el.getAttribute('aria-label')||'applied').slice(0,80)) : null;
+                            """
+                        )
+                        if badge:
+                            item["reason"] = "already_applied"
+                            report["skipped"].append(item)
+                            report["counts"]["skipped"] += 1
+                            print("SKIP already_applied", page_title[:80], flush=True)
+                            continue
+                    except Exception:
+                        pass
                     # Company site — open and mark external (full ATS fill is best-effort)
                     for sel in (
                         "button:contains('Apply on company site')",
                         "a:contains('Apply on company site')",
-                        "//a[contains(., 'Apply on company site')]",
-                        "//button[contains(., 'Apply on company site')]",
+                        "button:contains('Apply on company website')",
+                        "a:contains('Apply on company website')",
+                        "button:contains('Apply on the company site')",
+                        "a:contains('Apply on the company site')",
+                        "//a[contains(., 'Apply on company')]",
+                        "//button[contains(., 'Apply on company')]",
+                        "//a[contains(., 'Company site') or contains(., 'company website')]",
                     ):
                         try:
                             if sb.is_element_visible(sel, timeout=2):
@@ -2180,6 +2322,29 @@ def main() -> int:
                                 break
                         except Exception:
                             continue
+                    if not applied:
+                        try:
+                            clicked = sb.execute_script(
+                                """
+                                const cands=[...document.querySelectorAll('button, a, [role=button]')];
+                                const el=cands.find(e => /apply on company|company website|company site/i.test(
+                                  ((e.innerText||'') + ' ' + (e.getAttribute('aria-label')||'')).trim()
+                                ));
+                                if(!el) return null;
+                                el.click();
+                                return (el.innerText||el.getAttribute('aria-label')||'').slice(0,80);
+                                """
+                            )
+                            if clicked:
+                                item["path"] = "external_opened"
+                                report["external"].append(item)
+                                report["counts"]["external"] += 1
+                                time.sleep(2)
+                                fill_common_questions(sb)
+                                applied = True
+                                print("EXTERNAL", clicked, page_title[:80], flush=True)
+                        except Exception:
+                            pass
                     if not applied:
                         item["reason"] = "no_apply_button"
                         report["skipped"].append(item)

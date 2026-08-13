@@ -497,6 +497,9 @@ def fill_apply_radios_and_selects(page: Page) -> None:
             (r"require sponsorship|visa sponsorship", "No"),
             (r"willing to relocate", "Yes"),
             (r"hyderabad", "Yes"),
+            (r"work model|5 days a week|office \d+ days", "Yes"),
+            (r"start immediately|fill this position urgently", "Yes"),
+            (r"on-?site|work from (our|the) .* office", "Yes"),
         ]:
             q = page.get_by_text(re.compile(qpat, re.I)).first
             if not (q.count() and q.is_visible()):
@@ -769,22 +772,58 @@ def fill_inputs(page: Page) -> None:
     except Exception:
         pass
 
-    # Native selects still on Select an option
+    # Native selects still on Select an option — Playwright select_option is more
+    # reliable than dispatching change events for LinkedIn Easy Apply validation.
     try:
-        page.evaluate(
-            """() => {
-              const h=[...document.querySelectorAll('h2,h1')].find(e=>/Apply to /i.test(e.innerText||''));
-              const root=h ? (h.closest('.artdeco-modal') || h.parentElement?.parentElement?.parentElement) : document;
-              for (const s of root.querySelectorAll('select')) {
-                const yes=[...s.options].find(o=>o.text.trim().toLowerCase()==='yes');
-                if(yes && (!s.value || /select/i.test(s.options[s.selectedIndex]?.text||''))) {
-                  s.value=yes.value;
-                  s.dispatchEvent(new Event('input',{bubbles:true}));
-                  s.dispatchEvent(new Event('change',{bubbles:true}));
-                }
-              }
-            }"""
-        )
+        form = apply_form_root(page)
+        for sel in form.locator("select").all()[:12]:
+            try:
+                if not sel.is_visible():
+                    continue
+                opts = [
+                    re.sub(r"\s+", " ", (t or "")).strip()
+                    for t in sel.locator("option").all_inner_texts()
+                ]
+                lower = [o.lower() for o in opts]
+                cur = ""
+                try:
+                    cur = (sel.evaluate("s => (s.options[s.selectedIndex]?.text || '')") or "").strip()
+                except Exception:
+                    cur = ""
+                # Yes/No additional questions (not email/country lists)
+                if "yes" in lower and "no" in lower and len(opts) <= 5:
+                    if not cur or re.search(r"select", cur, re.I):
+                        try:
+                            sel.select_option(label=re.compile(r"^\s*Yes\s*$", re.I))
+                        except Exception:
+                            try:
+                                sel.select_option(value="Yes")
+                            except Exception:
+                                sel.evaluate(
+                                    """s => {
+                                      const yes=[...s.options].find(o=>/^yes$/i.test((o.text||'').trim()));
+                                      if(!yes) return;
+                                      s.selectedIndex=[...s.options].indexOf(yes);
+                                      s.value=yes.value;
+                                      s.dispatchEvent(new Event('input',{bubbles:true}));
+                                      s.dispatchEvent(new Event('change',{bubbles:true}));
+                                    }"""
+                                )
+                    continue
+                # Email select → profile email
+                if any("rafi.success@gmail.com" in o.lower() for o in opts):
+                    if not cur or re.search(r"select", cur, re.I):
+                        sel.select_option(label=re.compile(r"rafi\.success@gmail\.com", re.I))
+                    continue
+                # Phone country → India (+91)
+                if any(re.search(r"\(\+\d+\)", o) for o in opts):
+                    if not cur or re.search(r"select|andorra|\+376", cur, re.I):
+                        try:
+                            sel.select_option(label=re.compile(r"India\s*\(\+91\)", re.I))
+                        except Exception:
+                            pass
+            except Exception:
+                continue
     except Exception:
         pass
 
@@ -1016,14 +1055,25 @@ def _application_submitted(page: Page) -> bool:
     return False
 
 
+def _easy_apply_modal_ancestor(heading_loc):
+    """Full Easy Apply modal — never artdeco-modal__header (substring false match)."""
+    # Token-match 'artdeco-modal' so artdeco-modal__header / __content are skipped.
+    return heading_loc.locator(
+        "xpath=ancestor::div["
+        "@role='dialog' or "
+        "contains(@class,'jobs-easy-apply-modal') or "
+        "contains(@class,'easy-apply-modal') or "
+        "contains(concat(' ', normalize-space(@class), ' '), ' artdeco-modal ')"
+        "][1]"
+    )
+
+
 def apply_form_root(page: Page):
     """Locator for the active Easy Apply form (modal OR new inline Apply page)."""
     heading = page.get_by_role("heading", name=re.compile(r"Apply to ", re.I))
     try:
         if heading.count() and heading.first.is_visible():
-            modal = heading.first.locator(
-                "xpath=ancestor::div[contains(@class,'artdeco-modal') or contains(@class,'easy-apply') or @role='dialog'][1]"
-            )
+            modal = _easy_apply_modal_ancestor(heading.first)
             if modal.count():
                 return modal.first
             # Prefer smallest ancestor that contains Next/Review/Submit *with visible text*
@@ -1056,9 +1106,7 @@ def _apply_modal(page: Page):
     heading = page.get_by_role("heading", name=re.compile(r"Apply to ", re.I))
     try:
         if heading.count() and heading.first.is_visible():
-            modal = heading.first.locator(
-                "xpath=ancestor::div[contains(@class,'artdeco-modal') or contains(@class,'easy-apply') or @role='dialog'][1]"
-            )
+            modal = _easy_apply_modal_ancestor(heading.first)
             if modal.count():
                 return modal
             return heading.first.locator(
@@ -1308,13 +1356,43 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
         # Footer actions MUST be scoped to Apply form — page-level get_by_role('Next')
         # matches jobs-list pagination (aria-label=Next) and abandons the form.
         form = apply_form_root(page)
+        form_ok = False
+        try:
+            cls = (form.get_attribute("class") or "") + " " + (form.get_attribute("role") or "")
+            form_ok = bool(
+                re.search(r"jobs-easy-apply-modal|easy-apply-modal|\bartdeco-modal\b|dialog", cls, re.I)
+            ) or bool(page.get_by_role("heading", name=re.compile(r"Apply to ", re.I)).count())
+            # Reject body fallback / header-only
+            if form.evaluate("el => el === document.body"):
+                form_ok = False
+            if re.search(r"artdeco-modal__header", cls):
+                form_ok = False
+        except Exception:
+            form_ok = False
+        if not form_ok:
+            # Modal closed mid-flow — do NOT click jobs pagination Next
+            last_err = "Easy Apply modal lost"
+            if _application_submitted(page):
+                job.status = "submitted"
+                job.reason = "Application submitted"
+                job.path = "Easy Apply"
+                shot(page, f"submitted-{job.job_id}.png")
+                return job
+            time.sleep(0.6)
+            continue
+
         advanced = False
         for name in ("Submit application", "Submit", "Review", "Next", "Continue"):
             try:
                 # Prefer visible button text inside the apply form (not aria-only Next)
-                btn = form.locator(
-                    f"button:text-is('{name}'), button[aria-label='{name}']"
-                )
+                if name == "Next":
+                    sel = (
+                        "button:text-is('Next'), button[aria-label='Next'], "
+                        "button[aria-label='Continue to next step']"
+                    )
+                else:
+                    sel = f"button:text-is('{name}'), button[aria-label='{name}']"
+                btn = form.locator(sel)
                 # Exclude empty-text pagination-style controls when name is Next
                 candidates = []
                 for i in range(min(btn.count(), 6)):
@@ -1324,10 +1402,14 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
                             continue
                         txt = (b.inner_text() or "").strip()
                         aria = (b.get_attribute("aria-label") or "").strip()
-                        if name == "Next" and not re.search(r"^next$", txt, re.I):
-                            # Skip aria-only "Next" (search pagination)
-                            continue
-                        if txt or aria == name:
+                        if name == "Next":
+                            # Must be form Next (text Next or Continue to next step) — never pagination
+                            if not (
+                                re.search(r"^next$", txt, re.I)
+                                or re.search(r"continue to next step", aria, re.I)
+                            ):
+                                continue
+                        if txt or aria:
                             candidates.append(b)
                     except Exception:
                         continue
@@ -1338,10 +1420,12 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
                         b = role_btn.nth(i)
                         try:
                             txt = (b.inner_text() or "").strip()
-                            if b.is_visible() and b.is_enabled() and (
-                                txt == name or name != "Next"
-                            ):
-                                candidates.append(b)
+                            aria = (b.get_attribute("aria-label") or "").strip()
+                            if not (b.is_visible() and b.is_enabled()):
+                                continue
+                            if name == "Next" and not re.search(r"^next$", txt, re.I):
+                                continue
+                            candidates.append(b)
                         except Exception:
                             continue
                 for b in candidates[:2]:
@@ -1381,12 +1465,15 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
 
         try:
             primary = form.locator(
-                "button.artdeco-button--primary, button:has-text('Next'), "
-                "button:has-text('Review'), button:has-text('Submit')"
+                "button.artdeco-button--primary:has-text('Next'), "
+                "button.artdeco-button--primary:has-text('Review'), "
+                "button.artdeco-button--primary:has-text('Submit'), "
+                "button[aria-label='Continue to next step']"
             ).first
             if primary.count() and primary.is_visible():
                 txt = (primary.inner_text() or "").lower()
-                if any(x in txt for x in ("next", "review", "submit", "continue")):
+                aria = (primary.get_attribute("aria-label") or "").lower()
+                if any(x in txt or x in aria for x in ("next", "review", "submit", "continue")):
                     primary.click(timeout=3000, force=True)
                     time.sleep(1.4)
                     if _application_submitted(page):

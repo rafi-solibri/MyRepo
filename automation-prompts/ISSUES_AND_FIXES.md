@@ -10,6 +10,49 @@
 | Infor Phenom form + invisible reCAPTCHA timed out; Amgen Anaplan / Epam Quality Architect / Power Platform burned attempts | Infor field fills + early `g-recaptcha` wall; skip Anaplan/Celonis/Power Platform/Quality Architect titles |
 | Workday helper false-exited `ats_password_policy` because Create Account page always shows “Password Requirements / minimum of N characters” | `authFailureReason` only matches real password **errors**, not the static requirements checklist |
 
+## Fixed for 2026-08-13 Indeed cloud cron (privacy Agree + location)
+
+| Issue | Fix |
+| --- | --- |
+| SmartApply stuck at 89% on Nagarro/Mattel voluntary self-ID — required **Agree** privacy checkbox unchecked (`Choose an option to continue`) because fill JS clicked input then wrapping label (toggle off) and page-level `voluntary self` returned `decline` | Tick privacy/Agree once (`tick_required_agreements`); skip oversized form/main roots; recover validation wall; skip Bengaluru-only when snippet chrome says remote; skip already-applied job-view CTAs |
+| Frontline EM Easy Apply stuck on employer questions `What is your current position?` / `What is your current salary?` | Map those labels to Solutions Architect / 52 LPA in `fill_common_questions` |
+
+## Fixed for 2026-08-13 LinkedIn cloud cron (Yes/No select)
+
+| Issue | Fix |
+| --- | --- |
+| Easy Apply Additional Questions stuck — native Yes/No select stayed on Select an option; years fields OK but Next looped | Playwright select_option for Yes/No selects inside modal; expand work-model / start-immediately Yes patterns |
+
+## Fixed for 2026-08-13 same-day post-fix re-run (all daily jobs)
+
+| Issue | Fix |
+| --- | --- |
+| After a code-fixable blocker was patched and merged, that day's automation stopped — applies only happened on the next cron | `scripts/rerun-daily-after-fix.sh` runs after `auto-merge-fix-pr.sh` / `merge-open-fix-prs.sh`: pull `main`, launch a fresh cloud job (needs `CURSOR_API_KEY`) or re-exec the durable helper in-session. Cap 5 re-runs/portal/IST day. Wired for LinkedIn, Foundit, Cutshort, Naukri, Instahyre, Indeed, Hitech City, Notification, Hotels, and home-local replicas. |
+
+## Fixed for 2026-08-13 LinkedIn cloud cron (pagination Next)
+
+| Issue | Fix |
+| --- | --- |
+| After modal closed, apply_form_root fell back to body and clicked jobs-search pagination Next → exceeded Easy Apply steps | Require real easy-apply modal; match Continue to next step; never click list pagination Next |
+
+## Fixed for 2026-08-13 LinkedIn cloud cron (Easy Apply Next)
+
+| Issue | Fix |
+| --- | --- |
+| Easy Apply stuck no Next/Submit — apply_form_root matched artdeco-modal__header via contains(@class,artdeco-modal) so footer Next was out of scope | Token-match full artdeco-modal / jobs-easy-apply-modal / role=dialog in _easy_apply_modal_ancestor |
+
+## Fixed for 2026-08-13 LinkedIn cloud cron (session clobber)
+
+| Issue | Fix |
+| --- | --- |
+| Preflight `sync-chrome-sessions` overwrote a live auto-login CDP `li_at` with stale Desktop source cookies → next launch lost session | Preserve dest when its auth cookie expires later than source; `refresh-portal-session-seed.sh` also updates live Desktop Cookies |
+
+## Fixed for 2026-08-13 LinkedIn cloud cron (auto-login follow-up)
+
+| Issue | Fix |
+| --- | --- |
+| Stale LinkedIn session required owner headed login every cloud cron; AWS IP → reCAPTCHA checkpoint | Cloud LinkedIn CDP uses WARP SOCKS (`ensure-linkedin-warp.sh`); `tools/linkedin/auto_login.py` tries Google SSO then `LINKEDIN_PASSWORD`; on success `refresh-portal-session-seed.sh` updates `.portal-sessions` for next boot. CAPTCHA still owner-only when WARP+SSO fail. |
+
 ## Fixed for 2026-08-13 Naukri daily (cloud)
 
 | Issue | Fix |
@@ -30,6 +73,9 @@
 | Experian Hyd .NET SA skipped (`location_not_hyd_or_campus`) — title lacked city; Brazil/Malaysia cards leaked | Annotate SmartRecruiters cards with nearest location group; expand BAD_LOC (Brazil/Malaysia/etc.) |
 | SmartRecruiters DataDome (`captcha-delivery.com`) reported as `ats_incomplete_or_stuck` | Detect DataDome iframe/host in `blocked_wall` as CAPTCHA/bot wall |
 | ModMed Workday card poisoned with `· Hyderabad` from page chrome nearestLoc | Restrict location-group annotation to SmartRecruiters hosts; URL BAD_LOC wins |
+| `CDP_REQUIRE_LIVE_LOGIN=1` hard-failed `launch-chrome-cdp.sh hitechcity` so careers never started | Hard-fail only for `linkedin`; hitechcity warns and continues for career-portal applies |
+| Oracle Cloud HCM `closest('[class*="job"]')` matched empty `<a class="job-grid-item__link">` so JPMC/Oracle `jobCount: 0`; listing `?location=Hyderabad` poisoned URL loc hint; hidden recaptcha/api2/anchor flagged Microsoft/Qualcomm as CAPTCHA; Hyland `/en/about/careers` 404; Intel search landed on Workday marketing page; Solera dropped at MAX_COMPANIES=18 | Walk parent cards for Oracle/JPMC titles; path-only `url_loc_hint`; challenge-only CAPTCHA (bframe/DataDome/visible widget); Hyland iCIMS + Intel Workday search URLs; cookie Accept; MAX_COMPANIES=24 |
+| LinkedIn-blocked hitechcity CDP kept WARP SOCKS → Solera/Accenture `ERR_SOCKS_CONNECTION_FAILED`; Qualcomm email SSO classified as guest apply (`ats_incomplete`); Intel `US-Oregon-Hillsboro` paths not BAD_LOC; Hyland iCIMS jobs live in iframe | Relaunch Chrome without WARP after LinkedIn fail; login wall if Sign-in copy and no resume upload; US-state Workday path BAD_LOC; extract job links from all frames |
 
 ## Fixed for 2026-08-13 LinkedIn cloud cron
 
@@ -186,8 +232,9 @@
 
 See [AUTO_FIX.md](AUTO_FIX.md). Code-fixable blockers discovered during any daily
 automation must be patched in durable helpers, pushed on a feature branch, opened
-as a **ready** PR (not draft), and merged with `bash scripts/auto-merge-fix-pr.sh`
-— not left as report-only notes.
+as a **ready** PR (not draft), merged with `bash scripts/auto-merge-fix-pr.sh`,
+and **same-day re-run** with `scripts/rerun-daily-after-fix.sh` so that day's
+applies use the fix — not left as report-only notes and not deferred to tomorrow's cron.
 
 ## Fixed for 2026-08-11 Cutshort home (Windows residential)
 

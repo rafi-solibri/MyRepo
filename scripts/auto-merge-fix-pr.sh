@@ -46,7 +46,7 @@ if [[ -z "$PR_URL" ]]; then
 
 ## Test plan
 - [ ] Relevant portal preflight / unit smoke
-- [ ] Re-run durable apply helper when safe
+- [ ] Same-day re-run via scripts/rerun-daily-after-fix.sh (do not wait for tomorrow's cron)
 
 EOF
 )"
@@ -79,6 +79,9 @@ echo "PR merge status: $STATE"
 MERGED="$(gh pr view --json state -q .state 2>/dev/null || true)"
 if [[ "$MERGED" == "MERGED" ]]; then
   echo "OK: PR merged → $PR_URL"
+  echo "Same-day post-fix re-run: apply today's jobs with the merged code (do not wait for tomorrow's cron)."
+  bash "$ROOT/scripts/rerun-daily-after-fix.sh" --merged-pr "$PR_URL" \
+    || echo "WARNING: post-fix re-run failed (merge still OK) — re-run: bash scripts/rerun-daily-after-fix.sh --merged-pr $PR_URL"
   exit 0
 fi
 
