@@ -260,7 +260,38 @@ function checkPortal(portal) {
       }
     } catch (err) {
       result.liveVerified = false;
-      result.liveError = String(err && err.message ? err.message : err).slice(0, 240);
+      const stdout = String((err && err.stdout) || "");
+      const stderr = String((err && err.stderr) || "");
+      const blob = `${stdout}\n${stderr}\n${err && err.message ? err.message : err}`;
+      result.liveError = blob.slice(0, 400);
+      // Prefer live CDP reason over misleading "cookies locked" when Chrome is open
+      // on a login/checkpoint page (common on Windows ABE / system profile).
+      let liveJson = null;
+      for (const line of `${stdout}\n${stderr}`.split(/\r?\n/).reverse()) {
+        const t = line.trim();
+        if (!t.startsWith("{") || !t.includes('"ok"')) continue;
+        try {
+          liveJson = JSON.parse(t);
+          break;
+        } catch {
+          /* keep scanning */
+        }
+      }
+      if (liveJson && liveJson.reason) {
+        result.reason = String(liveJson.reason);
+        if (liveJson.url) result.liveUrl = String(liveJson.url).slice(0, 240);
+        if (liveJson.onChallenge) result.liveChallenge = true;
+      } else if (/checkpoint|challenge|security.?verif/i.test(blob)) {
+        result.reason =
+          portal === "linkedin" || portal === "hitechcity"
+            ? "linkedin_security_challenge"
+            : `${portal}_login_or_challenge`;
+      } else if (/login_required|authwall|\/login/i.test(blob)) {
+        result.reason =
+          portal === "linkedin" || portal === "hitechcity"
+            ? "linkedin_login_required"
+            : `${portal}_login_required`;
+      }
     }
   }
   console.log(JSON.stringify(result, null, 2));

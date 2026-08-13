@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-13 LinkedIn home (Windows residential)
+
+| Issue | Fix |
+| --- | --- |
+| Preflight exit 3 reported `chrome_cookies_locked_close_chrome_and_resync` while live CDP was already on `/checkpoint/challenge` (Security Verification) — owner action unclear | `wait_for_cdp_login.js` emits `linkedin_security_challenge`; `chrome_session.checkPortal` parses waiter JSON and prefers that reason over locked-cookie. Owner: complete CAPTCHA via `bash scripts/home-headed-login.sh linkedin` (no LINKEDIN_* secrets on this home box) |
+
 ## Fixed for 2026-08-13 LinkedIn password auto-login
 
 | Issue | Fix |

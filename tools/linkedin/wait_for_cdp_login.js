@@ -169,11 +169,14 @@ async function main() {
     }
   }
 
+  const challenge =
+    last.onChallenge || /checkpoint|challenge|security.?verif/i.test(last.url || "");
   console.log(
     JSON.stringify({
       ok: false,
-      reason: "linkedin_login_required",
+      reason: challenge ? "linkedin_security_challenge" : "linkedin_login_required",
       has_li_at: last.has_li_at,
+      onChallenge: !!challenge,
       url: last.url,
       hint: "bash scripts/home-headed-login.sh linkedin",
       note: "Windows ABE: Desktop Chrome cookies cannot be copied into CDP profiles. SQLite li_at name alone is not proof of a live session.",
