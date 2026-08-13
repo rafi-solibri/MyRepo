@@ -93,5 +93,20 @@ assert.strictEqual(
   true,
   "Data & AI SA without .NET must skip"
 );
+assert.strictEqual(
+  shouldSkipTitle("Principal IS Architect, Anaplan"),
+  true,
+  "Anaplan-primary must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Quality Solution Architect"),
+  true,
+  "Quality Architect must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Immediate Hiring For Power Platform Architect"),
+  true,
+  "Power Platform must skip"
+);
 assert.strictEqual(isArchLeadTitle("Dot Net Fullstack Developer"), false);
 console.log("resume_and_filters self-test OK");
