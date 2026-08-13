@@ -123,7 +123,11 @@ if cdp_missing:
     print("Daily automations WILL hit login walls until these are fixed + snapshot saved.")
     sys.exit(3)
 
-print("All 6 portal CDP profiles authenticated (cron-ready).")
+print("All 6 portal CDP profiles have auth cookie NAMES in SQLite.")
+print("NOTE: SQLite name presence ≠ live session. LinkedIn often keeps a stale li_at")
+print("      row after server invalidation / checkpoint. Cloud cron must still pass")
+print("      `bash scripts/launch-chrome-cdp.sh linkedin` live CDP probe (feed URL, not /login|/checkpoint).")
+print("      If live check fails: headed login → refresh .portal-sessions → Save snapshot.")
 if source_missing:
     print(f"Desktop Default still missing: {', '.join(source_missing)} (non-fatal for cron if CDP OK)")
 sys.exit(0)

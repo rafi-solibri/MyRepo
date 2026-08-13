@@ -1843,7 +1843,15 @@ def main() -> None:
         "4452340803",  # MyCareernet blocked
     }
     with sync_playwright() as p:
-        browser = p.chromium.connect_over_cdp(CDP)
+        try:
+            browser = p.chromium.connect_over_cdp(CDP)
+        except Exception as e:
+            results.append(
+                JobResult(status="blocked", reason=f"CDP connect failed: {str(e)[:180]}")
+            )
+            OUT.write_text(json.dumps([asdict(r) for r in results], indent=2))
+            print(f"BLOCKED: CDP connect failed: {e}")
+            raise SystemExit(5)
         context = browser.contexts[0]
         page = None
         for pg in context.pages:
@@ -1863,6 +1871,10 @@ def main() -> None:
         for auth_try in range(2):
             page.goto("https://www.linkedin.com/feed/", wait_until="domcontentloaded", timeout=60000)
             time.sleep(2 + auth_try)
+            url_l = (page.url or "").lower()
+            if re.search(r"/login|authwall|/checkpoint|uas/login", url_l):
+                time.sleep(2)
+                continue
             body = page.locator("body").inner_text()[:2000]
             has_feed = bool(
                 re.search(
@@ -1870,7 +1882,7 @@ def main() -> None:
                     body,
                     re.I,
                 )
-            ) or ("/feed" in (page.url or "") and "login" not in (page.url or "").lower())
+            ) or ("/feed" in url_l and "login" not in url_l and "checkpoint" not in url_l)
             login_wall = bool(re.search(r"Sign in\n|Email or phone|Welcome Back", body)) and not has_feed
             # Cookie presence is a strong signal when feed chrome is present
             try:
@@ -1881,8 +1893,11 @@ def main() -> None:
             if has_feed and has_li_at and not login_wall:
                 signed_in = True
                 break
-            if has_li_at and "login" not in (page.url or "").lower() and not re.search(
-                r"Email or phone", body
+            if (
+                has_li_at
+                and "login" not in url_l
+                and "checkpoint" not in url_l
+                and not re.search(r"Email or phone", body)
             ):
                 signed_in = True
                 break
@@ -1891,7 +1906,7 @@ def main() -> None:
             results.append(JobResult(status="blocked", reason="Not signed in"))
             OUT.write_text(json.dumps([asdict(r) for r in results], indent=2))
             print("BLOCKED: not signed in")
-            return
+            raise SystemExit(5)
 
         ensure_english_ui(page)
 

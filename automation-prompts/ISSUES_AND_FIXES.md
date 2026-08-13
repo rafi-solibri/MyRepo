@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-13 LinkedIn cloud cron
+
+| Issue | Fix |
+| --- | --- |
+| SQLite/`verify-portal-logins` reported OK while live CDP hit `/login` then `/checkpoint` (stale `.portal-sessions` `li_at` from 2026-08-06); Easy Apply stopped correctly but external burned 25 PRIORITY_IDS as false `no external Apply button` | `launch-chrome-cdp.sh` hard-fails LinkedIn live probe when `CDP_REQUIRE_LIVE_LOGIN=1` (default); headed-login scripts set `=0`; external helper auth-gates before PRIORITY_IDS; Easy Apply exits 5 on CDP/login wall; verify script notes SQLite≠live. Owner: headed login + refresh `.portal-sessions` + Save snapshot |
+
 ## Fixed for 2026-08-12 Notification home (Windows residential)
 
 | Issue | Fix |

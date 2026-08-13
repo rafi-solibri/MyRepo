@@ -8,6 +8,7 @@ cd "$ROOT"
 export CHROME_CDP_MODE="${CHROME_CDP_MODE:-system}"
 export CHROME_HEADLESS=0
 export CDP_LIVE_LOGIN_CHECK=0
+export CDP_REQUIRE_LIVE_LOGIN=0
 
 echo "Starting system Chrome with CDP (closes normal Chrome briefly)…"
 bash scripts/launch-chrome-cdp.sh linkedin

@@ -301,6 +301,13 @@ def process_external(page: Page, job: dict) -> ExtResult:
         return res
     time.sleep(2.5)
 
+    url_l = (page.url or "").lower()
+    if re.search(r"/login|authwall|/checkpoint|uas/login", url_l):
+        res.status = "blocked"
+        res.reason = "linkedin_login_required"
+        print(f"  -> blocked: {res.reason} ({(page.url or '')[:120]})", flush=True)
+        return res
+
     # Location hard check again
     loc = res.location or ""
     try:
@@ -470,10 +477,63 @@ def main() -> None:
             ordered.append(jid)
     results: list[ExtResult] = []
     with sync_playwright() as p:
-        browser = p.chromium.connect_over_cdp(CDP)
+        try:
+            browser = p.chromium.connect_over_cdp(CDP)
+        except Exception as e:
+            results.append(
+                ExtResult(status="blocked", reason=f"CDP connect failed: {str(e)[:180]}")
+            )
+            out = {
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "submitted": [],
+                "blocked": [asdict(r) for r in results],
+                "skipped": [],
+                "all": [asdict(r) for r in results],
+            }
+            REPORT_OUT.write_text(json.dumps(out, indent=2))
+            print(f"BLOCKED: CDP connect failed: {e}", flush=True)
+            raise SystemExit(5)
         context = browser.contexts[0]
         page = context.pages[0] if context.pages else context.new_page()
         page.bring_to_front()
+        # Auth gate — do not burn PRIORITY_IDS as false "no external Apply button"
+        try:
+            page.goto("https://www.linkedin.com/feed/", wait_until="domcontentloaded", timeout=60000)
+            time.sleep(2)
+        except Exception:
+            pass
+        url_l = (page.url or "").lower()
+        body = ""
+        try:
+            body = page.locator("body").inner_text()[:2000]
+        except Exception:
+            body = ""
+        try:
+            has_li_at = any(c.get("name") == "li_at" for c in context.cookies(["https://www.linkedin.com"]))
+        except Exception:
+            has_li_at = False
+        login_wall = bool(re.search(r"/login|authwall|/checkpoint|uas/login", url_l)) or (
+            bool(re.search(r"Sign in\n|Email or phone|Welcome Back", body))
+            and not re.search(r"Start a post|My Network|Notifications", body, re.I)
+        )
+        if login_wall or not has_li_at:
+            results.append(
+                ExtResult(
+                    status="blocked",
+                    reason="linkedin_login_required",
+                    url=page.url or "",
+                )
+            )
+            out = {
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "submitted": [],
+                "blocked": [asdict(r) for r in results],
+                "skipped": [],
+                "all": [asdict(r) for r in results],
+            }
+            REPORT_OUT.write_text(json.dumps(out, indent=2))
+            print("BLOCKED: not signed in (linkedin_login_required)", flush=True)
+            raise SystemExit(5)
         done = 0
         for jid in ordered:
             if done >= MAX_EXTERNAL:

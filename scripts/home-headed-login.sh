@@ -33,6 +33,8 @@ LOGIN_URL="$(
 )"
 
 export CHROME_HEADLESS=0
+# Launch may probe live login; do not abort here — this script waits for the owner next.
+export CDP_REQUIRE_LIVE_LOGIN=0
 export PYTHON_BIN="${PYTHON_BIN:-}"
 if [[ -z "${PYTHON_BIN}" && -x /c/Python314/python ]]; then
   export PYTHON_BIN=/c/Python314/python
