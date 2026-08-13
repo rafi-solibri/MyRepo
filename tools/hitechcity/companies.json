@@ -65,7 +65,7 @@
       "campuses": ["sattva-knowledge-city", "the-v", "mindspace-madhapur"],
       "linkedinSlug": "microsoft",
       "careersUrls": [
-        "https://jobs.careers.microsoft.com/global/en/search?q=architect&lc=India&l=Hyderabad%2C%20Telangana%2C%20India"
+        "https://apply.careers.microsoft.com/careers?keywords=architect&location=Hyderabad%2C+Telangana%2C+India"
       ],
       "priority": 1
     },
@@ -274,7 +274,7 @@
       "campuses": ["divyasree-orion", "dlf-cyber-city"],
       "linkedinSlug": "palo-alto-networks",
       "careersUrls": [
-        "https://jobs.paloaltonetworks.com/en/jobs/?search=&country=India&pagesize=20#results"
+        "https://jobs.paloaltonetworks.com/en/search-jobs/Hyderabad"
       ],
       "priority": 1
     },
@@ -283,7 +283,7 @@
       "campuses": ["mindspace-madhapur", "cyber-pearl"],
       "linkedinSlug": "experian",
       "careersUrls": [
-        "https://jobs.smartrecruiters.com/Experian/search?q=architect&location=Hyderabad"
+        "https://careers.smartrecruiters.com/Experian?search=architect"
       ],
       "priority": 1
     },

@@ -1,5 +1,19 @@
 # Issues from last cron + fixes
 
+<<<<<<< HEAD
+## Fixed for 2026-08-13 Hitech City cloud cron
+
+| Issue | Fix |
+| --- | --- |
+| Oracle Cloud HCM / JPMC career boards returned `jobCount: 0` because job anchors have empty `innerText` (title on parent card) | `extract_job_links` falls back to `aria-label` / parent-card text; light scroll after scan |
+| Microsoft Hyd search URL redirected to unrelated global US listing | Point `companies.json` at `apply.careers.microsoft.com/careers?keywords=architect&location=Hyderabad...` |
+| Palo Alto `#results` URL showed Custom Content Error; Experian `/search?q=` 404'd | Use `search-jobs/Hyderabad` + `careers.smartrecruiters.com/Experian?search=architect` (click Hyderabad group) |
+| Optum category hub `architecture-jobs` treated as a role | Skip bare `architecture-jobs` / search-hub URLs without a job id |
+| Oracle parent-card text `BENGALURU … India` passed location because bare `India` overrode BAD_LOC | `card_location_ok`: non-Hyd city beats bare India unless Hyd/remote also present |
+| Experian Hyd .NET SA skipped (`location_not_hyd_or_campus`) — title lacked city; Brazil/Malaysia cards leaked | Annotate SmartRecruiters cards with nearest location group; expand BAD_LOC (Brazil/Malaysia/etc.) |
+| SmartRecruiters DataDome (`captcha-delivery.com`) reported as `ats_incomplete_or_stuck` | Detect DataDome iframe/host in `blocked_wall` as CAPTCHA/bot wall |
+| ModMed Workday card poisoned with `· Hyderabad` from page chrome nearestLoc | Restrict location-group annotation to SmartRecruiters hosts; URL BAD_LOC wins |
+=======
 ## Fixed for 2026-08-13 LinkedIn cloud cron
 
 | Issue | Fix |
@@ -12,6 +26,7 @@
 | --- | --- |
 | Raven `minimumExperience/maximumExperience` `0-0` (undisclosed) with no title band was kept as `max=0` → false skip `maxExp 0<10` (e.g. Senior Software Architect - .NET) | `experienceBounds` returns NaN/NaN + `undisclosed:true` when Raven is 0-0 and title has no band; still overlays title bands like 6-9 / 8-12 |
 | Country-only `locations: India` failed as `location not Hyd/remote: India` without JD enrich → missed Remote/Hyd in description | `classifyJob` sets `needsEnrich` for empty/country-only India when description missing |
+>>>>>>> origin/main
 
 ## Fixed for 2026-08-12 Notification home (Windows residential)
 

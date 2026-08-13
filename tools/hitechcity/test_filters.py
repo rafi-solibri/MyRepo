@@ -34,6 +34,28 @@ def test_campus_location():
     assert not location_or_campus_ok("Solutions Architect", "", "Solutions Architect role summary")
 
 
+def test_oraclecloud_parent_card_location():
+    # Oracle Cloud HCM parent-card text often bundles title + city (Bengaluru must skip).
+    assert not card_location_ok(
+        "System Architect BENGALURU, KARNATAKA, India and 2 more HOT JOB"
+    )
+    assert card_location_ok(
+        "Senior Lead Architect - Solution Architect Hyderabad, Telangana, India TechnologyArchitecture"
+    )
+    # SmartRecruiters location-group annotation must keep Hyd and drop Brazil/Malaysia.
+    assert card_location_ok(
+        "Solution Architect (Microsoft .NET/Azure Cloud) Full-time · Hyderabad, India"
+    )
+    assert not card_location_ok("Solutions Architect Full-time · São Carlos, Brazil")
+    assert not card_location_ok(
+        "Senior Software & Platform Architect Full-time · Cyberjaya, Malaysia"
+    )
+    # Palo Alto / search-jobs Hyd path encodes workplace.
+    pan = "https://jobs.paloaltonetworks.com/en/job/hyderabad/senior-staff-software-engineer/47263/96768473904"
+    assert "hyderabad" in url_loc_hint(pan).lower()
+    assert card_location_ok("Senior Staff Software Engineer", url_loc_hint(pan))
+
+
 def test_careers_card_location():
     # US workplace in title must skip even if page chrome later mentions India.
     assert not card_location_ok(
@@ -70,6 +92,7 @@ def test_company_match():
 if __name__ == "__main__":
     test_title_ok()
     test_campus_location()
+    test_oraclecloud_parent_card_location()
     test_careers_card_location()
     test_company_match()
     print("ok")
