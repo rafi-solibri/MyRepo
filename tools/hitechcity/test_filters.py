@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Small unit tests for Hitech City filters."""
 
-from tools.hitechcity.ats_fill import frame_url_is_captcha_challenge
+from tools.hitechcity.ats_fill import blocked_wall, frame_url_is_captcha_challenge
 from tools.hitechcity.careers_apply import (
     CAREERS_TITLE_SKIP,
+    JD_WRONG_STACK,
     JOB_ID_HREF_RE,
     NAV_CHROME_RE,
     card_location_ok,
@@ -25,12 +26,19 @@ def test_title_ok():
     assert skip_reason("QA Engineer") is not None
     assert CAREERS_TITLE_SKIP.search("Staff Project Analyst")
     assert CAREERS_TITLE_SKIP.search("Principal Project Manager India, Telangana, Hyderabad")
+    assert CAREERS_TITLE_SKIP.search("Principal Software Development Engineer in Test")
+    assert CAREERS_TITLE_SKIP.search("CyberSecurity Architect - CNI")
+    assert CAREERS_TITLE_SKIP.search("Principal Database Engineer- Architecture/Engineering")
     assert CAREERS_TITLE_SKIP.search("Embedded Software - System Test Architect")
     assert CAREERS_TITLE_SKIP.search("Product Manager, Principal")
+    assert JD_WRONG_STACK.search(
+        "designing and implementing Salesforce solutions ... SFDC Development and Customization"
+    )
     assert LI_TITLE_SKIP.search("Staff/Principal GPU/CPU Kernel Optimization Engineer")
     assert LI_TITLE_SKIP.search("Network Architect")
     assert not LI_TITLE_SKIP.search("Software Engineer, Principal - C#")
     assert not LI_TITLE_SKIP.search("Solution Architect")
+    assert not CAREERS_TITLE_SKIP.search("Principal Software Engineer")
 
 
 def test_campus_location():
@@ -120,6 +128,55 @@ def test_captcha_frame_ignores_hidden_badge():
     )
     assert frame_url_is_captcha_challenge("https://geo.captcha-delivery.com/captcha/?initialCid=x")
     assert frame_url_is_captcha_challenge("https://challenges.cloudflare.com/cdn-cgi/challenge-platform/")
+
+
+class _FakeLoc:
+    def __init__(self, n=0):
+        self._n = n
+
+    def count(self):
+        return self._n
+
+
+class _FakePage:
+    """Minimal page stub for blocked_wall unit checks."""
+
+    def __init__(self, body: str, *, file_inputs: int = 0, create_acct: bool = False):
+        self._body = body
+        self._file = file_inputs
+        self._create = create_acct
+        self.frames = []
+        self.url = "https://solera.wd5.myworkdayjobs.com/apply/applyManually"
+
+    def locator(self, sel: str):
+        s = (sel or "").lower()
+        if "input[type='file']" in s or 'input[type="file"]' in s:
+            return _FakeLoc(self._file)
+        if "createaccountsubmitbutton" in s:
+            return _FakeLoc(1 if self._create else 0)
+        if "password" in s:
+            return _FakeLoc(1 if self._create else 0)
+        if sel == "body" or s == "body":
+            page = self
+
+            class _Body:
+                def inner_text(self, *a, **k):
+                    return page._body
+
+            return _Body()
+        return _FakeLoc(0)
+
+
+def test_workday_create_account_is_login_wall():
+    body = (
+        "Create Account/Sign In\nMy Information\nCreate Account\n"
+        "Password Requirements:\nEmail Address*\nPassword*\nVerify New Password*\n"
+        "Already have an account?\nSign In"
+    )
+    assert blocked_wall(_FakePage(body, file_inputs=0, create_acct=True)) == "login/account wall"
+    # Guest form with resume upload must not be treated as login wall just for "Sign In" chrome.
+    guest = "My Information\nFirst Name\nUpload Resume\nSubmit application"
+    assert blocked_wall(_FakePage(guest, file_inputs=1)) is None
 
 
 def test_hyland_icims_url():

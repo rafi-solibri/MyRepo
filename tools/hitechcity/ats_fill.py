@@ -144,7 +144,11 @@ def blocked_wall(page: Page) -> str | None:
     if re.search(
         r"sign in to continue|log in to apply|create an account|sign in to apply|"
         r"sign in using (microsoft|google)|employees must sign in|"
-        r"select a method below to sign in",
+        r"select a method below to sign in|"
+        # Workday applyManually often lands on Create Account/Sign In with no file input
+        # (Solera) — previously misreported as ats_incomplete_or_stuck.
+        r"create account\s*/\s*sign in|already have an account\??|"
+        r"verify new password|create account\s*$",
         body,
         re.I,
     ):
@@ -155,6 +159,17 @@ def blocked_wall(page: Page) -> str | None:
             has_resume = False
         if not has_resume:
             return "login/account wall"
+    # Workday progress bar: step 1 Create Account/Sign In + password fields, no resume.
+    try:
+        if page.locator('[data-automation-id="createAccountSubmitButton"]').count() and (
+            page.locator('input[data-automation-id="password"]').count()
+            or page.locator('[data-automation-id="password"]').count()
+        ):
+            has_resume = page.locator("input[type='file']").count() > 0
+            if not has_resume:
+                return "login/account wall"
+    except Exception:
+        pass
     return None
 
 
