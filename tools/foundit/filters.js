@@ -65,16 +65,25 @@ function parseTitleExperience(title) {
 function experienceBounds(job, title) {
   let min = Number(job.minimumExperience?.years ?? job.minExperience ?? NaN);
   let max = Number(job.maximumExperience?.years ?? job.maxExperience ?? NaN);
-  const undisclosed =
+  // Raven often emits 0-0 when experience is undisclosed — treat as unknown,
+  // then overlay title bands like "6-9 Yrs" / "8 to 12 years" when present.
+  const ravenUndisclosed =
     (Number.isNaN(min) && Number.isNaN(max)) || (min === 0 && max === 0);
-  if (undisclosed) {
+  if (ravenUndisclosed) {
     const fromTitle = parseTitleExperience(title || job.title);
     if (fromTitle) {
       min = fromTitle.min;
       max = fromTitle.max == null ? NaN : fromTitle.max;
+      return {
+        min,
+        max,
+        undisclosed: Number.isNaN(min) && Number.isNaN(max),
+      };
     }
+    // No title band → stay undisclosed (do NOT keep 0-0 as a junior/mid band).
+    return { min: NaN, max: NaN, undisclosed: true };
   }
-  return { min, max, undisclosed: Number.isNaN(min) && Number.isNaN(max) };
+  return { min, max, undisclosed: false };
 }
 
 function hasDotNet(title, skills) {
@@ -178,7 +187,15 @@ function classifyJob(job) {
   if (!hasSeniority(title))
     return { pass: false, reason: "no seniority keyword on title" };
   if (!locationOk(loc, title)) {
-    if (!loc) return { pass: false, reason: "needs JD location enrich", needsEnrich: true };
+    // Empty or country-only (India) cards need JD body for Remote/Hyd signals.
+    const countryOnly = !loc || /^(india|in)(\s*\|\s*(india|in))*$/i.test(loc.trim());
+    if (!loc || (countryOnly && !job.description)) {
+      return {
+        pass: false,
+        reason: "needs JD location enrich",
+        needsEnrich: true,
+      };
+    }
     return { pass: false, reason: `location not Hyd/remote: ${loc.slice(0, 80)}` };
   }
   const exp = experienceOk(job, title);

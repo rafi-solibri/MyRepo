@@ -1,16 +1,46 @@
 # Issues from last cron + fixes
 
+<<<<<<< HEAD
 ## Fixed for 2026-08-13 LinkedIn cloud cron (auto-login follow-up)
 
 | Issue | Fix |
 | --- | --- |
 | Stale LinkedIn session required owner headed login every cloud cron; AWS IP → reCAPTCHA checkpoint | Cloud LinkedIn CDP uses WARP SOCKS (`ensure-linkedin-warp.sh`); `tools/linkedin/auto_login.py` tries Google SSO then `LINKEDIN_PASSWORD`; on success `refresh-portal-session-seed.sh` updates `.portal-sessions` for next boot. CAPTCHA still owner-only when WARP+SSO fail. |
+=======
+## Fixed for 2026-08-13 Naukri daily (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Workday Create Account (Wells Fargo etc.) never toggled consent — label is “Yes, I have **reviewed** the above and consent…”, helper only matched “read”; `.check()` alone left box unchecked → silent stay / fake redirect → `external_incomplete_or_timeout` | `workday_apply.js`: click consent label (reviewed/read), verify `createAccountCheckbox` checked before submit; classify Sign-In wrong-password / stuck auth as `ats_login_wall` |
+| SS&C Workday already signed in but helper bailed during Autofill **Loading** spinner; My Information / Experience need Candidate Home fields (source multi-select, previous-worker No, city/postal, phone type, school/degree) + `pageFooterNextButton` | Wait out Loading; fill formField-* + promptLeafNode clicks; education Acharya Nagarjuna / B.Tech IT; avoid re-uploading resume each loop |
+| Oracle Fusion / Oracle DBA / Appian / Network Operations / Data & AI titles burned 3.5m ATS budgets | `resume_and_filters.js` + `test_filters.js`: expand `SKIP_TITLE_RE` / `NON_DOTNET_PRIMARY_RE` / `PURE_AI_DATA_RE` |
+
+## Fixed for 2026-08-13 Hitech City cloud cron
+
+| Issue | Fix |
+| --- | --- |
+| Oracle Cloud HCM / JPMC career boards returned `jobCount: 0` because job anchors have empty `innerText` (title on parent card) | `extract_job_links` falls back to `aria-label` / parent-card text; light scroll after scan |
+| Microsoft Hyd search URL redirected to unrelated global US listing | Point `companies.json` at `apply.careers.microsoft.com/careers?keywords=architect&location=Hyderabad...` |
+| Palo Alto `#results` URL showed Custom Content Error; Experian `/search?q=` 404'd | Use `search-jobs/Hyderabad` + `careers.smartrecruiters.com/Experian?search=architect` (click Hyderabad group) |
+| Optum category hub `architecture-jobs` treated as a role | Skip bare `architecture-jobs` / search-hub URLs without a job id |
+| Oracle parent-card text `BENGALURU … India` passed location because bare `India` overrode BAD_LOC | `card_location_ok`: non-Hyd city beats bare India unless Hyd/remote also present |
+| Experian Hyd .NET SA skipped (`location_not_hyd_or_campus`) — title lacked city; Brazil/Malaysia cards leaked | Annotate SmartRecruiters cards with nearest location group; expand BAD_LOC (Brazil/Malaysia/etc.) |
+| SmartRecruiters DataDome (`captcha-delivery.com`) reported as `ats_incomplete_or_stuck` | Detect DataDome iframe/host in `blocked_wall` as CAPTCHA/bot wall |
+| ModMed Workday card poisoned with `· Hyderabad` from page chrome nearestLoc | Restrict location-group annotation to SmartRecruiters hosts; URL BAD_LOC wins |
+>>>>>>> origin/main
 
 ## Fixed for 2026-08-13 LinkedIn cloud cron
 
 | Issue | Fix |
 | --- | --- |
 | SQLite/`verify-portal-logins` reported OK while live CDP hit `/login` then `/checkpoint` (stale `.portal-sessions` `li_at` from 2026-08-06); Easy Apply stopped correctly but external burned 25 PRIORITY_IDS as false `no external Apply button` | `launch-chrome-cdp.sh` hard-fails LinkedIn live probe when `CDP_REQUIRE_LIVE_LOGIN=1` (default); headed-login scripts set `=0`; external helper auth-gates before PRIORITY_IDS; Easy Apply exits 5 on CDP/login wall; verify script notes SQLite≠live. Owner: headed login + refresh `.portal-sessions` + Save snapshot |
+
+## Fixed for 2026-08-13 Foundit daily (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Raven `minimumExperience/maximumExperience` `0-0` (undisclosed) with no title band was kept as `max=0` → false skip `maxExp 0<10` (e.g. Senior Software Architect - .NET) | `experienceBounds` returns NaN/NaN + `undisclosed:true` when Raven is 0-0 and title has no band; still overlays title bands like 6-9 / 8-12 |
+| Country-only `locations: India` failed as `location not Hyd/remote: India` without JD enrich → missed Remote/Hyd in description | `classifyJob` sets `needsEnrich` for empty/country-only India when description missing |
 
 ## Fixed for 2026-08-12 Notification home (Windows residential)
 

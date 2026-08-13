@@ -66,5 +66,32 @@ assert.strictEqual(
   true,
   "SRE suffix must skip"
 );
+assert.strictEqual(
+  shouldSkipTitle("Appian Technical Lead - II"),
+  true,
+  "Appian-primary must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Technical Lead - Network Operations"),
+  true,
+  "Network Operations lead must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Oracle Fusion Finance Solution Architect"),
+  true,
+  "Oracle Fusion SA must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle(
+    "Oracle Cloud Infra Admin-Oracle DBA Cloud Architect-Manager"
+  ),
+  true,
+  "Oracle DBA Cloud Architect must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Data & AI Solution Architect"),
+  true,
+  "Data & AI SA without .NET must skip"
+);
 assert.strictEqual(isArchLeadTitle("Dot Net Fullstack Developer"), false);
 console.log("resume_and_filters self-test OK");
