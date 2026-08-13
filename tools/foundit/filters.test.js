@@ -179,4 +179,39 @@ assert.strictEqual(
   "plain .Net Developer still lacks seniority"
 );
 
+assert.strictEqual(
+  experienceOk(
+    { minimumExperience: { years: 0 }, maximumExperience: { years: 0 } },
+    "Senior Software Architect - .NET"
+  ).ok,
+  true,
+  "Raven 0-0 with no title band must be undisclosed (not maxExp 0 junior/mid)"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 11,
+    title: "Senior Software Architect - .NET",
+    companyName: "Hyland",
+    locations: [{ text: "Remote" }],
+    skills: [{ text: ".NET" }],
+    minimumExperience: { years: 0 },
+    maximumExperience: { years: 0 },
+  }).pass,
+  true,
+  "Senior .NET Architect remote with Raven 0-0 must pass"
+);
+
+const indiaEnrich = classifyJob({
+  jobId: 12,
+  title: "Senior .NET Architect",
+  companyName: "Example",
+  locations: [{ country: "India" }],
+  skills: [{ text: ".NET" }],
+  minimumExperience: { years: 10 },
+  maximumExperience: { years: 15 },
+});
+assert.strictEqual(indiaEnrich.needsEnrich, true, "country-only India must request JD enrich");
+assert.strictEqual(indiaEnrich.pass, false);
+
 console.log("filters.test.js OK");
