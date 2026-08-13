@@ -60,6 +60,9 @@ BAD_LOC_HINT = re.compile(
     r"bengaluru|bangalore|pune|chennai|mumbai|noida|gurgaon|gurugram|"
     r"brazil|s[aã]o\s*carlos|malaysia|cyberjaya|costa\s*rica|heredia|nottingham|"
     r"kuala\s*lumpur|mexico|colombia|chile|argentina|"
+    r"us[- ](?:texas|oregon|california|washington|arizona|colorado|massachusetts|"
+    r"florida|georgia|illinois|new[- ]york)|india[- ](?:bangalore|bengaluru)|"
+    r"hillsboro|santa[- ]clara|folsom|"
     r"tx|wa|ca|fl|ny|il|ga|nc|ma)\b",
     re.I,
 )
@@ -115,8 +118,15 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
     try:
         # Oracle Cloud HCM / JPMC / similar: job anchors often have empty innerText;
         # title + location live on the parent card (or aria-label / title attrs).
-        raw = page.evaluate(
-            """() => {
+        raw = []
+        frames = []
+        try:
+            frames = list(page.frames)
+        except Exception:
+            frames = []
+        if not frames:
+            frames = [page]
+        js = """() => {
               const out = [];
               const seen = new Set();
               const locRe = /([A-Z][A-Za-z .'-]+,\\s*(?:India|United States|USA|UK|United Kingdom|Malaysia|Brazil|Costa Rica|Romania|Poland|Germany|Netherlands|Ireland|Canada)(?:\\s*\\d+\\s*jobs?)?)/;
@@ -198,7 +208,14 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
               }
               return out;
             }"""
-        )
+        for fr in frames:
+            try:
+                part = fr.evaluate(js)
+            except Exception:
+                continue
+            raw.extend(part or [])
+            if len(raw) >= 40:
+                break
     except Exception:
         raw = []
     for item in raw or []:

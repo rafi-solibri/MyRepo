@@ -141,8 +141,19 @@ def blocked_wall(page: Page) -> str | None:
         re.I,
     ):
         return "CAPTCHA/bot wall"
-    if re.search(r"sign in to continue|log in to apply|create an account|sign in to apply", body, re.I):
-        if page.locator("input[type='file'], input[type='email']").count() == 0:
+    if re.search(
+        r"sign in to continue|log in to apply|create an account|sign in to apply|"
+        r"sign in using (microsoft|google)|employees must sign in|"
+        r"select a method below to sign in",
+        body,
+        re.I,
+    ):
+        # Email-only SSO is not guest apply (Qualcomm/Microsoft Eightfold).
+        try:
+            has_resume = page.locator("input[type='file']").count() > 0
+        except Exception:
+            has_resume = False
+        if not has_resume:
             return "login/account wall"
     return None
 

@@ -57,7 +57,10 @@ def test_oraclecloud_parent_card_location():
     assert not card_location_ok(
         "Senior Software & Platform Architect Full-time · Cyberjaya, Malaysia"
     )
-    # Palo Alto / search-jobs Hyd path encodes workplace.
+    # Workday US path tokens (Intel /job/US-Oregon-Hillsboro/).
+    intel = "https://intel.wd1.myworkdayjobs.com/en-US/External/job/US-Oregon-Hillsboro/Sr-Security-Architect_JR0282220?q=architect"
+    assert "oregon" in url_loc_hint(intel).lower()
+    assert not card_location_ok("Sr. Security Architect", url_loc_hint(intel))
     pan = "https://jobs.paloaltonetworks.com/en/job/hyderabad/senior-staff-software-engineer/47263/96768473904"
     assert "hyderabad" in url_loc_hint(pan).lower()
     assert card_location_ok("Senior Staff Software Engineer", url_loc_hint(pan))
