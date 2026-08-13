@@ -1,39 +1,33 @@
-# LinkedIn Daily — 2026-08-13
+# LinkedIn Daily — 2026-08-13 (manual all-portals rerun)
 
 Mohammed Abdul Rafi Ahmed — Easy Apply + external ATS batch.
+
+Cloud agent: https://cursor.com/agents/bc-7b7a3ecb-b7e8-4bc9-8b24-2ae739e5ba56
 
 ## Totals
 
 - **Submitted (Easy Apply):** 0
 - **Submitted (External ATS):** 0
-- **Blocked:** 1 Easy Apply (`Not signed in`)
-- **Skipped:** 25 external (false `no external Apply button` under login wall — fixed this run)
-- **Status:** **STOPPED — LinkedIn login required**
+- **Blocked:** 1 (`linkedin_login_required` / CAPTCHA checkpoint)
+- **Skipped:** 0
+- **Status:** **STOPPED — LinkedIn CAPTCHA / Security Verification (owner action)**
 
 ## Blockers
 
-- Preflight SQLite/`verify-portal-logins` showed `li_at` OK (seed `createdAt` 2026-08-06)
-- Live CDP: `/uas/login` then `/checkpoint/challenge` (stale/invalid session; CAPTCHA/owner)
+- Preflight SQLite showed `li_at` OK (`destHasAuth: true`)
+- Live CDP: `/uas/login` then `/checkpoint/challenge` (Google SSO auto-login hit CAPTCHA)
+- WARP SOCKS was up (`socks5://127.0.0.1:40000`); still checkpointed
 - Resume used: `resumes/Rafi_Resume.docx`
+- Not code-fixable: CAPTCHA/checkpoint is owner-only (`AUTO_FIX.md`)
 
 ## Owner action
 
-1. `bash scripts/home-headed-login.sh linkedin` (or Desktop Chrome on `chrome-cdp-profile`)
-2. Complete LinkedIn login + checkpoint/CAPTCHA
-3. Refresh `.portal-sessions` Cookies from the working profile
-4. `bash scripts/verify-portal-logins.sh --strict`
-5. Environment → **Save snapshot** so next cron boots a live session
-
-## Code fixes this run
-
-- `launch-chrome-cdp.sh` hard-fails LinkedIn live probe when `CDP_REQUIRE_LIVE_LOGIN=1`
-- Headed-login scripts set `CDP_REQUIRE_LIVE_LOGIN=0`
-- External helper auth-gates before PRIORITY_IDS; Easy Apply exits 5 on CDP/login wall
-- `verify-portal-logins.sh` notes SQLite name ≠ live session
+1. `bash scripts/home-headed-login.sh linkedin` (complete Security Verification)
+2. Refresh `.portal-sessions` Cookies from the working profile
+3. `bash scripts/verify-portal-logins.sh --strict`
+4. Environment → **Save snapshot** so next cron boots a live session
 
 ## Artifacts
 
-- `/opt/cursor/artifacts/daily-apply-report.json`
-- `/opt/cursor/artifacts/apply-report.json`
-- `/opt/cursor/artifacts/external-apply-report.json`
-- Agent: https://cursor.com/agents/bc-4cd80fa6-994b-40b4-a2bd-1d8bcee22ae6
+- `/opt/cursor/artifacts/linkedin-daily-run.json`
+- Morning cron (same blocker): https://cursor.com/agents/bc-4cd80fa6-994b-40b4-a2bd-1d8bcee22ae6
