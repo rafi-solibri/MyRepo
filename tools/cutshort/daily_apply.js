@@ -589,22 +589,14 @@ async function scan(page) {
       await sleep(60);
     }
   }
-  await pull({}, 350, "newest");
+  // Cap pages so daily runs finish in-session; classify() decides quality.
+  // Note: bare `q=`/`query=` params are ignored by /findjobs/q (same total as newest).
+  await pull({}, 120, "newest");
   await pull({ matchesfor: SEEKER_ID }, 40, "matchesfor");
-  await pull({ locations: "Hyderabad" }, 61, "hyd");
-  await pull({ locations: "Telangana" }, 30, "telangana");
-  // Keyword waves — catch Architect/Lead cards not in newest/hyd skill pages.
-  for (const [q, pages, label] of [
-    ["architect", 40, "q-architect"],
-    ["tech lead", 30, "q-techlead"],
-    [".net", 40, "q-dotnet"],
-    ["engineering manager", 20, "q-em"],
-  ]) {
-    await pull({ q }, pages, label);
-    await pull({ query: q }, Math.min(20, pages), `${label}-query`);
-  }
+  await pull({ locations: "Hyderabad" }, 50, "hyd");
+  await pull({ locations: "Telangana" }, 25, "telangana");
   for (const skills of ["00001", "00075", "00486", "00054", "00368", "00002", "00115"]) {
-    await pull({ skills }, 50, skills);
+    await pull({ skills }, 35, skills);
   }
   return [...byId.values()];
 }
