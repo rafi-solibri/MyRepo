@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-13 LinkedIn cloud cron (Yes/No select)
+
+| Issue | Fix |
+| --- | --- |
+| Easy Apply Additional Questions stuck — native Yes/No select stayed on Select an option; years fields OK but Next looped | Playwright select_option for Yes/No selects inside modal; expand work-model / start-immediately Yes patterns |
+
 ## Fixed for 2026-08-13 same-day post-fix re-run (all daily jobs)
 
 | Issue | Fix |

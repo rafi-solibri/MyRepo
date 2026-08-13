@@ -497,6 +497,9 @@ def fill_apply_radios_and_selects(page: Page) -> None:
             (r"require sponsorship|visa sponsorship", "No"),
             (r"willing to relocate", "Yes"),
             (r"hyderabad", "Yes"),
+            (r"work model|5 days a week|office \d+ days", "Yes"),
+            (r"start immediately|fill this position urgently", "Yes"),
+            (r"on-?site|work from (our|the) .* office", "Yes"),
         ]:
             q = page.get_by_text(re.compile(qpat, re.I)).first
             if not (q.count() and q.is_visible()):
@@ -769,22 +772,58 @@ def fill_inputs(page: Page) -> None:
     except Exception:
         pass
 
-    # Native selects still on Select an option
+    # Native selects still on Select an option — Playwright select_option is more
+    # reliable than dispatching change events for LinkedIn Easy Apply validation.
     try:
-        page.evaluate(
-            """() => {
-              const h=[...document.querySelectorAll('h2,h1')].find(e=>/Apply to /i.test(e.innerText||''));
-              const root=h ? (h.closest('.artdeco-modal') || h.parentElement?.parentElement?.parentElement) : document;
-              for (const s of root.querySelectorAll('select')) {
-                const yes=[...s.options].find(o=>o.text.trim().toLowerCase()==='yes');
-                if(yes && (!s.value || /select/i.test(s.options[s.selectedIndex]?.text||''))) {
-                  s.value=yes.value;
-                  s.dispatchEvent(new Event('input',{bubbles:true}));
-                  s.dispatchEvent(new Event('change',{bubbles:true}));
-                }
-              }
-            }"""
-        )
+        form = apply_form_root(page)
+        for sel in form.locator("select").all()[:12]:
+            try:
+                if not sel.is_visible():
+                    continue
+                opts = [
+                    re.sub(r"\s+", " ", (t or "")).strip()
+                    for t in sel.locator("option").all_inner_texts()
+                ]
+                lower = [o.lower() for o in opts]
+                cur = ""
+                try:
+                    cur = (sel.evaluate("s => (s.options[s.selectedIndex]?.text || '')") or "").strip()
+                except Exception:
+                    cur = ""
+                # Yes/No additional questions (not email/country lists)
+                if "yes" in lower and "no" in lower and len(opts) <= 5:
+                    if not cur or re.search(r"select", cur, re.I):
+                        try:
+                            sel.select_option(label=re.compile(r"^\s*Yes\s*$", re.I))
+                        except Exception:
+                            try:
+                                sel.select_option(value="Yes")
+                            except Exception:
+                                sel.evaluate(
+                                    """s => {
+                                      const yes=[...s.options].find(o=>/^yes$/i.test((o.text||'').trim()));
+                                      if(!yes) return;
+                                      s.selectedIndex=[...s.options].indexOf(yes);
+                                      s.value=yes.value;
+                                      s.dispatchEvent(new Event('input',{bubbles:true}));
+                                      s.dispatchEvent(new Event('change',{bubbles:true}));
+                                    }"""
+                                )
+                    continue
+                # Email select → profile email
+                if any("rafi.success@gmail.com" in o.lower() for o in opts):
+                    if not cur or re.search(r"select", cur, re.I):
+                        sel.select_option(label=re.compile(r"rafi\.success@gmail\.com", re.I))
+                    continue
+                # Phone country → India (+91)
+                if any(re.search(r"\(\+\d+\)", o) for o in opts):
+                    if not cur or re.search(r"select|andorra|\+376", cur, re.I):
+                        try:
+                            sel.select_option(label=re.compile(r"India\s*\(\+91\)", re.I))
+                        except Exception:
+                            pass
+            except Exception:
+                continue
     except Exception:
         pass
 
