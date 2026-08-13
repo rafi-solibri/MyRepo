@@ -7,6 +7,8 @@
 | TopTier Quick-apply button DOM always concatenates **Quick apply** + **Applied** (slide layers) → every detail looked `already_applied` / `quick_apply_not_found` | `readVisibleApplyCta` uses transform translateY on **absolute** overlays |
 | Quick Apply opens recruiter chatbot (Hyd relocate / years bands); Save stays `send disabled` until React sees radio change; Save is `div.sendMsg` not `<button>` | `answerNaukriChatbot`: native checked setter + change events; prefer `>12 years` / Yes; click `.sendMsg` |
 | Detail CTA empty / `quick_apply_not_found` on slow tabs; chatbot done but CTA lag → `apply_unconfirmed` | `waitForVisibleApplyCta`; evaluate click fallback; confirmApplied accepts chatbot success |
+| Mass `ctaState=missing` with 50+ tabs — background tab 0×0 rects broke layer detection; popup `about:blank` race | Prefer transform over rect; `bringToFront`; wait popup URL; prune stale job/ATS tabs |
+| Chatbot free-text years (`contenteditable`) + bands like `13-15` / `>15` exhausted steps | Score highest band; type `15` into `.textArea`; 20-step loop |
 
 ## Fixed for 2026-08-13 Naukri daily re-run (cloud) — dual-layer CTA
 
