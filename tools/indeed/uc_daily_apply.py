@@ -431,7 +431,11 @@ def fill_common_questions(sb) -> None:
             };
             const wantFromText = (text) => {
               const t = (text || '').toLowerCase();
-              if (/current.*(ctc|salary|compensation|pay)|ctc.*current|present.*ctc|current.*package/.test(t)) return '52';
+              if (/current.*(position|role|title|designation)|present.*(position|role|title)|job title/.test(t)
+                  && !/salary|ctc|compensation|pay/.test(t)) {
+                return 'Solutions Architect';
+              }
+              if (/current.*(ctc|salary|compensation|pay)|ctc.*current|present.*ctc|current.*package|current salary/.test(t)) return '52';
               if (/expected.*(ctc|salary|compensation|pay)|ctc.*expected|desired.*salary|expected.*package/.test(t)) return '65';
               if (/notice|joining|how soon|availability|immediate|serve notice/.test(t)) return 'Immediate';
               if (/total.*(experience|exp)|years of experience|overall experience|relevant experience/.test(t)) return '14';
@@ -535,7 +539,8 @@ def fill_common_questions(sb) -> None:
               else if (/last\\s*name|surname|family\\s*name|lname/.test(lab)) val = vals.last;
               else if (/phone|mobile|tel/.test(lab) || type === 'tel') val = vals.phone;
               else if (/e-?mail/.test(lab) || type === 'email') val = vals.email;
-              else if (/current.*(ctc|salary|compensation|package)|ctc.*current/.test(lab)) val = vals.current;
+              else if (/current.*(position|role|title|designation)|job title/.test(lab) && !/salary|ctc/.test(lab)) val = 'Solutions Architect';
+              else if (/current.*(ctc|salary|compensation|package)|ctc.*current|current salary/.test(lab)) val = vals.current;
               else if (/expected.*(ctc|salary|compensation|package)|ctc.*expected/.test(lab)) val = vals.expected;
               else if (/notice|joining|availability/.test(lab)) val = vals.notice;
               else if (/city|location|current\\s*location/.test(lab)) val = vals.city;
