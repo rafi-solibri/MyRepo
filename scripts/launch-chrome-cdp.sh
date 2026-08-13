@@ -248,6 +248,13 @@ if [[ "$portal" == "linkedin" || "$portal" == "hitechcity" ]]; then
       echo "WARNING: LinkedIn CDP not logged in (live check exit $live_rc)." >&2
       echo "         Sign in once: bash scripts/home-headed-login.sh linkedin" >&2
       echo "         Or set LINKEDIN_LOGIN_WAIT_SEC=300 and re-launch while you sign in." >&2
+      # Cron/cloud: hard-fail so apply helpers do not burn inventory on login walls.
+      # Headed login scripts set CDP_REQUIRE_LIVE_LOGIN=0 (they wait separately).
+      if [[ "${CDP_REQUIRE_LIVE_LOGIN:-1}" == "1" ]]; then
+        echo "ERROR: CDP_REQUIRE_LIVE_LOGIN=1 — refusing to continue without a live LinkedIn session." >&2
+        echo "       Refresh .portal-sessions after headed login, then Save environment snapshot." >&2
+        exit "$live_rc"
+      fi
     fi
   fi
 fi

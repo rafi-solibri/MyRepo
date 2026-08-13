@@ -1,5 +1,6 @@
 # Issues from last cron + fixes
 
+<<<<<<< HEAD
 ## Fixed for 2026-08-13 Hitech City cloud cron
 
 | Issue | Fix |
@@ -12,6 +13,20 @@
 | Experian Hyd .NET SA skipped (`location_not_hyd_or_campus`) — title lacked city; Brazil/Malaysia cards leaked | Annotate SmartRecruiters cards with nearest location group; expand BAD_LOC (Brazil/Malaysia/etc.) |
 | SmartRecruiters DataDome (`captcha-delivery.com`) reported as `ats_incomplete_or_stuck` | Detect DataDome iframe/host in `blocked_wall` as CAPTCHA/bot wall |
 | ModMed Workday card poisoned with `· Hyderabad` from page chrome nearestLoc | Restrict location-group annotation to SmartRecruiters hosts; URL BAD_LOC wins |
+=======
+## Fixed for 2026-08-13 LinkedIn cloud cron
+
+| Issue | Fix |
+| --- | --- |
+| SQLite/`verify-portal-logins` reported OK while live CDP hit `/login` then `/checkpoint` (stale `.portal-sessions` `li_at` from 2026-08-06); Easy Apply stopped correctly but external burned 25 PRIORITY_IDS as false `no external Apply button` | `launch-chrome-cdp.sh` hard-fails LinkedIn live probe when `CDP_REQUIRE_LIVE_LOGIN=1` (default); headed-login scripts set `=0`; external helper auth-gates before PRIORITY_IDS; Easy Apply exits 5 on CDP/login wall; verify script notes SQLite≠live. Owner: headed login + refresh `.portal-sessions` + Save snapshot |
+
+## Fixed for 2026-08-13 Foundit daily (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Raven `minimumExperience/maximumExperience` `0-0` (undisclosed) with no title band was kept as `max=0` → false skip `maxExp 0<10` (e.g. Senior Software Architect - .NET) | `experienceBounds` returns NaN/NaN + `undisclosed:true` when Raven is 0-0 and title has no band; still overlays title bands like 6-9 / 8-12 |
+| Country-only `locations: India` failed as `location not Hyd/remote: India` without JD enrich → missed Remote/Hyd in description | `classifyJob` sets `needsEnrich` for empty/country-only India when description missing |
+>>>>>>> origin/main
 
 ## Fixed for 2026-08-12 Notification home (Windows residential)
 
