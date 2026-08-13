@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-13 LinkedIn cloud cron (auto-login follow-up)
+
+| Issue | Fix |
+| --- | --- |
+| Stale LinkedIn session required owner headed login every cloud cron; AWS IP → reCAPTCHA checkpoint | Cloud LinkedIn CDP uses WARP SOCKS (`ensure-linkedin-warp.sh`); `tools/linkedin/auto_login.py` tries Google SSO then `LINKEDIN_PASSWORD`; on success `refresh-portal-session-seed.sh` updates `.portal-sessions` for next boot. CAPTCHA still owner-only when WARP+SSO fail. |
+
 ## Fixed for 2026-08-13 LinkedIn cloud cron
 
 | Issue | Fix |
