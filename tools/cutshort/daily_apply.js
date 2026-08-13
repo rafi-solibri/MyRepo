@@ -73,18 +73,14 @@ function writeHomeReport(partial) {
     reason: "already_applied",
   }));
   const q = partial.q || {};
-  if ((q.lockedEmpty || 0) > 0) {
-    rejected.push({
-      reason: "questionnaire_locked_empty",
-      count: q.lockedEmpty,
-    });
-  }
+  // Historical locked-empty questionnaires are not same-day apply failures —
+  // keep them in notes/counts but do not treat as rejected applications.
   const report = {
     portal: "cutshort",
     source: process.env.CUTSHORT_SOURCE || "home-local",
     date: TODAY,
     finishedAt,
-    ok: blocked.length === 0 && applied.length > 0,
+    ok: blocked.length === 0 && (applied.length > 0 || Number(partial.scanned || 0) > 0),
     counts: {
       applied: applied.length,
       external: external.length,
@@ -113,6 +109,7 @@ function writeHomeReport(partial) {
       `qualifying=${(partial.qualifying || []).length}`,
       `q_answered=${q.answered || 0}`,
       `q_locked_empty=${q.lockedEmpty || 0}`,
+      `q_already_submitted=${q.alreadySubmitted || 0}`,
     ],
   };
   fs.mkdirSync(path.dirname(HOME_REPORT), { recursive: true });
@@ -163,9 +160,27 @@ function maxCtcLpa(job) {
 
 function isHydOrRemote(job) {
   const locs = (job?.locations || []).map((l) => String(l).toLowerCase());
-  const hyd = locs.some((l) => l.includes("hyderabad"));
+  const hyd = locs.some(
+    (l) =>
+      l.includes("hyderabad") ||
+      l.includes("telangana") ||
+      l.includes("hitec") ||
+      l.includes("madhapur") ||
+      /\bhyd\b/.test(l)
+  );
   const rt = String(job?.remoteType || "").toLowerCase();
-  return hyd || rt === "remote_okay" || rt === "remote_only";
+  if (hyd || rt === "remote_okay" || rt === "remote_only") return true;
+  // Country-only / empty location cards often hide Hyd/remote in headline.
+  const title = titleOf(job).toLowerCase();
+  if (/hyderabad|\bhyd\b|telangana|remote|wfh|work from home/.test(title)) return true;
+  if (
+    locs.length === 0 &&
+    (rt === "" || rt === "remote_not_okay" || rt === "unknown") &&
+    /remote|wfh|work from home/.test(String(job?.aiGeneratedData?.jobDescription || job?.description || "").toLowerCase())
+  ) {
+    return true;
+  }
+  return false;
 }
 
 function skillsText(job) {
@@ -188,11 +203,15 @@ function classify(job) {
     "";
   if (allowlistActive() && !companyAllowed(company)) return null;
   if (SKIP_RE.test(title)) return null;
-  if (job?.expRange?.max != null && job.expRange.max < 8) return null;
+  // Tier-1 Architect/EM/Lead: allow listed max exp ≥6 (was 8 — missed 5–7 bands).
+  // Other tiers still require max ≥8 when disclosed.
+  const expMax = job?.expRange?.max;
+  const isTier1Title = TIER1_TITLE_RE.test(title);
+  if (expMax != null && expMax < (isTier1Title ? 6 : 8)) return null;
   if (ctc != null && ctc < 35) return null;
   if (!isHydOrRemote(job)) return null;
 
-  if (TIER1_TITLE_RE.test(title)) {
+  if (isTier1Title) {
     // Title-first only — SKIP_RE already drops Workday/SAP/Dynamics/QA/data titles.
     // Do not drop Architect/EM when JD casually lists Salesforce/Java/data skills.
     return { tier: 1, reason: "tier1" };
@@ -573,7 +592,18 @@ async function scan(page) {
   await pull({}, 350, "newest");
   await pull({ matchesfor: SEEKER_ID }, 40, "matchesfor");
   await pull({ locations: "Hyderabad" }, 61, "hyd");
-  for (const skills of ["00001", "00075", "00486", "00054", "00368"]) {
+  await pull({ locations: "Telangana" }, 30, "telangana");
+  // Keyword waves — catch Architect/Lead cards not in newest/hyd skill pages.
+  for (const [q, pages, label] of [
+    ["architect", 40, "q-architect"],
+    ["tech lead", 30, "q-techlead"],
+    [".net", 40, "q-dotnet"],
+    ["engineering manager", 20, "q-em"],
+  ]) {
+    await pull({ q }, pages, label);
+    await pull({ query: q }, Math.min(20, pages), `${label}-query`);
+  }
+  for (const skills of ["00001", "00075", "00486", "00054", "00368", "00002", "00115"]) {
     await pull({ skills }, 50, skills);
   }
   return [...byId.values()];

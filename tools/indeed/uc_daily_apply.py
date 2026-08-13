@@ -78,8 +78,10 @@ def _default_seed_profile() -> str:
 
 
 SEED_PROFILE = _default_seed_profile()
-MAX_APPLIES = int(os.environ.get("INDEED_MAX_APPLIES", "8"))
-MAX_SEEN = int(os.environ.get("INDEED_MAX_SEEN", "40"))
+# Volume: cron used to stop at 8 applies / 40 seen — raise so each run
+# exhausts Hyd/remote inventory instead of soft-stopping early.
+MAX_APPLIES = int(os.environ.get("INDEED_MAX_APPLIES", "40"))
+MAX_SEEN = int(os.environ.get("INDEED_MAX_SEEN", "120"))
 
 TITLE_OK = re.compile(
     r"(architect|tech(?:nical)?\s*lead|engineering\s*manager|\bEM\b|"
@@ -87,7 +89,8 @@ TITLE_OK = re.compile(
     r"(\.?\s*net|c#|azure).{0,40}(architect|tech(?:nical)?\s*lead|"
     r"engineering\s*manager|principal|staff)|"
     r"(solutions?\s*architect|technical\s*architect|software\s*architect|"
-    r"cloud\s*architect|application\s*architect)",
+    r"cloud\s*architect|application\s*architect|enterprise\s*architect|"
+    r"system\s*architect|platform\s*architect)",
     re.I,
 )
 TITLE_SKIP = re.compile(
@@ -294,7 +297,12 @@ def search_queries() -> list[tuple[str, str]]:
         ("Engineering Manager .NET", "Hyderabad, Telangana"),
         ("Principal .NET", "Hyderabad, Telangana"),
         ("Technical Lead .NET", "Hyderabad, Telangana"),
+        ("Software Architect .NET", "Hyderabad, Telangana"),
+        ("Enterprise Architect", "Hyderabad, Telangana"),
+        ("Staff Engineer .NET", "Hyderabad, Telangana"),
         (".NET Architect", "Remote"),
+        ("Solutions Architect", "Remote"),
+        ("Technical Lead C#", "Remote"),
     ]
 
 
@@ -449,10 +457,29 @@ def fill_common_questions(sb) -> None:
                   && !/salary|ctc|compensation|pay/.test(t)) {
                 return 'Solutions Architect';
               }
+              if (/current.*(employer|company|organization)|present.*(employer|company)|where.*(work|employed)/.test(t)
+                  && !/salary|ctc|compensation|pay/.test(t)) {
+                return 'Nemetschek / Solibri';
+              }
+              if (/linkedin(\\.com)?|profile url|portfolio url/.test(t)) {
+                return 'https://www.linkedin.com/in/rafi-ahmed';
+              }
+              if (/highest (degree|education|qualification)|education level|degree obtained|university|college/.test(t)) {
+                return 'B.Tech';
+              }
               if (/current.*(ctc|salary|compensation|pay)|ctc.*current|present.*ctc|current.*package|current salary/.test(t)) return '52';
               if (/expected.*(ctc|salary|compensation|pay)|ctc.*expected|desired.*salary|expected.*package/.test(t)) return '65';
               if (/notice|joining|how soon|availability|immediate|serve notice/.test(t)) return 'Immediate';
               if (/total.*(experience|exp)|years of experience|overall experience|relevant experience/.test(t)) return '14';
+              // Years with a specific stack (Blazor / FHIR / .NET / Angular / Azure / C#).
+              if (/how many years|years? (of |with |in )?(exp|experience)?|experience (with|in|on)/.test(t)
+                  && /(\\.net|c#|asp\\.\\s*net|blazor|fhir|angular|azure|react|microservices|architect|lead|manag)/.test(t)) {
+                return '10';
+              }
+              if (/proficien|rate your|skill level|expertise/.test(t)
+                  && /(\\.net|c#|blazor|fhir|angular|azure|react)/.test(t)) {
+                return 'Expert';
+              }
               // Voluntary self-ID / EEO — prefer decline (required fields on Mattel etc.).
               if (/voluntary self|self.?identif|gender identity|race|ethnicity|hispanic|latino|veteran|disability|disabled|lgbt|sexual orientation|pronoun/.test(t)
                   && !/authorized|work authori|visa|citizen/.test(t)) {
@@ -497,6 +524,9 @@ def fill_common_questions(sb) -> None:
                     (want === '52' && /\\b52\\b|50-55|45-55/.test(t)) ||
                     (want === '65' && /\\b65\\b|60-70|60-65/.test(t)) ||
                     (want === '14' && /\\b14\\b|12-15|10\\+/.test(t)) ||
+                    (want === '10' && /\\b10\\b|8-10|10\\+|8\\+|7\\+|5\\+/.test(t)) ||
+                    (want === 'Expert' && /expert|advanced|proficient|high/.test(t)) ||
+                    (want === 'B.Tech' && /b\\.?tech|bachelor|b\\.e\\b|undergraduate/.test(t)) ||
                     (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not/.test(t))
                   ) {
                     sel.value = opt.value;
@@ -554,6 +584,9 @@ def fill_common_questions(sb) -> None:
               else if (/phone|mobile|tel/.test(lab) || type === 'tel') val = vals.phone;
               else if (/e-?mail/.test(lab) || type === 'email') val = vals.email;
               else if (/current.*(position|role|title|designation)|job title/.test(lab) && !/salary|ctc/.test(lab)) val = 'Solutions Architect';
+              else if (/current.*(employer|company|organization)|present.*(employer|company)/.test(lab) && !/salary|ctc/.test(lab)) val = 'Nemetschek / Solibri';
+              else if (/linkedin|profile url|portfolio url/.test(lab)) val = 'https://www.linkedin.com/in/rafi-ahmed';
+              else if (/highest (degree|education|qualification)|education|university|college|degree/.test(lab)) val = 'B.Tech';
               else if (/current.*(ctc|salary|compensation|package)|ctc.*current|current salary/.test(lab)) val = vals.current;
               else if (/expected.*(ctc|salary|compensation|package)|ctc.*expected/.test(lab)) val = vals.expected;
               else if (/notice|joining|availability/.test(lab)) val = vals.notice;
@@ -563,7 +596,7 @@ def fill_common_questions(sb) -> None:
                 const w = wantFromText(lab);
                 if (w) val = w;
               }
-              if (val != null && (!(el.value || '').trim() || /phone|mobile|tel|first|last|ctc|salary|notice|city|experience|package/.test(lab))) {
+              if (val != null && (!(el.value || '').trim() || /phone|mobile|tel|first|last|ctc|salary|notice|city|experience|package|linkedin|employer|company|education|degree/.test(lab))) {
                 if (setNative(el, val)) answered += 1;
               }
             }
@@ -2173,7 +2206,7 @@ def main() -> int:
                 except Exception:
                     continue
 
-            for title_t, href, jk in hrefs[:12]:
+            for title_t, href, jk in hrefs[:30]:
                 if report["counts"]["applied"] + report["counts"]["external"] >= MAX_APPLIES:
                     break
                 if report["counts"]["seen"] >= MAX_SEEN:
@@ -2257,11 +2290,16 @@ def main() -> int:
                 for sel in (
                     "button.indeed-apply-button",
                     "#indeedApplyButton",
+                    "[data-indeed-apply-button]",
+                    "button.ia-IndeedApplyButton",
                     "button:contains('Apply with Indeed')",
+                    "button:contains('Indeed Apply')",
                     "button:contains('Easily apply')",
+                    "button:contains('Easy apply')",
                     "button:contains('Apply now')",
-                    "//button[contains(., 'Apply with Indeed') or contains(., 'Easily apply') or contains(., 'Apply now')]",
-                    "//a[contains(., 'Apply with Indeed') or contains(., 'Easily apply') or contains(., 'Apply now')]",
+                    "//button[contains(., 'Apply with Indeed') or contains(., 'Indeed Apply') or contains(., 'Easily apply') or contains(., 'Easy apply') or contains(., 'Apply now')]",
+                    "//a[contains(., 'Apply with Indeed') or contains(., 'Indeed Apply') or contains(., 'Easily apply') or contains(., 'Easy apply') or contains(., 'Apply now')]",
+                    "//button[contains(translate(@aria-label,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'), 'apply now') or contains(translate(@aria-label,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'), 'apply with indeed')]",
                 ):
                     try:
                         if sb.is_element_visible(sel, timeout=2):
@@ -2275,13 +2313,20 @@ def main() -> int:
                     try:
                         clicked = sb.execute_script(
                             """
-                            const cands=[...document.querySelectorAll('button, a, [role=button]')];
-                            const el=cands.find(e => /apply with indeed|easily apply|apply now/i.test(
-                              ((e.innerText||'') + ' ' + (e.getAttribute('aria-label')||'')).trim()
-                            ));
+                            const cands=[...document.querySelectorAll(
+                              'button, a, [role=button], [data-indeed-apply-button], .indeed-apply-button, .ia-IndeedApplyButton'
+                            )];
+                            const textOf = (e) => ((e.innerText||'') + ' ' + (e.getAttribute('aria-label')||'') + ' ' + (e.getAttribute('data-tn-element')||'')).trim();
+                            const el=cands.find(e => {
+                              const s=textOf(e);
+                              if (/apply with indeed|indeed apply|easily apply|easy apply|^apply now$/i.test(s)) return true;
+                              if (e.id === 'indeedApplyButton' || e.classList?.contains('indeed-apply-button')) return true;
+                              if (e.hasAttribute('data-indeed-apply-button')) return true;
+                              return false;
+                            });
                             if(!el) return null;
                             el.click();
-                            return (el.innerText||el.getAttribute('aria-label')||'').slice(0,80);
+                            return textOf(el).slice(0,80);
                             """
                         )
                         if clicked:
@@ -2393,9 +2438,16 @@ def main() -> int:
                     print("RECAPTCHA", page_title[:80], flush=True)
                 else:
                     item["reason"] = "easy_apply_incomplete"
+                    try:
+                        item["lastUrl"] = (sb.get_current_url() or "")[:200]
+                        item["sample"] = (sb.get_text("body") or "")[:350].replace("\n", " | ")
+                    except Exception:
+                        pass
                     report["rejected"].append(item)
                     report["counts"]["rejected"] += 1
                     print("INCOMPLETE", page_title[:80], flush=True)
+                    if item.get("lastUrl"):
+                        print(f"  incomplete_url={item['lastUrl']}", flush=True)
 
                 # Close Easy Apply modal / extra windows so the next job is clean.
                 try:

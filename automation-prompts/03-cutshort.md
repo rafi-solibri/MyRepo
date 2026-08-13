@@ -25,6 +25,8 @@ Use only Rafi_Resume.docx from /workspace/resumes or /home/ubuntu/resumes. Never
 - Default to APPLY for Hyd/remote Architect / Tech Lead / EM / Principal / Staff / Senior .NET/cloud.
 - When uncertain → APPLY. Title-first skips only.
 - Do not invent applications. Keep going while inventory remains.
+- Tier-1 Architect/EM/Lead: allow listed max experience ≥ **6** (not only ≥8). Title/remote keyword waves expand scan beyond newest/Hyd skill pages.
+- Historical `questionnaire_locked_empty` rows cannot be re-answered (API lock) — do not treat them as same-day apply failures.
 
 ## Daily order
 1. Newest find-jobs / matchesfor={seekerId}
