@@ -24,6 +24,7 @@ def test_title_ok():
     assert skip_reason("Salesforce Developer") is not None
     assert skip_reason("QA Engineer") is not None
     assert CAREERS_TITLE_SKIP.search("Staff Project Analyst")
+    assert CAREERS_TITLE_SKIP.search("Principal Project Manager India, Telangana, Hyderabad")
     assert CAREERS_TITLE_SKIP.search("Embedded Software - System Test Architect")
     assert CAREERS_TITLE_SKIP.search("Product Manager, Principal")
     assert LI_TITLE_SKIP.search("Staff/Principal GPU/CPU Kernel Optimization Engineer")
