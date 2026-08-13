@@ -78,6 +78,12 @@
 | SS&C Workday already signed in but helper bailed during Autofill **Loading** spinner; My Information / Experience need Candidate Home fields (source multi-select, previous-worker No, city/postal, phone type, school/degree) + `pageFooterNextButton` | Wait out Loading; fill formField-* + promptLeafNode clicks; education Acharya Nagarjuna / B.Tech IT; avoid re-uploading resume each loop |
 | Oracle Fusion / Oracle DBA / Appian / Network Operations / Data & AI titles burned 3.5m ATS budgets | `resume_and_filters.js` + `test_filters.js`: expand `SKIP_TITLE_RE` / `NON_DOTNET_PRIMARY_RE` / `PURE_AI_DATA_RE` |
 
+## Fixed for 2026-08-13 Hitech City discovery + boards
+
+| Issue | Fix |
+| --- | --- |
+| Hitech City only used curated `companies.json` + LinkedIn/careers; no campus discovery; Naukri/Indeed/Foundit/Cutshort/Instahyre ignored despite user ask | `discover_tenants.py` (seed + LinkedIn search merge); `board_campus_apply.py` runs those boards with `HITECHCITY_COMPANY_ALLOWLIST`; portal dailies skip non-campus companies; `daily_apply.py` order: discovery → LinkedIn → careers → boards; prompt `08-hitech-city.md` updated |
+
 ## Fixed for 2026-08-13 Hitech City cloud cron
 
 | Issue | Fix |

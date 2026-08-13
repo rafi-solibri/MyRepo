@@ -506,8 +506,9 @@ def referral_people_search(page: Page, company: str, role: str) -> dict[str, Any
 
 def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
     companies = companies or load_companies()
-    # Focus priority 1–2 first
-    companies = [c for c in companies if int(c.get("priority", 9)) <= 2][:22]
+    # Focus priority 1–2 first (raised after discovery expands tenant list)
+    max_co = int(os.environ.get("HITECHCITY_LI_MAX_COMPANIES", "30"))
+    companies = [c for c in companies if int(c.get("priority", 9)) <= 2][:max_co]
     report = LiReport(startedAt=datetime.now(timezone.utc).isoformat())
     seen_jobs: set[str] = set()
     applied = 0

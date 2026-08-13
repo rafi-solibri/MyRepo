@@ -17,6 +17,7 @@ const {
 } = require("./resume_and_filters");
 const { completeWorkdayApply, isSubmittedText } = require("./workday_apply");
 const { fillCommonAtsQuestions } = require("./ats_form");
+const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
 
 const CDP = process.env.NAUKRI_CDP || "http://127.0.0.1:9222";
 const REPORT =
@@ -1772,6 +1773,19 @@ async function main() {
               age,
               loc: loc.label,
             });
+
+            if (allowlistActive() && !companyAllowed(card.company)) {
+              report.skipped.push({
+                company: card.company,
+                role: card.role,
+                location: card.location,
+                reason: "hitechcity_campus_allowlist",
+                query: q,
+                age,
+                loc: loc.label,
+              });
+              continue;
+            }
 
             const reason = decideSkip(card);
             if (reason) {

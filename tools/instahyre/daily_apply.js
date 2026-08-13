@@ -20,6 +20,7 @@ const path = require("path");
 const { chromium } = require("playwright-core");
 const { skipReason, locationOk, hasDotNet } = require("./filters");
 const { findResume } = require("./resume");
+const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
 
 const CDP = process.env.INSTAHYRE_CDP || "http://127.0.0.1:9222";
 const OUT =
@@ -228,6 +229,18 @@ function enqueueJob(job, seen, candidates, report) {
       company,
       location,
       reason: "already_interested",
+      source: job._source || "job_search",
+    });
+    return;
+  }
+
+  if (allowlistActive() && !companyAllowed(company)) {
+    report.skipped.push({
+      id,
+      title,
+      company,
+      location,
+      reason: "hitechcity_campus_allowlist",
       source: job._source || "job_search",
     });
     return;
