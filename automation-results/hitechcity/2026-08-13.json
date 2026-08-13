@@ -3,228 +3,18 @@
   "source": "home-local",
   "date": "2026-08-13",
   "startedAt": null,
-  "finishedAt": "2026-08-13T14:41:56.483445+00:00",
+  "finishedAt": "2026-08-13T14:44:46.428483+00:00",
   "host": "NEM01-GBGR234",
-  "ok": true,
+  "ok": false,
   "counts": {
-    "applied": 23,
+    "applied": 0,
     "external": 0,
     "rejected": 0,
     "blocked": 24,
     "skipped": 20,
-    "seen": 3552
+    "seen": 27
   },
-  "applied": [
-    {
-      "portal": "naukri",
-      "company": "Hiring for a Recruitment / Staffing company",
-      "role": "Azure Architect",
-      "location": "remote",
-      "url": null,
-      "path": "board-naukri",
-      "campus": "hitechcity-allowlist"
-    },
-    {
-      "portal": "naukri",
-      "company": "NTT DATA, Inc.",
-      "role": "Technical Lead",
-      "location": "hyderabad",
-      "url": null,
-      "path": "board-naukri",
-      "campus": "hitechcity-allowlist"
-    },
-    {
-      "portal": "naukri",
-      "company": "Hexagon Capability Center India",
-      "role": "Principal Software Developer",
-      "location": "hyderabad",
-      "url": null,
-      "path": "board-naukri",
-      "campus": "hitechcity-allowlist"
-    },
-    {
-      "portal": "naukri",
-      "company": "Syneos Health",
-      "role": "Principal Engineer - Front/Back-End Development, Azure, CI/CD /Cloud",
-      "location": "hyderabad",
-      "url": null,
-      "path": "board-naukri",
-      "campus": "hitechcity-allowlist"
-    },
-    {
-      "portal": "naukri",
-      "company": "Dealersocket",
-      "role": "Principal Software Engineer",
-      "location": "hyderabad",
-      "url": null,
-      "path": "board-naukri",
-      "campus": "hitechcity-allowlist"
-    },
-    {
-      "portal": "naukri",
-      "company": "Redwood Software India",
-      "role": "Principal Software Engineer",
-      "location": "hyderabad",
-      "url": null,
-      "path": "board-naukri",
-      "campus": "hitechcity-allowlist"
-    },
-    {
-      "portal": "naukri",
-      "company": "SHI",
-      "role": "Principal Platform Engineer - OpenShift",
-      "location": "hyderabad",
-      "url": null,
-      "path": "board-naukri",
-      "campus": "hitechcity-allowlist"
-    },
-    {
-      "portal": "naukri",
-      "company": "SHI",
-      "role": "Principal Platform Engineer - Hyper -V",
-      "location": "hyderabad",
-      "url": null,
-      "path": "board-naukri",
-      "campus": "hitechcity-allowlist"
-    },
-    {
-      "portal": "naukri",
-      "company": "Clean Harbors",
-      "role": ".Net Fullstack Tech Lead",
-      "location": "hyderabad",
-      "url": null,
-      "path": "board-naukri",
-      "campus": "hitechcity-allowlist"
-    },
-    {
-      "portal": "naukri",
-      "company": "Tata Consultancy Services",
-      "role": "Full Stack .Net Developer lead",
-      "location": "hyderabad",
-      "url": null,
-      "path": "board-naukri",
-      "campus": "hitechcity-allowlist"
-    },
-    {
-      "portal": "naukri",
-      "company": "Leewayhertz Technologies",
-      "role": "Technical Architect",
-      "location": "Remote",
-      "url": null,
-      "path": "board-naukri",
-      "campus": "hitechcity-allowlist"
-    },
-    {
-      "portal": "naukri",
-      "company": "S&P Global Market Intelligence",
-      "role": "Director, Senior Engineering (.Net Full Stack + AI/ML)",
-      "location": "Hybrid - Noida, Hyderabad, Bengaluru",
-      "url": null,
-      "path": "board-naukri",
-      "campus": "hitechcity-allowlist"
-    },
-    {
-      "portal": "naukri",
-      "company": "Hiring for a Software Product company",
-      "role": "AI/ML Architect",
-      "location": "Hyderabad",
-      "url": null,
-      "path": "board-naukri",
-      "campus": "hitechcity-allowlist"
-    },
-    {
-      "portal": "naukri",
-      "company": "Clarity Benefit Solutions",
-      "role": "Enterprise Solution Architect",
-      "location": "Remote",
-      "url": null,
-      "path": "board-naukri",
-      "campus": "hitechcity-allowlist"
-    },
-    {
-      "portal": "naukri",
-      "company": "Lloyds Technology Centre",
-      "role": "Solution Architect",
-      "location": "Hybrid - Hyderabad",
-      "url": null,
-      "path": "board-naukri",
-      "campus": "hitechcity-allowlist"
-    },
-    {
-      "portal": "naukri",
-      "company": "Belzabar Software Design",
-      "role": "Senior AI Native Architect",
-      "location": "Remote",
-      "url": null,
-      "path": "board-naukri",
-      "campus": "hitechcity-allowlist"
-    },
-    {
-      "portal": "naukri",
-      "company": "Hiring for a Recruitment / Staffing company",
-      "role": "Cloud Platform Architect",
-      "location": "Remote",
-      "url": null,
-      "path": "board-naukri",
-      "campus": "hitechcity-allowlist"
-    },
-    {
-      "portal": "naukri",
-      "company": "PwC",
-      "role": "Tech lead - Manager",
-      "location": "Hybrid - Hyderabad, Bengaluru",
-      "url": null,
-      "path": "board-naukri",
-      "campus": "hitechcity-allowlist"
-    },
-    {
-      "portal": "naukri",
-      "company": "Experian",
-      "role": "Director Engineering",
-      "location": "Hyderabad",
-      "url": null,
-      "path": "board-naukri",
-      "campus": "hitechcity-allowlist"
-    },
-    {
-      "portal": "naukri",
-      "company": "Moder Solutions",
-      "role": "Databricks Architect",
-      "location": "Remote",
-      "url": null,
-      "path": "board-naukri",
-      "campus": "hitechcity-allowlist"
-    },
-    {
-      "portal": "naukri",
-      "company": "Calibo",
-      "role": "AI/ML Architect",
-      "location": "Remote",
-      "url": null,
-      "path": "board-naukri",
-      "campus": "hitechcity-allowlist"
-    },
-    {
-      "portal": "instahyre",
-      "company": "American Airlines",
-      "role": "Principal Engineer - IT Software",
-      "location": "Hyderabad",
-      "url": "https://www.instahyre.com/job-438545",
-      "path": "board-instahyre",
-      "campus": "hitechcity-allowlist",
-      "id": 438545
-    },
-    {
-      "portal": "instahyre",
-      "company": "Innovapptive",
-      "role": "Technical Solution Architect",
-      "location": "Hyderabad",
-      "url": "https://www.instahyre.com/job-422526",
-      "path": "board-instahyre",
-      "campus": "hitechcity-allowlist",
-      "id": 422526
-    }
-  ],
+  "applied": [],
   "external": [],
   "rejected": [],
   "blocked": [
@@ -238,176 +28,176 @@
       "role": "Principal Physical Design Engineer (Chiplet Design)",
       "reason": "ats_incomplete_or_stuck",
       "url": "https://careers.amd.com/careers-home/jobs/86545?lang=en-us",
-      "path": "company-careers",
-      "campus": "sattva-knowledge-city"
+      "campus": "sattva-knowledge-city",
+      "path": "company-careers"
     },
     {
       "company": "Amazon",
       "role": "Solutions Architect",
       "reason": "login/account wall",
       "url": "https://www.amazon.jobs/en/jobs/10456171/solutions-architect",
-      "path": "company-careers",
-      "campus": "mindspace-madhapur"
+      "campus": "mindspace-madhapur",
+      "path": "company-careers"
     },
     {
       "company": "Amazon",
       "role": "Solutions Architect",
       "reason": "login/account wall",
       "url": "https://www.amazon.jobs/en/jobs/10456173/solutions-architect",
-      "path": "company-careers",
-      "campus": "mindspace-madhapur"
+      "campus": "mindspace-madhapur",
+      "path": "company-careers"
     },
     {
       "company": "Amazon",
       "role": "Solutions Architect",
       "reason": "login/account wall",
       "url": "https://www.amazon.jobs/en/jobs/10456172/solutions-architect",
-      "path": "company-careers",
-      "campus": "mindspace-madhapur"
+      "campus": "mindspace-madhapur",
+      "path": "company-careers"
     },
     {
       "company": "Experian",
       "role": "Solution Architect (Microsoft .NET/Azure Cloud) Full-time · Hyderabad, India",
       "reason": "ats_incomplete_or_stuck",
       "url": "https://jobs.smartrecruiters.com/Experian/744000139938479-solution-architect-microsoft-net-azure-cloud-",
-      "path": "company-careers",
-      "campus": "mindspace-madhapur,cyber-pearl"
+      "campus": "mindspace-madhapur,cyber-pearl",
+      "path": "company-careers"
     },
     {
       "company": "Experian",
       "role": "Enterprise Architect Full-time · Hyderabad, India",
       "reason": "ats_incomplete_or_stuck",
       "url": "https://jobs.smartrecruiters.com/Experian/744000138822909-enterprise-architect",
-      "path": "company-careers",
-      "campus": "mindspace-madhapur,cyber-pearl"
+      "campus": "mindspace-madhapur,cyber-pearl",
+      "path": "company-careers"
     },
     {
       "company": "Experian",
       "role": "Engineering Manager Full-time · Hyderabad, India",
       "reason": "ats_incomplete_or_stuck",
       "url": "https://jobs.smartrecruiters.com/Experian/744000138099780-engineering-manager",
-      "path": "company-careers",
-      "campus": "mindspace-madhapur,cyber-pearl"
+      "campus": "mindspace-madhapur,cyber-pearl",
+      "path": "company-careers"
     },
     {
       "company": "Experian",
       "role": "Distinguished Platform Solutions Architect- Remote Full-time",
       "reason": "ats_incomplete_or_stuck",
       "url": "https://jobs.smartrecruiters.com/Experian/744000141720754-distinguished-platform-solutions-architect-remote",
-      "path": "company-careers",
-      "campus": "mindspace-madhapur,cyber-pearl"
+      "campus": "mindspace-madhapur,cyber-pearl",
+      "path": "company-careers"
     },
     {
       "company": "Microsoft",
       "role": "Principal Architect-UI Platforms India, Telangana, Hyderabad + 1 more Posted 6 months ago",
       "reason": "ats_incomplete_or_stuck",
       "url": "https://apply.careers.microsoft.com/careers/job/1970393556802529?keywords=architect",
-      "path": "company-careers",
-      "campus": "sattva-knowledge-city,the-v,mindspace-madhapur"
+      "campus": "sattva-knowledge-city,the-v,mindspace-madhapur",
+      "path": "company-careers"
     },
     {
       "company": "Microsoft",
       "role": "Principal Applied Scientist India, Telangana, Hyderabad + 1 more Posted 6 hours ago",
       "reason": "ats_incomplete_or_stuck",
       "url": "https://apply.careers.microsoft.com/careers/job/1970393556961868?keywords=architect",
-      "path": "company-careers",
-      "campus": "sattva-knowledge-city,the-v,mindspace-madhapur"
+      "campus": "sattva-knowledge-city,the-v,mindspace-madhapur",
+      "path": "company-careers"
     },
     {
       "company": "Palo Alto Networks",
       "role": "Principal Engineer Software Tel Aviv, Israel",
       "reason": "CAPTCHA/bot wall",
       "url": "https://jobs.paloaltonetworks.com/en/job/tel-aviv/principal-engineer-software/47263/99150549760",
-      "path": "company-careers",
-      "campus": "divyasree-orion,dlf-cyber-city"
+      "campus": "divyasree-orion,dlf-cyber-city",
+      "path": "company-careers"
     },
     {
       "company": "Qualcomm",
       "role": "Senior Lead Engineer – AI Platform Architecture & Engineering Hyderabad",
       "reason": "login/account wall",
       "url": "https://careers.qualcomm.com/careers/job/446720242178",
-      "path": "company-careers",
-      "campus": "mindspace-madhapur"
+      "campus": "mindspace-madhapur",
+      "path": "company-careers"
     },
     {
       "company": "Qualcomm",
       "role": "Cloud Platform Development Engineer-Staff Hyderabad, Telangāna, India + 1 more Software Engineering Posted 8 days ago",
       "reason": "login/account wall",
       "url": "https://careers.qualcomm.com/careers/job/446720271949",
-      "path": "company-careers",
-      "campus": "mindspace-madhapur"
+      "campus": "mindspace-madhapur",
+      "path": "company-careers"
     },
     {
       "company": "Qualcomm",
       "role": "Cloud Platform Development Engineer -Staff Hyderabad, Telangāna, India + 1 more Software Engineering Posted 8 days ago",
       "reason": "login/account wall",
       "url": "https://careers.qualcomm.com/careers/job/446720272187",
-      "path": "company-careers",
-      "campus": "mindspace-madhapur"
+      "campus": "mindspace-madhapur",
+      "path": "company-careers"
     },
     {
       "company": "Solera",
       "role": "Principal Software Engineer",
       "reason": "ats_incomplete_or_stuck",
       "url": "https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site/job/Hyderabad/Principal-Software-Engineer_JR-019000?q=architect",
-      "path": "company-careers",
-      "campus": "mindspace-madhapur,cyber-pearl"
+      "campus": "mindspace-madhapur,cyber-pearl",
+      "path": "company-careers"
     },
     {
       "company": "Solera",
       "role": "Principal Software Engineer",
       "reason": "login/account wall",
       "url": "https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site/job/Hyderabad/Principal-Software-Engineer_JR-019305?q=architect",
-      "path": "company-careers",
-      "campus": "mindspace-madhapur,cyber-pearl"
+      "campus": "mindspace-madhapur,cyber-pearl",
+      "path": "company-careers"
     },
     {
       "company": "Solera",
       "role": "Principal Software Engineer",
       "reason": "login/account wall",
       "url": "https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site/job/Hyderabad/Principal-Software-Engineer_JR-019226?q=architect",
-      "path": "company-careers",
-      "campus": "mindspace-madhapur,cyber-pearl"
+      "campus": "mindspace-madhapur,cyber-pearl",
+      "path": "company-careers"
     },
     {
       "company": "Cognizant",
       "role": "Architect",
       "reason": "ats_incomplete_or_stuck",
       "url": "https://careers.cognizant.com/global-en/jobs/00068354023/architect/",
-      "path": "company-careers",
-      "campus": "mindspace-madhapur,the-v"
+      "campus": "mindspace-madhapur,the-v",
+      "path": "company-careers"
     },
     {
       "company": "Cognizant",
       "role": "Architect",
       "reason": "ats_incomplete_or_stuck",
       "url": "https://careers.cognizant.com/global-en/jobs/00069002931/architect/",
-      "path": "company-careers",
-      "campus": "mindspace-madhapur,the-v"
+      "campus": "mindspace-madhapur,the-v",
+      "path": "company-careers"
     },
     {
       "company": "Cognizant",
       "role": "Technology Architect",
       "reason": "ats_incomplete_or_stuck",
       "url": "https://careers.cognizant.com/global-en/jobs/000664505510/technology-architect/",
-      "path": "company-careers",
-      "campus": "mindspace-madhapur,the-v"
+      "campus": "mindspace-madhapur,the-v",
+      "path": "company-careers"
     },
     {
       "company": "Cognizant",
       "role": "Principal Architect",
       "reason": "ats_incomplete_or_stuck",
       "url": "https://careers.cognizant.com/global-en/jobs/00068246425/principal-architect/",
-      "path": "company-careers",
-      "campus": "mindspace-madhapur,the-v"
+      "campus": "mindspace-madhapur,the-v",
+      "path": "company-careers"
     },
     {
       "company": "Cognizant",
       "role": "Technology Architect",
       "reason": "ats_incomplete_or_stuck",
       "url": "https://careers.cognizant.com/global-en/jobs/00069823894/technology-architect/",
-      "path": "company-careers",
-      "campus": "mindspace-madhapur,the-v"
+      "campus": "mindspace-madhapur,the-v",
+      "path": "company-careers"
     },
     {
       "portal": "indeed",
@@ -538,7 +328,7 @@
     }
   ],
   "seen": [],
-  "blockerSummary": "LinkedIn security challenge/login required; career ATS login/CAPTCHA walls; Indeed Cloudflare (WARP down on Windows home)",
+  "blockerSummary": "LinkedIn security challenge; career ATS login/CAPTCHA walls; Indeed Cloudflare (no WARP on Windows home). Board browse ran post-#138 with 0 fresh applies.",
   "notes": [],
   "preflight": null,
   "logPath": null
