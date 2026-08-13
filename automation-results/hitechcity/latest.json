@@ -1,18 +1,18 @@
 {
   "portal": "hitechcity",
   "source": "home-local",
-  "date": "2026-08-13",
-  "startedAt": null,
-  "finishedAt": "2026-08-13T14:44:46.428483+00:00",
+  "date": "2026-08-12",
+  "startedAt": "2026-08-12T13:40:35.833448+00:00",
+  "finishedAt": "2026-08-12T13:43:50.856946+00:00",
   "host": "NEM01-GBGR234",
   "ok": false,
   "counts": {
     "applied": 0,
     "external": 0,
     "rejected": 0,
-    "blocked": 24,
-    "skipped": 20,
-    "seen": 27
+    "blocked": 13,
+    "skipped": 7,
+    "seen": 37
   },
   "applied": [],
   "external": [],
@@ -20,316 +20,285 @@
   "blocked": [
     {
       "reason": "linkedin_login_required",
-      "path": "linkedin",
       "url": "https://www.linkedin.com/uas/login?session_redirect=https%3A%2F%2Fwww.linkedin.com%2Ffeed%2F"
     },
     {
       "company": "AMD",
-      "role": "Principal Physical Design Engineer (Chiplet Design)",
-      "reason": "ats_incomplete_or_stuck",
-      "url": "https://careers.amd.com/careers-home/jobs/86545?lang=en-us",
-      "campus": "sattva-knowledge-city",
-      "path": "company-careers"
+      "url": "https://careers.amd.com/careers-home/jobs?keywords=architect&location=Hyderabad",
+      "reason": "scan_nav:Page.goto: net::ERR_ABORTED at https://careers.amd.com/careers-home/jobs?keywords=architect&location=Hyderabad\nCall log:\n  - navigating to \"https://careers.amd.com/careers-home/jobs?keywords=architect&location=Hyderabad\", waiting until \"domcontentloaded\"\n"
     },
     {
       "company": "Amazon",
       "role": "Solutions Architect",
-      "reason": "login/account wall",
       "url": "https://www.amazon.jobs/en/jobs/10456171/solutions-architect",
       "campus": "mindspace-madhapur",
-      "path": "company-careers"
+      "path": "company-careers",
+      "status": "blocked",
+      "reason": "login/account wall",
+      "finalUrl": "https://passport.amazon.jobs/"
     },
     {
       "company": "Amazon",
       "role": "Solutions Architect",
+      "url": "https://www.amazon.jobs/en/jobs/10456379/solutions-architect",
+      "campus": "mindspace-madhapur",
+      "path": "company-careers",
+      "status": "blocked",
       "reason": "login/account wall",
+      "finalUrl": "https://passport.amazon.jobs/"
+    },
+    {
+      "company": "Amazon",
+      "role": "Solutions Architect",
       "url": "https://www.amazon.jobs/en/jobs/10456173/solutions-architect",
       "campus": "mindspace-madhapur",
-      "path": "company-careers"
-    },
-    {
-      "company": "Amazon",
-      "role": "Solutions Architect",
+      "path": "company-careers",
+      "status": "blocked",
       "reason": "login/account wall",
-      "url": "https://www.amazon.jobs/en/jobs/10456172/solutions-architect",
-      "campus": "mindspace-madhapur",
-      "path": "company-careers"
-    },
-    {
-      "company": "Experian",
-      "role": "Solution Architect (Microsoft .NET/Azure Cloud) Full-time · Hyderabad, India",
-      "reason": "ats_incomplete_or_stuck",
-      "url": "https://jobs.smartrecruiters.com/Experian/744000139938479-solution-architect-microsoft-net-azure-cloud-",
-      "campus": "mindspace-madhapur,cyber-pearl",
-      "path": "company-careers"
-    },
-    {
-      "company": "Experian",
-      "role": "Enterprise Architect Full-time · Hyderabad, India",
-      "reason": "ats_incomplete_or_stuck",
-      "url": "https://jobs.smartrecruiters.com/Experian/744000138822909-enterprise-architect",
-      "campus": "mindspace-madhapur,cyber-pearl",
-      "path": "company-careers"
-    },
-    {
-      "company": "Experian",
-      "role": "Engineering Manager Full-time · Hyderabad, India",
-      "reason": "ats_incomplete_or_stuck",
-      "url": "https://jobs.smartrecruiters.com/Experian/744000138099780-engineering-manager",
-      "campus": "mindspace-madhapur,cyber-pearl",
-      "path": "company-careers"
-    },
-    {
-      "company": "Experian",
-      "role": "Distinguished Platform Solutions Architect- Remote Full-time",
-      "reason": "ats_incomplete_or_stuck",
-      "url": "https://jobs.smartrecruiters.com/Experian/744000141720754-distinguished-platform-solutions-architect-remote",
-      "campus": "mindspace-madhapur,cyber-pearl",
-      "path": "company-careers"
-    },
-    {
-      "company": "Microsoft",
-      "role": "Principal Architect-UI Platforms India, Telangana, Hyderabad + 1 more Posted 6 months ago",
-      "reason": "ats_incomplete_or_stuck",
-      "url": "https://apply.careers.microsoft.com/careers/job/1970393556802529?keywords=architect",
-      "campus": "sattva-knowledge-city,the-v,mindspace-madhapur",
-      "path": "company-careers"
-    },
-    {
-      "company": "Microsoft",
-      "role": "Principal Applied Scientist India, Telangana, Hyderabad + 1 more Posted 6 hours ago",
-      "reason": "ats_incomplete_or_stuck",
-      "url": "https://apply.careers.microsoft.com/careers/job/1970393556961868?keywords=architect",
-      "campus": "sattva-knowledge-city,the-v,mindspace-madhapur",
-      "path": "company-careers"
+      "finalUrl": "https://passport.amazon.jobs/"
     },
     {
       "company": "Palo Alto Networks",
-      "role": "Principal Engineer Software Tel Aviv, Israel",
-      "reason": "CAPTCHA/bot wall",
-      "url": "https://jobs.paloaltonetworks.com/en/job/tel-aviv/principal-engineer-software/47263/99150549760",
+      "role": "Senior Staff Software Engineer Hyderabad, Telangana, Madhapur, Telangana",
+      "url": "https://jobs.paloaltonetworks.com/en/job/hyderabad/senior-staff-software-engineer/47263/99010928960",
       "campus": "divyasree-orion,dlf-cyber-city",
-      "path": "company-careers"
+      "path": "company-careers",
+      "status": "blocked",
+      "reason": "CAPTCHA/bot wall",
+      "finalUrl": "https://jobs.paloaltonetworks.com/en/job/hyderabad/senior-staff-software-engineer/47263/99010928960"
+    },
+    {
+      "company": "Palo Alto Networks",
+      "role": "Senior Staff Software Engineer Hyderabad, Telangana, Madhapur, Telangana",
+      "url": "https://jobs.paloaltonetworks.com/en/job/hyderabad/senior-staff-software-engineer/47263/99021605040",
+      "campus": "divyasree-orion,dlf-cyber-city",
+      "path": "company-careers",
+      "status": "blocked",
+      "reason": "CAPTCHA/bot wall",
+      "finalUrl": "https://jobs.paloaltonetworks.com/en/job/hyderabad/senior-staff-software-engineer/47263/99021605040"
+    },
+    {
+      "company": "Palo Alto Networks",
+      "role": "Principal Software Architect Hyderabad, Telangana, Madhapur, Telangana",
+      "url": "https://jobs.paloaltonetworks.com/en/job/hyderabad/principal-software-architect/47263/98416742768",
+      "campus": "divyasree-orion,dlf-cyber-city",
+      "path": "company-careers",
+      "status": "blocked",
+      "reason": "CAPTCHA/bot wall",
+      "finalUrl": "https://jobs.paloaltonetworks.com/en/job/hyderabad/principal-software-architect/47263/98416742768"
+    },
+    {
+      "company": "Palo Alto Networks",
+      "role": "Principal Software Engineer Hyderabad, Telangana, Madhapur, Telangana",
+      "url": "https://jobs.paloaltonetworks.com/en/job/hyderabad/principal-software-engineer/47263/98177649024",
+      "campus": "divyasree-orion,dlf-cyber-city",
+      "path": "company-careers",
+      "status": "blocked",
+      "reason": "CAPTCHA/bot wall",
+      "finalUrl": "https://jobs.paloaltonetworks.com/en/job/hyderabad/principal-software-engineer/47263/98177649024"
     },
     {
       "company": "Qualcomm",
-      "role": "Senior Lead Engineer – AI Platform Architecture & Engineering Hyderabad",
-      "reason": "login/account wall",
+      "role": "Senior Lead Engineer – AI Platform Architecture & Engineering Hyderabad, Telangāna, India Software Engineering Posted 2 days ago",
       "url": "https://careers.qualcomm.com/careers/job/446720242178",
       "campus": "mindspace-madhapur",
-      "path": "company-careers"
+      "path": "company-careers",
+      "status": "blocked",
+      "reason": "CAPTCHA/bot wall",
+      "finalUrl": "https://careers.qualcomm.com/careers/apply?pid=446720242178"
     },
     {
       "company": "Qualcomm",
-      "role": "Cloud Platform Development Engineer-Staff Hyderabad, Telangāna, India + 1 more Software Engineering Posted 8 days ago",
-      "reason": "login/account wall",
+      "role": "Cloud Platform Development Engineer-Staff Hyderabad, Telangāna, India + 1 more Software Engineering Posted 7 days ago",
       "url": "https://careers.qualcomm.com/careers/job/446720271949",
       "campus": "mindspace-madhapur",
-      "path": "company-careers"
+      "path": "company-careers",
+      "status": "blocked",
+      "reason": "CAPTCHA/bot wall",
+      "finalUrl": "https://careers.qualcomm.com/careers/apply?pid=446720271949"
     },
     {
       "company": "Qualcomm",
-      "role": "Cloud Platform Development Engineer -Staff Hyderabad, Telangāna, India + 1 more Software Engineering Posted 8 days ago",
-      "reason": "login/account wall",
+      "role": "Cloud Platform Development Engineer -Staff Hyderabad, Telangāna, India + 1 more Software Engineering Posted 7 days ago",
       "url": "https://careers.qualcomm.com/careers/job/446720272187",
       "campus": "mindspace-madhapur",
-      "path": "company-careers"
+      "path": "company-careers",
+      "status": "blocked",
+      "reason": "CAPTCHA/bot wall",
+      "finalUrl": "https://careers.qualcomm.com/careers/apply?pid=446720272187"
     },
     {
-      "company": "Solera",
-      "role": "Principal Software Engineer",
-      "reason": "ats_incomplete_or_stuck",
-      "url": "https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site/job/Hyderabad/Principal-Software-Engineer_JR-019000?q=architect",
-      "campus": "mindspace-madhapur,cyber-pearl",
-      "path": "company-careers"
-    },
-    {
-      "company": "Solera",
-      "role": "Principal Software Engineer",
-      "reason": "login/account wall",
-      "url": "https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site/job/Hyderabad/Principal-Software-Engineer_JR-019305?q=architect",
-      "campus": "mindspace-madhapur,cyber-pearl",
-      "path": "company-careers"
-    },
-    {
-      "company": "Solera",
-      "role": "Principal Software Engineer",
-      "reason": "login/account wall",
-      "url": "https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site/job/Hyderabad/Principal-Software-Engineer_JR-019226?q=architect",
-      "campus": "mindspace-madhapur,cyber-pearl",
-      "path": "company-careers"
-    },
-    {
-      "company": "Cognizant",
-      "role": "Architect",
-      "reason": "ats_incomplete_or_stuck",
-      "url": "https://careers.cognizant.com/global-en/jobs/00068354023/architect/",
-      "campus": "mindspace-madhapur,the-v",
-      "path": "company-careers"
-    },
-    {
-      "company": "Cognizant",
-      "role": "Architect",
-      "reason": "ats_incomplete_or_stuck",
-      "url": "https://careers.cognizant.com/global-en/jobs/00069002931/architect/",
-      "campus": "mindspace-madhapur,the-v",
-      "path": "company-careers"
-    },
-    {
-      "company": "Cognizant",
-      "role": "Technology Architect",
-      "reason": "ats_incomplete_or_stuck",
-      "url": "https://careers.cognizant.com/global-en/jobs/000664505510/technology-architect/",
-      "campus": "mindspace-madhapur,the-v",
-      "path": "company-careers"
-    },
-    {
-      "company": "Cognizant",
-      "role": "Principal Architect",
-      "reason": "ats_incomplete_or_stuck",
-      "url": "https://careers.cognizant.com/global-en/jobs/00068246425/principal-architect/",
-      "campus": "mindspace-madhapur,the-v",
-      "path": "company-careers"
-    },
-    {
-      "company": "Cognizant",
-      "role": "Technology Architect",
-      "reason": "ats_incomplete_or_stuck",
-      "url": "https://careers.cognizant.com/global-en/jobs/00069823894/technology-architect/",
-      "campus": "mindspace-madhapur,the-v",
-      "path": "company-careers"
-    },
-    {
-      "portal": "indeed",
-      "reason": "indeed_cloudflare_still_blocked",
-      "path": "board-indeed"
+      "company": "Qualcomm",
+      "role": "Cloud Platform Development Engineer -Staff Hyderabad, Telangāna, India + 1 more Software Engineering Posted 7 days ago",
+      "url": "https://careers.qualcomm.com/careers/job/446720272196",
+      "campus": "mindspace-madhapur",
+      "path": "company-careers",
+      "status": "blocked",
+      "reason": "CAPTCHA/bot wall",
+      "finalUrl": "https://careers.qualcomm.com/careers/apply?pid=446720272196"
     }
   ],
   "skipped": [
     {
       "company": "Amazon",
+      "role": "Solutions Architect",
+      "url": "https://www.amazon.jobs/en/jobs/10458542/solutions-architect",
+      "campus": "mindspace-madhapur",
+      "path": "company-careers",
+      "status": "skipped",
+      "reason": "location_not_hyd_or_campus",
+      "finalUrl": "https://www.amazon.jobs/en/jobs/10458542/solutions-architect"
+    },
+    {
+      "company": "Amazon",
       "role": "Solutions Architect, Gaming, Solutions Architect",
+      "url": "https://www.amazon.jobs/en/jobs/10472208/solutions-architect-gaming-solutions-architect",
+      "campus": "mindspace-madhapur",
+      "path": "company-careers",
+      "status": "skipped",
       "reason": "location_not_hyd_or_campus",
-      "path": "company-careers"
+      "finalUrl": "https://www.amazon.jobs/en/jobs/10472208/solutions-architect-gaming-solutions-architect"
     },
     {
       "company": "Amazon",
       "role": "Solutions Architect",
+      "url": "https://www.amazon.jobs/en/jobs/10413140/solutions-architect",
+      "campus": "mindspace-madhapur",
+      "path": "company-careers",
+      "status": "skipped",
       "reason": "location_not_hyd_or_campus",
-      "path": "company-careers"
-    },
-    {
-      "company": "Amazon",
-      "role": "Solutions Architect",
-      "reason": "location_not_hyd_or_campus",
-      "path": "company-careers"
+      "finalUrl": "https://www.amazon.jobs/en/jobs/10413140/solutions-architect"
     },
     {
       "company": "Amazon",
       "role": "Solutions Architect, SMB Solutions Architect",
+      "url": "https://www.amazon.jobs/en/jobs/10464534/solutions-architect-smb-solutions-architect",
+      "campus": "mindspace-madhapur",
+      "path": "company-careers",
+      "status": "skipped",
       "reason": "location_not_hyd_or_campus",
-      "path": "company-careers"
-    },
-    {
-      "company": "Amazon",
-      "role": "Solutions Architect",
-      "reason": "location_non_hyd_city",
-      "path": "company-careers"
+      "finalUrl": "https://www.amazon.jobs/en/jobs/10464534/solutions-architect-smb-solutions-architect"
     },
     {
       "company": "Amazon",
       "role": "Sr. Startup Solutions Architect, Solutions Architect, Startups",
+      "url": "https://www.amazon.jobs/en/jobs/10445312/sr-startup-solutions-architect-solutions-architect-startups",
+      "campus": "mindspace-madhapur",
+      "path": "company-careers",
+      "status": "skipped",
       "reason": "location_not_hyd_or_campus",
-      "path": "company-careers"
+      "finalUrl": "https://www.amazon.jobs/en/jobs/10445312/sr-startup-solutions-architect-solutions-architect-startups"
     },
     {
-      "company": "Solera",
-      "role": "Principal Software Engineer",
+      "company": "Amazon",
+      "role": "Sr. Solutions Architect, SMB Solutions Architect",
+      "url": "https://www.amazon.jobs/en/jobs/10498609/sr-solutions-architect-smb-solutions-architect",
+      "campus": "mindspace-madhapur",
+      "path": "company-careers",
+      "status": "skipped",
       "reason": "location_not_hyd_or_campus",
-      "path": "company-careers"
+      "finalUrl": "https://www.amazon.jobs/en/jobs/10498609/sr-solutions-architect-smb-solutions-architect"
     },
     {
-      "company": "Cognizant",
-      "role": "Principal Technical Architect",
-      "reason": "jd_wrong_stack",
-      "path": "company-careers"
-    },
-    {
-      "company": "IBM",
-      "role": "Infrastructure & Technology Platform Cloud Architect Professional Multiple Cities",
+      "company": "Optum",
+      "role": "Architecture",
+      "url": "https://careers.unitedhealthgroup.com/architecture-jobs",
+      "campus": "dlf-cyber-city,divyasree-orion",
+      "path": "company-careers",
+      "status": "skipped",
       "reason": "location_non_hyd_city",
-      "path": "company-careers"
-    },
-    {
-      "company": "IBM",
-      "role": "Software Engineering Anaplan Solution Architect Professional Multiple Cities",
-      "reason": "location_non_hyd_city",
-      "path": "company-careers"
-    },
-    {
-      "company": "IBM",
-      "role": "Security Security Architect Professional MELBOURNE, AU",
-      "reason": "location_not_hyd_or_campus",
-      "path": "company-careers"
-    },
-    {
-      "company": "IBM",
-      "role": "Infrastructure & Technology IT Solutions Architect Professional Nicosia, CY",
-      "reason": "location_not_hyd_or_campus",
-      "path": "company-careers"
-    },
-    {
-      "company": "IBM",
-      "role": "Project Management Senior Solutions Architect Professional Singapore, SG",
-      "reason": "location_not_hyd_or_campus",
-      "path": "company-careers"
-    },
-    {
-      "company": "IBM",
-      "role": "Consulting SIEM/SOAR Consultant - Architect Professional Multiple Cities",
-      "reason": "location_not_hyd_or_campus",
-      "path": "company-careers"
-    },
-    {
-      "company": "IBM",
-      "role": "Software Engineering Maximo Solution Architect Professional Multiple Cities",
-      "reason": "location_not_hyd_or_campus",
-      "path": "company-careers"
-    },
-    {
-      "company": "IBM",
-      "role": "Infrastructure & Technology Solution architect - Retail Professional Madrid, ES",
-      "reason": "location_not_hyd_or_campus",
-      "path": "company-careers"
-    },
-    {
-      "company": "IBM",
-      "role": "Software Engineering Maximo Solution Architect Professional MELBOURNE, AU",
-      "reason": "location_not_hyd_or_campus",
-      "path": "company-careers"
-    },
-    {
-      "company": "IBM",
-      "role": "Software Engineering Application Architect - Azure Cloud Professional Multiple Cities",
-      "reason": "location_not_hyd_or_campus",
-      "path": "company-careers"
-    },
-    {
-      "company": "IBM",
-      "role": "Infrastructure & Technology Technical Architect - eSC/eDV Clearance Professional Multiple Cities",
-      "reason": "location_non_hyd_city",
-      "path": "company-careers"
-    },
-    {
-      "company": "IBM",
-      "role": "Consulting CyberArk Architect Professional Dallas, US",
-      "reason": "location_non_hyd_city",
-      "path": "company-careers"
+      "finalUrl": "https://careers.unitedhealthgroup.com/search-jobs?acm=81405,9255136&alrpm=ALL&ascf=[%7B%22key%22:%22ALL%22,%22value%22:%22%22%7D]"
     }
   ],
-  "seen": [],
-  "blockerSummary": "LinkedIn security challenge; career ATS login/CAPTCHA walls; Indeed Cloudflare (no WARP on Windows home). Board browse ran post-#138 with 0 fresh applies.",
+  "seen": [
+    {
+      "company": "Amazon",
+      "url": "https://www.amazon.jobs/en/search?base_query=architect&loc_query=Hyderabad%2C+Telangana%2C+India",
+      "jobCount": 9
+    },
+    {
+      "company": "Apple",
+      "url": "https://jobs.apple.com/en-in/search?search=architect&location=hyderabad-HST430090",
+      "jobCount": 0
+    },
+    {
+      "company": "Blackbaud",
+      "url": "https://careers.blackbaud.com/search/?createNewAlert=false&q=architect&locationsearch=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Blue Yonder",
+      "url": "https://careers.blueyonder.com/search/?createNewAlert=false&q=architect&locationsearch=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Experian",
+      "url": "https://jobs.smartrecruiters.com/Experian/search?q=architect&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "GE Vernova",
+      "url": "https://careers.gevernova.com/global/en/search-results?keywords=architect",
+      "jobCount": 0
+    },
+    {
+      "company": "Goldman Sachs",
+      "url": "https://www.goldmansachs.com/careers/find-a-job",
+      "jobCount": 0
+    },
+    {
+      "company": "Hyland",
+      "url": "https://www.hyland.com/en/about/careers",
+      "jobCount": 0
+    },
+    {
+      "company": "Intel",
+      "url": "https://jobs.intel.com/en/search-jobs/Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "JPMorgan Chase",
+      "url": "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/requisitions?keyword=architect&location=Hyderabad%2C+Telangana%2C+India",
+      "jobCount": 0
+    },
+    {
+      "company": "Meta",
+      "url": "https://www.metacareers.com/jobs?q=architect&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Microsoft",
+      "url": "https://jobs.careers.microsoft.com/global/en/search?q=architect&lc=India&l=Hyderabad%2C%20Telangana%2C%20India",
+      "jobCount": 0
+    },
+    {
+      "company": "ModMed",
+      "url": "https://www.modmed.com/careers/",
+      "jobCount": 0
+    },
+    {
+      "company": "Optum",
+      "url": "https://careers.unitedhealthgroup.com/search-jobs/Hyderabad/?orgIds=1759&alp=false&alt=false",
+      "jobCount": 1
+    },
+    {
+      "company": "Oracle",
+      "url": "https://careers.oracle.com/en/sites/jobsearch/jobs?keyword=architect&location=Hyderabad%2C+Telangana%2C+India",
+      "jobCount": 0
+    },
+    {
+      "company": "Palo Alto Networks",
+      "url": "https://jobs.paloaltonetworks.com/en/jobs/?search=&country=India&pagesize=20#results",
+      "jobCount": 4
+    },
+    {
+      "company": "Qualcomm",
+      "url": "https://careers.qualcomm.com/careers?query=architect&location=Hyderabad",
+      "jobCount": 4
+    }
+  ],
+  "blockerSummary": "linkedin_login_required (Security Verification / no li_at); careers: Amazon passport + Palo Alto/Qualcomm CAPTCHA",
   "notes": [],
   "preflight": null,
-  "logPath": null
+  "logPath": "C:/Users/MohammedAhmed/.cursor/portal-home-logs/hitechcity/hitechcity-20260812T133002Z.log"
 }
