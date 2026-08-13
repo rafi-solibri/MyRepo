@@ -126,6 +126,19 @@ PY
 
 echo "Refreshed .portal-sessions seed for $DEST_NAME from $PROFILE"
 
+# Also push the live Cookies into Desktop Default so the next preflight sync
+# cannot wipe CDP with a stale source li_at / auth cookie.
+LIVE_SRC="${CHROME_SOURCE_PROFILE:-/home/ubuntu/.config/google-chrome}"
+if [[ -d "$LIVE_SRC/Default" ]]; then
+  mkdir -p "$LIVE_SRC/Default"
+  if cp -a "$SRC_COOKIES" "$LIVE_SRC/Default/Cookies" 2>/dev/null; then
+    [[ -f "$PROFILE/Default/Cookies-journal" ]] && cp -a "$PROFILE/Default/Cookies-journal" "$LIVE_SRC/Default/Cookies-journal" 2>/dev/null || true
+    echo "Also updated live Desktop Cookies at $LIVE_SRC/Default/Cookies"
+  else
+    echo "NOTE: could not update live Desktop Cookies (Chrome may have the DB locked)." >&2
+  fi
+fi
+
 if [[ "$DO_COMMIT" == "1" ]]; then
   git add -A "$SEED"
   if git diff --cached --quiet; then

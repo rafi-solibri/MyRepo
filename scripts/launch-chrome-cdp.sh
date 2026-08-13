@@ -304,12 +304,16 @@ if [[ "$portal" == "linkedin" || "$portal" == "hitechcity" ]]; then
       echo "         Sign in once: bash scripts/home-headed-login.sh linkedin" >&2
       echo "         Or set secrets LINKEDIN_EMAIL + LINKEDIN_PASSWORD for password fallback." >&2
       echo "         Or set LINKEDIN_LOGIN_WAIT_SEC=300 and re-launch while you sign in." >&2
-      # Cron/cloud: hard-fail so apply helpers do not burn inventory on login walls.
+      # LinkedIn portal: hard-fail so Easy Apply does not burn inventory on login walls.
+      # Hitech City: warn only — careers portals can still run (prompt allows partial).
       # Headed login scripts set CDP_REQUIRE_LIVE_LOGIN=0 (they wait separately).
-      if [[ "${CDP_REQUIRE_LIVE_LOGIN:-1}" == "1" ]]; then
+      if [[ "${CDP_REQUIRE_LIVE_LOGIN:-1}" == "1" && "$portal" == "linkedin" ]]; then
         echo "ERROR: CDP_REQUIRE_LIVE_LOGIN=1 — refusing to continue without a live LinkedIn session." >&2
         echo "       After a successful login, seed refresh is automatic; push .portal-sessions if needed." >&2
         exit "$live_rc"
+      fi
+      if [[ "$portal" == "hitechcity" ]]; then
+        echo "NOTE: Continuing hitechcity CDP for career-portal applies (LinkedIn blocked)." >&2
       fi
     fi
   fi

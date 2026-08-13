@@ -6,6 +6,18 @@
 | --- | --- |
 | After a code-fixable blocker was patched and merged, that day's automation stopped — applies only happened on the next cron | `scripts/rerun-daily-after-fix.sh` runs after `auto-merge-fix-pr.sh` / `merge-open-fix-prs.sh`: pull `main`, launch a fresh cloud job (needs `CURSOR_API_KEY`) or re-exec the durable helper in-session. Cap 5 re-runs/portal/IST day. Wired for LinkedIn, Foundit, Cutshort, Naukri, Instahyre, Indeed, Hitech City, Notification, Hotels, and home-local replicas. |
 
+## Fixed for 2026-08-13 LinkedIn cloud cron (Easy Apply Next)
+
+| Issue | Fix |
+| --- | --- |
+| Easy Apply stuck no Next/Submit — apply_form_root matched artdeco-modal__header via contains(@class,artdeco-modal) so footer Next was out of scope | Token-match full artdeco-modal / jobs-easy-apply-modal / role=dialog in _easy_apply_modal_ancestor |
+
+## Fixed for 2026-08-13 LinkedIn cloud cron (session clobber)
+
+| Issue | Fix |
+| --- | --- |
+| Preflight `sync-chrome-sessions` overwrote a live auto-login CDP `li_at` with stale Desktop source cookies → next launch lost session | Preserve dest when its auth cookie expires later than source; `refresh-portal-session-seed.sh` also updates live Desktop Cookies |
+
 ## Fixed for 2026-08-13 LinkedIn cloud cron (auto-login follow-up)
 
 | Issue | Fix |
@@ -32,6 +44,7 @@
 | Experian Hyd .NET SA skipped (`location_not_hyd_or_campus`) — title lacked city; Brazil/Malaysia cards leaked | Annotate SmartRecruiters cards with nearest location group; expand BAD_LOC (Brazil/Malaysia/etc.) |
 | SmartRecruiters DataDome (`captcha-delivery.com`) reported as `ats_incomplete_or_stuck` | Detect DataDome iframe/host in `blocked_wall` as CAPTCHA/bot wall |
 | ModMed Workday card poisoned with `· Hyderabad` from page chrome nearestLoc | Restrict location-group annotation to SmartRecruiters hosts; URL BAD_LOC wins |
+| `CDP_REQUIRE_LIVE_LOGIN=1` hard-failed `launch-chrome-cdp.sh hitechcity` so careers never started | Hard-fail only for `linkedin`; hitechcity warns and continues for career-portal applies |
 
 ## Fixed for 2026-08-13 LinkedIn cloud cron
 
