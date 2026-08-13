@@ -118,7 +118,8 @@ fi
 
 proxy_args=()
 # Indeed: WARP SOCKS (auto) or residential INDEED_HTTP_PROXY bypasses datacenter Cloudflare.
-# Home / residential Windows: skip WARP (INDEED_SKIP_WARP=1) — home IP is the bypass.
+# LinkedIn/HitechCity (cloud): same WARP path — AWS IPs trigger LinkedIn checkpoint/CAPTCHA.
+# Home / residential Windows: skip WARP (*_SKIP_WARP=1) — home IP is the bypass.
 if [[ "$portal" == "indeed" ]]; then
   if [[ "${INDEED_SKIP_WARP:-}" == "1" ]]; then
     echo "NOTE: INDEED_SKIP_WARP=1 — launching Indeed Chrome without WARP (home/residential)."
@@ -139,6 +140,28 @@ if [[ "$portal" == "indeed" ]]; then
   if [[ -n "${INDEED_HTTP_PROXY:-}" ]]; then
     proxy_args=(--proxy-server="${INDEED_HTTP_PROXY}")
     echo "Using INDEED_HTTP_PROXY for Chrome CDP (${INDEED_HTTP_PROXY})"
+  fi
+elif [[ "$portal" == "linkedin" || "$portal" == "hitechcity" ]]; then
+  if [[ "${LINKEDIN_SKIP_WARP:-}" == "1" ]]; then
+    echo "NOTE: LINKEDIN_SKIP_WARP=1 — launching LinkedIn Chrome without WARP."
+  elif [[ "$is_win" -eq 1 ]]; then
+    echo "NOTE: Windows home LinkedIn — skipping WARP (residential IP)."
+  elif [[ -n "${LINKEDIN_HTTP_PROXY:-}" ]]; then
+    proxy_args=(--proxy-server="${LINKEDIN_HTTP_PROXY}")
+    echo "Using LINKEDIN_HTTP_PROXY for Chrome CDP (${LINKEDIN_HTTP_PROXY})"
+  elif [[ -n "${CHROME_HTTP_PROXY:-}" ]]; then
+    proxy_args=(--proxy-server="${CHROME_HTTP_PROXY}")
+    echo "Using CHROME_HTTP_PROXY for Chrome CDP"
+  else
+    # shellcheck disable=SC1091
+    if eval "$(bash "$ROOT/scripts/ensure-linkedin-warp.sh")"; then
+      if [[ -n "${LINKEDIN_HTTP_PROXY:-}" ]]; then
+        proxy_args=(--proxy-server="${LINKEDIN_HTTP_PROXY}")
+        echo "Using WARP SOCKS for LinkedIn CDP (${LINKEDIN_HTTP_PROXY})"
+      fi
+    else
+      echo "WARNING: WARP SOCKS unavailable for LinkedIn — continuing without proxy (CAPTCHA more likely)." >&2
+    fi
   fi
 elif [[ -n "${CHROME_HTTP_PROXY:-}" ]]; then
   proxy_args=(--proxy-server="${CHROME_HTTP_PROXY}")
@@ -246,13 +269,46 @@ if [[ "$portal" == "linkedin" || "$portal" == "hitechcity" ]]; then
     set -e
     if [[ "$live_rc" -ne 0 ]]; then
       echo "WARNING: LinkedIn CDP not logged in (live check exit $live_rc)." >&2
+      # Unattended recovery: Google SSO / LINKEDIN_PASSWORD, then refresh seed on success.
+      if [[ "${LINKEDIN_AUTO_LOGIN:-1}" == "1" && -f "$ROOT/tools/linkedin/auto_login.py" ]]; then
+        echo "Attempting unattended LinkedIn auto-login…"
+        PY="$(bash "$ROOT/scripts/resolve-python.sh")"
+        set +e
+        if [[ "$PY" == "py" ]]; then
+          py -3 "$ROOT/tools/linkedin/auto_login.py"
+          auto_rc=$?
+        else
+          "$PY" "$ROOT/tools/linkedin/auto_login.py"
+          auto_rc=$?
+        fi
+        set -e
+        if [[ "$auto_rc" -eq 0 ]]; then
+          node "$ROOT/tools/linkedin/wait_for_cdp_login.js"
+          live_rc=$?
+          if [[ "$live_rc" -eq 0 ]]; then
+            echo "LinkedIn auto-login OK — refreshing .portal-sessions seed."
+            bash "$ROOT/scripts/refresh-portal-session-seed.sh" linkedin || true
+          fi
+        else
+          echo "NOTE: auto-login exit $auto_rc (5=login required, 6=CAPTCHA/checkpoint)." >&2
+        fi
+      fi
+    fi
+    if [[ "$live_rc" -eq 0 ]]; then
+      # Keep seed fresh whenever live session is good (survives next environment boot).
+      if [[ "${LINKEDIN_REFRESH_SEED:-1}" == "1" ]]; then
+        bash "$ROOT/scripts/refresh-portal-session-seed.sh" linkedin || true
+      fi
+    elif [[ "$live_rc" -ne 0 ]]; then
+      echo "WARNING: LinkedIn CDP still not logged in (live check exit $live_rc)." >&2
       echo "         Sign in once: bash scripts/home-headed-login.sh linkedin" >&2
+      echo "         Or set secrets LINKEDIN_EMAIL + LINKEDIN_PASSWORD for password fallback." >&2
       echo "         Or set LINKEDIN_LOGIN_WAIT_SEC=300 and re-launch while you sign in." >&2
       # Cron/cloud: hard-fail so apply helpers do not burn inventory on login walls.
       # Headed login scripts set CDP_REQUIRE_LIVE_LOGIN=0 (they wait separately).
       if [[ "${CDP_REQUIRE_LIVE_LOGIN:-1}" == "1" ]]; then
         echo "ERROR: CDP_REQUIRE_LIVE_LOGIN=1 — refusing to continue without a live LinkedIn session." >&2
-        echo "       Refresh .portal-sessions after headed login, then Save environment snapshot." >&2
+        echo "       After a successful login, seed refresh is automatic; push .portal-sessions if needed." >&2
         exit "$live_rc"
       fi
     fi

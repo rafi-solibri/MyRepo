@@ -9,8 +9,16 @@ cron agents do not boot into empty login walls.
 
 Refresh when sessions expire:
 ```bash
-bash scripts/open-portal-login-tabs.sh   # sign in on Desktop
-# quit Chrome, then:
-bash scripts/verify-portal-logins.sh --strict
-# re-copy Cookies into this folder (or ask the agent to refresh the seed)
+# Preferred (unattended after live login succeeds):
+bash scripts/launch-chrome-cdp.sh linkedin   # auto-login + refresh-portal-session-seed.sh
+# Or manually:
+bash scripts/refresh-portal-session-seed.sh linkedin --commit
+git push   # so next cloud boot restores the new Cookies
+
+# Manual headed path:
+bash scripts/home-headed-login.sh linkedin
+bash scripts/refresh-portal-session-seed.sh linkedin --commit
 ```
+
+Cloud LinkedIn Chrome uses WARP SOCKS by default (same as Indeed) to reduce
+datacenter CAPTCHA. Set `LINKEDIN_SKIP_WARP=1` on residential home.
