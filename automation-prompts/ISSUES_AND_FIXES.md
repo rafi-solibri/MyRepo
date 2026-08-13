@@ -5,6 +5,7 @@
 | Issue | Fix |
 | --- | --- |
 | Home `board_campus_apply` marked all boards `preflight_rc_1` with UTF-16 `REGDB_E_CLASSNOTREG` (WSL `bash` MSI stub via bare `bash` from Python subprocess) | `resolve_bash()` prefers Git Bash / `GIT_BASH`; reuse system Chrome CDP (`HITECHCITY_BOARD_REUSE_CDP=1`) after careers so boards skip broken relaunch; continue when launch warns but `:9222` is up |
+| Board browse credited Naukri 21 / Instahyre 2 from **stale** same-day portal `*-daily-apply.json` (mtime earlier than board `startedAt`) | Ignore report files whose `finishedAt`/`startedAt` precede the board portal start; prefer stdout `intentionalApplies`/`Applied: 0` |
 
 ## Fixed for 2026-08-13 LinkedIn home (Windows residential)
 
