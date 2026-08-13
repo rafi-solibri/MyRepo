@@ -1,12 +1,11 @@
 # Issues from last cron + fixes
 
-<<<<<<< HEAD
 ## Fixed for 2026-08-13 LinkedIn cloud cron (auto-login follow-up)
 
 | Issue | Fix |
 | --- | --- |
 | Stale LinkedIn session required owner headed login every cloud cron; AWS IP → reCAPTCHA checkpoint | Cloud LinkedIn CDP uses WARP SOCKS (`ensure-linkedin-warp.sh`); `tools/linkedin/auto_login.py` tries Google SSO then `LINKEDIN_PASSWORD`; on success `refresh-portal-session-seed.sh` updates `.portal-sessions` for next boot. CAPTCHA still owner-only when WARP+SSO fail. |
-=======
+
 ## Fixed for 2026-08-13 Naukri daily (cloud)
 
 | Issue | Fix |
@@ -27,7 +26,6 @@
 | Experian Hyd .NET SA skipped (`location_not_hyd_or_campus`) — title lacked city; Brazil/Malaysia cards leaked | Annotate SmartRecruiters cards with nearest location group; expand BAD_LOC (Brazil/Malaysia/etc.) |
 | SmartRecruiters DataDome (`captcha-delivery.com`) reported as `ats_incomplete_or_stuck` | Detect DataDome iframe/host in `blocked_wall` as CAPTCHA/bot wall |
 | ModMed Workday card poisoned with `· Hyderabad` from page chrome nearestLoc | Restrict location-group annotation to SmartRecruiters hosts; URL BAD_LOC wins |
->>>>>>> origin/main
 
 ## Fixed for 2026-08-13 LinkedIn cloud cron
 
