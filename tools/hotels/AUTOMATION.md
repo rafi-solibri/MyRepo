@@ -58,11 +58,11 @@ PYTHONPATH=. python3 -c "from pathlib import Path; from tools.hotels.send_resend
 - [ ] Emailed HTML with calendars **first** + CSVs to `rafi.success@gmail.com`
 - [ ] Confirmed delivery via `get-email`
 - [ ] Updated automation memory with the new Resend email id
-- [ ] If a code-fixable scraper/report/send bug was hit: patch `tools/hotels/`, follow `automation-prompts/AUTO_FIX.md` (commit + push + ready PR + `bash scripts/auto-merge-fix-pr.sh`)
+- [ ] If a code-fixable scraper/report/send bug was hit: patch `tools/hotels/`, follow `automation-prompts/AUTO_FIX.md` (commit + push + ready PR + `bash scripts/auto-merge-fix-pr.sh`), then same-day re-run this tracker (`scripts/rerun-daily-after-fix.sh --portal hotels`)
 
 ## Auto-fix & push (MANDATORY)
 
-Same policy as job-apply portals — see [`automation-prompts/AUTO_FIX.md`](../../automation-prompts/AUTO_FIX.md). Fix Kayak/calendar/report/send helpers in-repo; do not invent hotel prices. Owner-only: Resend domain verification / API key secrets.
+Same policy as job-apply portals — see [`automation-prompts/AUTO_FIX.md`](../../automation-prompts/AUTO_FIX.md). Fix Kayak/calendar/report/send helpers in-repo; do not invent hotel prices. After merge, same-day re-run this tracker so today's email uses the fix (`scripts/rerun-daily-after-fix.sh --portal hotels`). Owner-only: Resend domain verification / API key secrets.
 
 ## Out of scope unless asked
 

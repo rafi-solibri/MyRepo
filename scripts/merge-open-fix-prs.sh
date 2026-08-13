@@ -70,6 +70,10 @@ while IFS= read -r row; do
     failed=1
   else
     echo "Merged PR #$num"
+    pr_url="${title_url##*$'\t'}"
+    echo "Same-day post-fix re-run after merge of $pr_url"
+    bash "$ROOT/scripts/rerun-daily-after-fix.sh" --merged-pr "$pr_url" \
+      || echo "WARNING: post-fix re-run failed for $pr_url (merge still OK)"
   fi
 done <<< "$PRS_JSON"
 

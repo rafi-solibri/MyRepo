@@ -123,6 +123,10 @@ if [[ "$PORTAL" == "hitechcity" ]]; then
 Run: python tools/hitechcity/daily_apply.py (or py -3). Write artifacts/hitechcity-daily.json AND artifacts/hitechcity-daily-run.json (home schema)."
 fi
 
+# Home-local evening replica: keep applies on this machine (do not launch cloud).
+export HOME_LOCAL=1
+export PORTAL
+
 PROMPT="$(cat <<EOF
 You are the ${PORTAL} Daily apply runner on a HOME / residential machine.
 Read and OBEY the full fenced instructions in ${PROMPT_MD}.
@@ -140,6 +144,7 @@ AUTO-FIX / PUSH / MERGE (MANDATORY when code-fixable):
 - Open a READY (non-draft) PR to main, then run: bash scripts/auto-merge-fix-pr.sh
 - If merge conflicts: rebase onto origin/main, push, re-run auto-merge-fix-pr.sh
 - After merge: git fetch origin main && git checkout main && git pull --ff-only
+- Then the merge helper MUST same-day re-run this portal (scripts/rerun-daily-after-fix.sh) so today's applies use the fix. Do not wait for tomorrow.
 - Owner-only blockers (login/CAPTCHA/OTP): report + headed login helper if present; still ship any code helpers that make the next login smoother
 
 HARD — write a JSON summary the daily mail can ingest:
