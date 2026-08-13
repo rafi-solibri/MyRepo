@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-13 Indeed cloud cron (privacy Agree + location)
+
+| Issue | Fix |
+| --- | --- |
+| SmartApply stuck at 89% on Nagarro/Mattel voluntary self-ID — required **Agree** privacy checkbox unchecked (`Choose an option to continue`) because fill JS clicked input then wrapping label (toggle off) and page-level `voluntary self` returned `decline` | Tick privacy/Agree once (`tick_required_agreements`); skip oversized form/main roots; recover validation wall; skip Bengaluru-only when snippet chrome says remote; skip already-applied job-view CTAs |
+
 ## Fixed for 2026-08-13 LinkedIn cloud cron (Yes/No select)
 
 | Issue | Fix |
