@@ -92,6 +92,42 @@ function job(partial) {
 }
 
 {
+  const j = job({
+    title: "Solutions Architect",
+    skills: ["AWS"],
+    expRange: { min: 5, max: 7 },
+  });
+  assert.ok(
+    classify(j)?.tier === 1,
+    "tier1 with maxExp 7 should pass (was hard-skip <8)"
+  );
+}
+
+{
+  const j = job({
+    title: "Senior Backend Engineer",
+    skills: ["Node.js"],
+    expRange: { min: 5, max: 7 },
+  });
+  assert.strictEqual(
+    classify(j),
+    null,
+    "non-tier1 with maxExp 7 should still skip"
+  );
+}
+
+{
+  const j = job({
+    title: "Tech Lead - Remote",
+    locations: [],
+    remoteType: "remote_not_okay",
+    skills: ["Java", "React"],
+  });
+  assert.ok(isHydOrRemote(j), "remote in title should count as Hyd/remote");
+  assert.ok(classify(j)?.tier === 1);
+}
+
+{
   const j = job({ title: "Solutions Architect", skills: ["AWS"] });
   assert.strictEqual(titleOf(j), "Solutions Architect");
   assert.ok(classify(j)?.tier === 1);

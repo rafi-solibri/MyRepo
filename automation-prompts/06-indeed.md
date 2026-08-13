@@ -33,7 +33,8 @@ Current 52 LPA | Expected 65 LPA | Immediate | +91 8790251698 | rafi.success@gma
 ## Apply bias (CRITICAL)
 - Default to APPLY for Hyd/remote Architect / Tech Lead / EM / Principal / Staff / Senior .NET/cloud.
 - When uncertain → APPLY. Title-first skips only. Do not invent applies.
-- Keep going while inventory remains.
+- Keep going while inventory remains — defaults are **INDEED_MAX_APPLIES=40** / **INDEED_MAX_SEEN=120** (do not soft-stop at ~8).
+- Employer SmartApply questions: fill years-with-stack, current employer, LinkedIn URL, education, privacy Agree once (no double-toggle).
 
 ## Apply paths
 - Prefer Indeed Easy Apply through confirmation via `python3 tools/indeed/uc_daily_apply.py` (cloud WARP+UC path).

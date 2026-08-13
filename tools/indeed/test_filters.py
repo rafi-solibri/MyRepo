@@ -48,6 +48,21 @@ def test_skip_title_not_target():
     ) == "title_not_target"
 
 
+def test_enterprise_system_architect_ok():
+    assert skip_reason(
+        "Enterprise Architect - Commercial - Hyderabad, Telangana - Indeed.com",
+        "Mattel",
+        "Hyderabad, Telangana",
+        "",
+    ) is None
+    assert skip_reason(
+        "System Architect - Hyderabad, Telangana - Indeed.com",
+        "Axiado",
+        "Hyderabad, Telangana",
+        "",
+    ) is None
+
+
 def test_already_applied_job_view_only():
     assert already_applied("You applied to this job on 12 Aug", "https://in.indeed.com/viewjob?jk=abc")
     assert already_applied("You have already applied for this position", "https://in.indeed.com/viewjob?jk=abc")
@@ -61,5 +76,6 @@ if __name__ == "__main__":
     test_skip_hyd_remote_ok()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
     test_skip_title_not_target()
+    test_enterprise_system_architect_ok()
     test_already_applied_job_view_only()
     print("ok")
