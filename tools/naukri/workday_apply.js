@@ -183,19 +183,48 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
       .catch(() => "");
   }
 
+  async function ensureCreateAccountConsent() {
+    // Wells Fargo / newer tenants: "Yes, I have reviewed the above and consent…"
+    // Older copy: "Yes, I have read and consent…". Playwright .check() alone often
+    // does not toggle Workday's styled checkbox — click the label (or input).
+    const consentRe =
+      /Yes, I have reviewed the above and consent|Yes, I have read and consent|I acknowledge|I agree|I have read|consent to the terms/i;
+    const label = page.locator("label").filter({ hasText: consentRe }).first();
+    if (await label.isVisible().catch(() => false)) {
+      await label.click({ force: true }).catch(() => {});
+      await sleep(200);
+    } else {
+      await page.getByText(consentRe).first().click({ force: true }).catch(() => {});
+      await sleep(200);
+    }
+    const cb = page.locator("[data-automation-id='createAccountCheckbox']").first();
+    if (await cb.count()) {
+      const checked = await cb.isChecked().catch(() => false);
+      if (!checked) {
+        await cb.click({ force: true }).catch(() => {});
+        await sleep(200);
+      }
+      if (!(await cb.isChecked().catch(() => false))) {
+        await cb.check({ force: true }).catch(() => {});
+        await sleep(200);
+      }
+    }
+    return page
+      .locator("[data-automation-id='createAccountCheckbox']")
+      .first()
+      .isChecked()
+      .catch(() => false);
+  }
+
   async function submitCreateAccount() {
     await typeInto(page, "[data-automation-id='email']", EMAIL);
     await typeInto(page, "[data-automation-id='password']", PASS);
     await typeInto(page, "[data-automation-id='verifyPassword']", PASS);
-    await page
-      .getByText(/Yes, I have read and consent|I acknowledge|I agree|I have read/i)
-      .first()
-      .click({ force: true })
-      .catch(() => {});
-    await page
-      .locator("[data-automation-id='createAccountCheckbox']")
-      .check({ force: true })
-      .catch(() => {});
+    const consented = await ensureCreateAccountConsent();
+    if (!consented) {
+      // Do not burn submit without consent — Workday silently stays on Create Account.
+      return;
+    }
     await sleep(300);
     const createSubmit = page
       .locator(
@@ -413,9 +442,15 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
   const authText = await page
     .evaluate(() => (document.body?.innerText || "").slice(0, 2000))
     .catch(() => "");
+  const earlyAuthFail = authFailureReason(authText);
+  if (earlyAuthFail) {
+    return { ok: false, reason: earlyAuthFail, url: page.url() };
+  }
   if (
     (/Create Account\/Sign In|current step 1 of/i.test(authText) ||
-      /\/login/i.test(page.url())) &&
+      /\/login/i.test(page.url()) ||
+      (/Sign In/i.test(authText) &&
+        (await page.locator("[data-automation-id='email']").count()) > 0)) &&
     (await page.locator("input[type='password']").count()) > 0 &&
     !(await page.locator("input[type='file']").count())
   ) {
@@ -426,28 +461,221 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
         .isVisible()
         .catch(() => false)
     ) {
-      await typeInto(page, "[data-automation-id='email']", EMAIL);
-      await typeInto(page, "[data-automation-id='password']", PASS);
-      await typeInto(page, "[data-automation-id='verifyPassword']", PASS);
-      await page
-        .getByText(/Yes, I have read and consent|I acknowledge|I agree/i)
-        .first()
-        .click({ force: true })
-        .catch(() => {});
-      await clickWorkdayControl(page, "Create Account");
-      await sleep(3500);
+      await submitCreateAccount();
+      await sleep(1500);
+    }
+    const stillAuthText = await page
+      .evaluate(() => (document.body?.innerText || "").slice(0, 1500))
+      .catch(() => "");
+    const stillFail = authFailureReason(stillAuthText);
+    if (stillFail) {
+      return { ok: false, reason: stillFail, url: page.url() };
     }
     const stillAuth =
       /\/login/i.test(page.url()) ||
       ((await page.locator("input[type='password']").count()) > 0 &&
-        /Create Account\/Sign In/i.test(
-          await page
-            .evaluate(() => (document.body?.innerText || "").slice(0, 1200))
-            .catch(() => "")
-        ));
+        /Create Account\/Sign In|Don't have an account yet/i.test(stillAuthText));
     if (stillAuth) {
       return { ok: false, reason: "ats_login_wall", url: page.url() };
     }
+  }
+
+  async function fillFieldInput(formFieldId, value) {
+    const el = page
+      .locator(`[data-automation-id='${formFieldId}'] input, [data-automation-id='${formFieldId}']`)
+      .first();
+    if (!(await el.isVisible().catch(() => false))) return false;
+    await el.click({ force: true }).catch(() => {});
+    await el.fill("").catch(() => {});
+    if (typeof el.pressSequentially === "function") {
+      await el.pressSequentially(String(value), { delay: 15 }).catch(async () => {
+        await el.fill(String(value)).catch(() => {});
+      });
+    } else {
+      await el.fill(String(value)).catch(() => {});
+    }
+    return true;
+  }
+
+  async function pickPromptOption(formFieldId, optionPatterns) {
+    const root = page.locator(`[data-automation-id='${formFieldId}']`).first();
+    if (!(await root.isVisible().catch(() => false))) return false;
+    const already = ((await root.innerText().catch(() => "")) || "").trim();
+    if (
+      (/\d+\s+item selected|1 item selected/i.test(already) &&
+        !/0 items selected/i.test(already)) ||
+      (/^(BA|BS|MA|MS|MBA|PhD|B\.?Tech)/im.test(already) &&
+        !/Select One/i.test(already))
+    ) {
+      return true;
+    }
+    const listBtn = root.locator("button[aria-haspopup='listbox']").first();
+    const opener = (await listBtn.isVisible().catch(() => false))
+      ? listBtn
+      : root
+          .locator(
+            "[data-automation-id='multiselectInputContainer'], [data-automation-id='selectWidget'], button, input"
+          )
+          .first();
+    await opener.click({ force: true }).catch(() => {});
+    await sleep(900);
+    for (const re of optionPatterns) {
+      const leaf = page
+        .locator(
+          "[data-uxi-widget-type='multiselectlistitem'], [data-automation-id='promptLeafNode'], [role='option'], [data-automation-id='promptOption']"
+        )
+        .filter({ hasText: re })
+        .first();
+      if (!(await leaf.isVisible().catch(() => false))) continue;
+      const box = await leaf.boundingBox().catch(() => null);
+      if (box) {
+        await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+      } else {
+        await leaf.click({ force: true }).catch(() => {});
+      }
+      await sleep(500);
+      // Native listbox: typing the short code (e.g. BS) + Enter is reliable.
+      if (/Select One/i.test((await root.innerText().catch(() => "")) || "")) {
+        const hint = String(re.source || re)
+          .replace(/[\^\$\\]/g, "")
+          .slice(0, 8);
+        if (hint) {
+          await page.keyboard.type(hint, { delay: 40 }).catch(() => {});
+          await page.keyboard.press("Enter").catch(() => {});
+          await sleep(400);
+        }
+      }
+      break;
+    }
+    await page.keyboard.press("Escape").catch(() => {});
+    await sleep(300);
+    return true;
+  }
+
+  async function fillMyInformation() {
+    // Previously worked here? → No
+    const prev = page.locator(
+      "[data-automation-id='formField-candidateIsPreviousWorker']"
+    );
+    if (await prev.isVisible().catch(() => false)) {
+      await prev.getByText(/^No$/i).first().click({ force: true }).catch(() => {});
+    }
+
+    // Prefer India when Country shows United States / Select One.
+    const country = page
+      .locator(
+        "[data-automation-id='formField-country'] button, [data-automation-id='countryDropdown']"
+      )
+      .first();
+    if (await country.isVisible().catch(() => false)) {
+      const cText = ((await country.innerText().catch(() => "")) || "").trim();
+      if (/united states|select one|^$/i.test(cText) && !/india/i.test(cText)) {
+        await country.click({ force: true }).catch(() => {});
+        await sleep(600);
+        const india = page.getByText(/^India$/i).first();
+        if (await india.isVisible().catch(() => false)) {
+          await india.click({ force: true }).catch(() => {});
+          await sleep(800);
+        } else {
+          await page.keyboard.press("Escape").catch(() => {});
+        }
+      }
+    }
+
+    await fillFieldInput("legalNameSection_firstName", "Mohammed Abdul Rafi");
+    await fillFieldInput("legalNameSection_lastName", "Ahmed");
+    await fillFieldInput("formField-legalName--firstName", "Mohammed Abdul Rafi");
+    await fillFieldInput("formField-legalName--lastName", "Ahmed");
+    await fillFieldInput("addressSection_city", "Hyderabad");
+    await fillFieldInput("formField-addressLine1", "Hyderabad, Telangana");
+    await fillFieldInput("formField-city", "Hyderabad");
+    await fillFieldInput("formField-postalCode", "500032");
+    await fillFieldInput("phone", "8790251698");
+    await fillFieldInput("formField-phoneNumber", "8790251698");
+
+    await pickPromptOption("formField-phoneType", [/^Mobile$/i, /Cell/i, /Mobile/i]);
+    await pickPromptOption("formField-source", [
+      /^Job Board$/i,
+      /Naukri/i,
+      /Internet/i,
+      /Online/i,
+      /Other/i,
+      /Company Websites/i,
+    ]);
+
+    // Aria-label fallbacks.
+    for (const [re, val] of [
+      [/first name/i, "Mohammed Abdul Rafi"],
+      [/last name/i, "Ahmed"],
+      [/^city$/i, "Hyderabad"],
+      [/postal|zip/i, "500032"],
+      [/phone number|mobile/i, "8790251698"],
+      [/email/i, EMAIL],
+    ]) {
+      const el = page.getByLabel(re).first();
+      if (await el.isVisible().catch(() => false)) {
+        const cur = await el.inputValue().catch(() => "");
+        if (!cur) await el.fill(val).catch(() => {});
+      }
+    }
+  }
+
+  async function fillEducation() {
+    const schoolRoot = page.locator("[data-automation-id='formField-schoolName']");
+    if (!(await schoolRoot.isVisible().catch(() => false))) return;
+    // School is often a typeahead/multiselect prompt.
+    const schoolOpen = schoolRoot
+      .locator(
+        "[data-automation-id='multiselectInputContainer'], input, button"
+      )
+      .first();
+    await schoolOpen.click({ force: true }).catch(() => {});
+    await sleep(400);
+    await page.keyboard.type("Acharya Nagarjuna University", { delay: 25 }).catch(() => {});
+    await sleep(900);
+    const schoolOpt = page
+      .locator("[data-automation-id='promptOption']")
+      .filter({ hasText: /Acharya Nagarjuna/i })
+      .first();
+    if (await schoolOpt.isVisible().catch(() => false)) {
+      const box = await schoolOpt.boundingBox().catch(() => null);
+      if (box) await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+      else await schoolOpt.click({ force: true }).catch(() => {});
+    } else {
+      await fillFieldInput("formField-schoolName", "Acharya Nagarjuna University");
+    }
+    await page.keyboard.press("Escape").catch(() => {});
+    await sleep(300);
+
+    await pickPromptOption("formField-degree", [
+      /^BS$/i,
+      /^Bachelor of Science/i,
+      /^BA$/i,
+      /B\.?\s*Tech/i,
+      /^Bachelor/i,
+    ]);
+    await pickPromptOption("formField-fieldOfStudy", [
+      /Information Technology/i,
+      /Computer Science/i,
+      /Computer Engineering/i,
+      /IT\b/i,
+    ]);
+  }
+
+  async function clickAdvance() {
+    const footerNext = page
+      .locator(
+        "[data-automation-id='pageFooterNextButton'], button[data-automation-id='bottom-navigation-next-button']"
+      )
+      .first();
+    if (await footerNext.isVisible().catch(() => false)) {
+      await footerNext.click({ force: true }).catch(() => {});
+      return true;
+    }
+    for (const label of ["Save and Continue", "Next", "Continue", "Submit"]) {
+      if (await clickWorkdayControl(page, label)) return true;
+    }
+    return false;
   }
 
   while (Date.now() - start < maxMs) {
@@ -458,75 +686,44 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
       return { ok: true, url: page.url() };
     }
 
+    // Autofill step often shows a bare "Loading" spinner — wait, do not bail.
+    if (/^\s*Loading\b|\bLoading\s*$/m.test(text.slice(0, 900)) && !/First Name|My Information|How Did You Hear/i.test(text)) {
+      await sleep(2000);
+      continue;
+    }
+
     if (resumePath) {
       const file = page.locator("input[type='file']").first();
-      if (await file.count()) {
+      // Avoid re-uploading the same resume every loop (SS&C stacks duplicates).
+      const alreadyUploaded = /successfully uploaded|Rafi_Resume\.docx/i.test(text);
+      if ((await file.count()) && !alreadyUploaded) {
         await file.setInputFiles(resumePath).catch(() => {});
         await sleep(1500);
       }
     }
 
-    await page
-      .evaluate(() => {
-        const set = (id, val) => {
-          const el = document.querySelector(`[data-automation-id='${id}']`);
-          if (!el || el.disabled) return;
-          el.focus();
-          el.value = val;
-          el.dispatchEvent(new Event("input", { bubbles: true }));
-          el.dispatchEvent(new Event("change", { bubbles: true }));
-        };
-        set("legalNameSection_firstName", "Mohammed Abdul Rafi");
-        set("legalNameSection_lastName", "Ahmed");
-        set("addressSection_city", "Hyderabad");
-        set("phone", "8790251698");
-        for (const inp of document.querySelectorAll("input,textarea")) {
-          if (
-            inp.type === "file" ||
-            inp.type === "password" ||
-            inp.type === "checkbox" ||
-            inp.type === "radio" ||
-            inp.offsetParent === null
-          )
-            continue;
-          const ctx = (
-            (inp.getAttribute("aria-label") || "") +
-            " " +
-            (inp.getAttribute("data-automation-id") || "") +
-            " " +
-            (inp.placeholder || "")
-          ).toLowerCase();
-          if (/email/.test(ctx) && !inp.value) {
-            inp.value = "rafi.success@gmail.com";
-            inp.dispatchEvent(new Event("input", { bubbles: true }));
-          }
-          if (/phone|mobile/.test(ctx) && !inp.value) {
-            inp.value = "8790251698";
-            inp.dispatchEvent(new Event("input", { bubbles: true }));
-          }
-        }
-      })
-      .catch(() => {});
+    await fillMyInformation();
+    await fillEducation();
 
-    let advanced = false;
-    for (const label of ["Next", "Continue", "Submit", "Save and Continue"]) {
-      if (await clickWorkdayControl(page, label)) {
-        advanced = true;
-        await sleep(2200);
-        break;
-      }
+    let advanced = await clickAdvance();
+    if (advanced) {
+      await sleep(2500);
+      continue;
     }
-    if (!advanced) {
-      const text2 = await page
-        .evaluate(() => (document.body?.innerText || "").slice(0, 3000))
-        .catch(() => "");
-      if (isSubmittedText(text2)) return { ok: true, url: page.url() };
-      return {
-        ok: false,
-        reason: "external_incomplete_or_timeout",
-        url: page.url(),
-      };
+    const text2 = await page
+      .evaluate(() => (document.body?.innerText || "").slice(0, 3000))
+      .catch(() => "");
+    if (isSubmittedText(text2)) return { ok: true, url: page.url() };
+    // Still loading / animating — keep waiting within budget.
+    if (/\bLoading\b/i.test(text2.slice(0, 900))) {
+      await sleep(2000);
+      continue;
     }
+    return {
+      ok: false,
+      reason: "external_incomplete_or_timeout",
+      url: page.url(),
+    };
   }
   return { ok: false, reason: "external_incomplete_or_timeout", url: page.url() };
 }
