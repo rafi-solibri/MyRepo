@@ -147,6 +147,14 @@ function skipTitleReason(title) {
     !hasDotNet(t, "")
   )
     return "pure AI/data without .NET on title";
+  // Infra / IT ops / helpdesk — .NET only in skills laundry lists is noise (NUS Analyst case).
+  if (
+    /\b(infrastructure|it\s+analyst|systems?\s+analyst|sysadmin|system\s+admin|network\s+engineer|desktop\s+support|help\s*desk|helpdesk|sre\b|site\s+reliability)\b/i.test(
+      t
+    ) &&
+    !hasDotNet(t, "")
+  )
+    return "infra/ops without .NET on title";
   if (/\bwpf\b/i.test(t) && !/\basp\.?\s*net|web\s*api|azure|\.net\s*core\b/i.test(t))
     return "WPF/hardware desktop";
   return null;
