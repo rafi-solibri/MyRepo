@@ -1,5 +1,13 @@
 # Naukri — issues & fixes
 
+## 2026-08-14 (home)
+
+| Issue | Fix |
+| --- | --- |
+| Wrong applies: TOSCA Automation Architect, Embedded Technical Architect, Artificial Intelligence Architect | resume_and_filters.js: skip tosca/embedded/firmware + artificial intelligence architect |
+| Node /opt vs Git Bash /opt split on Windows — apply JSON not dual-written to repo artifacts | Wire daily_apply/update_profile_resume/home_run_report through tools/artifact_path.js dual-write |
+
+
 ## 2026-08-14 (cloud)
 
 | Issue | Fix |

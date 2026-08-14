@@ -25,6 +25,7 @@
 const fs = require("fs");
 const path = require("path");
 const { hasAuth } = require("../chrome_session");
+const { writeArtifactJson } = require("../artifact_path");
 const {
   findResume,
   CHROME_PROFILE,
@@ -36,7 +37,7 @@ const CDP = process.env.NAUKRI_CDP || "http://127.0.0.1:9222";
 const PROFILE_URL = process.env.NAUKRI_PROFILE_URL || DEFAULT_PROFILE_URL;
 const REPORT =
   process.env.NAUKRI_RESUME_REPORT ||
-  "/opt/cursor/artifacts/naukri-profile-resume.json";
+  require("../artifact_path").artifactPaths("naukri-profile-resume.json")[0];
 const SOFT = process.env.NAUKRI_RESUME_SOFT === "1";
 const MAX_ATTEMPTS = Number(process.env.NAUKRI_RESUME_ATTEMPTS || 3);
 
@@ -573,8 +574,11 @@ async function main() {
 
 function writeReport(obj) {
   try {
-    fs.mkdirSync(path.dirname(REPORT), { recursive: true });
-    fs.writeFileSync(REPORT, JSON.stringify(obj, null, 2));
+    writeArtifactJson("naukri-profile-resume.json", obj);
+    if (process.env.NAUKRI_RESUME_REPORT) {
+      fs.mkdirSync(path.dirname(REPORT), { recursive: true });
+      fs.writeFileSync(REPORT, JSON.stringify(obj, null, 2));
+    }
   } catch (_) {
     // ignore
   }

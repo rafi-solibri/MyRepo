@@ -36,10 +36,8 @@ function argValue(flag) {
 
 function defaultOut(portal) {
   const name = `${portal}-daily-run.json`;
-  if (fs.existsSync("/opt/cursor/artifacts")) {
-    return path.join("/opt/cursor/artifacts", name);
-  }
-  return path.join(process.cwd(), "artifacts", name);
+  const { artifactPaths } = require("./artifact_path");
+  return artifactPaths(name)[0];
 }
 
 function normalize(raw = {}, opts = {}) {
