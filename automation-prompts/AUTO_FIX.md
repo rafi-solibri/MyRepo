@@ -1,13 +1,13 @@
 # Auto-fix, push, and merge (every daily automation run)
 
-**Mandatory for LinkedIn, Hitech City / Knowledge City, Foundit, Cutshort, Naukri, Instahyre, Indeed (home), Notification, Hotel Price Tracker, and all home-local evening replicas.**
+**Mandatory for LinkedIn, Hitech City / Knowledge City, Foundit, Cutshort, Naukri, Instahyre, Indeed (home), Notification, and all home-local evening replicas.**
 
 When a run hits a **code-fixable** issue or blocker, do not only report it. Fix the durable helper, push a feature branch, open a PR, **merge it into `main` automatically**, and **same-day re-run that portal's job** so today's applies use the fix — do not wait for tomorrow's cron.
 
 ## Do this every run when applicable
 
 1. Prefer fixing under durable paths:
-   - `tools/{linkedin,hitechcity,foundit,cutshort,naukri,instahyre,indeed,hotels}/…`
+   - `tools/{linkedin,hitechcity,foundit,cutshort,naukri,instahyre,indeed}/…`
    - `scripts/*.sh` / `scripts/*.mjs` / `scripts/*.ps1`
    - `automation-prompts/*.md` (prompt corrections)
 2. Keep the change minimal and portal-scoped. Add/adjust a small test when filters/classifiers change.
@@ -53,7 +53,7 @@ gh pr merge --squash --delete-branch   # this repo: immediate squash (auto-merge
    1. Detects which daily job(s) the fix belongs to (PR title `fix(naukri): …`, paths under `tools/<portal>/`, or **all apply portals** when shared infra like `tools/chrome_session.js` changed).
    2. `git fetch origin main && git checkout main && git pull --ff-only origin main`.
    3. On cloud: launches a **fresh** Cursor cloud agent on `main` (needs secret `CURSOR_API_KEY` from [Cursor Dashboard → API Keys](https://cursor.com/dashboard/api)) with `POST_FIX_RERUN=1`. That new job runs the portal's daily apply prompt with the merged code.
-   4. If no API key, or on home-local (`HOME_LOCAL=1`): **re-executes** the durable apply helper in this session (`daily_apply.js` / LinkedIn helpers / `hitechcity/daily_apply.py` / hotel automation).
+   4. If no API key, or on home-local (`HOME_LOCAL=1`): **re-executes** the durable apply helper in this session (`daily_apply.js` / LinkedIn helpers / `hitechcity/daily_apply.py`).
    5. Caps at **5** same-day post-fix re-runs per portal (IST date) so a new blocker cannot loop forever.
 
    If you merged without the helper:
@@ -64,7 +64,7 @@ bash scripts/rerun-daily-after-fix.sh --portal <portal>
 bash scripts/rerun-daily-after-fix.sh --merged-pr https://github.com/rafi-solibri/myrepo/pull/NNN
 ```
 
-   Jobs: `linkedin` `foundit` `cutshort` `naukri` `instahyre` `indeed` `hitechcity` `notification` `hotels`.
+   Jobs: `linkedin` `foundit` `cutshort` `naukri` `instahyre` `indeed` `hitechcity` `notification`.
 
 8. After the re-run is launched or the helper is re-executing, do not invent applies. Skip jobs already submitted today. Home batch runners call `restore_main` between portals — still push+merge+re-run your fix first so `main` has it.
 

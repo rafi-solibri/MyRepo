@@ -39,9 +39,8 @@ expect "$got" "$want" "shared chrome_session → all apply portals"
 got="$(bash "$SCRIPT" --detect-from-files scripts/rerun-daily-after-fix.sh automation-prompts/AUTO_FIX.md)"
 expect "$got" "" "rerun/AUTO_FIX docs do not trigger apply jobs"
 
-got="$(bash "$SCRIPT" --detect-from-files tools/hotels/automation.py scripts/send-job-status-email.mjs)"
-want="$(printf '%s\n' notification hotels)"
-expect "$got" "$want" "hotels + notification files"
+got="$(bash "$SCRIPT" --detect-from-files scripts/send-job-status-email.mjs automation-prompts/issues/notification.md)"
+expect "$got" "notification" "notification files"
 
 got="$(bash "$SCRIPT" --detect-from-files automation-prompts/01-linkedin.md automation-prompts/02-foundit.md)"
 expect "$got" "" "prompt-only edits do not fan out to apply jobs"
@@ -51,6 +50,15 @@ if echo "$got" | grep -q "DRY-RUN would re-run naukri"; then
   echo "OK   dry-run naukri"
 else
   echo "FAIL dry-run naukri"
+  echo "$got"
+  fail=1
+fi
+
+got="$(bash "$SCRIPT" --dry-run --portal retired)"
+if echo "$got" | grep -q "no portal detected" && ! echo "$got" | grep -q "DRY-RUN would re-run"; then
+  echo "OK   invalid portal is inert"
+else
+  echo "FAIL invalid portal is inert"
   echo "$got"
   fail=1
 fi

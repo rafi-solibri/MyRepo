@@ -111,7 +111,7 @@
 
 | Issue | Fix |
 | --- | --- |
-| After a code-fixable blocker was patched and merged, that day's automation stopped — applies only happened on the next cron | `scripts/rerun-daily-after-fix.sh` runs after `auto-merge-fix-pr.sh` / `merge-open-fix-prs.sh`: pull `main`, launch a fresh cloud job (needs `CURSOR_API_KEY`) or re-exec the durable helper in-session. Cap 5 re-runs/portal/IST day. Wired for LinkedIn, Foundit, Cutshort, Naukri, Instahyre, Indeed, Hitech City, Notification, Hotels, and home-local replicas. |
+| After a code-fixable blocker was patched and merged, that day's automation stopped — applies only happened on the next cron | `scripts/rerun-daily-after-fix.sh` runs after `auto-merge-fix-pr.sh` / `merge-open-fix-prs.sh`: pull `main`, launch a fresh cloud job (needs `CURSOR_API_KEY`) or re-exec the durable helper in-session. Cap 5 re-runs/portal/IST day. Wired for LinkedIn, Foundit, Cutshort, Naukri, Instahyre, Indeed, Hitech City, Notification, and home-local replicas. |
 
 ## Fixed for 2026-08-13 LinkedIn cloud cron (pagination Next)
 
@@ -495,15 +495,6 @@ applies use the fix — not left as report-only notes and not deferred to tomorr
 | Issue | Fix |
 | --- | --- |
 | Cloud cron exit 5 after yesterday’s green run: Turnstile widget visible (`Verify you are human`) but clicks did not clear → hard stop | Root cause: **filelock 3.32** deadlocks nested SeleniumBase `uc_gui_*` locks — old patch set `is_singleton` in `__init__` too late (metaclass decides earlier). New `tools/indeed/filelock_patch.py` wraps `FileLockMeta.__call__`. Also: wait for Turnstile, multi-strategy CF clicks + manual XY fallback, window focus, WARP IP **rotate** between rounds, `preflight.js` UC retries. |
-
-## Fixed for 2026-08-10 Hotel Price Tracker
-
-| Issue | Fix |
-| --- | --- |
-| Google Hotels inventory returned 0 offers from cloud (pages show `$` not `₹`) | `providers/google_hotels.py` parses USD and converts via `DEFAULT_USD_INR` (~87); skips UI chips |
-| Calendars were Kayak-only (missed lower Google ladder rates) | New `calendar_google.py` enriches Qualia/Oak nights; `AUTOMATION_PROVIDERS=("kayak","google")` |
-| Google `$7` UI crumbs became fake ₹609 calendar mins | Reject USD &lt; `$12` / INR &lt; ₹1000 in Google parsers |
-| Same-day Resend idempotency key collision on cron re-run | Idempotency key now includes `HHMMSS` stamp in `automation.py` |
 
 ## Fixed for 2026-08-11 Windows private worker crash
 
