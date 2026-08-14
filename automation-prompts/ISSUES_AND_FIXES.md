@@ -1,5 +1,12 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-14 Naukri daily (cloud) — chatbot exhaust + title skips
+
+| Issue | Fix |
+| --- | --- |
+| 13× `apply_unconfirmed` with `chat_steps_exhausted` / delayed drawer (Save no-op under overlay; narrow chips) | `daily_apply.js`: Playwright force Save, stuck detection, broader chips/select/textarea answers, late thanks confirm |
+| Wrong applies/attempts: Gen AI SA, Agentforce, Network Support, Civil/Structural EM, QE Architect, Data Engineering Manager | `resume_and_filters.js` + `test_filters.js`: expand `SKIP_TITLE_RE` / `PURE_AI_DATA_RE` (`gen ai`, `ai agent`, Architect…AI/ML) |
+
 ## Fixed for 2026-08-13 Hitech City home boards (Windows)
 
 | Issue | Fix |
