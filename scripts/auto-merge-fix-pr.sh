@@ -90,10 +90,11 @@ set -e
 STATE="$(gh pr view --json state,autoMergeRequest,mergeStateStatus -q '{state:.state,auto:.autoMergeRequest.enabledAt,mergeState:.mergeStateStatus}' 2>/dev/null || echo "{}")"
 echo "PR merge status: $STATE"
 
-# gh sometimes returns empty briefly after squash; retry a few times.
+# gh sometimes returns empty briefly after squash; always query by PR URL
+# (branch may already be deleted by --delete-branch).
 MERGED=""
 for _try in 1 2 3 4 5; do
-  MERGED="$(gh pr view --json state -q .state 2>/dev/null || true)"
+  MERGED="$(gh pr view "$PR_URL" --json state -q .state 2>/dev/null || true)"
   [[ "$MERGED" == "MERGED" || "$MERGED" == "OPEN" || "$MERGED" == "CLOSED" ]] && break
   sleep 1
 done
