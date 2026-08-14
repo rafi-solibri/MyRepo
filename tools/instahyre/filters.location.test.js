@@ -24,6 +24,11 @@ assert.strictEqual(
   null
 );
 assert.strictEqual(
+  locationOk("Pan India"),
+  false,
+  "daily_apply enqueueJob must pass title/skills; 1-arg pan-India must not pass"
+);
+assert.strictEqual(
   skipReason("Backend Developer", { location: "Bengaluru" }),
   "location_not_hyd_remote"
 );

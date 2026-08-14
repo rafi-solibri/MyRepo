@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| enqueueJob called locationOk(location) so #151 pan-India/senior soften never ran on apply path | Pass title+skills into locationOk(location, title, skills) in daily_apply.js |
 | CDP closed mid job_search → hard crash with no report | apiGet returns browser_closed; write partial report and stop cleanly |
 
 

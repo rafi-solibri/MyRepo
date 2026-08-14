@@ -263,7 +263,7 @@ function enqueueJob(job, seen, candidates, report) {
     return;
   }
 
-  if (!locationOk(location)) {
+  if (!locationOk(location, title, skills)) {
     report.skipped.push({
       id,
       title,
