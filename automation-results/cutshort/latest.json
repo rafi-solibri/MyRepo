@@ -1,32 +1,36 @@
 {
   "portal": "cutshort",
   "source": "home-local",
-  "date": "2026-08-14",
+  "date": "2026-08-11",
   "startedAt": null,
-  "finishedAt": "2026-08-14T12:20:21.805Z",
+  "finishedAt": "2026-08-11T12:16:55.689Z",
   "host": "NEM01-GBGR234",
-  "ok": true,
+  "ok": false,
   "counts": {
     "applied": 0,
     "external": 0,
     "rejected": 0,
-    "blocked": 0,
+    "blocked": 1,
     "skipped": 0,
-    "seen": 1174
+    "seen": 0
   },
   "applied": [],
   "external": [],
   "rejected": [],
-  "blocked": [],
+  "blocked": [
+    {
+      "reason": "cutshort_login_required",
+      "detail": "stale cutshort_authentication + Cloudflare Turnstile; headed re-login required (bash scripts/home-headed-login.sh cutshort)"
+    }
+  ],
   "skipped": [],
   "seen": [],
-  "blockerSummary": null,
+  "blockerSummary": "cutshort_login_required — stale cutshort_authentication + Cloudflare Turnstile; headed re-login required (bash scripts/home-headed-login.sh cutshort)",
   "notes": [
     "qualifying=0",
     "q_answered=0",
-    "q_locked_empty=322",
-    "q_already_submitted=30"
+    "q_locked_empty=0"
   ],
   "preflight": null,
-  "logPath": null
+  "logPath": "C:/Users/MohammedAhmed/.cursor/portal-home-logs/cutshort/cutshort-20260811T121002Z.log"
 }
