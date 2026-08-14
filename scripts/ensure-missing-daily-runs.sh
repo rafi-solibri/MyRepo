@@ -87,29 +87,57 @@ def blocked_login(obj):
         )
     )
 
+def as_int(v, default=0):
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return default
+
+
+def applied_from(obj):
+    if obj is None:
+        return 0
+    if isinstance(obj, list):
+        return len(obj)
+    return as_int(obj, 0)
+
+
 counts = d.get("counts") or {}
 if not isinstance(counts, dict):
     counts = {}
-applied = int(counts.get("applied") or 0)
-seen = int(counts.get("seen") or 0)
+applied = applied_from(counts.get("applied"))
+seen = as_int(counts.get("seen") or 0)
+# list-shaped top-level applied (Instahyre / Naukri style)
+applied = max(applied, applied_from(d.get("applied")))
 ok = d.get("ok")
 if isinstance(d.get("ucApply"), dict):
     uc = d["ucApply"]
     counts = uc.get("counts") or counts
     if not isinstance(counts, dict):
         counts = {}
-    applied = int(counts.get("applied") or applied)
-    seen = int(counts.get("seen") or seen)
+    applied = max(applied, applied_from(counts.get("applied")))
+    seen = as_int(counts.get("seen") or seen)
     if uc.get("ok") is False and applied == 0 and seen == 0:
         raise SystemExit(1)
 if isinstance(d.get("summary"), dict):
-    applied = max(applied, int(d["summary"].get("applied") or 0))
+    applied = max(applied, applied_from(d["summary"].get("applied")))
+# HitechCity orchestrator: totals + nested phases (no top-level counts/ok historically)
+if isinstance(d.get("totals"), dict):
+    applied = max(applied, applied_from(d["totals"].get("applied")))
+    seen = max(seen, as_int(d["totals"].get("skipped") or 0), as_int(d["totals"].get("blocked") or 0))
+for phase in ("linkedin", "careers", "boards"):
+    part = d.get(phase)
+    if isinstance(part, dict):
+        applied = max(applied, applied_from(part.get("applied")))
 
 if blocked_login(d) and applied == 0:
     raise SystemExit(1)
 if ok is False and applied == 0 and seen == 0:
     raise SystemExit(1)
 if applied > 0 or seen > 0 or ok is True:
+    raise SystemExit(0)
+# Completed orchestrator run (finishedAt) counts even when inventory yielded 0 applies
+if d.get("finishedAt") and isinstance(d.get("totals"), dict):
     raise SystemExit(0)
 if d.get("loggedIn") and (d.get("applied") is not None):
     raise SystemExit(0)
