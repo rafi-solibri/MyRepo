@@ -224,6 +224,43 @@ def inject_seed_cookies(sb) -> dict:
     }
 
 
+def refresh_indeed_session(sb) -> dict:
+    """Mint a fresh Passport JWT via rememberMe on secure.indeed.com.
+
+    Synced cookies still contain CTK / rememberMe after the short-lived
+    `__Secure-PassportAuthProxy-BearerToken` JWT expires. Reloading
+    in.indeed.com alone stays on the anonymous "Get Started" home; opening
+    account settings first refreshes OAuth, then India home shows Welcome.
+    """
+    info: dict = {"ok": False, "urls": []}
+    for url in (
+        "https://secure.indeed.com/settings/account",
+        "https://in.indeed.com/",
+    ):
+        try:
+            sb.uc_open_with_reconnect(url, 5)
+            time.sleep(2)
+            try:
+                clear_cf(sb)
+            except Exception:
+                pass
+            title = sb.get_title() or ""
+            cur = sb.get_current_url() or ""
+            body = (sb.get_text("body") or "")[:1500]
+            info["urls"].append(
+                {
+                    "url": cur[:160],
+                    "title": title[:80],
+                    "signed_out": home_looks_signed_out(body),
+                }
+            )
+        except Exception as exc:
+            info["urls"].append({"url": url, "error": str(exc)[:160]})
+    last = info["urls"][-1] if info["urls"] else {}
+    info["ok"] = bool(info["urls"]) and not last.get("signed_out", True) and not last.get("error")
+    return info
+
+
 def clear_cf(sb, attempts: int = 4) -> bool:
     """Clear Indeed Cloudflare / Turnstile with multiple GUI strategies.
 
@@ -2253,12 +2290,9 @@ def main() -> int:
                 flush=True,
             )
             if injected.get("injected"):
-                try:
-                    sb.uc_open_with_reconnect("https://in.indeed.com/", 5)
-                    time.sleep(2)
-                    clear_cf(sb)
-                except Exception:
-                    pass
+                refreshed = refresh_indeed_session(sb)
+                report["sessionRefresh"] = refreshed
+                print(f"  session_refresh ok={refreshed.get('ok')} urls={refreshed.get('urls')}", flush=True)
                 try:
                     home_body = (sb.get_text("body") or "")[:2500]
                     home_title = sb.get_title() or ""

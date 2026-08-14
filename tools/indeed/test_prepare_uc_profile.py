@@ -123,6 +123,11 @@ def test_home_looks_signed_out():
     assert home_looks_signed_out(anon)
     logged_in = "Welcome, Rafi\nSign out\nMy jobs\nAccount settings"
     assert not home_looks_signed_out(logged_in)
+    # After rememberMe refresh on secure.indeed.com, India home shows Welcome.
+    after_refresh = (
+        "Messages Unread count 1\nFind jobs\nWelcome, Mohammed Abdul Raf"
+    )
+    assert not home_looks_signed_out(after_refresh)
 
 
 if __name__ == "__main__":
