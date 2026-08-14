@@ -182,7 +182,7 @@ fi
 
 # Restore seeded sessions before launching (helps Indeed/LinkedIn when dest was wiped).
 if [[ -x "$ROOT/scripts/restore-portal-sessions.sh" ]]; then
-  FORCE_RESTORE_SESSIONS="${FORCE_RESTORE_SESSIONS:-1}" bash "$ROOT/scripts/restore-portal-sessions.sh" \
+  FORCE_RESTORE_SESSIONS="${FORCE_RESTORE_SESSIONS:-0}" bash "$ROOT/scripts/restore-portal-sessions.sh" \
     || echo "WARNING: restore-portal-sessions failed (continuing)"
 fi
 
