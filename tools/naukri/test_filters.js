@@ -108,5 +108,47 @@ assert.strictEqual(
   true,
   "Power Platform must skip"
 );
+assert.strictEqual(
+  shouldSkipTitle("Solution Architect - Gen AI - Life Sciences"),
+  true,
+  "Gen AI SA without .NET must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("AI Agent Architect ( Agentic AI Systems)"),
+  true,
+  "AI Agent Architect without .NET must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Principal Architect- AI ,ML"),
+  true,
+  "Principal Architect AI/ML without .NET must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Agentforce Technical Lead"),
+  true,
+  "Agentforce/Salesforce must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Principal Network Support Engineer"),
+  true,
+  "Network Support must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle(
+    "Project Engineering Manager Substation (Civil & Structural)- Riyadh"
+  ),
+  true,
+  "Civil/Structural EM must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("QE Architect"),
+  true,
+  "QE Architect must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Azure Data Engineering Manager"),
+  true,
+  "Data Engineering Manager without .NET must skip"
+);
 assert.strictEqual(isArchLeadTitle("Dot Net Fullstack Developer"), false);
 console.log("resume_and_filters self-test OK");

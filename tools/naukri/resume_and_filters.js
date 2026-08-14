@@ -33,11 +33,11 @@ function findResume() {
  * Only skip when title itself is a QA/SDET role.
  */
 const SKIP_TITLE_RE =
-  /\b(qa engineer|quality assurance|quality engineer|quality engineering|quality architect|quality solution architect|sdet|intern(?!et)|fresher|salesforce|servicenow|coupa|pega|appian|anaplan|celonis|power platform|guidewire|sap\b|dynamics|workday hms|revit|\bbarch\b|hubspot|\bsre\b|site reliability|devops engineer|devops lead|platform sre|network operations|network ops)\b/i;
+  /\b(qa engineer|quality assurance|quality engineer|quality engineering|quality architect|quality solution architect|\bqe architect\b|sdet|intern(?!et)|fresher|salesforce|agentforce|servicenow|coupa|pega|appian|anaplan|celonis|power platform|guidewire|sap\b|dynamics|workday hms|revit|\bbarch\b|hubspot|\bsre\b|site reliability|devops engineer|devops lead|platform sre|network operations|network ops|network support|civil\b|structural|substation)\b/i;
 
 /** Pure AI/data titles need .NET|C# on the TITLE (skills laundry lists are noisy). */
 const PURE_AI_DATA_RE =
-  /\b(ai\s+architect|ai\s+engineer|ai\s+solution\s+architect|data\s*&\s*ai|ml\s+engineer|genai|data\s+scientist|data\s+engineer)\b/i;
+  /\b(ai\s+architect|ai\s+agent|ai\s+engineer|ai\s+solution\s+architect|architect[^.\n]{0,48}\b(ai|ml)\b|data\s*&\s*ai|ml\s+engineer|gen\s*-?\s*ai|genai|agentic\s+ai|data\s+scientist|data\s+engineer|data\s+engineering)\b/i;
 
 /**
  * Primary non-.NET stacks in the TITLE — skip to avoid Java/MEAN ATS dead-ends.
