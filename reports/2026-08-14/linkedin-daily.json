@@ -1,0 +1,275 @@
+{
+  "ts": "2026-08-14T09:25:59.440360+00:00",
+  "ok": true,
+  "source": "reconstructed from first-run log after login-wall resume overwrote apply-report.json",
+  "counts": {
+    "applied": 10,
+    "submitted": 10,
+    "skipped": 107,
+    "blocked": 5,
+    "seen": 122
+  },
+  "applied": [
+    {
+      "status": "submitted",
+      "company": "Solutions Architect - Microsoft Fabric",
+      "role": "Solutions Architect - Microsoft Fabric",
+      "job_id": "4453512847",
+      "location": "Hyderabad, Telangana, India",
+      "reason": "Application submitted",
+      "url": "/jobs/view/4453512847/",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "submitted",
+      "company": "Solutions Architect - Microsoft Fabric",
+      "role": "Solutions Architect - Microsoft Fabric",
+      "job_id": "4454396009",
+      "location": "Hyderabad, Telangana, India",
+      "reason": "Application submitted",
+      "url": "/jobs/view/4454396009/",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "submitted",
+      "company": "Solutions Architect - Microsoft Fabric",
+      "role": "Solutions Architect - Microsoft Fabric",
+      "job_id": "4453520647",
+      "location": "Hyderabad, Telangana, India",
+      "reason": "Application submitted",
+      "url": "/jobs/view/4453520647/",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "submitted",
+      "company": "Solutions Architect - Microsoft Fabric",
+      "role": "Solutions Architect - Microsoft Fabric",
+      "job_id": "4450879299",
+      "location": "India (promoted)",
+      "reason": "Application submitted",
+      "url": "/jobs/view/4450879299/",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "submitted",
+      "company": "Solutions Architect - Microsoft Fabric",
+      "role": "Solutions Architect - Microsoft Fabric",
+      "job_id": "4443883020",
+      "location": "India (promoted)",
+      "reason": "Application submitted",
+      "url": "/jobs/view/4443883020/",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "submitted",
+      "company": "Engineering Manager",
+      "role": "Engineering Manager",
+      "job_id": "4453509656",
+      "location": "Hyderabad, Telangana, India",
+      "reason": "Application submitted",
+      "url": "/jobs/view/4453509656/",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "submitted",
+      "company": "Interior Architect",
+      "role": "Interior Architect",
+      "job_id": "4450896338",
+      "location": "Hyderabad, Telangana, India",
+      "reason": "Application submitted",
+      "url": "/jobs/view/4450896338/",
+      "path": "Easy Apply",
+      "note": "false-apply BArch \u2014 filter patched this run"
+    },
+    {
+      "status": "submitted",
+      "company": "Solutions Architect - Microsoft Fabric",
+      "role": "Solutions Architect - Microsoft Fabric",
+      "job_id": "4450815218",
+      "location": "India (promoted)",
+      "reason": "Application submitted",
+      "url": "/jobs/view/4450815218/",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "submitted",
+      "company": "Solutions Architect - Microsoft Fabric",
+      "role": "Solutions Architect - Microsoft Fabric",
+      "job_id": "4450481862",
+      "location": "India (promoted)",
+      "reason": "Application submitted",
+      "url": "/jobs/view/4450481862/",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "submitted",
+      "company": "Snowflake Solutions Architect",
+      "role": "Snowflake Solutions Architect",
+      "job_id": "4453520148",
+      "location": "Kerala, India",
+      "reason": "Application submitted",
+      "url": "/jobs/view/4453520148/",
+      "path": "Easy Apply",
+      "note": "false-apply data/Kerala \u2014 filter patched this run"
+    }
+  ],
+  "submitted": [
+    {
+      "status": "submitted",
+      "company": "Solutions Architect - Microsoft Fabric",
+      "role": "Solutions Architect - Microsoft Fabric",
+      "job_id": "4453512847",
+      "location": "Hyderabad, Telangana, India",
+      "reason": "Application submitted",
+      "url": "/jobs/view/4453512847/",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "submitted",
+      "company": "Solutions Architect - Microsoft Fabric",
+      "role": "Solutions Architect - Microsoft Fabric",
+      "job_id": "4454396009",
+      "location": "Hyderabad, Telangana, India",
+      "reason": "Application submitted",
+      "url": "/jobs/view/4454396009/",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "submitted",
+      "company": "Solutions Architect - Microsoft Fabric",
+      "role": "Solutions Architect - Microsoft Fabric",
+      "job_id": "4453520647",
+      "location": "Hyderabad, Telangana, India",
+      "reason": "Application submitted",
+      "url": "/jobs/view/4453520647/",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "submitted",
+      "company": "Solutions Architect - Microsoft Fabric",
+      "role": "Solutions Architect - Microsoft Fabric",
+      "job_id": "4450879299",
+      "location": "India (promoted)",
+      "reason": "Application submitted",
+      "url": "/jobs/view/4450879299/",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "submitted",
+      "company": "Solutions Architect - Microsoft Fabric",
+      "role": "Solutions Architect - Microsoft Fabric",
+      "job_id": "4443883020",
+      "location": "India (promoted)",
+      "reason": "Application submitted",
+      "url": "/jobs/view/4443883020/",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "submitted",
+      "company": "Engineering Manager",
+      "role": "Engineering Manager",
+      "job_id": "4453509656",
+      "location": "Hyderabad, Telangana, India",
+      "reason": "Application submitted",
+      "url": "/jobs/view/4453509656/",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "submitted",
+      "company": "Interior Architect",
+      "role": "Interior Architect",
+      "job_id": "4450896338",
+      "location": "Hyderabad, Telangana, India",
+      "reason": "Application submitted",
+      "url": "/jobs/view/4450896338/",
+      "path": "Easy Apply",
+      "note": "false-apply BArch \u2014 filter patched this run"
+    },
+    {
+      "status": "submitted",
+      "company": "Solutions Architect - Microsoft Fabric",
+      "role": "Solutions Architect - Microsoft Fabric",
+      "job_id": "4450815218",
+      "location": "India (promoted)",
+      "reason": "Application submitted",
+      "url": "/jobs/view/4450815218/",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "submitted",
+      "company": "Solutions Architect - Microsoft Fabric",
+      "role": "Solutions Architect - Microsoft Fabric",
+      "job_id": "4450481862",
+      "location": "India (promoted)",
+      "reason": "Application submitted",
+      "url": "/jobs/view/4450481862/",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "submitted",
+      "company": "Snowflake Solutions Architect",
+      "role": "Snowflake Solutions Architect",
+      "job_id": "4453520148",
+      "location": "Kerala, India",
+      "reason": "Application submitted",
+      "url": "/jobs/view/4453520148/",
+      "path": "Easy Apply",
+      "note": "false-apply data/Kerala \u2014 filter patched this run"
+    }
+  ],
+  "skipped": [],
+  "blocked": [
+    {
+      "status": "blocked",
+      "company": "Solutions Architect - Microsoft Fabric",
+      "role": "Solutions Architect - Microsoft Fabric",
+      "job_id": "4454034736",
+      "location": "India",
+      "reason": "Easy Apply modal did not open",
+      "url": "/jobs/view/4454034736/",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "blocked",
+      "company": "Engineering Manager",
+      "role": "Engineering Manager",
+      "job_id": "4453500167",
+      "location": "India",
+      "reason": "Easy Apply modal did not open",
+      "url": "/jobs/view/4453500167/",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "blocked",
+      "company": "Senior .NET Engineer",
+      "role": "Senior .NET Engineer",
+      "job_id": "4438356022",
+      "location": "India",
+      "reason": "Easy Apply modal did not open",
+      "url": "/jobs/view/4438356022/",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "blocked",
+      "company": "Interior Architect",
+      "role": "Interior Architect",
+      "job_id": "4453522530",
+      "location": "India",
+      "reason": "exceeded Easy Apply steps",
+      "url": "/jobs/view/4453522530/",
+      "path": "Easy Apply"
+    },
+    {
+      "status": "blocked",
+      "company": "Snowflake Solutions Architect",
+      "role": "Snowflake Solutions Architect",
+      "job_id": "4452940611",
+      "location": "India",
+      "reason": "Easy Apply time-cap: Easy Apply modal lost",
+      "url": "/jobs/view/4452940611/",
+      "path": "Easy Apply"
+    }
+  ],
+  "external_candidates": [],
+  "resumeBlocked": "captcha_checkpoint after crash; auto-login exit 6"
+}

@@ -2116,7 +2116,45 @@ def main() -> None:
             time.sleep(2)
         if not signed_in:
             results.append(JobResult(status="blocked", reason="Not signed in"))
-            OUT.write_text(json.dumps([asdict(r) for r in results], indent=2))
+            # Preserve any earlier same-day batch; never clobber a dict report
+            # with a one-row login-wall list (resume after crash used to wipe submits).
+            payload: dict[str, Any] = {
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "ok": False,
+                "counts": {
+                    "applied": 0,
+                    "submitted": 0,
+                    "skipped": 0,
+                    "blocked": 1,
+                    "seen": 1,
+                },
+                "applied": [],
+                "submitted": [],
+                "skipped": [],
+                "blocked": [asdict(r) for r in results],
+                "all": [asdict(r) for r in results],
+                "blocker": "Not signed in",
+            }
+            if OUT.is_file():
+                try:
+                    prev = json.loads(OUT.read_text(encoding="utf-8"))
+                    if isinstance(prev, dict):
+                        prev_sub = prev.get("submitted") or prev.get("applied") or []
+                        if isinstance(prev_sub, list) and prev_sub:
+                            payload["applied"] = prev_sub
+                            payload["submitted"] = prev_sub
+                            payload["skipped"] = prev.get("skipped") or []
+                            payload["counts"]["applied"] = len(prev_sub)
+                            payload["counts"]["submitted"] = len(prev_sub)
+                            payload["counts"]["skipped"] = len(payload["skipped"])
+                            payload["preservedFrom"] = prev.get("ts")
+                            print(
+                                f"PRESERVE {len(prev_sub)} earlier submitted rows in {OUT}",
+                                flush=True,
+                            )
+                except Exception as e:
+                    print(f"PRESERVE skip: {e}", flush=True)
+            OUT.write_text(json.dumps(payload, indent=2))
             print("BLOCKED: not signed in")
             raise SystemExit(5)
 

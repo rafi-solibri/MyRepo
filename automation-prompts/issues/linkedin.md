@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Login-wall resume overwrote apply-report.json (list) and wiped 10 confirmed submits | Not-signed-in path preserves prior submitted dict rows instead of clobbering |
 | Easy Apply batch crashed on Page.reload ERR_ABORTED/detached frame; Interior Architect and Snowflake titles false-applied | Guard search reload/card-count; retry HTTP 999 5x; skip interior/landscape architect, Snowflake architect, Kerala city |
 
 
