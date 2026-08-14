@@ -2056,6 +2056,16 @@ async function main() {
           const fp = fingerprint(card.company, card.role);
           if (seen.has(fp)) continue;
           seen.add(fp);
+          if (allowlistActive() && !companyAllowed(card.company)) {
+            report.skipped.push({
+              company: card.company,
+              role: card.role,
+              location: card.location,
+              reason: "campus_allowlist",
+              query: queryLabel,
+            });
+            continue;
+          }
           const reason = decideSkip(card);
           if (reason) {
             report.skipped.push({
