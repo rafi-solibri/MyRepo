@@ -18,11 +18,12 @@ const {
 const { completeWorkdayApply, isSubmittedText } = require("./workday_apply");
 const { fillCommonAtsQuestions } = require("./ats_form");
 const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
+const { artifactPaths, writeArtifactJson } = require("../artifact_path");
 
 const CDP = process.env.NAUKRI_CDP || "http://127.0.0.1:9222";
 const REPORT =
   process.env.NAUKRI_APPLY_REPORT ||
-  "/opt/cursor/artifacts/naukri-daily-apply.json";
+  artifactPaths("naukri-daily-apply.json")[0];
 const RESUME = findResume();
 
 const QUERIES = [
@@ -143,9 +144,17 @@ function runProfileResumeRefresh() {
   });
   let report = null;
   try {
-    report = JSON.parse(
-      fs.readFileSync("/opt/cursor/artifacts/naukri-profile-resume.json", "utf8")
-    );
+    const candidates = artifactPaths("naukri-profile-resume.json");
+    let raw = null;
+    for (const p of candidates) {
+      try {
+        if (fs.existsSync(p)) {
+          raw = fs.readFileSync(p, "utf8");
+          break;
+        }
+      } catch (_) {}
+    }
+    report = JSON.parse(raw);
   } catch (_) {
     report = {
       ok: false,
@@ -1857,9 +1866,17 @@ async function main() {
     }
   } else {
     try {
-      report.profileResumeRefresh = JSON.parse(
-        fs.readFileSync("/opt/cursor/artifacts/naukri-profile-resume.json", "utf8")
-      );
+      const candidates = artifactPaths("naukri-profile-resume.json");
+      let raw = null;
+      for (const p of candidates) {
+        try {
+          if (fs.existsSync(p)) {
+            raw = fs.readFileSync(p, "utf8");
+            break;
+          }
+        } catch (_) {}
+      }
+      report.profileResumeRefresh = JSON.parse(raw);
     } catch (_) {}
   }
 
@@ -2098,8 +2115,12 @@ async function main() {
       skipped: report.skipped.length,
       seen: report.seen.length,
     };
-    fs.mkdirSync(path.dirname(REPORT), { recursive: true });
-    fs.writeFileSync(REPORT, JSON.stringify(report, null, 2));
+    const written = writeArtifactJson("naukri-daily-apply.json", report);
+    if (process.env.NAUKRI_APPLY_REPORT) {
+      fs.mkdirSync(path.dirname(REPORT), { recursive: true });
+      fs.writeFileSync(REPORT, JSON.stringify(report, null, 2));
+      written.push(REPORT);
+    }
     console.log(
       JSON.stringify(
         {
@@ -2107,6 +2128,7 @@ async function main() {
           applied: report.applied,
           blocked: report.blocked,
           skippedSample: report.skipped.slice(0, 40),
+          reportPaths: [...new Set(written)],
         },
         null,
         2

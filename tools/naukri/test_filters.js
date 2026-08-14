@@ -160,6 +160,21 @@ assert.strictEqual(
   true,
   "Cyber Security Architect must skip"
 );
+assert.strictEqual(
+  shouldSkipTitle("TOSCA Automation Architect"),
+  true,
+  "TOSCA / test automation architect must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Embedded Technical Architect- SME"),
+  true,
+  "Embedded / firmware-primary must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Artificial Intelligence Architect"),
+  true,
+  "Artificial Intelligence Architect without .NET must skip"
+);
 assert.strictEqual(shouldSkipTitle("Senior .NET Architect"), false);
 assert.strictEqual(isArchLeadTitle("Dot Net Fullstack Developer"), false);
 console.log("resume_and_filters self-test OK");
