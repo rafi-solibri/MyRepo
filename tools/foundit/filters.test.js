@@ -299,4 +299,32 @@ assert.strictEqual(
   "non-arch title without .NET must still fail"
 );
 
+assert.strictEqual(
+  classifyJob({
+    jobId: 19,
+    title: "Accounts Manager (Principal Sales Rep) - North America Sales",
+    companyName: "Deltek",
+    locations: [{ text: "India" }, { text: "remote" }],
+    skills: [{ text: "SaaS" }, { text: "Enterprise" }],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 12 },
+  }).reason,
+  "sales/account-management",
+  "Principal Sales Rep / Accounts Manager must not ride Arch/Lead .NET bypass"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 20,
+    title: "Principal Engineer",
+    companyName: "Example Corp",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: "Azure" }, { text: "Microservices" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  true,
+  "Principal Engineer Hyd without .NET skills laundry may still pass"
+);
+
 console.log("filters.test.js OK");

@@ -102,7 +102,8 @@ function hasSeniority(title) {
 
 /** Architect / Tech Lead / EM band — Naukri parity: may apply without .NET on skills laundry list. */
 function isArchLeadTitle(title) {
-  return /\b(architect|principal|staff\s+(software|engineer)|engineering\s+manager|\bem\b|tech(?:nology)?\s+lead|technical\s+lead|solution\s+architect|software\s+architect)\b/i.test(
+  // Do NOT treat bare "principal" as Arch/Lead — "Principal Sales Rep" is not engineering.
+  return /\b(architect|principal\s+(engineer|architect|software|sde|developer|consultant|staff)|staff\s+(software|engineer)|engineering\s+manager|\bem\b|tech(?:nology)?\s+lead|technical\s+lead|solution\s+architect|software\s+architect)\b/i.test(
     title || ""
   );
 }
@@ -134,6 +135,14 @@ function skipTitleReason(title) {
   )
     return "PM/TPM/delivery";
   if (/\bpresales|pre-sales\b/i.test(t)) return "presales";
+  // Sales / account-management (not Salesforce-the-product — that is a separate skip).
+  if (
+    /\b(account(?:s)?\s+manager|account\s+executive|business\s+development|\bbdr\b|\bsdr\b|inside\s+sales|field\s+sales|principal\s+sales|sales\s+rep(?:resentative)?)\b/i.test(
+      t
+    ) ||
+    (/\bsales\b/i.test(t) && !/\bsalesforce\b/i.test(t))
+  )
+    return "sales/account-management";
   // Agentforce/SFDC titles are Salesforce-stack even when "Salesforce" is only the employer.
   if (/\b(salesforce|agentforce|sfdc)\b/i.test(t)) return "Salesforce";
   if (/\bservicenow\b/i.test(t)) return "ServiceNow";
@@ -190,6 +199,10 @@ function classifyJob(job) {
   const loc = locationsFrom(job);
   const jobId = String(job.jobId || job.id || "");
 
+  // Title skips first so sales/Salesforce never ride the Arch/Lead .NET bypass.
+  const skip = skipTitleReason(title);
+  if (skip) return { pass: false, reason: skip };
+
   const archLead = isArchLeadTitle(title);
   // Naukri parity: Arch/Lead/EM Hyd/remote may pass without .NET on skills when not Java/SF-primary.
   if (!hasDotNet(title, skills)) {
@@ -202,8 +215,6 @@ function classifyJob(job) {
     return { pass: false, reason: "SAP without .NET" };
   if (/\bjava\b(?!\s*script)/i.test(norm) && !/\.net|\bdotnet\b|\bc#\b/i.test(norm))
     return { pass: false, reason: "Java-only" };
-  const skip = skipTitleReason(title);
-  if (skip) return { pass: false, reason: skip };
   // Employer Salesforce + no .NET on TITLE → Salesforce-stack (skills laundry lists are noisy).
   const company = job.companyName || job.company?.name || "";
   if (/\bsalesforce\b/i.test(company) && !hasDotNet(title, "")) {
