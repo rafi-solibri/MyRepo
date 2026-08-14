@@ -80,6 +80,15 @@ Rename this automation in the UI to **Hitech City / Knowledge City Daily** (it i
 Read and OBEY the full instructions in automation-prompts/08-hitech-city.md (the fenced text block). Run `bash scripts/preflight-portal-run.sh hitechcity` first, then `bash scripts/launch-chrome-cdp.sh hitechcity`. Use resumes/Rafi_Resume.docx. Execute the daily Hitech City / Knowledge City / Madhapur premium-campus career-portal + LinkedIn referral apply job now via `python3 tools/hitechcity/daily_apply.py`.
 ```
 
+## Ensure Missing Daily Runs (~10:30 AM IST) — CREATE THIS
+Schedule a new automation after the 9 AM portal wave (before Notification 11 AM). Paste once:
+
+```text
+Read and OBEY automation-prompts/09-ensure-missing.md (the fenced text block). Run `bash scripts/ensure-missing-daily-runs.sh` to launch any apply portals that have no usable same-day coverage (cron miss / login-wall reports do not count as done). Needs CURSOR_API_KEY for fresh cloud launches. Do not invent applies. Do not FORCE_RESTORE_SESSIONS.
+```
+
+Owner checklist for logins/secrets: [MAX_APPLY_OWNER_CHECKLIST.md](MAX_APPLY_OWNER_CHECKLIST.md).
+
 ## Optional: General Daily 9 AM — DISABLE THIS
 https://cursor.com/automations/30e2c023-9067-11f1-ba66-0e7d0216e441
 

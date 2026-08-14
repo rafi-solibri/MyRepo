@@ -9,10 +9,21 @@ function hasDotNet(title, skills) {
   return /\.net|\bdotnet\b|\bc#\b|\bcsharp\b/i.test(norm);
 }
 
-function locationOk(loc) {
-  return /\b(hyderabad|secunderabad|\bhyd\b|remote|wfh|work\s*from\s*home)\b/i.test(
-    loc || ""
-  );
+function locationOk(loc, title = "", skills = "") {
+  const l = loc || "";
+  if (/\b(hyderabad|secunderabad|\bhyd\b|remote|wfh|work\s*from\s*home)\b/i.test(l)) {
+    return true;
+  }
+  // Soften: pan-India / anywhere / multi-city when senior .NET/cloud title
+  if (
+    /\b(pan[\s-]?india|anywhere(\s+in\s+india)?|work\s*from\s*anywhere|multiple\s+locations?|india\s*\(?\s*remote\s*\)?|remote[\s-]?india|locations?\s+across\s+india)\b/i.test(
+      l
+    ) &&
+    (hasDotNet(title, skills) || hasTargetSeniority(title) || hasCloudPlatform(title, skills))
+  ) {
+    return true;
+  }
+  return false;
 }
 
 function hasCloudPlatform(title, skills) {
@@ -114,7 +125,7 @@ function skipReason(title, { company = "", location = "", skills = "", salary = 
     return "java_primary";
   }
 
-  if (location && !locationOk(location)) {
+  if (location && !locationOk(location, t, skills)) {
     return "location_not_hyd_remote";
   }
 

@@ -41,11 +41,11 @@ Solutions Architect & Technical Lead - 15+ Yrs - .NET Core, Microservices, AWS&A
 - Default to APPLY for Hyd/remote Architect / Tech Lead / EM / Principal / Staff / Director roles.
 - Architect/Lead/EM titles may proceed even if the card snippet does not show “.NET” (JD often buries it). Still skip Coupa/Pega/Salesforce/SAP-primary titles via `shouldSkipTitle`.
 - Skip listed max CTC only if clearly under **35 LPA** (Incedo/Capgemini 30–40 bands that were wrongly hard-skipped should now apply when ≥35; always state 65 expected).
-- Prefer `node tools/naukri/daily_apply.js` (MAX_APPLIES default 60). Expand ages via `NAUKRI_JOB_AGES` when fresh inventory is thin.
+- Prefer `node tools/naukri/daily_apply.js` (MAX_APPLIES default 60). Auto early-expand: after freshest age, if applied &lt; `NAUKRI_EARLY_EXPAND_BELOW` (default 3) continue remaining primary ages immediately; if still &lt; `NAUKRI_EXPAND_BELOW` (default 8) expand ages 15/30/60 and run extra .NET/Azure queries. Keep cyber/QA/Salesforce title skips.
 - When uncertain → APPLY. Do not invent applies.
 
 ## Primary board (after STEP 0)
-1. Newest 1d→3d→7d (then 15/30 if thin). Filters Hyd/Secunderabad + Remote/WFH. Exp ~10–20.
+1. Newest 1d→3d→7d (then 15/30/60 + extra queries if thin). Filters Hyd/Secunderabad + Remote/WFH. Exp ~10–20.
 2. Queries: Solution Architect .NET, Technical Architect .NET, .NET Technical Lead, Engineering Manager .NET, Principal Engineer .NET, Azure Architect .NET, Software Architect .NET
 
 ## TopTier UI

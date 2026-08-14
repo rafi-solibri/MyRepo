@@ -4,6 +4,8 @@
 
 **Recommended:** paste the short loaders in [ONE_TIME_LOADERS.md](ONE_TIME_LOADERS.md) once. After that, merge PRs and agents pull the latest full prompts from these files automatically.
 
+Owner max-apply checklist (logins, secrets, 10:30 ensure-missing automation): [MAX_APPLY_OWNER_CHECKLIST.md](MAX_APPLY_OWNER_CHECKLIST.md).
+
 Alternatively, paste each file’s full fenced `text` block into the matching automation, then Save.
 
 ## Shared targets

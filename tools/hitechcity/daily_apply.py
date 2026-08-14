@@ -154,17 +154,31 @@ def main() -> int:
         + (summary.get("linkedin", {}).get("applied") or 0)
         + (summary.get("boards", {}).get("applied") or 0)
     )
+    blocked = (
+        (summary.get("careers", {}).get("blocked") or 0)
+        + (summary.get("linkedin", {}).get("blocked") or 0)
+        + (summary.get("boards", {}).get("blocked") or 0)
+    )
+    skipped = (
+        (summary.get("careers", {}).get("skipped") or 0)
+        + (summary.get("linkedin", {}).get("skipped") or 0)
+        + (summary.get("boards", {}).get("skipped") or 0)
+    )
     summary["totals"] = {
         "applied": applied,
         "referralsSent": summary.get("linkedin", {}).get("referralsSent") or 0,
-        "blocked": (summary.get("careers", {}).get("blocked") or 0)
-        + (summary.get("linkedin", {}).get("blocked") or 0)
-        + (summary.get("boards", {}).get("blocked") or 0),
-        "skipped": (summary.get("careers", {}).get("skipped") or 0)
-        + (summary.get("linkedin", {}).get("skipped") or 0)
-        + (summary.get("boards", {}).get("skipped") or 0),
+        "blocked": blocked,
+        "skipped": skipped,
         "discoveryAdded": summary.get("discovery", {}).get("added") or 0,
     }
+    # ensure-missing / coverage detectors look for counts + ok (not only nested totals)
+    summary["counts"] = {
+        "applied": applied,
+        "blocked": blocked,
+        "skipped": skipped,
+        "seen": blocked + skipped + applied,
+    }
+    summary["ok"] = True
     summary["finishedAt"] = datetime.now(timezone.utc).isoformat()
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(summary, indent=2))

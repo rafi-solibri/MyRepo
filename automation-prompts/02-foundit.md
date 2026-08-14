@@ -30,6 +30,7 @@ Daily Foundit job-apply agent for Mohammed Abdul Rafi Ahmed (Solutions Architect
 - Default to APPLY for Hyd/remote .NET/cloud Architect / Lead / EM / Principal / Staff / Senior roles.
 - When uncertain → APPLY. Do not invent applies.
 - Maximize volume while inventory remains; expand age windows if fresh day is empty.
+- Arch/Lead/EM titles may pass without `.NET` on the skills laundry list (Naukri parity) when not Java/Salesforce-primary — `tools/foundit/filters.js` `isArchLeadTitle`.
 - Never stop early just because a soft quota “looks enough”.
 
 ## Order
