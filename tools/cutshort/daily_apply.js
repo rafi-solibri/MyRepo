@@ -173,6 +173,23 @@ function isHydOrRemote(job) {
   // Country-only / empty location cards often hide Hyd/remote in headline.
   const title = titleOf(job).toLowerCase();
   if (/hyderabad|\bhyd\b|telangana|remote|wfh|work from home/.test(title)) return true;
+  // Cutshort often lists only "India" for remote/WFH roles — allow when title is senior/.NET/architect.
+  const indiaOnly =
+    locs.length > 0 &&
+    locs.every((l) => l === "india" || l === "in" || l.includes("india")) &&
+    !locs.some((l) =>
+      /bengaluru|bangalore|pune|mumbai|chennai|noida|gurgaon|gurugram|delhi|kolkata/.test(l)
+    );
+  if (
+    indiaOnly &&
+    (/\b(architect|engineering manager|tech(?:nical)?\s*lead|principal|staff|senior|lead)\b/i.test(
+      title
+    ) ||
+      NET_STACK_RE.test(title) ||
+      NET_STACK_RE.test(skillsText(job)))
+  ) {
+    return true;
+  }
   if (
     locs.length === 0 &&
     (rt === "" || rt === "remote_not_okay" || rt === "unknown") &&
@@ -204,10 +221,12 @@ function classify(job) {
   if (allowlistActive() && !companyAllowed(company)) return null;
   if (SKIP_RE.test(title)) return null;
   // Tier-1 Architect/EM/Lead: allow listed max exp ≥6 (was 8 — missed 5–7 bands).
-  // Other tiers still require max ≥8 when disclosed.
+  // Tier-2 .NET titles: also allow max ≥6 so 5–7 yr senior/.NET bands are not dropped.
   const expMax = job?.expRange?.max;
   const isTier1Title = TIER1_TITLE_RE.test(title);
-  if (expMax != null && expMax < (isTier1Title ? 6 : 8)) return null;
+  const isNetTitle = NET_STACK_RE.test(title) || NET_STACK_RE.test(blob);
+  const minMax = isTier1Title || isNetTitle ? 6 : 8;
+  if (expMax != null && expMax < minMax) return null;
   if (ctc != null && ctc < 35) return null;
   if (!isHydOrRemote(job)) return null;
 
@@ -595,6 +614,9 @@ async function scan(page) {
   await pull({ matchesfor: SEEKER_ID }, 40, "matchesfor");
   await pull({ locations: "Hyderabad" }, 50, "hyd");
   await pull({ locations: "Telangana" }, 25, "telangana");
+  await pull({ locations: "India", remoteType: "remote_okay" }, 40, "india-remote");
+  await pull({ remoteType: "remote_okay" }, 40, "remote_okay");
+  await pull({ remoteType: "remote_only" }, 25, "remote_only");
   for (const skills of ["00001", "00075", "00486", "00054", "00368", "00002", "00115"]) {
     await pull({ skills }, 35, skills);
   }
@@ -662,13 +684,37 @@ async function main() {
   const jobs = await scan(page);
   stats.scanned = jobs.length;
   const qual = [];
+  const skipReasons = Object.create(null);
   for (const job of jobs) {
     const c = classify(job);
-    if (c) qual.push({ job, row: { id: job._id, title: titleOf(job), company: job.company, tier: c.tier, reason: c.reason, ctc: maxCtcLpa(job), remoteType: job.remoteType } });
+    if (c) {
+      qual.push({
+        job,
+        row: {
+          id: job._id,
+          title: titleOf(job),
+          company: job.company,
+          tier: c.tier,
+          reason: c.reason,
+          ctc: maxCtcLpa(job),
+          remoteType: job.remoteType,
+        },
+      });
+      continue;
+    }
+    // Lightweight skip taxonomy for volume debugging (not applied as rejects).
+    const title = titleOf(job);
+    let why = "no_tier_match";
+    if (SKIP_RE.test(title)) why = "skip_title";
+    else if (job?.expRange?.max != null && job.expRange.max < 6) why = "exp_max_low";
+    else if (maxCtcLpa(job) != null && maxCtcLpa(job) < 35) why = "ctc_under_35";
+    else if (!isHydOrRemote(job)) why = "location";
+    skipReasons[why] = (skipReasons[why] || 0) + 1;
   }
   qual.sort((a, b) => a.row.tier - b.row.tier || (b.row.ctc || 0) - (a.row.ctc || 0));
   stats.qualifying = qual.map((q) => q.row);
-  console.log(`[filter] scanned=${jobs.length} qualifying=${qual.length}`);
+  stats.skipReasons = skipReasons;
+  console.log(`[filter] scanned=${jobs.length} qualifying=${qual.length} skips=${JSON.stringify(skipReasons)}`);
 
   for (const { job, row } of qual) {
     if (stats.applied.length >= MAX_APPLIES) {
