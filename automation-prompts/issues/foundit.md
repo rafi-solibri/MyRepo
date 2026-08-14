@@ -1,5 +1,12 @@
 # Foundit — issues & fixes
 
+## 2026-08-14 (home)
+
+| Issue | Fix |
+| --- | --- |
+| Applied Senior IT Analyst (Infrastructure) at NUS — .NET only in skills laundry list passed hasDotNet | skipTitleReason: infrastructure/IT analyst/sysadmin/SRE without .NET on TITLE (mirror pure-AI title rule) |
+
+
 Portal-scoped log. Each daily agent (cloud or home) must append **only** to this file via
 `bash scripts/append-issue-fix.sh foundit "issue" "fix"` — never edit `ISSUES_AND_FIXES.md` for same-day rows.
 

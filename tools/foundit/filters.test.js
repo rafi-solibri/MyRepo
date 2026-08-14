@@ -299,4 +299,32 @@ assert.strictEqual(
   "non-arch title without .NET must still fail"
 );
 
+assert.strictEqual(
+  classifyJob({
+    jobId: 19,
+    title: "Senior IT Analyst (Infrastructure)",
+    companyName: "National University Of Singapore",
+    locations: [{ text: "Singapore | Remote" }],
+    skills: [{ text: ".NET" }, { text: "Azure" }, { text: "Windows" }],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 12 },
+  }).pass,
+  false,
+  "infra/IT Analyst must skip when .NET is only in skills laundry list"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 20,
+    title: "Senior .NET Infrastructure Architect",
+    companyName: "Example",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: ".NET Core" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  true,
+  "Infrastructure + .NET on title may still pass"
+);
+
 console.log("filters.test.js OK");
