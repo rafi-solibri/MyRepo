@@ -150,5 +150,17 @@ assert.strictEqual(
   true,
   "Data Engineering Manager without .NET must skip"
 );
+assert.strictEqual(
+  shouldSkipTitle("Senior Manager - Attack Surface Reduction"),
+  true,
+  "Attack Surface / cyber primary must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Cyber Security Architect"),
+  true,
+  "Cyber Security Architect must skip"
+);
+assert.strictEqual(shouldSkipTitle("Senior .NET Architect"), false);
 assert.strictEqual(isArchLeadTitle("Dot Net Fullstack Developer"), false);
 console.log("resume_and_filters self-test OK");
+

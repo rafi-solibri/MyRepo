@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-08-14 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Applied Senior Manager Attack Surface Reduction (cyber) via Senior Manager arch-lead waiver | SKIP_TITLE_RE: attack surface / cybersecurity / infosec / SOC / MDR |
+
+
 Portal-scoped log. Each daily agent (cloud or home) must append **only** to this file via
 `bash scripts/append-issue-fix.sh naukri "issue" "fix"` — never edit `ISSUES_AND_FIXES.md` for same-day rows.
 
