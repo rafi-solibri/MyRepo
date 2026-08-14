@@ -44,6 +44,11 @@ _SKIP_NAME_PREFIXES = (
     "all filters",
     "clear",
     "apply",
+    "great price",
+    "nightly",
+    "taxes",
+    "total",
+    "fee",
 )
 
 
@@ -59,9 +64,11 @@ def _url(query: SearchQuery) -> str:
     )
 
 
-# Nightly hotel floors — reject UI crumbs like "$7" taxes/fees (~₹609).
-MIN_INR = 1_000
-MIN_USD = 12.0
+# Nightly hotel floors — reject UI crumbs like "$7" taxes/fees (~₹609) and
+# "$12 nightly / $13 total" deal chips (~₹1044 at DEFAULT_USD_INR).
+# 4★ Hyderabad weeknights on Kayak are typically ₹1.8k+; $18 ≈ ₹1,566.
+MIN_INR = 1_500
+MIN_USD = 18.0
 
 
 def _prices_from_text(text: str) -> list[int]:
@@ -92,6 +99,10 @@ def _prices_from_text(text: str) -> list[int]:
 def _is_ui_chip(name: str) -> bool:
     low = name.lower().strip()
     if not low or len(low) < 4 or len(low) > 80:
+        return True
+    if "$" in low or "₹" in low:
+        return True
+    if "nightly" in low or "great price" in low or "taxes" in low:
         return True
     return any(low.startswith(p) for p in _SKIP_NAME_PREFIXES)
 

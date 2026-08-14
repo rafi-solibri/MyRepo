@@ -170,6 +170,101 @@ def _fetch_night_google(
     )
 
 
+BARE_GOOGLE_KEYS = frozenset({"Google Hotels", "Google/Google Hotels"})
+
+
+def _is_bare_google_key(key: str) -> bool:
+    return key in BARE_GOOGLE_KEYS
+
+
+def merge_google_day(kayak: DayPrice, google: DayPrice | None) -> DayPrice:
+    """Merge Google Hotels into a Kayak calendar day.
+
+    Unlabeled page-min ("Google/Google Hotels") must not undercut real Kayak
+    OTA prices — cloud Google pages often expose $12 "GREAT PRICE" chips.
+    Named Google OTAs (Google/Agoda, …) still win when they are cheaper and
+    pass the nightly floor.
+    """
+    if google is None or google.lowest_price_inr is None:
+        return kayak
+
+    providers = dict(kayak.providers or {})
+    kayak_has = kayak.lowest_price_inr is not None
+    for key, price in (google.providers or {}).items():
+        if price is None or price < MIN_INR:
+            continue
+        if _is_bare_google_key(key) and kayak_has:
+            continue
+        if key in providers:
+            providers[key] = min(providers[key], price)
+        else:
+            providers[key] = price
+
+    if not providers:
+        if not kayak_has and google.lowest_price_inr >= MIN_INR and not _is_bare_google_key(
+            google.lowest_provider or ""
+        ):
+            return google
+        if not kayak_has and google.lowest_price_inr >= MIN_INR:
+            # Bare Google is better than an empty cell, but only at the floor.
+            return DayPrice(
+                date=kayak.date,
+                lowest_price_inr=google.lowest_price_inr,
+                lowest_provider=google.lowest_provider,
+                providers=dict(google.providers or {}),
+            )
+        return kayak
+
+    best_name = min(providers, key=providers.get)  # type: ignore[arg-type]
+    return DayPrice(
+        date=kayak.date,
+        lowest_price_inr=providers[best_name],
+        lowest_provider=best_name,
+        providers=providers,
+    )
+
+
+def strip_untrusted_google_from_calendar(calendar: HotelCalendar) -> HotelCalendar:
+    """Re-apply merge rules to an already-enriched calendar (no re-fetch)."""
+    days: list[DayPrice] = []
+    for d in calendar.days:
+        kayak_providers = {
+            k: v
+            for k, v in (d.providers or {}).items()
+            if not str(k).startswith("Google")
+        }
+        google_providers = {
+            k: v
+            for k, v in (d.providers or {}).items()
+            if str(k).startswith("Google")
+        }
+        kayak_day = DayPrice(
+            date=d.date,
+            lowest_price_inr=min(kayak_providers.values()) if kayak_providers else None,
+            lowest_provider=(
+                min(kayak_providers, key=kayak_providers.get) if kayak_providers else None  # type: ignore[arg-type]
+            ),
+            providers=kayak_providers,
+        )
+        google_day = None
+        if google_providers:
+            best = min(google_providers, key=google_providers.get)  # type: ignore[arg-type]
+            google_day = DayPrice(
+                date=d.date,
+                lowest_price_inr=google_providers[best],
+                lowest_provider=best,
+                providers=google_providers,
+            )
+        days.append(merge_google_day(kayak_day, google_day))
+    return HotelCalendar(
+        hotel=calendar.hotel,
+        hid=calendar.hid,
+        months=calendar.months,
+        days=days,
+        details_base_url=calendar.details_base_url,
+    )
+
+
 def enrich_calendar_with_google(
     calendar: HotelCalendar,
     hotel: dict[str, str],
@@ -203,24 +298,7 @@ def enrich_calendar_with_google(
 
     merged_days: list[DayPrice] = []
     for d in calendar.days:
-        g = google_by_date.get(d.date)
-        if g is None or g.lowest_price_inr is None:
-            merged_days.append(d)
-            continue
-        providers = dict(d.providers or {})
-        providers.update(g.providers or {})
-        candidates = [(d.lowest_provider, d.lowest_price_inr)] if d.lowest_price_inr else []
-        candidates.append((g.lowest_provider, g.lowest_price_inr))
-        candidates = [(p, pr) for p, pr in candidates if pr is not None]
-        best_prov, best_price = min(candidates, key=lambda x: x[1])
-        merged_days.append(
-            DayPrice(
-                date=d.date,
-                lowest_price_inr=best_price,
-                lowest_provider=best_prov,
-                providers=providers,
-            )
-        )
+        merged_days.append(merge_google_day(d, google_by_date.get(d.date)))
     return HotelCalendar(
         hotel=calendar.hotel,
         hid=calendar.hid,
