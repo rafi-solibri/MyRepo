@@ -7,4 +7,5 @@ Portal-scoped log. Each daily agent (cloud or home) must append **only** to this
 
 | Issue | Fix |
 | --- | --- |
+| auto-merge post-fix re-run skipped because gh pr view used deleted branch | Query merge state via PR URL after squash --delete-branch |
 | shared ISSUES_AND_FIXES.md parallel squash left conflict markers on main | per-portal automation-prompts/issues/<portal>.md + append-issue-fix.sh + assert-no-conflict-markers in auto-merge |
