@@ -2175,6 +2175,39 @@ def main() -> int:
             _emit(report)
             return 5
 
+        # CF can clear while the account is still anonymous ("Get Started" / Sign in).
+        try:
+            home_body = (sb.get_text("body") or "")[:2500]
+            home_title = sb.get_title() or ""
+        except Exception:
+            home_body, home_title = "", ""
+        signed_out = bool(
+            re.search(
+                r"create an account or sign in|get started|sign in to see your personalised|"
+                r"your next job starts here",
+                home_body,
+                re.I,
+            )
+        ) and not re.search(
+            r"welcome,\s*\w+|sign out|account settings|my jobs|profile",
+            home_body,
+            re.I,
+        )
+        if signed_out:
+            report["blocked"].append(
+                {
+                    "reason": "indeed_login_required",
+                    "title": home_title[:120],
+                    "hint": "CF cleared but session is anonymous — refresh Indeed cookies via headed login / home CDP",
+                }
+            )
+            report["counts"]["blocked"] = 1
+            report["blockerSummary"] = "indeed_login_required"
+            OUT.parent.mkdir(parents=True, exist_ok=True)
+            OUT.write_text(json.dumps(report, indent=2))
+            _emit(report)
+            return 5
+
         seen_keys: set[str] = set()
         for query, location in search_queries():
             if report["counts"]["applied"] + report["counts"]["external"] >= MAX_APPLIES:

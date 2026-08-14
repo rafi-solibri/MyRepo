@@ -91,21 +91,34 @@ function shouldHardSkipTitle(title) {
   return null;
 }
 
+function isBrowserClosedError(e) {
+  return /has been closed|Target closed|Browser closed|Connection closed|Session closed/i.test(
+    String(e?.message || e)
+  );
+}
+
 async function apiGet(page, url) {
-  return page.evaluate(async (u) => {
-    const r = await fetch(u, {
-      credentials: "include",
-      headers: { "X-Requested-With": "XMLHttpRequest", Accept: "application/json" },
-    });
-    const text = await r.text();
-    let json = null;
-    try {
-      json = JSON.parse(text);
-    } catch {
-      json = { raw: text.slice(0, 500) };
+  try {
+    return await page.evaluate(async (u) => {
+      const r = await fetch(u, {
+        credentials: "include",
+        headers: { "X-Requested-With": "XMLHttpRequest", Accept: "application/json" },
+      });
+      const text = await r.text();
+      let json = null;
+      try {
+        json = JSON.parse(text);
+      } catch {
+        json = { raw: text.slice(0, 500) };
+      }
+      return { status: r.status, json };
+    }, url);
+  } catch (e) {
+    if (isBrowserClosedError(e)) {
+      return { status: 0, json: null, error: "browser_closed" };
     }
-    return { status: r.status, json };
-  }, url);
+    throw e;
+  }
 }
 
 async function apiPost(page, url, body) {
@@ -190,6 +203,10 @@ async function fetchUndecidedOpportunities(page, report) {
     let res;
     for (let attempt = 0; attempt < 4; attempt++) {
       res = await apiGet(page, url);
+      if (res.error === "browser_closed") {
+        report.blocked.push({ reason: "browser_closed", where: "opportunities" });
+        return jobs;
+      }
       if (res.status !== 429) break;
       report.rateLimited = (report.rateLimited || 0) + 1;
       await sleep(4000 + attempt * 2000);
@@ -307,6 +324,10 @@ async function searchSkill(page, skill, location, report) {
     let res;
     for (let attempt = 0; attempt < 4; attempt++) {
       res = await apiGet(page, url);
+      if (res.error === "browser_closed") {
+        report.blocked.push({ reason: "browser_closed", where: `search:${skill}:${location}` });
+        return jobs;
+      }
       if (res.status !== 429) break;
       const wait = 4000 + attempt * 2000;
       report.rateLimited = (report.rateLimited || 0) + 1;
@@ -456,58 +477,78 @@ async function main() {
       candidates.length = 0;
     }
 
-    for (const wave of SKILL_WAVES) {
-      if (report.applied.length >= MAX_APPLIES) break;
-      for (const skill of wave) {
-        for (const loc of ["Hyderabad", "Work From Home"]) {
-          console.error(`[instahyre] search skill=${skill} loc=${loc}`);
-          const jobs = await searchSkill(page, skill, loc, report);
-          for (const job of jobs) enqueueJob(job, seen, candidates, report);
-          await sleep(2500);
+    let browserDied = false;
+    try {
+      for (const wave of SKILL_WAVES) {
+        if (report.applied.length >= MAX_APPLIES) break;
+        for (const skill of wave) {
+          for (const loc of ["Hyderabad", "Work From Home"]) {
+            console.error(`[instahyre] search skill=${skill} loc=${loc}`);
+            const jobs = await searchSkill(page, skill, loc, report);
+            if (jobs.length === 0 && report.blocked.some((b) => b.reason === "browser_closed")) {
+              browserDied = true;
+              break;
+            }
+            for (const job of jobs) enqueueJob(job, seen, candidates, report);
+            await sleep(2500);
+          }
+          if (browserDied) break;
+        }
+        if (browserDied) break;
+        // After wave 1 (.NET), if we already have plenty of open candidates, still continue
+        // but prefer applying those first before broader skills.
+        if (wave === SKILL_WAVES[0] && candidates.length > 0) {
+          candidates.sort((a, b) => b.score - a.score);
+          for (const c of candidates) {
+            if (report.applied.length >= MAX_APPLIES) break;
+            await maybeApply(page, c, report);
+          }
+          candidates.length = 0;
         }
       }
-      // After wave 1 (.NET), if we already have plenty of open candidates, still continue
-      // but prefer applying those first before broader skills.
-      if (wave === SKILL_WAVES[0] && candidates.length > 0) {
+
+      if (!browserDied) {
         candidates.sort((a, b) => b.score - a.score);
         for (const c of candidates) {
           if (report.applied.length >= MAX_APPLIES) break;
           await maybeApply(page, c, report);
         }
-        candidates.length = 0;
+
+        // Spot-check up to 6 submitted pages for Application sent vs external ATS
+        const toCheck = report.applied.slice(0, 6);
+        for (const a of toCheck) {
+          const info = await spotCheckExternal(page, { id: a.id, public_url: a.publicUrl }, report);
+          if (!info) continue;
+          a.ui = info.applicationSent
+            ? "application_sent"
+            : info.interested
+              ? "interested"
+              : "unknown";
+          if (info.external?.length) {
+            a.externalLinks = info.external;
+            report.blocked.push({
+              reason: "external_ats_detected",
+              id: a.id,
+              title: a.title,
+              company: a.company,
+              links: info.external,
+              note: "Complete ATS with Rafi_Resume.docx + 52→65 if apply did not finish in-app",
+            });
+          }
+        }
+
+        report.countsAfter = await fetchFilterCounts(page);
+      }
+    } catch (e) {
+      if (isBrowserClosedError(e)) {
+        browserDied = true;
+        report.blocked.push({ reason: "browser_closed", detail: String(e.message || e).slice(0, 200) });
+        console.error("[instahyre] browser closed mid-run — writing partial report");
+      } else {
+        throw e;
       }
     }
 
-    candidates.sort((a, b) => b.score - a.score);
-    for (const c of candidates) {
-      if (report.applied.length >= MAX_APPLIES) break;
-      await maybeApply(page, c, report);
-    }
-
-    // Spot-check up to 6 submitted pages for Application sent vs external ATS
-    const toCheck = report.applied.slice(0, 6);
-    for (const a of toCheck) {
-      const info = await spotCheckExternal(page, { id: a.id, public_url: a.publicUrl }, report);
-      if (!info) continue;
-      a.ui = info.applicationSent
-        ? "application_sent"
-        : info.interested
-          ? "interested"
-          : "unknown";
-      if (info.external?.length) {
-        a.externalLinks = info.external;
-        report.blocked.push({
-          reason: "external_ats_detected",
-          id: a.id,
-          title: a.title,
-          company: a.company,
-          links: info.external,
-          note: "Complete ATS with Rafi_Resume.docx + 52→65 if apply did not finish in-app",
-        });
-      }
-    }
-
-    report.countsAfter = await fetchFilterCounts(page);
     report.summary = {
       applied: report.applied.length,
       skipped: report.skipped.length,
@@ -515,6 +556,7 @@ async function main() {
       uniqueJobsSeen: seen.size,
       opportunitiesUndecided: report.opportunitiesUndecided || 0,
       path: "Instahyre opportunities feed + job_search API (candidate_opportunity/apply)",
+      partial: browserDied || undefined,
     };
 
     fs.mkdirSync(path.dirname(OUT), { recursive: true });

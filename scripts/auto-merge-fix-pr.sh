@@ -90,7 +90,13 @@ set -e
 STATE="$(gh pr view --json state,autoMergeRequest,mergeStateStatus -q '{state:.state,auto:.autoMergeRequest.enabledAt,mergeState:.mergeStateStatus}' 2>/dev/null || echo "{}")"
 echo "PR merge status: $STATE"
 
-MERGED="$(gh pr view --json state -q .state 2>/dev/null || true)"
+# gh sometimes returns empty briefly after squash; retry a few times.
+MERGED=""
+for _try in 1 2 3 4 5; do
+  MERGED="$(gh pr view --json state -q .state 2>/dev/null || true)"
+  [[ "$MERGED" == "MERGED" || "$MERGED" == "OPEN" || "$MERGED" == "CLOSED" ]] && break
+  sleep 1
+done
 if [[ "$MERGED" == "MERGED" ]]; then
   echo "OK: PR merged → $PR_URL"
   # Verify main tip did not land conflict markers (parallel squash race).
