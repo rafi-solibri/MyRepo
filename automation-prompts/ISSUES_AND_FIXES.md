@@ -1,11 +1,28 @@
 # Issues from last cron + fixes
 
+<<<<<<< HEAD
 ## Fixed for 2026-08-14 Hitech City daily (cloud cron)
 
 | Issue | Fix |
 | --- | --- |
 | Indeed board `timeout_900s` dropped **2 real Easy Applies** (ModMed + Salesforce) — `TimeoutExpired` returned before report harvest; Chrome/CF-probe orphans survived | `board_campus_apply`: kill process group on timeout; always `_harvest_portal_report` after timeout/error; accept fresh `startedAt` without `finishedAt` |
 | Indeed Easy-Applied Salesforce **Success Architect (service cloud)** — `TITLE_OK` matched architect…cloud; company allowlist kept Salesforce | Expand `TITLE_SKIP` for salesforce/service cloud; skip Salesforce/ServiceNow company without .NET/Azure in title; negative lookbehind so service cloud ≠ cloud stack |
+=======
+<<<<<<< HEAD
+## Fixed for 2026-08-14 Naukri daily (cloud) — chatbot exhaust + title skips
+
+| Issue | Fix |
+| --- | --- |
+| 13× `apply_unconfirmed` with `chat_steps_exhausted` / delayed drawer (Save no-op under overlay; narrow chips) | `daily_apply.js`: Playwright force Save, stuck detection, broader chips/select/textarea answers, late thanks confirm |
+| Wrong applies/attempts: Gen AI SA, Agentforce, Network Support, Civil/Structural EM, QE Architect, Data Engineering Manager | `resume_and_filters.js` + `test_filters.js`: expand `SKIP_TITLE_RE` / `PURE_AI_DATA_RE` (`gen ai`, `ai agent`, Architect…AI/ML) |
+=======
+## Fixed for 2026-08-14 Foundit daily (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Applied Salesforce **Agentforce** Success Architect (Hyd) — title skip only matched `\bsalesforce\b`, and .NET in skills laundry list passed `hasDotNet` | Expand title skip to `salesforce|agentforce|sfdc`; hard-skip Salesforce employer when .NET is absent from the **title** (mirror pure-AI title rule) |
+>>>>>>> origin/main
+>>>>>>> origin/main
 
 ## Fixed for 2026-08-13 Hitech City home boards (Windows)
 

@@ -589,24 +589,68 @@ async function clickChatbotSave(page) {
   await page
     .evaluate(() => {
       const root =
-        document.querySelector(".chatbot_Drawer, ._chatBotContainer") || document;
+        document.querySelector(
+          ".chatbot_Drawer, ._chatBotContainer, #desktopChatBotContainer"
+        ) || document;
       root.querySelector(".chatbot_Overlay")?.classList.remove("show");
+      for (const el of root.querySelectorAll(
+        ".send.disabled, .sendMsgbtn_container.disabled, .disabled"
+      )) {
+        el.classList.remove("disabled");
+      }
       const sendWrap = root.querySelector(".send");
       sendWrap?.classList.remove("disabled");
       root.querySelector(".sendMsg")?.click();
-      const save = [...root.querySelectorAll("div.sendMsg, div.send, button")].find(
-        (e) => /^Save$/i.test((e.innerText || "").trim())
-      );
+      const save = [
+        ...root.querySelectorAll(
+          "div.sendMsg, div.send, div.sendMsgbtn_container, button"
+        ),
+      ].find((e) => /^Save$/i.test((e.innerText || "").trim()));
       save?.click();
     })
     .catch(() => {});
+  // Playwright force-click — evaluate click often no-ops under TopTier overlay.
+  for (const sel of [
+    ".chatbot_Drawer .sendMsg",
+    "._chatBotContainer .sendMsg",
+    "#desktopChatBotContainer .sendMsg",
+    ".chatbot_Drawer div.send:has-text('Save')",
+    "div.sendMsgbtn_container",
+    "button:has-text('Save')",
+  ]) {
+    const b = page.locator(sel).first();
+    if (await b.isVisible().catch(() => false)) {
+      await b.click({ force: true }).catch(() => {});
+      break;
+    }
+  }
+}
+
+function chatSuccessReason(chatText) {
+  const t = String(chatText || "");
+  if (
+    /successfully applied|application sent|has been submitted|thank you for applying|application has been submitted/i.test(
+      t
+    )
+  ) {
+    return "success";
+  }
+  if (
+    /thank you for your responses/i.test(t) &&
+    !/How many years|Are you|Do you|\?/i.test(
+      t.split(/thank you for your responses/i)[1] || ""
+    )
+  ) {
+    return "responses_thanks";
+  }
+  return null;
 }
 
 async function answerNaukriChatbot(page) {
   // Drawer can mount a beat after Quick apply — wait before declaring no_chat.
   {
     const start = Date.now();
-    while (Date.now() - start < 6000) {
+    while (Date.now() - start < 8000) {
       const ready = await page
         .evaluate(() => {
           const el = document.querySelector(
@@ -621,7 +665,9 @@ async function answerNaukriChatbot(page) {
     }
   }
 
-  for (let step = 0; step < 20; step++) {
+  let lastFingerprint = "";
+  let stuckCount = 0;
+  for (let step = 0; step < 24; step++) {
     await page.bringToFront().catch(() => {});
     const chatText = await page
       .evaluate(
@@ -632,34 +678,29 @@ async function answerNaukriChatbot(page) {
       )
       .catch(() => "");
     if (!chatText || chatText.length < 20) return { done: true, reason: "no_chat" };
-    if (
-      /successfully applied|application sent|has been submitted|thank you for applying|application has been submitted/i.test(
-        chatText
-      )
-    ) {
-      return { done: true, reason: "success" };
-    }
-    if (
-      /thank you for your responses/i.test(chatText) &&
-      !/How many years|Are you|Do you|\?/i.test(
-        chatText.split(/thank you for your responses/i)[1] || ""
-      )
-    ) {
+    const doneReason = chatSuccessReason(chatText);
+    if (doneReason === "success") return { done: true, reason: "success" };
+    if (doneReason === "responses_thanks") {
       await clickChatbotSave(page);
       await sleep(1500);
       return { done: true, reason: "responses_thanks" };
     }
 
+    const fingerprint = chatText.replace(/\s+/g, " ").trim().slice(-500);
     const picked = await page
       .evaluate(() => {
         const root =
-          document.querySelector(".chatbot_Drawer, ._chatBotContainer") ||
-          document;
+          document.querySelector(
+            ".chatbot_Drawer, ._chatBotContainer, #desktopChatBotContainer"
+          ) || document;
         root.querySelector(".chatbot_Overlay")?.classList.remove("show");
 
         const scoreBand = (v) => {
           const s = String(v || "").trim();
           if (/^yes$/i.test(s)) return 10_000;
+          if (/immediate|serving notice|available/i.test(s)) return 9_000;
+          if (/hyderabad|secunderabad|remote|work from home|wfh|any location/i.test(s))
+            return 8_000;
           if (/^no$/i.test(s)) return -1;
           const nums = (s.match(/\d+/g) || []).map(Number);
           if (!nums.length) return 0;
@@ -686,7 +727,9 @@ async function answerNaukriChatbot(page) {
           inp.closest(".ssrc__radio-btn-container")?.click();
         };
 
-        const radios = [...root.querySelectorAll('input[type="radio"]')];
+        const radios = [...root.querySelectorAll('input[type="radio"]')].filter(
+          (r) => r.offsetParent !== null || r.getClientRects().length
+        );
         if (radios.length) {
           const yes = radios.find((r) => /^yes$/i.test(r.value || r.id));
           const target =
@@ -698,18 +741,41 @@ async function answerNaukriChatbot(page) {
           return target.value || target.id || "radio";
         }
 
+        // Native <select> questions.
+        const sel = [...root.querySelectorAll("select")].find(
+          (s) => s.offsetParent !== null && s.options && s.options.length > 1
+        );
+        if (sel) {
+          const opts = [...sel.options].filter((o) => o.value || o.text);
+          const ranked = opts.sort(
+            (a, b) => scoreBand(b.text || b.value) - scoreBand(a.text || a.value)
+          );
+          const best = ranked[0];
+          if (best) {
+            sel.value = best.value;
+            sel.dispatchEvent(new Event("input", { bubbles: true }));
+            sel.dispatchEvent(new Event("change", { bubbles: true }));
+            return `select:${(best.text || best.value || "").trim()}`;
+          }
+        }
+
         // Free-text / contenteditable years questions.
         const box = root.querySelector(
-          '.textArea[contenteditable="true"], [contenteditable="true"].textArea, div.textArea[contenteditable="true"]'
+          '.textArea[contenteditable="true"], [contenteditable="true"].textArea, div.textArea[contenteditable="true"], textarea:not([type="hidden"])'
         );
         if (box && box.offsetParent !== null) {
           const q = (root.innerText || "").slice(-400);
           let answer = "15";
-          if (/relocat|hyderabad|willing|notice|immediate/i.test(q)) answer = "Yes";
-          else if (/ctc|salary|lpa|compensation/i.test(q)) answer = "65";
+          if (/relocat|hyderabad|willing|immediate|join/i.test(q)) answer = "Yes";
+          else if (/ctc|salary|lpa|compensation|expected/i.test(q)) answer = "65";
+          else if (/current.*ctc|current.*salary/i.test(q)) answer = "52";
           else if (/notice/i.test(q)) answer = "0";
           box.focus();
-          box.textContent = answer;
+          if (box.tagName === "TEXTAREA" || box.tagName === "INPUT") {
+            box.value = answer;
+          } else {
+            box.textContent = answer;
+          }
           box.dispatchEvent(new InputEvent("input", { bubbles: true, data: answer }));
           box.dispatchEvent(new Event("change", { bubbles: true }));
           return `text:${answer}`;
@@ -717,14 +783,16 @@ async function answerNaukriChatbot(page) {
 
         const chips = [
           ...root.querySelectorAll(
-            "label, button, [role='button'], div[class*='chip'], span[class*='chip'], span.ssrc__label"
+            "label, button, [role='button'], div[class*='chip'], span[class*='chip'], span.ssrc__label, li[role='option']"
           ),
         ].filter((e) => {
           const t = (e.innerText || "").replace(/\s+/g, " ").trim();
           return (
             t &&
-            t.length < 40 &&
-            /^(Yes|No|>?\d+.*years|\d+\s*-\s*\d+\s*years)$/i.test(t)
+            t.length < 48 &&
+            /^(Yes|No|Immediate|Serving notice|Available|>?\d+.*years|\d+\s*-\s*\d+\s*years|Hyderabad|Secunderabad|Remote|Work from home|WFH|Any location|15\+|Agree|Proceed)$/i.test(
+              t
+            )
           );
         });
         if (chips.length) {
@@ -736,13 +804,67 @@ async function answerNaukriChatbot(page) {
           ranked[0].click();
           return (ranked[0].innerText || "").trim();
         }
+
+        // Last-resort: click an unchecked checkbox / agree.
+        const agree = [...root.querySelectorAll('input[type="checkbox"]')].find(
+          (c) => !c.checked && /agree|confirm|authorize|consent/i.test(
+            (c.closest("label,div,li")?.innerText || c.id || "") + " " + (c.value || "")
+          )
+        );
+        if (agree) {
+          setChecked(agree);
+          return "checkbox:agree";
+        }
         return null;
       })
       .catch(() => null);
-    if (!picked) break;
+
+    if (fingerprint === lastFingerprint) stuckCount += 1;
+    else stuckCount = 0;
+    lastFingerprint = fingerprint;
+
+    if (!picked) {
+      // Nothing to pick — try Save once in case prior answer enabled it, then stop.
+      await clickChatbotSave(page);
+      await sleep(1800);
+      const after = await page
+        .evaluate(
+          () =>
+            document.querySelector(
+              ".chatbot_Drawer, ._chatBotContainer, #desktopChatBotContainer"
+            )?.innerText || ""
+        )
+        .catch(() => "");
+      const late = chatSuccessReason(after);
+      if (late) return { done: true, reason: late };
+      break;
+    }
     await sleep(400);
     await clickChatbotSave(page);
     await sleep(2200);
+    if (stuckCount >= 3) {
+      // Same drawer text after repeated answers — Save may be stuck; one more force Save then exit.
+      await clickChatbotSave(page);
+      await sleep(2000);
+      break;
+    }
+  }
+  // Final pass: drawer may already show thanks / applied after last Save.
+  const finalText = await page
+    .evaluate(
+      () =>
+        document.querySelector(
+          ".chatbot_Drawer, ._chatBotContainer, #desktopChatBotContainer"
+        )?.innerText || ""
+    )
+    .catch(() => "");
+  const finalReason = chatSuccessReason(finalText);
+  if (finalReason) {
+    if (finalReason === "responses_thanks") {
+      await clickChatbotSave(page);
+      await sleep(1000);
+    }
+    return { done: true, reason: finalReason };
   }
   return { done: false, reason: "chat_steps_exhausted" };
 }
@@ -984,10 +1106,28 @@ async function confirmApplied(page, chatHint = null) {
   }
   // Instant Quick Apply (no chatbot): CTA animates Quick→Applied. Do NOT
   // return early on "quick" — wait specifically for Applied / toast.
-  const visible = await waitForAppliedCta(page, { timeoutMs: 12000 });
+  // Also covers chat_steps_exhausted when Save eventually flipped CTA.
+  const visible = await waitForAppliedCta(page, {
+    timeoutMs: chatHint?.reason === "chat_steps_exhausted" ? 8000 : 12000,
+  });
   if (visible?.state === "applied") {
     return { ok: true, cta: visible.label || "Applied" };
   }
+  // Late chatbot thanks after exhausted loop / overlay lag.
+  const lateChat = await page
+    .evaluate(() => {
+      const t =
+        document.querySelector(
+          ".chatbot_Drawer, ._chatBotContainer, #desktopChatBotContainer"
+        )?.innerText ||
+        document.body.innerText ||
+        "";
+      if (/thank you for your responses|successfully applied|application sent/i.test(t))
+        return "late_thanks";
+      return "";
+    })
+    .catch(() => "");
+  if (lateChat) return { ok: true, cta: `chatbot:${lateChat}` };
   const detail = await readDetail(page);
   return { ok: false, cta: detail.cta || visible?.label || "" };
 }
