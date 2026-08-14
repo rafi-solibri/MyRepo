@@ -42,4 +42,33 @@ def test_resolve_bash_finds_git_on_this_machine():
 if __name__ == "__main__":
     test_resolve_bash_honors_git_bash_env()
     test_resolve_bash_finds_git_on_this_machine()
+    # Timeout must still credit applies from a fresh portal report (Indeed 2026-08-14).
+    import json
+    import tempfile
+    from unittest import mock
+    from tools.hitechcity import board_campus_apply as b
+
+    with tempfile.TemporaryDirectory() as td:
+        art = Path(td)
+        (art / "indeed-daily-run.json").write_text(
+            json.dumps(
+                {
+                    "startedAt": "2026-08-14T04:27:00+00:00",
+                    "applied": [{"company": "ModMed"}, {"company": "X"}],
+                    "skipped": [{}] * 3,
+                    "blocked": [],
+                }
+            ),
+            encoding="utf-8",
+        )
+        with mock.patch.object(b, "_artifact_dir", return_value=art):
+            row = {
+                "startedAt": "2026-08-14T04:27:00+00:00",
+                "applied": 0,
+                "blocked": 0,
+                "skipped": 0,
+            }
+            b._harvest_portal_report(row, "indeed")
+            assert row["applied"] == 2, row
+            assert row["skipped"] == 3
     print("ok")
