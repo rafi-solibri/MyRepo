@@ -7,7 +7,7 @@ If you paste the full block instead, copy everything inside the fence below and 
 
 ```text
 FIRST: run `node tools/indeed/preflight.js` (WARP SOCKS + Chrome probe + UC Turnstile clear; honors `INDEED_HTTP_PROXY`). Preflight auto-applies `tools/indeed/filelock_patch.py`, multi-strategy Turnstile clicks, and WARP IP rotate. If it still exits 5, stop and report — do not invent applies.
-Prefer: `node tools/indeed/daily_apply.js` (wraps preflight + `uc_daily_apply.py`). On home Wi‑Fi use `bash scripts/indeed-home-daily.sh`.
+Prefer: `node tools/indeed/daily_apply.js` (wraps preflight + `uc_daily_apply.py`). **Indeed is home-first:** on home Wi‑Fi use `bash scripts/indeed-home-daily.sh` (18:40 IST task). Cloud is best-effort only (CF + session). Optional cloud residential: env secret `INDEED_HTTP_PROXY`.
 Then run `bash scripts/preflight-portal-run.sh indeed`. Verify `node tools/indeed/resume.js`.
 Then run `bash scripts/launch-chrome-cdp.sh indeed` only if using plain Chrome CDP (Easy Apply on cloud should use UC, not CDP).
 Chrome CDP profile: /home/ubuntu/chrome-indeed-profile (synced from Desktop Default).

@@ -69,7 +69,8 @@ Judge location from the TOP CARD / workplace pills / job location field — neve
 4. Easy Apply AND company-website / ATS redirects — both required paths
 5. After a successful apply, try referral: message the job poster (poster-specific Message) OR send a short LinkedIn connection note to a Hyd engineer/recruiter/EM at that company asking for a referral / 15–20 min screen
 6. For each company: also open official careers URL from companies.json, find Hyd/India qualifying roles, COMPLETE Greenhouse / Lever / Workday / SmartRecruiters / SuccessFactors / company ATS when guest/logged apply is possible (skip US-only cards and SSO passport walls quickly)
-7. Boards: each portal gets its own preflight + CDP launch + allowlist; keep per-board caps modest (defaults ~6–12). Login wall on one board → log blocked, continue others
+7. Boards: each portal gets its own preflight + CDP launch + allowlist; keep per-board caps modest (defaults ~6–12). **Cutshort/Indeed are login-probed first** (`chrome_session.js check`) — skip immediately on `*_login_required` so the phase is not burned. Other board login walls → log blocked, continue.
+8. External ATS: default wall/attempt caps are tight (`HITECHCITY_MAX_EXT_WALLS=1`, `HITECHCITY_MAX_EXT_ATTEMPTS=2`, `HITECHCITY_EXT_ATS_TIME_CAP_S=45`) so Phenom/guest walls fail fast and more companies are attempted.
 8. Cap stuck ATS/CAPTCHA/OTP at ~3–4 minutes — log blocked, continue
 9. Skip already Applied; expand inventory to 14-day window when thin
 

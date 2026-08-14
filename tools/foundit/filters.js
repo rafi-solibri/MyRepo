@@ -100,6 +100,20 @@ function hasSeniority(title) {
   );
 }
 
+/** Architect / Tech Lead / EM band — Naukri parity: may apply without .NET on skills laundry list. */
+function isArchLeadTitle(title) {
+  return /\b(architect|principal|staff\s+(software|engineer)|engineering\s+manager|\bem\b|tech(?:nology)?\s+lead|technical\s+lead|solution\s+architect|software\s+architect)\b/i.test(
+    title || ""
+  );
+}
+
+function isJavaOrSalesforcePrimary(title, skills) {
+  const blob = `${title || ""} ${skills || ""}`;
+  if (/\b(salesforce|agentforce|sfdc)\b/i.test(title || "")) return true;
+  if (/\bjava\b(?!\s*script)/i.test(blob) && !hasDotNet(title, skills)) return true;
+  return false;
+}
+
 function isTechLeadBand(title) {
   return /\b(architect|principal|staff|tech(?:nology)?\s+lead|technical\s+lead)\b/i.test(
     title || ""
@@ -176,8 +190,13 @@ function classifyJob(job) {
   const loc = locationsFrom(job);
   const jobId = String(job.jobId || job.id || "");
 
-  if (!hasDotNet(title, skills))
-    return { pass: false, reason: "no .NET on title+skills" };
+  const archLead = isArchLeadTitle(title);
+  // Naukri parity: Arch/Lead/EM Hyd/remote may pass without .NET on skills when not Java/SF-primary.
+  if (!hasDotNet(title, skills)) {
+    if (!(archLead && !isJavaOrSalesforcePrimary(title, skills))) {
+      return { pass: false, reason: "no .NET on title+skills" };
+    }
+  }
   const norm = `${title} ${skills}`.replace(/asp\.?\s*net/gi, "DOTNET");
   if (/\bsap\b/i.test(norm) && !/\.net|\bdotnet\b|\bc#\b/i.test(norm))
     return { pass: false, reason: "SAP without .NET" };
@@ -219,6 +238,7 @@ function classifyJob(job) {
     redirectUrl: job.redirectUrl || null,
     exp,
     ctcLpa: ctc.lpa,
+    archLeadWithoutDotNetProof: archLead && !hasDotNet(title, skills),
   };
 }
 
@@ -229,6 +249,7 @@ module.exports = {
   experienceBounds,
   hasDotNet,
   hasSeniority,
+  isArchLeadTitle,
   experienceOk,
   ctcOk,
   classifyJob,

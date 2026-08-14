@@ -356,6 +356,27 @@ def _harvest_portal_report(row: dict[str, Any], portal: str) -> None:
         pass
 
 
+def _portal_auth_ok(portal: str) -> tuple[bool, str]:
+    """Fast cookie/CDP auth probe — skip Cutshort/Indeed board legs on login walls."""
+    try:
+        proc = subprocess.run(
+            ["node", str(ROOT / "tools" / "chrome_session.js"), "check", portal],
+            cwd=str(ROOT),
+            capture_output=True,
+            text=True,
+            timeout=90,
+            env=os.environ.copy(),
+        )
+        if proc.returncode == 0:
+            return True, "ok"
+        blob = ((proc.stdout or "") + "\n" + (proc.stderr or "")).lower()
+        if "login" in blob or "auth" in blob or "anonymous" in blob:
+            return False, f"{portal}_login_required"
+        return False, f"{portal}_auth_check_rc_{proc.returncode}"
+    except Exception as e:
+        return False, f"{portal}_auth_check_error:{str(e)[:120]}"
+
+
 def run(companies: list[dict] | None = None) -> dict[str, Any]:
     if os.environ.get("HITECHCITY_BOARD_BROWSE", "1") != "1":
         return {"ok": True, "skipped": True, "reason": "HITECHCITY_BOARD_BROWSE=0"}
@@ -374,8 +395,44 @@ def run(companies: list[dict] | None = None) -> dict[str, Any]:
         "totals": {"applied": 0, "blocked": 0, "skipped": 0},
     }
 
+    # Portals that commonly burn 5–15 minutes on login walls — probe first.
+    login_sensitive = {
+        p.strip().lower()
+        for p in (os.environ.get("HITECHCITY_BOARD_LOGIN_PROBE") or "cutshort,indeed").split(",")
+        if p.strip()
+    }
+
     for portal in _boards():
         print(f"=== HitechCity board browse: {portal} ===", flush=True)
+        if portal in login_sensitive:
+            ok, why = _portal_auth_ok(portal)
+            if not ok:
+                row = {
+                    "portal": portal,
+                    "startedAt": datetime.now(timezone.utc).isoformat(),
+                    "finishedAt": datetime.now(timezone.utc).isoformat(),
+                    "status": "skipped",
+                    "reason": why,
+                    "applied": 0,
+                    "blocked": 1,
+                    "skipped": 0,
+                    "rc": 5 if "login" in why else 1,
+                }
+                report["portals"].append(row)
+                report["totals"]["blocked"] += 1
+                print(
+                    json.dumps(
+                        {
+                            "board": portal,
+                            "status": "skipped",
+                            "applied": 0,
+                            "rc": row["rc"],
+                            "reason": why,
+                        }
+                    ),
+                    flush=True,
+                )
+                continue
         t0 = time.time()
         row = _run_portal(portal, allowlist, env_base)
         row["elapsedSec"] = round(time.time() - t0, 1)

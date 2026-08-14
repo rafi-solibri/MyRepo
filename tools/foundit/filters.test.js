@@ -256,4 +256,47 @@ assert.strictEqual(
   "explicit .NET title at Salesforce employer may still pass"
 );
 
+// Arch/EM without .NET on skills — Naukri parity (not Java/SF primary)
+assert.strictEqual(
+  classifyJob({
+    jobId: 16,
+    title: "Solution Architect",
+    companyName: "Example Corp",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: "Azure" }, { text: "Microservices" }, { text: "API" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  true,
+  "Arch title Hyd without .NET skills laundry may pass"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 17,
+    title: "Engineering Manager",
+    companyName: "Example Corp",
+    locations: [{ text: "Remote" }],
+    skills: [{ text: "Java" }, { text: "Spring" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  false,
+  "EM with Java-only skills must still fail"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 18,
+    title: "Backend Developer",
+    companyName: "Example Corp",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: "Azure" }],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 12 },
+  }).pass,
+  false,
+  "non-arch title without .NET must still fail"
+);
+
 console.log("filters.test.js OK");

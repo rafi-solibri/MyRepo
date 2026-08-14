@@ -10,6 +10,7 @@ import time
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 from urllib.parse import quote
 
 from playwright.sync_api import sync_playwright, Page, TimeoutError as PWTimeout
@@ -130,6 +131,15 @@ MAX_APPLY = int(os.environ.get("LINKEDIN_MAX_APPLY", "50"))
 MAX_SCAN_PER_SEARCH = int(os.environ.get("LINKEDIN_MAX_SCAN", "60"))
 # Past 24h, then 3 days, then 7 days, then 14 days (thin-inventory expand)
 TPR_WINDOWS = ("r86400", "r259200", "r604800", "r1209600")
+# After Easy Apply pass, also search without f_AL so company-site / Apply jobs are visible.
+EASY_APPLY_ONLY = os.environ.get("LINKEDIN_EASY_APPLY_ONLY", "0") == "1"
+NON_EA_IF_BELOW = int(os.environ.get("LINKEDIN_NON_EA_IF_BELOW", "20"))
+SEEN_IDS_PATH = Path(
+    os.environ.get(
+        "LINKEDIN_SEEN_IDS_PATH",
+        "/opt/cursor/artifacts/linkedin-seen-ids.json",
+    )
+)
 
 
 @dataclass
@@ -1594,6 +1604,86 @@ def parse_card_meta(page: Page) -> tuple[str, str, str]:
     return role, company, location
 
 
+def _ids_from_report_obj(data: Any) -> set[str]:
+    out: set[str] = set()
+    if isinstance(data, list):
+        for row in data:
+            if isinstance(row, dict):
+                jid = str(row.get("job_id") or row.get("jobId") or "").strip()
+                if jid.isdigit():
+                    out.add(jid)
+        return out
+    if not isinstance(data, dict):
+        return out
+    for key in ("submitted", "applied", "all", "blocked", "skipped", "external_candidates"):
+        rows = data.get(key)
+        if not isinstance(rows, list):
+            continue
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            jid = str(row.get("job_id") or row.get("jobId") or "").strip()
+            if jid.isdigit():
+                out.add(jid)
+            # Only treat submitted/applied as hard-seen when scanning "all"
+            if key in ("submitted", "applied") and jid.isdigit():
+                out.add(jid)
+    for jid in data.get("ids") or data.get("jobIds") or []:
+        s = str(jid).strip()
+        if s.isdigit():
+            out.add(s)
+    return out
+
+
+def load_prior_seen_ids(seed: set[str] | None = None) -> set[str]:
+    """Merge artifact/report job IDs with optional bootstrap seed (legacy hardcodes)."""
+    seen: set[str] = set(seed or ())
+    candidates = [
+        SEEN_IDS_PATH,
+        Path("/opt/cursor/artifacts/apply-report.json"),
+        Path("/opt/cursor/artifacts/linkedin-apply-report.json"),
+        Path(os.environ.get("LINKEDIN_APPLY_REPORT", "")),
+    ]
+    # Same-day + recent markdown companions are optional; prefer JSON artifacts.
+    reports_root = Path(__file__).resolve().parents[2] / "reports"
+    if reports_root.is_dir():
+        for day_dir in sorted(reports_root.glob("20*"), reverse=True)[:5]:
+            candidates.append(day_dir / "linkedin-daily.json")
+    for path in candidates:
+        if not path or not str(path).strip():
+            continue
+        try:
+            if not path.is_file():
+                continue
+            data = json.loads(path.read_text(encoding="utf-8"))
+            before = len(seen)
+            seen |= _ids_from_report_obj(data)
+            added = len(seen) - before
+            if added:
+                print(f"DEDUP loaded +{added} job ids from {path}", flush=True)
+        except Exception as e:
+            print(f"DEDUP skip {path}: {e}", flush=True)
+    return seen
+
+
+def persist_seen_ids(seen: set[str], results: list[JobResult]) -> None:
+    """Rolling artifact so tomorrow's run does not rely on hardcoded IDs alone."""
+    for r in results:
+        if r.status in ("submitted", "blocked") and (r.job_id or "").isdigit():
+            seen.add(r.job_id)
+    try:
+        SEEN_IDS_PATH.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "updatedAt": datetime.now(timezone.utc).isoformat(),
+            "ids": sorted(seen),
+            "count": len(seen),
+        }
+        SEEN_IDS_PATH.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        print(f"DEDUP wrote {len(seen)} ids → {SEEN_IDS_PATH}", flush=True)
+    except Exception as e:
+        print(f"DEDUP persist failed: {e}", flush=True)
+
+
 def process_search(
     page: Page,
     keywords: str,
@@ -1602,11 +1692,13 @@ def process_search(
     results: list[JobResult],
     seen: set[str],
     tpr: str = "r86400",
+    easy_apply: bool = True,
 ) -> None:
     if len([r for r in results if r.status == "submitted"]) >= MAX_APPLY:
         return
-    url = search_url(keywords, location, remote=remote, tpr=tpr)
-    print(f"SEARCH {keywords!r} loc={location!r} remote={remote} tpr={tpr} -> {url}")
+    url = search_url(keywords, location, remote=remote, tpr=tpr, easy_apply=easy_apply)
+    ea = "easy" if easy_apply else "all-apply"
+    print(f"SEARCH [{ea}] {keywords!r} loc={location!r} remote={remote} tpr={tpr} -> {url}")
     navigated = False
     last_nav_err = ""
     for nav_try in range(3):
@@ -1828,8 +1920,8 @@ def process_search(
 
 def main() -> None:
     results: list[JobResult] = []
-    # Prior-run IDs (already applied) — LinkedIn also marks Applied; keep for safety
-    seen: set[str] = {
+    # Bootstrap seed (legacy hardcodes) + artifact-driven IDs from prior reports
+    seed_seen: set[str] = {
         # Prior automation runs
         "4448545122",
         "4448935949",
@@ -1929,6 +2021,8 @@ def main() -> None:
         "4444523612",  # Cyara blocked
         "4452340803",  # MyCareernet blocked
     }
+    seen = load_prior_seen_ids(seed_seen)
+    print(f"DEDUP seen ids={len(seen)} (seed={len(seed_seen)})", flush=True)
     with sync_playwright() as p:
         try:
             browser = p.chromium.connect_over_cdp(CDP)
@@ -2001,11 +2095,25 @@ def main() -> None:
             return any(r.reason == "easy_apply_daily_limit" for r in results)
 
         def write_report() -> None:
+            submitted = [asdict(r) for r in results if r.status == "submitted"]
+            skipped = [asdict(r) for r in results if r.status == "skipped"]
+            blocked = [asdict(r) for r in results if r.status == "blocked"]
             report = {
                 "ts": datetime.now(timezone.utc).isoformat(),
-                "submitted": [asdict(r) for r in results if r.status == "submitted"],
-                "skipped": [asdict(r) for r in results if r.status == "skipped"],
-                "blocked": [asdict(r) for r in results if r.status == "blocked"],
+                "ok": not any(
+                    "not signed in" in (r.reason or "").lower() for r in results if r.status == "blocked"
+                ),
+                "counts": {
+                    "applied": len(submitted),
+                    "submitted": len(submitted),
+                    "skipped": len(skipped),
+                    "blocked": len(blocked),
+                    "seen": len(results),
+                },
+                "applied": submitted,  # ensure-missing / coverage detectors
+                "submitted": submitted,
+                "skipped": skipped,
+                "blocked": blocked,
                 "external_candidates": [
                     asdict(r)
                     for r in results
@@ -2014,6 +2122,7 @@ def main() -> None:
                 "all": [asdict(r) for r in results],
             }
             OUT.write_text(json.dumps(report, indent=2))
+            persist_seen_ids(seen, results)
             print("=== SUMMARY ===")
             print("submitted", len(report["submitted"]))
             print("skipped", len(report["skipped"]))
@@ -2021,41 +2130,59 @@ def main() -> None:
             print("external_candidates", len(report["external_candidates"]))
             print("wrote", OUT)
 
+        def submitted_n() -> int:
+            return len([r for r in results if r.status == "submitted"])
+
+        def run_search_wave(*, easy_apply: bool, tpr: str) -> None:
+            titles_hyd = TITLES if easy_apply else TITLES[:6]
+            titles_remote = TITLES[:5] if easy_apply else TITLES[:3]
+            for title in titles_hyd:
+                process_search(
+                    page,
+                    title,
+                    "Hyderabad, Telangana, India",
+                    remote=False,
+                    results=results,
+                    seen=seen,
+                    tpr=tpr,
+                    easy_apply=easy_apply,
+                )
+                if submitted_n() >= MAX_APPLY or hit_daily_limit():
+                    return
+            if submitted_n() >= MAX_APPLY or hit_daily_limit():
+                return
+            for title in titles_remote:
+                process_search(
+                    page,
+                    title,
+                    "India",
+                    remote=True,
+                    results=results,
+                    seen=seen,
+                    tpr=tpr,
+                    easy_apply=easy_apply,
+                )
+                if submitted_n() >= MAX_APPLY or hit_daily_limit():
+                    return
+
         try:
             for tpr in TPR_WINDOWS:
-                if len([r for r in results if r.status == "submitted"]) >= MAX_APPLY:
+                if submitted_n() >= MAX_APPLY or hit_daily_limit():
                     break
-                if hit_daily_limit():
-                    break
-                # Hyderabad first
-                for title in TITLES:
-                    process_search(
-                        page,
-                        title,
-                        "Hyderabad, Telangana, India",
-                        remote=False,
-                        results=results,
-                        seen=seen,
-                        tpr=tpr,
+                # Hyderabad + Remote Easy Apply first
+                run_search_wave(easy_apply=True, tpr=tpr)
+                # Non-Easy Apply pass so company-site / Apply jobs are not invisible
+                if (
+                    not EASY_APPLY_ONLY
+                    and submitted_n() < MAX_APPLY
+                    and submitted_n() < NON_EA_IF_BELOW
+                    and not hit_daily_limit()
+                ):
+                    print(
+                        f"=== NON-EASY-APPLY SEARCH PASS (submitted={submitted_n()} < {NON_EA_IF_BELOW}) ===",
+                        flush=True,
                     )
-                    if len([r for r in results if r.status == "submitted"]) >= MAX_APPLY:
-                        break
-                    if hit_daily_limit():
-                        break
-
-                # Remote India
-                if len([r for r in results if r.status == "submitted"]) >= MAX_APPLY:
-                    break
-                if hit_daily_limit():
-                    break
-                for title in TITLES[:5]:
-                    process_search(
-                        page, title, "India", remote=True, results=results, seen=seen, tpr=tpr
-                    )
-                    if len([r for r in results if r.status == "submitted"]) >= MAX_APPLY:
-                        break
-                    if hit_daily_limit():
-                        break
+                    run_search_wave(easy_apply=False, tpr=tpr)
         finally:
             write_report()
 

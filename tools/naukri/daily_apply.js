@@ -60,13 +60,24 @@ const MAX_APPLIES = Number(process.env.NAUKRI_MAX_APPLIES || 60);
 const MAX_EXTERNAL_MS = Number(process.env.NAUKRI_MAX_EXTERNAL_MS || 5 * 60 * 1000);
 const MAX_WORKDAY_MS = Number(process.env.NAUKRI_MAX_WORKDAY_MS || 6.5 * 60 * 1000);
 const SKIP_PROFILE_REFRESH = process.env.NAUKRI_SKIP_PROFILE_REFRESH === "1";
+const EXPAND_BELOW = Number(process.env.NAUKRI_EXPAND_BELOW || 8);
+const EARLY_EXPAND_BELOW = Number(process.env.NAUKRI_EARLY_EXPAND_BELOW || 3);
 const AUTO_EXPAND_AGES =
   process.env.NAUKRI_AUTO_EXPAND_AGES !== "0"
-    ? (process.env.NAUKRI_EXPAND_AGES || "15,30")
+    ? (process.env.NAUKRI_EXPAND_AGES || "15,30,60")
         .split(",")
         .map((s) => Number(String(s).trim()))
         .filter((n) => Number.isFinite(n) && n > 0)
     : [];
+/** Extra query wave when primary+expand still thin. */
+const EXTRA_QUERIES = [
+  ".net azure architect",
+  "solution architect azure",
+  "dotnet engineering manager",
+  "principal software engineer .net",
+  "technical architect c#",
+  "cloud architect .net",
+];
 
 function safeClose(page) {
   if (!page) return;
@@ -1860,10 +1871,10 @@ async function main() {
 
   const seen = new Set();
 
-  async function runSearchPass(ages, passLabel) {
+  async function runSearchPass(ages, passLabel, queries = QUERIES) {
     for (const age of ages) {
       if (report.applied.length >= MAX_APPLIES) break;
-      for (const q of QUERIES) {
+      for (const q of queries) {
         if (report.applied.length >= MAX_APPLIES) break;
         for (const loc of searchUrls(q, age)) {
           if (report.applied.length >= MAX_APPLIES) break;
@@ -1969,11 +1980,30 @@ async function main() {
   }
 
   try {
-    await runSearchPass(JOB_AGES, "primary");
+    // Freshest age first; early-expand when still thin after age-1.
+    const primaryAges = [...JOB_AGES];
+    const firstAge = primaryAges.length ? [primaryAges[0]] : [1];
+    const restAges = primaryAges.slice(1);
+    await runSearchPass(firstAge, "primary-fresh");
+
+    if (
+      report.applied.length < EARLY_EXPAND_BELOW &&
+      restAges.length &&
+      report.applied.length < MAX_APPLIES
+    ) {
+      console.log(
+        `Early age expand (applied=${report.applied.length} < ${EARLY_EXPAND_BELOW}):`,
+        restAges.join(",")
+      );
+      report.earlyExpandedAges = restAges;
+      await runSearchPass(restAges, "primary-early-rest");
+    } else if (restAges.length) {
+      await runSearchPass(restAges, "primary");
+    }
 
     // Auto-expand older inventory in the same run when fresh ages are thin.
     if (
-      report.applied.length < 15 &&
+      report.applied.length < EXPAND_BELOW &&
       AUTO_EXPAND_AGES.length &&
       !JOB_AGES.some((a) => AUTO_EXPAND_AGES.includes(a))
     ) {
@@ -1985,8 +2015,22 @@ async function main() {
       }
     }
 
+    // Extra query wave when still thin after age expands
+    if (report.applied.length < EXPAND_BELOW && EXTRA_QUERIES.length) {
+      const agesForExtra =
+        report.expandedAges && report.expandedAges.length
+          ? [...new Set([...JOB_AGES, ...report.expandedAges])]
+          : JOB_AGES;
+      console.log(
+        `Extra queries (applied=${report.applied.length} < ${EXPAND_BELOW}):`,
+        EXTRA_QUERIES.join(" | ")
+      );
+      report.extraQueries = EXTRA_QUERIES;
+      await runSearchPass(agesForExtra, "extra-queries", EXTRA_QUERIES);
+    }
+
     // Recommended + homepage inventory pass when search burst is thin
-    if (report.applied.length < 15) {
+    if (report.applied.length < EXPAND_BELOW) {
       for (const inventoryUrl of [
         "https://www.naukri.com/mnjuser/recommendedjobs",
         "https://www.naukri.com/mnjuser/homepage",
