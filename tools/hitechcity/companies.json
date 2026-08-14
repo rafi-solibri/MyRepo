@@ -21,7 +21,7 @@
       "Azure Architect",
       "Cloud Architect"
     ],
-    "lastDiscoveryAt": "2026-08-13T08:49:08.784118+00:00"
+    "lastDiscoveryAt": "2026-08-14T06:22:29.002267+00:00"
   },
   "campuses": [
     {
@@ -365,6 +365,50 @@
       "discoveredAt": "2026-08-13"
     },
     {
+      "name": "Celonis",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "celonis",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "linkedin_search",
+      "discoveredAt": "2026-08-14"
+    },
+    {
+      "name": "City Tech Consultants",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "city-tech-consultants",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "linkedin_search",
+      "discoveredAt": "2026-08-14"
+    },
+    {
+      "name": "CityScanner",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "city-scanner",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "linkedin_search",
+      "discoveredAt": "2026-08-14"
+    },
+    {
+      "name": "CoEnterprise",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "coenterprise",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "linkedin_search",
+      "discoveredAt": "2026-08-14"
+    },
+    {
       "name": "Cognizant",
       "campuses": [
         "mindspace-madhapur",
@@ -422,6 +466,17 @@
       "discoveredAt": "2026-08-13"
     },
     {
+      "name": "Hyderabad Tech Community",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "hyderabad-tech-community",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "linkedin_search",
+      "discoveredAt": "2026-08-14"
+    },
+    {
       "name": "IBM",
       "campuses": [
         "mindspace-madhapur"
@@ -435,7 +490,8 @@
     {
       "name": "Infor",
       "campuses": [
-        "mindspace-madhapur"
+        "mindspace-madhapur",
+        "sattva-knowledge-city"
       ],
       "linkedinSlug": "infor",
       "careersUrls": [],
@@ -453,6 +509,17 @@
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "Knowledge Bridge Solutions",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "knowledgebridgesolutions",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "linkedin_search",
+      "discoveredAt": "2026-08-14"
     },
     {
       "name": "MathWorks",
@@ -608,6 +675,39 @@
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "Softeq",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "softeq",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "linkedin_search",
+      "discoveredAt": "2026-08-14"
+    },
+    {
+      "name": "software companies erbil",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "software-companies-erbil",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "linkedin_search",
+      "discoveredAt": "2026-08-14"
+    },
+    {
+      "name": "Software Development Aegona Ltd",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "aegona",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "linkedin_search",
+      "discoveredAt": "2026-08-14"
     },
     {
       "name": "Storable",
