@@ -160,6 +160,73 @@ assert.strictEqual(
   true,
   "Cyber Security Architect must skip"
 );
+assert.strictEqual(
+  shouldSkipTitle("Marketing Director - Head of Marketing"),
+  true,
+  "Marketing director must skip (ARCH_LEAD director/head-of waiver)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Azure AI ML Architect"),
+  true,
+  "AI ML Architect without .NET must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Data Solution Architect"),
+  true,
+  "Data Solution Architect without .NET must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Data Platform Solution Architect"),
+  true,
+  "Data Platform SA without .NET must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Oracle C2M Solution Architect"),
+  true,
+  "Oracle-primary SA must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Senior Solution Architect Network & Security"),
+  true,
+  "Network & Security SA must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("JIRA Atlassian Architect"),
+  true,
+  "Jira/Atlassian architect must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Endpoint Architect"),
+  true,
+  "Endpoint/MDM architect must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Pricing Architect"),
+  true,
+  "Pricing architect must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Senior / Principal Process Engineer - APIEM"),
+  true,
+  "Process engineer must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle(
+    "Manager-Tech Consulting-FS-CNS-TC-Cyber Architecture, OT & Engineering"
+  ),
+  true,
+  "Cyber Architecture primary must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Dot Net Architect"),
+  false,
+  "Dot Net Architect must still apply"
+);
+assert.strictEqual(
+  shouldSkipTitle("Azure/AWS Architect-Manager with Snowflake and Banking domain"),
+  false,
+  "Cloud architect-manager without banned stack must still apply"
+);
 assert.strictEqual(shouldSkipTitle("Senior .NET Architect"), false);
 assert.strictEqual(isArchLeadTitle("Dot Net Fullstack Developer"), false);
 console.log("resume_and_filters self-test OK");

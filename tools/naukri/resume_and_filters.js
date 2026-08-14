@@ -33,18 +33,18 @@ function findResume() {
  * Only skip when title itself is a QA/SDET role.
  */
 const SKIP_TITLE_RE =
-  /\b(qa engineer|quality assurance|quality engineer|quality engineering|quality architect|quality solution architect|\bqe architect\b|sdet|intern(?!et)|fresher|salesforce|agentforce|servicenow|coupa|pega|appian|anaplan|celonis|power platform|guidewire|sap\b|dynamics|workday hms|revit|\bbarch\b|hubspot|\bsre\b|site reliability|devops engineer|devops lead|platform sre|network operations|network ops|network support|civil\b|structural|substation|attack surface|cyber\s*security|cybersecurity|infosec|penetration|red team|soc analyst|security operations|threat hunter|\bmdr\b|\bedr\b)\b/i;
+  /\b(qa engineer|quality assurance|quality engineer|quality engineering|quality architect|quality solution architect|\bqe architect\b|sdet|intern(?!et)|fresher|salesforce|agentforce|servicenow|coupa|pega|appian|anaplan|celonis|power platform|guidewire|sap\b|dynamics|workday hms|revit|\bbarch\b|hubspot|\bsre\b|site reliability|devops engineer|devops lead|platform sre|network operations|network ops|network support|network\s*(?:&|and)\s*security|civil\b|structural|substation|attack surface|cyber\s*security|cybersecurity|cyber\s*architecture|infosec|penetration|red team|soc analyst|security operations|threat hunter|\bmdr\b|\bedr\b|endpoint architect|\bmarketing\b|pricing architect|process engineer|\batlassian\b|\bjira\b)\b/i;
 
 /** Pure AI/data titles need .NET|C# on the TITLE (skills laundry lists are noisy). */
 const PURE_AI_DATA_RE =
-  /\b(ai\s+architect|ai\s+agent|ai\s+engineer|ai\s+solution\s+architect|architect[^.\n]{0,48}\b(ai|ml)\b|data\s*&\s*ai|ml\s+engineer|gen\s*-?\s*ai|genai|agentic\s+ai|data\s+scientist|data\s+engineer|data\s+engineering)\b/i;
+  /\b(ai\s+architect|ai\s*ml\s+architect|ml\s+architect|ai\s+agent|ai\s+engineer|ai\s+solution\s+architect|architect[^.\n]{0,48}\b(ai|ml)\b|data\s*&\s*ai|ml\s+engineer|gen\s*-?\s*ai|genai|agentic\s+ai|data\s+scientist|data\s+engineer|data\s+engineering|data\s+(?:platform\s+)?(?:solution\s+)?architect)\b/i;
 
 /**
  * Primary non-.NET stacks in the TITLE — skip to avoid Java/MEAN ATS dead-ends.
  * Do not use on full JD blobs (skills lists are noisy).
  */
 const NON_DOTNET_PRIMARY_RE =
-  /\b(java|j2ee|spring boot|golang|go lang|python|mean\b|mern\b|ruby on rails|php|oracle apps|oracle fusion|oracle\s+dba|oracle cloud|abap)\b/i;
+  /\b(java|j2ee|spring boot|golang|go lang|python|mean\b|mern\b|ruby on rails|php|\boracle\b|oracle apps|oracle fusion|oracle\s+dba|oracle cloud|abap)\b/i;
 
 /** When scanning detail pages, use job panel text only — never document.body. */
 function shouldSkipTitleFromDetail(detailText) {
