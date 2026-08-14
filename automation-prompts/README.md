@@ -38,7 +38,7 @@ available in the saved environment snapshot. `hitechcity` reuses the LinkedIn CD
 merge via `bash scripts/auto-merge-fix-pr.sh`, **same-day re-run the job** via
 `scripts/rerun-daily-after-fix.sh` (so today's applies use the fix — do not wait
 for tomorrow's cron), and note the fix in
-[ISSUES_AND_FIXES.md](ISSUES_AND_FIXES.md).
+[ISSUES_AND_FIXES.md](ISSUES_AND_FIXES.md) (historical index) and per-portal [issues/](issues/) logs (append via `scripts/append-issue-fix.sh` — avoids parallel merge collisions).
 
 Not auto-fixable from code alone: portal logins/snapshot, missing secrets,
 CAPTCHA/OTP, and Indeed Cloudflare only after WARP+UC multi-strategy + IP rotate
@@ -79,4 +79,4 @@ Run a second pass on this PC at **5 PM** (cloud morning automations stay On):
 → **[HOME_AUTOMATIONS.md](HOME_AUTOMATIONS.md)**  
 → Windows: `powershell -ExecutionPolicy Bypass -File scripts\install-all-home-tasks.ps1`
 
-See [ISSUES_AND_FIXES.md](ISSUES_AND_FIXES.md) for what was broken in the last cron and what still needs your login/secrets.
+See [issues/](issues/) (per portal) and [ISSUES_AND_FIXES.md](ISSUES_AND_FIXES.md) for what was broken and what still needs your login/secrets.

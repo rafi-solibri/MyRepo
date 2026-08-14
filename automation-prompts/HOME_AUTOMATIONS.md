@@ -87,6 +87,11 @@ Task Scheduler cannot run if the machine is asleep. Use:
 Leave cloud automations **On**. Local evening runs are a second pass — already-applied
 roles should be skipped. Do not turn cloud off unless you want local-only.
 
+**They do not need different apply code.** Shared `tools/<portal>/` helpers are correct.
+What *did* collide was every agent appending the same `ISSUES_AND_FIXES.md` — that left
+conflict markers on `main`. Home and cloud now append only to
+`automation-prompts/issues/<portal>.md` via `scripts/append-issue-fix.sh`.
+
 ## Portal login on this PC
 
 Home runs use **per-portal CDP profiles** under

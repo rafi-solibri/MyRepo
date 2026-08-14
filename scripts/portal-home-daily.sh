@@ -139,7 +139,7 @@ Report submitted/skipped/blocked/rejected. Do not invent applies.
 
 AUTO-FIX / PUSH / MERGE (MANDATORY when code-fixable):
 - Patch durable helpers under tools/ or scripts/ or automation-prompts/
-- Append automation-prompts/ISSUES_AND_FIXES.md
+- Append via `bash scripts/append-issue-fix.sh ${PORTAL} "issue" "fix"` (portal-scoped log)
 - Feature branch (never commit straight to main), git push
 - Open a READY (non-draft) PR to main, then run: bash scripts/auto-merge-fix-pr.sh
 - If merge conflicts: rebase onto origin/main, push, re-run auto-merge-fix-pr.sh

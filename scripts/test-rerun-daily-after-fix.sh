@@ -29,7 +29,7 @@ expect "$got" "notification" "title notification"
 got="$(bash "$SCRIPT" --detect-from-title "docs(linkedin): WARP auto-login")"
 expect "$got" "linkedin" "title docs(linkedin)"
 
-got="$(bash "$SCRIPT" --detect-from-files tools/naukri/workday_apply.js automation-prompts/ISSUES_AND_FIXES.md)"
+got="$(bash "$SCRIPT" --detect-from-files tools/naukri/workday_apply.js automation-prompts/issues/naukri.md)"
 expect "$got" "naukri" "files naukri helper"
 
 got="$(bash "$SCRIPT" --detect-from-files tools/chrome_session.js)"

@@ -31,8 +31,22 @@ if [[ "$BRANCH" == "main" || "$BRANCH" == "master" || "$BRANCH" == "HEAD" ]]; th
   exit 3
 fi
 
+# Refuse to push/merge if this branch still has unresolved conflict markers
+# (common when parallel portal agents all edited the shared ISSUES file).
+bash "$ROOT/scripts/assert-no-conflict-markers.sh"
+
 git fetch origin main >/dev/null 2>&1 || true
-git push -u origin HEAD
+
+# Rebase onto latest main so same-day sibling portal PRs do not leave markers.
+if ! git rebase origin/main; then
+  echo "ERROR: rebase onto origin/main failed — resolve conflicts (prefer portal-scoped" >&2
+  echo "  automation-prompts/issues/<portal>.md via scripts/append-issue-fix.sh)," >&2
+  echo "  then: git add -A && git rebase --continue && bash scripts/auto-merge-fix-pr.sh" >&2
+  git rebase --abort >/dev/null 2>&1 || true
+  exit 6
+fi
+bash "$ROOT/scripts/assert-no-conflict-markers.sh"
+git push -u origin HEAD --force-with-lease
 
 PR_URL="$(gh pr view --json url -q .url 2>/dev/null || true)"
 if [[ -z "$PR_URL" ]]; then
@@ -79,6 +93,11 @@ echo "PR merge status: $STATE"
 MERGED="$(gh pr view --json state -q .state 2>/dev/null || true)"
 if [[ "$MERGED" == "MERGED" ]]; then
   echo "OK: PR merged → $PR_URL"
+  # Verify main tip did not land conflict markers (parallel squash race).
+  git fetch origin main >/dev/null 2>&1 || true
+  if git show origin/main:automation-prompts/ISSUES_AND_FIXES.md 2>/dev/null | grep -qE '^(<<<<<<< |>>>>>>> )'; then
+    echo "WARNING: origin/main ISSUES_AND_FIXES.md still has conflict markers — run a cleanup PR." >&2
+  fi
   echo "Same-day post-fix re-run: apply today's jobs with the merged code (do not wait for tomorrow's cron)."
   bash "$ROOT/scripts/rerun-daily-after-fix.sh" --merged-pr "$PR_URL" \
     || echo "WARNING: post-fix re-run failed (merge still OK) — re-run: bash scripts/rerun-daily-after-fix.sh --merged-pr $PR_URL"
