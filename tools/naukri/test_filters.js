@@ -218,6 +218,16 @@ assert.strictEqual(
   "Cyber Architecture primary must skip"
 );
 assert.strictEqual(
+  shouldSkipTitle("TOSCA Automation Architect"),
+  true,
+  "TOSCA/test-automation architect must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Artificial Intelligence Architect"),
+  true,
+  "Artificial Intelligence Architect without .NET must skip"
+);
+assert.strictEqual(
   shouldSkipTitle("Dot Net Architect"),
   false,
   "Dot Net Architect must still apply"

@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| TOSCA Automation Architect apply; Artificial Intelligence Architect attempts | SKIP_TITLE tosca; PURE_AI_DATA artificial intelligence |
 | False applies: Marketing Director, Azure AI ML Architect, Data/Oracle/Jira/Network-Security/Endpoint/Pricing architects | resume_and_filters.js: skip marketing/jira/atlassian/endpoint/pricing/process/network&security/cyber architecture; PURE_AI_DATA data architect + AI ML; NON_DOTNET oracle |
 | Applied Senior Manager Attack Surface Reduction (cyber) via Senior Manager arch-lead waiver | SKIP_TITLE_RE: attack surface / cybersecurity / infosec / SOC / MDR |
 
