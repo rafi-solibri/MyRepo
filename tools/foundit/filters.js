@@ -120,7 +120,8 @@ function skipTitleReason(title) {
   )
     return "PM/TPM/delivery";
   if (/\bpresales|pre-sales\b/i.test(t)) return "presales";
-  if (/\bsalesforce\b/i.test(t)) return "Salesforce";
+  // Agentforce/SFDC titles are Salesforce-stack even when "Salesforce" is only the employer.
+  if (/\b(salesforce|agentforce|sfdc)\b/i.test(t)) return "Salesforce";
   if (/\bservicenow\b/i.test(t)) return "ServiceNow";
   if (/\bpower\s*platform\b/i.test(t)) return "Power Platform";
   if (/\bduck\s*creek\b/i.test(t)) return "Duck Creek";
@@ -184,6 +185,11 @@ function classifyJob(job) {
     return { pass: false, reason: "Java-only" };
   const skip = skipTitleReason(title);
   if (skip) return { pass: false, reason: skip };
+  // Employer Salesforce + no .NET on TITLE → Salesforce-stack (skills laundry lists are noisy).
+  const company = job.companyName || job.company?.name || "";
+  if (/\bsalesforce\b/i.test(company) && !hasDotNet(title, "")) {
+    return { pass: false, reason: "Salesforce" };
+  }
   if (!hasSeniority(title))
     return { pass: false, reason: "no seniority keyword on title" };
   if (!locationOk(loc, title)) {

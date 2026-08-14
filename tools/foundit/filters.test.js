@@ -214,4 +214,46 @@ const indiaEnrich = classifyJob({
 assert.strictEqual(indiaEnrich.needsEnrich, true, "country-only India must request JD enrich");
 assert.strictEqual(indiaEnrich.pass, false);
 
+assert.strictEqual(
+  classifyJob({
+    jobId: 13,
+    title: "Agentforce - Sucess Architect",
+    companyName: "Salesforce",
+    locations: [{ text: "Hyderabad / Secunderabad, Telangana" }],
+    skills: [{ text: ".NET" }, { text: "Salesforce" }],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 12 },
+  }).pass,
+  false,
+  "Agentforce title must hard-skip even with .NET in skills laundry list"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 14,
+    title: "Solutions Architect",
+    companyName: "Salesforce",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: ".NET" }, { text: "Azure" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  false,
+  "Salesforce employer without .NET on title must skip"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 15,
+    title: "Senior .NET Architect",
+    companyName: "Salesforce",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: ".NET Core" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  true,
+  "explicit .NET title at Salesforce employer may still pass"
+);
+
 console.log("filters.test.js OK");

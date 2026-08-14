@@ -1,5 +1,11 @@
 # Issues from last cron + fixes
 
+## Fixed for 2026-08-14 Foundit daily (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Applied Salesforce **Agentforce** Success Architect (Hyd) — title skip only matched `\bsalesforce\b`, and .NET in skills laundry list passed `hasDotNet` | Expand title skip to `salesforce|agentforce|sfdc`; hard-skip Salesforce employer when .NET is absent from the **title** (mirror pure-AI title rule) |
+
 ## Fixed for 2026-08-13 Hitech City home boards (Windows)
 
 | Issue | Fix |
