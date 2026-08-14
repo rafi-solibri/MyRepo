@@ -112,7 +112,22 @@ function job(partial) {
   assert.strictEqual(
     classify(j),
     null,
-    "non-tier1 with maxExp 7 should still skip"
+    "non-tier1 non-.NET with maxExp 7 should still skip"
+  );
+}
+
+{
+  const j = job({
+    title: "Senior .NET Developer",
+    skills: ["ASP.NET", "Azure"],
+    locations: ["India"],
+    remoteType: "remote_not_okay",
+    expRange: { min: 5, max: 7 },
+  });
+  assert.ok(isHydOrRemote(j), "India-only + .NET senior should count as Hyd/remote bias");
+  assert.ok(
+    classify(j)?.tier === 2,
+    `India-only Senior .NET maxExp7 should qualify, got ${JSON.stringify(classify(j))}`
   );
 }
 
