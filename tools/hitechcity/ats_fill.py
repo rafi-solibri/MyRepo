@@ -40,9 +40,33 @@ def resume_path() -> str:
     raise FileNotFoundError("Rafi_Resume.docx missing")
 
 
+# SmartRecruiters OneClick / Indeed OAuth / Google GSI — not guest-applyable.
+AUTH_WALL_URL = re.compile(
+    r"passport\.amazon\.jobs|login\.microsoftonline|accounts\.google\.com|"
+    r"secure\.indeed\.com/(?:auth|account)|indeed\.com/auth|"
+    r"okta\.com|login\.microsoft|signin\.aws|"
+    r"/checkpoint/challenge|linkedin\.com/uas/login|"
+    r"smartrecruiters\.com/[^/]+/login",
+    re.I,
+)
+
+
+def auth_wall_url(url: str | None) -> bool:
+    """True when the browser landed on a login/SSO/OAuth wall (fail fast)."""
+    return bool(url and AUTH_WALL_URL.search(url))
+
+
+def _body_text(page: Page, limit: int = 4500) -> str:
+    """inner_text with a hard timeout so SSO pages cannot hang careers forever."""
+    try:
+        return (page.locator("body").inner_text(timeout=4000) or "")[:limit]
+    except Exception:
+        return ""
+
+
 def looks_submitted(page: Page) -> bool:
     try:
-        body = page.locator("body").inner_text()[:7000]
+        body = _body_text(page, 7000)
     except Exception:
         return False
     return bool(
@@ -94,6 +118,15 @@ def iframe_looks_onscreen(el) -> bool:
 
 
 def blocked_wall(page: Page) -> str | None:
+    # URL-first: Indeed OAuth / Google SSO / passport walls must not burn ATS time caps.
+    try:
+        if auth_wall_url(getattr(page, "url", None) or ""):
+            return "login/account wall"
+        for fr in getattr(page, "frames", []) or []:
+            if auth_wall_url(getattr(fr, "url", None) or ""):
+                return "login/account wall"
+    except Exception:
+        pass
     # Frame/iframe CAPTCHA first — body text often omits "captcha" while a real
     # challenge blocks submit. Do NOT treat bare [data-sitekey] or hidden
     # recaptcha/api2/anchor badges as a wall (many ATS pages embed them).
@@ -123,9 +156,8 @@ def blocked_wall(page: Page) -> str | None:
                         return "CAPTCHA/bot wall"
     except Exception:
         pass
-    try:
-        body = page.locator("body").inner_text()[:4500]
-    except Exception:
+    body = _body_text(page, 4500)
+    if not body:
         return None
     if re.search(
         r"no longer accepting applications|this position has been filled|"
@@ -145,6 +177,8 @@ def blocked_wall(page: Page) -> str | None:
         r"sign in to continue|log in to apply|create an account|sign in to apply|"
         r"sign in using (microsoft|google)|employees must sign in|"
         r"select a method below to sign in|"
+        # Indeed Accounts / SmartRecruiters OneClick OAuth chrome
+        r"sign in\s*\|\s*indeed|continue with google|continue with indeed|"
         # Workday applyManually often lands on Create Account/Sign In with no file input
         # (Solera) — previously misreported as ats_incomplete_or_stuck.
         r"create account\s*/\s*sign in|already have an account\??|"
