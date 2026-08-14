@@ -17,9 +17,11 @@ TITLE_BLACKLIST = re.compile(
     r"node\.?js[- ]?(mandatory|only)|"
     r"python[- ]?(mandatory|only)|principal engineer\s*\(\s*python|"
     r"\bdata engineer\b|\bmachine learning engineer\b|"
-    r"big data architect|\bdata architect\b|data warehouse architect|implementation specialist|"
+    r"big data architect|\bdata architect\b|data warehouse architect|"
+    r"snowflake (solutions )?architect|implementation specialist|"
     r"\bphp\b|laravel|"
-    r"interior designer|civil engineer|electrical engineering|electrical design|"
+    r"interior designer|interior architect|landscape architect|"
+    r"civil engineer|electrical engineering|electrical design|"
     r"golang &|golang and|"
     r"bpo|call center|marketing cloud|success architect|"
     r"non-?it staffing|us non-?it|staffing recruiter|talent acquisition|"
@@ -72,7 +74,7 @@ REMOTE_OK = re.compile(
 INDIA_ONLY = re.compile(r"^(greater\s+)?india\b|^الهند\b", re.I)
 BAD_CITY = re.compile(
     r"bengaluru|bangalore|pune|chennai|mumbai|delhi|noida|gurgaon|gurugram|"
-    r"ahmedabad|kolkata|jaipur|kochi|trivandrum|thiruvananthapuram|coimbatore|"
+    r"ahmedabad|kolkata|jaipur|kochi|kerala|trivandrum|thiruvananthapuram|coimbatore|"
     r"indore|nagpur|united states|\busa\b|\buk\b|london|singapore|dubai|"
     r"toronto|canada|australia|germany|netherlands|"
     r"بنغالور|بنجالور|بانجلور|بوني|بونة|تشيناي|مومباي|دلهي|نويدا|جورجاون|"

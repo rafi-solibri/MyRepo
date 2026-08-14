@@ -67,6 +67,18 @@ assert_true(
     skip_reason("AI/ML Architect", "ToggleNow", "") is not None,
     "AI/ML Architect title must skip",
 )
+assert_true(
+    skip_reason("Interior Architect", "Studio", "") is not None,
+    "Interior Architect (BArch) title must skip",
+)
+assert_true(
+    skip_reason("Snowflake Solutions Architect", "Acme", "") is not None,
+    "Snowflake data-architect title must skip",
+)
+assert_true(
+    skip_reason("Solutions Architect - Microsoft Fabric", "Acme", "") is None,
+    "Microsoft Fabric solutions architect must still be eligible",
+)
 
 for title in [
     "Director, Senior Engineering (.Net FullStack + AI/ML)",

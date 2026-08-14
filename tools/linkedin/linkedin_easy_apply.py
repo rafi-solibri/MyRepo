@@ -1701,7 +1701,8 @@ def process_search(
     print(f"SEARCH [{ea}] {keywords!r} loc={location!r} remote={remote} tpr={tpr} -> {url}")
     navigated = False
     last_nav_err = ""
-    for nav_try in range(3):
+    nav_tries = 5
+    for nav_try in range(nav_tries):
         try:
             page.goto(url, wait_until="domcontentloaded", timeout=60000)
             navigated = True
@@ -1709,8 +1710,11 @@ def process_search(
         except Exception as e:
             last_nav_err = str(e)[:200]
             # LinkedIn rate-limit / transient HTTP failures (e.g. 429/999)
-            print(f"  WARN: search goto failed (try {nav_try + 1}/3): {last_nav_err}", flush=True)
-            time.sleep(4 + nav_try * 6)
+            print(
+                f"  WARN: search goto failed (try {nav_try + 1}/{nav_tries}): {last_nav_err}",
+                flush=True,
+            )
+            time.sleep(5 + nav_try * 8)
             try:
                 page.goto("https://www.linkedin.com/feed/", wait_until="domcontentloaded", timeout=45000)
                 time.sleep(2)
@@ -1729,25 +1733,52 @@ def process_search(
     )
     ai_cards = ai_job_card_buttons(page)
     use_ai = False
-    n = min(list_items.count(), MAX_SCAN_PER_SEARCH)
+    try:
+        n = min(list_items.count(), MAX_SCAN_PER_SEARCH)
+    except Exception as e:
+        print(f"  WARN: card count failed: {e}", flush=True)
+        n = 0
     if n == 0:
-        n = min(ai_cards.count(), MAX_SCAN_PER_SEARCH)
-        use_ai = n > 0
-    print(f"  cards={n} ai={use_ai or _is_ai_job_search(page)}", flush=True)
+        try:
+            n = min(ai_cards.count(), MAX_SCAN_PER_SEARCH)
+            use_ai = n > 0
+        except Exception:
+            n = 0
+            use_ai = False
+    try:
+        print(f"  cards={n} ai={use_ai or _is_ai_job_search(page)}", flush=True)
+    except Exception:
+        print(f"  cards={n} ai={use_ai}", flush=True)
     if n == 0:
-        # wait/reload once
+        # wait/reload once — never crash the whole batch on a detached frame
         time.sleep(3)
-        page.reload(wait_until="domcontentloaded")
+        try:
+            page.reload(wait_until="domcontentloaded")
+        except Exception as e:
+            print(f"  WARN: search reload failed: {e}", flush=True)
+            try:
+                page.goto(url, wait_until="domcontentloaded", timeout=60000)
+            except Exception as e2:
+                print(f"  SKIP search: reload/goto failed: {e2}", flush=True)
+                return
         time.sleep(4)
         list_items = page.locator(
             "li.scaffold-layout__list-item, li.jobs-search-results__list-item, div.job-card-container"
         )
         ai_cards = ai_job_card_buttons(page)
-        n = min(list_items.count(), MAX_SCAN_PER_SEARCH)
+        try:
+            n = min(list_items.count(), MAX_SCAN_PER_SEARCH)
+        except Exception as e:
+            print(f"  WARN: card count after reload failed: {e}", flush=True)
+            n = 0
         use_ai = False
         if n == 0:
-            n = min(ai_cards.count(), MAX_SCAN_PER_SEARCH)
-            use_ai = n > 0
+            try:
+                n = min(ai_cards.count(), MAX_SCAN_PER_SEARCH)
+                use_ai = n > 0
+            except Exception:
+                n = 0
+                use_ai = False
         print(f"  cards after reload={n} ai={use_ai}", flush=True)
 
     for i in range(n):
