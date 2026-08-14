@@ -7,6 +7,16 @@ Paste each block below into the matching automation **once**. After that, merge 
 
 **Auto-fix & push & merge:** every run must follow [AUTO_FIX.md](AUTO_FIX.md) — code-fixable blockers get durable helper patches, a feature-branch push, a **ready** PR, `bash scripts/auto-merge-fix-pr.sh` (not silent report-only / not draft-only), and a **same-day re-run** of that portal's job via `scripts/rerun-daily-after-fix.sh` so today's applies use the fix.
 
+## Same-day re-runs + missing cron recovery (owner secret)
+
+Set **`CURSOR_API_KEY`** on the Cloud Agent environment ([Dashboard → API Keys](https://cursor.com/dashboard/api)) so:
+1. `scripts/auto-merge-fix-pr.sh` → `scripts/rerun-daily-after-fix.sh` can launch a **fresh** cloud job on `main` after a fix (max 5/portal/IST day).
+2. `scripts/ensure-missing-daily-runs.sh` can recover when an enabled portal cron (LinkedIn/Cutshort/Instahyre/Indeed/…) never fired that morning.
+
+Without the key, helpers still re-exec durable apply scripts **in the current session**.
+
+
+
 ## LinkedIn Daily 9 AM
 https://cursor.com/automations/beb6ef8e-908f-11f1-ba66-0e7d0216e441
 

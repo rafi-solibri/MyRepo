@@ -116,17 +116,20 @@ portals_from_files() {
   local -A seen=()
   for f in "$@"; do
     case "$f" in
-      tools/linkedin/*) seen[linkedin]=1 ;;
-      tools/foundit/*) seen[foundit]=1 ;;
-      tools/cutshort/*) seen[cutshort]=1 ;;
-      tools/naukri/*) seen[naukri]=1 ;;
-      tools/instahyre/*) seen[instahyre]=1 ;;
-      tools/indeed/*) seen[indeed]=1 ;;
-      tools/hitechcity/*) seen[hitechcity]=1 ;;
-      scripts/send-job-status-email.mjs|scripts/fetch-home-result.sh|scripts/fetch-indeed-home-result.sh|scripts/notification-home-daily.sh)
+      tools/linkedin/*|automation-prompts/issues/linkedin.md) seen[linkedin]=1 ;;
+      tools/foundit/*|automation-prompts/issues/foundit.md) seen[foundit]=1 ;;
+      tools/cutshort/*|automation-prompts/issues/cutshort.md) seen[cutshort]=1 ;;
+      tools/naukri/*|automation-prompts/issues/naukri.md) seen[naukri]=1 ;;
+      tools/instahyre/*|automation-prompts/issues/instahyre.md) seen[instahyre]=1 ;;
+      tools/indeed/*|automation-prompts/issues/indeed.md) seen[indeed]=1 ;;
+      tools/hitechcity/*|automation-prompts/issues/hitechcity.md) seen[hitechcity]=1 ;;
+      scripts/send-job-status-email.mjs|scripts/fetch-home-result.sh|scripts/fetch-indeed-home-result.sh|scripts/notification-home-daily.sh|automation-prompts/issues/notification.md)
         seen[notification]=1
         ;;
-      tools/hotels/*) seen[hotels]=1 ;;
+      tools/hotels/*|automation-prompts/issues/hotels.md) seen[hotels]=1 ;;
+      scripts/ensure-missing-daily-runs.sh|scripts/run-portal-with-autofix.sh|scripts/append-issue-fix.sh|scripts/assert-no-conflict-markers.sh)
+        # Infra helpers — docs/merge safety only; do not fan out to every portal.
+        ;;
       scripts/rerun-daily-after-fix.sh|scripts/auto-merge-fix-pr.sh|scripts/test-rerun-daily-after-fix.sh|automation-prompts/*|.github/workflows/*)
         ;;
       *)

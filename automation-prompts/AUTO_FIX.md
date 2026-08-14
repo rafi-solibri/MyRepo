@@ -11,7 +11,13 @@ When a run hits a **code-fixable** issue or blocker, do not only report it. Fix 
    - `scripts/*.sh` / `scripts/*.mjs` / `scripts/*.ps1`
    - `automation-prompts/*.md` (prompt corrections)
 2. Keep the change minimal and portal-scoped. Add/adjust a small test when filters/classifiers change.
-3. Append a one-line row to `automation-prompts/ISSUES_AND_FIXES.md` under today’s date section.
+3. Append a one-line row with the **portal-scoped** helper (never edit the shared `ISSUES_AND_FIXES.md` for same-day rows — that caused parallel merge conflict markers on `main`):
+
+```bash
+bash scripts/append-issue-fix.sh <portal> "<issue one-liner>" "<fix one-liner>"
+# writes automation-prompts/issues/<portal>.md only
+```
+
 4. Git workflow (feature branch — never commit straight to `main`):
 
 ```bash
@@ -85,9 +91,23 @@ bash scripts/rerun-daily-after-fix.sh --merged-pr https://github.com/rafi-solibr
 | CAPTCHA / email OTP / SMS walls | Cap ~3–4 min, mark blocked, continue |
 | Automations UI Agent instructions | API is read-only — rely on ONE_TIME_LOADERS + merge to `main` |
 
-## Parallel runs
+## Parallel runs (cloud morning + home evening)
 
 Each portal agent uses its **own** feature branch/PR. Do not force-push shared branches. Notification Job may link today’s merged fix PRs in the daily mail but should not invent apply counts from them.
+
+**Home vs cloud are not apply-code forks.** Shared helpers under `tools/<portal>/` stay shared. Collision risk is git/docs:
+
+| Shared (OK) | Must stay portal/source-scoped |
+| --- | --- |
+| `tools/<portal>/daily_apply.*`, filters, ATS fillers | `automation-prompts/issues/<portal>.md` only |
+| Resume path / Chrome CDP launch helpers | Feature branch per portal (`cursor/<portal>-…`) |
+| Already-applied skip logic | Artifacts: `*-daily-*.json` per portal |
+
+Home evening sets `HOME_LOCAL=1` and skips jobs already submitted that morning — do **not** duplicate apply implementations “to avoid collision”.
+
+**Loop (max 5):** after merge, `scripts/rerun-daily-after-fix.sh` / `scripts/run-portal-with-autofix.sh` re-executes the same portal up to **5** times the same IST day. If a cron portal never fired, run `bash scripts/ensure-missing-daily-runs.sh` (needs `CURSOR_API_KEY` for fresh cloud jobs).
+
+`scripts/auto-merge-fix-pr.sh` rebases onto `main`, asserts **no conflict markers**, then squash-merges.
 
 ## Owner secret for same-day cloud re-runs
 
