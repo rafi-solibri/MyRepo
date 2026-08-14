@@ -703,12 +703,18 @@ async function main() {
         skippedNoAnswers: 0,
         skipNotQuestionnaire: 0,
       };
-      await answerPendingQuestionnaires(page, { q: perApplyQ });
-      stats.q.answered += perApplyQ.answered;
-      stats.q.saveFailed += perApplyQ.saveFailed;
-      stats.q.submitFailed += perApplyQ.submitFailed;
-      stats.q.verifyEmpty += perApplyQ.verifyEmpty;
-      console.log(`[Q] per-apply answered+=${perApplyQ.answered}`);
+      try {
+        await answerPendingQuestionnaires(page, { q: perApplyQ });
+        stats.q.answered += perApplyQ.answered;
+        stats.q.saveFailed += perApplyQ.saveFailed;
+        stats.q.submitFailed += perApplyQ.submitFailed;
+        stats.q.verifyEmpty += perApplyQ.verifyEmpty;
+        console.log(`[Q] per-apply answered+=${perApplyQ.answered}`);
+      } catch (e) {
+        const msg = String(e?.message || e);
+        console.error("[Q] per-apply aborted:", msg.slice(0, 200));
+        if (!/has been closed|Target closed|Browser closed|Connection closed/i.test(msg)) throw e;
+      }
     } else if (result.status === "already_applied") stats.already.push({ ...row, result });
     else if (result.status === "external") stats.external.push({ ...row, result });
     else stats.failed.push({ ...row, result });
@@ -727,16 +733,26 @@ async function main() {
     skippedNoAnswers: 0,
     skipNotQuestionnaire: 0,
   };
-  await answerPendingQuestionnaires(page, { q: auditQ });
-  stats.q.answered += auditQ.answered;
-  stats.q.awaitingListed = auditQ.awaitingListed;
-  stats.q.alreadySubmitted = auditQ.alreadySubmitted;
-  stats.q.lockedEmpty = auditQ.lockedEmpty;
-  stats.q.saveFailed += auditQ.saveFailed;
-  stats.q.submitFailed += auditQ.submitFailed;
-  stats.q.verifyEmpty += auditQ.verifyEmpty;
-  stats.q.skippedNoAnswers = auditQ.skippedNoAnswers;
-  stats.q.skipNotQuestionnaire = auditQ.skipNotQuestionnaire;
+  try {
+    await answerPendingQuestionnaires(page, { q: auditQ });
+    stats.q.answered += auditQ.answered;
+    stats.q.awaitingListed = auditQ.awaitingListed;
+    stats.q.alreadySubmitted = auditQ.alreadySubmitted;
+    stats.q.lockedEmpty = auditQ.lockedEmpty;
+    stats.q.saveFailed += auditQ.saveFailed;
+    stats.q.submitFailed += auditQ.submitFailed;
+    stats.q.verifyEmpty += auditQ.verifyEmpty;
+    stats.q.skippedNoAnswers = auditQ.skippedNoAnswers;
+    stats.q.skipNotQuestionnaire = auditQ.skipNotQuestionnaire;
+  } catch (e) {
+    // Chrome/CDP often dies after long scans — do not lose the apply report.
+    const msg = String(e?.message || e);
+    stats.q.error = msg.slice(0, 240);
+    console.error("[Q] audit aborted:", msg.slice(0, 200));
+    if (!/has been closed|Target closed|Browser closed|Connection closed/i.test(msg)) {
+      throw e;
+    }
+  }
 
   const failedTotal = stats.failed.length + stats.q.lockedEmpty + stats.q.verifyEmpty;
   const report = `# Cutshort daily ${TODAY}
@@ -751,7 +767,7 @@ async function main() {
 - Q answered: **${stats.q.answered}** | already-submitted: ${stats.q.alreadySubmitted} | locked-empty: **${stats.q.lockedEmpty}** | verify-empty: ${stats.q.verifyEmpty}
 - Awaiting listed: ${stats.q.awaitingListed}
 - Failures (apply + locked-empty + verify-empty): **${failedTotal}**
-
+${stats.q.error ? `- Q audit note: ${stats.q.error}\n` : ""}
 ## Applied
 ${stats.applied.map((a) => `- T${a.tier} ${a.title} @ ${a.company} (${a.ctc}L) \`${a.id}\` via=${a.result?.via || "?"}`).join("\n") || "_None_"}
 
@@ -764,6 +780,7 @@ ${stats.failed.map((a) => `- T${a.tier} ${a.title} @ ${a.company} — ${a.result
   console.log(report);
   console.log("home_report:", homePath);
   await page.close().catch(() => {});
+  // connectOverCDP: closing browser disconnects Playwright only — do not kill Chrome.
   await browser.close().catch(() => {});
 }
 
