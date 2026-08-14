@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """Small unit tests for Hitech City filters."""
 
-from tools.hitechcity.ats_fill import blocked_wall, frame_url_is_captcha_challenge
+from tools.hitechcity.ats_fill import (
+    auth_wall_url,
+    blocked_wall,
+    frame_url_is_captcha_challenge,
+)
 from tools.hitechcity.careers_apply import (
     CAREERS_TITLE_SKIP,
     JD_WRONG_STACK,
@@ -31,14 +35,18 @@ def test_title_ok():
     assert CAREERS_TITLE_SKIP.search("Principal Database Engineer- Architecture/Engineering")
     assert CAREERS_TITLE_SKIP.search("Embedded Software - System Test Architect")
     assert CAREERS_TITLE_SKIP.search("Product Manager, Principal")
+    assert CAREERS_TITLE_SKIP.search("Principal Physical Design Engineer (Chiplet Design)")
+    assert CAREERS_TITLE_SKIP.search("Staff ASIC Design Engineer")
     assert JD_WRONG_STACK.search(
         "designing and implementing Salesforce solutions ... SFDC Development and Customization"
     )
     assert LI_TITLE_SKIP.search("Staff/Principal GPU/CPU Kernel Optimization Engineer")
     assert LI_TITLE_SKIP.search("Network Architect")
+    assert LI_TITLE_SKIP.search("Principal Physical Design Engineer")
     assert not LI_TITLE_SKIP.search("Software Engineer, Principal - C#")
     assert not LI_TITLE_SKIP.search("Solution Architect")
     assert not CAREERS_TITLE_SKIP.search("Principal Software Engineer")
+    assert not CAREERS_TITLE_SKIP.search("Solution Architect (Microsoft .NET/Azure Cloud)")
 
 
 def test_campus_location():
@@ -179,6 +187,18 @@ def test_workday_create_account_is_login_wall():
     assert blocked_wall(_FakePage(guest, file_inputs=1)) is None
 
 
+def test_indeed_oauth_url_is_login_wall():
+    assert auth_wall_url(
+        "https://secure.indeed.com/auth?oauth_client_id=abc&from=oauth&continue=https%3A%2F%2Fsecure.indeed.com"
+    )
+    assert auth_wall_url("https://accounts.google.com/gsi/button?client_id=x")
+    assert auth_wall_url("https://passport.amazon.jobs/login")
+    assert not auth_wall_url("https://jobs.smartrecruiters.com/Experian/123-Solution-Architect")
+    page = _FakePage("Sign In | Indeed Accounts\nContinue with Google", file_inputs=0)
+    page.url = "https://secure.indeed.com/auth?oauth_client_id=x"
+    assert blocked_wall(page) == "login/account wall"
+
+
 def test_hyland_icims_url():
     import json
     from pathlib import Path
@@ -197,5 +217,7 @@ if __name__ == "__main__":
     test_careers_card_location()
     test_company_match()
     test_captcha_frame_ignores_hidden_badge()
+    test_workday_create_account_is_login_wall()
+    test_indeed_oauth_url_is_login_wall()
     test_hyland_icims_url()
     print("ok")

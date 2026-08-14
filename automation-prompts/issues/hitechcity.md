@@ -1,5 +1,10 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-14 (home)
+
+| Issue | Fix |
+| --- | --- |
+| Experian SmartRecruiters OneClick opened Indeed OAuth tabs; careers hung burning ATS time cap; Principal Physical Design matched TITLE_HINT | auth_wall_url + timed inner_text; close Indeed SSO popups; careers wall/attempt caps; CAREERS_TITLE_SKIP physical design/chiplet/ASIC |
 Portal-scoped log. Each daily agent (cloud or home) must append **only** to this file via
 `bash scripts/append-issue-fix.sh hitechcity "issue" "fix"` — never edit `ISSUES_AND_FIXES.md` for same-day rows.
 

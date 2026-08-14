@@ -16,7 +16,12 @@ from urllib.parse import urlparse
 
 from playwright.sync_api import Page, sync_playwright
 
-from tools.hitechcity.ats_fill import attempt_ats_apply, blocked_wall, try_click_named
+from tools.hitechcity.ats_fill import (
+    attempt_ats_apply,
+    auth_wall_url,
+    blocked_wall,
+    try_click_named,
+)
 from tools.hitechcity.filters import (
     location_or_campus_ok,
     prefer_dotnet,
@@ -38,7 +43,10 @@ REPORT = Path(os.environ.get("HITECHCITY_CAREERS_REPORT", "/opt/cursor/artifacts
 MAX_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_PER_COMPANY", "4"))
 # Raised for discovery-expanded campus tenant list (still priority-sorted).
 MAX_COMPANIES = int(os.environ.get("HITECHCITY_MAX_COMPANIES", "40"))
-TIME_CAP_S = int(os.environ.get("HITECHCITY_ATS_TIME_CAP_S", "180"))
+# Tight default: SSO walls must fail fast; guest ATS rarely needs 3+ minutes.
+TIME_CAP_S = int(os.environ.get("HITECHCITY_ATS_TIME_CAP_S", "90"))
+MAX_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "1"))
+MAX_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "2"))
 
 TITLE_HINT = re.compile(
     r"architect|technical lead|tech lead|engineering manager|principal|staff|"
@@ -75,6 +83,9 @@ CAREERS_TITLE_SKIP = re.compile(
     r"product\s*manager|network\s*architect|"
     r"chemical\s*mechanical|planarization|\bcmp\b|soc\s*compute|"
     r"memory\s*subsystem|foundry\s*solutions|"
+    # Silicon / chip design (Principal Physical Design matched TITLE_HINT via Principal).
+    r"physical\s*design|chiplet|\basic\b|\bvlsi\b|rtl\s*design|dft\s*engineer|"
+    r"analog\s*design|digital\s*design\s*engineer|verification\s*engineer|"
     r"sales\s*specialist|especialista|"
     r"\bai\s*native\b|\bdata\s*&\s*ai\b|staff\s*engineer\s*\(\s*ai|"
     r"engineer in test|\bsdet\b|cyber\s*security|cybersecurity|"
@@ -89,11 +100,42 @@ JD_WRONG_STACK = re.compile(
     r"only\s+(java|python|node|salesforce)\b",
     re.I,
 )
+# Kept for callers; prefer auth_wall_url() which also covers Indeed OAuth.
 AUTH_HOST = re.compile(
     r"passport\.amazon\.jobs|login\.microsoftonline|accounts\.google|"
-    r"auth\.|signin\.|sso\.|okta\.com|login\.microsoft",
+    r"secure\.indeed\.com|indeed\.com/auth|okta\.com|login\.microsoft|"
+    r"auth\.|signin\.|sso\.",
     re.I,
 )
+
+
+def _close_auth_popups(page: Page) -> None:
+    """Close Indeed/Google SSO tabs spawned by SmartRecruiters OneClick Apply."""
+    try:
+        ctx = page.context
+        keep = page
+        for p in list(ctx.pages):
+            if p is keep:
+                continue
+            try:
+                if auth_wall_url(p.url or ""):
+                    p.close()
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+
+def _context_hit_auth_wall(page: Page) -> bool:
+    try:
+        if auth_wall_url(page.url or ""):
+            return True
+        for p in page.context.pages:
+            if auth_wall_url(p.url or ""):
+                return True
+    except Exception:
+        return False
+    return False
 NAV_CHROME_RE = re.compile(
     r"skip to (main )?content|^jobs?\s+\d+|turn on job alerts|go to home|"
     r"^sitemap$|^manage profile$|^sign in$|^careers home$|^see all jobs$",
@@ -395,7 +437,7 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         row["reason"] = f"nav_error:{e}"
         return row
     time.sleep(2.0)
-    if AUTH_HOST.search(page.url or ""):
+    if auth_wall_url(page.url or "") or AUTH_HOST.search(page.url or ""):
         row["reason"] = "login/account wall"
         row["finalUrl"] = page.url
         return row
@@ -454,21 +496,35 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         return row
 
     # Click apply if listing page
+    before_pages = set(page.context.pages)
     try_click_named(page, ("Apply now", "Apply Now", "Apply", "Start application", "I'm interested"))
     time.sleep(1.5)
-    if AUTH_HOST.search(page.url or ""):
+    # SmartRecruiters OneClick often opens Indeed OAuth in a new tab.
+    try:
+        for p2 in page.context.pages:
+            if p2 not in before_pages and auth_wall_url(p2.url or ""):
+                row["reason"] = "login/account wall"
+                row["finalUrl"] = p2.url
+                _close_auth_popups(page)
+                return row
+    except Exception:
+        pass
+    if auth_wall_url(page.url or "") or AUTH_HOST.search(page.url or "") or _context_hit_auth_wall(page):
         row["reason"] = "login/account wall"
         row["finalUrl"] = page.url
+        _close_auth_popups(page)
         return row
     status, reason = attempt_ats_apply(page, time_cap_s=TIME_CAP_S)
-    if AUTH_HOST.search(page.url or "") or "passport.amazon.jobs" in (page.url or ""):
+    if auth_wall_url(page.url or "") or AUTH_HOST.search(page.url or "") or "passport.amazon.jobs" in (page.url or ""):
         row["status"] = "blocked"
         row["reason"] = "login/account wall"
         row["finalUrl"] = page.url
+        _close_auth_popups(page)
         return row
     row["status"] = status
     row["reason"] = reason
     row["finalUrl"] = page.url
+    _close_auth_popups(page)
     return row
 
 
@@ -490,6 +546,8 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
             urls = company.get("careersUrls") or []
             _safe_print(f"CAREERS SCAN {name}")
             company_applied = 0
+            company_walls = 0
+            company_attempts = 0
             for url in urls:
                 try:
                     scan_goto(page, url, timeout=75000)
@@ -530,7 +588,27 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                     seen_urls.add(job["url"])
                     if company_applied >= MAX_PER_COMPANY:
                         break
+                    if company_walls >= MAX_WALLS_PER_COMPANY or company_attempts >= MAX_ATTEMPTS_PER_COMPANY:
+                        report.skipped.append(
+                            {
+                                "company": name,
+                                "role": job.get("role"),
+                                "url": job.get("url"),
+                                "status": "skipped",
+                                "reason": (
+                                    f"company_wall_cap_{company_walls}"
+                                    if company_walls >= MAX_WALLS_PER_COMPANY
+                                    else f"company_attempt_cap_{company_attempts}"
+                                ),
+                            }
+                        )
+                        break
+                    company_attempts += 1
                     result = apply_job(page, job, campuses)
+                    _safe_print(
+                        f"CAREERS {result.get('status', '?').upper()} {name} | "
+                        f"{(result.get('reason') or '')[:60]}"
+                    )
                     if result["status"] == "applied":
                         report.applied.append(result)
                         company_applied += 1
@@ -538,7 +616,12 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                         report.skipped.append(result)
                     else:
                         report.blocked.append(result)
+                        why = (result.get("reason") or "").lower()
+                        if "login" in why or "captcha" in why or "account wall" in why or "time_cap" in why:
+                            company_walls += 1
                 if company_applied >= MAX_PER_COMPANY:
+                    break
+                if company_walls >= MAX_WALLS_PER_COMPANY or company_attempts >= MAX_ATTEMPTS_PER_COMPANY:
                     break
 
     report.finishedAt = datetime.now(timezone.utc).isoformat()
