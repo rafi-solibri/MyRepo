@@ -110,6 +110,28 @@ def test_careers_card_location():
     modmed = "https://modmed.wd501.myworkdayjobs.com/en-US/ModMed12/job/Boca-Raton-FL/Cloud-Engineering-Manager_R4806"
     assert "boca" in url_loc_hint(modmed).lower()
     assert not card_location_ok("Cloud Engineering Manager", url_loc_hint(modmed))
+    # Same-tab LinkedIn EXT to Workday Oslo must skip (not Hyd) and not hijack later searches.
+    oslo = (
+        "https://gevernova.wd5.myworkdayjobs.com/Vernova_ExternalSite/job/Oslo/"
+        "Senior-Software-Engineering-Manager_R5031870-2/apply"
+    )
+    assert "oslo" in url_loc_hint(oslo).lower()
+    assert not card_location_ok("Senior Software Engineering Manager", url_loc_hint(oslo))
+    assert not card_location_ok("", url_loc_hint(oslo))
+
+
+def test_linkedin_url_guard():
+    import sys
+
+    mod = next(m for n, m in sys.modules.items() if n.endswith("linkedin_target_apply"))
+    is_linkedin_url = mod.is_linkedin_url
+    assert is_linkedin_url("https://www.linkedin.com/jobs/view/123")
+    assert is_linkedin_url("https://www.linkedin.com/company/amd/jobs/?keywords=Architect")
+    assert not is_linkedin_url(
+        "https://gevernova.wd5.myworkdayjobs.com/Vernova_ExternalSite/job/Oslo/x/apply"
+    )
+    assert not is_linkedin_url("https://www.linkedin.com/uas/login?session_redirect=/feed/")
+    assert not is_linkedin_url("about:blank")
 
 
 def test_company_match():
@@ -195,6 +217,7 @@ if __name__ == "__main__":
     test_campus_location()
     test_oraclecloud_parent_card_location()
     test_careers_card_location()
+    test_linkedin_url_guard()
     test_company_match()
     test_captcha_frame_ignores_hidden_badge()
     test_hyland_icims_url()

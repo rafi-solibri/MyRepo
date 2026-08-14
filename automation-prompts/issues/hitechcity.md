@@ -7,6 +7,7 @@ Portal-scoped log. Each daily agent (cloud or home) must append **only** to this
 
 | Issue | Fix |
 | --- | --- |
+| LinkedIn same-tab Workday ATS (GE Vernova Oslo) swallowed later company searches (0 job ids from Goldman onward) | ensure_linkedin_page after EXT; skip ATS URL Oslo/non-Hyd; careers starts on a fresh tab; close leftover Workday tabs |
 | parallel portal PRs collided on shared issues log | portal-scoped issues/hitechcity.md only |
 | Indeed board `timeout_900s` dropped **2 real Easy Applies** (ModMed + Salesforce) — `TimeoutExpired` returned before report harvest; Chrome/CF-probe orphans survived | `board_campus_apply`: kill process group on timeout; always `_harvest_portal_report` after timeout/error; accept fresh `startedAt` without `finishedAt` |
 | Indeed Easy-Applied Salesforce **Success Architect (service cloud)** — `TITLE_OK` matched architect…cloud; company allowlist kept Salesforce | Expand `TITLE_SKIP` for salesforce/service cloud; skip Salesforce/ServiceNow company without .NET/Azure in title; negative lookbehind so service cloud ≠ cloud stack |

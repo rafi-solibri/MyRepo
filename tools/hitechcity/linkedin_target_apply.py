@@ -16,6 +16,7 @@ from urllib.parse import quote
 from playwright.sync_api import Page, sync_playwright
 
 from tools.hitechcity.ats_fill import attempt_ats_apply, resume_path
+from .careers_apply import card_location_ok, url_loc_hint
 from tools.hitechcity.filters import (
     company_name_match,
     location_or_campus_ok,
@@ -86,21 +87,106 @@ def load_companies() -> list[dict[str, Any]]:
     return sorted(data.get("companies", []), key=lambda c: (c.get("priority", 9), c.get("name", "")))
 
 
+def is_linkedin_url(url: str) -> bool:
+    u = (url or "").lower()
+    return "linkedin.com" in u and "/uas/login" not in u and "authwall" not in u
+
+
+def close_stray_ats_pages(keep: Page) -> None:
+    """Drop leftover Workday/Greenhouse tabs so CDP is not stuck off LinkedIn."""
+    try:
+        ctx = keep.context
+        pages = list(ctx.pages)
+    except Exception:
+        return
+    for p2 in pages:
+        if p2 == keep:
+            continue
+        try:
+            u = (p2.url or "").lower()
+        except Exception:
+            u = ""
+        if "linkedin.com" in u or u.startswith("about:blank"):
+            continue
+        try:
+            p2.close()
+        except Exception:
+            pass
+
+
+def ensure_linkedin_page(page: Page, fallback_url: str = "https://www.linkedin.com/feed/") -> Page:
+    """Recover after same-tab company-website ATS (Workday) swallows LinkedIn navigation."""
+    close_stray_ats_pages(page)
+    try:
+        if is_linkedin_url(page.url or ""):
+            return page
+    except Exception:
+        pass
+    try:
+        for p2 in list(page.context.pages):
+            try:
+                if is_linkedin_url(p2.url or ""):
+                    close_stray_ats_pages(p2)
+                    return p2
+            except Exception:
+                continue
+    except Exception:
+        pass
+    try:
+        page.goto("about:blank", wait_until="domcontentloaded", timeout=15000)
+        page.goto(fallback_url, wait_until="domcontentloaded", timeout=45000)
+        if is_linkedin_url(page.url or ""):
+            return page
+    except Exception:
+        pass
+    try:
+        fresh = page.context.new_page()
+        fresh.set_default_timeout(45000)
+        fresh.goto(fallback_url, wait_until="domcontentloaded", timeout=45000)
+        try:
+            if page != fresh:
+                page.close()
+        except Exception:
+            pass
+        return fresh
+    except Exception:
+        return page
+
+
 def goto_retry(page: Page, url: str, *, timeout: int = 70000, attempts: int = 3) -> None:
     """Navigate with backoff on LinkedIn HTTP throttle / transient failures."""
     last: Exception | None = None
+    want_linkedin = "linkedin.com" in (url or "").lower()
     for i in range(attempts):
         try:
+            if want_linkedin:
+                u0 = ""
+                try:
+                    u0 = (page.url or "").lower()
+                except Exception:
+                    u0 = ""
+                if u0 and "linkedin.com" not in u0:
+                    try:
+                        page.goto("about:blank", wait_until="domcontentloaded", timeout=15000)
+                    except Exception:
+                        pass
             page.goto(url, wait_until="domcontentloaded", timeout=timeout)
             # Soft throttle signal in URL/title
             u = (page.url or "").lower()
+            if want_linkedin and "linkedin.com" not in u:
+                raise RuntimeError(f"goto_swallowed expected linkedin got {page.url}")
             if any(x in u for x in ("/authwall", "/checkpoint/challenge", "unavailable")):
                 time.sleep(2.5 + i * 2.0)
             return
         except Exception as e:
             last = e
             msg = str(e)
-            if "ERR_HTTP_RESPONSE_CODE_FAILURE" in msg or "Timeout" in msg or "net::ERR_" in msg:
+            if (
+                "ERR_HTTP_RESPONSE_CODE_FAILURE" in msg
+                or "Timeout" in msg
+                or "net::ERR_" in msg
+                or "goto_swallowed" in msg
+            ):
                 time.sleep(3.0 + i * 3.5)
                 continue
             raise
@@ -393,6 +479,22 @@ def follow_external(page: Page, meta: dict[str, str]) -> dict[str, Any]:
     except Exception:
         pass
     time.sleep(1.5)
+    row["atsUrl"] = ats.url
+    ats_hint = url_loc_hint(ats.url or "")
+    if not card_location_ok("", ats_hint):
+        row["status"] = "skipped"
+        row["reason"] = "ats_url_location"
+        if ats != page:
+            try:
+                ats.close()
+            except Exception:
+                pass
+        else:
+            try:
+                page.goto("about:blank", wait_until="domcontentloaded", timeout=15000)
+            except Exception:
+                pass
+        return row
     status, reason = attempt_ats_apply(ats, time_cap_s=EXT_ATS_TIME_CAP_S)
     row["status"] = status
     row["reason"] = reason
@@ -400,6 +502,12 @@ def follow_external(page: Page, meta: dict[str, str]) -> dict[str, Any]:
     if ats != page:
         try:
             ats.close()
+        except Exception:
+            pass
+    else:
+        # Same-tab ATS (Workday) — blank so later LinkedIn searches are not swallowed.
+        try:
+            page.goto("about:blank", wait_until="domcontentloaded", timeout=15000)
         except Exception:
             pass
     return row
@@ -556,6 +664,7 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                 continue
             ext_walls = 0
             ext_attempts = 0
+            page = ensure_linkedin_page(page)
 
             job_ids: list[str] = []
             for title in TITLES[:5]:
@@ -563,10 +672,13 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                     break
                 url = company_jobs_url(slug, title)
                 print(f"LI COMPANY JOBS {name} | {title}", flush=True)
+                page = ensure_linkedin_page(page, url)
                 try:
                     goto_retry(page, url, timeout=70000)
                 except Exception as e:
+                    print(f"LI SEARCH NAV FAIL {name} | {title} | {e}", flush=True)
                     report.blocked.append({"company": name, "title": title, "reason": f"search_nav:{e}"})
+                    page = ensure_linkedin_page(page)
                     continue
                 time.sleep(2.5)
                 dismiss(page)
@@ -746,6 +858,7 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                 print(f"LI EXT {company_found} | {role} | {jid}", flush=True)
                 ext_attempts += 1
                 ext = follow_external(page, meta)
+                page = ensure_linkedin_page(page)
                 ext["campusCompany"] = name
                 ext["location"] = loc
                 if ext["status"] == "applied":

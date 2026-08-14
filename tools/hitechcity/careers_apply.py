@@ -56,6 +56,8 @@ BAD_LOC_HINT = re.compile(
     r"toronto|dublin|san\s*francisco|mountain\s*view|cupertino|menlo\s*park|"
     r"united\s*states|united\s*kingdom|\busa\b|\buk\b|berkshire|reading|"
     r"romania|bucharest|poland|warsaw|germany|berlin|munich|amsterdam|netherlands|"
+    r"oslo|norway|stockholm|sweden|copenhagen|denmark|helsinki|finland|"
+    r"zurich|switzerland|brussels|belgium|"
     r"washington,\s*redmond|multiple\s*locations|"
     r"bengaluru|bangalore|pune|chennai|mumbai|noida|gurgaon|gurugram|"
     r"brazil|s[aã]o\s*carlos|malaysia|cyberjaya|costa\s*rica|heredia|nottingham|"
@@ -481,8 +483,39 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
     with sync_playwright() as p:
         browser = p.chromium.connect_over_cdp(CDP)
         context = browser.contexts[0]
-        page = context.pages[0] if context.pages else context.new_page()
+        # LinkedIn EXT may leave Workday/Greenhouse tabs; start careers on a clean page.
+        try:
+            for p2 in list(context.pages):
+                try:
+                    u = (p2.url or "").lower()
+                except Exception:
+                    u = ""
+                if "linkedin.com" in u:
+                    continue
+                if any(
+                    x in u
+                    for x in (
+                        "myworkdayjobs",
+                        "greenhouse.io",
+                        "lever.co",
+                        "smartrecruiters",
+                        "icims.com",
+                        "successfactors",
+                        "workdayjobs",
+                    )
+                ):
+                    try:
+                        p2.close()
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+        try:
+            page = context.new_page()
+        except Exception:
+            page = context.pages[0] if context.pages else context.new_page()
         page.set_default_timeout(45000)
+        _reset_page_nav(page)
 
         for company in companies:
             name = company["name"]
