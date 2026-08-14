@@ -84,8 +84,9 @@ MAX_APPLIES = int(os.environ.get("INDEED_MAX_APPLIES", "40"))
 MAX_SEEN = int(os.environ.get("INDEED_MAX_SEEN", "120"))
 
 TITLE_OK = re.compile(
+    # Require azure/cloud stack tokens — not Salesforce "service cloud" product.
     r"(architect|tech(?:nical)?\s*lead|engineering\s*manager|\bEM\b|"
-    r"principal|staff|senior).{0,40}(\.?\s*net|c#|azure|cloud)|"
+    r"principal|staff|senior).{0,40}(\.?\s*net|c#|azure|(?<!service\s)cloud)|"
     r"(\.?\s*net|c#|azure).{0,40}(architect|tech(?:nical)?\s*lead|"
     r"engineering\s*manager|principal|staff)|"
     r"(solutions?\s*architect|technical\s*architect|software\s*architect|"
@@ -96,7 +97,9 @@ TITLE_OK = re.compile(
 TITLE_SKIP = re.compile(
     r"\b(java|python|node\.?js|golang|ruby|php)\b.{0,20}\b(only|mandatory|must)\b|"
     r"\b(qa|sdet|quality\s*analyst|intern|junior|graduate|trainee)\b|"
-    r"\b(salesforce|servicenow|\bsap\b)\b.{0,30}\b(developer|admin|consultant)\b|"
+    # Salesforce / ServiceNow / SAP product-primary titles (incl. Success Architect + Service Cloud).
+    r"\b(salesforce|servicenow|\bsap\b|sfdc|service\s*cloud|sales\s*cloud|"
+    r"experience\s*cloud|marketing\s*cloud|commerce\s*cloud)\b|"
     r"\b(android|ios|flutter|react\s*native)\b.{0,20}\b(developer|engineer)\b",
     re.I,
 )
@@ -249,6 +252,11 @@ def skip_reason(title: str, company: str, location: str, snippet: str) -> str | 
         return "hitechcity_campus_allowlist"
     if TITLE_SKIP.search(t):
         return "title_skip"
+    # Company is Salesforce/ServiceNow product shop unless title clearly .NET/Azure.
+    if re.search(r"salesforce|servicenow", company or "", re.I) and not re.search(
+        r"\.net|dotnet|\bc#\b|azure", t, re.I
+    ):
+        return "company_wrong_stack"
     if not TITLE_OK.search(t):
         # Bias: when uncertain on architect/lead/.NET titles → apply.
         # Only skip clear non-matches (no senior/architect/lead/.net signal).

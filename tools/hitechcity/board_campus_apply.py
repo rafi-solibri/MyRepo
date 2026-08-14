@@ -214,30 +214,93 @@ def _run_portal(portal: str, allowlist: Path, env_base: dict[str, str]) -> dict[
         return row
 
     timeout_s = int(os.environ.get("HITECHCITY_BOARD_TIMEOUT_S", "900"))
+    # New session so timeout can SIGKILL the whole tree (node → Chrome/UC children).
+    # Without this, Indeed/CF-probe Chrome often survives TimeoutExpired and burns the next board.
+    popen_kwargs: dict[str, Any] = {
+        "cwd": str(ROOT),
+        "env": env,
+        "stdout": subprocess.PIPE,
+        "stderr": subprocess.PIPE,
+        "text": True,
+    }
+    if os.name != "nt":
+        popen_kwargs["start_new_session"] = True
+    else:
+        # CREATE_NEW_PROCESS_GROUP on Windows
+        popen_kwargs["creationflags"] = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+
     try:
-        proc = subprocess.run(
-            cmd,
-            cwd=str(ROOT),
-            env=env,
-            capture_output=True,
-            text=True,
-            timeout=timeout_s,
-        )
+        proc = subprocess.Popen(cmd, **popen_kwargs)
+        try:
+            stdout, stderr = proc.communicate(timeout=timeout_s)
+        except subprocess.TimeoutExpired:
+            _kill_process_tree(proc)
+            try:
+                stdout, stderr = proc.communicate(timeout=15)
+            except Exception:
+                stdout, stderr = "", ""
+            row["rc"] = None
+            row["stdoutTail"] = (stdout or "")[-1200:]
+            row["stderrTail"] = (stderr or "")[-600:]
+            row["status"] = "timeout"
+            row["reason"] = f"timeout_{timeout_s}s"
+            # Still harvest — Indeed often lands Easy Applies then hangs on CF/UC cleanup.
+            _harvest_portal_report(row, portal)
+            row["finishedAt"] = datetime.now(timezone.utc).isoformat()
+            return row
         row["rc"] = proc.returncode
-        row["stdoutTail"] = (proc.stdout or "")[-1200:]
-        row["stderrTail"] = (proc.stderr or "")[-600:]
+        row["stdoutTail"] = (stdout or "")[-1200:]
+        row["stderrTail"] = (stderr or "")[-600:]
         row["status"] = "ok" if proc.returncode == 0 else "error"
-    except subprocess.TimeoutExpired:
-        row["status"] = "timeout"
-        row["reason"] = f"timeout_{timeout_s}s"
-        return row
     except Exception as e:
         row["status"] = "error"
         row["reason"] = str(e)[:300]
+        _harvest_portal_report(row, portal)
+        row["finishedAt"] = datetime.now(timezone.utc).isoformat()
         return row
 
-    # Best-effort count scrape from known report paths — ignore STALE files from
-    # earlier same-day portal home dailies (common on Windows shared artifacts/).
+    _harvest_portal_report(row, portal)
+    row["finishedAt"] = datetime.now(timezone.utc).isoformat()
+    return row
+
+
+def _kill_process_tree(proc: subprocess.Popen[Any]) -> None:
+    """Best-effort kill of portal helper + Chrome/UC grandchildren."""
+    try:
+        if os.name != "nt" and proc.pid:
+            import signal
+
+            try:
+                os.killpg(proc.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+            try:
+                proc.wait(timeout=5)
+                return
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+        else:
+            proc.terminate()
+            try:
+                proc.wait(timeout=5)
+                return
+            except subprocess.TimeoutExpired:
+                proc.kill()
+    except Exception:
+        try:
+            proc.kill()
+        except Exception:
+            pass
+
+
+def _harvest_portal_report(row: dict[str, Any], portal: str) -> None:
+    """Best-effort count scrape — also used after timeout so landed applies are not dropped.
+
+    Ignore STALE files from earlier same-day portal home dailies (Windows shared artifacts/).
+    """
     report_guess = {
         "naukri": "naukri-daily-apply.json",
         "foundit": "foundit-apply-report.json",
@@ -245,54 +308,52 @@ def _run_portal(portal: str, allowlist: Path, env_base: dict[str, str]) -> dict[
         "instahyre": "instahyre-apply-report.json",
         "indeed": "indeed-daily-run.json",
     }.get(portal)
-    if report_guess:
-        rp = _artifact_dir() / report_guess
-        row["report"] = str(rp)
-        if rp.is_file():
-            try:
-                data = json.loads(rp.read_text(encoding="utf-8"))
-                started = row.get("startedAt") or ""
-                report_finished = str(data.get("finishedAt") or data.get("endedAt") or "")
-                report_started = str(data.get("startedAt") or "")
-                # Accept report only if it finished at/after this board portal started.
-                fresh = False
-                if started and report_finished and report_finished >= started[:19]:
-                    fresh = True
-                elif started and report_started and report_started >= started[:19]:
-                    fresh = True
-                # Foundit sometimes only has intentionalApplies / appliedDelta
-                if not fresh and "intentionalApplies" in data:
-                    # still stale relative to board start — do not credit
-                    row["staleReportIgnored"] = True
-                if fresh:
-                    if isinstance(data.get("applied"), list):
-                        row["applied"] = len(data["applied"])
-                    elif isinstance(data.get("counts"), dict):
-                        row["applied"] = int(data["counts"].get("applied") or 0)
-                        row["blocked"] = int(data["counts"].get("blocked") or 0)
-                        row["skipped"] = int(data["counts"].get("skipped") or 0)
-                    if isinstance(data.get("skipped"), list):
-                        row["skipped"] = len(data["skipped"])
-                    if isinstance(data.get("blocked"), list):
-                        row["blocked"] = len(data["blocked"])
-                    if data.get("intentionalApplies") is not None:
-                        row["applied"] = int(data.get("intentionalApplies") or 0)
-                    if data.get("appliedDelta") is not None and not isinstance(
-                        data.get("applied"), list
-                    ):
-                        row["applied"] = int(data.get("appliedDelta") or 0)
-                else:
-                    row["staleReportIgnored"] = True
-                    # Prefer stdout markers when report is stale
-                    tail = (row.get("stdoutTail") or "") + (row.get("stderrTail") or "")
-                    if '"intentionalApplies": 0' in tail or '"appliedDelta": 0' in tail:
-                        row["applied"] = 0
-                    if "- Applied: **0**" in tail or '"applied": 0' in tail:
-                        row["applied"] = 0
-            except Exception:
-                pass
-    row["finishedAt"] = datetime.now(timezone.utc).isoformat()
-    return row
+    if not report_guess:
+        return
+    rp = _artifact_dir() / report_guess
+    row["report"] = str(rp)
+    if not rp.is_file():
+        return
+    try:
+        data = json.loads(rp.read_text(encoding="utf-8"))
+        started = row.get("startedAt") or ""
+        report_finished = str(data.get("finishedAt") or data.get("endedAt") or "")
+        report_started = str(data.get("startedAt") or "")
+        # Accept report only if it finished/started at/after this board portal started.
+        # Timed-out Indeed runs often lack finishedAt but have a fresh startedAt + applied[].
+        fresh = False
+        if started and report_finished and report_finished >= started[:19]:
+            fresh = True
+        elif started and report_started and report_started >= started[:19]:
+            fresh = True
+        if not fresh and "intentionalApplies" in data:
+            row["staleReportIgnored"] = True
+        if fresh:
+            if isinstance(data.get("applied"), list):
+                row["applied"] = len(data["applied"])
+            elif isinstance(data.get("counts"), dict):
+                row["applied"] = int(data["counts"].get("applied") or 0)
+                row["blocked"] = int(data["counts"].get("blocked") or 0)
+                row["skipped"] = int(data["counts"].get("skipped") or 0)
+            if isinstance(data.get("skipped"), list):
+                row["skipped"] = len(data["skipped"])
+            if isinstance(data.get("blocked"), list):
+                row["blocked"] = len(data["blocked"])
+            if data.get("intentionalApplies") is not None:
+                row["applied"] = int(data.get("intentionalApplies") or 0)
+            if data.get("appliedDelta") is not None and not isinstance(
+                data.get("applied"), list
+            ):
+                row["applied"] = int(data.get("appliedDelta") or 0)
+        else:
+            row["staleReportIgnored"] = True
+            tail = (row.get("stdoutTail") or "") + (row.get("stderrTail") or "")
+            if '"intentionalApplies": 0' in tail or '"appliedDelta": 0' in tail:
+                row["applied"] = 0
+            if "- Applied: **0**" in tail or '"applied": 0' in tail:
+                row["applied"] = 0
+    except Exception:
+        pass
 
 
 def run(companies: list[dict] | None = None) -> dict[str, Any]:
