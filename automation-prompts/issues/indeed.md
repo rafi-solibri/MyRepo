@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| UC CF cleared but v10 auth cookies undecryptable in hybrid profile (anonymous Get Started / 0 seen) | Decrypt Chrome Linux v10 blobs to plaintext in prepare_uc_profile; CDP Network.setCookie inject if home still signed out |
 | login-failed report counted as same-day coverage so ensure-missing skipped re-run | ensure-missing only treats usable apply/scan reports as coverage; force-restore sessions before launch |
 | UC CF cleared but anonymous Sign-in home → 0 seen silent fail | Detect unsigned-in home after clear_cf; exit 5 with indeed_login_required |
 

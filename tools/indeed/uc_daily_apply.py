@@ -164,6 +164,66 @@ def prepare_profile() -> dict:
         return {"error": (res.stderr or res.stdout or "")[:400], "exit": res.returncode}
 
 
+def home_looks_signed_out(body: str) -> bool:
+    """Anonymous Indeed home after CF clear (Get Started / Sign in CTA)."""
+    text = body or ""
+    return bool(
+        re.search(
+            r"create an account or sign in|get started|sign in to see your personalised|"
+            r"your next job starts here",
+            text,
+            re.I,
+        )
+    ) and not re.search(
+        r"welcome,\s*\w+|sign out|account settings|my jobs|\bprofile\b",
+        text,
+        re.I,
+    )
+
+
+def inject_seed_cookies(sb) -> dict:
+    """Push decrypted Indeed cookies into the live UC session via CDP.
+
+    Hybrid `--user-data-dir` cannot decrypt v10 blobs copied from the seed
+    profile; Network.setCookie with plaintext values restores Passport/CTK.
+    """
+    try:
+        from tools.indeed.prepare_uc_profile import load_decrypted_indeed_cookies
+    except Exception as exc:
+        return {"injected": 0, "error": str(exc)[:200]}
+    cookies = load_decrypted_indeed_cookies(Path(SEED_PROFILE))
+    driver = getattr(sb, "driver", None)
+    if driver is None:
+        return {"injected": 0, "available": len(cookies), "error": "no_driver"}
+    try:
+        driver.execute_cdp_cmd("Network.enable", {})
+    except Exception:
+        pass
+    injected = 0
+    failed = 0
+    auth_names = []
+    for cookie in cookies:
+        try:
+            driver.execute_cdp_cmd("Network.setCookie", cookie)
+            injected += 1
+            name = cookie.get("name") or ""
+            if name in (
+                "CTK",
+                "PPID",
+                "__Secure-PassportAuthProxy-BearerToken",
+                "rememberMe",
+            ):
+                auth_names.append(name)
+        except Exception:
+            failed += 1
+    return {
+        "injected": injected,
+        "failed": failed,
+        "available": len(cookies),
+        "auth": sorted(set(auth_names)),
+    }
+
+
 def clear_cf(sb, attempts: int = 4) -> bool:
     """Clear Indeed Cloudflare / Turnstile with multiple GUI strategies.
 
@@ -2176,23 +2236,35 @@ def main() -> int:
             return 5
 
         # CF can clear while the account is still anonymous ("Get Started" / Sign in).
+        # v10 cookies copied into the hybrid profile often fail to decrypt —
+        # inject plaintext Passport/CTK via CDP and reload before giving up.
         try:
             home_body = (sb.get_text("body") or "")[:2500]
             home_title = sb.get_title() or ""
         except Exception:
             home_body, home_title = "", ""
-        signed_out = bool(
-            re.search(
-                r"create an account or sign in|get started|sign in to see your personalised|"
-                r"your next job starts here",
-                home_body,
-                re.I,
+        signed_out = home_looks_signed_out(home_body)
+        if signed_out:
+            injected = inject_seed_cookies(sb)
+            report["cookieInject"] = injected
+            print(
+                f"  cookie_inject injected={injected.get('injected')} "
+                f"auth={injected.get('auth')} failed={injected.get('failed')}",
+                flush=True,
             )
-        ) and not re.search(
-            r"welcome,\s*\w+|sign out|account settings|my jobs|profile",
-            home_body,
-            re.I,
-        )
+            if injected.get("injected"):
+                try:
+                    sb.uc_open_with_reconnect("https://in.indeed.com/", 5)
+                    time.sleep(2)
+                    clear_cf(sb)
+                except Exception:
+                    pass
+                try:
+                    home_body = (sb.get_text("body") or "")[:2500]
+                    home_title = sb.get_title() or ""
+                except Exception:
+                    home_body, home_title = "", ""
+                signed_out = home_looks_signed_out(home_body)
         if signed_out:
             report["blocked"].append(
                 {
