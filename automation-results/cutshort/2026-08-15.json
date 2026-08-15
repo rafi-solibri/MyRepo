@@ -3,7 +3,7 @@
   "source": "home-local",
   "date": "2026-08-15",
   "startedAt": null,
-  "finishedAt": "2026-08-15T17:24:15.191Z",
+  "finishedAt": "2026-08-15T17:25:13.291Z",
   "host": "NEM01-GBGR234",
   "ok": true,
   "counts": {
@@ -24,10 +24,11 @@
   "notes": [
     "qualifying=0",
     "q_answered=0",
-    "q_locked_empty=322",
+    "q_locked_empty=0",
     "skipReasons={\"location\":69,\"no_tier_match\":28,\"skip_title\":300,\"ctc_under_35\":451,\"exp_max_low\":322}",
     "home_evening_replica",
-    "cdp_reconnect_fix=#180"
+    "cdp_reconnect_fix=#180",
+    "q_audit_skipped=no_applies_this_session"
   ],
   "preflight": null,
   "logPath": null
