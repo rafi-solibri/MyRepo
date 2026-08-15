@@ -181,6 +181,16 @@ assert_true(
     is None,
     "Greenhouse with resume input is guest-applyable",
 )
+assert_true(
+    auth_wall_reason(
+        "https://boards.greenhouse.io/acme/jobs/1",
+        "Sign in\nCreate an account\nApply for this job\nHyderabad",
+        has_password=False,
+        has_file=False,
+    )
+    is None,
+    "Greenhouse JD chrome Create an account is not a login wall",
+)
 
 assert_true(
     workday_password_rejected(

@@ -227,8 +227,11 @@ agent_prompt_for() {
   pfile="$(prompt_file_for "$portal")"
   extra=""
   case "$portal" in
-    linkedin|hitechcity)
+    linkedin)
       extra="Run bash scripts/preflight-portal-run.sh $portal then bash scripts/launch-chrome-cdp.sh $portal."
+      ;;
+    hitechcity)
+      extra="Run bash scripts/preflight-portal-run.sh hitechcity then bash scripts/launch-chrome-cdp.sh hitechcity. Set HITECHCITY_CAREERS_ONLY=1 and run python3 tools/hitechcity/daily_apply.py so company career portals apply first (do not wait on LinkedIn CAPTCHA). Success = confirmation text only."
       ;;
     foundit|cutshort|instahyre)
       extra="Run bash scripts/preflight-portal-run.sh $portal first."
@@ -519,7 +522,7 @@ exec_portal_job() {
       bash "$ROOT/scripts/preflight-portal-run.sh" hitechcity
       bash "$ROOT/scripts/launch-chrome-cdp.sh" hitechcity
       set +e
-      "$py" "$ROOT/tools/hitechcity/daily_apply.py"
+      HITECHCITY_CAREERS_ONLY=1 "$py" "$ROOT/tools/hitechcity/daily_apply.py"
       rc=$?
       set -e
       ;;

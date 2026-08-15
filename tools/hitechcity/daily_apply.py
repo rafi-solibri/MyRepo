@@ -91,25 +91,14 @@ def main() -> int:
         except Exception:
             companies = None
 
-    # 1) LinkedIn company-targeted applies + referrals (PRIMARY)
-    try:
-        print("=== HitechCity LinkedIn + referrals (PRIMARY) ===", flush=True)
-        linkedin_rep = run_linkedin(companies)
-        summary["linkedin"] = {
-            "applied": len(linkedin_rep.applied),
-            "external": len(linkedin_rep.external),
-            "referralsSent": sum(1 for r in linkedin_rep.referrals if r.get("status") == "sent"),
-            "blocked": len(linkedin_rep.blocked),
-            "skipped": len(linkedin_rep.skipped),
-            "report": str(
-                Path(os.environ.get("HITECHCITY_LINKEDIN_REPORT", "/opt/cursor/artifacts/hitechcity-linkedin.json"))
-            ),
-        }
-    except Exception as e:
-        summary["errors"].append({"phase": "linkedin", "error": str(e), "trace": traceback.format_exc()[-1500:]})
-        print("LINKEDIN ERROR", e, flush=True)
+    careers_only = os.environ.get("HITECHCITY_CAREERS_ONLY", "").strip() in ("1", "true", "yes")
+    skip_linkedin = careers_only or os.environ.get("HITECHCITY_SKIP_LINKEDIN", "").strip() in (
+        "1",
+        "true",
+        "yes",
+    )
 
-    # 2) Official career portals (PRIMARY)
+    # 1) Official career portals FIRST — LinkedIn CAPTCHA must not starve ATS time.
     try:
         print("=== HitechCity careers portals (PRIMARY) ===", flush=True)
         careers_rep = run_careers(companies)
@@ -124,30 +113,56 @@ def main() -> int:
         summary["errors"].append({"phase": "careers", "error": str(e), "trace": traceback.format_exc()[-1500:]})
         print("CAREERS ERROR", e, flush=True)
 
-    # 3) Job boards — campus allowlist (secondary but required path)
-    try:
-        print("=== HitechCity board browse (Naukri/Foundit/Cutshort/Instahyre/Indeed) ===", flush=True)
-        boards_rep = run_boards(companies)
-        summary["boards"] = {
-            "applied": (boards_rep.get("totals") or {}).get("applied") or 0,
-            "blocked": (boards_rep.get("totals") or {}).get("blocked") or 0,
-            "skipped": (boards_rep.get("totals") or {}).get("skipped") or 0,
-            "portals": [
-                {
-                    "portal": p.get("portal"),
-                    "status": p.get("status"),
-                    "applied": p.get("applied"),
-                    "reason": p.get("reason"),
-                    "rc": p.get("rc"),
-                }
-                for p in (boards_rep.get("portals") or [])
-            ],
-            "report": boards_rep.get("report"),
-            "skippedPhase": boards_rep.get("skipped"),
-        }
-    except Exception as e:
-        summary["errors"].append({"phase": "boards", "error": str(e), "trace": traceback.format_exc()[-1500:]})
-        print("BOARDS ERROR", e, flush=True)
+    # 2) LinkedIn company-targeted applies + referrals (after careers)
+    if skip_linkedin:
+        summary["linkedin"] = {"skippedPhase": "careers_only"}
+        print("=== HitechCity LinkedIn skipped (careers-only) ===", flush=True)
+    else:
+        try:
+            print("=== HitechCity LinkedIn + referrals ===", flush=True)
+            linkedin_rep = run_linkedin(companies)
+            summary["linkedin"] = {
+                "applied": len(linkedin_rep.applied),
+                "external": len(linkedin_rep.external),
+                "referralsSent": sum(1 for r in linkedin_rep.referrals if r.get("status") == "sent"),
+                "blocked": len(linkedin_rep.blocked),
+                "skipped": len(linkedin_rep.skipped),
+                "report": str(
+                    Path(os.environ.get("HITECHCITY_LINKEDIN_REPORT", "/opt/cursor/artifacts/hitechcity-linkedin.json"))
+                ),
+            }
+        except Exception as e:
+            summary["errors"].append({"phase": "linkedin", "error": str(e), "trace": traceback.format_exc()[-1500:]})
+            print("LINKEDIN ERROR", e, flush=True)
+
+    # 3) Job boards — campus allowlist (secondary). Skip when careers-only.
+    if careers_only:
+        summary["boards"] = {"skippedPhase": "careers_only"}
+        print("=== HitechCity boards skipped (careers-only) ===", flush=True)
+    else:
+        try:
+            print("=== HitechCity board browse (Naukri/Foundit/Cutshort/Instahyre/Indeed) ===", flush=True)
+            boards_rep = run_boards(companies)
+            summary["boards"] = {
+                "applied": (boards_rep.get("totals") or {}).get("applied") or 0,
+                "blocked": (boards_rep.get("totals") or {}).get("blocked") or 0,
+                "skipped": (boards_rep.get("totals") or {}).get("skipped") or 0,
+                "portals": [
+                    {
+                        "portal": p.get("portal"),
+                        "status": p.get("status"),
+                        "applied": p.get("applied"),
+                        "reason": p.get("reason"),
+                        "rc": p.get("rc"),
+                    }
+                    for p in (boards_rep.get("portals") or [])
+                ],
+                "report": boards_rep.get("report"),
+                "skippedPhase": boards_rep.get("skipped"),
+            }
+        except Exception as e:
+            summary["errors"].append({"phase": "boards", "error": str(e), "trace": traceback.format_exc()[-1500:]})
+            print("BOARDS ERROR", e, flush=True)
 
     applied = (
         (summary.get("careers", {}).get("applied") or 0)

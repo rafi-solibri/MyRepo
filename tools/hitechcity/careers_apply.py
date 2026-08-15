@@ -20,6 +20,7 @@ from tools.hitechcity.ats_fill import (
     attempt_ats_apply,
     auth_wall_url,
     blocked_wall,
+    looks_workday_page,
     try_click_named,
 )
 from tools.ats.complete import classify_ats_host
@@ -104,6 +105,18 @@ JD_WRONG_STACK = re.compile(
     re.I,
 )
 # Kept for callers; prefer auth_wall_url() which also covers Indeed OAuth.
+# These listings never expose a guest ATS form — skip the company so Workday/iCIMS
+# inventory is not starved by Amazon/Microsoft/Qualcomm SSO walls.
+SSO_ONLY_CAREERS_RE = re.compile(
+    r"amazon\.jobs|passport\.amazon\.jobs|apply\.careers\.microsoft\.com|"
+    r"careers\.microsoft\.com|careers\.qualcomm\.com",
+    re.I,
+)
+GUEST_ATS_HOST_RE = re.compile(
+    r"myworkdayjobs|icims\.com|oraclecloud\.com|taleo\.net|smartrecruiters\.com|"
+    r"greenhouse\.io|lever\.co|myworkdaysite",
+    re.I,
+)
 AUTH_HOST = re.compile(
     r"passport\.amazon\.jobs|login\.microsoftonline|accounts\.google|"
     r"secure\.indeed\.com|indeed\.com/auth|okta\.com|login\.microsoft|"
@@ -166,8 +179,51 @@ class CareersReport:
 
 def load_companies() -> list[dict[str, Any]]:
     data = json.loads(COMPANIES_PATH.read_text())
-    companies = sorted(data.get("companies", []), key=lambda c: (c.get("priority", 9), c.get("name", "")))
+    companies = sorted(
+        data.get("companies", []),
+        key=lambda c: (_company_ats_rank(c), c.get("priority", 9), c.get("name", "")),
+    )
     return companies
+
+
+def _company_ats_rank(company: dict[str, Any]) -> int:
+    """Guest-completable ATS first; known SSO-only hosts last."""
+    urls = " ".join(company.get("careersUrls") or [])
+    if not urls:
+        return 8
+    if SSO_ONLY_CAREERS_RE.search(urls):
+        return 9
+    if GUEST_ATS_HOST_RE.search(urls):
+        return 0
+    return int(company.get("priority", 5) or 5)
+
+
+def is_sso_only_careers_url(url: str) -> bool:
+    return bool(url and SSO_ONLY_CAREERS_RE.search(url))
+
+
+def adopt_ats_tab(page: Page, before_pages: set) -> Page:
+    """If Apply opened Workday/Greenhouse/iCIMS in a new tab, switch to it.
+
+    SSO/OAuth popups are closed so we can still guest-apply on the JD tab.
+    """
+    try:
+        for p2 in list(page.context.pages):
+            u2 = p2.url or ""
+            if classify_ats_host(u2) == "sso" or auth_wall_url(u2):
+                if p2 is not page:
+                    try:
+                        p2.close()
+                    except Exception:
+                        pass
+                continue
+            if p2 in before_pages:
+                continue
+            if classify_ats_host(u2) in ("workday", "greenhouse") or GUEST_ATS_HOST_RE.search(u2):
+                return p2
+    except Exception:
+        pass
+    return page
 
 
 def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
@@ -202,6 +258,17 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
                 }
                 return '';
               };
+              const wdTitles = [...document.querySelectorAll(
+                'a[data-automation-id="jobTitle"], [data-automation-id="jobTitle"] a, [data-automation-id="jobTitle"]'
+              )];
+              for (const a of wdTitles) {
+                const href = a.href || a.closest('a')?.href || '';
+                const text = (a.innerText || a.textContent || a.getAttribute('aria-label') || '').trim().replace(/\\s+/g, ' ');
+                if (href && text && text.length >= 8 && !seen.has(href)) {
+                  seen.add(href);
+                  out.push({ href, text: text.slice(0, 180) });
+                }
+              }
               const anchors = [...document.querySelectorAll('a[href]')];
               for (const a of anchors) {
                 const href = a.href || '';
@@ -446,9 +513,12 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         row["reason"] = "login/account wall"
         row["finalUrl"] = page.url
         return row
+    # JD chrome ("Sign in" / "Create an account") is not a wall. Only CAPTCHA /
+    # closed reqs fail here — Workday Create Account must reach complete_ats.
     wall = blocked_wall(page)
-    if wall:
+    if wall in ("CAPTCHA/bot wall", "job_closed") and not looks_workday_page(page):
         row["reason"] = wall
+        row["status"] = "skipped" if wall == "job_closed" else "blocked"
         row["finalUrl"] = page.url
         return row
 
@@ -506,41 +576,49 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
 
     # Click apply if listing page
     before_pages = set(page.context.pages)
-    try_click_named(page, ("Apply now", "Apply Now", "Apply", "Start application", "I'm interested"))
-    # SmartRecruiters OneClick / Cognizant talent login often open in a new tab
-    # a second or two after the click. Poll so we do not burn the ATS cap on the JD tab.
+    try_click_named(
+        page,
+        (
+            "Apply manually",
+            "Apply without Indeed",
+            "Apply now",
+            "Apply Now",
+            "Start application",
+            "I'm interested",
+            "Apply",
+        ),
+    )
+    # Adopt guest ATS tabs; close SSO popups instead of bailing on the JD.
     try:
         deadline = time.time() + 6
         while time.time() < deadline:
-            for p2 in list(page.context.pages):
-                u2 = p2.url or ""
-                if classify_ats_host(u2) == "sso" or auth_wall_url(u2):
-                    row["reason"] = "login/account wall"
-                    row["finalUrl"] = u2
-                    _close_auth_popups(page)
-                    return row
-                if p2 not in before_pages and classify_ats_host(u2) == "unavailable":
-                    row["status"] = "skipped"
-                    row["reason"] = "job_unavailable"
-                    row["finalUrl"] = u2
-                    return row
+            page = adopt_ats_tab(page, before_pages)
+            u2 = page.url or ""
+            if classify_ats_host(u2) == "unavailable":
+                row["status"] = "skipped"
+                row["reason"] = "job_unavailable"
+                row["finalUrl"] = u2
+                _close_auth_popups(page)
+                return row
+            if looks_workday_page(page) or classify_ats_host(u2) in ("workday", "greenhouse"):
+                break
             time.sleep(0.45)
     except Exception:
         pass
-    if auth_wall_url(page.url or "") or AUTH_HOST.search(page.url or "") or _context_hit_auth_wall(page):
+    if auth_wall_url(page.url or "") or AUTH_HOST.search(page.url or ""):
         row["reason"] = "login/account wall"
         row["finalUrl"] = page.url
         _close_auth_popups(page)
         return row
-    # Apply CTA often hops listing → Eightfold/Phenom Sign-in (Qualcomm).
     wall = blocked_wall(page)
-    if wall:
+    if wall in ("CAPTCHA/bot wall", "job_closed") and not looks_workday_page(page):
         row["reason"] = wall
+        row["status"] = "skipped" if wall == "job_closed" else "blocked"
         row["finalUrl"] = page.url
         _close_auth_popups(page)
         return row
     status, reason = attempt_ats_apply(page, time_cap_s=TIME_CAP_S)
-    if auth_wall_url(page.url or "") or AUTH_HOST.search(page.url or "") or "passport.amazon.jobs" in (page.url or ""):
+    if auth_wall_url(page.url or "") or "passport.amazon.jobs" in (page.url or ""):
         row["status"] = "blocked"
         row["reason"] = "login/account wall"
         row["finalUrl"] = page.url
@@ -574,6 +652,17 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
             company_walls = 0
             company_attempts = 0
             for url in urls:
+                if is_sso_only_careers_url(url):
+                    report.skipped.append(
+                        {
+                            "company": name,
+                            "url": url,
+                            "status": "skipped",
+                            "reason": "sso_only_careers_host",
+                        }
+                    )
+                    _safe_print(f"CAREERS SKIP {name} | sso_only_careers_host")
+                    continue
                 try:
                     scan_goto(page, url, timeout=75000)
                 except Exception as e:

@@ -12,6 +12,7 @@ from tools.hitechcity.careers_apply import (
     JOB_ID_HREF_RE,
     NAV_CHROME_RE,
     card_location_ok,
+    is_sso_only_careers_url,
     url_loc_hint,
 )
 from tools.hitechcity.filters import (
@@ -180,16 +181,26 @@ class _FakePage:
         return _FakeLoc(0)
 
 
-def test_workday_create_account_is_login_wall():
+def test_workday_create_account_is_completable():
     body = (
         "Create Account/Sign In\nMy Information\nCreate Account\n"
         "Password Requirements:\nEmail Address*\nPassword*\nVerify New Password*\n"
         "Already have an account?\nSign In"
     )
-    assert blocked_wall(_FakePage(body, file_inputs=0, create_acct=True)) == "login/account wall"
+    # Workday step 1 has no resume input — still completable with the env password.
+    assert blocked_wall(_FakePage(body, file_inputs=0, create_acct=True)) is None
     # Guest form with resume upload must not be treated as login wall just for "Sign In" chrome.
     guest = "My Information\nFirst Name\nUpload Resume\nSubmit application"
     assert blocked_wall(_FakePage(guest, file_inputs=1)) is None
+    jd = _FakePage(
+        "Sign in\nCreate an account\nPrincipal Software Engineer\nHyderabad\nApply now",
+        file_inputs=0,
+    )
+    jd.url = "https://boards.greenhouse.io/acme/jobs/1"
+    assert blocked_wall(jd) is None
+    assert is_sso_only_careers_url("https://www.amazon.jobs/en/search?base_query=architect")
+    assert is_sso_only_careers_url("https://apply.careers.microsoft.com/careers?keywords=architect")
+    assert not is_sso_only_careers_url("https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site")
 
 
 def test_indeed_oauth_url_is_login_wall():
@@ -226,7 +237,7 @@ if __name__ == "__main__":
     test_careers_card_location()
     test_company_match()
     test_captcha_frame_ignores_hidden_badge()
-    test_workday_create_account_is_login_wall()
+    test_workday_create_account_is_completable()
     test_indeed_oauth_url_is_login_wall()
     test_hyland_icims_url()
     print("ok")

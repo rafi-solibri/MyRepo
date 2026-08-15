@@ -475,11 +475,11 @@ def auth_wall_reason(
     # box + "Sign in using Google" and no resume upload — not guest-applyable.
     if re.search(
         r"select a method below to sign in|"
-        r"sign in to (continue|apply)|log in to apply|create an account|"
+        r"sign in to (continue|apply)|log in to apply|"
         r"sign in using (microsoft|google|linkedin|facebook|apple)|"
         r"if you are a microsoft employee|"
         r"employees must sign in|"
-        r"current \w+ employees must sign in|first time here\?|"
+        r"current \w+ employees must sign in|"
         r"we don't recognize this email",
         text or "",
         re.I,
@@ -967,13 +967,26 @@ def workday_auth(page) -> str | None:
         return None
     if not password:
         return "ats_password_missing"
+    # Prefer Sign In — prior runs often already created the tenant account.
+    # Create Account is what Solera rejects on password-complexity rules.
+    try:
+        sign = page.locator(
+            "[data-automation-id='signInLink'], [data-automation-id='utilityButtonSignIn']"
+        ).first
+        if sign.count() and sign.is_visible():
+            sign.click(force=True)
+            _sleep(1.0)
+    except Exception:
+        pass
     verify = page.locator("[data-automation-id='verifyPassword']").first
     try:
         if not (verify.count() and verify.is_visible()):
-            create = page.locator("[data-automation-id='createAccountLink']").first
-            if create.count() and create.is_visible():
-                create.click(force=True)
-                _sleep(1.2)
+            sign_in = page.locator("[data-automation-id='signInSubmitButton']").first
+            if not (sign_in.count() and sign_in.is_visible()):
+                create = page.locator("[data-automation-id='createAccountLink']").first
+                if create.count() and create.is_visible():
+                    create.click(force=True)
+                    _sleep(1.2)
     except Exception:
         pass
     _type_automation(page, "email", email)
