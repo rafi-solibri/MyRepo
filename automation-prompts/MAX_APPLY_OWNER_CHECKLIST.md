@@ -43,6 +43,7 @@ bash scripts/refresh-portal-session-seed.sh indeed
 | `LINKEDIN_EMAIL` + `LINKEDIN_PASSWORD` | Auto-heal LinkedIn when CDP session expires (still may need CAPTCHA once). |
 | `INDEED_HTTP_PROXY` (optional) | True residential proxy for cloud Indeed when home Wi‑Fi is unavailable. |
 | `NAUKRI_WORKDAY_PASSWORD` (or `WORKDAY_PASSWORD` / `ATS_PASSWORD`) | One shared password for Workday Create Account / Sign In. Helpers alias whichever of these is set. 12+ chars with complexity. |
+| `CAPSOLVER_API_KEY` / `TWOCAPTCHA_API_KEY` | **Optional.** Paid token solvers for unattended iCIMS hCaptcha. Skip these if you do not want to pay — use the headed home click below instead. |
 
 Dashboard → Cloud Agent environment → Secrets / API keys: https://cursor.com/dashboard/api
 
@@ -55,11 +56,24 @@ See `automation-prompts/ONE_TIME_LOADERS.md`. Especially paste:
 
 Cursor Automations API is **read-only** for agents — only you can create/edit schedules in the UI.
 
-## 4) Indeed = home-first
+## 4) Career-portal hCaptcha = headed home click (free)
+
+Cloud AWS IPs cannot pass Hyland iCIMS hCaptcha without a paid solver or a human click. You do **not** need CapSolver.
+
+```bash
+# On your home PC (visible Chrome). Helper fills email / I accept, then waits.
+bash scripts/home-headed-careers-apply.sh
+# Optional longer wait:
+ATS_CAPTCHA_WAIT_SEC=420 bash scripts/home-headed-careers-apply.sh
+```
+
+When the checkbox / image challenge appears, click it. The helper continues the apply. One-time iCIMS “Log back in!” in Desktop Chrome + Save snapshot can also skip the widget later.
+
+## 5) Indeed = home-first
 
 Prefer the **18:40 IST** home task (`scripts/indeed-home-daily.sh`). Cloud Indeed is best-effort (CF + anonymous session). Keep home Task Scheduler installed via `scripts/install-all-home-tasks.ps1`.
 
-## 5) Do not force-restore stale seeds
+## 6) Do not force-restore stale seeds
 
 Never set `FORCE_RESTORE_SESSIONS=1` unless you intend to overwrite live CDP auth with `.portal-sessions/` seeds (that wiped Cutshort on 2026-08-14).
 

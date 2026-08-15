@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
-"""Optional CapSolver / 2Captcha helpers for guest ATS (iCIMS hCaptcha, reCAPTCHA).
+"""hCaptcha helpers for guest ATS (iCIMS, reCAPTCHA widgets).
 
-Same secret contract as Indeed SmartApply (`CAPSOLVER_API_KEY` or
-`TWOCAPTCHA_API_KEY`). Token CAPTCHAs can be completed; DataDome / Cloudflare
-Turnstile sliders are not token widgets and stay owner/residential.
+Free path: headed Chrome waits for the owner to click
+(`ATS_CAPTCHA_WAIT_SEC` / `HOME_LOCAL=1` / `CHROME_HEADLESS=0`).
+Paid path (optional): CapSolver / 2Captcha token inject via
+`CAPSOLVER_API_KEY` or `TWOCAPTCHA_API_KEY`.
+
+DataDome / Cloudflare Turnstile sliders are not token widgets and stay
+owner/residential.
 """
 
 from __future__ import annotations
@@ -276,14 +280,62 @@ def try_click_hcaptcha_checkbox(page) -> bool:
     return False
 
 
+def owner_captcha_wait_sec() -> int:
+    """Seconds to wait for a human to click hCaptcha in headed Chrome.
+
+    Free path: no CapSolver key. Cloud headless defaults to 0. Home / headed
+    Chrome defaults to 180 unless ATS_CAPTCHA_WAIT_SEC is set.
+    """
+    raw = (os.environ.get("ATS_CAPTCHA_WAIT_SEC") or "").strip()
+    if raw:
+        try:
+            return max(0, int(raw))
+        except ValueError:
+            return 0
+    if (os.environ.get("HOME_LOCAL") or "").strip().lower() in ("1", "true", "yes"):
+        return 180
+    if (os.environ.get("CHROME_HEADLESS") or "1").strip() in ("0", "false", "no"):
+        return 180
+    return 0
+
+
+def wait_for_owner_hcaptcha(page) -> bool:
+    """Pause so the owner can solve hCaptcha in the visible Chrome window."""
+    wait = owner_captcha_wait_sec()
+    if wait <= 0:
+        return False
+    print(
+        f"hcaptcha=wait_owner {wait}s — click the captcha in the Chrome window (no paid API key)",
+        flush=True,
+    )
+    deadline = time.time() + wait
+    while time.time() < deadline:
+        if hcaptcha_token_present(page):
+            print("hcaptcha=owner_solved", flush=True)
+            return True
+        try:
+            url = getattr(page, "url", "") or ""
+        except Exception:
+            url = ""
+        if "icims.com" in url.lower() and "/login" not in url.lower():
+            # Parent navigated off login chrome.
+            if hcaptcha_token_present(page):
+                return True
+        time.sleep(2.0)
+    print("hcaptcha=owner_wait_timeout", flush=True)
+    return False
+
+
 def try_clear_hcaptcha(page) -> bool:
-    """Click checkbox, then CapSolver/2Captcha if a sitekey is present."""
+    """Click checkbox, wait for owner (free), then CapSolver/2Captcha if keyed."""
     if hcaptcha_token_present(page):
         return True
     try_click_hcaptcha_checkbox(page)
     time.sleep(1.0)
     if hcaptcha_token_present(page):
         print("hcaptcha=checkbox_passed", flush=True)
+        return True
+    if wait_for_owner_hcaptcha(page):
         return True
     if not captcha_solver_configured():
         print("hcaptcha=no_solver_key", flush=True)

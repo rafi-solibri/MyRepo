@@ -418,7 +418,15 @@ assert_true(
 assert_true(is_hard_ats_wall("CAPTCHA/bot wall"), "iCIMS hCaptcha must trip company wall cap")
 assert_true(
     is_hard_ats_wall("captcha_solver_key_missing"),
-    "missing CapSolver/2Captcha key trips company wall cap",
+    "legacy missing-key reason still trips company wall cap",
+)
+assert_true(
+    is_hard_ats_wall("captcha_needs_owner_or_solver"),
+    "no paid key + no headed wait trips company wall cap",
+)
+assert_true(
+    is_hard_ats_wall("owner_captcha_unsolved"),
+    "headed owner-wait miss trips company wall cap",
 )
 assert_true(callable(complete_icims), "complete_icims is wired")
 
