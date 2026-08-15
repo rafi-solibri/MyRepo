@@ -42,6 +42,9 @@ def test_title_ok():
     assert JD_WRONG_STACK.search(
         "designing and implementing Salesforce solutions ... SFDC Development and Customization"
     )
+    assert JD_WRONG_STACK.search(
+        "Job Title : Architect ... highly skilled Mobile Architect ... Ionic Capacitor"
+    )
     assert LI_TITLE_SKIP.search("Staff/Principal GPU/CPU Kernel Optimization Engineer")
     assert LI_TITLE_SKIP.search("Network Architect")
     assert LI_TITLE_SKIP.search("Principal Physical Design Engineer")

@@ -67,7 +67,8 @@ UNAVAILABLE_RE = re.compile(
     r"this site is temporarily unavailable|community\.workday\.com/maintenance|"
     r"this job is no longer|position has been filled|"
     r"no longer accepting applications|requisition is closed|"
-    r"job is no longer available",
+    r"job is no longer available|"
+    r"403 forbidden|\berror 403\b|access denied",
     re.I,
 )
 

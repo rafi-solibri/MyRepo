@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Cognizant talent ATS 403 Forbidden burned 390s; generic Architect + Mobile/Ionic JD | Treat 403 Forbidden as unavailable; JD_WRONG_STACK mobile architect / Ionic Capacitor |
 | Microsoft Eightfold SSO chooser (no password) burned 390s ATS cap as timeout | auth_wall_reason fail-fasts Sign in using Microsoft chooser without requiring a password field |
 | Workday maintenance and SmartRecruiters OneClick burned ATS budget then tripped walls | Shared completer fail-fasts maintenance; skips OneClick/Indeed OAuth; timeouts/unavailable are not company walls |
 | First ATS timeout counted as company wall (cap 1) so remaining externals were skipped | is_hard_ats_wall ignores timeout/incomplete; caps 4 walls / 10 attempts |

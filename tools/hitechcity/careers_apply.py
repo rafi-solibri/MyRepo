@@ -96,6 +96,7 @@ CAREERS_TITLE_SKIP = re.compile(
 # JD snippets that mean the role is wrong-stack even when the TITLE is generic Architect.
 JD_WRONG_STACK = re.compile(
     r"salesforce solutions|sfdc development|sfdc lightning|omnistudio|"
+    r"mobile architect|ionic capacitor|"
     r"mandatory[:\s]+(java|python|node|salesforce)|"
     r"required[:\s]+(java|python|node|salesforce)|"
     r"only\s+(java|python|node|salesforce)\b",
