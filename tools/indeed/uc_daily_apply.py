@@ -668,7 +668,15 @@ def fill_common_questions(sb) -> None:
               if (/\\bpan\\b|aadhaar|aadhar|passport\\s*(no|number|id)|ssn|social security/.test(t)) return null;
               if (/current.*(ctc|salary|compensation|pay)|ctc.*current|present.*ctc|current.*package|current salary/.test(t)) return '52';
               if (/expected.*(ctc|salary|compensation|pay)|ctc.*expected|desired.*salary|expected.*package/.test(t)) return '65';
-              if (/notice|joining|how soon|availability|immediate|serve notice/.test(t)) return 'Immediate';
+              if (/earliest start|start date|available from|joining date|when can you (start|join)/.test(t)
+                  && !/salary|ctc/.test(t)) {
+                return '15/08/2026';
+              }
+              if (/notice|joining|how soon|availability|immediate|serve notice/.test(t)
+                  && !/start date|available from/.test(t)) return 'Immediate';
+              if (/certify that|i certify|details mentioned in your resume|accurate and truthful/.test(t)) {
+                return 'yes';
+              }
               if (/total.*(experience|exp)|years of experience|overall experience|relevant experience/.test(t)) return '14';
               // Years with a specific stack (Blazor / FHIR / .NET / Angular / Azure / C#).
               if (/how many years|years? (of |with |in )?(exp|experience)?|experience (with|in|on)/.test(t)
@@ -693,7 +701,7 @@ def fill_common_questions(sb) -> None:
               if (/gender/.test(t)) return 'male';
               if (/city|current location|prefer.*location|job location|base location/.test(t)) return 'Hyderabad';
               if (/\\?/.test(t) && /(yes|no)/.test(t)) return 'yes';
-              if (/cover letter|why (do )?you|tell us|about yourself|summary|additional information/.test(t)) {
+              if (/what makes you unique|cover letter|why (do )?you|tell us|about yourself|summary|additional information/.test(t)) {
                 return 'Solutions Architect / Tech Lead with 14+ years in .NET, Azure, microservices. Immediate joiner. Hyd/Remote. Expected 65 LPA.';
               }
               return null;
@@ -751,7 +759,7 @@ def fill_common_questions(sb) -> None:
               for (const el of root.querySelectorAll('button, [role=option], li, label, span')) {
                 const t = ((el.innerText||'') + ' ' + (el.getAttribute('aria-label')||'')).trim().toLowerCase();
                 if (!t || t.length > 80) continue;
-                if (want === 'yes' && /\\byes\\b/.test(t) && !/\\bno\\b/.test(t)) { el.click(); return true; }
+                if (want === 'yes' && /\\byes\\b|i certify|yes, i certify/.test(t) && !/don'?t certify|\\bno,/.test(t)) { el.click(); return true; }
                 if (want === 'Immediate' && /immediate|0\\s*day/.test(t)) { el.click(); return true; }
                 if (want === 'B.Tech' && /b\\.?\\s*tech|bachelor|b\\.e\\b|undergraduate|master'?s?|m\\.?\\s*tech/.test(t)
                     && !/select an option|highest degree/.test(t)) {
@@ -798,7 +806,7 @@ def fill_common_questions(sb) -> None:
                   && !/first|last|middle|company/.test(lab)) val = 'Mohammed Abdul Rafi Ahmed';
               else if (/first\\s*name|given\\s*name|fname/.test(lab)) val = vals.first;
               else if (/last\\s*name|surname|family\\s*name|lname/.test(lab)) val = vals.last;
-              else if (/phone|mobile|tel/.test(lab) || type === 'tel') val = vals.phone;
+              else if (/\\bphone\\b|\\bmobile\\b|telephone/.test(lab) || type === 'tel') val = vals.phone;
               else if (/e-?mail/.test(lab) || type === 'email') val = vals.email;
               else if (/current.*(position|role|title|designation)|job title/.test(lab) && !/salary|ctc/.test(lab)) val = 'Solutions Architect';
               else if (/current.*(employer|company|organization)|present.*(employer|company)/.test(lab) && !/salary|ctc/.test(lab)) val = 'Nemetschek / Solibri';
@@ -806,7 +814,8 @@ def fill_common_questions(sb) -> None:
               else if (/highest (degree|education|qualification)|education|university|college|degree/.test(lab)) val = 'B.Tech';
               else if (/current.*(ctc|salary|compensation|package)|ctc.*current|current salary/.test(lab)) val = vals.current;
               else if (/expected.*(ctc|salary|compensation|package)|ctc.*expected/.test(lab)) val = vals.expected;
-              else if (/notice|joining|availability/.test(lab)) val = vals.notice;
+              else if (/earliest start|start date|available from|joining date/.test(lab) || (type === 'date' && /start|join|avail/.test(lab))) val = '15/08/2026';
+              else if (/notice|joining|availability/.test(lab) && !/start date|available from/.test(lab)) val = vals.notice;
               else if (/date of birth|\\bdob\\b|birth\\s*date|birthday/.test(lab) || type === 'date') val = '16/01/1989';
               else if (/\\bpan\\b|aadhaar|aadhar|passport\\s*(no|number|id)/.test(lab)) val = null;
               else if (/city|current\\s*location|prefer.*location|base location/.test(lab) && !/compan/.test(lab)) val = vals.city;
@@ -815,7 +824,7 @@ def fill_common_questions(sb) -> None:
                 const w = wantFromText(lab);
                 if (w) val = w;
               }
-              if (val != null && (!(el.value || '').trim() || /phone|mobile|tel|first|last|full\\s*name|ctc|salary|notice|city|experience|package|linkedin|employer|company|education|degree/.test(lab))) {
+              if (val != null && (!(el.value || '').trim() || /\\bphone\\b|\\bmobile\\b|telephone|first|last|full\\s*name|ctc|salary|notice|city|experience|package|linkedin|employer|company|education|degree|start date/.test(lab))) {
                 if (setNative(el, val)) answered += 1;
               }
             }
@@ -885,7 +894,7 @@ def fill_common_questions(sb) -> None:
               const lab = labelFor(el);
               const req = el.required || el.getAttribute('aria-required') === 'true' || /required|\\*/.test(lab);
               if (!req && !/question|ctc|salary|notice|experience/.test(lab)) continue;
-              if (/name|e-?mail|phone|mobile|tel|date|birth|pan|aadhaar/.test(lab)) {
+              if (/name|e-?mail|\\bphone\\b|\\bmobile\\b|telephone|date|birth|pan|aadhaar/.test(lab)) {
                 const named = wantFromText(lab)
                   || (/full\\s*name|your\\s*name/.test(lab) ? 'Mohammed Abdul Rafi Ahmed'
                     : (/first/.test(lab) ? vals.first : (/last/.test(lab) ? vals.last : null)));
@@ -1015,8 +1024,9 @@ def tick_required_agreements(sb) -> dict:
               if (isOn(el) || el.disabled) continue;
               const t = nearby(el);
               const short = ((el.getAttribute('aria-label') || '') + ' ' + (el.parentElement?.innerText || '') + ' ' + (el.value || '')).toLowerCase().slice(0, 80);
-              if (/\bagree\b/.test(short) || /privacy notice|declare that you have read|terms and conditions|i have read|by checking this|consent to/.test(t)) {
-                tick(el, 'box:' + short.slice(0, 40));
+              if (/\bagree\b/.test(short) || /yes, i certify|i certify/.test(short)
+                  || /privacy notice|declare that you have read|terms and conditions|i have read|by checking this|consent to|accurate and truthful/.test(t)) {
+                if (!/don'?t certify|no, i/.test(short)) tick(el, 'box:' + short.slice(0, 40));
               }
             }
             for (const el of document.querySelectorAll('label, button, [role=button], [role=option]')) {

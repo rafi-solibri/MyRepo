@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| SmartApply 'tell us unique' matched tel and got phone; start date and Yes I certify left empty | Stop matching tel inside tell; fill start date 15/08/2026; tick Yes I certify |
 | SmartApply full name got Yes leftover; years combobox stayed Select an option | Map full name to Mohammed Abdul Rafi Ahmed; open education/years listboxes and pick B.Tech / 10+ |
 | India homepage Get Started treated as signed-out after CF (false indeed_login_required; Passport cookies valid) | Confirm session on secure.indeed.com/settings/account; copy Local State into UC hybrid; fill known DOB 16/01/1989 |
 | Indeed applystart/rc/clk still counted as company-site (did_not_leave_indeed) and Easy Apply 'external' credited a click | Follow applystart hops; complete_ats_url waits off Indeed; finish_company_site on both company-site click and Easy Apply flip; confirmation only |
