@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| SmartApply Full name got Yes; education/years custom dropdowns stayed Select an option | Map full name; never Yes-fallback name fields; open comboboxes and pick B.Tech / 10+ years |
 | SmartApply DOB fields got Yes fallback and failed DD/MM/YYYY validation | Fill known DOB 16/01/1989; skip PAN/Aadhaar invent |
 | CF-cleared homepage stayed anonymous Get Started despite valid Passport cookies | After Turnstile, open secure.indeed.com/settings/account then return home so Welcome paints; copy Local State into hybrid UC profile |
 | uc_daily_apply clear_cf returned True without post-Turnstile reload → anonymous Get Started / false indeed_login_required after preflight Welcome | Reuse cf_bypass_uc.try_clear_strategies (wait+focus+reload) in clear_cf; retry reload once before login_required |
