@@ -805,7 +805,13 @@ async function main() {
     await sleep(500);
   }
 
-  // Final questionnaire audit (unique counts — do not sum across per-apply passes)
+  // Final questionnaire audit (unique counts — do not sum across per-apply passes).
+  // Historical locked-empty threads cannot be re-answered. Skip the 40+ page
+  // sweep when this session applied 0 so the run does not burn ~10 min every day.
+  if (!stats.applied.length) {
+    stats.q.skippedAudit = "no_applies_this_session";
+    console.log("[Q] skip final audit — 0 applies this session (historical locked-empty cannot be unlocked)");
+  } else {
   const auditQ = {
     awaitingListed: 0,
     answered: 0,
@@ -836,6 +842,7 @@ async function main() {
     if (!/has been closed|Target closed|Browser closed|Connection closed/i.test(msg)) {
       throw e;
     }
+  }
   }
 
   const failedTotal = stats.failed.length + stats.q.lockedEmpty + stats.q.verifyEmpty;
