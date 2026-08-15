@@ -459,11 +459,11 @@ def job_dedupe_key(href: str, jk: str = "") -> str:
     SERP cards often omit data-jk and use unique pagead/clk hrefs; extract jk=
     from the URL so BytesEdge-style repeats do not burn the ATS time cap.
     """
-    if jk:
-        return jk.strip()
     m = re.search(r"[?&]jk=([a-f0-9]+)", href or "", re.I)
     if m:
         return m.group(1)
+    if jk:
+        return jk.strip()
     return (href or "").split("?")[0]
 
 

@@ -97,7 +97,8 @@ def test_skip_salesforce_service_cloud_title():
 def test_job_dedupe_key_extracts_jk():
     assert job_dedupe_key("https://in.indeed.com/viewjob?jk=e9bbb7477d605a5b&from=serp", "") == "e9bbb7477d605a5b"
     assert job_dedupe_key("https://in.indeed.com/pagead/clk?mo=r&jk=e9bbb7477d605a5b", "") == "e9bbb7477d605a5b"
-    assert job_dedupe_key("https://in.indeed.com/viewjob?jk=abc", "cardjk") == "cardjk"
+    # URL jk wins over a per-impression card data-jk.
+    assert job_dedupe_key("https://in.indeed.com/viewjob?jk=e9bbb7477d605a5b", "cardjk") == "e9bbb7477d605a5b"
 
 
 def test_already_applied_job_view_only():
