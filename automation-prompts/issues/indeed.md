@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| daily_apply spawnSync killed preflight at 180s (status null) after a successful UC clear | Raise nested preflight timeout to 6m so WARP+Turnstile can finish |
 | SmartApply start-date empty and Yes on sponsorship/government walls | Fill start date 15/08/2026; answer sponsorship and government-employment No; retry education combobox after a short wait |
 | SmartApply education combobox left on Select an option (Choose an option to continue) | Open Indeed listbox and pick B.Tech/Bachelor; recover the same wall from tick_required_agreements |
 | SmartApply put Yes into Date of birth / PAN and stalled on required employer questions | Fill DOB 16/01/1989 and title Mr.; never invent PAN/Aadhaar; stop defaulting leftover required text to Yes |

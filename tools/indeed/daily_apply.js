@@ -56,7 +56,13 @@ function main() {
     blocked: [],
   };
 
-  const pre = run(process.execPath, [path.join(__dirname, "preflight.js")]);
+  // UC Turnstile + WARP rotate regularly exceeds 3m; 180s spawnSync
+  // timeout was aborting a successful clear as preflight_error (null status).
+  const pre = run(
+    process.execPath,
+    [path.join(__dirname, "preflight.js")],
+    Number(process.env.INDEED_PREFLIGHT_TIMEOUT_MS || 360000),
+  );
   report.preflightExit = pre.status;
   const preParsed = parseJsonTail(
     `${pre.stdout || ""}\n${pre.stderr || ""}`,
