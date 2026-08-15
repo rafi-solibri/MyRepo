@@ -78,6 +78,20 @@ def _default_seed_profile() -> str:
 
 
 SEED_PROFILE = _default_seed_profile()
+
+
+def complete_external_ats(url: str, time_cap_s: int | None = None) -> tuple[str, str, str]:
+    """Finish a company-site ATS after Indeed opens it. Confirmation only."""
+    if not url or "indeed.com" in url.lower():
+        return "blocked", "did_not_leave_indeed", url or ""
+    try:
+        sys.path.insert(0, str(ROOT))
+        from tools.ats.complete import complete_ats_url
+
+        cap = int(time_cap_s or os.environ.get("INDEED_ATS_TIME_CAP_S") or 390)
+        return complete_ats_url(url, time_cap_s=cap)
+    except Exception as exc:
+        return "blocked", f"ats_helper_error:{exc}"[:180], url
 # Volume: cron used to stop at 8 applies / 40 seen — raise so each run
 # exhausts Hyd/remote inventory instead of soft-stopping early.
 MAX_APPLIES = int(os.environ.get("INDEED_MAX_APPLIES", "40"))
@@ -2465,7 +2479,12 @@ def main() -> int:
                             continue
                     except Exception:
                         pass
-                    # Company site — open and mark external (full ATS fill is best-effort)
+                    # Company site — open, then COMPLETE the ATS (do not count a mere click).
+                    handles_before = []
+                    try:
+                        handles_before = list(sb.driver.window_handles)
+                    except Exception:
+                        handles_before = []
                     for sel in (
                         "button:contains('Apply on company site')",
                         "a:contains('Apply on company site')",
@@ -2480,13 +2499,8 @@ def main() -> int:
                         try:
                             if sb.is_element_visible(sel, timeout=2):
                                 sb.click(sel)
-                                item["path"] = "external_opened"
-                                report["external"].append(item)
-                                report["counts"]["external"] += 1
-                                time.sleep(2)
-                                fill_common_questions(sb)
                                 applied = True
-                                print("EXTERNAL", page_title[:80], flush=True)
+                                print("EXTERNAL click", page_title[:80], flush=True)
                                 break
                         except Exception:
                             continue
@@ -2504,19 +2518,40 @@ def main() -> int:
                                 """
                             )
                             if clicked:
-                                item["path"] = "external_opened"
-                                report["external"].append(item)
-                                report["counts"]["external"] += 1
-                                time.sleep(2)
-                                fill_common_questions(sb)
                                 applied = True
-                                print("EXTERNAL", clicked, page_title[:80], flush=True)
+                                print("EXTERNAL click", clicked, page_title[:80], flush=True)
                         except Exception:
                             pass
                     if not applied:
                         item["reason"] = "no_apply_button"
                         report["skipped"].append(item)
                         report["counts"]["skipped"] += 1
+                        continue
+                    time.sleep(2)
+                    ats_url = ""
+                    try:
+                        handles_after = list(sb.driver.window_handles)
+                        new_h = [h for h in handles_after if h not in handles_before]
+                        if new_h:
+                            sb.switch_to_window(new_h[-1])
+                        ats_url = sb.get_current_url() or ""
+                    except Exception:
+                        ats_url = ""
+                    status, reason, final_url = complete_external_ats(ats_url)
+                    item["atsUrl"] = final_url or ats_url
+                    item["reason"] = reason
+                    if status == "applied":
+                        item["path"] = "company_ATS"
+                        item["confirmed"] = True
+                        report["external"].append(item)
+                        report["counts"]["external"] += 1
+                        print("EXTERNAL submitted", (item.get("title") or page_title)[:80], flush=True)
+                    else:
+                        item["path"] = "company_ATS"
+                        report["blocked"].append(item)
+                        report["counts"]["blocked"] += 1
+                        print("EXTERNAL blocked", reason, flush=True)
+                    applied = True
                     continue
 
                 # Wait for SmartApply module navigation / modal hydration.

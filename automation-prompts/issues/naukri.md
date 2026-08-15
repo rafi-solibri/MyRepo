@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-08-15 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| external_incomplete_or_timeout — hidden reCAPTCHA treated as wall; GH questions only on some hosts; one Next then bail | Visible-challenge CAPTCHA only; always fillCommonAtsQuestions; retry 4x; 6.5m budget; shared WORKDAY_PASSWORD |
+
+
 ## 2026-08-14 (home)
 
 | Issue | Fix |

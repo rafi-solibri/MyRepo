@@ -42,6 +42,7 @@ bash scripts/refresh-portal-session-seed.sh indeed
 | `CURSOR_API_KEY` | Post-fix + ensure-missing can launch **fresh** same-day cloud jobs (max 5/portal/day). Without it, only in-session re-exec works. |
 | `LINKEDIN_EMAIL` + `LINKEDIN_PASSWORD` | Auto-heal LinkedIn when CDP session expires (still may need CAPTCHA once). |
 | `INDEED_HTTP_PROXY` (optional) | True residential proxy for cloud Indeed when home Wi‑Fi is unavailable. |
+| `WORKDAY_PASSWORD` (or `ATS_PASSWORD`) | Shared password for Workday Create Account / Sign In on company-website ATS. Without it, external Workday applies stop at the account wall. |
 
 Dashboard → Cloud Agent environment → Secrets / API keys: https://cursor.com/dashboard/api
 

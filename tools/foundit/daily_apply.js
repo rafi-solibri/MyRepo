@@ -24,13 +24,15 @@ const {
   FORBIDDEN_DRY_RUN,
 } = require("./resume");
 const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
+const { completeWorkdayApply } = require("../naukri/workday_apply");
+const { fillCommonAtsQuestions } = require("../naukri/ats_form");
 
 const CDP = process.env.FOUNDIT_CDP || "http://127.0.0.1:9222";
 const OUT =
   process.env.FOUNDIT_REPORT ||
   "/opt/cursor/artifacts/foundit-apply-report.json";
 const MAX_APPLIES = Number(process.env.FOUNDIT_MAX_APPLIES || 50);
-const ATS_CAP_MS = Number(process.env.FOUNDIT_ATS_CAP_MS || 3.5 * 60 * 1000);
+const ATS_CAP_MS = Number(process.env.FOUNDIT_ATS_CAP_MS || 6.5 * 60 * 1000);
 
 const QUERIES = [
   ".net architect",
@@ -359,21 +361,48 @@ async function handleExternalAts(context, resumePath, job, report) {
     }
 
     // Workday / Greenhouse / generic ATS: open Apply, upload resume, fill CTC, submit
-    const isWorkday = /myworkdayjobs\.com|workday\.com/i.test(url);
+    const isWorkday = /myworkdayjobs\.com|myworkdaysite\.com|workdayjobs|workday\.com/i.test(
+      page.url() + " " + url
+    );
+    const looksWorkdayUi = await page
+      .evaluate(
+        () =>
+          /Autofill with Resume|Apply Manually|data-automation-id/i.test(
+            document.body?.innerText || ""
+          ) || !!document.querySelector("[data-automation-id]")
+      )
+      .catch(() => false);
+    if (isWorkday || looksWorkdayUi) {
+      const wd = await completeWorkdayApply(page, resumePath, {
+        maxMs: Math.max(60_000, ATS_CAP_MS - (Date.now() - started)),
+      });
+      return {
+        status: wd.ok ? "ats_submitted" : wd.reason || "ats_incomplete_or_cap",
+        url: wd.url || page.url(),
+      };
+    }
     let applyOpened = false;
     while (Date.now() - started < ATS_CAP_MS) {
       const body = await page.evaluate(() =>
         (document.body?.innerText || "").slice(0, 1200)
       );
-      if (/captcha|hcaptcha|recaptcha|verify you are human/i.test(body)) {
+      const hasVisibleChallenge = await page
+        .locator(
+          "iframe[src*='recaptcha/bframe'], iframe[src*='hcaptcha.com'], iframe[src*='challenges.cloudflare.com']"
+        )
+        .first()
+        .isVisible()
+        .catch(() => false);
+      if (
+        hasVisibleChallenge ||
+        /verify you are human|press and hold|i'?m not a robot/i.test(body)
+      ) {
         return { status: "ats_captcha", url: page.url() };
       }
       if (
-        (/sign in|log in|create account|sso/i.test(body) &&
-          /password/i.test(body) &&
-          !/apply manually|autofill with resume/i.test(body)) ||
-        (/create account\/sign in|create account\/sign-in/i.test(body) &&
-          /current step/i.test(body))
+        /b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com/i.test(
+          page.url()
+        )
       ) {
         return { status: "ats_login_wall", url: page.url() };
       }
@@ -424,6 +453,8 @@ async function handleExternalAts(context, resumePath, job, report) {
           await sleep(800);
         }
       }
+
+      await fillCommonAtsQuestions(page).catch(() => {});
 
       await page.evaluate(
         ({ cur, exp }) => {

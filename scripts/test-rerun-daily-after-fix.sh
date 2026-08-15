@@ -36,6 +36,9 @@ got="$(bash "$SCRIPT" --detect-from-files tools/chrome_session.js)"
 want="$(printf '%s\n' linkedin foundit cutshort naukri instahyre indeed hitechcity)"
 expect "$got" "$want" "shared chrome_session → all apply portals"
 
+got="$(bash "$SCRIPT" --detect-from-files tools/ats/complete.py)"
+expect "$got" "$want" "shared tools/ats → all apply portals"
+
 got="$(bash "$SCRIPT" --detect-from-files scripts/rerun-daily-after-fix.sh automation-prompts/AUTO_FIX.md)"
 expect "$got" "" "rerun/AUTO_FIX docs do not trigger apply jobs"
 

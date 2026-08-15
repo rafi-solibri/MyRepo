@@ -1,5 +1,12 @@
 # Foundit — issues & fixes
 
+## 2026-08-15 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Workday Create Account treated as ats_login_wall (Aveva etc.) so 0 company-site completes | Reuse naukri completeWorkdayApply; 6.5m cap; fillCommonAtsQuestions on generic ATS |
+
+
 ## 2026-08-14 (home)
 
 | Issue | Fix |

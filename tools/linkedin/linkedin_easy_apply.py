@@ -2117,7 +2117,8 @@ def main() -> None:
                 "external_candidates": [
                     asdict(r)
                     for r in results
-                    if r.status == "skipped" and "external" in (r.reason or "").lower()
+                    if (r.status == "skipped" and "external" in (r.reason or "").lower())
+                    or str(getattr(r, "path", "") or "").lower() in {"external", "company", "ats", "company_website"}
                 ],
                 "all": [asdict(r) for r in results],
             }

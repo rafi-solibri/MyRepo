@@ -5,9 +5,17 @@
  */
 "use strict";
 
-const EMAIL = process.env.NAUKRI_APPLY_EMAIL || "rafi.success@gmail.com";
+const EMAIL =
+  process.env.APPLY_EMAIL ||
+  process.env.NAUKRI_APPLY_EMAIL ||
+  process.env.LINKEDIN_EMAIL ||
+  "";
 const PASS =
-  process.env.NAUKRI_WORKDAY_PASSWORD || process.env.NAUKRI_ATS_PASSWORD || "";
+  process.env.WORKDAY_PASSWORD ||
+  process.env.ATS_PASSWORD ||
+  process.env.NAUKRI_WORKDAY_PASSWORD ||
+  process.env.NAUKRI_ATS_PASSWORD ||
+  "";
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));

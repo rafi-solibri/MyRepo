@@ -336,49 +336,10 @@ def try_submit(page: Page) -> bool:
     )
 
 
-def attempt_ats_apply(page: Page, time_cap_s: int = 180) -> tuple[str, str]:
+def attempt_ats_apply(page: Page, time_cap_s: int = 390) -> tuple[str, str]:
     """Fill + submit current ATS page. Returns (status, reason)."""
-    start = time.time()
-    # Bail before expensive fill loops when CAPTCHA/login already present.
-    wall = blocked_wall(page)
-    if wall:
-        status = "skipped" if wall == "job_closed" else "blocked"
-        return status, wall
-    if looks_submitted(page):
-        return "applied", "confirmation"
     try:
-        upload_resume(page)
+        from tools.ats.complete import complete_ats
     except Exception:
-        pass
-    if time.time() - start >= time_cap_s:
-        return "blocked", "ats_time_cap"
-    wall = blocked_wall(page)
-    if wall:
-        status = "skipped" if wall == "job_closed" else "blocked"
-        return status, wall
-    try:
-        fill_common(page)
-    except Exception:
-        pass
-    steps = 0
-    while time.time() - start < time_cap_s and steps < 8:
-        wall = blocked_wall(page)
-        if wall:
-            status = "skipped" if wall == "job_closed" else "blocked"
-            return status, wall
-        if looks_submitted(page):
-            return "applied", "confirmation"
-        if not try_submit(page):
-            break
-        try:
-            upload_resume(page)
-            fill_common(page)
-        except Exception:
-            pass
-        steps += 1
-        time.sleep(0.8)
-    if looks_submitted(page):
-        return "applied", "confirmation"
-    if time.time() - start >= time_cap_s:
-        return "blocked", "ats_time_cap"
-    return "blocked", "ats_incomplete_or_stuck"
+        from ats.complete import complete_ats  # type: ignore
+    return complete_ats(page, time_cap_s=time_cap_s)

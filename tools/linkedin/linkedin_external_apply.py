@@ -131,7 +131,7 @@ SKIP_COMPANY_LOC = re.compile(
     re.I,
 )
 MAX_EXTERNAL = int(os.environ.get("LINKEDIN_MAX_EXTERNAL", "25"))
-ATS_TIME_CAP_S = int(os.environ.get("LINKEDIN_ATS_TIME_CAP_S", "210"))  # ~3.5 minutes
+ATS_TIME_CAP_S = int(os.environ.get("LINKEDIN_ATS_TIME_CAP_S", "390"))  # Workday needs ~6.5m
 
 
 @dataclass
@@ -151,6 +151,14 @@ def shot(page: Page, name: str) -> None:
         page.screenshot(path=str(SCREEN_DIR / name), full_page=False)
     except Exception:
         pass
+
+
+def _complete_ats(page: Page, time_cap_s: int) -> tuple[str, str]:
+    try:
+        from tools.ats.complete import complete_ats
+    except Exception:
+        from ats.complete import complete_ats  # type: ignore
+    return complete_ats(page, time_cap_s=time_cap_s)
 
 
 def fill_common(page: Page) -> None:
@@ -353,6 +361,12 @@ def process_external(page: Page, job: dict) -> ExtResult:
         res.reason = "no external Apply button"
         return res
 
+    apply_href = ""
+    try:
+        apply_href = (apply_btn.get_attribute("href") or "").strip()
+    except Exception:
+        apply_href = ""
+
     before = {p for p in page.context.pages}
     try:
         with page.context.expect_page(timeout=8000) as new_page_info:
@@ -378,80 +392,52 @@ def process_external(page: Page, job: dict) -> ExtResult:
     res.path = ats_url
     print(f"  ATS {ats_url[:140]}", flush=True)
 
-    if "linkedin.com" in ats_url and "jobs" in ats_url:
-        res.status = "blocked"
-        res.reason = "did not leave LinkedIn"
-        return res
-
-    t0 = time.time()
-    wall = blocked_wall(ats)
-    if wall and "login" in wall:
-        # try once more after short wait
-        time.sleep(1.5)
-        wall = blocked_wall(ats)
-    if wall == "CAPTCHA/bot wall":
-        res.status = "blocked"
-        res.reason = wall
-        shot(ats, f"ext-blocked-{jid}.png")
-        return res
-
-    steps = 0
-    while time.time() - t0 < ATS_TIME_CAP_S and steps < 12:
-        if looks_submitted(ats):
-            res.status = "submitted"
-            res.reason = "ATS confirmation"
-            shot(ats, f"ext-submitted-{jid}.png")
-            print("  -> submitted", flush=True)
-            return res
-        wall = blocked_wall(ats)
-        if wall == "CAPTCHA/bot wall":
-            res.status = "blocked"
-            res.reason = wall
-            shot(ats, f"ext-blocked-{jid}.png")
-            return res
-        fill_common(ats)
-        # Upload canonical resume when ATS file input appears
-        try:
-            resume = resume_upload_path()
-            for sel in ("#resume", "input[type=file]", "input[name*=resume i]", "input[accept*='pdf']"):
-                floc = ats.locator(sel).first
-                if floc.count():
-                    try:
-                        floc.set_input_files(resume, timeout=15000)
-                        break
-                    except Exception:
-                        continue
-        except Exception as e:
-            print("resume upload note:", e)
-        # file upload skip if required without resume on disk
-        advanced = try_submit(ats)
-        steps += 1
-        if not advanced:
-            # click primary-looking buttons
+    if "linkedin.com" in (ats_url or "") and "jobs" in (ats_url or ""):
+        # 2026 UI often keeps the job view and puts the real ATS on href / offsite.
+        offsite = apply_href if apply_href.startswith("http") and "linkedin.com" not in apply_href.lower() else ""
+        if not offsite:
             try:
-                primary = ats.locator("button[type='submit'], input[type='submit']").first
-                if primary.count() and primary.is_visible():
-                    primary.click(timeout=3000)
-                    time.sleep(1.5)
-                    advanced = True
+                for a in page.locator("a[href^='http']").all()[:20]:
+                    href = (a.get_attribute("href") or "").strip()
+                    label = ((a.inner_text() or "") + " " + (a.get_attribute("aria-label") or "")).lower()
+                    if href and "linkedin.com" not in href.lower() and "apply" in label:
+                        offsite = href
+                        break
             except Exception:
-                pass
-        if not advanced:
-            break
-        time.sleep(1.2)
+                offsite = ""
+        if offsite:
+            try:
+                ats.goto(offsite, wait_until="domcontentloaded", timeout=60000)
+                time.sleep(1.5)
+                ats_url = ats.url
+                res.path = ats_url
+                print(f"  ATS href {ats_url[:140]}", flush=True)
+            except Exception as e:
+                res.status = "blocked"
+                res.reason = f"did not leave LinkedIn ({e})"
+                return res
+        if "linkedin.com" in (ats_url or ""):
+            res.status = "blocked"
+            res.reason = "did not leave LinkedIn"
+            return res
 
-    if looks_submitted(ats):
+    status, reason = _complete_ats(ats, ATS_TIME_CAP_S)
+    if status == "applied":
         res.status = "submitted"
-        res.reason = "ATS confirmation"
+        res.reason = reason or "ATS confirmation"
         shot(ats, f"ext-submitted-{jid}.png")
         print("  -> submitted", flush=True)
         return res
+    if status == "skipped":
+        res.status = "skipped"
+        res.reason = reason
+        print(f"  -> skipped: {res.reason}", flush=True)
+        return res
 
     res.status = "blocked"
-    res.reason = f"stuck/time cap after {steps} steps on {urlparse(ats_url).netloc}"
+    res.reason = reason or f"stuck/time cap on {urlparse(ats_url).netloc}"
     shot(ats, f"ext-blocked-{jid}.png")
     print(f"  -> blocked: {res.reason}", flush=True)
-    # Close ATS tab if separate
     try:
         if ats != page and not ats.is_closed():
             ats.close()

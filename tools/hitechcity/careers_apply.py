@@ -44,7 +44,7 @@ MAX_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_PER_COMPANY", "4"))
 # Raised for discovery-expanded campus tenant list (still priority-sorted).
 MAX_COMPANIES = int(os.environ.get("HITECHCITY_MAX_COMPANIES", "40"))
 # Tight default: SSO walls must fail fast; guest ATS rarely needs 3+ minutes.
-TIME_CAP_S = int(os.environ.get("HITECHCITY_ATS_TIME_CAP_S", "90"))
+TIME_CAP_S = int(os.environ.get("HITECHCITY_ATS_TIME_CAP_S", "390"))
 MAX_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "1"))
 MAX_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "2"))
 
