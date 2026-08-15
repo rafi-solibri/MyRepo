@@ -165,12 +165,61 @@ def prepare_profile() -> dict:
 
 
 def clear_cf(sb, attempts: int = 4) -> bool:
-    """Clear Indeed Cloudflare / Turnstile with multiple GUI strategies.
+    """Clear Indeed Cloudflare / Turnstile using the same path as preflight.
 
-    Yesterday's single `uc_gui_click_captcha()` path is flaky when the widget
-    is visible but the first click does not register — try CF-specific clicks,
-    retry/blind modes, and handle_* before giving up.
+    Important: after a Turnstile GUI click we must reload (uc_open_with_reconnect).
+    Returning True on title-only "not blocked" without reload leaves an anonymous
+    homepage ("Get Started") even when Passport cookies are valid — preflight's
+    cf_bypass_uc.try_clear_strategies always reloads and restores Welcome.
     """
+    try:
+        from tools.indeed.cf_bypass_uc import (
+            blocked_blob,
+            looks_healthy,
+            page_snapshot,
+            try_clear_strategies,
+        )
+    except Exception:
+        blocked_blob = None  # type: ignore[assignment]
+        looks_healthy = None  # type: ignore[assignment]
+        page_snapshot = None  # type: ignore[assignment]
+        try_clear_strategies = None  # type: ignore[assignment]
+
+    if try_clear_strategies is not None:
+        for _ in range(max(1, attempts)):
+            title, cur_url, text = page_snapshot(sb)
+            if looks_healthy(title, text, cur_url) and not blocked_blob(
+                title, text, cur_url
+            ):
+                return True
+            if blocked_blob(title, text, cur_url) or blocked(title, text):
+                try_clear_strategies(sb)
+                title, cur_url, text = page_snapshot(sb)
+                if looks_healthy(title, text, cur_url) and not blocked_blob(
+                    title, text, cur_url
+                ):
+                    return True
+            else:
+                # Not a CF interstitial but not healthy either — hard reload once.
+                try:
+                    sb.uc_open_with_reconnect(
+                        cur_url or "https://in.indeed.com/", 4
+                    )
+                except Exception:
+                    pass
+                time.sleep(2)
+                title, cur_url, text = page_snapshot(sb)
+                if looks_healthy(title, text, cur_url) and not blocked_blob(
+                    title, text, cur_url
+                ):
+                    return True
+        title, cur_url, text = page_snapshot(sb)
+        return bool(
+            looks_healthy(title, text, cur_url)
+            and not blocked_blob(title, text, cur_url)
+        )
+
+    # Fallback if cf_bypass helpers cannot be imported.
     strategies = (
         ("uc_gui_click_cf", lambda: sb.uc_gui_click_cf()),
         ("uc_gui_click_cf_retry", lambda: sb.uc_gui_click_cf(retry=True)),
@@ -186,6 +235,14 @@ def clear_cf(sb, attempts: int = 4) -> bool:
         except Exception:
             text = ""
         if not blocked(title, text):
+            # Mirror preflight: reload so Passport session paints Welcome.
+            try:
+                sb.uc_open_with_reconnect(
+                    sb.get_current_url() or "https://in.indeed.com/", 4
+                )
+            except Exception:
+                pass
+            time.sleep(2)
             return True
         for _name, fn in strategies:
             try:
@@ -193,15 +250,10 @@ def clear_cf(sb, attempts: int = 4) -> bool:
             except Exception:
                 continue
             time.sleep(6)
-            title = sb.get_title() or ""
             try:
-                text = sb.get_text("body") or ""
-            except Exception:
-                text = ""
-            if not blocked(title, text):
-                return True
-            try:
-                sb.uc_open_with_reconnect(sb.get_current_url() or "https://in.indeed.com/", 4)
+                sb.uc_open_with_reconnect(
+                    sb.get_current_url() or "https://in.indeed.com/", 4
+                )
             except Exception:
                 pass
             time.sleep(2)
@@ -2176,28 +2228,44 @@ def main() -> int:
             return 5
 
         # CF can clear while the account is still anonymous ("Get Started" / Sign in).
+        # One hard reload: preflight-style clear sometimes paints Welcome only after
+        # a second navigation once cf_clearance is set.
         try:
             home_body = (sb.get_text("body") or "")[:2500]
             home_title = sb.get_title() or ""
         except Exception:
             home_body, home_title = "", ""
-        signed_out = bool(
-            re.search(
-                r"create an account or sign in|get started|sign in to see your personalised|"
-                r"your next job starts here",
-                home_body,
+
+        def _signed_out(body: str) -> bool:
+            return bool(
+                re.search(
+                    r"create an account or sign in|get started|sign in to see your personalised|"
+                    r"your next job starts here",
+                    body,
+                    re.I,
+                )
+            ) and not re.search(
+                r"welcome,\s*\w+|sign out|account settings|my jobs|profile",
+                body,
                 re.I,
             )
-        ) and not re.search(
-            r"welcome,\s*\w+|sign out|account settings|my jobs|profile",
-            home_body,
-            re.I,
-        )
-        if signed_out:
+
+        if _signed_out(home_body):
+            try:
+                sb.uc_open_with_reconnect("https://in.indeed.com/", 5)
+                time.sleep(3)
+                if not clear_cf(sb):
+                    pass
+                home_body = (sb.get_text("body") or "")[:2500]
+                home_title = sb.get_title() or ""
+            except Exception:
+                pass
+        if _signed_out(home_body):
             report["blocked"].append(
                 {
                     "reason": "indeed_login_required",
                     "title": home_title[:120],
+                    "bodySample": home_body[:400],
                     "hint": "CF cleared but session is anonymous — refresh Indeed cookies via headed login / home CDP",
                 }
             )
