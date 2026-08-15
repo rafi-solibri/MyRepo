@@ -159,4 +159,80 @@ function job(partial) {
   assert.ok(classify(j)?.tier === 1);
 }
 
+{
+  const j = job({
+    title: "Devops/ Platform Engineer",
+    skills: ["Terraform", "Kubernetes", "Windows Azure"],
+    salaryRange: { max: 8000000, maxVanity: 8000000 },
+    expRange: { min: 8, max: 15 },
+  });
+  assert.ok(
+    classify(j)?.tier === 3,
+    `Hyd Azure platform/devops 80L should be tier3 stretch, got ${JSON.stringify(classify(j))}`
+  );
+}
+
+{
+  const j = job({
+    title: "Senior AI/ Machine Learning Engineer",
+    skills: ["Python", "PyTorch", "Computer Vision"],
+    locations: ["Singapore"],
+    remoteType: "remote_only",
+    salaryRange: { max: 5500000, maxVanity: 5500000 },
+    expRange: { min: 5, max: 12 },
+  });
+  assert.ok(isHydOrRemote(j), "remote_only should count as Hyd/remote");
+  assert.ok(
+    classify(j)?.tier === 3,
+    `Senior AI/ML remote 55L should be tier3, got ${JSON.stringify(classify(j))}`
+  );
+}
+
+{
+  const j = job({
+    title: "Copilot Developer",
+    skills: ["GitHub Copilot", "Logic Apps", "Windows Azure"],
+    locations: [],
+    remoteType: "remote_only",
+    salaryRange: { max: 4000000, maxVanity: 4000000 },
+    expRange: { min: 9, max: 15 },
+  });
+  assert.ok(
+    classify(j)?.tier === 3,
+    `remote Copilot/Azure 40L should be tier3, got ${JSON.stringify(classify(j))}`
+  );
+}
+
+{
+  const j = job({
+    title: "Customer Success Engineer",
+    skills: ["Communication Skills"],
+    locations: [],
+    remoteType: "remote_only",
+    salaryRange: { max: 3500000, maxVanity: 3500000 },
+  });
+  assert.strictEqual(classify(j), null, "customer success must hard-skip");
+}
+
+{
+  const j = job({
+    title: "Senior PHP & Symfony Software Engineer",
+    skills: ["Symfony"],
+    locations: [],
+    remoteType: "remote_only",
+    salaryRange: { max: 4000000, maxVanity: 4000000 },
+  });
+  assert.strictEqual(classify(j), null, "PHP-primary title must hard-skip");
+}
+
+{
+  const j = job({
+    title: "MDM Data Specialist",
+    skills: ["MDM", "Informatica MDM"],
+    locations: ["Hyderabad"],
+    salaryRange: { max: 4500000, maxVanity: 4500000 },
+  });
+  assert.strictEqual(classify(j), null, "MDM/data specialist must hard-skip");
+}
+
 console.log("cutshort test_filters: ok");

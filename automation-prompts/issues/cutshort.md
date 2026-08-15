@@ -6,6 +6,7 @@
 | --- | --- |
 | findjobs defaulted to 5/page so inventory stayed thin; Associate Technical Architect hard-skipped | pageSize=50 on /findjobs/q; associate skip allows Technical/Architect/Lead |
 | status=external recorded without opening/completing company site | Extract Apply href and completeExternalPage |
+| 1195 scanned / 0 qualifying: Hyd Azure Platform Engineer 80L and Senior AI/ML remote 55L missed (tier3 required senior\|lead + narrow stack; PHP/CS/MDM leaked as no_tier) | Expand STACK_SIGNAL (AI/Python/K8s/DevOps) and tier3 titles (platform engineer/devops/copilot/AI engineer); skip customer-success/PHP/MDM/CAD; unknown CTC no longer blocks stretch |
 
 
 ## 2026-08-14 (cloud)

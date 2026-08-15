@@ -135,12 +135,12 @@ function isLoggedOut(url, bodyText) {
 }
 
 const SKIP_RE =
-  /\b(qa engineer|quality assurance|quality engineer|sdet|test engineer|intern|trainee|associate(?!\s+(director|technical|architect|principal|lead|vice))|junior|workday|dynamics|\bsap\b|shoppay|shopify|business development|\bbdm\b|recruiter|data architect|data engineer|analytics engineer|penetration|product manager|ios developer|android developer|flutter|php developer|wordpress|game developer|mobile engineer)\b/i;
+  /\b(qa engineer|quality assurance|quality engineer|sdet|test engineer|intern|trainee|associate(?!\s+(director|technical|architect|principal|lead|vice))|junior|workday|dynamics|\bsap\b|shoppay|shopify|business development|\bbdm\b|recruiter|data architect|data engineer|analytics engineer|penetration|product manager|ios developer|android developer|flutter|\bphp\b|wordpress|game developer|mobile engineer|customer success|it support|cad\/?cam|master data|\bmdm\b|data specialist|analytical engineer)\b/i;
 
 /** C# / .NET need non-\b patterns: `\bc#\b` never matches "C#" (# is non-word). */
 const NET_STACK_RE = /(\.net|\bdotnet\b|asp\.?\s*net|c#|\bcsharp\b|\bazure\b)/i;
 const STACK_SIGNAL_RE =
-  /(\.net|\bdotnet\b|asp\.?\s*net|c#|\bcsharp\b|\bazure\b|\baws\b|\breact\b|microservices|\bnode\.?js\b|\bnodejs\b|\btypescript\b|\bjava\b|genai|gen\s*ai|generative\s*ai|\bllm\b|platform engineer)/i;
+  /(\.net|\bdotnet\b|asp\.?\s*net|c#|\bcsharp\b|\bazure\b|\baws\b|\breact\b|microservices|\bnode\.?js\b|\bnodejs\b|\btypescript\b|\bjava\b|genai|gen\s*ai|generative\s*ai|\bllm\b|platform engineer|\bpython\b|machine learning|\bmlops\b|\bai\b|kubernetes|\bdevops\b|\bterraform\b)/i;
 const TIER1_TITLE_RE =
   /\b(solutions?\s*architect|technical\s*architect|cloud\s*architect|platform\s*architect|enterprise\s*architect|application\s*architect|tech(?:nical)?\s*lead|engineering\s*manager|engineering\s*leader|principal|staff|head of eng(?:ineering)?|director of eng(?:ineering)?|delivery lead|engineering lead|architect)\b/i;
 
@@ -250,14 +250,14 @@ function classify(job) {
   ) {
     return { tier: 2, reason: "tier2-senior-stack" };
   }
-  // Tier 3 stretch: Hyd/remote with band ≥35L — senior/lead + cloud/stack signal.
+  // Tier 3 stretch: Hyd/remote with band ≥35L — senior/lead/cloud + stack signal.
   // Prefer APPLY when uncertain (title-first hard-skips already applied above).
   if (
-    /\b(lead|staff|principal|architect|manager|head|senior|fullstack|full\s*-?\s*stack)\b/i.test(
+    /\b(lead|staff|principal|architect|manager|head|senior|fullstack|full\s*-?\s*stack|platform engineer|devops|sre|cloud engineer|copilot|ai engineer)\b/i.test(
       title
     ) &&
     STACK_SIGNAL_RE.test(blob) &&
-    (ctc == null ? !!job?.salaryRange?.hideSalary : ctc >= 35)
+    (ctc == null || ctc >= 35)
   ) {
     return { tier: 3, reason: "tier3-stretch" };
   }
@@ -715,7 +715,26 @@ async function main() {
   qual.sort((a, b) => a.row.tier - b.row.tier || (b.row.ctc || 0) - (a.row.ctc || 0));
   stats.qualifying = qual.map((q) => q.row);
   stats.skipReasons = skipReasons;
+  stats.nearMiss = jobs
+    .filter((job) => {
+      const title = titleOf(job);
+      if (SKIP_RE.test(title)) return false;
+      if (job?.expRange?.max != null && job.expRange.max < 6) return false;
+      if (maxCtcLpa(job) != null && maxCtcLpa(job) < 35) return false;
+      if (!isHydOrRemote(job)) return false;
+      return !classify(job);
+    })
+    .slice(0, 12)
+    .map((job) => ({
+      id: job._id,
+      title: titleOf(job),
+      company: job.company,
+      ctc: maxCtcLpa(job),
+    }));
   console.log(`[filter] scanned=${jobs.length} qualifying=${qual.length} skips=${JSON.stringify(skipReasons)}`);
+  if (stats.nearMiss.length) {
+    console.log(`[filter] nearMiss=${JSON.stringify(stats.nearMiss)}`);
+  }
 
   for (const { job, row } of qual) {
     if (stats.applied.length >= MAX_APPLIES) {
@@ -851,6 +870,7 @@ async function main() {
 - Q answered: **${stats.q.answered}** | already-submitted: ${stats.q.alreadySubmitted} | locked-empty: **${stats.q.lockedEmpty}** | verify-empty: ${stats.q.verifyEmpty}
 - Awaiting listed: ${stats.q.awaitingListed}
 - Failures (apply + locked-empty + verify-empty): **${failedTotal}**
+- Skip reasons: ${JSON.stringify(stats.skipReasons || {})}
 ${stats.q.error ? `- Q audit note: ${stats.q.error}\n` : ""}
 ## Applied
 ${stats.applied.map((a) => `- T${a.tier} ${a.title} @ ${a.company} (${a.ctc}L) \`${a.id}\` via=${a.result?.via || "?"}`).join("\n") || "_None_"}
