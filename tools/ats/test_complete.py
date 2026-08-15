@@ -25,6 +25,7 @@ from tools.ats.complete import (
     is_unavailable_text,
     looks_like_apply_cta,
     page_fingerprint,
+    workday_on_standalone_login,
     workday_password_alert,
     workday_password_rejected,
 )
@@ -261,6 +262,18 @@ assert_true(
 assert_true(
     not workday_password_alert(_AlertPage(None, _chrome + "Password*\nVerify New Password*")),
     "labels alone are not a live reject",
+)
+assert_true(
+    workday_on_standalone_login(
+        "https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site/login?redirect=%2Fjob"
+    ),
+    "Workday /login is standalone auth",
+)
+assert_true(
+    not workday_on_standalone_login(
+        "https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site/job/Hyderabad/Principal-Software-Engineer_JR-1/apply/autofillWithResume"
+    ),
+    "in-flow apply URL is not standalone login",
 )
 
 assert_true(
