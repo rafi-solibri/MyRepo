@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-08-15 (home)
+
+| Issue | Fix |
+| --- | --- |
+| Git Bash mangled taskkill /F so system Chrome never died; Start-Process handed off without remote-debugging → Playwright cdp_connect_failed / stale :9222 | launch-chrome-cdp.sh: PowerShell multi-retry Stop-Process + Singleton* clear + wait until :9222 down before relaunch |
+
+
 ## 2026-08-15 (cloud)
 
 | Issue | Fix |

@@ -93,11 +93,38 @@ if [[ "$cdp_ready" -eq 0 ]]; then
   if [[ "$system_profile" -eq 1 ]]; then
     # System profile is locked by any normal Chrome window — must close Chrome first.
     echo "Closing existing Chrome so Default profile can open with remote debugging…"
-    if command -v taskkill.exe >/dev/null 2>&1; then
-      taskkill.exe /F /IM chrome.exe >/dev/null 2>&1 || true
+    if command -v powershell.exe >/dev/null 2>&1; then
+      # Git Bash mangles taskkill /F → F:/. A single kill also leaves child
+      # chrome.exe that steals the next Start-Process (remote-debugging ignored).
+      powershell.exe -NoProfile -Command \
+        '1..6 | ForEach-Object { Get-Process chrome -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue; Start-Sleep -Milliseconds 800 }; if (@(Get-Process chrome -ErrorAction SilentlyContinue).Count -gt 0) { cmd /c "taskkill /F /IM chrome.exe /T" | Out-Null }; Start-Sleep -Seconds 1; $ud = Join-Path $env:LOCALAPPDATA "Google\Chrome\User Data"; @("SingletonLock","SingletonCookie","SingletonSocket") | ForEach-Object { $p = Join-Path $ud $_; if (Test-Path $p) { Remove-Item -Force $p -ErrorAction SilentlyContinue } }' \
+        >/dev/null 2>&1 || true
+    elif command -v taskkill.exe >/dev/null 2>&1; then
+      # Git Bash mangles /F → F:/ — use //F //IM (same as sync-chrome-sessions.sh).
+      taskkill.exe //F //IM chrome.exe >/dev/null 2>&1 || true
     else
       bash "$ROOT/scripts/kill-chrome-cdp.sh" all || true
     fi
+    # Forced kill looks like a crash → Chrome restores 100+ tabs and Playwright
+    # connectOverCDP hangs. Mark a clean exit so the next launch starts blank.
+    node - "$profile" <<'NODE' || true
+const fs = require("fs");
+const path = require("path");
+const ud = process.argv[2];
+for (const rel of ["Default/Preferences", "Default/Secure Preferences"]) {
+  const p = path.join(ud, rel);
+  try {
+    const j = JSON.parse(fs.readFileSync(p, "utf8"));
+    j.profile = j.profile || {};
+    j.profile.exit_type = "Normal";
+    j.profile.exited_cleanly = true;
+    fs.writeFileSync(p, JSON.stringify(j));
+    console.error(`NOTE: marked clean Chrome exit in ${rel}`);
+  } catch {
+    /* missing / locked — ignore */
+  }
+}
+NODE
   elif command -v taskkill.exe >/dev/null 2>&1; then
     # Only kill Chrome instances that expose CDP :9222 (leave normal browsing alone when possible).
     powershell.exe -NoProfile -Command \
@@ -105,6 +132,16 @@ if [[ "$cdp_ready" -eq 0 ]]; then
       >/dev/null 2>&1 || true
   else
     bash "$ROOT/scripts/kill-chrome-cdp.sh" cdp || true
+  fi
+  # Confirm :9222 is actually down before relaunch (stale CDP fools reuse checks).
+  for _i in 1 2 3 4 5 6 7 8; do
+    if ! curl -fsS "http://127.0.0.1:9222/json/version" >/dev/null 2>&1; then
+      break
+    fi
+    sleep 1
+  done
+  if curl -fsS "http://127.0.0.1:9222/json/version" >/dev/null 2>&1; then
+    echo "WARNING: :9222 still up after kill — Playwright may attach to stale Chrome." >&2
   fi
   sleep 1
 fi
@@ -203,6 +240,10 @@ if [[ "$cdp_ready" -eq 0 ]]; then
       echo "  '--disable-gpu',"
       echo "  '--disable-dev-shm-usage',"
       echo "  '--disable-extensions',"
+      echo "  '--no-first-run',"
+      echo "  '--no-default-browser-check',"
+      echo "  '--disable-session-crashed-bubble',"
+      echo "  '--hide-crash-restore-bubble',"
       echo "  '--remote-debugging-address=127.0.0.1',"
       echo "  '--remote-debugging-port=9222',"
       echo "  '--remote-allow-origins=*',"
@@ -229,6 +270,10 @@ if [[ "$cdp_ready" -eq 0 ]]; then
       --disable-gpu \
       --disable-dev-shm-usage \
       --disable-extensions \
+      --no-first-run \
+      --no-default-browser-check \
+      --disable-session-crashed-bubble \
+      --hide-crash-restore-bubble \
       --remote-debugging-address=127.0.0.1 \
       --remote-debugging-port=9222 \
       --remote-allow-origins='*' \
