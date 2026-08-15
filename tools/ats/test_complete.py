@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -25,6 +26,7 @@ from tools.ats.complete import (
     is_unavailable_text,
     looks_like_apply_cta,
     page_fingerprint,
+    workday_compliant_password,
     workday_on_standalone_login,
     workday_password_alert,
     workday_password_rejected,
@@ -274,6 +276,19 @@ assert_true(
         "https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site/job/Hyderabad/Principal-Software-Engineer_JR-1/apply/autofillWithResume"
     ),
     "in-flow apply URL is not standalone login",
+)
+assert_true(
+    workday_compliant_password("GoodPass123!") == "GoodPass123!",
+    "already-compliant password is unchanged",
+)
+_weak = workday_compliant_password("short")
+assert_true(len(_weak) >= 12, "compliant password is 12+")
+assert_true(bool(re.search(r"[A-Z]", _weak)), "compliant password has uppercase")
+assert_true(bool(re.search(r"[0-9]", _weak)), "compliant password has digit")
+assert_true(bool(re.search(r"[^A-Za-z0-9]", _weak)), "compliant password has special")
+assert_true(
+    workday_compliant_password("short") == workday_compliant_password("short"),
+    "compliant password is deterministic",
 )
 
 assert_true(

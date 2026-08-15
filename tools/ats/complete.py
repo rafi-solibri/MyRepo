@@ -214,6 +214,38 @@ def ats_password() -> str:
     return ""
 
 
+def workday_compliant_password(raw: str) -> str:
+    """Deterministic Workday-safe password (12+, upper, lower, digit, special).
+
+    Same input always yields the same output so Sign In matches Create Account
+    across runs. If the secret already meets common tenant rules, return it.
+    """
+    pw = (raw or "").strip()
+    if (
+        len(pw) >= 12
+        and re.search(r"[A-Z]", pw)
+        and re.search(r"[a-z]", pw)
+        and re.search(r"[0-9]", pw)
+        and re.search(r"[^A-Za-z0-9]", pw)
+    ):
+        return pw
+    extra = ""
+    if not re.search(r"[A-Z]", pw):
+        extra += "A"
+    if not re.search(r"[a-z]", pw):
+        extra += "a"
+    if not re.search(r"[0-9]", pw):
+        extra += "1"
+    if not re.search(r"[^A-Za-z0-9]", pw):
+        extra += "!"
+    pw = pw + extra
+    if len(pw) < 12:
+        pw = (pw + "Aa1!")[:12] if len(pw) + 4 >= 12 else pw + "Aa1!"
+        while len(pw) < 12:
+            pw += "x"
+    return pw
+
+
 def is_hard_ats_wall(reason: str | None) -> bool:
     """True only for walls that will repeat for the same company this run.
 
@@ -999,6 +1031,7 @@ def workday_auth(page) -> str | None:
         return None
     if not password:
         return "ats_password_missing"
+    create_password = workday_compliant_password(password)
     # Prefer Sign In — prior runs often already created the tenant account.
     # Create Account is what Solera rejects on password-complexity rules.
     chose_sign_in = False
@@ -1030,11 +1063,17 @@ def workday_auth(page) -> str | None:
                     _sleep(1.2)
     except Exception:
         pass
-    _type_automation(page, "email", email)
-    _type_automation(page, "password", password)
+    creating = False
     try:
-        if page.locator("[data-automation-id='verifyPassword']").first.is_visible():
-            _type_automation(page, "verifyPassword", password)
+        creating = page.locator("[data-automation-id='verifyPassword']").first.is_visible()
+    except Exception:
+        creating = False
+    use_pw = create_password if creating else password
+    _type_automation(page, "email", email)
+    _type_automation(page, "password", use_pw)
+    try:
+        if creating:
+            _type_automation(page, "verifyPassword", create_password)
             tick_consents(page)
             submit = page.locator(
                 "[data-automation-id='createAccountSubmitButton'], button:has-text('Create Account')"
@@ -1059,22 +1098,44 @@ def workday_auth(page) -> str | None:
         _click_text(page, ("Sign In",))
         _sleep(2.0)
     if workday_password_alert(page):
-        # Tenant complexity (Solera: uppercase+numeric) rejects the stored secret.
-        # Try Sign In once, then fail-fast — do not burn the 390s cap.
+        # Raw secret failed complexity — retry Create Account with compliant
+        # password, then Sign In. Do not burn the 390s cap looping Create.
         try:
-            sign = page.locator(
-                "[data-automation-id='signInLink'], [data-automation-id='utilityButtonSignIn']"
-            ).first
-            if sign.count() and sign.is_visible():
-                sign.click(force=True)
-                _sleep(1.2)
-                _type_automation(page, "email", email)
-                _type_automation(page, "password", password)
-                _click_text(page, ("Sign In",))
-                _sleep(2.0)
+            if page.locator("[data-automation-id='verifyPassword']").first.is_visible():
+                _type_automation(page, "password", create_password)
+                _type_automation(page, "verifyPassword", create_password)
+                tick_consents(page)
+                submit = page.locator(
+                    "[data-automation-id='createAccountSubmitButton']"
+                ).first
+                if submit.count() and submit.is_visible():
+                    submit.click(force=True)
+                    _sleep(2.8)
         except Exception:
             pass
-        if workday_password_alert(page) or page.locator(
+        if workday_password_alert(page):
+            try:
+                sign = page.locator(
+                    "[data-automation-id='signInLink'], [data-automation-id='utilityButtonSignIn']"
+                ).first
+                if sign.count() and sign.is_visible():
+                    sign.click(force=True)
+                    _sleep(1.2)
+                    _type_automation(page, "email", email)
+                    _type_automation(page, "password", password)
+                    _click_text(page, ("Sign In",))
+                    _sleep(2.0)
+                    if re.search(
+                        r"wrong email address or password|incorrect email or password",
+                        _body(page, 1500),
+                        re.I,
+                    ) and create_password != password:
+                        _type_automation(page, "password", create_password)
+                        _click_text(page, ("Sign In",))
+                        _sleep(2.0)
+            except Exception:
+                pass
+        if workday_password_alert(page) and page.locator(
             "[data-automation-id='createAccountSubmitButton']"
         ).count():
             return "ats_login_wall"

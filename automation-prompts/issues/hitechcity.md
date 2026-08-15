@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Workday Create Account burned 390s then 0 applies when secret failed tenant complexity / empty /login | Fail-fast inputAlert + standalone /login; Create Account uses deterministic 12+ complexity password so guest Workday can submit |
 | Solera Workday Sign In navigated to /login with empty fields; click_advance re-submitted Sign In until 390s timeout | Fail-fast ats_login_wall on standalone myworkdayjobs /login after one credential pass |
 | Solera Workday Create Account burned 390s — password-rule error sat below a 1500-char body slice so fail-fast never fired and click_advance kept submitting Create Account | workday_password_alert reads inputAlert + 8k body; do not match static Password Requirements list; wait for Sign In form; skip Create Account submit after reject |
 | Career portals applied 0 — JD Sign-in chrome and Workday Create Account treated as login wall | Do not wall JD chrome or Workday auth; Sign In first; adopt ATS tabs; skip Amazon/Microsoft/Qualcomm SSO-only hosts; run careers before LinkedIn |
