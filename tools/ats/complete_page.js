@@ -78,7 +78,7 @@ async function completeExternalPage(page, resumePath, { maxMs = 6.5 * 60 * 1000 
   await preferGuestApply(page);
   while (Date.now() - start < maxMs && noAdvance < 6) {
     const url = page.url() || "";
-    if (/b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|secure\.indeed\.com\/(?:auth|oauth)|oneclick\.smartrecruiters/i.test(url)) {
+    if (/b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|secure\.indeed\.com\/(?:auth|oauth)|oneclick\.smartrecruiters|talent\.cognizant\.com\/\S*login/i.test(url)) {
       return { ok: false, reason: "ats_login_wall", url };
     }
     const text = await page

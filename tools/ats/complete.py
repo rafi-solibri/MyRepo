@@ -83,7 +83,8 @@ BOARD_TRACKING_RE = re.compile(
 SSO_HOST_RE = re.compile(
     r"b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|"
     r"auth0\.com|passport\.amazon\.jobs|secure\.indeed\.com/(?:auth|account|oauth)|"
-    r"signin\.aws|login\.microsoft|oneclick\.smartrecruiters",
+    r"signin\.aws|login\.microsoft|oneclick\.smartrecruiters|"
+    r"talent\.cognizant\.com/\S*login",
     re.I,
 )
 

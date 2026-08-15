@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Cognizant talent.cognizant.com/login2 hung ATS cap (timeout not a wall, 10 retries) | Classify talent.cognizant.com/login* as SSO login wall |
 | Cognizant talent ATS 403 Forbidden burned 390s; generic Architect + Mobile/Ionic JD | Treat 403 Forbidden as unavailable; JD_WRONG_STACK mobile architect / Ionic Capacitor |
 | Microsoft Eightfold SSO chooser (no password) burned 390s ATS cap as timeout | auth_wall_reason fail-fasts Sign in using Microsoft chooser without requiring a password field |
 | Workday maintenance and SmartRecruiters OneClick burned ATS budget then tripped walls | Shared completer fail-fasts maintenance; skips OneClick/Indeed OAuth; timeouts/unavailable are not company walls |
