@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Overlapping home portals killed shared system Chrome: Git Bash /proc never matched chrome.exe so every launch-chrome-cdp restart wiped mid-apply; also PowerShell -File on MSYS /tmp .ps1 never started Chrome | launch-chrome-cdp.sh: Windows PowerShell Win32_Process reuse for system :9222; write launch .ps1 under artifacts/ + cygpath -w; inline Start-Process fallback |
 | Git Bash mangled taskkill /F so system Chrome never died; Start-Process handed off without remote-debugging → Playwright cdp_connect_failed / stale :9222 | launch-chrome-cdp.sh: PowerShell multi-retry Stop-Process + Singleton* clear + wait until :9222 down before relaunch |
 
 
