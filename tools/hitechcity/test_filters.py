@@ -37,6 +37,7 @@ def test_title_ok():
     assert CAREERS_TITLE_SKIP.search("Product Manager, Principal")
     assert CAREERS_TITLE_SKIP.search("Principal Physical Design Engineer (Chiplet Design)")
     assert CAREERS_TITLE_SKIP.search("Staff ASIC Design Engineer")
+    assert CAREERS_TITLE_SKIP.search("Principal Silicon Design Engineer")
     assert JD_WRONG_STACK.search(
         "designing and implementing Salesforce solutions ... SFDC Development and Customization"
     )
@@ -195,6 +196,7 @@ def test_indeed_oauth_url_is_login_wall():
     assert auth_wall_url("https://passport.amazon.jobs/login")
     assert auth_wall_url("https://app.eightfold.ai/login?next=/careers")
     assert auth_wall_url("https://login.cognizant.com/oauth2")
+    assert auth_wall_url("https://talent.cognizant.com/en_US/careers/Login2")
     assert not auth_wall_url("https://jobs.smartrecruiters.com/Experian/123-Solution-Architect")
     assert not auth_wall_url("https://app.eightfold.ai/careers/job?pid=123")
     page = _FakePage("Sign In | Indeed Accounts\nContinue with Google", file_inputs=0)

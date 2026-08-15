@@ -158,6 +158,35 @@ assert_true(
 )
 
 assert_true(
+    classify_ats_host("https://talent.cognizant.com/en_US/careers/Login2") == "sso",
+    "Cognizant talent login2 is SSO",
+)
+assert_true(
+    auth_wall_reason(
+        "https://careers.qualcomm.com/careers/apply?pid=446720272187",
+        "Sign In\nCurrent Qualcomm employees must sign in using the Career Hub.\n"
+        "Email\nWe don't recognize this email. Create a new account\n"
+        "Continue\nOR\nSign in using Google\nFirst time here?\nCreate an account",
+        has_password=False,
+        has_file=False,
+        has_email_field=True,
+    )
+    == "ats_login_wall",
+    "Eightfold email-only Sign-in is a hard wall",
+)
+assert_true(
+    auth_wall_reason(
+        "https://careers.qualcomm.com/careers/apply?pid=1",
+        "Sign in using Google\nCreate an account",
+        has_password=False,
+        has_file=True,
+        has_email_field=True,
+    )
+    is None,
+    "Resume upload means guest apply can continue",
+)
+
+assert_true(
     auth_wall_reason(
         "https://careers.acme.com/job",
         "This position has been filled",
