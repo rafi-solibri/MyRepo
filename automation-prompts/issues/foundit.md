@@ -1,5 +1,12 @@
 # Foundit — issues & fixes
 
+## 15 Aug 2026 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Primary .NET-token Raven queries exhausted (0 new applies, 42 duplicates); Hyd Arch/Lead/cloud inventory only appeared on Naukri-parity queries; underscore titles hid seniority; Salesforce-in-skills CPQ passed as Arch | EXTRA_QUERIES wave when applies<8; titleForMatch for _/\|; Dot Net proof; skip Salesforce-primary skills without .NET on title |
+
+
 ## 2026-08-14 (home)
 
 | Issue | Fix |

@@ -86,10 +86,19 @@ function experienceBounds(job, title) {
   return { min, max, undisclosed: false };
 }
 
+/** Underscore / pipe titles ("Technical Architect_.NET", "IN_Senior_…") need word breaks. */
+function titleForMatch(title) {
+  return String(title || "").replace(/[_|/]+/g, " ");
+}
+
+function hasDotNetProof(text) {
+  const norm = String(text || "").replace(/asp\.?\s*net/gi, "DOTNET");
+  return /\.net|\bdotnet\b|\bdot\s*net\b|\bc#\b/i.test(norm);
+}
+
 function hasDotNet(title, skills) {
   // Do NOT use \b before .net — space+dot is not a word boundary.
-  const norm = `${title || ""} ${skills || ""}`.replace(/asp\.?\s*net/gi, "DOTNET");
-  return /\.net|\bdotnet\b|\bc#\b/i.test(norm);
+  return hasDotNetProof(`${titleForMatch(title)} ${skills || ""}`);
 }
 
 function hasSeniority(title) {
@@ -97,36 +106,39 @@ function hasSeniority(title) {
   // Apply bias: uncertain → apply; still gated by .NET + Hyd/remote + exp elsewhere.
   // architect(?:ure)? covers "Solution Architecture …" titles (not only "Architect").
   return /\b(architect(?:ure)?|principal|staff\s+(software|engineer)|engineering\s+manager|\bem\b|director|avp|head\s+of|tech(?:nology)?\s+lead|technical\s+lead|\blead\b|manager|\bsenior\b|\bsr\.?\b)\b/i.test(
-    title || ""
+    titleForMatch(title)
   );
 }
 
 /** Architect / Tech Lead / EM band — Naukri parity: may apply without .NET on skills laundry list. */
 function isArchLeadTitle(title) {
   return /\b(architect(?:ure)?|principal|staff\s+(software|engineer)|engineering\s+manager|\bem\b|tech(?:nology)?\s+lead|technical\s+lead|solution\s+architect(?:ure)?|software\s+architect(?:ure)?)\b/i.test(
-    title || ""
+    titleForMatch(title)
   );
 }
 
 function isJavaOrSalesforcePrimary(title, skills) {
-  const blob = `${title || ""} ${skills || ""}`;
-  if (/\b(salesforce|agentforce|sfdc)\b/i.test(title || "")) return true;
+  const t = titleForMatch(title);
+  const blob = `${t} ${skills || ""}`;
+  if (/\b(salesforce|agentforce|sfdc)\b/i.test(t)) return true;
+  // Skills-only Salesforce without .NET on TITLE (Hitachi CPQ / Agentforce-adjacent).
+  if (/\b(salesforce|agentforce|sfdc)\b/i.test(skills || "") && !hasDotNetProof(t)) return true;
   if (/\bjava\b(?!\s*script)/i.test(blob) && !hasDotNet(title, skills)) return true;
   return false;
 }
 
 function isTechLeadBand(title) {
   return /\b(architect(?:ure)?|principal|staff|tech(?:nology)?\s+lead|technical\s+lead)\b/i.test(
-    title || ""
+    titleForMatch(title)
   );
 }
 
 function isStaffPrincipal(title) {
-  return /\b(staff|principal)\b/i.test(title || "");
+  return /\b(staff|principal)\b/i.test(titleForMatch(title));
 }
 
 function skipTitleReason(title) {
-  const t = title || "";
+  const t = titleForMatch(title);
   if (/\b(qa\b|sdet|test\s+engineer)\b/i.test(t) && !hasDotNet(t, "")) return "QA/test";
   if (
     /\b(project\s+manager|program\s+manager|delivery\s+manager|technical\s+program\s+manager|\btpm\b)\b/i.test(
@@ -206,10 +218,10 @@ function classifyJob(job) {
       return { pass: false, reason: "no .NET on title+skills" };
     }
   }
-  const norm = `${title} ${skills}`.replace(/asp\.?\s*net/gi, "DOTNET");
-  if (/\bsap\b/i.test(norm) && !/\.net|\bdotnet\b|\bc#\b/i.test(norm))
+  const norm = `${titleForMatch(title)} ${skills}`.replace(/asp\.?\s*net/gi, "DOTNET");
+  if (/\bsap\b/i.test(norm) && !hasDotNetProof(norm))
     return { pass: false, reason: "SAP without .NET" };
-  if (/\bjava\b(?!\s*script)/i.test(norm) && !/\.net|\bdotnet\b|\bc#\b/i.test(norm))
+  if (/\bjava\b(?!\s*script)/i.test(norm) && !hasDotNetProof(norm))
     return { pass: false, reason: "Java-only" };
   const skip = skipTitleReason(title);
   if (skip) return { pass: false, reason: skip };
@@ -256,9 +268,12 @@ module.exports = {
   locationsFrom,
   parseTitleExperience,
   experienceBounds,
+  titleForMatch,
+  hasDotNetProof,
   hasDotNet,
   hasSeniority,
   isArchLeadTitle,
+  isJavaOrSalesforcePrimary,
   experienceOk,
   ctcOk,
   classifyJob,

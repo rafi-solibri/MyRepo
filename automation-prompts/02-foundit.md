@@ -35,7 +35,7 @@ Daily Foundit job-apply agent for Mohammed Abdul Rafi Ahmed (Solutions Architect
 
 ## Order
 1. Newest: 1 day → 3 days → expand; Raven public search OK if Akamai blocks UI
-2. Queries: .net architect, .net lead, solutions architect .net, engineering manager .net, principal .net, azure .net architect, software architect .net
+2. Queries: .net architect, .net lead, solutions architect .net, engineering manager .net, principal .net, azure .net architect, software architect .net. If those are exhausted, extra wave (Naukri parity): solution architect, technical architect, engineering manager, technical lead, software architect, principal engineer, cloud architect, dotnet architect, tech lead .net, azure architect.
 3. Quick Apply / Apply Now when native; else complete external ATS with Rafi_Resume.docx + 52→65 LPA
 4. NEVER call canJobApply as dry-run (it submits). Use userJobInfo / applicationStatus for eligibility.
 5. Cap stuck CAPTCHA/login ~3–4 min; continue inventory
