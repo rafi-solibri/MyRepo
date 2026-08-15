@@ -11,6 +11,7 @@ from tools.hitechcity.careers_apply import (
     JD_WRONG_STACK,
     JOB_ID_HREF_RE,
     NAV_CHROME_RE,
+    _browser_session_dead,
     card_location_ok,
     is_hang_scan_url,
     is_sso_only_careers_url,
@@ -23,6 +24,12 @@ from tools.hitechcity.filters import (
     title_matches_senior_stack,
 )
 from tools.hitechcity.linkedin_target_apply import LI_TITLE_SKIP
+
+
+def test_browser_session_dead():
+    assert _browser_session_dead("Page.goto: Target page, context or browser has been closed")
+    assert _browser_session_dead("connect ECONNREFUSED 127.0.0.1:9222")
+    assert not _browser_session_dead("Timeout 75000ms exceeded")
 
 
 def test_title_ok():
