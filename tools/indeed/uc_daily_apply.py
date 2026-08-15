@@ -682,6 +682,14 @@ def fill_common_questions(sb) -> None:
               if (/reason for (change|leaving|switch)|why (are you )?looking|why change|current (role|job) change/.test(t)) {
                 return 'Career growth — seeking Solution Architect / Tech Lead roles in .NET and Azure. Immediate joiner. Expected 65 LPA.';
               }
+              if (/makes you unique|150 characters|catch our eye/.test(t)) {
+                return '14y .NET/Azure architect, Hyd/Remote, immediate, 65 LPA.';
+              }
+              if (/certify|accurate and truthful|details mentioned in your resume/.test(t)) return 'yes';
+              if (/earliest start|start date|available (from|on)|joining date/.test(t)
+                  && !/salary|ctc|notice/.test(t)) {
+                return '15/08/2026';
+              }
               if (/cover letter|why (do )?you|tell us|about yourself|summary|additional information/.test(t)) {
                 return 'Solutions Architect / Tech Lead with 14+ years in .NET, Azure, microservices. Immediate joiner. Hyd/Remote. Expected 65 LPA.';
               }
@@ -773,7 +781,7 @@ def fill_common_questions(sb) -> None:
                   && !/first|last|middle|company/.test(lab)) val = 'Mohammed Abdul Rafi Ahmed';
               else if (/first\\s*name|given\\s*name|fname/.test(lab)) val = vals.first;
               else if (/last\\s*name|surname|family\\s*name|lname/.test(lab)) val = vals.last;
-              else if (/phone|mobile|tel/.test(lab) || type === 'tel') val = vals.phone;
+              else if (/phone|mobile|\\btel\\b|telephone/.test(lab) || type === 'tel') val = vals.phone;
               else if (/e-?mail/.test(lab) || type === 'email') val = vals.email;
               else if (/current.*(position|role|title|designation)|job title/.test(lab) && !/salary|ctc/.test(lab)) val = 'Solutions Architect';
               else if (/current.*(employer|company|organization)|present.*(employer|company)/.test(lab) && !/salary|ctc/.test(lab)) val = 'Nemetschek / Solibri';
@@ -782,7 +790,9 @@ def fill_common_questions(sb) -> None:
               else if (/current.*(ctc|salary|compensation|package)|ctc.*current|current salary/.test(lab)) val = vals.current;
               else if (/expected.*(ctc|salary|compensation|package)|ctc.*expected/.test(lab)) val = vals.expected;
               else if (/notice|joining|availability/.test(lab)) val = vals.notice;
-              else if (/date of birth|\\bdob\\b|birth\\s*date|birthday/.test(lab) || type === 'date') val = '16/01/1989';
+              else if (/earliest start|start date|available (from|on)|joining date/.test(lab)) val = '15/08/2026';
+              else if (/date of birth|\\bdob\\b|birth\\s*date|birthday/.test(lab) || (type === 'date' && /birth|dob/.test(lab))) val = '16/01/1989';
+              else if (type === 'date') val = '15/08/2026';
               else if (/\\bpan\\b|aadhaar|aadhar|passport\\s*(no|number|id)/.test(lab)) val = null;
               else if (/city|current\\s*location|prefer.*location|base location/.test(lab) && !/compan/.test(lab)) val = vals.city;
               else if (/experience|years/.test(lab) && !/date|birth|pan|aadhaar/.test(lab)) val = vals.experience;
@@ -790,7 +800,7 @@ def fill_common_questions(sb) -> None:
                 const w = wantFromText(lab);
                 if (w) val = w;
               }
-              if (val != null && (!(el.value || '').trim() || /phone|mobile|tel|first|last|full\\s*name|ctc|salary|notice|city|experience|package|linkedin|employer|company|education|degree/.test(lab))) {
+              if (val != null && (!(el.value || '').trim() || /phone|mobile|\\btel\\b|telephone|first|last|full\\s*name|ctc|salary|notice|city|experience|package|linkedin|employer|company|education|degree/.test(lab))) {
                 if (setNative(el, val)) answered += 1;
               }
             }
@@ -851,7 +861,7 @@ def fill_common_questions(sb) -> None:
               if (c.disabled) continue;
               if (c.checked || c.getAttribute('aria-checked') === 'true') continue;
               const lab = labelFor(c) + ' ' + (c.innerText || '') + ' ' + (c.value || '');
-              if (/confirm|agree|privacy|notice|terms|read.*understand|i have read|by checking|consent/.test(lab)) {
+              if (/confirm|agree|privacy|notice|terms|read.*understand|i have read|by checking|consent|certify|accurate and truthful/.test(lab)) {
                 try { c.click(); answered += 1; } catch (e) {}
               }
             }
@@ -861,7 +871,8 @@ def fill_common_questions(sb) -> None:
               const lab = labelFor(el);
               const req = el.required || el.getAttribute('aria-required') === 'true' || /required|\\*/.test(lab);
               if (!req && !/question|ctc|salary|notice|experience/.test(lab)) continue;
-              if (/name|e-?mail|phone|mobile|tel|date|birth|pan|aadhaar/.test(lab)) {
+              if (/name|e-?mail|phone|mobile|\\btel\\b|telephone|date|birth|pan|aadhaar/.test(lab)
+                  && !/tell us|unique|makes you/.test(lab)) {
                 const named = wantFromText(lab)
                   || (/full\\s*name|your\\s*name/.test(lab) ? 'Mohammed Abdul Rafi Ahmed'
                     : (/first/.test(lab) ? vals.first : (/last/.test(lab) ? vals.last : null)));
@@ -1003,7 +1014,8 @@ def tick_required_agreements(sb) -> dict:
               if (isOn(el) || el.disabled) continue;
               const t = nearby(el);
               const short = ((el.getAttribute('aria-label') || '') + ' ' + (el.parentElement?.innerText || '') + ' ' + (el.value || '')).toLowerCase().slice(0, 80);
-              if (/\bagree\b/.test(short) || /privacy notice|declare that you have read|terms and conditions|i have read|by checking this|consent to/.test(t)) {
+              if (/\bagree\b/.test(short) || /yes, i certify|i certify/.test(short)
+                  || /privacy notice|declare that you have read|terms and conditions|i have read|by checking this|consent to|accurate and truthful/.test(t)) {
                 tick(el, 'box:' + short.slice(0, 40));
               }
             }
@@ -1022,7 +1034,7 @@ def tick_required_agreements(sb) -> dict:
             if (err) {
               const root = err.closest('fieldset, [class*="question"], [class*="Question"], li, section, form, div') || document.body;
               const opt = [...root.querySelectorAll('label, button, [role=option], [role=radio], [role=checkbox], input')]
-                .find(e => /^agree\b|^yes\b/i.test(((e.innerText || '') + ' ' + (e.getAttribute('aria-label') || '') + ' ' + (e.value || '')).trim()));
+                .find(e => /^agree\b|^yes\b|certify/i.test(((e.innerText || '') + ' ' + (e.getAttribute('aria-label') || '') + ' ' + (e.value || '')).trim()));
               if (opt) {
                 const box = associatedBox(opt) || opt;
                 if (!isOn(box)) tick(box, 'validation-agree');
