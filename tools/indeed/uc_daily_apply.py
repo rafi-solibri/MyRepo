@@ -401,6 +401,30 @@ def _campus_allowlist_blocks(company: str) -> bool:
         return False
 
 
+def notice_period_answer(label: str) -> str | None:
+    """SmartApply notice-period value. Numeric 'in days' fields must be 0, not Immediate."""
+    t = (label or "").lower()
+    if re.search(r"privacy notice|agree to the (privacy|terms)", t):
+        return None
+    if re.search(r"start date|available from", t) and not re.search(r"notice", t):
+        return None
+    days_numeric = bool(
+        re.search(
+            r"notice period\s*\(in days\)|notice.*\(in days\)|notice.*in days|"
+            r"notice.*\(days\)|number of days|days\b.*notice|notice.*\bdays\b|"
+            r"valid number",
+            t,
+        )
+    )
+    if days_numeric:
+        return "0"
+    if re.search(
+        r"notice|joining|how soon|availability|immediate|serve notice", t
+    ) and not re.search(r"start date|available from", t):
+        return "Immediate"
+    return None
+
+
 def skip_reason(title: str, company: str, location: str, snippet: str) -> str | None:
     t = title or ""
     if _campus_allowlist_blocks(company):
@@ -796,8 +820,11 @@ def fill_common_questions(sb) -> None:
                   && !/salary|ctc/.test(t)) {
                 return '15/08/2026';
               }
+              // "Notice Period (in days)" is a number field — "Immediate" fails validation.
+              if (/notice/.test(t) && /(in days|\\(days\\)|\\bdays\\b|number of days|valid number)/.test(t)
+                  && !/privacy notice/.test(t)) return '0';
               if (/notice|joining|how soon|availability|immediate|serve notice/.test(t)
-                  && !/start date|available from/.test(t)) return 'Immediate';
+                  && !/start date|available from|privacy notice/.test(t)) return 'Immediate';
               if (/certify that|i certify|details mentioned in your resume|accurate and truthful/.test(t)) {
                 return 'yes';
               }
@@ -944,7 +971,8 @@ def fill_common_questions(sb) -> None:
               else if (/current.*(ctc|salary|compensation|package)|ctc.*current|current salary/.test(lab)) val = vals.current;
               else if (/expected.*(ctc|salary|compensation|package)|ctc.*expected/.test(lab)) val = vals.expected;
               else if (/earliest start|start date|available from|joining date/.test(lab) || (type === 'date' && /start|join|avail/.test(lab))) val = '15/08/2026';
-              else if (/notice|joining|availability/.test(lab) && !/start date|available from/.test(lab)) val = vals.notice;
+              else if (/notice/.test(lab) && /(in days|\\(days\\)|\\bdays\\b|number of days)/.test(lab)) val = '0';
+              else if (/notice|joining|availability/.test(lab) && !/start date|available from|privacy notice/.test(lab)) val = vals.notice;
               else if (/city|location|current\\s*location/.test(lab)) val = vals.city;
               else if (/experience|years/.test(lab)) val = vals.experience;
               else if (!(el.value || '').trim()) {

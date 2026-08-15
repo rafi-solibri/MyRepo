@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| SmartApply Notice Period (in days) rejected Immediate (valid number) | Fill numeric notice-period-in-days as 0; keep Immediate only for dropdowns |
 | SERP pagead repeats + SmartApply name/certify/start-date/tel=tell | job_dedupe_key from jk=; fill full name/start date/certify; stop tel matching tell |
 | SmartApply put Yes into Date of birth / PAN and stalled on required employer questions | Fill DOB 16/01/1989 and title Mr.; never invent PAN/Aadhaar; stop defaulting leftover required text to Yes |
 | UC CF cleared but India Get Started home false indeed_login_required (Passport cookies present; Local State not copied so v10 cookies could not decrypt) | Copy Local State into UC hybrid profile; restore session via Sign-in/account/myjobs; only exit login_required on a real Sign-in wall |
