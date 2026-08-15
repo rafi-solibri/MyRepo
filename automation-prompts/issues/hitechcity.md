@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Campus-board India-only pass applied CMP/Oracle SCM/turbine/design-verification Principals | Foundit skipTitleReason: hardware/manufacturing/CMP/verification + Oracle Core/SCM without .NET on title |
 | Foundit campus board skipped India-only cards and Lead 6-9 (Virtusa/Infosys/Capgemini/Microsoft) so board applies stayed 0 | Campus-board mode: country-only India + Lead/Arch exp>=6 pass; harvest Foundit ts; Cognizant talent login2 is a hard ATS wall |
 | Cognizant/Eightfold SSO burned ATS cap; brochure careers pages timed out | auth_wall_url fail-fast login.cognizant + eightfold.ai/login; shared no_ats_form + skip View applied CTAs |
 | Workday maintenance and SmartRecruiters OneClick burned ATS budget then tripped walls | Shared completer fail-fasts maintenance; skips OneClick/Indeed OAuth; timeouts/unavailable are not company walls |

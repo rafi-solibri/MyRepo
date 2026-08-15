@@ -539,4 +539,57 @@ assert.strictEqual(
   "Foundit daily (no board mode) still rejects 6-9 mid band"
 );
 
+assert.strictEqual(
+  classifyJob({
+    jobId: 40,
+    title: "Staff/Principal Engineer - Process Development, CMP",
+    companyName: "Micron Technology",
+    locations: [{ country: "India" }],
+    skills: [{ text: "Azure" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  false,
+  "CMP/process-development Principal must skip"
+);
+assert.strictEqual(
+  classifyJob({
+    jobId: 41,
+    title: "Oracle Core SCM Solution Architect",
+    companyName: "Capgemini",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: "Azure" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  false,
+  "Oracle Core SCM architect must skip"
+);
+assert.strictEqual(
+  classifyJob({
+    jobId: 42,
+    title: "Manufacturing Engineering Manager- Turbine Assembly",
+    companyName: "Larsen & Toubro",
+    locations: [{ country: "India" }],
+    skills: [{ text: "Azure" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  false,
+  "turbine manufacturing EM must skip"
+);
+assert.strictEqual(
+  classifyJob({
+    jobId: 43,
+    title: "Design Verification Engineer- Senior / Principal",
+    companyName: "Microsoft Corp",
+    locations: [{ country: "India" }],
+    skills: [{ text: "Azure" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  false,
+  "design verification Principal must skip"
+);
+
 console.log("filters.test.js OK");

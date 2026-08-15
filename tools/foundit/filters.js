@@ -165,8 +165,15 @@ function skipTitleReason(title) {
     return "non-software engineering without .NET on title";
   if (/\boperations\s+engineering\s+manager\b/i.test(t) && !hasDotNet(t, ""))
     return "ops/manufacturing EM without .NET on title";
-  // Naukri NON_DOTNET_PRIMARY_RE parity — Oracle Fusion/Apps/ERP is not .NET.
-  if (/\b(oracle\s+fusion|oracle\s+apps|oracle\s+erp)\b/i.test(t) && !hasDotNet(t, ""))
+  if (
+    /\b(manufacturing|turbine|industrial\s+design|process\s+development|\bcmp\b|planarization|silicon|physical\s+design|chiplet|\basic\b|\bvlsi\b|rtl\s+design|design\s+verification|verification\s+engineer)\b/i.test(
+      t
+    ) &&
+    !hasDotNet(t, "")
+  )
+    return "hardware/manufacturing without .NET on title";
+  // Naukri NON_DOTNET_PRIMARY_RE parity — Oracle Fusion/Apps/ERP/SCM is not .NET.
+  if (/\b(oracle\s+fusion|oracle\s+apps|oracle\s+erp|oracle\s+core|oracle\s+scm)\b/i.test(t) && !hasDotNet(t, ""))
     return "Oracle Fusion/ERP without .NET on title";
   if (/\bwpf\b/i.test(t) && !/\basp\.?\s*net|web\s*api|azure|\.net\s*core\b/i.test(t))
     return "WPF/hardware desktop";
