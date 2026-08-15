@@ -106,10 +106,23 @@ async function ensureFoundit(page) {
  * Cookie-backed Node fetch for Foundit APIs.
  * Prefer this over page.evaluate — Windows CDP Chrome often dies mid-search
  * when dozens of in-page fetches run during collectCandidates.
+ *
+ * Cache the Cookie header right after login so Raven/Falcon survive other
+ * portal agents killing shared system Chrome (CHROME_CDP_MODE=system).
  */
-async function apiFetch(context, url, opts = {}) {
+let CACHED_COOKIE_HEADER = "";
+
+async function refreshCookieCache(context) {
   const cookies = await context.cookies("https://www.foundit.in");
-  const cookieHeader = cookies.map((c) => `${c.name}=${c.value}`).join("; ");
+  CACHED_COOKIE_HEADER = cookies.map((c) => `${c.name}=${c.value}`).join("; ");
+  return cookies;
+}
+
+async function apiFetch(_context, url, opts = {}) {
+  const cookieHeader = CACHED_COOKIE_HEADER;
+  if (!cookieHeader) {
+    throw new Error("foundit_cookie_cache_empty — call refreshCookieCache after login");
+  }
   const headers = {
     Accept: "application/json",
     "User-Agent":
@@ -552,9 +565,29 @@ async function main() {
     }
     report.loggedIn = true;
 
-    report.appliedBefore = await readAppliedCount(page);
+    // Snapshot cookies immediately — other home portals may taskkill shared Chrome.
+    let cookies = [];
+    try {
+      cookies = await refreshCookieCache(context);
+    } catch (e) {
+      report.blocked.push({
+        reason: "cookie_cache_failed",
+        error: String(e).slice(0, 200),
+      });
+      fs.mkdirSync(path.dirname(OUT), { recursive: true });
+      fs.writeFileSync(OUT, JSON.stringify(report, null, 2));
+      console.error(JSON.stringify(report, null, 2));
+      process.exit(3);
+    }
 
-    const cookies = await context.cookies("https://www.foundit.in");
+    try {
+      report.appliedBefore = await readAppliedCount(page);
+    } catch (e) {
+      report.appliedBefore = null;
+      report.appliedBeforeError = String(e).slice(0, 160);
+      console.error("[foundit] readAppliedCount skipped:", report.appliedBeforeError);
+    }
+
     const jwt = jwtFromMssoat(cookies.find((c) => c.name === "MSSOAT")?.value);
     if (!jwt) {
       report.blocked.push({ reason: "mssoat_jwt_missing" });
@@ -564,8 +597,8 @@ async function main() {
       process.exit(3);
     }
     report.jwtOk = true;
+    report.cookieCacheLen = CACHED_COOKIE_HEADER.length;
 
-    await ensureFoundit(page);
     const seen = new Set();
     let applies = 0;
 
@@ -652,7 +685,9 @@ async function main() {
         const applyRes = await falconApply(context, jwt, jobId);
         const bodyStr = JSON.stringify(applyRes.json || {});
 
-        await tryDismissScreening(page);
+        await tryDismissScreening(page).catch((e) => {
+          console.error("[foundit] screening dismiss skipped:", String(e).slice(0, 120));
+        });
 
         const duplicate =
           /DUPLICATE_APPLY/i.test(bodyStr) || /already\s*applied/i.test(bodyStr);
@@ -679,14 +714,20 @@ async function main() {
         let ats = null;
         const redirectUrl = job.redirectUrl || verdict.redirectUrl;
         if (redirectUrl && !/foundit\.in/i.test(redirectUrl)) {
-          ats = await handleExternalAts(
-            context,
-            resume,
-            { ...verdict, jobId, redirectUrl },
-            report
-          );
-          pathLabel = `Foundit + ATS ${redirectUrl}`;
-          await ensureFoundit(page);
+          try {
+            ats = await handleExternalAts(
+              context,
+              resume,
+              { ...verdict, jobId, redirectUrl },
+              report
+            );
+            pathLabel = `Foundit + ATS ${redirectUrl}`;
+            await ensureFoundit(page).catch(() => {});
+          } catch (e) {
+            ats = { status: "ats_cdp_dead", error: String(e).slice(0, 160) };
+            pathLabel = `Foundit Falcon (ATS skipped — CDP dead) ${redirectUrl}`;
+            console.error("[foundit] ATS skipped:", ats.error);
+          }
         }
 
         if (falconOk || (ats && /_ok|_submitted|submit_clicked/i.test(ats.status))) {
@@ -778,7 +819,13 @@ async function main() {
       }
     }
 
-    report.appliedAfter = await readAppliedCount(page);
+    try {
+      report.appliedAfter = await readAppliedCount(page);
+    } catch (e) {
+      report.appliedAfter = null;
+      report.appliedAfterError = String(e).slice(0, 160);
+      console.error("[foundit] readAppliedCount(after) skipped:", report.appliedAfterError);
+    }
     report.appliedDelta =
       report.appliedBefore != null && report.appliedAfter != null
         ? report.appliedAfter - report.appliedBefore
