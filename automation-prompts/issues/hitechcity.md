@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Chrome closed mid-careers after Hyland hCaptcha; remaining tenants all blocked with browser has been closed | Reconnect connect_over_cdp up to HITECHCITY_CAREERS_CDP_RECONNECTS (default 3) instead of burning every company as scan_nav |
 | hCaptcha owner-wait poll evaluate hung on cross-origin hcaptcha iframes; CDP connect_over_cdp default 180s starved careers after Chrome flap | Skip hcaptcha/recaptcha frames + 2.5s poll timeout in captcha_solve; connect_over_cdp timeout=20s for discovery/careers/linkedin |
 
 

@@ -461,6 +461,32 @@ def dismiss_cookie_banners(page: Page) -> None:
             continue
 
 
+
+def _browser_session_dead(err: BaseException | str) -> bool:
+    s = str(err).lower()
+    return any(
+        x in s
+        for x in (
+            "has been closed",
+            "target closed",
+            "econnrefused",
+            "browser has been closed",
+            "connection refused",
+        )
+    )
+
+
+def _connect_careers_cdp(p):
+    """Connect (or reconnect) to Chrome CDP for careers scanning."""
+    browser = p.chromium.connect_over_cdp(CDP, timeout=20_000)
+    if not browser.contexts:
+        raise RuntimeError("cdp_no_contexts")
+    context = browser.contexts[0]
+    page = context.pages[0] if context.pages else context.new_page()
+    page.set_default_timeout(45000)
+    return browser, context, page
+
+
 def _reset_page_nav(page: Page) -> None:
     """Stop in-flight navigations so the next company goto is not interrupted."""
     try:
@@ -687,12 +713,14 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
     seen_urls: set[str] = set()
 
     with sync_playwright() as p:
-        browser = p.chromium.connect_over_cdp(CDP, timeout=20_000)
-        context = browser.contexts[0]
-        page = context.pages[0] if context.pages else context.new_page()
-        page.set_default_timeout(45000)
+        browser, context, page = _connect_careers_cdp(p)
+        reconnects = 0
+        max_reconnects = int(os.environ.get("HITECHCITY_CAREERS_CDP_RECONNECTS", "3"))
+        cdp_fatal = False
 
         for company in companies:
+            if cdp_fatal:
+                break
             name = company["name"]
             campuses = ",".join(company.get("campuses") or [])
             urls = company.get("careersUrls") or []
@@ -727,6 +755,27 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                     scan_goto(page, url, timeout=75000)
                 except Exception as e:
                     report.blocked.append({"company": name, "url": url, "reason": f"scan_nav:{e}"})
+                    if _browser_session_dead(e):
+                        if reconnects >= max_reconnects:
+                            _safe_print(f"CAREERS CDP dead — stop after {reconnects} reconnects")
+                            cdp_fatal = True
+                            break
+                        reconnects += 1
+                        try:
+                            browser, context, page = _connect_careers_cdp(p)
+                            _safe_print(f"CAREERS CDP reconnect #{reconnects} ok")
+                        except Exception as re_err:
+                            _safe_print(f"CAREERS CDP reconnect failed: {re_err}")
+                            report.blocked.append(
+                                {
+                                    "company": name,
+                                    "url": url,
+                                    "reason": f"cdp_reconnect_failed:{re_err}",
+                                }
+                            )
+                            cdp_fatal = True
+                            break
+                        continue
                     # Clear poisoned/in-flight navigations before the next company.
                     _reset_page_nav(page)
                     try:
