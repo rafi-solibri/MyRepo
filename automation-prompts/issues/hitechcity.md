@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Solera Workday Autofill left Company empty; Take Assessment popup blank | Fill empty companyName from resume map; assessment_required is a hard wall |
 | Solera JR-019000 already-applied banner still burned ATS time | Skip You applied for this job as already_applied before Workday fill |
 | Solera Workday rejected https://linkedin.com (no www) and stalled My Experience | PROFILE LinkedIn uses www.linkedin.com; workday_fill_core writes linkedInAccount |
 | Solera Workday Create Account burned 390s on password-rule reject | workday_auth fail-fasts password-must-include; try Sign In once then ats_login_wall |

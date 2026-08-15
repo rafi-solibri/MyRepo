@@ -49,7 +49,18 @@ PROFILE = {
     "notice": "0",
     "experience_years": "15",
     "school": "Acharya Nagarjuna University",
+    "employer": "Solibri",
 }
+
+# Resume work-history company fallbacks when Workday Autofill leaves Company empty.
+WORK_HISTORY_COMPANY = (
+    (r"principal analyst|nemetschek|solibri|spacewell", "Nemetschek"),
+    (r"ps iv|ncr", "NCR"),
+    (r"unitedhealth|uhg|technical lead", "UnitedHealth Group"),
+    (r"senior consultant|adp", "ADP"),
+    (r"epam", "EPAM Systems"),
+    (r"infosys", "Infosys"),
+)
 
 SUBMITTED_RE = re.compile(
     r"application (has been )?submitted|thank you for (your )?appl|"
@@ -256,6 +267,7 @@ def is_hard_ats_wall(reason: str | None) -> bool:
             "ats_login_wall",
             "ats_password_missing",
             "ats_email_missing",
+            "assessment_required",
             "sso",
         )
     )
@@ -1142,6 +1154,24 @@ def workday_fill_core(page) -> None:
     fill_labeled_fields(page)
     fill_yes_no(page)
     tick_consents(page)
+    # Autofill often leaves Company* empty → Errors Found / 390s stall (Solera).
+    try:
+        titles = page.locator("input[name='jobTitle']")
+        companies = page.locator("input[name='companyName']")
+        for i in range(min(titles.count(), companies.count())):
+            cur = (companies.nth(i).input_value() or "").strip()
+            if cur:
+                continue
+            title = (titles.nth(i).input_value() or "").strip()
+            fill = PROFILE.get("employer") or "Solibri"
+            for pat, name in WORK_HISTORY_COMPANY:
+                if re.search(pat, title, re.I):
+                    fill = name
+                    break
+            companies.nth(i).click(force=True)
+            companies.nth(i).fill(fill)
+    except Exception:
+        pass
 
 
 def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
@@ -1158,6 +1188,16 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
         return "blocked", auth
     if workday_password_rejected(_body(page, 1500)):
         return "blocked", "ats_login_wall"
+    if re.search(r"take assessment", _body(page, 1500), re.I) and page.locator(
+        "[data-automation-id='inlineAssessmentButton']"
+    ).count():
+        try:
+            page.locator("[data-automation-id='inlineAssessmentButton']").first.click(force=True)
+            _sleep(2.5)
+        except Exception:
+            pass
+        if re.search(r"take assessment", _body(page, 1200), re.I):
+            return "blocked", "assessment_required"
     stuck = 0
     while time.time() - start < time_cap_s and stuck < 10:
         if looks_submitted(page):
