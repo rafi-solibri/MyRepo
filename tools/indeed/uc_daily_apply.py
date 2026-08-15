@@ -407,6 +407,114 @@ def skip_reason(title: str, company: str, location: str, snippet: str) -> str | 
     return None
 
 
+def signed_in(body: str) -> bool:
+    """True when the page shows an authenticated Indeed chrome."""
+    return bool(
+        re.search(
+            r"welcome,\s*\w+|sign out|account settings|\bmy jobs\b|"
+            r"email settings|sign out of indeed",
+            body or "",
+            re.I,
+        )
+    )
+
+
+def signed_out(body: str) -> bool:
+    """True when homepage / account chrome is clearly anonymous.
+
+    Do not treat the substring 'profile' as signed-in — marketing copy
+    ('personalised job recommendations') must not mask Get Started.
+    """
+    b = body or ""
+    if signed_in(b):
+        return False
+    return bool(
+        re.search(
+            r"create an account or sign in|get started|"
+            r"sign in to see your personalised|your next job starts here",
+            b,
+            re.I,
+        )
+    )
+
+
+def restore_signed_in(sb) -> dict:
+    """Use Passport cookies to paint Welcome after CF leaves Get Started.
+
+    A homepage reload alone is not enough: Turnstile clearance on a new WARP
+    IP often keeps the marketing homepage until we hit Sign-in / account /
+    myjobs so Passport can attach the existing session.
+    """
+    info: dict = {"tried": [], "ok": False}
+    restore_urls = (
+        "https://secure.indeed.com/settings",
+        "https://in.indeed.com/myjobs",
+        "https://secure.indeed.com/auth?hl=en_IN&co=IN"
+        "&continue=https%3A%2F%2Fin.indeed.com%2F",
+        "https://www.indeed.com/account/login"
+        "?continue=https%3A%2F%2Fin.indeed.com%2F",
+        "https://in.indeed.com/",
+    )
+
+    def _snap() -> str:
+        try:
+            return (sb.get_text("body") or "")[:2500]
+        except Exception:
+            return ""
+
+    def _done(body: str, via: str) -> bool:
+        if signed_in(body) and not signed_out(body):
+            info["ok"] = True
+            info["via"] = via
+            return True
+        return False
+
+    # 1) Click the homepage Sign in link (cookie session often resumes here).
+    for sel in (
+        "a[data-gnav-element-name='SignIn']",
+        "a[href*='account/login']",
+        "a[href*='secure.indeed.com/auth']",
+        "a[href*='login']",
+    ):
+        try:
+            if sb.is_element_visible(sel):
+                sb.click(sel)
+                time.sleep(3)
+                clear_cf(sb)
+                body = _snap()
+                info["tried"].append({"click": sel, "signedIn": signed_in(body)})
+                if _done(body, f"click:{sel}"):
+                    return info
+        except Exception as exc:
+            info["tried"].append({"click": sel, "error": str(exc)[:120]})
+
+    # 2) Direct account / myjobs URLs — Passport tokens live on .indeed.com.
+    for url in restore_urls:
+        try:
+            sb.uc_open_with_reconnect(url, 5)
+            time.sleep(3)
+            clear_cf(sb)
+            body = _snap()
+            info["tried"].append(
+                {
+                    "url": url,
+                    "signedIn": signed_in(body),
+                    "title": (sb.get_title() or "")[:80],
+                }
+            )
+            if _done(body, url):
+                try:
+                    sb.uc_open_with_reconnect("https://in.indeed.com/", 4)
+                    time.sleep(2)
+                    clear_cf(sb)
+                except Exception:
+                    pass
+                return info
+        except Exception as exc:
+            info["tried"].append({"url": url, "error": str(exc)[:120]})
+    return info
+
+
 def already_applied(body: str, url: str = "") -> bool:
     """True when the job-view page shows this listing was already submitted."""
     b = (body or "").lower()
@@ -2301,29 +2409,15 @@ def main() -> int:
             return 5
 
         # CF can clear while the account is still anonymous ("Get Started" / Sign in).
-        # One hard reload: preflight-style clear sometimes paints Welcome only after
-        # a second navigation once cf_clearance is set.
+        # Homepage reload alone is not enough — restore via Sign-in / account URLs
+        # so Passport cookies attach on this WARP IP.
         try:
             home_body = (sb.get_text("body") or "")[:2500]
             home_title = sb.get_title() or ""
         except Exception:
             home_body, home_title = "", ""
 
-        def _signed_out(body: str) -> bool:
-            return bool(
-                re.search(
-                    r"create an account or sign in|get started|sign in to see your personalised|"
-                    r"your next job starts here",
-                    body,
-                    re.I,
-                )
-            ) and not re.search(
-                r"welcome,\s*\w+|sign out|account settings|my jobs|profile",
-                body,
-                re.I,
-            )
-
-        if _signed_out(home_body):
+        if signed_out(home_body):
             try:
                 sb.uc_open_with_reconnect("https://in.indeed.com/", 5)
                 time.sleep(3)
@@ -2333,13 +2427,21 @@ def main() -> int:
                 home_title = sb.get_title() or ""
             except Exception:
                 pass
-        if _signed_out(home_body):
+        if signed_out(home_body):
+            warmed = restore_signed_in(sb)
+            report["sessionRestore"] = warmed
+            try:
+                home_body = (sb.get_text("body") or "")[:2500]
+                home_title = sb.get_title() or ""
+            except Exception:
+                pass
+        if signed_out(home_body) and not signed_in(home_body):
             report["blocked"].append(
                 {
                     "reason": "indeed_login_required",
                     "title": home_title[:120],
                     "bodySample": home_body[:400],
-                    "hint": "CF cleared but session is anonymous — refresh Indeed cookies via headed login / home CDP",
+                    "hint": "CF cleared but session is anonymous after Sign-in/account restore — refresh Indeed cookies via headed login / home CDP",
                 }
             )
             report["counts"]["blocked"] = 1

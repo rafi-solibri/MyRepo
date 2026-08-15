@@ -9,7 +9,13 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from tools.indeed.uc_daily_apply import already_applied, skip_reason  # noqa: E402
+from tools.indeed.prepare_uc_profile import COPY_PATHS  # noqa: E402
+from tools.indeed.uc_daily_apply import (  # noqa: E402
+    already_applied,
+    signed_in,
+    signed_out,
+    skip_reason,
+)
 
 
 def test_skip_hyd_remote_ok():
@@ -96,6 +102,23 @@ def test_already_applied_job_view_only():
     )
 
 
+def test_hybrid_profile_copies_local_state():
+    assert "Local State" in COPY_PATHS
+
+
+def test_signed_out_get_started_not_masked_by_profile_substring():
+    anon = (
+        "Sign in\nYour next job starts here\n"
+        "Create an account or sign in to see your personalised job recommendations.\n"
+        "Get Started"
+    )
+    assert signed_out(anon)
+    assert not signed_in(anon)
+    welcome = "Welcome, Rafi\nSign out\nMy jobs\nAccount settings"
+    assert signed_in(welcome)
+    assert not signed_out(welcome)
+
+
 if __name__ == "__main__":
     test_skip_hyd_remote_ok()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
@@ -103,4 +126,6 @@ if __name__ == "__main__":
     test_enterprise_system_architect_ok()
     test_skip_salesforce_service_cloud_title()
     test_already_applied_job_view_only()
+    test_hybrid_profile_copies_local_state()
+    test_signed_out_get_started_not_masked_by_profile_substring()
     print("ok")
