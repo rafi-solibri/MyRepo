@@ -12,7 +12,13 @@ from tools.hitechcity.campus_allowlist import (
     reset_allowlist_cache,
     write_allowlist_artifact,
 )
-from tools.hitechcity.discover_tenants import DISCOVERY_SEEDS, _merge_candidate, discover_from_seeds
+from tools.hitechcity.discover_tenants import (
+    DISCOVERY_SEEDS,
+    _is_junk_tenant,
+    _merge_candidate,
+    discover_from_seeds,
+    prune_junk_tenants,
+)
 
 
 def test_allowlist_match(tmp_path: Path | None = None):
@@ -59,6 +65,50 @@ def test_discovery_seeds_merge():
     assert len(DISCOVERY_SEEDS) >= 10
 
 
+def test_discovery_junk_rejected_and_pruned():
+    companies = [
+        {
+            "name": "Microsoft",
+            "campuses": ["sattva-knowledge-city"],
+            "linkedinSlug": "microsoft",
+            "careersUrls": ["https://example.com"],
+            "priority": 1,
+            "source": "seed",
+        },
+        {
+            "name": "software companies erbil",
+            "campuses": ["sattva-knowledge-city"],
+            "linkedinSlug": "software-companies-erbil",
+            "careersUrls": [],
+            "priority": 2,
+            "source": "linkedin_search",
+        },
+        {
+            "name": "Hyderabad Tech Community",
+            "campuses": ["sattva-knowledge-city"],
+            "linkedinSlug": "hyderabad-tech-community",
+            "careersUrls": [],
+            "priority": 2,
+            "source": "linkedin_search",
+        },
+    ]
+    assert _is_junk_tenant("software companies erbil", "software-companies-erbil")
+    assert _merge_candidate(
+        companies,
+        {
+            "name": "software companies erbil",
+            "linkedinSlug": "software-companies-erbil",
+            "campuses": ["sattva-knowledge-city"],
+        },
+        "linkedin_search",
+    ) is None
+    removed = prune_junk_tenants(companies)
+    assert "software companies erbil" in removed
+    assert "Hyderabad Tech Community" in removed
+    assert any(c["name"] == "Microsoft" for c in companies)
+    assert not any("erbil" in (c.get("name") or "").lower() for c in companies)
+
+
 def test_allowlist_js_module_exists():
     p = Path(__file__).with_name("campus_allowlist.js")
     assert p.is_file()
@@ -70,5 +120,6 @@ def test_allowlist_js_module_exists():
 if __name__ == "__main__":
     test_allowlist_match()
     test_discovery_seeds_merge()
+    test_discovery_junk_rejected_and_pruned()
     test_allowlist_js_module_exists()
     print("ok")

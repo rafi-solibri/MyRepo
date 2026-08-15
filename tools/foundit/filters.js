@@ -95,14 +95,15 @@ function hasDotNet(title, skills) {
 function hasSeniority(title) {
   // Accept Senior/.NET Senior/Senior Backend (not only "Senior .NET …" word-order).
   // Apply bias: uncertain → apply; still gated by .NET + Hyd/remote + exp elsewhere.
-  return /\b(architect|principal|staff\s+(software|engineer)|engineering\s+manager|\bem\b|director|avp|head\s+of|tech(?:nology)?\s+lead|technical\s+lead|\blead\b|manager|\bsenior\b|\bsr\.?\b)\b/i.test(
+  // architect(?:ure)? covers "Solution Architecture …" titles (not only "Architect").
+  return /\b(architect(?:ure)?|principal|staff\s+(software|engineer)|engineering\s+manager|\bem\b|director|avp|head\s+of|tech(?:nology)?\s+lead|technical\s+lead|\blead\b|manager|\bsenior\b|\bsr\.?\b)\b/i.test(
     title || ""
   );
 }
 
 /** Architect / Tech Lead / EM band — Naukri parity: may apply without .NET on skills laundry list. */
 function isArchLeadTitle(title) {
-  return /\b(architect|principal|staff\s+(software|engineer)|engineering\s+manager|\bem\b|tech(?:nology)?\s+lead|technical\s+lead|solution\s+architect|software\s+architect)\b/i.test(
+  return /\b(architect(?:ure)?|principal|staff\s+(software|engineer)|engineering\s+manager|\bem\b|tech(?:nology)?\s+lead|technical\s+lead|solution\s+architect(?:ure)?|software\s+architect(?:ure)?)\b/i.test(
     title || ""
   );
 }
@@ -115,7 +116,7 @@ function isJavaOrSalesforcePrimary(title, skills) {
 }
 
 function isTechLeadBand(title) {
-  return /\b(architect|principal|staff|tech(?:nology)?\s+lead|technical\s+lead)\b/i.test(
+  return /\b(architect(?:ure)?|principal|staff|tech(?:nology)?\s+lead|technical\s+lead)\b/i.test(
     title || ""
   );
 }

@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-15 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Foundit/Naukri skipped Solution Architecture titles (no Architect word); LinkedIn discovery merged junk tenants (software companies erbil, Hyderabad Tech Community) | Match architect(?:ure)? in arch/lead filters; reject+prune junk LinkedIn discovery names |
+
+
 ## 2026-08-14 (home)
 
 | Issue | Fix |

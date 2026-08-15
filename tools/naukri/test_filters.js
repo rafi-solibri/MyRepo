@@ -177,5 +177,10 @@ assert.strictEqual(
 );
 assert.strictEqual(shouldSkipTitle("Senior .NET Architect"), false);
 assert.strictEqual(isArchLeadTitle("Dot Net Fullstack Developer"), false);
+assert.strictEqual(
+  isArchLeadTitle("Solution Architecture Apps & AI"),
+  true,
+  "Architecture titles count as arch/lead band"
+);
 console.log("resume_and_filters self-test OK");
 
