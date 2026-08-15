@@ -62,21 +62,45 @@ mkdir -p /opt/cursor/artifacts 2>/dev/null || mkdir -p "$ROOT/artifacts"
 cdp_ready=0
 if curl -fsS "http://127.0.0.1:9222/json/version" >/dev/null 2>&1; then
   profile_match=0
-  # Prefer /proc exe+cmdline so we never confuse agent shells with Chrome.
-  for pid in /proc/[0-9]*; do
-    pid="${pid#/proc/}"
-    [[ "$pid" =~ ^[0-9]+$ ]] || continue
-    exe="$(readlink -f "/proc/$pid/exe" 2>/dev/null || true)"
-    case "$exe" in
-      */chrome|*/google-chrome*|*/chromium*) ;;
-      *) continue ;;
-    esac
-    cmd="$(tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null || true)"
-    [[ "$cmd" == *remote-debugging-port=9222* ]] || continue
-    [[ "$cmd" == *"--user-data-dir=$profile"* || "$cmd" == *"--user-data-dir=$profile "* ]] || continue
-    profile_match=1
-    break
-  done
+  is_win_cdp=0
+  [[ "${OS:-}" == "Windows_NT" || -n "${MSYSTEM:-}" || "$(uname -s 2>/dev/null)" == MINGW* ]] && is_win_cdp=1
+
+  if [[ "$is_win_cdp" -eq 1 ]] && command -v powershell.exe >/dev/null 2>&1; then
+    # Git Bash /proc does not expose real chrome.exe command lines on Windows, so the
+    # /proc matcher always fails → every portal kills system Chrome mid-apply.
+    # PowerShell Win32_Process.CommandLine is the source of truth here.
+    profile_win="$(cygpath -w "$profile" 2>/dev/null || echo "$profile")"
+    if powershell.exe -NoProfile -Command \
+      "\$want = [string]'${profile_win}'; \$hit = Get-CimInstance Win32_Process -Filter \"name='chrome.exe'\" | Where-Object { \$_.CommandLine -match 'remote-debugging-port=9222' -and (\$_.CommandLine -like ('*' + \$want + '*') -or '${system_profile}' -eq '1') }; if (\$hit) { exit 0 } else { exit 1 }" \
+      >/dev/null 2>&1; then
+      profile_match=1
+    fi
+    # System Chrome Default: any :9222 listener is the shared home CDP — reuse it.
+    if [[ "$profile_match" -eq 0 && "$system_profile" -eq 1 ]]; then
+      if powershell.exe -NoProfile -Command \
+        "if (Get-CimInstance Win32_Process -Filter \"name='chrome.exe'\" | Where-Object { \$_.CommandLine -match 'remote-debugging-port=9222' }) { exit 0 } else { exit 1 }" \
+        >/dev/null 2>&1; then
+        profile_match=1
+        echo "NOTE: Windows system Chrome CDP on :9222 — reusing shared home session (skip kill)."
+      fi
+    fi
+  else
+    # Prefer /proc exe+cmdline so we never confuse agent shells with Chrome (Linux/cloud).
+    for pid in /proc/[0-9]*; do
+      pid="${pid#/proc/}"
+      [[ "$pid" =~ ^[0-9]+$ ]] || continue
+      exe="$(readlink -f "/proc/$pid/exe" 2>/dev/null || true)"
+      case "$exe" in
+        */chrome|*/google-chrome*|*/chromium*) ;;
+        *) continue ;;
+      esac
+      cmd="$(tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null || true)"
+      [[ "$cmd" == *remote-debugging-port=9222* ]] || continue
+      [[ "$cmd" == *"--user-data-dir=$profile"* || "$cmd" == *"--user-data-dir=$profile "* ]] || continue
+      profile_match=1
+      break
+    done
+  fi
   if [[ "$profile_match" -eq 1 ]]; then
     cdp_ready=1
     echo "Chrome CDP already listening on :9222 with $profile — reusing."
@@ -225,8 +249,11 @@ log="/tmp/cursor/chrome-cdp-${portal}.log"
 if [[ "$cdp_ready" -eq 0 ]]; then
   if [[ "$is_win" -eq 1 ]] && command -v powershell.exe >/dev/null 2>&1; then
     # PowerShell Start-Process is more reliable than nohup for Windows Chrome + Default profile.
-    ps_file="$(mktemp /tmp/chrome-cdp-launch-XXXXXX.ps1 2>/dev/null || echo "$ROOT/artifacts/_chrome_cdp_launch.ps1")"
-    mkdir -p "$(dirname "$ps_file")" 2>/dev/null || true
+    # NEVER write the .ps1 under Git Bash /tmp — powershell -File cannot open MSYS paths,
+    # so Start-Process never runs and the readiness poll times out (false CDP_DOWN).
+    mkdir -p "$ROOT/artifacts"
+    ps_file="$ROOT/artifacts/_chrome_cdp_launch_${portal}.ps1"
+    ps_file_win="$(cygpath -w "$ps_file" 2>/dev/null || echo "$ps_file")"
     profile_dir="${CHROME_PROFILE_DIRECTORY:-Default}"
     {
       echo "\$chrome = @'"
@@ -261,7 +288,13 @@ if [[ "$cdp_ready" -eq 0 ]]; then
       echo ")"
       echo "Start-Process -FilePath \$chrome -ArgumentList \$args"
     } > "$ps_file"
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$ps_file" >/dev/null 2>&1 || true
+    echo "NOTE: launching Chrome via PowerShell -File $ps_file_win"
+    if ! powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$ps_file_win"; then
+      echo "WARNING: PowerShell -File launch failed — retrying inline Start-Process" >&2
+      powershell.exe -NoProfile -Command \
+        "Start-Process -FilePath '$chrome' -ArgumentList @('--no-sandbox','--disable-dev-shm-usage','--disable-extensions','--no-first-run','--no-default-browser-check','--disable-session-crashed-bubble','--hide-crash-restore-bubble','--remote-debugging-address=127.0.0.1','--remote-debugging-port=9222','--remote-allow-origins=*','--user-data-dir=$profile','--profile-directory=${CHROME_PROFILE_DIRECTORY:-Default}','about:blank')" \
+        || true
+    fi
   else
     nohup "$chrome" \
       "${headless[@]}" \
