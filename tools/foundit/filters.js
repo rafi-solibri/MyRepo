@@ -161,15 +161,36 @@ function skipTitleReason(title) {
   return null;
 }
 
+function campusBoardMode() {
+  return String(process.env.HITECHCITY_BOARD_MODE || "") === "1"; // pragma: allowlist secret
+}
+
 function locationOk(loc, title) {
-  return /\b(hyderabad|secunderabad|\bhyd\b|remote|wfh|work\s*from\s*home)\b/i.test(
-    `${loc || ""} ${title || ""}`
-  );
+  const blob = `${loc || ""} ${title || ""}`;
+  if (/\b(hyderabad|secunderabad|\bhyd\b|remote|wfh|work\s*from\s*home)\b/i.test(blob)) {
+    return true;
+  }
+  // Campus-board mode: country-only India is in-scope (prompt: India / India Remote;
+  // apply-bias: uncertain → APPLY). Do not let this override an explicit non-Hyd city.
+  if (campusBoardMode()) {
+    const countryOnly = !loc || /^(india|in)(\s*\|\s*(india|in))*$/i.test(String(loc).trim());
+    if (countryOnly) return true;
+  }
+  return false;
 }
 
 function experienceOk(job, title) {
   const { min, max, undisclosed } = experienceBounds(job, title);
   if (undisclosed) return { ok: true, reason: "undisclosed" };
+  // Hitech City boards: skip only junior/intern/fresher — Lead/Architect 6–9 yr
+  // bands (Capgemini ".Net Azure Lead|6-9 Yrs|…Hyderabad") are in-scope.
+  if (
+    campusBoardMode() &&
+    (isTechLeadBand(title) || isArchLeadTitle(title) || /\blead\b/i.test(title || "")) &&
+    ((!Number.isNaN(min) && min >= 6) || (!Number.isNaN(max) && max >= 6))
+  ) {
+    return { ok: true, reason: `hitech TL/Arch exp ${min}-${max}` };
+  }
   // Reject clearly junior/mid bands (e.g. Capgemini "6-9 Yrs") but allow 8-12 / 10-15.
   if (!Number.isNaN(max) && max < 10 && (Number.isNaN(min) || min < 8)) {
     return { ok: false, reason: `maxExp ${max}<10 (junior/mid band)` };
@@ -262,5 +283,7 @@ module.exports = {
   experienceOk,
   ctcOk,
   classifyJob,
+  locationOk,
+  campusBoardMode,
   FORBIDDEN_DRY_RUN: "/home/api/canJobApply",
 };

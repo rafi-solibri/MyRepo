@@ -208,16 +208,27 @@ function skillsText(job) {
   return "";
 }
 
+function companyNameOf(job) {
+  const c = job?.company;
+  if (typeof c === "string" && c.trim()) return c.trim();
+  if (c && typeof c === "object") {
+    const n = c.name || c.companyName || c.displayName || "";
+    if (n) return String(n).trim();
+  }
+  const nested =
+    job?.companyDetails?.name ||
+    (job?.companyId && typeof job.companyId === "object" && job.companyId.name) ||
+    job?.companyName ||
+    "";
+  return String(nested || "").trim();
+}
+
 function classify(job) {
   const title = titleOf(job);
   const ctc = maxCtcLpa(job);
   const skills = skillsText(job);
   const blob = `${title} ${skills}`;
-  const company =
-    (typeof job.company === "string" && job.company) ||
-    job.companyDetails?.name ||
-    job.companyId?.name ||
-    "";
+  const company = companyNameOf(job);
   if (allowlistActive() && !companyAllowed(company)) return null;
   if (SKIP_RE.test(title)) return null;
   // Tier-1 Architect/EM/Lead: allow listed max exp ≥6 (was 8 — missed 5–7 bands).
@@ -265,11 +276,7 @@ function classify(job) {
 
 function noteFor(job, firstName) {
   const role = titleOf(job) || "this";
-  const company =
-    (typeof job.company === "string" && job.company) ||
-    job.companyDetails?.name ||
-    job.companyId?.name ||
-    "the company";
+  const company = companyNameOf(job) || "the company";
   const hi = firstName ? `Hi ${firstName},` : "Hi,";
   return `${hi}
 
@@ -693,7 +700,7 @@ async function main() {
         row: {
           id: job._id,
           title: titleOf(job),
-          company: job.company,
+          company: companyNameOf(job) || job.company,
           tier: c.tier,
           reason: c.reason,
           ctc: maxCtcLpa(job),
@@ -705,7 +712,8 @@ async function main() {
     // Lightweight skip taxonomy for volume debugging (not applied as rejects).
     const title = titleOf(job);
     let why = "no_tier_match";
-    if (SKIP_RE.test(title)) why = "skip_title";
+    if (allowlistActive() && !companyAllowed(companyNameOf(job))) why = "campus_allowlist";
+    else if (SKIP_RE.test(title)) why = "skip_title";
     else if (job?.expRange?.max != null && job.expRange.max < 6) why = "exp_max_low";
     else if (maxCtcLpa(job) != null && maxCtcLpa(job) < 35) why = "ctc_under_35";
     else if (!isHydOrRemote(job)) why = "location";
@@ -837,4 +845,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { classify, isHydOrRemote, maxCtcLpa, titleOf };
+module.exports = { classify, isHydOrRemote, maxCtcLpa, titleOf, companyNameOf };

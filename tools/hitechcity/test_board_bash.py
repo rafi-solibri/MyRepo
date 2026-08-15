@@ -71,4 +71,28 @@ if __name__ == "__main__":
             b._harvest_portal_report(row, "indeed")
             assert row["applied"] == 2, row
             assert row["skipped"] == 3
+
+        (art / "foundit-apply-report.json").write_text(
+            json.dumps(
+                {
+                    "ts": "2026-08-14T05:41:29.120Z",
+                    "applied": [{"jobId": "1", "company": "Virtusa"}],
+                    "skipped": [{}] * 4,
+                    "blocked": [],
+                    "intentionalApplies": 1,
+                }
+            ),
+            encoding="utf-8",
+        )
+        with mock.patch.object(b, "_artifact_dir", return_value=art):
+            row = {
+                "startedAt": "2026-08-14T05:41:19.099752+00:00",
+                "applied": 0,
+                "blocked": 0,
+                "skipped": 0,
+            }
+            b._harvest_portal_report(row, "foundit")
+            assert row.get("staleReportIgnored") is not True, row
+            assert row["applied"] == 1, row
+            assert row["skipped"] == 4
     print("ok")
