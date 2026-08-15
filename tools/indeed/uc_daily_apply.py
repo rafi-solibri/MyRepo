@@ -660,6 +660,10 @@ def fill_common_questions(sb) -> None:
               if (/highest (degree|education|qualification)|degree of education|education level|degree obtained|university|college/.test(t)) {
                 return 'B.Tech';
               }
+              if (/full\\s*name|your\\s*name|candidate\\s*name|applicant\\s*name/.test(t)
+                  && !/first|last|middle|company/.test(t)) {
+                return 'Mohammed Abdul Rafi Ahmed';
+              }
               if (/date of birth|\\bdob\\b|birth\\s*date|birthday/.test(t)) return '16/01/1989';
               if (/\\bpan\\b|aadhaar|aadhar|passport\\s*(no|number|id)|ssn|social security/.test(t)) return null;
               if (/current.*(ctc|salary|compensation|pay)|ctc.*current|present.*ctc|current.*package|current salary/.test(t)) return '52';
@@ -735,8 +739,8 @@ def fill_common_questions(sb) -> None:
                 if (want === 'decline') continue;
                 if (want) { setNative(el, want); return true; }
               }
-              // Custom listbox / button options (Indeed education is often a combobox).
-              if (want === 'B.Tech') {
+              // Custom listbox / button options (Indeed education / years are often comboboxes).
+              if (want === 'B.Tech' || want === '14' || want === '10') {
                 for (const btn of root.querySelectorAll('button, [role=combobox], [aria-haspopup=listbox]')) {
                   const t = ((btn.innerText||'') + ' ' + (btn.getAttribute('aria-label')||'')).toLowerCase();
                   if (/select an option|choose an option|^select$/.test(t) || btn.getAttribute('aria-expanded') === 'false') {
@@ -751,6 +755,10 @@ def fill_common_questions(sb) -> None:
                 if (want === 'Immediate' && /immediate|0\\s*day/.test(t)) { el.click(); return true; }
                 if (want === 'B.Tech' && /b\\.?\\s*tech|bachelor|b\\.e\\b|undergraduate|master'?s?|m\\.?\\s*tech/.test(t)
                     && !/select an option|highest degree/.test(t)) {
+                  el.click(); return true;
+                }
+                if ((want === '14' || want === '10') && /\\b(14|12|10|8)\\+?\\b|12-15|10\\+|8-10/.test(t)
+                    && !/select an option|how many years/.test(t)) {
                   el.click(); return true;
                 }
                 if (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not/.test(t)) {
@@ -786,7 +794,9 @@ def fill_common_questions(sb) -> None:
               if (el.disabled || el.readOnly) continue;
               const lab = labelFor(el);
               let val = null;
-              if (/first\\s*name|given\\s*name|fname/.test(lab)) val = vals.first;
+              if (/full\\s*name|your\\s*name|candidate\\s*name|applicant\\s*name/.test(lab)
+                  && !/first|last|middle|company/.test(lab)) val = 'Mohammed Abdul Rafi Ahmed';
+              else if (/first\\s*name|given\\s*name|fname/.test(lab)) val = vals.first;
               else if (/last\\s*name|surname|family\\s*name|lname/.test(lab)) val = vals.last;
               else if (/phone|mobile|tel/.test(lab) || type === 'tel') val = vals.phone;
               else if (/e-?mail/.test(lab) || type === 'email') val = vals.email;
@@ -805,7 +815,7 @@ def fill_common_questions(sb) -> None:
                 const w = wantFromText(lab);
                 if (w) val = w;
               }
-              if (val != null && (!(el.value || '').trim() || /phone|mobile|tel|first|last|ctc|salary|notice|city|experience|package|linkedin|employer|company|education|degree/.test(lab))) {
+              if (val != null && (!(el.value || '').trim() || /phone|mobile|tel|first|last|full\\s*name|ctc|salary|notice|city|experience|package|linkedin|employer|company|education|degree/.test(lab))) {
                 if (setNative(el, val)) answered += 1;
               }
             }
@@ -842,13 +852,21 @@ def fill_common_questions(sb) -> None:
                 }
                 continue;
               }
-              for (const opt of [...sel.options].slice(1)) {
-                if ((opt.text || '').trim()) {
-                  sel.value = opt.value;
-                  sel.dispatchEvent(new Event('change', {bubbles:true}));
-                  answered += 1;
-                  break;
-                }
+              const want = wantFromText(lab);
+              const pick = [...sel.options].slice(1).find((opt) => {
+                const t = (opt.text || '').toLowerCase();
+                if (!t.trim()) return false;
+                if (want === 'B.Tech' && /b\\.?tech|bachelor|b\\.e\\b|undergraduate|graduation/.test(t)) return true;
+                if (want === '14' && /\\b14\\b|12-15|10\\+|12\\+|15\\+|8\\+|7\\+/.test(t)) return true;
+                if (want === '10' && /\\b10\\b|8-10|10\\+|8\\+|7\\+|5\\+/.test(t)) return true;
+                if (want === 'Immediate' && /immediate|0\\s*day|0-15|less than/.test(t)) return true;
+                if (want === 'Hyderabad' && /hyderabad/.test(t)) return true;
+                return false;
+              }) || [...sel.options].slice(1).find((opt) => (opt.text || '').trim());
+              if (pick) {
+                sel.value = pick.value;
+                sel.dispatchEvent(new Event('change', {bubbles:true}));
+                answered += 1;
               }
             }
             // Required acknowledgment / privacy checkboxes (Mattel / Nagarro etc.).
@@ -867,6 +885,13 @@ def fill_common_questions(sb) -> None:
               const lab = labelFor(el);
               const req = el.required || el.getAttribute('aria-required') === 'true' || /required|\\*/.test(lab);
               if (!req && !/question|ctc|salary|notice|experience/.test(lab)) continue;
+              if (/name|e-?mail|phone|mobile|tel|date|birth|pan|aadhaar/.test(lab)) {
+                const named = wantFromText(lab)
+                  || (/full\\s*name|your\\s*name/.test(lab) ? 'Mohammed Abdul Rafi Ahmed'
+                    : (/first/.test(lab) ? vals.first : (/last/.test(lab) ? vals.last : null)));
+                if (named && setNative(el, named)) answered += 1;
+                continue;
+              }
               const w = wantFromText(lab) || (/how many|years|experience/.test(lab) ? '14' : (/salary|ctc|lpa|package/.test(lab) ? '65' : 'Yes'));
               if (setNative(el, w)) answered += 1;
             }
@@ -878,6 +903,8 @@ def fill_common_questions(sb) -> None:
     except Exception as e:
         print(f"  fill_error={e!s}"[:200], flush=True)
 
+    fill_custom_dropdowns(sb)
+
     # Resume upload
     if RESUME.exists():
         try:
@@ -887,6 +914,64 @@ def fill_common_questions(sb) -> None:
         except Exception:
             pass
     tick_required_agreements(sb)
+
+
+def fill_custom_dropdowns(sb) -> None:
+    """Open SmartApply custom comboboxes (education / years) and pick a known option.
+
+    Native <select> handling misses Indeed's button+listbox widgets, which is why
+    required education/years fields stay on "Select an option".
+    """
+    _switch_smartapply_frame(sb)
+    try:
+        opened = sb.execute_script(
+            """
+            const isEdu = (t) => /highest (degree|education|qualification)|education level|degree obtained/.test(t);
+            const isYears = (t) => /how many years|years of experience|total.*experience|overall experience/.test(t);
+            const triggers = [...document.querySelectorAll(
+              '[role=combobox], button[aria-haspopup], [aria-haspopup=listbox], [data-testid*="select"], [class*="dropdown"] button, select'
+            )];
+            const textOf = (el) => ((el.innerText || el.getAttribute('aria-label') || '') + ' ' +
+              (el.closest('label, fieldset, [class*="question"], li, section, div')?.innerText || '')
+            ).toLowerCase().slice(0, 240);
+            let clicked = 0;
+            for (const el of triggers) {
+              if (el.tagName === 'SELECT') continue;
+              if (el.disabled) continue;
+              const t = textOf(el);
+              if (!(isEdu(t) || isYears(t))) continue;
+              const cur = (el.innerText || '').trim();
+              if (cur && !/^select|choose|option/i.test(cur) && cur.length < 40) continue;
+              try { el.click(); clicked += 1; } catch (e) {}
+            }
+            return {opened: clicked};
+            """
+        )
+        if isinstance(opened, dict) and opened.get("opened"):
+            time.sleep(0.6)
+            picked = sb.execute_script(
+                """
+                const opts = [...document.querySelectorAll(
+                  '[role=option], [role=listbox] li, [role=listbox] button, ul[role=listbox] *, .ia-Listbox option, li'
+                )];
+                const want = [
+                  /b\\.?\\s*tech|bachelor|b\\.e\\b|undergraduate|graduation/i,
+                  /\\b14\\b|12-15|10\\+|12\\+|15\\+|8\\+|7\\+/i,
+                ];
+                let clicked = 0;
+                for (const el of opts) {
+                  const t = (el.innerText || el.getAttribute('aria-label') || '').trim();
+                  if (!t || t.length > 60) continue;
+                  if (want.some((re) => re.test(t))) {
+                    try { el.click(); clicked += 1; break; } catch (e) {}
+                  }
+                }
+                return {picked: clicked};
+                """
+            )
+            print(f"  dropdowns={opened} {picked}", flush=True)
+    except Exception as e:
+        print(f"  dropdowns_error={e!s}"[:200], flush=True)
 
 
 def tick_required_agreements(sb) -> dict:
