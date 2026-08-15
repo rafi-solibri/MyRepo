@@ -237,7 +237,7 @@ if [[ "$cdp_ready" -eq 0 ]]; then
       echo "'@"
       echo "\$args = @("
       echo "  '--no-sandbox',"
-      echo "  '--disable-gpu',"
+      # --disable-gpu can crash Chrome mid-CDP on some Windows home GPUs.
       echo "  '--disable-dev-shm-usage',"
       echo "  '--disable-extensions',"
       echo "  '--no-first-run',"
@@ -296,7 +296,8 @@ import sys, time, urllib.request
 
 url = "http://127.0.0.1:9222/json/version"
 last = None
-for _ in range(40):
+# Windows system Chrome + Default profile can take >20s after taskkill.
+for _ in range(90):
     try:
         print(urllib.request.urlopen(url, timeout=1).read().decode())
         raise SystemExit(0)

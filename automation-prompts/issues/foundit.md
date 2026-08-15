@@ -1,5 +1,12 @@
 # Foundit — issues & fixes
 
+## 2026-08-15 (home)
+
+| Issue | Fix |
+| --- | --- |
+| Windows home: page.evaluate Raven search killed CDP Chrome; confirmLogin false-failed on Hi Seeker despite MSSOAT; browser.close killed shared Chrome; launch --disable-gpu / short CDP wait | apiFetch via cookies for Raven/Falcon; accept MSSOAT+onApp login; never browser.close over CDP; skip --disable-gpu on Windows launch; wait 45s for CDP |
+
+
 ## 2026-08-15 (cloud)
 
 | Issue | Fix |

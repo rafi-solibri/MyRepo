@@ -102,6 +102,42 @@ async function ensureFoundit(page) {
   }
 }
 
+/**
+ * Cookie-backed Node fetch for Foundit APIs.
+ * Prefer this over page.evaluate — Windows CDP Chrome often dies mid-search
+ * when dozens of in-page fetches run during collectCandidates.
+ */
+async function apiFetch(context, url, opts = {}) {
+  const cookies = await context.cookies("https://www.foundit.in");
+  const cookieHeader = cookies.map((c) => `${c.name}=${c.value}`).join("; ");
+  const headers = {
+    Accept: "application/json",
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "Accept-Language": "en-US,en;q=0.9",
+    Origin: "https://www.foundit.in",
+    Referer: "https://www.foundit.in/seeker/dashboard",
+    ...(opts.headers || {}),
+    Cookie: cookieHeader,
+  };
+  const res = await fetch(url, {
+    method: opts.method || "GET",
+    headers,
+    body: opts.body != null ? opts.body : undefined,
+  });
+  const text = await res.text();
+  let json = null;
+  try {
+    json = JSON.parse(text);
+  } catch (_) {}
+  return {
+    status: res.status,
+    ok: res.ok,
+    json,
+    text: text.slice(0, 2000),
+  };
+}
+
 async function pageFetch(page, url, opts = {}) {
   await ensureFoundit(page);
   return page.evaluate(
@@ -128,7 +164,7 @@ async function pageFetch(page, url, opts = {}) {
   );
 }
 
-async function ravenSearch(page, query, locations, start = 0, limit = 20) {
+async function ravenSearch(context, query, locations, start = 0, limit = 20) {
   const body = {
     query,
     locations: locations || [],
@@ -136,8 +172,8 @@ async function ravenSearch(page, query, locations, start = 0, limit = 20) {
     limit,
     sort: 1,
   };
-  const res = await pageFetch(
-    page,
+  const res = await apiFetch(
+    context,
     "https://www.foundit.in/raven/api/public/search/v1/jobs",
     {
       method: "POST",
@@ -154,17 +190,17 @@ async function ravenSearch(page, query, locations, start = 0, limit = 20) {
   return { status: res.status, data };
 }
 
-async function jobDetail(page, jobId) {
-  const res = await pageFetch(
-    page,
+async function jobDetail(context, jobId) {
+  const res = await apiFetch(
+    context,
     `https://www.foundit.in/home/api/jobDetail?jobId=${jobId}`,
     { headers: { Accept: "application/json" } }
   );
   return res.json && typeof res.json === "object" ? res.json : null;
 }
 
-async function alreadyApplied(page, jobId) {
-  const uji = await pageFetch(page, "https://www.foundit.in/home/api/userJobInfo", {
+async function alreadyApplied(context, jobId) {
+  const uji = await apiFetch(context, "https://www.foundit.in/home/api/userJobInfo", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -175,8 +211,8 @@ async function alreadyApplied(page, jobId) {
   const row = Array.isArray(uji.json) ? uji.json[0] : null;
   if (row?.applied) return { applied: true, via: "userJobInfo" };
 
-  const st = await pageFetch(
-    page,
+  const st = await apiFetch(
+    context,
     `https://www.foundit.in/home/api/applicationStatus?jobId=${jobId}`,
     { headers: { Accept: "application/json" } }
   );
@@ -184,8 +220,8 @@ async function alreadyApplied(page, jobId) {
   return { applied: false, uji: row, st: st.json };
 }
 
-async function falconApply(page, jwt, jobId) {
-  return pageFetch(page, "https://www.foundit.in/falcon/api/users/v9/jobs/apply", {
+async function falconApply(context, jwt, jobId) {
+  return apiFetch(context, "https://www.foundit.in/falcon/api/users/v9/jobs/apply", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -220,25 +256,34 @@ function readLoginSignals() {
   return { hits, hasRafi, loginWall };
 }
 
-async function confirmLogin(page) {
+async function confirmLogin(page, context) {
   const urls = [
     "https://www.foundit.in/seeker/dashboard",
     "https://www.foundit.in/home/user",
   ];
-  let last = { hits: [], hasRafi: false, loginWall: true };
+  let last = { hits: [], hasRafi: false, loginWall: true, hasAuthCookie: false };
   for (const url of urls) {
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
     // Header personalization can lag; poll so we do not false-fail on "Hi, Seeker".
     const deadline = Date.now() + 12000;
     while (Date.now() < deadline) {
       last = await page.evaluate(readLoginSignals);
-      if (last.hasRafi && !last.loginWall) {
-        last.url = url;
+      last.url = page.url() || url;
+      const cookies = await context.cookies("https://www.foundit.in").catch(() => []);
+      const auth = cookies.find((c) => c.name === "MSSOAT" && String(c.value || "").length > 0);
+      last.hasAuthCookie = Boolean(auth);
+      last.mssoatLen = auth ? String(auth.value).length : 0;
+      const onApp =
+        /seeker\/dashboard|\/home\/user|\/profile|\/seeker\//i.test(last.url) &&
+        !/\/rio\//i.test(last.url);
+      last.onApp = onApp;
+      // Parity with wait_for_cdp_login: MSSOAT + app URL is enough when greeting stays "Hi, Seeker".
+      if ((last.hasRafi || (last.hasAuthCookie && onApp)) && !last.loginWall) {
         return last;
       }
       await sleep(800);
     }
-    last.url = url;
+    last.url = page.url() || url;
   }
   return last;
 }
@@ -414,7 +459,7 @@ async function handleExternalAts(context, resumePath, job, report) {
   }
 }
 
-async function collectCandidates(page, maxDays, seen, queries = QUERIES) {
+async function collectCandidates(context, maxDays, seen, queries = QUERIES) {
   const out = [];
   const locationSets = [
     ["hyderabad / secunderabad", "remote"],
@@ -424,7 +469,10 @@ async function collectCandidates(page, maxDays, seen, queries = QUERIES) {
   for (const query of queries) {
     for (const locs of locationSets) {
       for (let start = 0; start < 60; start += 20) {
-        const { data } = await ravenSearch(page, query, locs, start, 20);
+        const { data, status } = await ravenSearch(context, query, locs, start, 20);
+        if (status && status >= 400) {
+          console.error(`[raven] ${status} q=${query} start=${start}`);
+        }
         if (!data.length) break;
         for (const job of data) {
           const id = String(job.jobId || job.id || "");
@@ -471,7 +519,7 @@ async function main() {
 
   let browser;
   try {
-    browser = await chromium.connectOverCDP(CDP);
+    browser = await chromium.connectOverCDP(CDP, { timeout: 120000 });
   } catch (e) {
     report.blocked.push({
       reason: "cdp_connect_failed",
@@ -487,9 +535,15 @@ async function main() {
     const context = browser.contexts()[0] || (await browser.newContext());
     const page = await context.newPage();
 
-    const login = await confirmLogin(page);
+    const login = await confirmLogin(page, context);
     report.login = login;
-    if (!login.hasRafi || login.loginWall) {
+    const onApp =
+      login.onApp === true ||
+      (/seeker\/dashboard|\/home\/user|\/profile|\/seeker\//i.test(login.url || "") &&
+        !/\/rio\//i.test(login.url || ""));
+    const loggedIn =
+      !login.loginWall && (login.hasRafi || (login.hasAuthCookie && onApp));
+    if (!loggedIn) {
       report.blocked.push({ reason: "foundit_login_required" });
       fs.mkdirSync(path.dirname(OUT), { recursive: true });
       fs.writeFileSync(OUT, JSON.stringify(report, null, 2));
@@ -519,7 +573,7 @@ async function main() {
       if (applies >= MAX_APPLIES) break;
       report.ageWindowUsed = maxDays;
       const candidates = await collectCandidates(
-        page,
+        context,
         maxDays,
         seen,
         [...QUERIES, ...EXTRA_QUERIES]
@@ -532,14 +586,14 @@ async function main() {
         let verdict = classifyJob(job);
 
         if (!verdict.pass && verdict.needsEnrich) {
-          const detail = await jobDetail(page, job.jobId || job.id);
+          const detail = await jobDetail(context, job.jobId || job.id);
           if (detail) {
             job = { ...job, ...detail, skills: detail.skills || detail.itSkills || job.skills };
             verdict = classifyJob(job);
           }
         } else if (verdict.pass && !job.description) {
           // Enrich for redirectUrl / questionnaire when applying
-          const detail = await jobDetail(page, job.jobId || job.id);
+          const detail = await jobDetail(context, job.jobId || job.id);
           if (detail) {
             job = {
               ...job,
@@ -583,7 +637,7 @@ async function main() {
         }
 
         const jobId = String(verdict.jobId || job.jobId || job.id);
-        const elig = await alreadyApplied(page, jobId);
+        const elig = await alreadyApplied(context, jobId);
         if (elig.applied) {
           report.duplicates.push({
             jobId,
@@ -595,7 +649,7 @@ async function main() {
         }
 
         // Prefer Foundit native apply first (registers on Foundit even for some externals)
-        const applyRes = await falconApply(page, jwt, jobId);
+        const applyRes = await falconApply(context, jwt, jobId);
         const bodyStr = JSON.stringify(applyRes.json || {});
 
         await tryDismissScreening(page);
@@ -735,7 +789,8 @@ async function main() {
     fs.writeFileSync(OUT, JSON.stringify(report, null, 2));
     console.log(JSON.stringify(report, null, 2));
   } finally {
-    await browser.close().catch(() => {});
+    // Never browser.close() over CDP — kills shared system Chrome on Windows home.
+    // Avoid disconnect() hang; process exit drops the CDP client.
   }
 }
 

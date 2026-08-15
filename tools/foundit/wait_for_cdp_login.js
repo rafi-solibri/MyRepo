@@ -62,7 +62,7 @@ async function main() {
 
   let browser;
   try {
-    browser = await chromium.connectOverCDP(CDP);
+    browser = await chromium.connectOverCDP(CDP, { timeout: 120000 });
   } catch (err) {
     console.error(
       JSON.stringify({
