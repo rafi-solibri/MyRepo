@@ -141,8 +141,9 @@ function skipTitleReason(title) {
   if (/\bpower\s*platform\b/i.test(t)) return "Power Platform";
   if (/\bduck\s*creek\b/i.test(t)) return "Duck Creek";
   // Pure AI / data titles need .NET|C#|dotnet on the TITLE (skills laundry lists are noisy).
+  // Naukri parity: AI Solution Architect + Data Engineering Manager (not only "data engineer").
   if (
-    /\b(ai\s+architect|ai\s+engineer|ml\s+engineer|genai|data\s+scientist|data\s+engineer)\b/i.test(
+    /\b(ai\s+(?:specialist\s+)?(?:solution\s+)?architect|ai\s+engineer|ml\s+engineer|genai|data\s+scientist|data\s+engineer(?:ing)?)\b/i.test(
       t
     ) &&
     !hasDotNet(t, "")
@@ -156,6 +157,17 @@ function skipTitleReason(title) {
     !hasDotNet(t, "")
   )
     return "infra/ops without .NET on title";
+  // EXTRA_QUERIES Arch/Lead wave pulled non-software EM/Principal titles (2026-08-15).
+  if (
+    /\b(facilities|electrical|mechanical|civil|structural|hvac|power\s+generation|wastewater|water)\b/i.test(t) &&
+    !hasDotNet(t, "")
+  )
+    return "non-software engineering without .NET on title";
+  if (/\boperations\s+engineering\s+manager\b/i.test(t) && !hasDotNet(t, ""))
+    return "ops/manufacturing EM without .NET on title";
+  // Naukri NON_DOTNET_PRIMARY_RE parity — Oracle Fusion/Apps/ERP is not .NET.
+  if (/\b(oracle\s+fusion|oracle\s+apps|oracle\s+erp)\b/i.test(t) && !hasDotNet(t, ""))
+    return "Oracle Fusion/ERP without .NET on title";
   if (/\bwpf\b/i.test(t) && !/\basp\.?\s*net|web\s*api|azure|\.net\s*core\b/i.test(t))
     return "WPF/hardware desktop";
   return null;
