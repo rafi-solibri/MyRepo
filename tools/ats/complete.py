@@ -1534,9 +1534,10 @@ def icims_active_frame(page):
 
 
 def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
-    """Click iframe Apply, clear hCaptcha (checkbox or CapSolver/2Captcha), then fill."""
+    """Click iframe Apply, clear hCaptcha (owner click, checkbox, or paid solver), then fill."""
     from tools.ats.captcha_solve import (
         captcha_solver_configured,
+        owner_captcha_wait_sec,
         try_clear_hcaptcha,
     )
 
@@ -1564,8 +1565,10 @@ def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
     if icims_hcaptcha_login(page) or visible_captcha_challenge(page):
         cleared = try_clear_hcaptcha(page)
         if not cleared:
+            if owner_captcha_wait_sec() > 0:
+                return "blocked", "owner_captcha_unsolved"
             if not captcha_solver_configured():
-                return "blocked", "captcha_solver_key_missing"
+                return "blocked", "captcha_needs_owner_or_solver"
             return "blocked", "CAPTCHA/bot wall"
         try:
             _click_text(

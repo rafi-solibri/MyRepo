@@ -12,7 +12,8 @@
 # Cursor Cloud Automations should ALSO set the same keys as Environment Secrets
 # so cron pods get them without relying on a snapshot file:
 #   LINKEDIN_EMAIL, LINKEDIN_PASSWORD, NAUKRI_WORKDAY_PASSWORD, RESEND_*,
-#   CAPSOLVER_API_KEY or TWOCAPTCHA_API_KEY (iCIMS hCaptcha / Indeed reCAPTCHA).
+#   CAPSOLVER_API_KEY or TWOCAPTCHA_API_KEY — optional paid solvers.
+#   Free path: bash scripts/home-headed-careers-apply.sh (you click hCaptcha).
 set -uo pipefail
 
 _ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
