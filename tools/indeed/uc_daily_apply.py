@@ -606,6 +606,9 @@ def fill_common_questions(sb) -> None:
               if (/gender/.test(t)) return 'male';
               if (/city|current location|prefer.*location|job location|base location/.test(t)) return 'Hyderabad';
               if (/\\?/.test(t) && /(yes|no)/.test(t)) return 'yes';
+              if (/reason for (change|leaving|switch)|why (are you )?looking|why change|current (role|job) change/.test(t)) {
+                return 'Career growth — seeking Solution Architect / Tech Lead roles in .NET and Azure. Immediate joiner. Expected 65 LPA.';
+              }
               if (/cover letter|why (do )?you|tell us|about yourself|summary|additional information/.test(t)) {
                 return 'Solutions Architect / Tech Lead with 14+ years in .NET, Azure, microservices. Immediate joiner. Hyd/Remote. Expected 65 LPA.';
               }
