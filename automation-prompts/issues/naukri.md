@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| homepage card role parse; Manager SW/CTO; chatbot .Net+Java; View applied jobs | parseNaukriCardLines; ARCH_LEAD SW/CTO; prefer .NET-only multiselect; View applied = applied |
 | button:has-text('Apply') clicked View applied jobs (20+) → apply_unconfirmed; brochure careers.html burned 6.5m as external_incomplete_or_timeout | isFalseApplyCta skips View applied/applied jobs; brochure fail-fast no_ats_form; handleExternal uses completeExternalPage |
 | SmartRecruiters/Workday timeouts + Lloyds maintenance + chatbot ignored .NET/Java checkboxes and Never served | Fail-fast unavailable; skip D365/cyber architecture; chatbot stack checkboxes + military No |
 | Workday Python/JS password miss when only LINKEDIN_PASSWORD/NAUKRI_WORKDAY_PASSWORD set | Password chain includes NAUKRI_WORKDAY_PASSWORD + LINKEDIN_PASSWORD; richer Workday fill |

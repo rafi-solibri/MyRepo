@@ -68,7 +68,8 @@ UNAVAILABLE_RE = re.compile(
     r"this site is temporarily unavailable|community\.workday\.com/maintenance|"
     r"this job is no longer|position has been filled|"
     r"no longer accepting applications|requisition is closed|"
-    r"job is no longer available",
+    r"job is no longer available|"
+    r"403 forbidden|\berror 403\b|access denied",
     re.I,
 )
 
@@ -473,8 +474,11 @@ def auth_wall_reason(
     # Email-only Eightfold/Phenom SSO (Qualcomm careers/apply) has an email
     # box + "Sign in using Google" and no resume upload — not guest-applyable.
     if re.search(
+        r"select a method below to sign in|"
         r"sign in to (continue|apply)|log in to apply|create an account|"
-        r"sign in using (microsoft|google)|employees must sign in|"
+        r"sign in using (microsoft|google|linkedin|facebook|apple)|"
+        r"if you are a microsoft employee|"
+        r"employees must sign in|"
         r"current \w+ employees must sign in|first time here\?|"
         r"we don't recognize this email",
         text or "",
@@ -493,6 +497,15 @@ def _body(page, limit: int = 4500) -> str:
 
 def _sleep(seconds: float) -> None:
     time.sleep(seconds)
+
+
+def page_fingerprint(page) -> str:
+    """URL + short body so Apply clicks that do not change the page count as stuck."""
+    try:
+        url = getattr(page, "url", "") or ""
+    except Exception:
+        url = ""
+    return f"{url}|{_body(page, 600)}"
 
 
 def looks_submitted(page) -> bool:
@@ -1228,6 +1241,7 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
         has_apply_cta=flags.get("has_apply_cta", False),
     ):
         return "skipped", "no_ats_form"
+    last_fp = page_fingerprint(page)
     while time.time() - start < time_cap_s and stuck < 8:
         if looks_submitted(page):
             return "applied", "confirmation"
@@ -1256,12 +1270,15 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
         fill_yes_no(page)
         fill_greenhouse_combos(page)
         tick_consents(page)
-        if click_advance(page):
+        advanced = click_advance(page)
+        _sleep(1.4 if advanced else 1.0)
+        fp = page_fingerprint(page)
+        if advanced and fp != last_fp:
             stuck = 0
-            _sleep(1.4)
+            last_fp = fp
             continue
         stuck += 1
-        _sleep(1.0)
+        last_fp = fp
     if looks_submitted(page):
         return "applied", "confirmation"
     return "blocked", "external_incomplete_or_timeout"

@@ -440,6 +440,20 @@ def skip_reason(title: str, company: str, location: str, snippet: str) -> str | 
 ACCOUNT_SETTINGS_URL = "https://secure.indeed.com/settings/account"
 
 
+def job_dedupe_key(href: str, jk: str = "") -> str:
+    """Stable key so the same listing is not Easy-Applied / ATS-opened twice.
+
+    SERP cards often omit data-jk and use unique pagead/clk hrefs; extract jk=
+    from the URL so BytesEdge-style repeats do not burn the ATS time cap.
+    """
+    m = re.search(r"[?&]jk=([a-f0-9]+)", href or "", re.I)
+    if m:
+        return m.group(1)
+    if jk:
+        return jk.strip()
+    return (href or "").split("?")[0]
+
+
 def looks_signed_in(body: str, url: str = "") -> bool:
     """True when nav/account chrome shows an authenticated jobseeker session.
 
@@ -762,6 +776,10 @@ def fill_common_questions(sb) -> None:
               if (/highest (degree|education|qualification)|degree of education|education level|degree obtained|university|college/.test(t)) {
                 return 'B.Tech';
               }
+              if (/full\\s*name|your\\s*name|candidate\\s*name|applicant\\s*name/.test(t)
+                  && !/first|last|middle|company/.test(t)) {
+                return 'Mohammed Abdul Rafi Ahmed';
+              }
               if (/(date of birth|\\bdob\\b|birth date|birthday)/.test(t) && !/place of birth/.test(t)) {
                 return '16/01/1989';
               }
@@ -774,7 +792,15 @@ def fill_common_questions(sb) -> None:
               }
               if (/current.*(ctc|salary|compensation|pay)|ctc.*current|present.*ctc|current.*package|current salary/.test(t)) return '52';
               if (/expected.*(ctc|salary|compensation|pay)|ctc.*expected|desired.*salary|expected.*package/.test(t)) return '65';
-              if (/notice|joining|how soon|availability|immediate|serve notice/.test(t)) return 'Immediate';
+              if (/earliest start|start date|available from|joining date|when can you (start|join)/.test(t)
+                  && !/salary|ctc/.test(t)) {
+                return '15/08/2026';
+              }
+              if (/notice|joining|how soon|availability|immediate|serve notice/.test(t)
+                  && !/start date|available from/.test(t)) return 'Immediate';
+              if (/certify that|i certify|details mentioned in your resume|accurate and truthful/.test(t)) {
+                return 'yes';
+              }
               if (/total.*(experience|exp)|years of experience|overall experience|relevant experience/.test(t)) return '14';
               // Years with a specific stack (Blazor / FHIR / .NET / Angular / Azure / C#).
               if (/how many years|years? (of |with |in )?(exp|experience)?|experience (with|in|on)/.test(t)
@@ -799,7 +825,7 @@ def fill_common_questions(sb) -> None:
               if (/gender/.test(t)) return 'male';
               if (/city|current location|prefer.*location|job location|base location/.test(t)) return 'Hyderabad';
               if (/\\?/.test(t) && /(yes|no)/.test(t)) return 'yes';
-              if (/cover letter|why (do )?you|tell us|about yourself|summary|additional information/.test(t)) {
+              if (/what makes you unique|cover letter|why (do )?you|tell us|about yourself|summary|additional information/.test(t)) {
                 return 'Solutions Architect / Tech Lead with 14+ years in .NET, Azure, microservices. Immediate joiner. Hyd/Remote. Expected 65 LPA.';
               }
               return null;
@@ -833,7 +859,7 @@ def fill_common_questions(sb) -> None:
                     (want === '14' && /\\b14\\b|12-15|10\\+/.test(t)) ||
                     (want === '10' && /\\b10\\b|8-10|10\\+|8\\+|7\\+|5\\+/.test(t)) ||
                     (want === 'Expert' && /expert|advanced|proficient|high/.test(t)) ||
-                    (want === 'B.Tech' && /b\\.?tech|bachelor|b\\.e\\b|undergraduate/.test(t)) ||
+                    (want === 'B.Tech' && /b\\.?tech|bachelor|b\\.e\\b|undergraduate|master|m\\.?tech/.test(t)) ||
                     (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not/.test(t))
                   ) {
                     sel.value = opt.value;
@@ -847,13 +873,29 @@ def fill_common_questions(sb) -> None:
                 if (want === 'decline') continue;
                 if (want) { setNative(el, want); return true; }
               }
-              // Custom listbox / button options
+              // Custom listbox / button options (Indeed education / years are often comboboxes).
+              if (want === 'B.Tech' || want === '14' || want === '10') {
+                for (const btn of root.querySelectorAll('button, [role=combobox], [aria-haspopup=listbox]')) {
+                  const t = ((btn.innerText||'') + ' ' + (btn.getAttribute('aria-label')||'')).toLowerCase();
+                  if (/select an option|choose an option|^select$/.test(t) || btn.getAttribute('aria-expanded') === 'false') {
+                    try { btn.click(); } catch (e) {}
+                  }
+                }
+              }
               for (const el of root.querySelectorAll('button, [role=option], li, label, span')) {
                 const t = ((el.innerText||'') + ' ' + (el.getAttribute('aria-label')||'')).trim().toLowerCase();
                 if (!t || t.length > 80) continue;
-                if (want === 'yes' && /\\byes\\b/.test(t) && !/\\bno\\b/.test(t)) { el.click(); return true; }
+                if (want === 'yes' && /\\byes\\b|i certify|yes, i certify/.test(t) && !/don'?t certify|\\bno,/.test(t)) { el.click(); return true; }
                 if (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs/.test(t)) { el.click(); return true; }
                 if (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15/.test(t)) { el.click(); return true; }
+                if (want === 'B.Tech' && /b\\.?\\s*tech|bachelor|b\\.e\\b|undergraduate|master'?s?|m\\.?\\s*tech/.test(t)
+                    && !/select an option|highest degree/.test(t)) {
+                  el.click(); return true;
+                }
+                if ((want === '14' || want === '10') && /\\b(14|12|10|8)\\+?\\b|12-15|10\\+|8-10/.test(t)
+                    && !/select an option|how many years/.test(t)) {
+                  el.click(); return true;
+                }
                 if (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not/.test(t)) {
                   el.click(); return true;
                 }
@@ -887,12 +929,13 @@ def fill_common_questions(sb) -> None:
               if (el.disabled || el.readOnly) continue;
               const lab = labelFor(el);
               let val = null;
-              if (/first\\s*name|given\\s*name|fname/.test(lab)) val = vals.first;
+              if (/full\\s*name|your\\s*name|candidate\\s*name|applicant\\s*name/.test(lab)
+                  && !/first|last|middle|company/.test(lab)) val = vals.full;
+              else if (/first\\s*name|given\\s*name|fname/.test(lab)) val = vals.first;
               else if (/last\\s*name|surname|family\\s*name|lname/.test(lab)) val = vals.last;
-              else if (/full\\s*name|candidate name|your name/.test(lab) && !/first|last|company|employer/.test(lab)) val = vals.full;
               else if (/(date of birth|\\bdob\\b|birth date|birthday)/.test(lab)) val = vals.dob;
               else if (/\\bpan\\b|aadhaar|aadhar|passport number|national id/.test(lab)) val = null;
-              else if (/phone|mobile|tel/.test(lab) || type === 'tel') val = vals.phone;
+              else if (/\\bphone\\b|\\bmobile\\b|telephone/.test(lab) || type === 'tel') val = vals.phone;
               else if (/e-?mail/.test(lab) || type === 'email') val = vals.email;
               else if (/current.*(position|role|title|designation)|job title/.test(lab) && !/salary|ctc/.test(lab)) val = 'Solutions Architect';
               else if (/current.*(employer|company|organization)|present.*(employer|company)/.test(lab) && !/salary|ctc/.test(lab)) val = 'Nemetschek / Solibri';
@@ -900,14 +943,15 @@ def fill_common_questions(sb) -> None:
               else if (/highest (degree|education|qualification)|education|university|college|degree/.test(lab)) val = 'B.Tech';
               else if (/current.*(ctc|salary|compensation|package)|ctc.*current|current salary/.test(lab)) val = vals.current;
               else if (/expected.*(ctc|salary|compensation|package)|ctc.*expected/.test(lab)) val = vals.expected;
-              else if (/notice|joining|availability/.test(lab)) val = vals.notice;
+              else if (/earliest start|start date|available from|joining date/.test(lab) || (type === 'date' && /start|join|avail/.test(lab))) val = '15/08/2026';
+              else if (/notice|joining|availability/.test(lab) && !/start date|available from/.test(lab)) val = vals.notice;
               else if (/city|location|current\\s*location/.test(lab)) val = vals.city;
               else if (/experience|years/.test(lab)) val = vals.experience;
               else if (!(el.value || '').trim()) {
                 const w = wantFromText(lab);
                 if (w) val = w;
               }
-              if (val != null && (!(el.value || '').trim() || /phone|mobile|tel|first|last|ctc|salary|notice|city|experience|package|linkedin|employer|company|education|degree|birth|dob|date/.test(lab) || /^(yes|no)$/i.test(el.value || ''))) {
+              if (val != null && (!(el.value || '').trim() || /\\bphone\\b|\\bmobile\\b|telephone|first|last|full\\s*name|ctc|salary|notice|city|experience|package|linkedin|employer|company|education|degree|birth|dob|start date/.test(lab) || /^(yes|no)$/i.test(el.value || ''))) {
                 if (setNative(el, val)) answered += 1;
               }
             }
@@ -1033,8 +1077,9 @@ def tick_required_agreements(sb) -> dict:
               if (isOn(el) || el.disabled) continue;
               const t = nearby(el);
               const short = ((el.getAttribute('aria-label') || '') + ' ' + (el.parentElement?.innerText || '') + ' ' + (el.value || '')).toLowerCase().slice(0, 80);
-              if (/\bagree\b/.test(short) || /privacy notice|declare that you have read|terms and conditions|i have read|by checking this|consent to/.test(t)) {
-                tick(el, 'box:' + short.slice(0, 40));
+              if (/\bagree\b/.test(short) || /yes, i certify|i certify/.test(short)
+                  || /privacy notice|declare that you have read|terms and conditions|i have read|by checking this|consent to|accurate and truthful/.test(t)) {
+                if (!/don'?t certify|no, i/.test(short)) tick(el, 'box:' + short.slice(0, 40));
               }
             }
             for (const el of document.querySelectorAll('label, button, [role=button], [role=option]')) {
@@ -2578,7 +2623,7 @@ def main() -> int:
                     break
                 if report["counts"]["seen"] >= MAX_SEEN:
                     break
-                key = jk or href.split("?")[0]
+                key = job_dedupe_key(href, jk)
                 if key in seen_keys:
                     continue
                 seen_keys.add(key)

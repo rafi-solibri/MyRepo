@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| spot-check used /jobs/{id}/ which 404s | use /job-{id}/ public URLs |
 | Company-site completer still treated OneClick/SSO as fillable forms | complete_page.js fail-fast SSO/OneClick and prefer guest Apply |
 | external_ats_detected logged but company-site never completed | Follow ATS href via tools/ats/complete_page.js |
 

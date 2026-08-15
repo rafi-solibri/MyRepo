@@ -38,6 +38,10 @@ def test_title_ok():
     assert CAREERS_TITLE_SKIP.search("Principal Physical Design Engineer (Chiplet Design)")
     assert CAREERS_TITLE_SKIP.search("Staff ASIC Design Engineer")
     assert CAREERS_TITLE_SKIP.search("Principal Silicon Design Engineer")
+    assert CAREERS_TITLE_SKIP.search("Principal Silicon Design Engineer India, Telangana, Hyderabad")
+    assert CAREERS_TITLE_SKIP.search("Product Design Manager")
+    assert LI_TITLE_SKIP.search("Principal Silicon Design Engineer")
+    assert JD_WRONG_STACK.search("We need a Mobile Architect for Ionic Capacitor and Zscaler")
     assert JD_WRONG_STACK.search(
         "designing and implementing Salesforce solutions ... SFDC Development and Customization"
     )

@@ -30,7 +30,7 @@ async function looksWorkday(page) {
 }
 
 function isUnavailable(url, text) {
-  return /maintenance-page|scheduled maintenance|we('ll| will) be back|temporarily unavailable|community\.workday\.com\/maintenance|no longer accepting applications|position has been filled|job is no longer available|requisition is closed/i.test(
+  return /maintenance-page|scheduled maintenance|we('ll| will) be back|temporarily unavailable|community\.workday\.com\/maintenance|no longer accepting applications|position has been filled|job is no longer available|requisition is closed|403 forbidden|\berror 403\b|access denied/i.test(
     `${url || ""} ${text || ""}`
   );
 }
@@ -107,7 +107,7 @@ async function completeExternalPage(page, resumePath, { maxMs = 6.5 * 60 * 1000 
   }
   while (Date.now() - start < maxMs && noAdvance < 6) {
     const url = page.url() || "";
-    if (/b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|secure\.indeed\.com\/(?:auth|oauth)|oneclick\.smartrecruiters|login\.cognizant|eightfold\.ai\/(?:login|signin|auth)/i.test(url)) {
+    if (/b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|secure\.indeed\.com\/(?:auth|oauth)|oneclick\.smartrecruiters|login\.cognizant|talent\.cognizant\.com\/\S*login|eightfold\.ai\/(?:login|signin|auth)/i.test(url)) {
       return { ok: false, reason: "ats_login_wall", url };
     }
     const text = await page
@@ -124,6 +124,15 @@ async function completeExternalPage(page, resumePath, { maxMs = 6.5 * 60 * 1000 
     if (challenge) return { ok: false, reason: "captcha_wall", url };
 
     if (isUnavailable(url, text)) return { ok: false, reason: "job_unavailable", url };
+    // Microsoft/Eightfold SSO chooser has no password field — fail fast.
+    if (
+      /select a method below to sign in|sign in using (microsoft|google|linkedin|facebook|apple)|if you are a microsoft employee|employees must sign in/i.test(
+        text
+      )
+    ) {
+      const files = await page.locator("input[type='file']").count().catch(() => 0);
+      if (!files) return { ok: false, reason: "ats_login_wall", url };
+    }
     await preferGuestApply(page);
     if (resumePath) {
       const files = page.locator("input[type='file']");
