@@ -439,6 +439,19 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         row["reason"] = f"nav_error:{e}"
         return row
     time.sleep(2.0)
+    try:
+        from tools.ats.complete import is_already_applied_text
+    except Exception:
+        from ats.complete import is_already_applied_text  # type: ignore
+    try:
+        banner = page.locator("body").inner_text(timeout=2500) or ""
+    except Exception:
+        banner = ""
+    if is_already_applied_text(banner):
+        row["status"] = "skipped"
+        row["reason"] = "already_applied"
+        row["finalUrl"] = page.url
+        return row
     if auth_wall_url(page.url or "") or AUTH_HOST.search(page.url or ""):
         row["reason"] = "login/account wall"
         row["finalUrl"] = page.url

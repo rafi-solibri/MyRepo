@@ -22,6 +22,7 @@ from tools.ats.complete import (
     is_board_tracking_url,
     is_brochure_or_dead_end,
     is_hard_ats_wall,
+    is_already_applied_text,
     is_submitted_text,
     is_unavailable_text,
     looks_like_apply_cta,
@@ -35,6 +36,11 @@ def assert_true(cond, msg):
 
 
 assert_true(is_submitted_text("Thank you for applying to Acme"), "thank-you must count")
+assert_true(
+    is_already_applied_text("You applied for this job on August 15, 2026."),
+    "Workday already-applied banner",
+)
+assert_true(not is_already_applied_text("Apply for this job"), "CTA is not already-applied")
 assert_true(is_submitted_text("Your application was sent"), "sent must count")
 assert_true(is_submitted_text("We have received your application"), "received must count")
 assert_true(is_submitted_text("Thanks for your interest — you're all set"), "all-set must count")

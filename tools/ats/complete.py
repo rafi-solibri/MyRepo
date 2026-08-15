@@ -63,6 +63,14 @@ SUBMITTED_RE = re.compile(
     re.I,
 )
 
+ALREADY_APPLIED_RE = re.compile(
+    r"you (already )?applied for this job|you have already applied|"
+    r"already applied to this (job|position|role)|application already (exists|submitted)|"
+    r"you applied for this job on",
+    re.I,
+)
+
+
 UNAVAILABLE_RE = re.compile(
     r"maintenance-page|scheduled maintenance|we('ll| will) be back|"
     r"this site is temporarily unavailable|community\.workday\.com/maintenance|"
@@ -255,6 +263,10 @@ def is_hard_ats_wall(reason: str | None) -> bool:
 
 def is_submitted_text(text: str | None) -> bool:
     return bool(SUBMITTED_RE.search(text or ""))
+
+
+def is_already_applied_text(text: str | None) -> bool:
+    return bool(ALREADY_APPLIED_RE.search(text or ""))
 
 
 def looks_like_apply_cta(label: str | None) -> bool:
@@ -1134,6 +1146,8 @@ def workday_fill_core(page) -> None:
 
 def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
     start = time.time()
+    if is_already_applied_text(_body(page, 2500)):
+        return "skipped", "already_applied"
     if is_unavailable_text(f"{getattr(page, 'url', '')}\n{_body(page, 1500)}"):
         return "skipped", "job_unavailable"
     workday_open_apply(page)
@@ -1275,6 +1289,8 @@ def complete_ats(page, time_cap_s: int | None = None) -> tuple[str, str]:
     cap = int(time_cap_s or DEFAULT_TIME_CAP_S)
     if looks_submitted(page):
         return "applied", "confirmation"
+    if is_already_applied_text(_body(page, 2500)):
+        return "skipped", "already_applied"
     if visible_captcha_challenge(page):
         return "blocked", "CAPTCHA/bot wall"
     flags = page_flags(page)

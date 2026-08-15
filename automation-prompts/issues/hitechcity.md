@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Solera JR-019000 already-applied banner still burned ATS time | Skip You applied for this job as already_applied before Workday fill |
 | Solera Workday rejected https://linkedin.com (no www) and stalled My Experience | PROFILE LinkedIn uses www.linkedin.com; workday_fill_core writes linkedInAccount |
 | Solera Workday Create Account burned 390s on password-rule reject | workday_auth fail-fasts password-must-include; try Sign In once then ats_login_wall |
 | Qualcomm Eightfold email-only Sign-in burned 390s ATS cap (timeout not a wall) | auth_wall_reason fail-fast email-only SSO; talent.cognizant.com/login2; skip silicon design titles |
