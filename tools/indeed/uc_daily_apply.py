@@ -334,6 +334,46 @@ def skip_reason(title: str, company: str, location: str, snippet: str) -> str | 
     return None
 
 
+def signed_out_home(body: str) -> bool:
+    """True when the Indeed homepage is the anonymous Get Started marketing page."""
+    return bool(
+        re.search(
+            r"create an account or sign in|get started|sign in to see your personalised|"
+            r"your next job starts here",
+            body or "",
+            re.I,
+        )
+    ) and not re.search(
+        r"welcome,\s*\w+|sign out|account settings|my jobs",
+        body or "",
+        re.I,
+    )
+
+
+def warm_passport_session(sb) -> tuple[str, str]:
+    """Activate Passport after Turnstile so the homepage paints Welcome.
+
+    CF clear can leave in.indeed.com on anonymous Get Started even when
+    Passport cookies are valid in the jar. Opening account settings attaches
+    the session; returning home then shows Welcome.
+    """
+    try:
+        sb.uc_open_with_reconnect("https://secure.indeed.com/settings/account", 5)
+        time.sleep(3)
+        clear_cf(sb)
+    except Exception:
+        pass
+    try:
+        sb.uc_open_with_reconnect("https://in.indeed.com/", 5)
+        time.sleep(3)
+        clear_cf(sb)
+        body = (sb.get_text("body") or "")[:2500]
+        title = sb.get_title() or ""
+        return title, body
+    except Exception:
+        return "", ""
+
+
 def already_applied(body: str, url: str = "") -> bool:
     """True when the job-view page shows this listing was already submitted."""
     b = (body or "").lower()
@@ -527,6 +567,8 @@ def fill_common_questions(sb) -> None:
               if (/highest (degree|education|qualification)|education level|degree obtained|university|college/.test(t)) {
                 return 'B.Tech';
               }
+              if (/date of birth|\\bdob\\b|birth\\s*date|birthday/.test(t)) return '16/01/1989';
+              if (/\\bpan\\b|aadhaar|aadhar|passport\\s*(no|number|id)|ssn|social security/.test(t)) return null;
               if (/current.*(ctc|salary|compensation|pay)|ctc.*current|present.*ctc|current.*package|current salary/.test(t)) return '52';
               if (/expected.*(ctc|salary|compensation|pay)|ctc.*expected|desired.*salary|expected.*package/.test(t)) return '65';
               if (/notice|joining|how soon|availability|immediate|serve notice/.test(t)) return 'Immediate';
@@ -650,8 +692,10 @@ def fill_common_questions(sb) -> None:
               else if (/current.*(ctc|salary|compensation|package)|ctc.*current|current salary/.test(lab)) val = vals.current;
               else if (/expected.*(ctc|salary|compensation|package)|ctc.*expected/.test(lab)) val = vals.expected;
               else if (/notice|joining|availability/.test(lab)) val = vals.notice;
-              else if (/city|location|current\\s*location/.test(lab)) val = vals.city;
-              else if (/experience|years/.test(lab)) val = vals.experience;
+              else if (/date of birth|\\bdob\\b|birth\\s*date|birthday/.test(lab) || type === 'date') val = '16/01/1989';
+              else if (/\\bpan\\b|aadhaar|aadhar|passport\\s*(no|number|id)/.test(lab)) val = null;
+              else if (/city|current\\s*location|prefer.*location|base location/.test(lab) && !/compan/.test(lab)) val = vals.city;
+              else if (/experience|years/.test(lab) && !/date|birth|pan|aadhaar/.test(lab)) val = vals.experience;
               else if (!(el.value || '').trim()) {
                 const w = wantFromText(lab);
                 if (w) val = w;
@@ -2227,30 +2271,16 @@ def main() -> int:
             _emit(report)
             return 5
 
-        # CF can clear while the account is still anonymous ("Get Started" / Sign in).
-        # One hard reload: preflight-style clear sometimes paints Welcome only after
-        # a second navigation once cf_clearance is set.
+        # CF can clear while the homepage stays anonymous ("Get Started").
+        # Homepage reload alone is not enough — Passport attaches after
+        # secure.indeed.com/settings/account, then Welcome paints on return.
         try:
             home_body = (sb.get_text("body") or "")[:2500]
             home_title = sb.get_title() or ""
         except Exception:
             home_body, home_title = "", ""
 
-        def _signed_out(body: str) -> bool:
-            return bool(
-                re.search(
-                    r"create an account or sign in|get started|sign in to see your personalised|"
-                    r"your next job starts here",
-                    body,
-                    re.I,
-                )
-            ) and not re.search(
-                r"welcome,\s*\w+|sign out|account settings|my jobs|profile",
-                body,
-                re.I,
-            )
-
-        if _signed_out(home_body):
+        if signed_out_home(home_body):
             try:
                 sb.uc_open_with_reconnect("https://in.indeed.com/", 5)
                 time.sleep(3)
@@ -2260,7 +2290,12 @@ def main() -> int:
                 home_title = sb.get_title() or ""
             except Exception:
                 pass
-        if _signed_out(home_body):
+        if signed_out_home(home_body):
+            warmed_title, warmed_body = warm_passport_session(sb)
+            if warmed_body:
+                home_title, home_body = warmed_title, warmed_body
+                report["sessionWarmedVia"] = "secure.indeed.com/settings/account"
+        if signed_out_home(home_body):
             report["blocked"].append(
                 {
                     "reason": "indeed_login_required",
