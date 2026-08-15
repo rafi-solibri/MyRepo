@@ -1,5 +1,12 @@
 # Instahyre — issues & fixes
 
+## 2026-08-15 (home)
+
+| Issue | Fix |
+| --- | --- |
+| pages()[0] foreign tab ERR_ABORT / false instahyre_login_required on home CDP | always context.newPage() in daily_apply.js and wait_for_cdp_login.js |
+
+
 ## 2026-08-15 (cloud)
 
 | Issue | Fix |
