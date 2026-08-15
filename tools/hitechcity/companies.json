@@ -451,7 +451,7 @@
       ],
       "linkedinSlug": "gartner",
       "careersUrls": [
-        "https://jobs.gartner.com/search/?createNewAlert=false&q=architect&locationsearch=Hyderabad"
+        "https://jobs.gartner.com/jobs/?search=architect&location=Hyderabad"
       ],
       "priority": 2
     },
@@ -529,7 +529,7 @@
       ],
       "linkedinSlug": "mcafee",
       "careersUrls": [
-        "https://careers.mcafee.com/search/?createNewAlert=false&q=architect&locationsearch=Hyderabad"
+        "https://careers.mcafee.com/jobs?keywords=architect"
       ],
       "priority": 2
     },
@@ -797,7 +797,7 @@
       ],
       "linkedinSlug": "dxc-technology",
       "careersUrls": [
-        "https://careers.dxc.com/global/en/search-results?keywords=architect"
+        "https://careers.dxc.com/job-search-results/?keywords=architect"
       ],
       "priority": 3
     },
