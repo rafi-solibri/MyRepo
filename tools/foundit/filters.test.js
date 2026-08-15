@@ -6,7 +6,9 @@ const {
   experienceOk,
   classifyJob,
   hasDotNet,
+  hasSeniority,
   isArchLeadTitle,
+  isJavaOrSalesforcePrimary,
 } = require("./filters");
 
 assert.deepStrictEqual(parseTitleExperience(".Net Lead|6-9 Yrs|Hyderabad"), {
@@ -343,6 +345,97 @@ assert.strictEqual(
   }).pass,
   true,
   "Solution Architecture Hyd titles may apply without .NET skills laundry"
+);
+
+assert.strictEqual(
+  hasSeniority("Technical Architect_.NET Core"),
+  true,
+  "underscore before .NET must not hide Architect seniority"
+);
+assert.strictEqual(
+  hasSeniority("IN_Senior Associate_Azure Dot Net Developer_GCC_Advisory_Bangalore"),
+  true,
+  "IN_Senior underscore title must count as seniority"
+);
+assert.strictEqual(
+  hasDotNet("IN_Senior Associate_Azure Dot Net Developer", ""),
+  true,
+  "Dot Net (two words) on title is .NET proof"
+);
+assert.strictEqual(
+  isJavaOrSalesforcePrimary("CPQ/Digital Commerce Solution architect", "Salesforce Conga CPQ"),
+  true,
+  "Salesforce in skills without .NET on title is SF-primary"
+);
+assert.strictEqual(
+  classifyJob({
+    jobId: 22,
+    title: "CPQ/Digital Commerce Solution architect",
+    companyName: "Hitachi Energy",
+    locations: [{ city: "Remote", country: "India" }],
+    skills: [{ text: "Salesforce" }, { text: "Conga CPQ" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  false,
+  "Salesforce-stack architect without .NET on title must skip"
+);
+assert.strictEqual(
+  classifyJob({
+    jobId: 23,
+    title: "Technical Architect_.NET Core",
+    companyName: "Example",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: ".NET Core" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 12 },
+  }).pass,
+  true,
+  "Technical Architect_.NET Core Hyd must pass"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 24,
+    title: "Solutions Architect",
+    companyName: "Allianz Technology",
+    locations: [{ country: "Thailand" }],
+    description: "Work from home. Remote-first culture across APAC.",
+    skills: [{ text: "software architecture" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  false,
+  "country-only Thailand must not inherit JD WFH/remote-first"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 25,
+    title: "Software Engineering Manager, AI i18n and Evaluations",
+    companyName: "Google India",
+    locations: [{ country: "Singapore" }],
+    description: "This is a remote-first role based in Singapore.",
+    skills: [{ text: "AI" }, { text: "i18n" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  false,
+  "country-only Singapore must not inherit JD remote-first"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 26,
+    title: "Principal Electrical Engineer, Data Center",
+    companyName: "Jacobs",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: "AutoCAD" }],
+    minimumExperience: { years: 12 },
+    maximumExperience: { years: 18 },
+  }).pass,
+  false,
+  "electrical principal is not a software Arch/Lead apply"
 );
 
 console.log("filters.test.js OK");
