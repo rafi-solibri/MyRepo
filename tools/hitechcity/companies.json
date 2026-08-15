@@ -140,7 +140,7 @@
       ],
       "linkedinSlug": "blue-yonder",
       "careersUrls": [
-        "https://careers.blueyonder.com/search/?createNewAlert=false&q=architect&locationsearch=Hyderabad"
+        "https://careers.blueyonder.com/us/en/search-results?keywords=architect&location=Hyderabad"
       ],
       "priority": 1
     },
@@ -198,7 +198,7 @@
       ],
       "linkedinSlug": "hyland-software",
       "careersUrls": [
-        "https://careers-hyland.icims.com/jobs/search?ss=1&searchKeyword=architect"
+        "https://careers-hyland.icims.com/jobs/search?ss=1&searchKeyword=architect&in_iframe=1"
       ],
       "priority": 1
     },
@@ -209,6 +209,7 @@
       ],
       "linkedinSlug": "intel-corporation",
       "careersUrls": [
+        "https://intel.wd1.myworkdayjobs.com/en-US/External?q=software%20architect&location=Hyderabad",
         "https://intel.wd1.myworkdayjobs.com/External?q=architect"
       ],
       "priority": 1
@@ -439,7 +440,7 @@
       ],
       "linkedinSlug": "fiserv",
       "careersUrls": [
-        "https://careers.fiserv.com/search/?createNewAlert=false&q=architect&locationsearch=Hyderabad"
+        "https://careers.fiserv.com/us/en/search-results?keywords=architect&location=Hyderabad"
       ],
       "priority": 2
     },

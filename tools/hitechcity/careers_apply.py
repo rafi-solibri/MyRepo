@@ -123,6 +123,11 @@ GUEST_ATS_HOST_RE = re.compile(
     r"greenhouse\.io|lever\.co|myworkdaysite",
     re.I,
 )
+# DataDome / reCAPTCHA boards burn the run if scanned first (Experian/Blackbaud/PAN).
+CAPTCHA_PRONE_HOST_RE = re.compile(
+    r"smartrecruiters\.com|careers\.blackbaud\.com|jobs\.paloaltonetworks\.com",
+    re.I,
+)
 AUTH_HOST = re.compile(
     r"passport\.amazon\.jobs|login\.microsoftonline|accounts\.google|"
     r"secure\.indeed\.com|indeed\.com/auth|okta\.com|login\.microsoft|"
@@ -201,6 +206,8 @@ def _company_ats_rank(company: dict[str, Any]) -> int:
         return 9
     if HANG_SCAN_HOST_RE.search(urls):
         return 8
+    if CAPTCHA_PRONE_HOST_RE.search(urls):
+        return 4
     if GUEST_ATS_HOST_RE.search(urls):
         return 0
     return int(company.get("priority", 5) or 5)
@@ -251,6 +258,17 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
             frames = []
         if not frames:
             frames = [page]
+        def _frame_rank(fr) -> int:
+            u = getattr(fr, "url", "") or ""
+            if "in_iframe=1" in u:
+                return 0
+            if "about:blank" in u or not u:
+                return 3
+            return 1
+        try:
+            frames = sorted(frames, key=_frame_rank)
+        except Exception:
+            pass
         js = """() => {
               const out = [];
               const seen = new Set();
@@ -286,9 +304,11 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
                 const href = a.href || '';
                 const h = href.toLowerCase();
                 const looksJobId = /\\/jobs?\\/\\d+|\\/job\\/\\d+|gh_jid=|[?&](?:jobId|pid|reqId)=\\d+|smartrecruiters\\.com\\/[^/]+\\/\\d{6,}|myworkdayjobs\\.com\\/.+\\/job\\/|icims\\.com\\/jobs\\/\\d+/i.test(h);
-                const looksJob = looksJobId
-                  || /job|career|requisition|opening|position|gh_jid|lever|workday|smartrecruiters|icims|taleo|greenhouse/.test(h)
-                  || /\\/jobs?\\//.test(h);
+                // Path job slugs only — do NOT treat vendor hostnames (icims/career) as jobs.
+                // Parent iCIMS chrome has 40+ marketing links on careers-*.icims.com and
+                // used to fill the 40-cap before the in_iframe=1 listing was evaluated.
+                const looksJobPath = /\\/(?:jobs|job)\\/(?!search|login|intro|home|cart)[^/?#]+/i.test(h);
+                const looksJob = looksJobId || looksJobPath || /[?&](?:gh_jid|jobId|pid)=\\d/i.test(h);
                 if (!looksJob) continue;
                 // Skip bare search/list hubs (no job id) that only match because of "jobs" in path.
                 if (/architecture-jobs\\/?$/i.test(h) || /\\/search-jobs\\/?(\\?|$)/i.test(h)) continue;
@@ -300,7 +320,7 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
                 const rawLabel = (a.innerText || a.textContent || '').trim().replace(/\\s+/g, ' ');
                 if (/^\\d+\\s+jobs?\\b/i.test(rawLabel) || /\\bturn on job alerts\\b/i.test(rawLabel)) continue;
                 let text = (a.innerText || a.textContent || a.getAttribute('aria-label') || a.getAttribute('title') || '')
-                  .trim().replace(/\\s+/g, ' ');
+                  .trim().replace(/\\s+/g, ' ').replace(/^job title\\s+/i, '');
                 if (!text || text.length < 8) {
                   // Oracle Cloud HCM / JPMC: <a class="job-grid-item__link"> has empty innerText.
                   // closest('[class*="job"]') matches the anchor itself — walk parents instead.
@@ -351,12 +371,11 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
             except Exception:
                 continue
             raw.extend(part or [])
-            if len(raw) >= 40:
-                break
+            # Keep scanning iframes even after chrome links; job-id rows win later.
     except Exception:
         raw = []
     for item in raw or []:
-        text = item.get("text") or ""
+        text = re.sub(r"^job title\s+", "", item.get("text") or "", flags=re.I)
         href = item.get("href") or ""
         if re.search(r"^\d+\s+jobs?\b|turn on job alerts", text, re.I):
             continue
@@ -711,13 +730,31 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                 except Exception:
                     pass
                 # Wait for guest ATS cards (Workday / iCIMS / Oracle HCM) before extract.
+                # Do not treat iCIMS skip-to-iframe chrome (`#icims_content_iframe`) as a card.
+                try:
+                    page.wait_for_selector(
+                        'iframe[src*="in_iframe=1"], iframe#icims_content_iframe',
+                        timeout=6000,
+                    )
+                except Exception:
+                    pass
                 try:
                     page.wait_for_selector(
                         '[data-automation-id="jobTitle"], a[data-automation-id="jobTitle"], '
-                        'a[href*="/job/"], a[href*="icims.com/jobs/"], '
+                        'a[href*="icims.com/jobs/"][href*="/job"], '
                         "a.job-grid-item__link, [data-qa='jobRequisitionTitle']",
                         timeout=10000,
                     )
+                except Exception:
+                    pass
+                try:
+                    for fr in page.frames:
+                        if "in_iframe=1" in (getattr(fr, "url", "") or ""):
+                            fr.wait_for_selector(
+                                'a[href*="icims.com/jobs/"][href*="/job"]',
+                                timeout=8000,
+                            )
+                            break
                 except Exception:
                     pass
                 # Experian SmartRecruiters location groups collapse job links until expanded.
