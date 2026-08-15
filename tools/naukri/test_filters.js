@@ -5,6 +5,7 @@ const {
   shouldSkipTitle,
   hasDotNet,
   isArchLeadTitle,
+  parseNaukriCardLines,
 } = require("./resume_and_filters");
 
 assert.strictEqual(shouldSkipTitle("Solution Architect .NET"), false);
@@ -187,6 +188,53 @@ assert.strictEqual(
 );
 assert.strictEqual(shouldSkipTitle("Senior .NET Architect"), false);
 assert.strictEqual(isArchLeadTitle("Dot Net Fullstack Developer"), false);
+
+const homepageSalesforce = parseNaukriCardLines([
+  "Salesforce",
+  "3.9",
+  "Software Product",
+  "50001-100000 employees",
+  "Senior Manager, Software Engineering",
+  "Hyderabad",
+  "Not Disclosed",
+  "CRM, SCM, Coding, Scrum, Salesforce, Enterprise applications",
+  "19d ago - On company site",
+]);
+assert.strictEqual(
+  homepageSalesforce.role,
+  "Senior Manager, Software Engineering",
+  "homepage CTA-last cards must parse role"
+);
+assert.strictEqual(homepageSalesforce.location, "Hyderabad");
+assert.strictEqual(homepageSalesforce.companySite, true);
+
+const homepageQuick = parseNaukriCardLines([
+  "Dysrupit India",
+  "4.7",
+  "IT Services & Consulting",
+  "ServiceNow Solution Architect",
+  "Remote",
+  "Not Disclosed",
+  "Servicenow, Servicenow Development, Solution Design, ITSM, Solution Architecting",
+  "16d ago",
+  "Quick apply",
+]);
+assert.strictEqual(homepageQuick.role, "ServiceNow Solution Architect");
+assert.strictEqual(homepageQuick.location, "Remote");
+assert.strictEqual(homepageQuick.quick, true);
+
+const searchCtaFirst = parseNaukriCardLines([
+  "Nagarro",
+  "Quick apply",
+  "Principal Engineer, Dotnet Fullstack (React)",
+  "Remote",
+]);
+assert.strictEqual(
+  searchCtaFirst.role,
+  "Principal Engineer, Dotnet Fullstack (React)",
+  "search CTA-then-role layout still works"
+);
+assert.strictEqual(searchCtaFirst.location, "Remote");
 assert.strictEqual(
   isArchLeadTitle("Solution Architecture Apps & AI"),
   true,

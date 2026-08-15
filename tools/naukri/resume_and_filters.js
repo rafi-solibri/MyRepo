@@ -82,6 +82,73 @@ function shouldSkipTitle(title) {
   return false;
 }
 
+const CARD_CTA_RE =
+  /Quick apply|Go to company site|On company site|Apply on company|On hirist/i;
+
+/** Chrome lines on TopTier cards — not the job title or location. */
+function isNaukriCardChromeLine(line) {
+  const l = String(line || "").trim();
+  if (!l) return true;
+  if (CARD_CTA_RE.test(l)) return true;
+  if (/^\d\.\d$/.test(l)) return true;
+  if (/\bemployees\b/i.test(l)) return true;
+  if (/^Posted by\b/i.test(l)) return true;
+  if (/^Not Disclosed$/i.test(l)) return true;
+  if (/₹|L\/year|\blpa\b/i.test(l)) return true;
+  if (/\d+d ago/i.test(l)) return true;
+  if (/^\d{1,2}(\.\d)?\s*[-to]+\s*\d{1,2}\s*(yrs?|years)/i.test(l)) return true;
+  if (
+    /^(IT Services|Software Product|Internet|Food Processing|Consumer Electronics|Recruitment|Staffing|Analytics|KPO|Consulting)\b/i.test(
+      l
+    )
+  ) {
+    return true;
+  }
+  if ((l.match(/,/g) || []).length >= 3) return true;
+  return false;
+}
+
+/**
+ * Parse company / role / location from TopTier card lines.
+ * Search cards often put the CTA before the role; homepage / recommended
+ * put company, role, location, then "Nd ago" + Quick apply / On company site.
+ */
+function parseNaukriCardLines(lines) {
+  const clean = (Array.isArray(lines) ? lines : [])
+    .map((x) => String(x || "").trim())
+    .filter(Boolean);
+  const applyIdx = clean.findIndex((l) => CARD_CTA_RE.test(l));
+  const ctaLine = applyIdx >= 0 ? clean[applyIdx] : "";
+  let company = (clean[0] || "").replace(/\s+\d\.\d.*$/, "").trim();
+  company = company.replace(/\s+Posted by\b.*$/i, "").trim();
+
+  let role = "";
+  let location = "";
+  if (applyIdx >= 0) {
+    const afterRole = clean[applyIdx + 1] || "";
+    if (afterRole && !isNaukriCardChromeLine(afterRole)) {
+      role = afterRole;
+      const afterLoc = clean[applyIdx + 2] || "";
+      if (afterLoc && !isNaukriCardChromeLine(afterLoc)) location = afterLoc;
+    }
+  }
+  if (!role) {
+    const rest = clean.slice(1).filter((l) => !isNaukriCardChromeLine(l));
+    role = rest[0] || "";
+    location = rest[1] || "";
+  }
+  return {
+    company,
+    role,
+    location,
+    ctaLine,
+    companySite: /Go to company site|On company site|Apply on company|On hirist/i.test(
+      clean.join("\n")
+    ),
+    quick: /Quick apply/i.test(clean.join("\n")),
+  };
+}
+
 module.exports = {
   findResume,
   hasDotNet,
@@ -89,6 +156,9 @@ module.exports = {
   shouldSkipTitleFromDetail,
   isArchLeadTitle,
   normalizeAspNet,
+  parseNaukriCardLines,
+  isNaukriCardChromeLine,
+  CARD_CTA_RE,
   ARCH_LEAD_RE,
   RESUME_CANDIDATES,
   EXPECTED_CTC_LPA: 65,

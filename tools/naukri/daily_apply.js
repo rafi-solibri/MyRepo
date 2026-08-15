@@ -12,6 +12,7 @@ const {
   hasDotNet,
   shouldSkipTitle,
   isArchLeadTitle,
+  parseNaukriCardLines,
   EXPECTED_CTC_LPA,
   CURRENT_CTC_LPA,
 } = require("./resume_and_filters");
@@ -382,8 +383,6 @@ function searchUrls(q, age) {
 
 async function collectCards(page) {
   const raw = await page.evaluate(() => {
-    const siteRe =
-      /Go to company site|On company site|Apply on company(?:\s+site)?|On hirist/i;
     const isFilterChip = (text) =>
       /^Applied\s*\(\d+\)\s*$/i.test(String(text || "").replace(/\s+/g, " ").trim());
     const nodes = [...document.querySelectorAll("div.cursor-pointer")].filter(
@@ -412,41 +411,26 @@ async function collectCards(page) {
         .split("\n")
         .map((x) => x.trim())
         .filter(Boolean);
-      let company = lines[0] || "";
-      company = company.replace(/\s+\d\.\d.*$/, "").trim();
-      const applyIdx = lines.findIndex((l) =>
-        /Quick apply|Go to company site|On company site|Apply on company|On hirist/i.test(
-          l
-        )
-      );
-      let role = "";
-      let location = "";
-      if (applyIdx >= 0) {
-        role = lines[applyIdx + 1] || "";
-        location = lines[applyIdx + 2] || "";
-      }
-      // Per-job already-applied is "Quick apply Applied" on the card CTA line only.
-      const ctaLine = applyIdx >= 0 ? lines[applyIdx] : "";
-      const companySite = siteRe.test(text);
-      const quick = /Quick apply/i.test(text);
       return {
         idx,
-        company,
-        role,
-        location,
+        lines,
         text: text.slice(0, 600),
-        ctaLine,
-        companySite,
-        quick,
       };
     });
   });
   return raw.map((c) => {
-    const already = isAlreadyAppliedCta(c.ctaLine || c.text);
+    const parsed = parseNaukriCardLines(c.lines);
+    const already = isAlreadyAppliedCta(parsed.ctaLine || c.text);
     return {
-      ...c,
+      idx: c.idx,
+      company: parsed.company,
+      role: parsed.role,
+      location: parsed.location,
+      text: c.text,
+      ctaLine: parsed.ctaLine,
+      companySite: parsed.companySite,
       already,
-      quick: c.quick && !already,
+      quick: parsed.quick && !already,
     };
   });
 }
