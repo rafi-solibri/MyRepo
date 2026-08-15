@@ -449,7 +449,9 @@ async function main() {
 
   try {
     const context = browser.contexts()[0] || (await browser.newContext());
-    const page = context.pages()[0] || (await context.newPage());
+    // Always newPage — pages()[0] may be a foreign portal tab (Foundit/Naukri/
+    // LinkedIn) left from an earlier home daily; goto then ERR_ABORTs.
+    const page = await context.newPage();
     await page.goto("https://www.instahyre.com/candidate/opportunities/", {
       waitUntil: "domcontentloaded",
       timeout: 60000,

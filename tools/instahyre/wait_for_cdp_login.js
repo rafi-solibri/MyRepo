@@ -76,7 +76,9 @@ async function main() {
   }
 
   const ctx = browser.contexts()[0] || (await browser.newContext());
-  const page = ctx.pages()[0] || (await ctx.newPage());
+  // Prefer a fresh tab — pages()[0] is often LinkedIn/Naukri/Foundit from a
+  // prior home portal run; goto from those tabs can ERR_ABORT / stick on login.
+  const page = await ctx.newPage();
 
   async function probe() {
     const cookies = await ctx.cookies("https://www.instahyre.com");
