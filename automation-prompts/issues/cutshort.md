@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Final Q audit walked 367 historical awaiting threads (~10 min) after 0 applies | Skip final questionnaire audit when this session applied 0 — locked-empty cannot be unlocked |
 | findjobs defaulted to 5/page so inventory stayed thin; Associate Technical Architect hard-skipped | pageSize=50 on /findjobs/q; associate skip allows Technical/Architect/Lead |
 | status=external recorded without opening/completing company site | Extract Apply href and completeExternalPage |
 
