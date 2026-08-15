@@ -58,6 +58,25 @@ def auth_wall_url(url: str | None) -> bool:
     return bool(url and AUTH_WALL_URL.search(url))
 
 
+def looks_workday_page(page: Page) -> bool:
+    """Workday Create Account / Apply Manually is completable — not a login wall."""
+    url = getattr(page, "url", "") or ""
+    if re.search(r"myworkdayjobs|myworkdaysite|workdayjobs", url, re.I):
+        return True
+    try:
+        for sel in (
+            "[data-automation-id='createAccountSubmitButton']",
+            "[data-automation-id='adventureButton']",
+            "[data-automation-id='applyManually']",
+            "[data-automation-id='signInSubmitButton']",
+        ):
+            if page.locator(sel).count():
+                return True
+    except Exception:
+        pass
+    return False
+
+
 def _body_text(page: Page, limit: int = 4500) -> str:
     """inner_text with a hard timeout so SSO pages cannot hang careers forever."""
     try:
@@ -175,37 +194,37 @@ def blocked_wall(page: Page) -> str | None:
         re.I,
     ):
         return "CAPTCHA/bot wall"
+    # Workday Create Account / Apply Manually is the apply form — complete it.
+    if looks_workday_page(page):
+        return None
+    # Strong SSO chooser only. JD/nav chrome ("Create an account", "Sign in")
+    # is on almost every career listing and must not block Apply.
     if re.search(
-        r"sign in to continue|log in to apply|create an account|sign in to apply|"
-        r"sign in using (microsoft|google)|employees must sign in|"
         r"select a method below to sign in|"
-        # Indeed Accounts / SmartRecruiters OneClick OAuth chrome
-        r"sign in\s*\|\s*indeed|continue with google|continue with indeed|"
-        # Workday applyManually often lands on Create Account/Sign In with no file input
-        # (Solera) — previously misreported as ats_incomplete_or_stuck.
-        r"create account\s*/\s*sign in|already have an account\??|"
-        r"verify new password|create account\s*$",
+        r"if you are a microsoft employee|"
+        r"employees must sign in|"
+        r"current \w+ employees must sign in|"
+        r"we don't recognize this email|"
+        r"sign in\s*\|\s*indeed accounts|"
+        r"continue with google|continue with indeed|"
+        r"sign in using (microsoft|google|linkedin|facebook|apple)",
         body,
         re.I,
     ):
-        # Email-only SSO is not guest apply (Qualcomm/Microsoft Eightfold).
         try:
             has_resume = page.locator("input[type='file']").count() > 0
         except Exception:
             has_resume = False
-        if not has_resume:
+        has_guest = bool(
+            re.search(
+                r"apply (now|manually|for this job|without)|autofill with resume|"
+                r"i'?m interested|upload (your )?resume",
+                body,
+                re.I,
+            )
+        )
+        if not has_resume and not has_guest:
             return "login/account wall"
-    # Workday progress bar: step 1 Create Account/Sign In + password fields, no resume.
-    try:
-        if page.locator('[data-automation-id="createAccountSubmitButton"]').count() and (
-            page.locator('input[data-automation-id="password"]').count()
-            or page.locator('[data-automation-id="password"]').count()
-        ):
-            has_resume = page.locator("input[type='file']").count() > 0
-            if not has_resume:
-                return "login/account wall"
-    except Exception:
-        pass
     return None
 
 

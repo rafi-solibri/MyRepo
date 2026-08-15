@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Career portals applied 0 — JD Sign-in chrome and Workday Create Account treated as login wall | Do not wall JD chrome or Workday auth; Sign In first; adopt ATS tabs; skip Amazon/Microsoft/Qualcomm SSO-only hosts; run careers before LinkedIn |
 | 403 / Microsoft Eightfold SSO chooser + silicon/product-design + Ionic/Zscaler JDs | fail-fast 403+SSO chooser; fingerprint stuck Apply; poll Apply tabs 6s; skip silicon engineer/product design manager |
 | Solera Workday Create Account burned 390s on password-rule reject | workday_auth fail-fasts password-must-include; try Sign In once then ats_login_wall |
 | Qualcomm Eightfold email-only Sign-in burned 390s ATS cap (timeout not a wall) | auth_wall_reason fail-fast email-only SSO; talent.cognizant.com/login2; skip silicon design titles |
