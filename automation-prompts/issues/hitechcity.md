@@ -12,6 +12,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Gartner Apply opened US/UK Workday and burned 390s ATS cap | Re-check card_location_ok on adopted ATS URL path (Remote---United-Kingdom) |
 | Accenture/Gartner/DXC/McAfee career URLs extracted 0 jobs (jobdetails + site-search 404) | Match Accenture jobdetails?id= + title=; point Gartner/DXC/McAfee at real job-search URLs |
 | Optum/UHG Taleo login tabs poisoned pages[0] and starved other career portals | HITECHCITY_SKIP_UHG (default on) + HITECHCITY_SKIP_COMPANIES; close leftover uhg.taleo tabs so remaining tenants still scan |
 | Logged-in Hyland iCIMS jobs stalled on leftover hCaptcha frames at /questions and US EEO forms | Skip captcha wait after Log Out; fill questions + I Don't Wish To Answer / Advance to next form |

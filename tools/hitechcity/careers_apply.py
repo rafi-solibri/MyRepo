@@ -444,7 +444,7 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
         hint = url_loc_hint(href)
         hydish = re.compile(
             r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|gachibowli|raidurg|"
-            r"\bremote\b|\bwfh\b|work from home|india remote|fully remote",
+            r"india remote|remote[, ]*india|remote \(india\)|anywhere in india",
             re.I,
         )
         if hint and BAD_LOC_HINT.search(hint) and not hydish.search(hint):
@@ -478,9 +478,11 @@ def card_location_ok(role_text: str, top_card: str = "") -> bool:
     # Explicit non-Hyd city on the card/title wins over bare "India" / footer noise.
     # (Oracle HCM: "System Architect BENGALURU, KARNATAKA, India and 2 more")
     if BAD_LOC_HINT.search(blob):
+        # Bare "Remote" must not override United Kingdom / USA on Workday paths
+        # (Remote---United-Kingdom). Require an India/Hyd workplace token.
         hydish = re.compile(
             r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|gachibowli|raidurg|"
-            r"\bremote\b|\bwfh\b|work from home|india remote|fully remote",
+            r"india remote|remote[, ]*india|remote \(india\)|anywhere in india",
             re.I,
         )
         if not hydish.search(blob):
@@ -742,6 +744,14 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
             time.sleep(0.45)
     except Exception:
         pass
+    # Workday/Gartner Apply often encodes workplace in the ATS path
+    # (Remote---United-Kingdom) after the listing card had no city.
+    if not card_location_ok(role, url_loc_hint(page.url or "")):
+        row["status"] = "skipped"
+        row["reason"] = "location_non_hyd_city"
+        row["finalUrl"] = page.url
+        _close_auth_popups(page)
+        return row
     if auth_wall_url(page.url or "") or AUTH_HOST.search(page.url or ""):
         row["reason"] = "login/account wall"
         row["finalUrl"] = page.url

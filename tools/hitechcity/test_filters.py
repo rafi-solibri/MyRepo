@@ -290,6 +290,12 @@ def test_skip_uhg_default():
         assert JOB_ID_HREF_RE.search(
             "https://jobs.gartner.com/jobs/job/112613-executive-partner-enterprise-architecture-ea/"
         )
+        assert not card_location_ok(
+            "Executive Partner - Enterprise Architecture (EA)",
+            url_loc_hint(
+                "https://gartner.wd5.myworkdayjobs.com/en-US/EXT/job/Remote---United-Kingdom/Executive-Partner_112613/apply"
+            ),
+        )
     finally:
         if prev_uhg is None:
             os.environ.pop("HITECHCITY_SKIP_UHG", None)
