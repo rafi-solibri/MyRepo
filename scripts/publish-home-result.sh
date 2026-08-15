@@ -58,6 +58,16 @@ fi
 REPORT="$NORMALIZED"
 
 DATE="$(node -e "const fs=require('fs'); const r=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(r.date || new Date().toISOString().slice(0,10));" "$REPORT")"
+TODAY_UTC="$(date -u +%Y-%m-%d)"
+# Never overwrite today's good result (or latest.json) with a prior-day stale report.
+# Set HOME_PUBLISH_ALLOW_STALE=1 only for intentional historical backfills.
+if [[ "$DATE" != "$TODAY_UTC" && "${HOME_PUBLISH_ALLOW_STALE:-}" != "1" ]]; then
+  echo "ERROR: refusing to publish stale $PORTAL report date=$DATE (today UTC=$TODAY_UTC)."
+  echo "Fix: write a same-day artifacts/${PORTAL}-daily-run.json, or set HOME_PUBLISH_ALLOW_STALE=1 to override."
+  node -e "const fs=require('fs'); const r=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); console.log(JSON.stringify({date:r.date, counts:r.counts, blockerSummary:r.blockerSummary}, null, 2));" "$REPORT"
+  exit 4
+fi
+
 BRANCH="${HOME_RESULTS_BRANCH:-automation-results}"
 REMOTE="${HOME_RESULTS_REMOTE:-origin}"
 WT="$(mktemp -d "${TMPDIR:-/tmp}/${PORTAL}-results-XXXXXX")"

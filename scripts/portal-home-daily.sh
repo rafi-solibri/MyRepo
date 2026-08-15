@@ -239,14 +239,34 @@ git fetch origin main >/dev/null 2>&1 || true
 git checkout -f main >/dev/null 2>&1 || true
 git pull --ff-only origin main >/dev/null 2>&1 || true
 
-if [[ ! -f "$REPORT_CLOUD" && ! -f "$REPORT_LOCAL" && ! -f "$REPORT_HOME" ]]; then
-  echo "WARNING: agent did not write ${PORTAL}-daily-run.json — recording empty/blocked stub"
-  write_empty "agent_finished_without_report_exit_${agent_rc}" "$REPORT_LOCAL" || true
-fi
+TODAY_UTC="$(date -u +%Y-%m-%d)"
+is_same_day_report() {
+  local f="$1"
+  [[ -f "$f" ]] || return 1
+  node -e "
+    const fs = require('fs');
+    try {
+      const j = JSON.parse(fs.readFileSync(process.argv[1], 'utf8'));
+      process.exit(j.date === process.argv[2] ? 0 : 1);
+    } catch {
+      process.exit(1);
+    }
+  " "$f" "$TODAY_UTC"
+}
 
-FINAL_REPORT="$REPORT_LOCAL"
-[[ -f "$REPORT_CLOUD" ]] && FINAL_REPORT="$REPORT_CLOUD"
-[[ -f "$REPORT_HOME" && ! -f "$REPORT_CLOUD" && ! -f "$REPORT_LOCAL" ]] && FINAL_REPORT="$REPORT_HOME"
+FINAL_REPORT=""
+for cand in "$REPORT_CLOUD" "$REPORT_LOCAL" "$REPORT_HOME"; do
+  if is_same_day_report "$cand"; then
+    FINAL_REPORT="$cand"
+    break
+  fi
+done
+
+if [[ -z "$FINAL_REPORT" ]]; then
+  echo "WARNING: no same-day ${PORTAL}-daily-run.json after agent (rc=$agent_rc) — writing stub (will not republish stale)"
+  write_empty "agent_finished_without_same_day_report_exit_${agent_rc}" "$REPORT_LOCAL" || true
+  FINAL_REPORT="$REPORT_LOCAL"
+fi
 
 normalize_report "$FINAL_REPORT" "$REPORT_LOCAL"
 cp "$REPORT_LOCAL" "$REPORT_HOME" 2>/dev/null || true
