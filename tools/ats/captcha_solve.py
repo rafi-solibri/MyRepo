@@ -86,6 +86,26 @@ def extract_hcaptcha_sitekey(page) -> str:
     return ""
 
 
+def _captcha_poll_frames(page) -> list:
+    """Parent page first; skip cross-origin hCaptcha/reCAPTCHA iframes (evaluate hangs)."""
+    targets: list = [page]
+    try:
+        frames = list(getattr(page, "frames", []) or [])
+    except Exception:
+        frames = []
+    for fr in frames:
+        if fr is page:
+            continue
+        try:
+            u = (getattr(fr, "url", None) or "").lower()
+        except Exception:
+            u = ""
+        if "hcaptcha.com" in u or "newassets.hcaptcha" in u or "google.com/recaptcha" in u:
+            continue
+        targets.append(fr)
+    return targets
+
+
 def hcaptcha_token_present(page) -> bool:
     js = """() => {
       const sels = [
@@ -100,16 +120,23 @@ def hcaptcha_token_present(page) -> bool:
       }
       return false;
     }"""
+    # Polls must not inherit a 45s page default — one stuck frame starved careers.
     try:
-        frames = list(getattr(page, "frames", []) or [])
+        page.set_default_timeout(2500)
     except Exception:
-        frames = []
-    for fr in frames or [page]:
+        pass
+    try:
+        for fr in _captcha_poll_frames(page):
+            try:
+                if fr.evaluate(js):
+                    return True
+            except Exception:
+                continue
+    finally:
         try:
-            if fr.evaluate(js):
-                return True
+            page.set_default_timeout(45000)
         except Exception:
-            continue
+            pass
     return False
 
 

@@ -516,7 +516,7 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
     referrals = 0
 
     with sync_playwright() as p:
-        browser = p.chromium.connect_over_cdp(CDP)
+        browser = p.chromium.connect_over_cdp(CDP, timeout=20_000)
         context = browser.contexts[0]
         page = context.pages[0] if context.pages else context.new_page()
         page.set_default_timeout(45000)
