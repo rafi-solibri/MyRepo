@@ -39,6 +39,12 @@ def prepare(src: Path, dst: Path) -> dict:
     (dst / "Default").mkdir(parents=True)
 
     copied = []
+    src_state = src / "Local State"
+    if src_state.exists():
+        shutil.copy2(src_state, dst / "Local State")
+        copied.append("Local State")
+    (dst / "First Run").touch()
+    copied.append("First Run")
     for rel in COPY_PATHS:
         s = src / rel
         d = dst / rel

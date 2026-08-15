@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| CF-cleared homepage stayed anonymous Get Started despite valid Passport cookies in the jar | After Turnstile, open secure.indeed.com/settings/account then return home so Welcome paints; copy Local State into hybrid UC profile |
 | uc_daily_apply clear_cf returned True without post-Turnstile reload → anonymous Get Started / false indeed_login_required after preflight Welcome | Reuse cf_bypass_uc.try_clear_strategies (wait+focus+reload) in clear_cf; retry reload once before login_required |
 
 

@@ -9,7 +9,11 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from tools.indeed.uc_daily_apply import already_applied, skip_reason  # noqa: E402
+from tools.indeed.uc_daily_apply import (  # noqa: E402
+    already_applied,
+    signed_out_home,
+    skip_reason,
+)
 
 
 def test_skip_hyd_remote_ok():
@@ -87,6 +91,22 @@ def test_skip_salesforce_service_cloud_title():
     ) is None
 
 
+def test_signed_out_home_after_cf_clear():
+    anon = (
+        "Sign in\nYour next job starts here\n"
+        "Create an account or sign in to see your personalised job recommendations.\n"
+        "Get Started"
+    )
+    assert signed_out_home(anon)
+    welcome = (
+        "Messages Unread count 1\nFind jobs\n"
+        "Welcome, Mohammed Abdul Rafi\nWe can't find any job recommendations"
+    )
+    assert not signed_out_home(welcome)
+    # Settings page is not the anonymous homepage — do not treat as signed-out.
+    assert not signed_out_home("Account settings\nYour contact information\nSecurity settings")
+
+
 def test_already_applied_job_view_only():
     assert already_applied("You applied to this job on 12 Aug", "https://in.indeed.com/viewjob?jk=abc")
     assert already_applied("You have already applied for this position", "https://in.indeed.com/viewjob?jk=abc")
@@ -102,5 +122,6 @@ if __name__ == "__main__":
     test_skip_title_not_target()
     test_enterprise_system_architect_ok()
     test_skip_salesforce_service_cloud_title()
+    test_signed_out_home_after_cf_clear()
     test_already_applied_job_view_only()
     print("ok")
