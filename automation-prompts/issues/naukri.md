@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 15 Aug 2026 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Jade/PwC apply_unconfirmed: chatbot Save disabled on .Net/Java multiselect checkboxes (mcc__checkbox) | daily_apply.js answers multiselect skill checkboxes preferring .NET; chatbot_answers.js + tests; also skip D365/cyber architecture titles |
+
+
 ## 2026-08-14 (home)
 
 | Issue | Fix |

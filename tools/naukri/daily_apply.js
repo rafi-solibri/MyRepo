@@ -17,6 +17,7 @@ const {
 } = require("./resume_and_filters");
 const { completeWorkdayApply, isSubmittedText } = require("./workday_apply");
 const { fillCommonAtsQuestions } = require("./ats_form");
+const { preferChatbotCheckboxValues } = require("./chatbot_answers");
 const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
 const { artifactPaths, writeArtifactJson } = require("../artifact_path");
 
@@ -707,6 +708,103 @@ async function answerNaukriChatbot(page) {
     }
 
     const fingerprint = chatText.replace(/\s+/g, " ").trim().slice(-500);
+
+    // Multiselect skill checkboxes (Jade: ".Net" / "Java") — Save stays
+    // disabled until a box is ticked. Radios/chips never match these.
+    const multiBoxes = await page
+      .evaluate(() => {
+        const root =
+          document.querySelector(
+            ".chatbot_Drawer, ._chatBotContainer, #desktopChatBotContainer"
+          ) || document;
+        root.querySelector(".chatbot_Overlay")?.classList.remove("show");
+        const nodes = [
+          ...root.querySelectorAll(
+            'input.mcc__checkbox, input[data-val="multiselect"], .multiselectcheckboxes input[type="checkbox"], .multicheckboxes-container input[type="checkbox"]'
+          ),
+        ];
+        return nodes.map((c) => ({
+          id: c.id || "",
+          value: c.value || "",
+          label: (
+            (c.labels && c.labels[0] && c.labels[0].innerText) ||
+            c.value ||
+            c.id ||
+            ""
+          ).trim(),
+          checked: Boolean(c.checked),
+        }));
+      })
+      .catch(() => []);
+    if (multiBoxes.length) {
+      const chosen = preferChatbotCheckboxValues(
+        multiBoxes.map((b) => b.label || b.value || b.id)
+      );
+      const pickedMulti = await page
+        .evaluate((want) => {
+          const root =
+            document.querySelector(
+              ".chatbot_Drawer, ._chatBotContainer, #desktopChatBotContainer"
+            ) || document;
+          root.querySelector(".chatbot_Overlay")?.classList.remove("show");
+          const wantLc = (want || []).map((w) => String(w).toLowerCase());
+          const setChecked = (inp) => {
+            if (!inp) return;
+            const native = Object.getOwnPropertyDescriptor(
+              HTMLInputElement.prototype,
+              "checked"
+            );
+            native?.set?.call(inp, true);
+            inp.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+            inp.dispatchEvent(new Event("input", { bubbles: true }));
+            inp.dispatchEvent(new Event("change", { bubbles: true }));
+            try {
+              const lab = root.querySelector(
+                `label[for="${CSS.escape(inp.id)}"]`
+              );
+              lab?.click();
+            } catch (_) {}
+          };
+          const nodes = [
+            ...root.querySelectorAll(
+              'input.mcc__checkbox, input[data-val="multiselect"], .multiselectcheckboxes input[type="checkbox"], .multicheckboxes-container input[type="checkbox"]'
+            ),
+          ];
+          const ticked = [];
+          for (const c of nodes) {
+            const label = (
+              (c.labels && c.labels[0] && c.labels[0].innerText) ||
+              c.value ||
+              c.id ||
+              ""
+            ).trim();
+            const hit =
+              wantLc.includes(label.toLowerCase()) ||
+              wantLc.includes(String(c.value || "").toLowerCase()) ||
+              wantLc.includes(String(c.id || "").toLowerCase());
+            if (!hit) continue;
+            setChecked(c);
+            ticked.push(label || c.value || c.id);
+          }
+          return ticked.length ? `checkbox:${ticked.join(",")}` : null;
+        }, chosen)
+        .catch(() => null);
+      if (pickedMulti) {
+        await sleep(400);
+        await clickChatbotSave(page);
+        await sleep(2200);
+        if (fingerprint === lastFingerprint) stuckCount += 1;
+        else stuckCount = 0;
+        lastFingerprint = fingerprint;
+        if (stuckCount >= 3) {
+          await clickChatbotSave(page);
+          await sleep(2000);
+          break;
+        }
+        continue;
+      }
+    }
+
     const picked = await page
       .evaluate(() => {
         const root =
@@ -721,6 +819,7 @@ async function answerNaukriChatbot(page) {
           if (/immediate|serving notice|available/i.test(s)) return 9_000;
           if (/hyderabad|secunderabad|remote|work from home|wfh|any location/i.test(s))
             return 8_000;
+          if (/\.net|dotnet|c#|csharp|azure/i.test(s)) return 7_500;
           if (/^no$/i.test(s)) return -1;
           const nums = (s.match(/\d+/g) || []).map(Number);
           if (!nums.length) return 0;
@@ -810,7 +909,7 @@ async function answerNaukriChatbot(page) {
           return (
             t &&
             t.length < 48 &&
-            /^(Yes|No|Immediate|Serving notice|Available|>?\d+.*years|\d+\s*-\s*\d+\s*years|Hyderabad|Secunderabad|Remote|Work from home|WFH|Any location|15\+|Agree|Proceed)$/i.test(
+            /^(Yes|No|Immediate|Serving notice|Available|>?\d+.*years|\d+\s*-\s*\d+\s*years|Hyderabad|Secunderabad|Remote|Work from home|WFH|Any location|15\+|Agree|Proceed|\.NET|DotNet|C#|Azure|Java)$/i.test(
               t
             )
           );
