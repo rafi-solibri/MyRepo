@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Goldman Sachs higher.gs.com hung extract_job_links and starved remaining career portals | Skip hang-scan hosts + 12s evaluate timeout so Workday/iCIMS/Oracle still get applied |
 | Careers-only still launched WARP + LinkedIn auto-login (CAPTCHA + ERR_SOCKS on Workday) | HITECHCITY_CAREERS_ONLY skips WARP and LinkedIn auto-login so guest ATS uses direct IP |
 | Workday Create Account burned 390s then 0 applies when secret failed tenant complexity / empty /login | Fail-fast inputAlert + standalone /login; Create Account uses deterministic 12+ complexity password so guest Workday can submit |
 | Solera Workday Sign In navigated to /login with empty fields; click_advance re-submitted Sign In until 390s timeout | Fail-fast ats_login_wall on standalone myworkdayjobs /login after one credential pass |

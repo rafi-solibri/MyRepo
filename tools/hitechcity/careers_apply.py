@@ -112,6 +112,12 @@ SSO_ONLY_CAREERS_RE = re.compile(
     r"careers\.microsoft\.com|careers\.qualcomm\.com",
     re.I,
 )
+# Heavy SPAs that hang extract_job_links (no guest ATS form anyway).
+HANG_SCAN_HOST_RE = re.compile(
+    r"higher\.gs\.com|metacareers\.com|jobs\.apple\.com|"
+    r"pwc\.com/.*/careers|tcs\.com/careers$",
+    re.I,
+)
 GUEST_ATS_HOST_RE = re.compile(
     r"myworkdayjobs|icims\.com|oraclecloud\.com|taleo\.net|smartrecruiters\.com|"
     r"greenhouse\.io|lever\.co|myworkdaysite",
@@ -193,6 +199,8 @@ def _company_ats_rank(company: dict[str, Any]) -> int:
         return 8
     if SSO_ONLY_CAREERS_RE.search(urls):
         return 9
+    if HANG_SCAN_HOST_RE.search(urls):
+        return 8
     if GUEST_ATS_HOST_RE.search(urls):
         return 0
     return int(company.get("priority", 5) or 5)
@@ -200,6 +208,10 @@ def _company_ats_rank(company: dict[str, Any]) -> int:
 
 def is_sso_only_careers_url(url: str) -> bool:
     return bool(url and SSO_ONLY_CAREERS_RE.search(url))
+
+
+def is_hang_scan_url(url: str) -> bool:
+    return bool(url and HANG_SCAN_HOST_RE.search(url))
 
 
 def adopt_ats_tab(page: Page, before_pages: set) -> Page:
@@ -334,7 +346,7 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
             }"""
         for fr in frames:
             try:
-                part = fr.evaluate(js)
+                part = fr.evaluate(js, timeout=12000)
             except Exception:
                 continue
             raw.extend(part or [])
@@ -662,6 +674,17 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                         }
                     )
                     _safe_print(f"CAREERS SKIP {name} | sso_only_careers_host")
+                    continue
+                if is_hang_scan_url(url):
+                    report.skipped.append(
+                        {
+                            "company": name,
+                            "url": url,
+                            "status": "skipped",
+                            "reason": "hang_scan_host",
+                        }
+                    )
+                    _safe_print(f"CAREERS SKIP {name} | hang_scan_host")
                     continue
                 try:
                     scan_goto(page, url, timeout=75000)

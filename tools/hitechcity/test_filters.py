@@ -12,6 +12,7 @@ from tools.hitechcity.careers_apply import (
     JOB_ID_HREF_RE,
     NAV_CHROME_RE,
     card_location_ok,
+    is_hang_scan_url,
     is_sso_only_careers_url,
     url_loc_hint,
 )
@@ -201,6 +202,9 @@ def test_workday_create_account_is_completable():
     assert is_sso_only_careers_url("https://www.amazon.jobs/en/search?base_query=architect")
     assert is_sso_only_careers_url("https://apply.careers.microsoft.com/careers?keywords=architect")
     assert not is_sso_only_careers_url("https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site")
+    assert is_hang_scan_url("https://higher.gs.com/results?keyword=architect")
+    assert is_hang_scan_url("https://www.metacareers.com/jobs?q=architect&location=Hyderabad")
+    assert not is_hang_scan_url("https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site")
 
 
 def test_indeed_oauth_url_is_login_wall():
