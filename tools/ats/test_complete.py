@@ -11,6 +11,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.ats.complete import (
+    PROFILE,
     ats_password,
     auth_wall_reason,
     classify_ats_host,
@@ -165,6 +166,10 @@ assert_true(
     "Solera Workday password-rule error is a reject",
 )
 assert_true(not workday_password_rejected("Password*\nVerify New Password*"), "labels are not a reject")
+assert_true(
+    "www.linkedin.com/in/" in PROFILE["linkedin"],
+    "Workday LinkedIn URL must use www.linkedin.com",
+)
 
 assert_true(
     classify_ats_host("https://talent.cognizant.com/en_US/careers/Login2") == "sso",

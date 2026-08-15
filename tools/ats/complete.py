@@ -39,7 +39,7 @@ PROFILE = {
     "full": "Mohammed Abdul Rafi Ahmed",
     "email": "",
     "phone": "8790251698",
-    "linkedin": "https://linkedin.com/in/rafi-ahmed-mohammed-abdul-151644ba",
+    "linkedin": "https://www.linkedin.com/in/rafi-ahmed-mohammed-abdul-151644ba",
     "city": "Hyderabad",
     "state": "Telangana",
     "country": "India",
@@ -1086,6 +1086,9 @@ def workday_fill_core(page) -> None:
     _type_automation(page, "formField-postalCode", PROFILE["postal"])
     _type_automation(page, "phone", PROFILE["phone"])
     _type_automation(page, "formField-phoneNumber", PROFILE["phone"])
+    # Workday rejects https://linkedin.com/... (needs www).
+    _type_automation(page, "linkedInAccount", PROFILE["linkedin"])
+    _type_automation(page, "formField-linkedInAccount", PROFILE["linkedin"])
     _pick_workday_option(page, "formField-phoneType", [r"^Mobile$", r"Cell", r"Mobile"])
     _pick_workday_option(
         page,
