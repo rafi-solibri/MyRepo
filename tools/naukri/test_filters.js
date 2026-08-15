@@ -3,6 +3,8 @@
 const assert = require("assert");
 const {
   shouldSkipTitle,
+  shouldSkipTitleFromCard,
+  parseNaukriCardLines,
   hasDotNet,
   isArchLeadTitle,
 } = require("./resume_and_filters");
@@ -186,6 +188,64 @@ assert.strictEqual(
   "Cyber Architecture must skip"
 );
 assert.strictEqual(shouldSkipTitle("Senior .NET Architect"), false);
+assert.strictEqual(
+  shouldSkipTitleFromCard(
+    "Software Engineering Architect",
+    "Salesforce\n3.9\nSoftware Product\nQuick apply\nSoftware Engineering Architect\nHyderabad"
+  ),
+  false,
+  "company name Salesforce must not title-skip an Architect role"
+);
+assert.strictEqual(
+  shouldSkipTitleFromCard("Salesforce Technical Architect", "Salesforce\n..."),
+  true,
+  "Salesforce-primary TITLE still skips"
+);
+{
+  const search = parseNaukriCardLines([
+    "Salesforce",
+    "3.9",
+    "Software Product",
+    "50001-100000 employees",
+    "1d ago",
+    "Quick apply",
+    "Software Engineering Architect",
+    "Hyderabad",
+    "Not Disclosed",
+  ]);
+  assert.strictEqual(search.role, "Software Engineering Architect");
+  assert.strictEqual(search.location, "Hyderabad");
+  const home = parseNaukriCardLines([
+    "Salesforce",
+    "3.9",
+    "Software Product",
+    "50001-100000 employees",
+    "Senior Manager, Software Engineering",
+    "Hyderabad",
+    "Not Disclosed",
+    "CRM, SCM, Coding, Scrum, Salesforce",
+    "19d ago - On company site",
+  ]);
+  assert.strictEqual(home.role, "Senior Manager, Software Engineering");
+  assert.strictEqual(home.location, "Hyderabad");
+  const home2 = parseNaukriCardLines([
+    "Dysrupit India",
+    "4.7",
+    "IT Services & Consulting",
+    "ServiceNow Solution Architect",
+    "Remote",
+    "Not Disclosed",
+    "16d ago",
+    "Quick apply",
+  ]);
+  assert.strictEqual(home2.role, "ServiceNow Solution Architect");
+  assert.strictEqual(home2.location, "Remote");
+}
+assert.strictEqual(
+  isArchLeadTitle("Manager, Solution Engineering"),
+  true,
+  "Manager, Solution Engineering is EM-band"
+);
 assert.strictEqual(isArchLeadTitle("Dot Net Fullstack Developer"), false);
 assert.strictEqual(
   isArchLeadTitle("Solution Architecture Apps & AI"),

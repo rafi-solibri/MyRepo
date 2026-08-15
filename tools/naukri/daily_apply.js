@@ -10,7 +10,8 @@ const { spawnSync } = require("child_process");
 const {
   findResume,
   hasDotNet,
-  shouldSkipTitle,
+  shouldSkipTitleFromCard,
+  parseNaukriCardLines,
   isArchLeadTitle,
   EXPECTED_CTC_LPA,
   CURRENT_CTC_LPA,
@@ -412,28 +413,18 @@ async function collectCards(page) {
         .split("\n")
         .map((x) => x.trim())
         .filter(Boolean);
-      let company = lines[0] || "";
-      company = company.replace(/\s+\d\.\d.*$/, "").trim();
       const applyIdx = lines.findIndex((l) =>
         /Quick apply|Go to company site|On company site|Apply on company|On hirist/i.test(
           l
         )
       );
-      let role = "";
-      let location = "";
-      if (applyIdx >= 0) {
-        role = lines[applyIdx + 1] || "";
-        location = lines[applyIdx + 2] || "";
-      }
       // Per-job already-applied is "Quick apply Applied" on the card CTA line only.
       const ctaLine = applyIdx >= 0 ? lines[applyIdx] : "";
       const companySite = siteRe.test(text);
       const quick = /Quick apply/i.test(text);
       return {
         idx,
-        company,
-        role,
-        location,
+        lines,
         text: text.slice(0, 600),
         ctaLine,
         companySite,
@@ -442,9 +433,17 @@ async function collectCards(page) {
     });
   });
   return raw.map((c) => {
+    const parsed = parseNaukriCardLines(c.lines || []);
+    const company = (parsed.company || "").replace(/\s+\d\.\d.*$/, "").trim();
     const already = isAlreadyAppliedCta(c.ctaLine || c.text);
     return {
-      ...c,
+      idx: c.idx,
+      company,
+      role: parsed.role || "",
+      location: parsed.location || "",
+      text: c.text,
+      ctaLine: c.ctaLine,
+      companySite: c.companySite,
       already,
       quick: c.quick && !already,
     };
@@ -1735,14 +1734,15 @@ async function handleExternal(context, page, detail, jobMeta, report) {
 
 function decideSkip(card, { detailMode = false } = {}) {
   const blob = card.text || "";
-  const role = card.role || "";
-  const loc = card.location || "";
+  const parsed = !card.role
+    ? parseNaukriCardLines(String(blob).split("\n"))
+    : null;
+  const role = card.role || parsed?.role || "";
+  const loc = card.location || parsed?.location || "";
 
   if (card.already) return "already_applied";
-  // Title/role keyword skips only — never scan full page chrome (false "QA" hits).
-  if (shouldSkipTitle(role)) return "skip_title_keyword";
-  if (!detailMode && shouldSkipTitle(blob.split("\n").slice(0, 8).join(" ")))
-    return "skip_title_keyword";
+  // Title/role only — never company name / skills chrome (Salesforce SA false-skip).
+  if (shouldSkipTitleFromCard(role, blob)) return "skip_title_keyword";
   const seniorTitle =
     isArchLeadTitle(role) ||
     /\b(lead|manager|architect|principal|staff|director)\b/i.test(role);

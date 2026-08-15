@@ -57,7 +57,84 @@ const DOTNET_RE = /(\.net|dotnet|asp\.?\s*net|c#|csharp)/i;
 
 /** Architect / Lead / EM / Principal / Staff / Director — apply even if card omits .NET. */
 const ARCH_LEAD_RE =
-  /\b(architect(?:ure)?|technical lead|tech lead|technology lead|engineering manager|engineering lead|engineer manager|software engineer manager|principal|staff|director|avp|head of|solution architect(?:ure)?|cloud architect(?:ure)?|azure architect(?:ure)?|\.net lead|dotnet lead|lead (software|development|engineer)|software (engineering )?manager|senior manager|manager[, -]?\s*(software|engineering|technology|platform)|senior engineering)\b/i;
+  /\b(architect(?:ure)?|technical lead|tech lead|technology lead|engineering manager|engineering lead|engineer manager|software engineer manager|principal|staff|director|avp|head of|solution architect(?:ure)?|cloud architect(?:ure)?|azure architect(?:ure)?|\.net lead|dotnet lead|lead (software|development|engineer)|software (engineering )?manager|senior manager|manager\b[^.\n]{0,32}\b(software|engineering|technology|platform)|senior engineering)\b/i;
+
+/** TopTier search cards: CTA then role. Homepage cards: role then location then CTA last. */
+const CARD_CTA_RE =
+  /Quick apply|Go to company site|On company site|Apply on company|On hirist/i;
+const CARD_LOCATION_RE =
+  /\b(remote|hybrid|wfh|work from home|hyderabad|secunderabad|telangana|bengaluru|bangalore|pune|chennai|mumbai|delhi|noida|gurgaon|gurugram|india)\b/i;
+const CARD_META_RE =
+  /^(?:\d+\.\d+|posted by\b|.*\bemployees\b|\d+\+?d ago\b|quick apply|not disclosed|₹|.*\bl\/year\b|.*\blpa\b|\d+\s*-\s*\d+\s*yrs)/i;
+
+function isCardLocationLine(l) {
+  const t = String(l || "").trim();
+  if (!t || t.length >= 140 || CARD_CTA_RE.test(t)) return false;
+  if (/^(hybrid\s*-?\s*)?(remote|wfh|work from home)\b/i.test(t)) return true;
+  if (
+    /^(hybrid\s*-)?\s*(hyderabad|secunderabad|bengaluru|bangalore|pune|chennai|mumbai|delhi|noida|gurgaon|gurugram)\b/i.test(
+      t
+    )
+  ) {
+    return true;
+  }
+  // City list only — not a title that happens to mention India/Hyderabad.
+  if (
+    CARD_LOCATION_RE.test(t) &&
+    !/\b(architect|engineer|manager|lead|developer|consultant|director|principal|staff)\b/i.test(
+      t
+    )
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Parse company / role / location from Naukri card lines.
+ * Never treat company name or skills laundry as the job title.
+ */
+function parseNaukriCardLines(lines) {
+  const ls = (lines || [])
+    .map((x) => String(x || "").trim())
+    .filter(Boolean);
+  const company = ls[0] || "";
+  let role = "";
+  let location = "";
+  const locIdx = ls.findIndex((l, i) => i > 0 && isCardLocationLine(l));
+  if (locIdx > 0) {
+    location = ls[locIdx];
+    for (let i = locIdx - 1; i >= 1; i--) {
+      if (CARD_CTA_RE.test(ls[i]) || CARD_META_RE.test(ls[i])) continue;
+      role = ls[i];
+      break;
+    }
+  }
+  if (!role) {
+    const applyIdx = ls.findIndex((l) => CARD_CTA_RE.test(l));
+    if (applyIdx >= 0 && ls[applyIdx + 1] && !CARD_META_RE.test(ls[applyIdx + 1])) {
+      role = ls[applyIdx + 1];
+      if (!location) location = ls[applyIdx + 2] || "";
+    } else if (applyIdx > 1) {
+      for (let i = applyIdx - 1; i >= 1; i--) {
+        if (CARD_META_RE.test(ls[i]) || isCardLocationLine(ls[i])) continue;
+        if (CARD_CTA_RE.test(ls[i])) continue;
+        role = ls[i];
+        break;
+      }
+    }
+  }
+  return { company, role, location };
+}
+
+/** Title skip from the job title only — never company name / card chrome / skills. */
+function shouldSkipTitleFromCard(role, cardText) {
+  const r = String(role || "").trim();
+  if (r) return shouldSkipTitle(r);
+  const recovered = parseNaukriCardLines(String(cardText || "").split("\n")).role;
+  if (recovered) return shouldSkipTitle(recovered);
+  return false;
+}
 
 function normalizeAspNet(text) {
   return String(text || "").replace(/asp\.?\s*net/gi, "DOTNET");
@@ -87,9 +164,12 @@ module.exports = {
   hasDotNet,
   shouldSkipTitle,
   shouldSkipTitleFromDetail,
+  shouldSkipTitleFromCard,
+  parseNaukriCardLines,
   isArchLeadTitle,
   normalizeAspNet,
   ARCH_LEAD_RE,
+  CARD_CTA_RE,
   RESUME_CANDIDATES,
   EXPECTED_CTC_LPA: 65,
   CURRENT_CTC_LPA: 52,
