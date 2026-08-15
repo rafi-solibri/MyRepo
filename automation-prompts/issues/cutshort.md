@@ -1,5 +1,12 @@
 # Cutshort — issues & fixes
 
+## 2026-08-15 (home)
+
+| Issue | Fix |
+| --- | --- |
+| CDP page/browser closed mid-scan → hard exit 1 with no home report | createCdpSession reconnect + scan/apply retry; never browser.close() on Windows; still write report on closed-page abort |
+
+
 ## 2026-08-15 (cloud)
 
 | Issue | Fix |
