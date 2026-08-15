@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Cognizant Technology Architect Chennai/Bangalore opened; login2 tab arrived after 1.5s check | Include page title in location check; poll 6s for SSO tabs after Apply |
 | Cognizant Apply opened login2 in a new tab; completer burned cap on the JD page | Detect SSO/login on any context tab after Apply; skip Zscaler/network-security Architect JDs |
 | Cognizant talent.cognizant.com/login2 hung ATS cap (timeout not a wall, 10 retries) | Classify talent.cognizant.com/login* as SSO login wall |
 | Cognizant talent ATS 403 Forbidden burned 390s; generic Architect + Mobile/Ionic JD | Treat 403 Forbidden as unavailable; JD_WRONG_STACK mobile architect / Ionic Capacitor |

@@ -473,13 +473,17 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
     except Exception:
         top = ""
     role = job.get("role") or ""
-    if not card_location_ok(role, top or ""):
+    try:
+        page_title = page.title() or ""
+    except Exception:
+        page_title = ""
+    if not card_location_ok(role, f"{top or ''} {page_title}"):
         row["status"] = "skipped"
         row["reason"] = "location_non_hyd_city"
         row["finalUrl"] = page.url
         return row
-    # Require an explicit Hyd/campus/remote/India signal on role or top card.
-    loc_blob = f"{role} {top or ''}"
+    # Require an explicit Hyd/campus/remote/India signal on role, top card, or title.
+    loc_blob = f"{role} {top or ''} {page_title}"
     if not LOC_HINT.search(loc_blob) and not location_or_campus_ok(loc_blob, "", ""):
         row["status"] = "skipped"
         row["reason"] = "location_not_hyd_or_campus"
@@ -500,24 +504,26 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
     # Click apply if listing page
     before_pages = set(page.context.pages)
     try_click_named(page, ("Apply now", "Apply Now", "Apply", "Start application", "I'm interested"))
-    time.sleep(1.5)
-    # SmartRecruiters OneClick / Cognizant talent login often open in a new tab.
-    # The listing page has no form — do not burn the ATS cap on the JD tab.
+    # SmartRecruiters OneClick / Cognizant talent login often open in a new tab
+    # a second or two after the click. Poll so we do not burn the ATS cap on the JD tab.
     try:
         from tools.ats.complete import classify_ats_host
 
-        for p2 in list(page.context.pages):
-            u2 = p2.url or ""
-            if classify_ats_host(u2) == "sso" or auth_wall_url(u2):
-                row["reason"] = "login/account wall"
-                row["finalUrl"] = u2
-                _close_auth_popups(page)
-                return row
-            if p2 not in before_pages and classify_ats_host(u2) == "unavailable":
-                row["status"] = "skipped"
-                row["reason"] = "job_unavailable"
-                row["finalUrl"] = u2
-                return row
+        deadline = time.time() + 6
+        while time.time() < deadline:
+            for p2 in list(page.context.pages):
+                u2 = p2.url or ""
+                if classify_ats_host(u2) == "sso" or auth_wall_url(u2):
+                    row["reason"] = "login/account wall"
+                    row["finalUrl"] = u2
+                    _close_auth_popups(page)
+                    return row
+                if p2 not in before_pages and classify_ats_host(u2) == "unavailable":
+                    row["status"] = "skipped"
+                    row["reason"] = "job_unavailable"
+                    row["finalUrl"] = u2
+                    return row
+            time.sleep(0.45)
     except Exception:
         pass
     if auth_wall_url(page.url or "") or AUTH_HOST.search(page.url or "") or _context_hit_auth_wall(page):

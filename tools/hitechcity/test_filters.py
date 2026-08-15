@@ -86,6 +86,10 @@ def test_oraclecloud_parent_card_location():
     intel = "https://intel.wd1.myworkdayjobs.com/en-US/External/job/US-Oregon-Hillsboro/Sr-Security-Architect_JR0282220?q=architect"
     assert "oregon" in url_loc_hint(intel).lower()
     assert not card_location_ok("Sr. Security Architect", url_loc_hint(intel))
+    assert not card_location_ok(
+        "Technology Architect",
+        "Technology Architect, Chennai, Tamil Nadu, India / Bangalore, Karnataka, India",
+    )
     pan = "https://jobs.paloaltonetworks.com/en/job/hyderabad/senior-staff-software-engineer/47263/96768473904"
     assert "hyderabad" in url_loc_hint(pan).lower()
     assert card_location_ok("Senior Staff Software Engineer", url_loc_hint(pan))
