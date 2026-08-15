@@ -1723,10 +1723,10 @@ function decideSkip(card, { detailMode = false } = {}) {
   const loc = card.location || "";
 
   if (card.already) return "already_applied";
-  // Title/role keyword skips only — never scan full page chrome (false "QA" hits).
+  // Title/role keyword skips only — never card chrome / company / skills laundry
+  // (Salesforce company + "Salesforce" in skills false-skipped
+  // Senior Manager, Software Engineering on homepage).
   if (shouldSkipTitle(role)) return "skip_title_keyword";
-  if (!detailMode && shouldSkipTitle(blob.split("\n").slice(0, 8).join(" ")))
-    return "skip_title_keyword";
   const seniorTitle =
     isArchLeadTitle(role) ||
     /\b(lead|manager|architect|principal|staff|director)\b/i.test(role);

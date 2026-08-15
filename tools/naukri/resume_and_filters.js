@@ -57,7 +57,7 @@ const DOTNET_RE = /(\.net|dotnet|asp\.?\s*net|c#|csharp)/i;
 
 /** Architect / Lead / EM / Principal / Staff / Director — apply even if card omits .NET. */
 const ARCH_LEAD_RE =
-  /\b(architect(?:ure)?|technical lead|tech lead|technology lead|engineering manager|engineering lead|engineer manager|software engineer manager|principal|staff|director|avp|head of|solution architect(?:ure)?|cloud architect(?:ure)?|azure architect(?:ure)?|\.net lead|dotnet lead|lead (software|development|engineer)|software (engineering )?manager|senior manager|manager[, -]?\s*(software|engineering|technology|platform)|senior engineering)\b/i;
+  /\b(architect(?:ure)?|technical lead|tech lead|technology lead|engineering manager|engineering lead|engineer manager|software engineer manager|principal|staff|director|avp|cto|chief technology officer|head of|solution architect(?:ure)?|cloud architect(?:ure)?|azure architect(?:ure)?|\.net lead|dotnet lead|lead (software|development|engineer)|software (engineering )?manager|senior manager|manager[, -]?\s*(software|engineering|technology|platform)|senior engineering)\b/i;
 
 function normalizeAspNet(text) {
   return String(text || "").replace(/asp\.?\s*net/gi, "DOTNET");

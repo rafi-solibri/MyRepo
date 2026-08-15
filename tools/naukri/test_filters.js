@@ -240,5 +240,15 @@ assert.strictEqual(
   true,
   "Architecture titles count as arch/lead band"
 );
+assert.strictEqual(
+  shouldSkipTitle("Senior Manager, Software Engineering"),
+  false,
+  "EM title is not a Salesforce-primary skip (company/skills chrome must not be scanned)"
+);
+assert.strictEqual(
+  isArchLeadTitle("Chief Technology Officer"),
+  true,
+  "CTO counts as director-band apply title"
+);
 console.log("resume_and_filters self-test OK");
 

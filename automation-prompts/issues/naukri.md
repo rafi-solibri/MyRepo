@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| card chrome/company/skills Salesforce false-skipped Senior Manager Software Engineering | decideSkip title-skip on role only; CTO is arch/lead |
 | homepage/recommended cards parsed empty role (CTA last) so 0 applies after search skips | parseNaukriCardLines: CTA-last homepage layout + keep search CTA-then-role |
 | SmartRecruiters/Workday timeouts + Lloyds maintenance + chatbot ignored .NET/Java checkboxes and Never served | Fail-fast unavailable; skip D365/cyber architecture; chatbot stack checkboxes + military No |
 | Workday Python/JS password miss when only LINKEDIN_PASSWORD/NAUKRI_WORKDAY_PASSWORD set | Password chain includes NAUKRI_WORKDAY_PASSWORD + LINKEDIN_PASSWORD; richer Workday fill |
