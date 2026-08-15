@@ -67,7 +67,7 @@ REFERRAL_NOTE = (
 MAX_EXT_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "1"))
 # Hard cap on external ATS attempts per company (incomplete Phenom/guest forms burn the run).
 MAX_EXT_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "2"))
-EXT_ATS_TIME_CAP_S = int(os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S", "45"))
+EXT_ATS_TIME_CAP_S = int(os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S", "390"))
 
 
 @dataclass

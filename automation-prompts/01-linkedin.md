@@ -55,7 +55,7 @@ Judge location from the TOP CARD / workplace pills only — never the full page 
 - The durable runner also runs a **non-Easy-Apply search pass** (`f_AL` off) when submitted count is still below `LINKEDIN_NON_EA_IF_BELOW` (default 20), so company-site / Apply jobs are not invisible. Set `LINKEDIN_EASY_APPLY_ONLY=1` only to disable that pass.
 - If Apply / company website / Workday / Greenhouse / Lever / SmartRecruiters / SuccessFactors / BambooHR / Hibob: FOLLOW and COMPLETE. Do not skip externals.
 - Dedup: load prior job IDs from `/opt/cursor/artifacts/linkedin-seen-ids.json` + prior apply reports (plus bootstrap seed). Do not re-apply known IDs.
-- One job at a time; ~3–4 min cap on stuck ATS/CAPTCHA/OTP — log blocked, continue
+- One job at a time; ~6.5 min cap on Workday/Greenhouse ATS (LINKEDIN_ATS_TIME_CAP_S=390). CAPTCHA/OTP: log blocked, continue
 - Greenhouse email OTP: if GMAIL session available in Chrome, read OTP; else block and continue
 - After Easy Apply, message the poster (poster-specific Message, not generic typeahead) asking for a 15–20 min screen
 

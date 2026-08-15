@@ -145,6 +145,11 @@ async function fillCommonAtsQuestions(page) {
     [/join the team within|notice period|immediate/i, "Yes"],
     [/gender/i, "Male"],
     [/how did you hear/i, "Naukri"],
+    [/years of experience|total experience/i, "15"],
+    [/notice period|available to start|start date/i, "Immediate"],
+    [/expected (ctc|salary|compensation)|desired salary/i, "6500000"],
+    [/current (ctc|salary|compensation)|present ctc/i, "5200000"],
+    [/willing to relocate/i, "Yes"],
   ];
   for (const [re, val] of pairs) {
     const ok = await fillLabeledCombobox(page, re, val).catch(() => false);

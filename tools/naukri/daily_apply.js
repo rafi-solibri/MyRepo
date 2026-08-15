@@ -58,7 +58,7 @@ function parseJobAges() {
 
 const JOB_AGES = parseJobAges();
 const MAX_APPLIES = Number(process.env.NAUKRI_MAX_APPLIES || 60);
-const MAX_EXTERNAL_MS = Number(process.env.NAUKRI_MAX_EXTERNAL_MS || 5 * 60 * 1000);
+const MAX_EXTERNAL_MS = Number(process.env.NAUKRI_MAX_EXTERNAL_MS || 6.5 * 60 * 1000);
 const MAX_WORKDAY_MS = Number(process.env.NAUKRI_MAX_WORKDAY_MS || 6.5 * 60 * 1000);
 const SKIP_PROFILE_REFRESH = process.env.NAUKRI_SKIP_PROFILE_REFRESH === "1";
 const EXPAND_BELOW = Number(process.env.NAUKRI_EXPAND_BELOW || 8);
@@ -1372,6 +1372,7 @@ async function handleExternal(context, page, detail, jobMeta, report) {
     return;
   }
 
+  let noAdvance = 0;
   while (Date.now() - start < MAX_EXTERNAL_MS) {
     const url = newPage.url();
     if (isJunkAtsUrl(url)) {
@@ -1387,10 +1388,16 @@ async function handleExternal(context, page, detail, jobMeta, report) {
     const text = await newPage
       .evaluate(() => (document.body?.innerText || "").slice(0, 2500))
       .catch(() => "");
+    const hasVisibleChallenge = await newPage
+      .locator(
+        "iframe[src*='recaptcha/bframe'], iframe[src*='hcaptcha.com'], iframe[src*='challenges.cloudflare.com'], iframe[src*='captcha-delivery.com']"
+      )
+      .first()
+      .isVisible()
+      .catch(() => false);
     const hasRecaptcha =
-      /captcha|verify you are human|cloudflare|hcaptcha|datadome/i.test(text) ||
-      (await newPage.locator("iframe[src*='recaptcha'], iframe[src*='hcaptcha'], .g-recaptcha, #g-recaptcha-response").count()) >
-        0;
+      hasVisibleChallenge ||
+      /verify you are human|press and hold|i'?m not a robot/i.test(text);
     if (hasRecaptcha) {
       report.blocked.push({
         ...jobMeta,
@@ -1538,14 +1545,8 @@ async function handleExternal(context, page, detail, jobMeta, report) {
       await countrySel.selectOption({ label: "India" }).catch(() => {});
     }
 
-    // Greenhouse / SmartRecruiters / generic boards — required comboboxes & selects.
-    if (
-      /greenhouse\.io|job-boards\.greenhouse|smartrecruiters\.com|lever\.co|ashbyhq\.com/i.test(
-        newPage.url()
-      )
-    ) {
-      await fillCommonAtsQuestions(newPage).catch(() => {});
-    }
+    // Greenhouse / SmartRecruiters / Lever / Ashby / Phenom / generic boards.
+    await fillCommonAtsQuestions(newPage).catch(() => {});
 
     // SmartRecruiters often needs an explicit "Submit" after consent checkbox.
     if (/smartrecruiters\.com/i.test(newPage.url())) {
@@ -1660,11 +1661,13 @@ async function handleExternal(context, page, detail, jobMeta, report) {
       .first();
     if (await next.isVisible().catch(() => false)) {
       await next.click().catch(() => {});
+      noAdvance = 0;
       await sleep(1500);
       continue;
     }
+    noAdvance += 1;
+    if (noAdvance >= 4) break;
     await sleep(1500);
-    break;
   }
 
   report.blocked.push({

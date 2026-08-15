@@ -104,7 +104,7 @@ portals_from_title() {
 is_shared_apply_path() {
   local f="$1"
   case "$f" in
-    tools/chrome_session.js|scripts/launch-chrome-cdp.sh|scripts/preflight-portal-run.sh|scripts/resolve-python.sh|scripts/sync-chrome-sessions.sh|scripts/kill-chrome-cdp.sh|scripts/restore-portal-sessions.sh|scripts/bootstrap-job-assets.sh|tools/resume_paths.py|scripts/home-headed-login.sh|scripts/cloud-agent-install.sh|scripts/cloud-agent-start.sh)
+    tools/chrome_session.js|tools/ats/*|scripts/launch-chrome-cdp.sh|scripts/preflight-portal-run.sh|scripts/resolve-python.sh|scripts/sync-chrome-sessions.sh|scripts/kill-chrome-cdp.sh|scripts/restore-portal-sessions.sh|scripts/bootstrap-job-assets.sh|tools/resume_paths.py|scripts/home-headed-login.sh|scripts/cloud-agent-install.sh|scripts/cloud-agent-start.sh)
       return 0
       ;;
   esac
