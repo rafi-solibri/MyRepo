@@ -4,6 +4,8 @@
 
 | Issue | Fix |
 | --- | --- |
+| Extra-query wave treated country-only Singapore/Thailand as remote via JD WFH copy; Jacobs Principal Electrical Engineer would apply | hasSpecificPlace for non-India country-only cards; skip electrical/civil/mechanical titles without software/.NET on title |
+| Primary .NET-token Raven queries exhausted (0 new applies, 42 duplicates) after PR #160 re-run; Hyd Arch/Lead inventory only on Naukri-parity queries | EXTRA_QUERIES wave when applies<8; titleForMatch for _/\|; Dot Net proof; skip Salesforce-primary skills without .NET on title |
 | Workday Create Account treated as ats_login_wall (Aveva etc.) so 0 company-site completes | Reuse naukri completeWorkdayApply; 6.5m cap; fillCommonAtsQuestions on generic ATS |
 
 

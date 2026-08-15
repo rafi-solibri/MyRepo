@@ -44,6 +44,22 @@ const QUERIES = [
   "software architect .net",
 ];
 
+/** Naukri-parity second wave when .NET-token queries are exhausted. */
+const EXTRA_QUERIES = [
+  "solution architect",
+  "solutions architect",
+  "technical architect",
+  "engineering manager",
+  "technical lead",
+  "software architect",
+  "principal engineer",
+  "cloud architect",
+  "dotnet architect",
+  "tech lead .net",
+  "azure architect",
+];
+const EXPAND_BELOW = Number(process.env.FOUNDIT_EXPAND_BELOW || 8);
+
 /** Age windows in days; expand when fresher inventory is empty. */
 const AGE_WINDOWS = [1, 3, 7, 14, 30, 90, 3650];
 
@@ -546,14 +562,14 @@ async function handleExternalAts(context, resumePath, job, report) {
   }
 }
 
-async function collectCandidates(page, maxDays, seen) {
+async function collectCandidates(page, maxDays, seen, queries = QUERIES) {
   const out = [];
   const locationSets = [
     ["hyderabad / secunderabad", "remote"],
     [], // unrestricted — local filter via classifyJob / JD enrich
   ];
 
-  for (const query of QUERIES) {
+  for (const query of queries) {
     for (const locs of locationSets) {
       for (let start = 0; start < 60; start += 20) {
         const { data } = await ravenSearch(page, query, locs, start, 20);
@@ -590,6 +606,7 @@ async function main() {
     duplicates: [],
     referralDrafts: [],
     queries: QUERIES,
+    extraQueries: EXTRA_QUERIES,
     maxApplies: MAX_APPLIES,
   };
 
@@ -646,12 +663,17 @@ async function main() {
     await ensureFoundit(page);
     const seen = new Set();
     let applies = 0;
+    const waves = [{ name: "primary", queries: QUERIES }];
+    if (EXTRA_QUERIES.length) waves.push({ name: "extra", queries: EXTRA_QUERIES });
 
-    for (const maxDays of AGE_WINDOWS) {
+    for (const wave of waves) {
+      if (wave.name === "extra" && applies >= EXPAND_BELOW) break;
+      report.searchWave = wave.name;
+      for (const maxDays of AGE_WINDOWS) {
       if (applies >= MAX_APPLIES) break;
       report.ageWindowUsed = maxDays;
-      const candidates = await collectCandidates(page, maxDays, seen);
-      report[`candidates_d${maxDays}`] = candidates.length;
+      const candidates = await collectCandidates(page, maxDays, seen, wave.queries);
+      report[`candidates_${wave.name}_d${maxDays}`] = candidates.length;
 
       for (const raw of candidates) {
         if (applies >= MAX_APPLIES) break;
@@ -848,6 +870,7 @@ async function main() {
       // Expand age window only if we still have apply budget and few new applies from fresher days
       if (applies > 0 && maxDays >= 14 && applies >= Math.min(10, MAX_APPLIES)) {
         // keep going while inventory remains — do not soft-stop
+      }
       }
     }
 
