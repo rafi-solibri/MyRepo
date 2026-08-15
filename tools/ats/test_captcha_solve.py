@@ -11,6 +11,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.ats.captcha_solve import (
+    _captcha_poll_frames,
     captcha_solver_configured,
     extract_sitekey_from_text,
     inject_hcaptcha_token,
@@ -68,5 +69,31 @@ for k, v in _saved.items():
 
 assert_true(not inject_hcaptcha_token(object(), ""), "short token rejected")
 assert_true(not inject_hcaptcha_token(object(), "short"), "short token rejected 2")
+
+
+class _FakeFrame:
+    def __init__(self, url: str):
+        self.url = url
+
+
+class _FakePage:
+    def __init__(self, frames):
+        self.frames = frames
+
+
+_page = _FakePage(
+    [
+        _FakeFrame("https://hyland.icims.com/jobs/..."),
+        _FakeFrame("https://newassets.hcaptcha.com/captcha/v1/x/static/hcaptcha.html"),
+        _FakeFrame("https://www.google.com/recaptcha/api2/anchor"),
+        _FakeFrame("https://hyland.icims.com/jobs/.../login"),
+    ]
+)
+# page itself is first; hcaptcha/recaptcha iframes skipped
+_polled = _captcha_poll_frames(_page)
+assert_true(_polled[0] is _page, "page first")
+assert_true(len(_polled) == 3, f"skip captcha iframes got {len(_polled)}")
+assert_true(all("hcaptcha" not in getattr(f, "url", "") for f in _polled[1:]), "no hcaptcha frames")
+assert_true(all("recaptcha" not in getattr(f, "url", "") for f in _polled[1:]), "no recaptcha frames")
 
 print("tools/ats/test_captcha_solve.py OK")
