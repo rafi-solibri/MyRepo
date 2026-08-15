@@ -9,7 +9,13 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from tools.indeed.uc_daily_apply import already_applied, skip_reason  # noqa: E402
+from tools.indeed.uc_daily_apply import (  # noqa: E402
+    already_applied,
+    looks_anonymous_marketing_home,
+    looks_login_wall,
+    looks_signed_in,
+    skip_reason,
+)
 
 
 def test_skip_hyd_remote_ok():
@@ -96,6 +102,38 @@ def test_already_applied_job_view_only():
     )
 
 
+def test_india_home_get_started_is_not_login_proof():
+    home = (
+        "Sign in\nYour next job starts here\n"
+        "Create an account or sign in to see your personalised job recommendations.\n"
+        "Get Started"
+    )
+    assert looks_anonymous_marketing_home(home)
+    assert not looks_signed_in(home, "https://in.indeed.com/")
+    assert not looks_login_wall(home, "https://in.indeed.com/")
+
+
+def test_account_settings_and_serp_are_signed_in():
+    account = (
+        "Account settings\nYour contact information\n"
+        "Manage your account security\nChange account type\n"
+        "Messages Unread count 2"
+    )
+    assert looks_signed_in(account, "https://secure.indeed.com/settings/account")
+    assert not looks_login_wall(account, "https://secure.indeed.com/settings/account")
+    serp = (
+        "Messages Unread count 2\n9+\nEmployers / Post Job\n"
+        "Solutions Architect .NET jobs in Hyderabad, Telangana"
+    )
+    assert looks_signed_in(serp, "https://in.indeed.com/jobs?q=Solutions+Architect")
+    wall = (
+        "Sign In | Indeed Accounts\nReady to take the next step?\n"
+        "Create an account or sign in.\nContinue with Apple\nEmail address *"
+    )
+    assert looks_login_wall(wall, "https://secure.indeed.com/auth?continue=https://myjobs.indeed.com/")
+    assert not looks_signed_in(wall)
+
+
 if __name__ == "__main__":
     test_skip_hyd_remote_ok()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
@@ -103,4 +141,6 @@ if __name__ == "__main__":
     test_enterprise_system_architect_ok()
     test_skip_salesforce_service_cloud_title()
     test_already_applied_job_view_only()
+    test_india_home_get_started_is_not_login_proof()
+    test_account_settings_and_serp_are_signed_in()
     print("ok")

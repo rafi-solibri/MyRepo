@@ -407,6 +407,52 @@ def skip_reason(title: str, company: str, location: str, snippet: str) -> str | 
     return None
 
 
+ACCOUNT_SETTINGS_URL = "https://secure.indeed.com/settings/account"
+
+
+def looks_signed_in(body: str, url: str = "") -> bool:
+    """True when nav/account chrome shows an authenticated jobseeker session.
+
+    in.indeed.com marketing home still says "Get Started" / "Sign in" while
+    logged in — do not use that copy. Account settings and SERP nav (Messages)
+    are the reliable signals.
+    """
+    blob = f"{url}\n{body}"
+    return bool(
+        re.search(
+            r"account settings|messages unread|manage your account security|"
+            r"change account type|device management|privacy settings|"
+            r"welcome,\s*\w+|sign out|unread count",
+            blob,
+            re.I,
+        )
+    )
+
+
+def looks_login_wall(body: str, url: str = "") -> bool:
+    blob = f"{url}\n{body}"
+    return bool(
+        re.search(
+            r"sign in \| indeed accounts|ready to take the next step|"
+            r"continue with apple|enter your email address",
+            blob,
+            re.I,
+        )
+    ) and not looks_signed_in(body, url)
+
+
+def looks_anonymous_marketing_home(body: str) -> bool:
+    """India homepage marketing hero — shown to signed-in and anonymous users."""
+    return bool(
+        re.search(
+            r"create an account or sign in|get started|"
+            r"sign in to see your personalised|your next job starts here",
+            body,
+            re.I,
+        )
+    ) and not looks_signed_in(body)
+
+
 def already_applied(body: str, url: str = "") -> bool:
     """True when the job-view page shows this listing was already submitted."""
     b = (body or "").lower()
@@ -2300,54 +2346,68 @@ def main() -> int:
             _emit(report)
             return 5
 
-        # CF can clear while the account is still anonymous ("Get Started" / Sign in).
-        # One hard reload: preflight-style clear sometimes paints Welcome only after
-        # a second navigation once cf_clearance is set.
+        # in.indeed.com marketing home always shows "Get Started" / "Sign in"
+        # even with a valid Passport session. Confirm on account settings
+        # (and treat SERP Messages nav as signed-in). Homepage-only heuristics
+        # caused a false indeed_login_required after CF clear (2026-08-15).
         try:
             home_body = (sb.get_text("body") or "")[:2500]
             home_title = sb.get_title() or ""
+            home_url = sb.get_current_url() or ""
         except Exception:
-            home_body, home_title = "", ""
+            home_body, home_title, home_url = "", "", ""
 
-        def _signed_out(body: str) -> bool:
-            return bool(
-                re.search(
-                    r"create an account or sign in|get started|sign in to see your personalised|"
-                    r"your next job starts here",
-                    body,
-                    re.I,
-                )
-            ) and not re.search(
-                r"welcome,\s*\w+|sign out|account settings|my jobs|profile",
-                body,
-                re.I,
-            )
-
-        if _signed_out(home_body):
+        session_ok = looks_signed_in(home_body, home_url)
+        if not session_ok:
             try:
-                sb.uc_open_with_reconnect("https://in.indeed.com/", 5)
+                sb.uc_open_with_reconnect(ACCOUNT_SETTINGS_URL, 5)
                 time.sleep(3)
                 if not clear_cf(sb):
                     pass
-                home_body = (sb.get_text("body") or "")[:2500]
-                home_title = sb.get_title() or ""
+                acc_body = (sb.get_text("body") or "")[:2500]
+                acc_title = sb.get_title() or ""
+                acc_url = sb.get_current_url() or ""
             except Exception:
-                pass
-        if _signed_out(home_body):
-            report["blocked"].append(
-                {
-                    "reason": "indeed_login_required",
-                    "title": home_title[:120],
-                    "bodySample": home_body[:400],
-                    "hint": "CF cleared but session is anonymous — refresh Indeed cookies via headed login / home CDP",
-                }
-            )
-            report["counts"]["blocked"] = 1
-            report["blockerSummary"] = "indeed_login_required"
-            OUT.parent.mkdir(parents=True, exist_ok=True)
-            OUT.write_text(json.dumps(report, indent=2))
-            _emit(report)
-            return 5
+                acc_body, acc_title, acc_url = "", "", ""
+            if looks_signed_in(acc_body, acc_url):
+                session_ok = True
+                report["sessionWarm"] = "account_settings"
+            elif looks_login_wall(acc_body, acc_url):
+                report["blocked"].append(
+                    {
+                        "reason": "indeed_login_required",
+                        "title": (acc_title or home_title)[:120],
+                        "bodySample": (acc_body or home_body)[:400],
+                        "hint": "Account settings is a Sign-in wall — refresh Indeed cookies via headed login / home CDP",
+                    }
+                )
+                report["counts"]["blocked"] = 1
+                report["blockerSummary"] = "indeed_login_required"
+                OUT.parent.mkdir(parents=True, exist_ok=True)
+                OUT.write_text(json.dumps(report, indent=2))
+                _emit(report)
+                return 5
+            elif looks_anonymous_marketing_home(home_body) and looks_login_wall(
+                home_body, home_url
+            ):
+                report["blocked"].append(
+                    {
+                        "reason": "indeed_login_required",
+                        "title": home_title[:120],
+                        "bodySample": home_body[:400],
+                        "hint": "CF cleared but session is anonymous — refresh Indeed cookies via headed login / home CDP",
+                    }
+                )
+                report["counts"]["blocked"] = 1
+                report["blockerSummary"] = "indeed_login_required"
+                OUT.parent.mkdir(parents=True, exist_ok=True)
+                OUT.write_text(json.dumps(report, indent=2))
+                _emit(report)
+                return 5
+            else:
+                # Ambiguous chrome (e.g. CF interstitial remnant). Continue;
+                # search/apply paths still skip already-applied and login walls.
+                report["sessionWarm"] = "unconfirmed_continue"
 
         seen_keys: set[str] = set()
         for query, location in search_queries():
