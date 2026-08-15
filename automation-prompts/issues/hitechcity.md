@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Solera Workday Create Account burned 390s — password-rule error sat below a 1500-char body slice so fail-fast never fired and click_advance kept submitting Create Account | workday_password_alert reads inputAlert + 8k body; do not match static Password Requirements list; wait for Sign In form; skip Create Account submit after reject |
 | Career portals applied 0 — JD Sign-in chrome and Workday Create Account treated as login wall | Do not wall JD chrome or Workday auth; Sign In first; adopt ATS tabs; skip Amazon/Microsoft/Qualcomm SSO-only hosts; run careers before LinkedIn |
 | 403 / Microsoft Eightfold SSO chooser + silicon/product-design + Ionic/Zscaler JDs | fail-fast 403+SSO chooser; fingerprint stuck Apply; poll Apply tabs 6s; skip silicon engineer/product design manager |
 | Solera Workday Create Account burned 390s on password-rule reject | workday_auth fail-fasts password-must-include; try Sign In once then ats_login_wall |

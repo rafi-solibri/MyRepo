@@ -25,6 +25,7 @@ from tools.ats.complete import (
     is_unavailable_text,
     looks_like_apply_cta,
     page_fingerprint,
+    workday_password_alert,
     workday_password_rejected,
 )
 
@@ -199,6 +200,68 @@ assert_true(
     "Solera Workday password-rule error is a reject",
 )
 assert_true(not workday_password_rejected("Password*\nVerify New Password*"), "labels are not a reject")
+assert_true(
+    not workday_password_rejected(
+        "Password Requirements:\n\nA special character\nAn uppercase character\nA numeric character"
+    ),
+    "static Password Requirements list is not a reject",
+)
+_chrome = "Skip to main content\nSign In\n" + ("step 1 of 7 Create Account/Sign In\n" * 50)
+assert_true(
+    workday_password_rejected(
+        _chrome + "Error: Password must include:\n\t  - An uppercase character"
+    ),
+    "password reject still matches after Workday progress-bar chrome",
+)
+
+
+class _AlertPage:
+    def __init__(self, alert: str | None, body: str):
+        self._alert = alert
+        self._text = body
+
+    def locator(self, sel: str):
+        page = self
+
+        class _El:
+            def count(self):
+                if "inputAlert" in sel:
+                    return 1 if page._alert else 0
+                return 1
+
+            def is_visible(self):
+                if "inputAlert" in sel:
+                    return bool(page._alert)
+                return True
+
+            def inner_text(self, *a, **k):
+                if "inputAlert" in sel:
+                    return page._alert or ""
+                return page._text
+
+            @property
+            def first(self):
+                return self
+
+        return _El()
+
+
+assert_true(
+    workday_password_alert(
+        _AlertPage("Error: Password must include:\n  - An uppercase character", _chrome)
+    ),
+    "inputAlert password reject wins over chrome-heavy body",
+)
+assert_true(
+    workday_password_alert(
+        _AlertPage(None, _chrome + "Error: Password must include:\n  - A numeric character")
+    ),
+    "long body still sees password reject past a 1500-char slice",
+)
+assert_true(
+    not workday_password_alert(_AlertPage(None, _chrome + "Password*\nVerify New Password*")),
+    "labels alone are not a live reject",
+)
 
 assert_true(
     classify_ats_host("https://talent.cognizant.com/en_US/careers/Login2") == "sso",
