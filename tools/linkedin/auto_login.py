@@ -140,25 +140,102 @@ def _pick_linkedin_page(ctx):
         raise
 
 
+
+def _has_google_session(ctx) -> bool:
+    """True when CDP profile has a usable Google login cookie for GSI."""
+    try:
+        cookies = ctx.cookies(["https://accounts.google.com", "https://www.google.com"])
+        names = {c.get("name") for c in cookies}
+        return bool(names & {"__Secure-1PSID", "__Secure-3PSID", "SID"})
+    except Exception:
+        return False
+
+
+def _reveal_full_login_form(page) -> None:
+    """Leave LinkedIn 'Welcome back' remembered-account UI so GSI is clickable.
+
+    The welcome-back card shows password + Apple only; Continue with Google lives
+    on the full /login form behind 'Sign in using another account'.
+    """
+    try:
+        body = page.locator("body").inner_text()[:1200]
+    except Exception:
+        body = ""
+    if not re.search(r"Welcome back|Sign in using another account", body, re.I):
+        return
+    try:
+        link = page.get_by_role("link", name=re.compile(r"Sign in using another account", re.I))
+        if link.count() and link.first.is_visible():
+            link.first.click(timeout=5000)
+            time.sleep(2)
+            return
+    except Exception:
+        pass
+    try:
+        alt = page.locator("a:has-text('Sign in using another account')")
+        if alt.count():
+            alt.first.click(force=True, timeout=5000)
+            time.sleep(2)
+    except Exception:
+        pass
+
+
+def _gsi_button_frames(page):
+    frames = [f for f in page.frames if "accounts.google.com/gsi/button" in (f.url or "")]
+    # Prefer a frame whose Continue button is actually visible (width~400).
+    visible = []
+    for fr in frames:
+        try:
+            btn = fr.locator("div[role=button]").first
+            if btn.count() and btn.is_visible():
+                visible.append(fr)
+        except Exception:
+            continue
+    return visible or frames
+
+
 def _click_continue_google(ctx, page) -> bool:
     """Click LinkedIn Continue with Google and choose the remembered Google account."""
-    frames = [f for f in page.frames if "accounts.google.com/gsi/button" in (f.url or "")]
+    _reveal_full_login_form(page)
+    # Wait briefly for GSI iframes after welcome-back → full form transition.
+    deadline = time.time() + 8
+    frames = _gsi_button_frames(page)
+    while not frames and time.time() < deadline:
+        time.sleep(0.5)
+        frames = _gsi_button_frames(page)
     popup = None
     clicked = False
 
     def _do_click():
-        nonlocal clicked
-        if frames:
+        nonlocal clicked, frames
+        frames = _gsi_button_frames(page)
+        for fr in frames:
             try:
-                frames[0].locator("div[role=button]").first.click(force=True, timeout=8000)
+                fr.locator("div[role=button]").first.click(force=True, timeout=8000)
                 clicked = True
                 return
             except Exception:
-                pass
+                continue
         btn = page.locator("[role=button]:has-text('Continue with Google')")
-        if btn.count():
-            btn.first.click(force=True, timeout=8000)
-            clicked = True
+        try:
+            n = min(btn.count(), 6)
+        except Exception:
+            n = 0
+        for i in range(n):
+            try:
+                el = btn.nth(i)
+                if el.is_visible():
+                    el.click(force=True, timeout=8000)
+                    clicked = True
+                    return
+            except Exception:
+                continue
+        if n:
+            try:
+                btn.first.click(force=True, timeout=8000)
+                clicked = True
+            except Exception:
+                pass
 
     try:
         with ctx.expect_page(timeout=15000) as np:
@@ -172,6 +249,13 @@ def _click_continue_google(ctx, page) -> bool:
             except Exception:
                 return False
         time.sleep(2)
+        # Popup may already exist from a prior partial click.
+        if popup is None:
+            for pg in ctx.pages:
+                u = pg.url or ""
+                if "accounts.google.com" in u and re.search(r"select|gsi|signin", u, re.I):
+                    popup = pg
+                    break
 
     if not clicked:
         return False
@@ -182,7 +266,7 @@ def _click_continue_google(ctx, page) -> bool:
         except Exception:
             pass
         time.sleep(1.5)
-        # Account chooser: "Rafi … / rafi.success@gmail.com"
+        # Account chooser: remembered Gmail on GSI select card
         chosen = False
         for sel in ("div[role='link']", "div[data-identifier]", "div[data-email]"):
             try:
@@ -221,7 +305,6 @@ def _click_continue_google(ctx, page) -> bool:
             except Exception:
                 break
     return True
-
 
 def _visible_locator(page, selectors: str):
     """Return first visible locator for comma-separated CSS selectors.
@@ -329,6 +412,8 @@ def _goto_login_clean(ctx, page):
             time.sleep(2)
         except Exception:
             pass
+    page = _pick_linkedin_page(ctx)
+    _reveal_full_login_form(page)
     return _pick_linkedin_page(ctx)
 
 
@@ -390,6 +475,8 @@ def main() -> int:
             return 0
 
         page = _goto_login_clean(ctx, page)
+        google_session = _has_google_session(ctx)
+        out["google_session"] = google_session
 
         def try_password() -> int | None:
             if not PASSWORD:
@@ -414,9 +501,22 @@ def main() -> int:
             if not _click_continue_google(ctx, nonlocal_page):
                 out["attempts"].append({"step": "google_sso", "clicked": False})
                 return None
+            out["attempts"].append({"step": "google_sso", "clicked": True})
             return _wait_signed_in(ctx, nonlocal_page, deadline, "google_sso", out)
 
-        order = ("password", "google_sso") if prefer_password else ("google_sso", "password")
+        # Prefer Google SSO when the CDP profile already has Google cookies.
+        # Password-first often burns a checkpoint before GSI gets a clean shot;
+        # welcome-back UI also hid the GSI button until "another account".
+        prefer_google = google_session and os.environ.get(
+            "LINKEDIN_PREFER_GOOGLE_IF_SESSION", "1"
+        ).strip() not in ("0", "false", "no")
+        if prefer_google:
+            order = ("google_sso", "password")
+        elif prefer_password:
+            order = ("password", "google_sso")
+        else:
+            order = ("google_sso", "password")
+        out["order"] = list(order)
         captcha_seen = False
         for step in order:
             rc = try_password() if step == "password" else try_google()
@@ -433,7 +533,17 @@ def main() -> int:
             print(json.dumps(out))
             return 0
         if captcha_seen or (_on_captcha(page) and not _cookies_has_li_at(ctx)):
-            out.update(ok=False, reason="captcha_checkpoint", url=page.url)
+            out.update(
+                ok=False,
+                reason="captcha_checkpoint",
+                url=page.url,
+                google_session=google_session,
+                hint=(
+                    "Owner CAPTCHA/checkpoint required"
+                    if google_session
+                    else "CAPTCHA with no Google session — bash scripts/home-headed-login.sh linkedin"
+                ),
+            )
             print(json.dumps(out))
             return 6
 
@@ -442,6 +552,7 @@ def main() -> int:
             reason="linkedin_login_required",
             url=page.url,
             has_li_at=_cookies_has_li_at(ctx),
+            google_session=google_session,
             hint="CAPTCHA/checkpoint or Google SSO failed; set Cursor secret LINKEDIN_PASSWORD and re-run",
         )
         print(json.dumps(out))
