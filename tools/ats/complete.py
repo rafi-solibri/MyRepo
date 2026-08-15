@@ -705,6 +705,8 @@ def fill_labeled_fields(page) -> None:
             continue
         if not text or len(text) > 90:
             continue
+        if re.search(r"robots only|beecatcher|do not enter if you.re human", text, re.I):
+            continue
         for pat, val in pairs:
             if not re.search(pat, text, re.I):
                 continue
@@ -795,6 +797,9 @@ def click_advance(page) -> bool:
             if el.count() and el.is_visible() and el.is_enabled():
                 label = ((el.inner_text() or "") + " " + (el.get_attribute("aria-label") or "")).lower()
                 if re.search(r"sign in with (google|microsoft|linkedin|apple)", label):
+                    continue
+                # Password-rule reject: do not keep submitting Create Account.
+                if "createAccountSubmit" in sel and workday_password_alert(page):
                     continue
                 el.click(timeout=3000, force=True)
                 _sleep(1.6)
@@ -897,14 +902,36 @@ def _type_automation(page, automation_id: str, value: str) -> bool:
 
 
 def workday_password_rejected(text: str | None) -> bool:
-    """True when Workday Create Account rejects the typed password rules."""
+    """True when Workday Create Account rejects the typed password rules.
+
+    Do not match the static "Password Requirements:" help list — only the
+    live error ("Password must include" / "does not meet the password").
+    """
     return bool(
         re.search(
-            r"password must include|does not meet (the )?password|password requirements",
+            r"password must include|does not meet (the )?password|"
+            r"error:\s*password|password (is )?too weak",
             text or "",
             re.I,
         )
     )
+
+
+def workday_password_alert(page) -> bool:
+    """True when the live Create Account form shows a password-rule error.
+
+    Workday progress-bar chrome often exceeds a 1500-char body slice, so the
+    visible ``inputAlert`` (or a longer body) must be checked — otherwise
+    complete_workday burns the 390s cap re-clicking Create Account.
+    """
+    try:
+        alert = page.locator("[data-automation-id='inputAlert']").first
+        if alert.count() and alert.is_visible():
+            if workday_password_rejected(alert.inner_text(timeout=800) or ""):
+                return True
+    except Exception:
+        pass
+    return workday_password_rejected(_body(page, 8000))
 
 
 def workday_open_apply(page) -> None:
@@ -969,20 +996,29 @@ def workday_auth(page) -> str | None:
         return "ats_password_missing"
     # Prefer Sign In — prior runs often already created the tenant account.
     # Create Account is what Solera rejects on password-complexity rules.
+    chose_sign_in = False
     try:
         sign = page.locator(
             "[data-automation-id='signInLink'], [data-automation-id='utilityButtonSignIn']"
         ).first
         if sign.count() and sign.is_visible():
             sign.click(force=True)
-            _sleep(1.0)
+            chose_sign_in = True
+            # Wait for Sign In form — do not bounce back to Create Account.
+            for _ in range(8):
+                _sleep(0.35)
+                try:
+                    if page.locator("[data-automation-id='signInSubmitButton']").first.is_visible():
+                        break
+                except Exception:
+                    pass
     except Exception:
         pass
     verify = page.locator("[data-automation-id='verifyPassword']").first
     try:
         if not (verify.count() and verify.is_visible()):
             sign_in = page.locator("[data-automation-id='signInSubmitButton']").first
-            if not (sign_in.count() and sign_in.is_visible()):
+            if not (sign_in.count() and sign_in.is_visible()) and not chose_sign_in:
                 create = page.locator("[data-automation-id='createAccountLink']").first
                 if create.count() and create.is_visible():
                     create.click(force=True)
@@ -1017,7 +1053,7 @@ def workday_auth(page) -> str | None:
         _type_automation(page, "password", password)
         _click_text(page, ("Sign In",))
         _sleep(2.0)
-    if workday_password_rejected(_body(page, 1500)):
+    if workday_password_alert(page):
         # Tenant complexity (Solera: uppercase+numeric) rejects the stored secret.
         # Try Sign In once, then fail-fast — do not burn the 390s cap.
         try:
@@ -1033,7 +1069,7 @@ def workday_auth(page) -> str | None:
                 _sleep(2.0)
         except Exception:
             pass
-        if workday_password_rejected(_body(page, 1500)) or page.locator(
+        if workday_password_alert(page) or page.locator(
             "[data-automation-id='createAccountSubmitButton']"
         ).count():
             return "ats_login_wall"
@@ -1165,12 +1201,14 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
     auth = workday_auth(page)
     if auth:
         return "blocked", auth
-    if workday_password_rejected(_body(page, 1500)):
+    if workday_password_alert(page):
         return "blocked", "ats_login_wall"
     stuck = 0
     while time.time() - start < time_cap_s and stuck < 10:
         if looks_submitted(page):
             return "applied", "confirmation"
+        if workday_password_alert(page):
+            return "blocked", "ats_login_wall"
         wall = blocked_wall(page)
         if wall == "CAPTCHA/bot wall":
             return "blocked", wall
