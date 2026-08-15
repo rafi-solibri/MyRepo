@@ -286,45 +286,114 @@ Thanks,
 Rafi Ahmed`;
 }
 
-async function api(page, method, urlPath, body) {
-  if (!String(page.url()).includes("cutshort.io")) {
-    await page.goto("https://cutshort.io/profile/candidate-dashboard", {
-      waitUntil: "domcontentloaded",
-      timeout: 60000,
-    });
-    await sleep(800);
-  }
-  return page.evaluate(
-    async ({ method, urlPath, body }) => {
-      const cookies = document.cookie.split(";").map((s) => s.trim());
-      const xsrf = cookies
-        .find((c) => c.startsWith("XSRF-TOKEN="))
-        ?.split("=")
-        .slice(1)
-        .join("=");
-      const token = decodeURIComponent(xsrf || "");
-      const headers = {
-        Accept: "application/json",
-        "x-requested-with": "XMLHttpRequest",
-        "x-xsrf-token": token,
-        "x-csrf-token": token,
-      };
-      if (body != null) headers["Content-Type"] = "application/json";
-      const res = await fetch(urlPath, {
-        method,
-        headers,
-        credentials: "include",
-        body: body != null ? JSON.stringify(body) : undefined,
-      });
-      const text = await res.text();
-      let json = null;
-      try {
-        json = JSON.parse(text);
-      } catch {}
-      return { status: res.status, ok: res.ok, json, text: text.slice(0, 1500) };
-    },
-    { method, urlPath, body }
+function isBrowserClosedError(e) {
+  return /has been closed|Target closed|Browser closed|Connection closed|Session closed|ECONNREFUSED|cdp_connect/i.test(
+    String(e?.message || e)
   );
+}
+
+/** CDP session that can reconnect when Chrome drops the page mid-scan. */
+function createCdpSession() {
+  let browser = null;
+  let context = null;
+  let page = null;
+
+  async function connect() {
+    browser = await chromium.connectOverCDP(CDP, { timeout: 60000 });
+    context = browser.contexts()[0] || (await browser.newContext());
+    page = context.pages().find((p) => /cutshort\.io/i.test(p.url())) || (await context.newPage());
+    if (!String(page.url()).includes("cutshort.io")) {
+      await page.goto("https://cutshort.io/profile/candidate-dashboard", {
+        waitUntil: "domcontentloaded",
+        timeout: 60000,
+      });
+      await sleep(800);
+    }
+    return page;
+  }
+
+  async function ensurePage() {
+    try {
+      if (page && !page.isClosed()) {
+        void page.url();
+        return page;
+      }
+    } catch {
+      /* reconnect below */
+    }
+    console.log("[cdp] reconnecting…");
+    await sleep(1500);
+    return connect();
+  }
+
+  async function disconnect() {
+    // Never browser.close() on Windows home — Playwright can tear down Chrome CDP.
+    await page?.close().catch(() => {});
+    page = null;
+    context = null;
+    browser = null;
+  }
+
+  return {
+    connect,
+    ensurePage,
+    disconnect,
+    getPage: () => page,
+  };
+}
+
+async function api(pageOrSession, method, urlPath, body) {
+  const session =
+    pageOrSession && typeof pageOrSession.ensurePage === "function" ? pageOrSession : null;
+  let page = session ? await session.ensurePage() : pageOrSession;
+  const run = async (p) => {
+    if (!String(p.url()).includes("cutshort.io")) {
+      await p.goto("https://cutshort.io/profile/candidate-dashboard", {
+        waitUntil: "domcontentloaded",
+        timeout: 60000,
+      });
+      await sleep(800);
+    }
+    return p.evaluate(
+      async ({ method, urlPath, body }) => {
+        const cookies = document.cookie.split(";").map((s) => s.trim());
+        const xsrf = cookies
+          .find((c) => c.startsWith("XSRF-TOKEN="))
+          ?.split("=")
+          .slice(1)
+          .join("=");
+        const token = decodeURIComponent(xsrf || "");
+        const headers = {
+          Accept: "application/json",
+          "x-requested-with": "XMLHttpRequest",
+          "x-xsrf-token": token,
+          "x-csrf-token": token,
+        };
+        if (body != null) headers["Content-Type"] = "application/json";
+        const res = await fetch(urlPath, {
+          method,
+          headers,
+          credentials: "include",
+          body: body != null ? JSON.stringify(body) : undefined,
+        });
+        const text = await res.text();
+        let json = null;
+        try {
+          json = JSON.parse(text);
+        } catch {}
+        return { status: res.status, ok: res.ok, json, text: text.slice(0, 1500) };
+      },
+      { method, urlPath, body }
+    );
+  };
+  try {
+    return await run(page);
+  } catch (e) {
+    if (!session || !isBrowserClosedError(e)) throw e;
+    console.log("[cdp] api retry after closed page:", String(e.message || e).slice(0, 120));
+    page = await session.ensurePage();
+    return run(page);
+  }
 }
 
 function questionText(q) {
@@ -595,12 +664,19 @@ async function applyOne(page, job) {
   return applyViaApi("api_after_ui");
 }
 
-async function scan(page) {
+async function scan(pageOrSession) {
   const byId = new Map();
   async function pull(query, maxPages, label) {
     for (let p = 1; p <= maxPages; p++) {
       const qs = new URLSearchParams({ page: String(p), pageSize: "50", ...query }).toString();
-      const res = await api(page, "GET", `/findjobs/q?${qs}`);
+      let res;
+      try {
+        res = await api(pageOrSession, "GET", `/findjobs/q?${qs}`);
+      } catch (e) {
+        if (!isBrowserClosedError(e)) throw e;
+        console.error(`[scan:${label}] aborted page ${p}:`, String(e.message || e).slice(0, 160));
+        break;
+      }
       const results = res.json?.results || [];
       if (!results.length) break;
       for (const j of results) byId.set(j._id, j);
@@ -629,14 +705,9 @@ async function main() {
   fs.mkdirSync(REPORT_DIR, { recursive: true });
   console.log("resume:", findResume());
 
-  const browser = await chromium.connectOverCDP(CDP);
-  const context = browser.contexts()[0] || (await browser.newContext());
-  const page = await context.newPage();
-  await page.goto("https://cutshort.io/profile/candidate-dashboard", {
-    waitUntil: "domcontentloaded",
-    timeout: 60000,
-  });
-  await sleep(1500);
+  const session = createCdpSession();
+  const page = await session.connect();
+  await sleep(700);
   const loginProbe = await page.evaluate(() => ({
     url: location.href,
     text: (document.body?.innerText || "").slice(0, 2000),
@@ -659,8 +730,10 @@ async function main() {
       q: {},
     });
     console.log("home_report:", homePath);
+    await session.disconnect();
     process.exit(2);
   }
+
 
   const stats = {
     scanned: 0,
@@ -682,7 +755,15 @@ async function main() {
     },
   };
 
-  const jobs = await scan(page);
+  let jobs = [];
+  try {
+    jobs = await scan(session);
+  } catch (e) {
+    const msg = String(e?.message || e);
+    console.error("[scan] fatal:", msg.slice(0, 240));
+    stats.q.error = `scan_aborted: ${msg.slice(0, 200)}`;
+    if (!isBrowserClosedError(e)) throw e;
+  }
   stats.scanned = jobs.length;
   const qual = [];
   const skipReasons = Object.create(null);
@@ -725,8 +806,20 @@ async function main() {
     console.log(`\n[apply] T${row.tier} ${row.title} @ ${row.company} ctc=${row.ctc}`);
     let result;
     try {
-      result = await applyOne(page, job);
+      const p = await session.ensurePage();
+      result = await applyOne(p, job);
     } catch (e) {
+      if (isBrowserClosedError(e)) {
+        console.error("[apply] CDP closed:", String(e.message || e).slice(0, 160));
+        stats.failed.push({ ...row, result: { status: "cdp_closed" } });
+        try {
+          await session.ensurePage();
+        } catch {
+          console.error("[apply] cannot reconnect — stopping");
+          break;
+        }
+        continue;
+      }
       result = { status: "exception", error: String(e).slice(0, 200) };
     }
     console.log(" =>", result.status);
@@ -751,7 +844,7 @@ async function main() {
         skipNotQuestionnaire: 0,
       };
       try {
-        await answerPendingQuestionnaires(page, { q: perApplyQ });
+        await answerPendingQuestionnaires(await session.ensurePage(), { q: perApplyQ });
         stats.q.answered += perApplyQ.answered;
         stats.q.saveFailed += perApplyQ.saveFailed;
         stats.q.submitFailed += perApplyQ.submitFailed;
@@ -764,7 +857,7 @@ async function main() {
       }
     }     else if (result.status === "already_applied") stats.already.push({ ...row, result });
     else if (result.status === "external") {
-      const href = await page
+      const href = await (await session.ensurePage())
         .evaluate(() => {
           const a = [...document.querySelectorAll("a")].find((el) =>
             /company website|apply on company|greenhouse|myworkdayjobs|lever\.co|smartrecruiters|ashbyhq|careers\.|jobs\./i.test(
@@ -775,7 +868,7 @@ async function main() {
         })
         .catch(() => "");
       if (href) {
-        const ats = await page.context().newPage();
+        const ats = await (await session.ensurePage()).context().newPage();
         try {
           await ats.goto(href, { waitUntil: "domcontentloaded", timeout: 60000 });
           const done = await completeExternalPage(ats, findResume());
@@ -824,7 +917,7 @@ async function main() {
     skipNotQuestionnaire: 0,
   };
   try {
-    await answerPendingQuestionnaires(page, { q: auditQ });
+    await answerPendingQuestionnaires(await session.ensurePage(), { q: auditQ });
     stats.q.answered += auditQ.answered;
     stats.q.awaitingListed = auditQ.awaitingListed;
     stats.q.alreadySubmitted = auditQ.alreadySubmitted;
@@ -870,14 +963,27 @@ ${stats.failed.map((a) => `- T${a.tier} ${a.title} @ ${a.company} — ${a.result
   const homePath = writeHomeReport(stats);
   console.log(report);
   console.log("home_report:", homePath);
-  await page.close().catch(() => {});
-  // connectOverCDP: closing browser disconnects Playwright only — do not kill Chrome.
-  await browser.close().catch(() => {});
+  await session.disconnect();
 }
 
 if (require.main === module) {
   main().catch((e) => {
     console.error(e);
+    try {
+      writeHomeReport({
+        loginRequired: /login/i.test(String(e?.message || e)),
+        loginDetail: String(e?.message || e).slice(0, 300),
+        scanned: 0,
+        applied: [],
+        already: [],
+        failed: [],
+        external: [],
+        qualifying: [],
+        q: { error: String(e?.message || e).slice(0, 240) },
+      });
+    } catch {
+      /* ignore */
+    }
     process.exit(1);
   });
 }
