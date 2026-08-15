@@ -14,6 +14,7 @@ from tools.indeed.uc_daily_apply import (  # noqa: E402
     already_applied,
     looks_anonymous_marketing_home,
     looks_login_wall,
+    job_dedupe_key,
     looks_signed_in,
     skip_reason,
 )
@@ -139,6 +140,13 @@ def test_account_settings_and_serp_are_signed_in():
     assert not looks_signed_in(wall)
 
 
+def test_job_dedupe_key_from_jk():
+    assert job_dedupe_key("https://in.indeed.com/pagead/clk?jk=abc123def456&from=serp", "") == "abc123def456"
+    assert job_dedupe_key("https://in.indeed.com/viewjob?jk=abc123def456", "other") == "abc123def456"
+    assert job_dedupe_key("https://in.indeed.com/viewjob?jk=abc123def456", "") == "abc123def456"
+    assert job_dedupe_key("https://in.indeed.com/rc/clk?from=serp", "deadbeef") == "deadbeef"
+
+
 if __name__ == "__main__":
     test_skip_hyd_remote_ok()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
@@ -149,4 +157,5 @@ if __name__ == "__main__":
     test_hybrid_profile_copies_local_state()
     test_india_home_get_started_is_not_login_proof()
     test_account_settings_and_serp_are_signed_in()
+    test_job_dedupe_key_from_jk()
     print("ok")

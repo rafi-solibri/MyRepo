@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Thailand/Singapore country-only inherited JD remote-first; underscore titles; SF-in-skills | hasSpecificPlace for non-India country; titleForMatch; Salesforce-in-skills without .NET on title |
 | Engineering Manager Water and AI Specialist Solution Architect still applied after first filter pass | skip water/wastewater titles; AI Specialist Solution Architect in pure-AI skip |
 | EXTRA_QUERIES Arch/Lead wave applied Facilities/Electrical/Mechanical/Oracle Fusion/AI Solution/Data Engineering titles | skipTitleReason: non-software engineering, ops EM, Oracle Fusion/ERP, AI Solution Architect, data engineering (Naukri parity) |
 | .NET-only Raven queries already Applied so 0 new company-site inventory | EXTRA_QUERIES Arch/Lead wave always searched; completeExternalPage fail-fast no_ats_form |

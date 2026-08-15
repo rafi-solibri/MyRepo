@@ -24,6 +24,7 @@ from tools.ats.complete import (
     is_submitted_text,
     is_unavailable_text,
     looks_like_apply_cta,
+    page_fingerprint,
     workday_password_rejected,
 )
 
@@ -107,7 +108,30 @@ assert_true(is_board_tracking_url("https://www.indeed.com/applystart?jk=abc"), "
 assert_true(is_board_tracking_url("https://www.indeed.com/rc/clk?jk=abc"), "rc/clk tracking")
 assert_true(not is_board_tracking_url("https://acme.wd1.myworkdayjobs.com/en-US/job"), "wd not tracking")
 assert_true(is_unavailable_text("We'll be back shortly — scheduled maintenance"), "maint text")
+assert_true(is_unavailable_text("403 Forbidden"), "http 403 is unavailable")
 assert_true(is_submitted_text("Thanks for applying — we've got your application"), "got-app must count")
+
+
+class _FpPage:
+    def __init__(self, url: str, text: str):
+        self.url = url
+        self._text = text
+
+    def locator(self, sel: str):
+        page = self
+
+        class _Body:
+            def inner_text(self, *a, **k):
+                return page._text
+
+        return _Body()
+
+
+_fp_a = page_fingerprint(_FpPage("https://apply.careers.microsoft.com/careers/apply?pid=1", "Apply now"))
+_fp_b = page_fingerprint(_FpPage("https://apply.careers.microsoft.com/careers/apply?pid=1", "Apply now"))
+_fp_c = page_fingerprint(_FpPage("https://apply.careers.microsoft.com/careers/apply?pid=1", "Thank you for applying"))
+assert_true(_fp_a == _fp_b, "same page fingerprint")
+assert_true(_fp_a != _fp_c, "changed body changes fingerprint")
 
 assert_true(frame_url_is_captcha_challenge("https://www.google.com/recaptcha/api2/bframe?x=1"), "bframe")
 assert_true(not frame_url_is_captcha_challenge("https://www.google.com/recaptcha/api2/anchor"), "hidden badge")
@@ -203,6 +227,23 @@ assert_true(
     )
     == "job_unavailable",
     "closed requisition",
+)
+
+# Microsoft Eightfold careers: SSO buttons, no password, no resume input.
+ms_chooser = (
+    "Select a method below to Sign in. This allows you to access your profile "
+    "or begin a new application. Sign in using Microsoft Sign in using LinkedIn "
+    "Sign in using Google. If you are a Microsoft Employee, Sign in here."
+)
+assert_true(
+    auth_wall_reason(
+        "https://apply.careers.microsoft.com/careers/apply?pid=1",
+        ms_chooser,
+        has_password=False,
+        has_file=False,
+    )
+    == "ats_login_wall",
+    "Microsoft Eightfold SSO chooser (no password) is a hard wall",
 )
 
 print("tools/ats/test_complete.py OK")

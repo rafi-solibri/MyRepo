@@ -10,12 +10,14 @@ const { spawnSync } = require("child_process");
 const {
   findResume,
   hasDotNet,
-  shouldSkipTitle,
+  shouldSkipTitleFromCard,
+  parseNaukriCardLines,
   isArchLeadTitle,
   EXPECTED_CTC_LPA,
   CURRENT_CTC_LPA,
 } = require("./resume_and_filters");
 const { completeWorkdayApply, isSubmittedText } = require("./workday_apply");
+const { preferChatbotCheckboxValues } = require("./chatbot_answers");
 const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
 const { artifactPaths, writeArtifactJson } = require("../artifact_path");
 const { completeExternalPage } = require("../ats/complete_page");
@@ -249,11 +251,14 @@ function isAlreadyAppliedCta(text) {
   // Callers must use readVisibleApplyCta(page) for live buttons.
   if (/Quick apply/i.test(t) && /Applied/i.test(t)) return false;
   if (/^Applied$/i.test(t)) return true;
+  // Post-apply widget after instant Quick Apply (Meltwater 2026-08-15).
+  if (/view applied jobs/i.test(t)) return true;
   if (
     t.length < 48 &&
     /\bApplied\b/i.test(t) &&
     !/^Quick apply$/i.test(t) &&
-    !/^Applied\s*\(/i.test(t)
+    !/^Applied\s*\(/i.test(t) &&
+    !/view applied jobs/i.test(t)
   ) {
     return true;
   }
@@ -414,28 +419,18 @@ async function collectCards(page) {
         .split("\n")
         .map((x) => x.trim())
         .filter(Boolean);
-      let company = lines[0] || "";
-      company = company.replace(/\s+\d\.\d.*$/, "").trim();
       const applyIdx = lines.findIndex((l) =>
         /Quick apply|Go to company site|On company site|Apply on company|On hirist/i.test(
           l
         )
       );
-      let role = "";
-      let location = "";
-      if (applyIdx >= 0) {
-        role = lines[applyIdx + 1] || "";
-        location = lines[applyIdx + 2] || "";
-      }
       // Per-job already-applied is "Quick apply Applied" on the card CTA line only.
       const ctaLine = applyIdx >= 0 ? lines[applyIdx] : "";
       const companySite = siteRe.test(text);
       const quick = /Quick apply/i.test(text);
       return {
         idx,
-        company,
-        role,
-        location,
+        lines,
         text: text.slice(0, 600),
         ctaLine,
         companySite,
@@ -444,9 +439,17 @@ async function collectCards(page) {
     });
   });
   return raw.map((c) => {
+    const parsed = parseNaukriCardLines(c.lines || []);
+    const company = (parsed.company || "").replace(/\s+\d\.\d.*$/, "").trim();
     const already = isAlreadyAppliedCta(c.ctaLine || c.text);
     return {
-      ...c,
+      idx: c.idx,
+      company,
+      role: parsed.role || "",
+      location: parsed.location || "",
+      text: c.text,
+      ctaLine: c.ctaLine,
+      companySite: c.companySite,
       already,
       quick: c.quick && !already,
     };
@@ -710,6 +713,103 @@ async function answerNaukriChatbot(page) {
     }
 
     const fingerprint = chatText.replace(/\s+/g, " ").trim().slice(-500);
+
+    // Multiselect skill checkboxes (Jade: ".Net" / "Java") — Save stays
+    // disabled until a box is ticked. Radios/chips never match these.
+    const multiBoxes = await page
+      .evaluate(() => {
+        const root =
+          document.querySelector(
+            ".chatbot_Drawer, ._chatBotContainer, #desktopChatBotContainer"
+          ) || document;
+        root.querySelector(".chatbot_Overlay")?.classList.remove("show");
+        const nodes = [
+          ...root.querySelectorAll(
+            'input.mcc__checkbox, input[data-val="multiselect"], .multiselectcheckboxes input[type="checkbox"], .multicheckboxes-container input[type="checkbox"]'
+          ),
+        ];
+        return nodes.map((c) => ({
+          id: c.id || "",
+          value: c.value || "",
+          label: (
+            (c.labels && c.labels[0] && c.labels[0].innerText) ||
+            c.value ||
+            c.id ||
+            ""
+          ).trim(),
+          checked: Boolean(c.checked),
+        }));
+      })
+      .catch(() => []);
+    if (multiBoxes.length) {
+      const chosen = preferChatbotCheckboxValues(
+        multiBoxes.map((b) => b.label || b.value || b.id)
+      );
+      const pickedMulti = await page
+        .evaluate((want) => {
+          const root =
+            document.querySelector(
+              ".chatbot_Drawer, ._chatBotContainer, #desktopChatBotContainer"
+            ) || document;
+          root.querySelector(".chatbot_Overlay")?.classList.remove("show");
+          const wantLc = (want || []).map((w) => String(w).toLowerCase());
+          const setChecked = (inp) => {
+            if (!inp) return;
+            const native = Object.getOwnPropertyDescriptor(
+              HTMLInputElement.prototype,
+              "checked"
+            );
+            native?.set?.call(inp, true);
+            inp.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+            inp.dispatchEvent(new Event("input", { bubbles: true }));
+            inp.dispatchEvent(new Event("change", { bubbles: true }));
+            try {
+              const lab = root.querySelector(
+                `label[for="${CSS.escape(inp.id)}"]`
+              );
+              lab?.click();
+            } catch (_) {}
+          };
+          const nodes = [
+            ...root.querySelectorAll(
+              'input.mcc__checkbox, input[data-val="multiselect"], .multiselectcheckboxes input[type="checkbox"], .multicheckboxes-container input[type="checkbox"]'
+            ),
+          ];
+          const ticked = [];
+          for (const c of nodes) {
+            const label = (
+              (c.labels && c.labels[0] && c.labels[0].innerText) ||
+              c.value ||
+              c.id ||
+              ""
+            ).trim();
+            const hit =
+              wantLc.includes(label.toLowerCase()) ||
+              wantLc.includes(String(c.value || "").toLowerCase()) ||
+              wantLc.includes(String(c.id || "").toLowerCase());
+            if (!hit) continue;
+            setChecked(c);
+            ticked.push(label || c.value || c.id);
+          }
+          return ticked.length ? `checkbox:${ticked.join(",")}` : null;
+        }, chosen)
+        .catch(() => null);
+      if (pickedMulti) {
+        await sleep(400);
+        await clickChatbotSave(page);
+        await sleep(2200);
+        if (fingerprint === lastFingerprint) stuckCount += 1;
+        else stuckCount = 0;
+        lastFingerprint = fingerprint;
+        if (stuckCount >= 3) {
+          await clickChatbotSave(page);
+          await sleep(2000);
+          break;
+        }
+        continue;
+      }
+    }
+
     const picked = await page
       .evaluate(() => {
         const root =
@@ -721,9 +821,16 @@ async function answerNaukriChatbot(page) {
         const scoreBand = (v) => {
           const s = String(v || "").trim();
           if (/^yes$/i.test(s)) return 10_000;
-          if (/immediate|serving notice|available/i.test(s)) return 9_000;
+          if (/never served/i.test(s)) return 9_500;
+          if (
+            /immediate|serving notice|available/i.test(s) &&
+            !/currently serving|previously served/i.test(s)
+          )
+            return 9_000;
           if (/hyderabad|secunderabad|remote|work from home|wfh|any location/i.test(s))
             return 8_000;
+          if (/\.net|dotnet|c#|csharp|azure/i.test(s)) return 7_500;
+          if (/currently serving|previously served/i.test(s)) return -1;
           if (/^no$/i.test(s)) return -1;
           const nums = (s.match(/\d+/g) || []).map(Number);
           if (!nums.length) return 0;
@@ -846,16 +953,21 @@ async function answerNaukriChatbot(page) {
 
         const chips = [
           ...root.querySelectorAll(
-            "label, button, [role='button'], div[class*='chip'], span[class*='chip'], span.ssrc__label, li[role='option']"
+            ".chatbot_Chip, .chipItem, label, button, [role='button'], div[class*='chip'], span[class*='chip'], span.ssrc__label, li[role='option']"
           ),
         ].filter((e) => {
           const t = (e.innerText || "").replace(/\s+/g, " ").trim();
-          return (
-            t &&
-            t.length < 48 &&
-            /^(Yes|No|Immediate|Serving notice|Never served|Not applicable|Available|>?\d+.*years|\d+\s*-\s*\d+\s*years|Hyderabad|Secunderabad|Remote|Work from home|WFH|Any location|15\+|Agree|Proceed|\.NET|Java|C#|Azure)$/i.test(
-              t
-            )
+          if (!t || t.length >= 64) return false;
+          if (
+            (e.classList &&
+              (e.classList.contains("chatbot_Chip") ||
+                e.classList.contains("chipItem"))) ||
+            /chatbot_Chip|chipItem/i.test(e.className || "")
+          ) {
+            return true;
+          }
+          return /^(Yes|No|Immediate|Serving notice|Never served|Not applicable|Available|>?\d+.*years|\d+\s*-\s*\d+\s*years|Hyderabad|Secunderabad|Remote|Work from home|WFH|Any location|15\+|Agree|Proceed|\.NET|DotNet|C#|Azure|Java|Currently serving|Previously served)$/i.test(
+            t
           );
         });
         if (chips.length) {
@@ -1194,6 +1306,19 @@ async function confirmApplied(page, chatHint = null) {
     })
     .catch(() => "");
   if (lateChat) return { ok: true, cta: `chatbot:${lateChat}` };
+  const viewApplied = await page
+    .evaluate(() =>
+      [...document.querySelectorAll("button, a, [role='button']")].some((e) => {
+        const t = (e.innerText || e.getAttribute("aria-label") || "")
+          .replace(/\s+/g, " ")
+          .trim();
+        if (!/view applied jobs/i.test(t)) return false;
+        const st = window.getComputedStyle(e);
+        return st.display !== "none" && st.visibility !== "hidden" && Number(st.opacity) > 0.2;
+      })
+    )
+    .catch(() => false);
+  if (viewApplied) return { ok: true, cta: "view_applied_jobs" };
   const detail = await readDetail(page);
   return { ok: false, cta: detail.cta || visible?.label || "" };
 }
@@ -1486,14 +1611,15 @@ async function handleExternal(context, page, detail, jobMeta, report) {
 
 function decideSkip(card, { detailMode = false } = {}) {
   const blob = card.text || "";
-  const role = card.role || "";
-  const loc = card.location || "";
+  const parsed = !card.role
+    ? parseNaukriCardLines(String(blob).split("\n"))
+    : null;
+  const role = card.role || parsed?.role || "";
+  const loc = card.location || parsed?.location || "";
 
   if (card.already) return "already_applied";
   // Title/role keyword skips only — never scan full page chrome (false "QA" hits).
-  if (shouldSkipTitle(role)) return "skip_title_keyword";
-  if (!detailMode && shouldSkipTitle(blob.split("\n").slice(0, 8).join(" ")))
-    return "skip_title_keyword";
+  if (shouldSkipTitleFromCard(role, blob)) return "skip_title_keyword";
   const seniorTitle =
     isArchLeadTitle(role) ||
     /\b(lead|manager|architect|principal|staff|director)\b/i.test(role);

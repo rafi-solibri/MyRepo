@@ -5,6 +5,7 @@ const {
   shouldSkipTitle,
   hasDotNet,
   isArchLeadTitle,
+  parseNaukriCardLines,
 } = require("./resume_and_filters");
 
 assert.strictEqual(shouldSkipTitle("Solution Architect .NET"), false);
@@ -191,6 +192,41 @@ assert.strictEqual(
   isArchLeadTitle("Solution Architecture Apps & AI"),
   true,
   "Architecture titles count as arch/lead band"
+);
+assert.strictEqual(
+  isArchLeadTitle("Manager, SW Engineering"),
+  true,
+  "Manager, SW Engineering is an EM-class apply title"
+);
+assert.strictEqual(
+  isArchLeadTitle("Chief Technology Officer"),
+  true,
+  "CTO is director-band apply title"
+);
+assert.strictEqual(
+  isArchLeadTitle("CTO"),
+  true,
+  "Bare CTO title is director-band"
+);
+assert.strictEqual(
+  isArchLeadTitle("Cloud Engineering, Senior Specialist CTO AI Ready Data/DTR"),
+  false,
+  "Product-string CTO must not count as arch/lead"
+);
+assert.strictEqual(
+  shouldSkipTitle("Manager, SW Engineering"),
+  false,
+  "EM-class SW Engineering manager must not title-skip"
+);
+assert.strictEqual(
+  parseNaukriCardLines([
+    "Acme Corp",
+    "Solutions Architect .NET",
+    "Hyderabad",
+    "Quick apply",
+  ]).role,
+  "Solutions Architect .NET",
+  "homepage card: role before location before CTA"
 );
 console.log("resume_and_filters self-test OK");
 

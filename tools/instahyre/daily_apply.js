@@ -30,6 +30,17 @@ const OUT =
 const MAX_APPLIES = Number(process.env.INSTAHYRE_MAX_APPLIES || 50);
 const DRY_RUN = process.env.INSTAHYRE_DRY_RUN === "1";
 
+/** Instahyre public job pages are /job-{id}/, not /jobs/{id}/. */
+function jobPublicUrl(job) {
+  const id = job?.id || job?.job_id;
+  const raw = job?.public_url || job?.opportunity_url || job?.job_url || "";
+  if (raw) {
+    if (/^https?:\/\//i.test(raw) || String(raw).startsWith("/")) return raw;
+    return `/${raw}`;
+  }
+  return id ? `/job-${id}/` : "";
+}
+
 const SKILL_WAVES = [
   [".NET", "C#", "ASP.NET"],
   ["Azure", "AWS", "Microservices", "React", "Angular", "Node.js", "Python", "Java"],
@@ -170,12 +181,10 @@ function normalizeOpportunity(opp) {
   const employer = opp?.employer || {};
   const id = job.id || job.job_id;
   if (!id) return null;
-  const path = job.opportunity_url || "";
-  const public_url = path
-    ? path.startsWith("http")
-      ? path
-      : `https://www.instahyre.com${path}`
-    : null;
+  const public_url = jobPublicUrl({
+    id,
+    public_url: job.opportunity_url || job.public_url || job.job_url || "",
+  });
   return {
     id,
     title: job.title || job.candidate_title || "",
@@ -234,6 +243,7 @@ function enqueueJob(job, seen, candidates, report) {
   const id = job.id || job.job_id;
   if (!id || seen.has(id)) return;
   seen.add(id);
+  if (!job.public_url) job.public_url = jobPublicUrl(job);
   const title = job.title || job.job_title || "";
   const location = locationsOf(job);
   const skills = skillsOf(job);
@@ -358,7 +368,8 @@ async function applyJob(page, jobId) {
 }
 
 async function spotCheckExternal(page, job, report) {
-  const url = job.public_url || `https://www.instahyre.com/jobs/${job.id}/`;
+  const raw = jobPublicUrl(job);
+  const url = /^https?:\/\//i.test(raw) ? raw : new URL(raw || `/job-${job.id}/`, page.url()).href;
   try {
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
     await sleep(1200);
