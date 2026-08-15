@@ -345,4 +345,116 @@ assert.strictEqual(
   "Solution Architecture Hyd titles may apply without .NET skills laundry"
 );
 
+assert.strictEqual(
+  classifyJob({
+    jobId: 22,
+    title: "Facilities Engineering Manager",
+    companyName: "Shell",
+    locations: [{ text: "Singapore | remote" }],
+    skills: [{ text: "Azure" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "non-software engineering without .NET on title",
+  "Facilities EM must skip"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 23,
+    title: "Principal Electrical Engineer - Power Generation",
+    companyName: "Jacobs",
+    locations: [{ text: "Philippines | remote" }],
+    skills: [{ text: "Azure" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  false,
+  "electrical/power Principal must skip"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 24,
+    title: "Principal Engineer - Mechanical (UK Water)",
+    companyName: "Arcadis",
+    locations: [{ text: "Hyderabad / Secunderabad, Telangana" }],
+    skills: [{ text: "Azure" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  false,
+  "mechanical Principal Hyd must skip"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 25,
+    title: "Operations Engineering Manager 2",
+    companyName: "Celestica",
+    locations: [{ text: "Thailand | Remote" }],
+    skills: [{ text: "Azure" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "ops/manufacturing EM without .NET on title",
+  "operations engineering manager must skip"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 26,
+    title: "Oracle Fusion Apps Principal Solutions Engineer (ERP)",
+    companyName: "Oracle",
+    locations: [{ text: "Saudi Arabia | remote" }],
+    skills: [{ text: ".NET" }, { text: "Oracle Fusion" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "Oracle Fusion/ERP without .NET on title",
+  "Oracle Fusion title must skip even with .NET in skills laundry"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 27,
+    title: "AI Solution Architect",
+    companyName: "hire feed",
+    locations: [{ text: "United Arab Emirates | Remote" }],
+    skills: [{ text: ".NET" }, { text: "Azure" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "pure AI/data without .NET on title",
+  "AI Solution Architect must skip like AI Architect"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 28,
+    title: "Data Engineering Manager",
+    companyName: "Reap",
+    locations: [{ text: "Singapore | Remote" }],
+    skills: [{ text: "Azure" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "pure AI/data without .NET on title",
+  "Data Engineering Manager must skip"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 29,
+    title: "Application Architect",
+    companyName: "RealPage",
+    locations: [{ text: "Hyderabad / Secunderabad, Telangana" }],
+    skills: [{ text: "Azure" }, { text: "Microservices" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  true,
+  "Hyd Application Architect without .NET skills laundry may still pass"
+);
+
 console.log("filters.test.js OK");
