@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| daily_apply.js 30m spawn timeout killed UC mid-inventory after ATS 390s caps | default INDEED_UC_TIMEOUT_MS 90m so Easy Apply + company-site can finish |
 | CF clear still paints Get Started / false login_required despite valid Passport cookies | copy Local State into UC hybrid + restore Welcome via Sign-in/account/myjobs before exiting 5 |
 | Indeed applystart/rc/clk still counted as company-site (did_not_leave_indeed) and Easy Apply 'external' credited a click | Follow applystart hops; complete_ats_url waits off Indeed; finish_company_site on both company-site click and Easy Apply flip; confirmation only |
 | Company-site clicks counted as external without ATS submit (28 opened / 0 completed) | complete_external_ats via Playwright; only count confirmation; do not credit external_opened |
