@@ -175,6 +175,16 @@ assert.strictEqual(
   true,
   "Artificial Intelligence Architect without .NET must skip"
 );
+assert.strictEqual(
+  shouldSkipTitle("Senior Technical Consultant D365"),
+  true,
+  "Dynamics 365 / D365 must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Manager Cyber Architecture, OT & Engineering"),
+  true,
+  "Cyber Architecture must skip"
+);
 assert.strictEqual(shouldSkipTitle("Senior .NET Architect"), false);
 assert.strictEqual(isArchLeadTitle("Dot Net Fullstack Developer"), false);
 assert.strictEqual(

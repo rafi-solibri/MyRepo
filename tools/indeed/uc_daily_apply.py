@@ -81,9 +81,13 @@ SEED_PROFILE = _default_seed_profile()
 
 
 def complete_external_ats(url: str, time_cap_s: int | None = None) -> tuple[str, str, str]:
-    """Finish a company-site ATS after Indeed opens it. Confirmation only."""
-    if not url or "indeed.com" in url.lower():
-        return "blocked", "did_not_leave_indeed", url or ""
+    """Finish a company-site ATS after Indeed opens it. Confirmation only.
+
+    Indeed "Apply on company site" often leaves us on applystart/rc/clk —
+    the completer follows that hop. Only fail if we never leave Indeed.
+    """
+    if not url:
+        return "blocked", "did_not_leave_indeed", ""
     try:
         sys.path.insert(0, str(ROOT))
         from tools.ats.complete import complete_ats_url
@@ -92,6 +96,61 @@ def complete_external_ats(url: str, time_cap_s: int | None = None) -> tuple[str,
         return complete_ats_url(url, time_cap_s=cap)
     except Exception as exc:
         return "blocked", f"ats_helper_error:{exc}"[:180], url
+
+
+def _record_external_result(item, report, status, reason, final_url, ats_url=""):
+    item["atsUrl"] = final_url or ats_url
+    item["reason"] = reason
+    item["path"] = "company_ATS"
+    if status == "applied":
+        item["confirmed"] = True
+        report["external"].append(item)
+        report["counts"]["external"] += 1
+        print("EXTERNAL submitted", (item.get("title") or "")[:80], flush=True)
+    else:
+        report["blocked"].append(item)
+        report["counts"]["blocked"] += 1
+        print("EXTERNAL blocked", reason, flush=True)
+
+
+def finish_company_site(sb, item, report, handles_before=None) -> None:
+    """Wait for Indeed tracking hops, then complete the employer ATS."""
+    time.sleep(2.5)
+    ats_url = ""
+    try:
+        handles_after = list(sb.driver.window_handles)
+        new_h = [h for h in handles_after if h not in (handles_before or [])]
+        if new_h:
+            sb.switch_to_window(new_h[-1])
+        ats_url = sb.get_current_url() or ""
+    except Exception:
+        ats_url = ""
+    if ats_url and "indeed.com" in ats_url.lower():
+        for _ in range(15):
+            time.sleep(1.0)
+            try:
+                ats_url = sb.get_current_url() or ats_url
+            except Exception:
+                break
+            if "indeed.com" not in ats_url.lower():
+                break
+    status, reason, final_url = complete_external_ats(ats_url)
+    _record_external_result(item, report, status, reason, final_url, ats_url)
+    try:
+        handles = list(sb.driver.window_handles)
+        if len(handles) > 1:
+            current = sb.driver.current_window_handle
+            for h in handles[1:]:
+                if h == current:
+                    continue
+                try:
+                    sb.switch_to_window(h)
+                    sb.driver.close()
+                except Exception:
+                    pass
+            sb.switch_to_window(handles[0])
+    except Exception:
+        pass
 # Volume: cron used to stop at 8 applies / 40 seen — raise so each run
 # exhausts Hyd/remote inventory instead of soft-stopping early.
 MAX_APPLIES = int(os.environ.get("INDEED_MAX_APPLIES", "40"))
@@ -2527,30 +2586,7 @@ def main() -> int:
                         report["skipped"].append(item)
                         report["counts"]["skipped"] += 1
                         continue
-                    time.sleep(2)
-                    ats_url = ""
-                    try:
-                        handles_after = list(sb.driver.window_handles)
-                        new_h = [h for h in handles_after if h not in handles_before]
-                        if new_h:
-                            sb.switch_to_window(new_h[-1])
-                        ats_url = sb.get_current_url() or ""
-                    except Exception:
-                        ats_url = ""
-                    status, reason, final_url = complete_external_ats(ats_url)
-                    item["atsUrl"] = final_url or ats_url
-                    item["reason"] = reason
-                    if status == "applied":
-                        item["path"] = "company_ATS"
-                        item["confirmed"] = True
-                        report["external"].append(item)
-                        report["counts"]["external"] += 1
-                        print("EXTERNAL submitted", (item.get("title") or page_title)[:80], flush=True)
-                    else:
-                        item["path"] = "company_ATS"
-                        report["blocked"].append(item)
-                        report["counts"]["blocked"] += 1
-                        print("EXTERNAL blocked", reason, flush=True)
+                    finish_company_site(sb, item, report, handles_before=handles_before)
                     applied = True
                     continue
 
@@ -2572,9 +2608,13 @@ def main() -> int:
                     report["counts"]["applied"] += 1
                     print("APPLIED", page_title[:80], flush=True)
                 elif result == "external":
-                    report["external"].append(item)
-                    report["counts"]["external"] += 1
-                    print("EXTERNAL", page_title[:80], flush=True)
+                    # Easy Apply flipped to company-site — complete ATS, do not credit a click.
+                    handles_now = []
+                    try:
+                        handles_now = list(sb.driver.window_handles)
+                    except Exception:
+                        handles_now = []
+                    finish_company_site(sb, item, report, handles_before=handles_now[:-1] if handles_now else [])
                 elif result == "recaptcha":
                     item["reason"] = "easy_apply_recaptcha"
                     report["blocked"].append(item)

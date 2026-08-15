@@ -25,7 +25,7 @@ const {
 } = require("./resume");
 const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
 const { completeWorkdayApply } = require("../naukri/workday_apply");
-const { fillCommonAtsQuestions } = require("../naukri/ats_form");
+const { completeExternalPage } = require("../ats/complete_page");
 
 const CDP = process.env.FOUNDIT_CDP || "http://127.0.0.1:9222";
 const OUT =
@@ -381,157 +381,13 @@ async function handleExternalAts(context, resumePath, job, report) {
         url: wd.url || page.url(),
       };
     }
-    let applyOpened = false;
-    while (Date.now() - started < ATS_CAP_MS) {
-      const body = await page.evaluate(() =>
-        (document.body?.innerText || "").slice(0, 1200)
-      );
-      const hasVisibleChallenge = await page
-        .locator(
-          "iframe[src*='recaptcha/bframe'], iframe[src*='hcaptcha.com'], iframe[src*='challenges.cloudflare.com']"
-        )
-        .first()
-        .isVisible()
-        .catch(() => false);
-      if (
-        hasVisibleChallenge ||
-        /verify you are human|press and hold|i'?m not a robot/i.test(body)
-      ) {
-        return { status: "ats_captcha", url: page.url() };
-      }
-      if (
-        /b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com/i.test(
-          page.url()
-        )
-      ) {
-        return { status: "ats_login_wall", url: page.url() };
-      }
-      if (/thank you for (your )?appl|application submitted|successfully submitted|we have received your application/i.test(body)) {
-        return { status: "ats_submitted", url: page.url() };
-      }
-
-      // Job posting landings (Workday/Greenhouse/etc.) → open Apply once before form fill
-      if (!applyOpened) {
-        const applyBtn = page
-          .locator(
-            'a[data-automation-id="adventureButton"], button[data-automation-id="adventureButton"], a:has-text("Apply Manually"), button:has-text("Apply Manually"), a:has-text("Apply"), button:has-text("Apply"), a:has-text("Apply for this job"), button:has-text("Apply for this job")'
-          )
-          .first();
-        if (await applyBtn.isVisible({ timeout: 2500 }).catch(() => false)) {
-          await applyBtn.click().catch(() => {});
-          applyOpened = true;
-          await sleep(2000);
-          const manual = page
-            .locator(
-              'a[data-automation-id="applyManually"], button:has-text("Apply Manually"), a:has-text("Apply Manually")'
-            )
-            .first();
-          if (await manual.isVisible({ timeout: 3000 }).catch(() => false)) {
-            await manual.click().catch(() => {});
-            await sleep(2000);
-          }
-          continue;
-        }
-        applyOpened = true;
-      }
-
-      const fileInputs = page.locator('input[type="file"]');
-      const n = await fileInputs.count();
-      for (let i = 0; i < n; i++) {
-        await fileInputs.nth(i).setInputFiles(resumePath).catch(() => {});
-      }
-      // Workday "Autofill with Resume" / Select Files
-      const autofill = page
-        .locator(
-          'button:has-text("Autofill with Resume"), button:has-text("Select Files"), label:has-text("Select Files")'
-        )
-        .first();
-      if (await autofill.isVisible({ timeout: 800 }).catch(() => false)) {
-        // If a hidden file input exists near autofill, set it; else click opens picker (CDP may not)
-        if (n === 0) {
-          await autofill.click().catch(() => {});
-          await sleep(800);
-        }
-      }
-
-      await fillCommonAtsQuestions(page).catch(() => {});
-
-      await page.evaluate(
-        ({ cur, exp }) => {
-          const fill = (el, val) => {
-            if (!el || el.disabled) return;
-            el.focus();
-            el.value = String(val);
-            el.dispatchEvent(new Event("input", { bubbles: true }));
-            el.dispatchEvent(new Event("change", { bubbles: true }));
-          };
-          for (const el of document.querySelectorAll("input, textarea, select")) {
-            const label = (
-              (el.getAttribute("aria-label") || "") +
-              " " +
-              (el.name || "") +
-              " " +
-              (el.id || "") +
-              " " +
-              (el.placeholder || "") +
-              " " +
-              (el.getAttribute("data-automation-id") || "")
-            ).toLowerCase();
-            if (/expected/.test(label) && /ctc|salary|compensation|pay|annual/.test(label))
-              fill(el, exp);
-            else if (/current/.test(label) && /ctc|salary|compensation|pay|annual/.test(label))
-              fill(el, cur);
-            if (/notice/.test(label)) fill(el, "Immediate");
-            if (/phone|mobile/.test(label) && !el.value) fill(el, "8790251698");
-            if (/email/.test(label) && !el.value) fill(el, "rafi.success@gmail.com");
-            if (/first\s*name|givenname/i.test(label) && !el.value) fill(el, "Mohammed Abdul Rafi");
-            if (/last\s*name|familyname|surname/i.test(label) && !el.value) fill(el, "Ahmed");
-          }
-        },
-        { cur: CURRENT_CTC_LPA, exp: EXPECTED_CTC_LPA }
-      );
-
-      const submit = page
-        .locator(
-          'button[data-automation-id="bottom-navigation-next-button"]:has-text("Submit"), button:has-text("Submit Application"), button:has-text("Submit"), button[type=submit], input[type=submit]'
-        )
-        .first();
-      if (await submit.isVisible({ timeout: 1500 }).catch(() => false)) {
-        const label = ((await submit.innerText().catch(() => "")) || "").toLowerCase();
-        await submit.click().catch(() => {});
-        await sleep(2000);
-        const ok = /thank|submitted|application received|successfully applied|we have received/i.test(
-          await page.evaluate(() => document.body?.innerText || "")
-        );
-        if (ok || /submit/.test(label)) {
-          return {
-            status: ok ? "ats_submitted" : "ats_submit_clicked",
-            url: page.url(),
-          };
-        }
-      }
-      const next = page
-        .locator(
-          'button[data-automation-id="bottom-navigation-next-button"], button:has-text("Next"), button:has-text("Continue"), button:has-text("Save and Continue")'
-        )
-        .first();
-      if (await next.isVisible({ timeout: 1000 }).catch(() => false)) {
-        await next.click().catch(() => {});
-        await sleep(1200);
-        continue;
-      }
-      // No progress controls — avoid busy-spin; wait briefly then re-check body
-      await sleep(1500);
-      const body2 = await page.evaluate(() =>
-        (document.body?.innerText || "").slice(0, 800)
-      );
-      if (/thank you for (your )?appl|application submitted|successfully submitted/i.test(body2)) {
-        return { status: "ats_submitted", url: page.url() };
-      }
-      if (!isWorkday || applyOpened) break;
-      applyOpened = true; // prevent infinite Apply-search loop
-    }
-    return { status: "ats_incomplete_or_cap", url: page.url() };
+    const done = await completeExternalPage(page, resumePath, {
+      maxMs: Math.max(60_000, ATS_CAP_MS - (Date.now() - started)),
+    });
+    return {
+      status: done.ok ? "ats_submitted" : done.reason || "ats_incomplete_or_cap",
+      url: done.url || page.url(),
+    };
   } catch (e) {
     report.blocked.push({
       jobId: job.jobId,

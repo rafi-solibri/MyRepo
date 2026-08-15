@@ -135,7 +135,7 @@ function isLoggedOut(url, bodyText) {
 }
 
 const SKIP_RE =
-  /\b(qa engineer|quality assurance|quality engineer|sdet|test engineer|intern|trainee|associate(?!\s+director)|junior|workday|dynamics|\bsap\b|shoppay|shopify|business development|\bbdm\b|recruiter|data architect|data engineer|analytics engineer|penetration|product manager|ios developer|android developer|flutter|php developer|wordpress|game developer|mobile engineer)\b/i;
+  /\b(qa engineer|quality assurance|quality engineer|sdet|test engineer|intern|trainee|associate(?!\s+(director|technical|architect|principal|lead|vice))|junior|workday|dynamics|\bsap\b|shoppay|shopify|business development|\bbdm\b|recruiter|data architect|data engineer|analytics engineer|penetration|product manager|ios developer|android developer|flutter|php developer|wordpress|game developer|mobile engineer)\b/i;
 
 /** C# / .NET need non-\b patterns: `\bc#\b` never matches "C#" (# is non-word). */
 const NET_STACK_RE = /(\.net|\bdotnet\b|asp\.?\s*net|c#|\bcsharp\b|\bazure\b)/i;
@@ -599,7 +599,7 @@ async function scan(page) {
   const byId = new Map();
   async function pull(query, maxPages, label) {
     for (let p = 1; p <= maxPages; p++) {
-      const qs = new URLSearchParams({ page: String(p), ...query }).toString();
+      const qs = new URLSearchParams({ page: String(p), pageSize: "50", ...query }).toString();
       const res = await api(page, "GET", `/findjobs/q?${qs}`);
       const results = res.json?.results || [];
       if (!results.length) break;

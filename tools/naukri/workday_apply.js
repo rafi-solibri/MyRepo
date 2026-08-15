@@ -98,6 +98,17 @@ function isSubmittedText(text) {
  */
 async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 } = {}) {
   const start = Date.now();
+  const landingUrl = page.url() || "";
+  const landingText = await page
+    .evaluate(() => (document.body?.innerText || "").slice(0, 1500))
+    .catch(() => "");
+  if (
+    /maintenance-page|scheduled maintenance|we('ll| will) be back|temporarily unavailable|community\.workday\.com\/maintenance/i.test(
+      `${landingUrl} ${landingText}`
+    )
+  ) {
+    return { ok: false, reason: "job_unavailable", url: landingUrl };
+  }
   await dismissCookies(page);
 
   // Open apply menu if on job posting

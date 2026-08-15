@@ -747,10 +747,50 @@ async function answerNaukriChatbot(page) {
           inp.closest(".ssrc__radio-btn-container")?.click();
         };
 
+        const qTail = (root.innerText || "").slice(-800);
+        const visibleBoxes = [...root.querySelectorAll('input[type="checkbox"]')].filter(
+          (c) => c.offsetParent !== null || c.getClientRects().length
+        );
+        if (visibleBoxes.length && /\.?\s*net|c#|java|azure|python|stack|skill/i.test(qTail)) {
+          let n = 0;
+          for (const c of visibleBoxes) {
+            const ctx = (
+              (c.closest("label,div,li,span")?.innerText || "") +
+              " " +
+              (c.value || "") +
+              " " +
+              (c.id || "")
+            ).toLowerCase();
+            if (/(\.net|dotnet|c#|csharp|java|azure)/i.test(ctx)) {
+              setChecked(c);
+              n += 1;
+            }
+          }
+          if (n) return `checkbox:stack:${n}`;
+        }
+        if (visibleBoxes.length && /military|armed forces|served/i.test(qTail)) {
+          const never = visibleBoxes.find((c) =>
+            /never|no\b|not served|not applicable/i.test(
+              (c.closest("label,div,li")?.innerText || "") + " " + (c.value || "")
+            )
+          );
+          if (never) {
+            setChecked(never);
+            return "checkbox:never-served";
+          }
+        }
+
         const radios = [...root.querySelectorAll('input[type="radio"]')].filter(
           (r) => r.offsetParent !== null || r.getClientRects().length
         );
         if (radios.length) {
+          if (/military|armed forces|served in/i.test(qTail)) {
+            const no = radios.find((r) => /^no$/i.test(r.value || r.id));
+            if (no) {
+              setChecked(no);
+              return "radio:no-military";
+            }
+          }
           const yes = radios.find((r) => /^yes$/i.test(r.value || r.id));
           const target =
             yes ||
@@ -810,7 +850,7 @@ async function answerNaukriChatbot(page) {
           return (
             t &&
             t.length < 48 &&
-            /^(Yes|No|Immediate|Serving notice|Available|>?\d+.*years|\d+\s*-\s*\d+\s*years|Hyderabad|Secunderabad|Remote|Work from home|WFH|Any location|15\+|Agree|Proceed)$/i.test(
+            /^(Yes|No|Immediate|Serving notice|Never served|Not applicable|Available|>?\d+.*years|\d+\s*-\s*\d+\s*years|Hyderabad|Secunderabad|Remote|Work from home|WFH|Any location|15\+|Agree|Proceed|\.NET|Java|C#|Azure)$/i.test(
               t
             )
           );
@@ -1388,6 +1428,20 @@ async function handleExternal(context, page, detail, jobMeta, report) {
     const text = await newPage
       .evaluate(() => (document.body?.innerText || "").slice(0, 2500))
       .catch(() => "");
+    if (
+      /maintenance-page|scheduled maintenance|we('ll| will) be back|temporarily unavailable|community\.workday\.com\/maintenance|no longer accepting applications|position has been filled/i.test(
+        `${url} ${text}`
+      )
+    ) {
+      report.skipped.push({
+        ...jobMeta,
+        reason: "job_unavailable",
+        url,
+        path: "company_ATS",
+      });
+      if (newPage !== page) safeClose(newPage);
+      return;
+    }
     const hasVisibleChallenge = await newPage
       .locator(
         "iframe[src*='recaptcha/bframe'], iframe[src*='hcaptcha.com'], iframe[src*='challenges.cloudflare.com'], iframe[src*='captcha-delivery.com']"
