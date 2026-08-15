@@ -13,8 +13,10 @@ from tools.hitechcity.careers_apply import (
     NAV_CHROME_RE,
     _browser_session_dead,
     card_location_ok,
+    company_skip_reason,
     is_hang_scan_url,
     is_sso_only_careers_url,
+    is_uhg_skip_url,
     url_loc_hint,
 )
 from tools.hitechcity.filters import (
@@ -258,6 +260,41 @@ def test_hyland_icims_url():
     )
 
 
+def test_skip_uhg_default():
+    import os
+
+    prev_uhg = os.environ.get("HITECHCITY_SKIP_UHG")
+    prev_names = os.environ.get("HITECHCITY_SKIP_COMPANIES")
+    try:
+        os.environ.pop("HITECHCITY_SKIP_UHG", None)
+        os.environ.pop("HITECHCITY_SKIP_COMPANIES", None)
+        assert company_skip_reason({"name": "Optum", "careersUrls": [
+            "https://careers.unitedhealthgroup.com/search-jobs/Hyderabad/"
+        ]}) == "skip_uhg"
+        assert company_skip_reason({"name": "UnitedHealth Group", "careersUrls": []}) == "skip_uhg"
+        assert is_uhg_skip_url("https://uhg.taleo.net/careersection/iam/accessmanagement/login.jsf")
+        assert company_skip_reason({"name": "Hyland", "careersUrls": [
+            "https://careers-hyland.icims.com/jobs/search"
+        ]}) is None
+        os.environ["HITECHCITY_SKIP_UHG"] = "0"
+        assert company_skip_reason({"name": "Optum", "careersUrls": [
+            "https://careers.unitedhealthgroup.com/search-jobs/Hyderabad/"
+        ]}) is None
+        assert not is_uhg_skip_url("https://uhg.taleo.net/careersection/iam/accessmanagement/login.jsf")
+        os.environ["HITECHCITY_SKIP_COMPANIES"] = "Hyland,Solera"
+        assert company_skip_reason({"name": "Hyland"}) == "skip_company"
+        assert company_skip_reason({"name": "ModMed"}) is None
+    finally:
+        if prev_uhg is None:
+            os.environ.pop("HITECHCITY_SKIP_UHG", None)
+        else:
+            os.environ["HITECHCITY_SKIP_UHG"] = prev_uhg
+        if prev_names is None:
+            os.environ.pop("HITECHCITY_SKIP_COMPANIES", None)
+        else:
+            os.environ["HITECHCITY_SKIP_COMPANIES"] = prev_names
+
+
 if __name__ == "__main__":
     test_title_ok()
     test_campus_location()
@@ -268,4 +305,5 @@ if __name__ == "__main__":
     test_workday_create_account_is_completable()
     test_indeed_oauth_url_is_login_wall()
     test_hyland_icims_url()
+    test_skip_uhg_default()
     print("ok")

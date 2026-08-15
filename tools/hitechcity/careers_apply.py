@@ -133,9 +133,13 @@ AUTH_HOST = re.compile(
     r"secure\.indeed\.com|indeed\.com/auth|okta\.com|login\.microsoft|"
     r"auth\.|signin\.|sso\.|login\.cognizant|cognizant\.okta|"
     r"talent\.cognizant\.com/[^?\s]*(?:login|login2)|"
-    r"eightfold\.ai/(?:login|signin|auth)",
+    r"eightfold\.ai/(?:login|signin|auth)|"
+    r"uhg\.taleo\.net/.*/(login|accessmanagement)",
     re.I,
 )
+# Optum / UHG Taleo login tabs poison pages[0] and starve other portals.
+UHG_HOST_RE = re.compile(r"unitedhealthgroup\.com|uhg\.taleo\.net", re.I)
+UHG_NAME_RE = re.compile(r"^(optum|unitedhealth\s*group|uhg|united\s*health)$", re.I)
 
 
 def _close_auth_popups(page: Page) -> None:
@@ -219,6 +223,43 @@ def is_sso_only_careers_url(url: str) -> bool:
 
 def is_hang_scan_url(url: str) -> bool:
     return bool(url and HANG_SCAN_HOST_RE.search(url))
+
+
+def _env_flag(name: str, default: str = "0") -> bool:
+    return os.environ.get(name, default).strip().lower() in ("1", "true", "yes")
+
+
+def skip_company_name_set() -> set[str]:
+    names = {
+        n.strip().lower()
+        for n in os.environ.get("HITECHCITY_SKIP_COMPANIES", "").split(",")
+        if n.strip()
+    }
+    # Default on: owner asked to skip UHG/Optum Taleo until they unset this.
+    if _env_flag("HITECHCITY_SKIP_UHG", "1"):
+        names.update({"optum", "unitedhealth group", "uhg", "united health", "unitedhealth"})
+    return names
+
+
+def is_uhg_skip_url(url: str) -> bool:
+    if not url or not _env_flag("HITECHCITY_SKIP_UHG", "1"):
+        return False
+    return bool(UHG_HOST_RE.search(url))
+
+
+def company_skip_reason(company: dict[str, Any]) -> str | None:
+    name = (company.get("name") or "").strip()
+    lowered = name.lower()
+    if lowered in skip_company_name_set():
+        if _env_flag("HITECHCITY_SKIP_UHG", "1") and (
+            UHG_NAME_RE.search(name) or lowered in {"optum", "unitedhealth group", "uhg", "united health", "unitedhealth"}
+        ):
+            return "skip_uhg"
+        return "skip_company"
+    urls = " ".join(company.get("careersUrls") or [])
+    if is_uhg_skip_url(urls):
+        return "skip_uhg"
+    return None
 
 
 def adopt_ats_tab(page: Page, before_pages: set) -> Page:
@@ -476,13 +517,34 @@ def _browser_session_dead(err: BaseException | str) -> bool:
     )
 
 
+def _close_uhg_tabs(context) -> None:
+    """Drop leftover Optum/UHG Taleo tabs so they cannot become pages[0]."""
+    if not _env_flag("HITECHCITY_SKIP_UHG", "1"):
+        return
+    try:
+        for pg in list(context.pages):
+            try:
+                if is_uhg_skip_url(pg.url or ""):
+                    pg.close()
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+
 def _connect_careers_cdp(p):
     """Connect (or reconnect) to Chrome CDP for careers scanning."""
     browser = p.chromium.connect_over_cdp(CDP, timeout=20_000)
     if not browser.contexts:
         raise RuntimeError("cdp_no_contexts")
     context = browser.contexts[0]
+    _close_uhg_tabs(context)
     page = context.pages[0] if context.pages else context.new_page()
+    if is_uhg_skip_url(getattr(page, "url", "") or ""):
+        try:
+            page = context.new_page()
+        except Exception:
+            pass
     page.set_default_timeout(45000)
     return browser, context, page
 
@@ -556,6 +618,10 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         "reason": "",
     }
     _safe_print(f"CAREERS OPEN {job['company']} | {job['role'][:80]}")
+    if is_uhg_skip_url(job.get("url") or ""):
+        row["status"] = "skipped"
+        row["reason"] = "skip_uhg"
+        return row
     # Role/title + URL path location first (before navigation wastes ATS time on US cards).
     if not card_location_ok(job.get("role") or "", url_loc_hint(job.get("url") or "")):
         row["status"] = "skipped"
@@ -708,8 +774,22 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
 
 def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
     companies = companies or load_companies()
-    companies = companies[:MAX_COMPANIES]
     report = CareersReport(startedAt=datetime.now(timezone.utc).isoformat())
+    kept: list[dict[str, Any]] = []
+    for company in companies:
+        reason = company_skip_reason(company)
+        if reason:
+            report.skipped.append(
+                {
+                    "company": company.get("name"),
+                    "status": "skipped",
+                    "reason": reason,
+                }
+            )
+            _safe_print(f"CAREERS SKIP {company.get('name')} | {reason}")
+            continue
+        kept.append(company)
+    companies = kept[:MAX_COMPANIES]
     seen_urls: set[str] = set()
 
     with sync_playwright() as p:
@@ -750,6 +830,17 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                         }
                     )
                     _safe_print(f"CAREERS SKIP {name} | hang_scan_host")
+                    continue
+                if is_uhg_skip_url(url):
+                    report.skipped.append(
+                        {
+                            "company": name,
+                            "url": url,
+                            "status": "skipped",
+                            "reason": "skip_uhg",
+                        }
+                    )
+                    _safe_print(f"CAREERS SKIP {name} | skip_uhg")
                     continue
                 try:
                     scan_goto(page, url, timeout=75000)
