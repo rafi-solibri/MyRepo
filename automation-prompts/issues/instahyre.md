@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| ATS spot-check used /jobs/{id}/ which 404s | Use /job-{id}/ (canonical slug redirect) + already-interested ATS follow-up helper |
 | Company-site completer still treated OneClick/SSO as fillable forms | complete_page.js fail-fast SSO/OneClick and prefer guest Apply |
 | external_ats_detected logged but company-site never completed | Follow ATS href via tools/ats/complete_page.js |
 

@@ -170,12 +170,12 @@ function normalizeOpportunity(opp) {
   const employer = opp?.employer || {};
   const id = job.id || job.job_id;
   if (!id) return null;
-  const path = job.opportunity_url || "";
+  const path = job.opportunity_url || job.public_url || job.job_url || "";
   const public_url = path
-    ? path.startsWith("http")
+    ? path.startsWith("http") || path.startsWith("/")
       ? path
-      : `https://www.instahyre.com${path}`
-    : null;
+      : `/${path}`
+    : `/job-${id}/`;
   return {
     id,
     title: job.title || job.candidate_title || "",
@@ -234,6 +234,14 @@ function enqueueJob(job, seen, candidates, report) {
   const id = job.id || job.job_id;
   if (!id || seen.has(id)) return;
   seen.add(id);
+  if (!job.public_url) {
+    const p = job.opportunity_url || job.job_url || "";
+    job.public_url = p
+      ? p.startsWith("http") || p.startsWith("/")
+        ? p
+        : `/${p}`
+      : `/job-${id}/`;
+  }
   const title = job.title || job.job_title || "";
   const location = locationsOf(job);
   const skills = skillsOf(job);
@@ -358,7 +366,8 @@ async function applyJob(page, jobId) {
 }
 
 async function spotCheckExternal(page, job, report) {
-  const url = job.public_url || `https://www.instahyre.com/jobs/${job.id}/`;
+  const raw = job.public_url || `/job-${job.id}/`;
+  const url = /^https?:\/\//i.test(raw) ? raw : new URL(raw, page.url()).href;
   try {
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
     await sleep(1200);
