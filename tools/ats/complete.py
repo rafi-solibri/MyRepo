@@ -84,7 +84,8 @@ SSO_HOST_RE = re.compile(
     r"b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|"
     r"auth0\.com|passport\.amazon\.jobs|secure\.indeed\.com/(?:auth|account|oauth)|"
     r"signin\.aws|login\.microsoft|oneclick\.smartrecruiters|"
-    r"login\.cognizant|cognizant\.okta|eightfold\.ai/(?:login|signin|auth)",
+    r"login\.cognizant|cognizant\.okta|talent\.cognizant\.com/[^?\s]*(?:login|login2)|"
+    r"eightfold\.ai/(?:login|signin|auth)",
     re.I,
 )
 
@@ -469,9 +470,13 @@ def auth_wall_reason(
         return None
     if has_file:
         return None
-    if has_password and re.search(
+    # Email-only Eightfold/Phenom SSO (Qualcomm careers/apply) has an email
+    # box + "Sign in using Google" and no resume upload — not guest-applyable.
+    if re.search(
         r"sign in to (continue|apply)|log in to apply|create an account|"
-        r"sign in using (microsoft|google)|employees must sign in",
+        r"sign in using (microsoft|google)|employees must sign in|"
+        r"current \w+ employees must sign in|first time here\?|"
+        r"we don't recognize this email",
         text or "",
         re.I,
     ):
@@ -878,6 +883,17 @@ def _type_automation(page, automation_id: str, value: str) -> bool:
         return False
 
 
+def workday_password_rejected(text: str | None) -> bool:
+    """True when Workday Create Account rejects the typed password rules."""
+    return bool(
+        re.search(
+            r"password must include|does not meet (the )?password|password requirements",
+            text or "",
+            re.I,
+        )
+    )
+
+
 def workday_open_apply(page) -> None:
     dismiss_cookies(page)
     for sel in (
@@ -975,6 +991,26 @@ def workday_auth(page) -> str | None:
         _type_automation(page, "password", password)
         _click_text(page, ("Sign In",))
         _sleep(2.0)
+    if workday_password_rejected(_body(page, 1500)):
+        # Tenant complexity (Solera: uppercase+numeric) rejects the stored secret.
+        # Try Sign In once, then fail-fast — do not burn the 390s cap.
+        try:
+            sign = page.locator(
+                "[data-automation-id='signInLink'], [data-automation-id='utilityButtonSignIn']"
+            ).first
+            if sign.count() and sign.is_visible():
+                sign.click(force=True)
+                _sleep(1.2)
+                _type_automation(page, "email", email)
+                _type_automation(page, "password", password)
+                _click_text(page, ("Sign In",))
+                _sleep(2.0)
+        except Exception:
+            pass
+        if workday_password_rejected(_body(page, 1500)) or page.locator(
+            "[data-automation-id='createAccountSubmitButton']"
+        ).count():
+            return "ats_login_wall"
     if re.search(
         r"wrong email address or password|incorrect email or password|invalid email or password",
         _body(page, 1500),
@@ -1103,6 +1139,8 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
     auth = workday_auth(page)
     if auth:
         return "blocked", auth
+    if workday_password_rejected(_body(page, 1500)):
+        return "blocked", "ats_login_wall"
     stuck = 0
     while time.time() - start < time_cap_s and stuck < 10:
         if looks_submitted(page):

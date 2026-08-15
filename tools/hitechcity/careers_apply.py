@@ -84,7 +84,7 @@ CAREERS_TITLE_SKIP = re.compile(
     r"chemical\s*mechanical|planarization|\bcmp\b|soc\s*compute|"
     r"memory\s*subsystem|foundry\s*solutions|"
     # Silicon / chip design (Principal Physical Design matched TITLE_HINT via Principal).
-    r"physical\s*design|chiplet|\basic\b|\bvlsi\b|rtl\s*design|dft\s*engineer|"
+    r"physical\s*design|silicon\s*design|chiplet|\basic\b|\bvlsi\b|rtl\s*design|dft\s*engineer|"
     r"analog\s*design|digital\s*design\s*engineer|verification\s*engineer|"
     r"sales\s*specialist|especialista|"
     r"\bai\s*native\b|\bdata\s*&\s*ai\b|staff\s*engineer\s*\(\s*ai|"
@@ -105,6 +105,7 @@ AUTH_HOST = re.compile(
     r"passport\.amazon\.jobs|login\.microsoftonline|accounts\.google|"
     r"secure\.indeed\.com|indeed\.com/auth|okta\.com|login\.microsoft|"
     r"auth\.|signin\.|sso\.|login\.cognizant|cognizant\.okta|"
+    r"talent\.cognizant\.com/[^?\s]*(?:login|login2)|"
     r"eightfold\.ai/(?:login|signin|auth)",
     re.I,
 )
@@ -512,6 +513,13 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         pass
     if auth_wall_url(page.url or "") or AUTH_HOST.search(page.url or "") or _context_hit_auth_wall(page):
         row["reason"] = "login/account wall"
+        row["finalUrl"] = page.url
+        _close_auth_popups(page)
+        return row
+    # Apply CTA often hops listing → Eightfold/Phenom Sign-in (Qualcomm).
+    wall = blocked_wall(page)
+    if wall:
+        row["reason"] = wall
         row["finalUrl"] = page.url
         _close_auth_popups(page)
         return row
