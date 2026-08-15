@@ -917,6 +917,11 @@ def workday_password_rejected(text: str | None) -> bool:
     )
 
 
+def workday_on_standalone_login(url: str | None) -> bool:
+    """True for Workday /login (not the in-flow Create Account/apply steps)."""
+    return bool(re.search(r"myworkdayjobs\.com/.+/login(?:\?|$)", url or "", re.I))
+
+
 def workday_password_alert(page) -> bool:
     """True when the live Create Account form shows a password-rule error.
 
@@ -1203,12 +1208,33 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
         return "blocked", auth
     if workday_password_alert(page):
         return "blocked", "ats_login_wall"
+    try:
+        login_url = getattr(page, "url", "") or ""
+    except Exception:
+        login_url = ""
+    if workday_on_standalone_login(login_url):
+        # Sign In navigated to /login. One more credential pass, then fail-fast
+        # so empty Sign In + click_advance cannot burn the 390s cap.
+        auth = workday_auth(page)
+        if auth:
+            return "blocked", auth
+        try:
+            login_url = getattr(page, "url", "") or ""
+        except Exception:
+            login_url = ""
+        if workday_on_standalone_login(login_url) or workday_password_alert(page):
+            return "blocked", "ats_login_wall"
     stuck = 0
     while time.time() - start < time_cap_s and stuck < 10:
         if looks_submitted(page):
             return "applied", "confirmation"
         if workday_password_alert(page):
             return "blocked", "ats_login_wall"
+        try:
+            if workday_on_standalone_login(getattr(page, "url", "") or ""):
+                return "blocked", "ats_login_wall"
+        except Exception:
+            pass
         wall = blocked_wall(page)
         if wall == "CAPTCHA/bot wall":
             return "blocked", wall
