@@ -3,7 +3,7 @@
   "source": "home-local",
   "date": "2026-08-15",
   "startedAt": null,
-  "finishedAt": "2026-08-15T17:29:29.651Z",
+  "finishedAt": "2026-08-15T17:22:00.000Z",
   "host": "NEM01-GBGR234",
   "ok": true,
   "counts": {
@@ -12,7 +12,7 @@
     "rejected": 0,
     "blocked": 0,
     "skipped": 0,
-    "seen": 1170
+    "seen": 3187
   },
   "applied": [],
   "external": [],
@@ -25,7 +25,7 @@
     "qualifying=0",
     "q_answered=0",
     "q_locked_empty=0",
-    "skipReasons={\"location\":69,\"no_tier_match\":28,\"skip_title\":300,\"ctc_under_35\":451,\"exp_max_low\":322}",
+    "skipReasons={\"skip_title\":752,\"location\":210,\"ctc_under_35\":1154,\"no_tier_match\":48,\"exp_max_low\":1023}",
     "home_evening_replica",
     "cdp_reconnect_fix=#180",
     "q_audit_skipped=no_applies_this_session"
