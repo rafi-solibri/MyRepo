@@ -182,5 +182,19 @@ assert.strictEqual(
   true,
   "Architecture titles count as arch/lead band"
 );
+
+const {
+  isApplyNavCta,
+  isAppliedFilterChip,
+  isAlreadyAppliedCta,
+} = require("./daily_apply");
+assert.strictEqual(isApplyNavCta("View applied jobs (20+)"), true);
+assert.strictEqual(isApplyNavCta("View applied jobs"), true);
+assert.strictEqual(isAppliedFilterChip("Applied (12)"), true);
+assert.strictEqual(isApplyNavCta("Quick apply"), false);
+assert.strictEqual(isAlreadyAppliedCta("View applied jobs (20+)"), false);
+assert.strictEqual(isAlreadyAppliedCta("Applied"), true);
+assert.strictEqual(isAlreadyAppliedCta("Quick apply Applied"), false);
+
 console.log("resume_and_filters self-test OK");
 

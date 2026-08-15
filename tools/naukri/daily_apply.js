@@ -233,6 +233,20 @@ function isAppliedFilterChip(text) {
 }
 
 /**
+ * Post-apply / recommended chrome: "View applied jobs (20+)" is a nav link.
+ * Playwright has-text('Apply') matches it (substring of "applied") and then
+ * confirmApplied records that label as the job CTA — 0 confirmed applies.
+ */
+function isApplyNavCta(text) {
+  const t = String(text || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!t) return false;
+  if (isAppliedFilterChip(t)) return true;
+  return /view applied jobs|applied jobs\s*\(/i.test(t);
+}
+
+/**
  * TopTier Quick-apply buttons use dual absolute layers ("Quick apply" + "Applied").
  * button.innerText always concatenates to "Quick apply Applied" even when only one
  * layer is on-screen — the off state translates the Applied layer by ~button height.
@@ -242,7 +256,7 @@ function isAlreadyAppliedCta(text) {
     .replace(/\s+/g, " ")
     .trim();
   if (!t) return false;
-  if (isAppliedFilterChip(t)) return false;
+  if (isApplyNavCta(t)) return false;
   // Dual-layer buttons: do NOT treat concatenated "Quick apply Applied" as applied.
   // Callers must use readVisibleApplyCta(page) for live buttons.
   if (/Quick apply/i.test(t) && /Applied/i.test(t)) return false;
@@ -297,6 +311,7 @@ async function readVisibleApplyCta(page) {
         .replace(/\s+/g, " ")
         .trim();
       if (!raw || /^Applied\s*\(\d+\)\s*$/i.test(raw)) continue;
+      if (/view applied jobs|applied jobs\s*\(/i.test(raw)) continue;
       if (!/Quick apply|Applied/i.test(raw)) continue;
       if (/company site|hirist/i.test(raw)) continue;
 
@@ -391,6 +406,10 @@ async function collectCards(page) {
         const text = (c.innerText || "").replace(/\s+/g, " ").trim();
         if (!text || text.length < 40) return false;
         if (isFilterChip(text)) return false;
+        if (/view applied jobs|applied jobs\s*\(/i.test(text) &&
+            !/Quick apply|Go to company site|On company site|Apply on company|On hirist/i.test(text)) {
+          return false;
+        }
         // Must look like a job card: apply CTA + role/years signal.
         if (
           !/Quick apply|Go to company site|On company site|Apply on company|On hirist/i.test(
@@ -457,11 +476,13 @@ async function waitForDetailApplyReady(detailPage, { timeoutMs = 18000 } = {}) {
     await detailPage.bringToFront().catch(() => {});
     const ready = await detailPage
       .evaluate(() =>
-        [...document.querySelectorAll("button, a, [role='button']")].some((b) =>
-          /Quick apply|Go to company site|On company site|Apply on company|On hirist|Applied/i.test(
-            (b.innerText || b.getAttribute("aria-label") || "").replace(/\s+/g, " ")
-          )
-        )
+        [...document.querySelectorAll("button, a, [role='button']")].some((b) => {
+          const t = (b.innerText || b.getAttribute("aria-label") || "").replace(/\s+/g, " ");
+          if (/view applied jobs|applied jobs\s*\(/i.test(t)) return false;
+          return /Quick apply|Go to company site|On company site|Apply on company|On hirist|^Applied$/i.test(
+            t
+          );
+        })
       )
       .catch(() => false);
     if (ready) return true;
@@ -554,6 +575,7 @@ async function readDetail(page) {
       )
       .filter((t) => {
         if (!t || /^Applied\s*\(\d+\)\s*$/i.test(t)) return false; // filter chip
+        if (/view applied jobs|applied jobs\s*\(/i.test(t)) return false;
         return /Quick apply|Apply|Applied|Go to company site|On company site|Apply on company|On hirist/i.test(
           t
         );
@@ -996,7 +1018,6 @@ async function clickQuickApply(page) {
     "button:has-text('Quick Apply')",
     "a:has-text('Quick apply')",
     "[role='button']:has-text('Quick apply')",
-    "button:has-text('Apply')",
   ];
   let clicked = false;
   let label = visible?.label || "";
@@ -1006,6 +1027,7 @@ async function clickQuickApply(page) {
       label = ((await btn.innerText().catch(() => "")) || "")
         .replace(/\s+/g, " ")
         .trim();
+      if (isApplyNavCta(label)) continue;
       if (/company site|on company/i.test(label)) continue;
       // Dual-layer buttons always include both words — click unless visible state is applied.
       if (/^Applied$/i.test(label) && !/Quick apply/i.test(label)) {
@@ -1048,6 +1070,7 @@ async function clickQuickApply(page) {
             .replace(/\s+/g, " ")
             .trim();
           if (!/Quick apply/i.test(raw)) continue;
+          if (/view applied jobs|applied jobs\s*\(/i.test(raw)) continue;
           if (/company site|hirist/i.test(raw)) continue;
           const overlays = [...btn.querySelectorAll("span")].filter((s) => {
             const st = window.getComputedStyle(s);
@@ -2141,6 +2164,12 @@ async function main() {
     safeClose(page);
   }
 }
+
+module.exports = {
+  isAppliedFilterChip,
+  isApplyNavCta,
+  isAlreadyAppliedCta,
+};
 
 if (require.main === module) {
   main()

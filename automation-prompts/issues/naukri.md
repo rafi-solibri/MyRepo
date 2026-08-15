@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| apply_unconfirmed: clickQuickApply has-text('Apply') hit View applied jobs (20+) nav; Capgemini Enterprise Architect 0 confirmed | Ignore View applied jobs / applied jobs(N) nav CTAs; drop bare Apply substring selector; confirm only Quick apply / Applied |
 | external_incomplete_or_timeout — hidden reCAPTCHA treated as wall; GH questions only on some hosts; one Next then bail | Visible-challenge CAPTCHA only; always fillCommonAtsQuestions; retry 4x; 6.5m budget; shared WORKDAY_PASSWORD |
 
 
