@@ -23,5 +23,16 @@ Earlier same-day (other run): **Solera JR-019000** Principal Software Engineer (
 - Experian / Blackbaud / Palo Alto: DataDome (owner/home)
 - Intel / JPMC / AMD / Oracle: no matching Hyd ATS cards
 
+## UHG skipped (owner request)
+Optum / UnitedHealth Group / `uhg.taleo.net` skipped (`HITECHCITY_SKIP_UHG=1`). No UHG apply attempted.
+
+## Remaining portals after UHG skip
+**0 new confirmation applies.** Scanned ModMed, Accenture, Deloitte, Fiserv, Gartner, MathWorks, McAfee, Qentelli, Salesforce, Storable, Verizon, DXC, L&T.
+
+- Salesforce Hyd “architect” cards are Success/Marketing Cloud (title skip)
+- Gartner architect search is US/UK remote analyst/EA (location skip); one Remote Workday timed out
+- Accenture/McAfee/DXC/Deloitte/Fiserv: no qualifying Hyd .NET/architect ATS cards this pass
+- Workday tenants (ADP/Infor/HighRadius/DXC) redirected to `community.workday.com/maintenance-page`
+
 ## Artifacts
-`/opt/cursor/artifacts/hitechcity-careers.json`, `hyland-dotnet-confirmed.json`, `hyland-midfunnel.json`, `hyland-rest.json`
+`/opt/cursor/artifacts/hitechcity-careers.json`, `hitechcity-careers-nouhg.json`, `hitechcity-careers-extractfix.json`, `hyland-dotnet-confirmed.json`, `hyland-midfunnel.json`, `hyland-rest.json`
