@@ -46,7 +46,8 @@ AUTH_WALL_URL = re.compile(
     r"secure\.indeed\.com/(?:auth|account)|indeed\.com/auth|"
     r"okta\.com|login\.microsoft|signin\.aws|"
     r"/checkpoint/challenge|linkedin\.com/uas/login|"
-    r"smartrecruiters\.com/[^/]+/login",
+    r"smartrecruiters\.com/[^/]+/login|"
+    r"talent\.cognizant\.com/\S*login",
     re.I,
 )
 

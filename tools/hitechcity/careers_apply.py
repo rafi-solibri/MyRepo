@@ -96,7 +96,7 @@ CAREERS_TITLE_SKIP = re.compile(
 # JD snippets that mean the role is wrong-stack even when the TITLE is generic Architect.
 JD_WRONG_STACK = re.compile(
     r"salesforce solutions|sfdc development|sfdc lightning|omnistudio|"
-    r"mobile architect|ionic capacitor|"
+    r"mobile architect|ionic capacitor|network security architect|zscaler|"
     r"mandatory[:\s]+(java|python|node|salesforce)|"
     r"required[:\s]+(java|python|node|salesforce)|"
     r"only\s+(java|python|node|salesforce)\b",
@@ -501,13 +501,22 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
     before_pages = set(page.context.pages)
     try_click_named(page, ("Apply now", "Apply Now", "Apply", "Start application", "I'm interested"))
     time.sleep(1.5)
-    # SmartRecruiters OneClick often opens Indeed OAuth in a new tab.
+    # SmartRecruiters OneClick / Cognizant talent login often open in a new tab.
+    # The listing page has no form — do not burn the ATS cap on the JD tab.
     try:
-        for p2 in page.context.pages:
-            if p2 not in before_pages and auth_wall_url(p2.url or ""):
+        from tools.ats.complete import classify_ats_host
+
+        for p2 in list(page.context.pages):
+            u2 = p2.url or ""
+            if classify_ats_host(u2) == "sso" or auth_wall_url(u2):
                 row["reason"] = "login/account wall"
-                row["finalUrl"] = p2.url
+                row["finalUrl"] = u2
                 _close_auth_popups(page)
+                return row
+            if p2 not in before_pages and classify_ats_host(u2) == "unavailable":
+                row["status"] = "skipped"
+                row["reason"] = "job_unavailable"
+                row["finalUrl"] = u2
                 return row
     except Exception:
         pass

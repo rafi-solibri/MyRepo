@@ -45,6 +45,9 @@ def test_title_ok():
     assert JD_WRONG_STACK.search(
         "Job Title : Architect ... highly skilled Mobile Architect ... Ionic Capacitor"
     )
+    assert JD_WRONG_STACK.search(
+        "The Network Security Architect acts as the SME for all Zscaler services"
+    )
     assert LI_TITLE_SKIP.search("Staff/Principal GPU/CPU Kernel Optimization Engineer")
     assert LI_TITLE_SKIP.search("Network Architect")
     assert LI_TITLE_SKIP.search("Principal Physical Design Engineer")
@@ -198,6 +201,9 @@ def test_indeed_oauth_url_is_login_wall():
     )
     assert auth_wall_url("https://accounts.google.com/gsi/button?client_id=x")
     assert auth_wall_url("https://passport.amazon.jobs/login")
+    assert auth_wall_url(
+        "https://talent.cognizant.com/4681/login2?RRID=1&TenantID=1"
+    )
     assert not auth_wall_url("https://jobs.smartrecruiters.com/Experian/123-Solution-Architect")
     page = _FakePage("Sign In | Indeed Accounts\nContinue with Google", file_inputs=0)
     page.url = "https://secure.indeed.com/auth?oauth_client_id=x"
