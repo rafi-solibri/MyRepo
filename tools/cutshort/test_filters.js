@@ -105,14 +105,14 @@ function job(partial) {
 
 {
   const j = job({
-    title: "Senior Backend Engineer",
+    title: "Backend Engineer",
     skills: ["Node.js"],
     expRange: { min: 5, max: 7 },
   });
   assert.strictEqual(
     classify(j),
     null,
-    "non-tier1 non-.NET with maxExp 7 should still skip"
+    "non-senior non-.NET with maxExp 7 should still skip"
   );
 }
 
@@ -146,6 +146,57 @@ function job(partial) {
   const j = job({ title: "Solutions Architect", skills: ["AWS"] });
   assert.strictEqual(titleOf(j), "Solutions Architect");
   assert.ok(classify(j)?.tier === 1);
+}
+
+{
+  const j = job({
+    title: "Senior Full-Stack Engineer",
+    skills: ["NodeJS (Node.js)", "React.js", "TypeScript"],
+    locations: [],
+    remoteType: "remote_only",
+    expRange: { min: 4, max: 7 },
+    salaryRange: { max: 3800000, maxVanity: 3800000 },
+  });
+  const c = classify(j);
+  assert.ok(
+    c && c.tier >= 2,
+    `Senior Full-Stack remote expMax7 should qualify (was dropped by max<8), got ${JSON.stringify(c)}`
+  );
+}
+
+{
+  const j = job({
+    title: "Associate Technical Architect / Senior Software Developer",
+    skills: ["Java", "Amazon Web Services (AWS)", "Microservices"],
+    locations: ["Hyderabad"],
+    salaryRange: { max: 4000000, maxVanity: 4000000, hideSalary: true },
+    expRange: { min: 6, max: 12 },
+  });
+  const c = classify(j);
+  assert.ok(
+    c && c.tier === 1,
+    `Associate Technical Architect must not hit associate skip, got ${JSON.stringify(c)}`
+  );
+}
+
+{
+  const j = job({
+    title: "Principal Engineer, Salesforce Health Cloud",
+    skills: ["Salesforce"],
+    locations: [],
+    remoteType: "remote_only",
+    salaryRange: { max: 3800000, maxVanity: 3800000 },
+    expRange: { min: 8, max: 15 },
+  });
+  assert.ok(classify(j)?.tier === 1, "Principal Engineer remote 38L is tier1");
+}
+
+{
+  const j = job({
+    title: "Senior Associate – SailPoint IIQ (IAM Operations)",
+    skills: ["SailPoint"],
+  });
+  assert.strictEqual(classify(j), null, "plain Associate title must still hard-skip");
 }
 
 console.log("cutshort test_filters: ok");

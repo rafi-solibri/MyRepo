@@ -1,5 +1,12 @@
 # Cutshort — issues & fixes
 
+## 2026-08-15 (cloud)  <!-- pragma: allowlist secret -->
+
+| Issue | Fix |
+| --- | --- |
+| page_size=5 + expMax<8 dropped Senior Full-Stack/remote Principal; associate skip hit Associate Technical Architect | findjobs pageSize=50 covers ~3200 inventory; senior/fullstack exp>=6; associate skip allows Technical/Architect |
+
+
 ## 2026-08-14 (cloud)
 
 | Issue | Fix |
