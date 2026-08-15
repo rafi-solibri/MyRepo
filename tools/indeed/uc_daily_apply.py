@@ -437,6 +437,135 @@ def skip_reason(title: str, company: str, location: str, snippet: str) -> str | 
     return None
 
 
+ACCOUNT_SETTINGS_URL = "https://secure.indeed.com/settings/account"
+
+
+def looks_signed_in(body: str, url: str = "") -> bool:
+    """True when nav/account chrome shows an authenticated jobseeker session.
+
+    in.indeed.com marketing home still says "Get Started" / "Sign in" while
+    logged in — do not use that copy. Account settings and SERP nav (Messages)
+    are the reliable signals.
+    """
+    blob = f"{url}\n{body}"
+    return bool(
+        re.search(
+            r"account settings|messages unread|manage your account security|"
+            r"change account type|device management|privacy settings|"
+            r"welcome,\s*\w+|sign out|unread count|sign out of indeed",
+            blob,
+            re.I,
+        )
+    )
+
+
+def looks_login_wall(body: str, url: str = "") -> bool:
+    blob = f"{url}\n{body}"
+    return bool(
+        re.search(
+            r"sign in \| indeed accounts|ready to take the next step|"
+            r"continue with apple|enter your email address",
+            blob,
+            re.I,
+        )
+    ) and not looks_signed_in(body, url)
+
+
+def looks_anonymous_marketing_home(body: str) -> bool:
+    """India homepage marketing hero — shown to signed-in and anonymous users."""
+    return bool(
+        re.search(
+            r"create an account or sign in|get started|"
+            r"sign in to see your personalised|your next job starts here",
+            body,
+            re.I,
+        )
+    ) and not looks_signed_in(body)
+
+
+def restore_signed_in(sb) -> dict:
+    """Attach Passport cookies after CF leaves the marketing homepage.
+
+    A homepage reload alone is not enough: Turnstile clearance on a new WARP
+    IP often keeps "Get Started" until we hit Sign-in / account / myjobs.
+    """
+    info: dict = {"tried": [], "ok": False}
+
+    def _snap() -> tuple[str, str, str]:
+        try:
+            return (
+                (sb.get_text("body") or "")[:2500],
+                sb.get_title() or "",
+                sb.get_current_url() or "",
+            )
+        except Exception:
+            return "", "", ""
+
+    def _done(body: str, url: str, via: str) -> bool:
+        if looks_signed_in(body, url):
+            info["ok"] = True
+            info["via"] = via
+            return True
+        return False
+
+    for sel in (
+        "a[data-gnav-element-name='SignIn']",
+        "a[href*='account/login']",
+        "a[href*='secure.indeed.com/auth']",
+        "a[href*='login']",
+    ):
+        try:
+            if sb.is_element_visible(sel):
+                sb.click(sel)
+                time.sleep(3)
+                clear_cf(sb)
+                body, _title, url = _snap()
+                info["tried"].append({"click": sel, "signedIn": looks_signed_in(body, url)})
+                if _done(body, url, f"click:{sel}"):
+                    return info
+        except Exception as exc:
+            info["tried"].append({"click": sel, "error": str(exc)[:120]})
+
+    for url in (
+        ACCOUNT_SETTINGS_URL,
+        "https://secure.indeed.com/settings",
+        "https://in.indeed.com/myjobs",
+        "https://secure.indeed.com/auth?hl=en_IN&co=IN"
+        "&continue=https%3A%2F%2Fin.indeed.com%2F",
+        "https://www.indeed.com/account/login"
+        "?continue=https%3A%2F%2Fin.indeed.com%2F",
+        "https://in.indeed.com/",
+    ):
+        try:
+            sb.uc_open_with_reconnect(url, 5)
+            time.sleep(3)
+            clear_cf(sb)
+            body, title, cur = _snap()
+            info["tried"].append(
+                {
+                    "url": url,
+                    "signedIn": looks_signed_in(body, cur),
+                    "loginWall": looks_login_wall(body, cur),
+                    "title": title[:80],
+                }
+            )
+            if _done(body, cur, url):
+                try:
+                    sb.uc_open_with_reconnect("https://in.indeed.com/", 4)
+                    time.sleep(2)
+                    clear_cf(sb)
+                except Exception:
+                    pass
+                return info
+            if looks_login_wall(body, cur):
+                info["loginWall"] = True
+                info["via"] = url
+                return info
+        except Exception as exc:
+            info["tried"].append({"url": url, "error": str(exc)[:120]})
+    return info
+
+
 def already_applied(body: str, url: str = "") -> bool:
     """True when the job-view page shows this listing was already submitted."""
     b = (body or "").lower()
@@ -2330,30 +2459,19 @@ def main() -> int:
             _emit(report)
             return 5
 
-        # CF can clear while the account is still anonymous ("Get Started" / Sign in).
-        # One hard reload: preflight-style clear sometimes paints Welcome only after
-        # a second navigation once cf_clearance is set.
+        # in.indeed.com marketing home always shows "Get Started" / "Sign in"
+        # even with a valid Passport session. Confirm on account settings
+        # (and treat SERP Messages nav as signed-in). Homepage-only heuristics
+        # caused a false indeed_login_required after CF clear (2026-08-15).
         try:
             home_body = (sb.get_text("body") or "")[:2500]
             home_title = sb.get_title() or ""
+            home_url = sb.get_current_url() or ""
         except Exception:
-            home_body, home_title = "", ""
+            home_body, home_title, home_url = "", "", ""
 
-        def _signed_out(body: str) -> bool:
-            return bool(
-                re.search(
-                    r"create an account or sign in|get started|sign in to see your personalised|"
-                    r"your next job starts here",
-                    body,
-                    re.I,
-                )
-            ) and not re.search(
-                r"welcome,\s*\w+|sign out|account settings|my jobs|profile",
-                body,
-                re.I,
-            )
-
-        if _signed_out(home_body):
+        session_ok = looks_signed_in(home_body, home_url)
+        if not session_ok:
             try:
                 sb.uc_open_with_reconnect("https://in.indeed.com/", 5)
                 time.sleep(3)
@@ -2361,25 +2479,40 @@ def main() -> int:
                     pass
                 home_body = (sb.get_text("body") or "")[:2500]
                 home_title = sb.get_title() or ""
+                home_url = sb.get_current_url() or ""
+                session_ok = looks_signed_in(home_body, home_url)
             except Exception:
                 pass
-        if not _signed_out(home_body):
-            warm_passport_session(sb)
-        if _signed_out(home_body):
-            report["blocked"].append(
-                {
-                    "reason": "indeed_login_required",
-                    "title": home_title[:120],
-                    "bodySample": home_body[:400],
-                    "hint": "CF cleared but session is anonymous — refresh Indeed cookies via headed login / home CDP",
-                }
-            )
-            report["counts"]["blocked"] = 1
-            report["blockerSummary"] = "indeed_login_required"
-            OUT.parent.mkdir(parents=True, exist_ok=True)
-            OUT.write_text(json.dumps(report, indent=2))
-            _emit(report)
-            return 5
+        if not session_ok:
+            warmed = restore_signed_in(sb)
+            report["sessionRestore"] = warmed
+            try:
+                home_body = (sb.get_text("body") or "")[:2500]
+                home_title = sb.get_title() or ""
+                home_url = sb.get_current_url() or ""
+            except Exception:
+                pass
+            if warmed.get("ok") or looks_signed_in(home_body, home_url):
+                session_ok = True
+            elif warmed.get("loginWall") or looks_login_wall(home_body, home_url):
+                report["blocked"].append(
+                    {
+                        "reason": "indeed_login_required",
+                        "title": home_title[:120],
+                        "bodySample": home_body[:400],
+                        "hint": "Account/auth is a Sign-in wall — refresh Indeed cookies via headed login / home CDP",
+                    }
+                )
+                report["counts"]["blocked"] = 1
+                report["blockerSummary"] = "indeed_login_required"
+                OUT.parent.mkdir(parents=True, exist_ok=True)
+                OUT.write_text(json.dumps(report, indent=2))
+                _emit(report)
+                return 5
+            else:
+                # Marketing home alone is not proof of logout. Continue;
+                # search/apply paths still skip already-applied and login walls.
+                report["sessionWarm"] = "unconfirmed_continue"
 
         seen_keys: set[str] = set()
         for query, location in search_queries():
