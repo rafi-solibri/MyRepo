@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Microsoft Eightfold SSO chooser (no password) burned 390s ATS cap as timeout | auth_wall_reason fail-fasts Sign in using Microsoft chooser without requiring a password field |
 | Workday maintenance and SmartRecruiters OneClick burned ATS budget then tripped walls | Shared completer fail-fasts maintenance; skips OneClick/Indeed OAuth; timeouts/unavailable are not company walls |
 | First ATS timeout counted as company wall (cap 1) so remaining externals were skipped | is_hard_ats_wall ignores timeout/incomplete; caps 4 walls / 10 attempts |
 | External ATS time cap 45s/90s burned Workday/Greenhouse before submit | Default EXT/careers ATS cap 390s; attempt_ats_apply uses shared complete_ats |

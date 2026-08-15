@@ -85,6 +85,7 @@ CAREERS_TITLE_SKIP = re.compile(
     r"memory\s*subsystem|foundry\s*solutions|"
     # Silicon / chip design (Principal Physical Design matched TITLE_HINT via Principal).
     r"physical\s*design|chiplet|\basic\b|\bvlsi\b|rtl\s*design|dft\s*engineer|"
+    r"silicon\s*design|product\s*design\s*manager|"
     r"analog\s*design|digital\s*design\s*engineer|verification\s*engineer|"
     r"sales\s*specialist|especialista|"
     r"\bai\s*native\b|\bdata\s*&\s*ai\b|staff\s*engineer\s*\(\s*ai|"

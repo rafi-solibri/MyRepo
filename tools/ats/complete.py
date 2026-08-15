@@ -238,9 +238,21 @@ def auth_wall_reason(
         return None
     if has_file:
         return None
+    # Eightfold / Microsoft careers SSO chooser: "Sign in using Microsoft" buttons
+    # with no password field. Requiring has_password burned the full ATS time cap
+    # (apply.careers.microsoft.com) as external_incomplete_or_timeout.
+    if re.search(
+        r"select a method below to sign in|"
+        r"sign in using (microsoft|google|linkedin|facebook|apple)|"
+        r"if you are a microsoft employee|"
+        r"sign in to (continue|apply)|log in to apply|"
+        r"employees must sign in",
+        text or "",
+        re.I,
+    ):
+        return "ats_login_wall"
     if has_password and re.search(
-        r"sign in to (continue|apply)|log in to apply|create an account|"
-        r"sign in using (microsoft|google)|employees must sign in",
+        r"create an account|already have an account",
         text or "",
         re.I,
     ):

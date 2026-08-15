@@ -90,6 +90,23 @@ assert_true(
     "Azure B2C / Microsoft SSO is a hard wall",
 )
 
+# Microsoft Eightfold careers: SSO buttons, no password, no resume input.
+ms_chooser = (
+    "Select a method below to Sign in. This allows you to access your profile "
+    "or begin a new application. Sign in using Microsoft Sign in using LinkedIn "
+    "Sign in using Google. If you are a Microsoft Employee, Sign in here."
+)
+assert_true(
+    auth_wall_reason(
+        "https://apply.careers.microsoft.com/careers/apply?pid=1",
+        ms_chooser,
+        has_password=False,
+        has_file=False,
+    )
+    == "ats_login_wall",
+    "Microsoft Eightfold SSO chooser (no password) is a hard wall",
+)
+
 assert_true(
     auth_wall_reason(
         "https://boards.greenhouse.io/acme/jobs/1",
