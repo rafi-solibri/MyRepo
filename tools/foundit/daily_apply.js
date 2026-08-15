@@ -44,6 +44,18 @@ const QUERIES = [
   "software architect .net",
 ];
 
+/** Extra Arch/Lead wave when .NET-only inventory is already Applied. */
+const EXTRA_QUERIES = [
+  "solutions architect",
+  "technical architect",
+  "engineering manager",
+  "principal engineer",
+  "software architect",
+  "technical lead",
+  "application architect",
+  "dotnet architect hyderabad",
+];
+
 /** Age windows in days; expand when fresher inventory is empty. */
 const AGE_WINDOWS = [1, 3, 7, 14, 30, 90, 3650];
 
@@ -402,14 +414,14 @@ async function handleExternalAts(context, resumePath, job, report) {
   }
 }
 
-async function collectCandidates(page, maxDays, seen) {
+async function collectCandidates(page, maxDays, seen, queries = QUERIES) {
   const out = [];
   const locationSets = [
     ["hyderabad / secunderabad", "remote"],
     [], // unrestricted — local filter via classifyJob / JD enrich
   ];
 
-  for (const query of QUERIES) {
+  for (const query of queries) {
     for (const locs of locationSets) {
       for (let start = 0; start < 60; start += 20) {
         const { data } = await ravenSearch(page, query, locs, start, 20);
@@ -445,7 +457,7 @@ async function main() {
     blocked: [],
     duplicates: [],
     referralDrafts: [],
-    queries: QUERIES,
+    queries: [...QUERIES, ...EXTRA_QUERIES],
     maxApplies: MAX_APPLIES,
   };
 
@@ -506,7 +518,12 @@ async function main() {
     for (const maxDays of AGE_WINDOWS) {
       if (applies >= MAX_APPLIES) break;
       report.ageWindowUsed = maxDays;
-      const candidates = await collectCandidates(page, maxDays, seen);
+      const candidates = await collectCandidates(
+        page,
+        maxDays,
+        seen,
+        [...QUERIES, ...EXTRA_QUERIES]
+      );
       report[`candidates_d${maxDays}`] = candidates.length;
 
       for (const raw of candidates) {

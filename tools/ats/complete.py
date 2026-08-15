@@ -7,12 +7,13 @@ an employer ATS. Never invents success — confirmation text only.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import sys
 import time
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 _ROOT = Path(__file__).resolve().parents[2]
 if str(_ROOT) not in sys.path:
@@ -82,7 +83,8 @@ BOARD_TRACKING_RE = re.compile(
 SSO_HOST_RE = re.compile(
     r"b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|"
     r"auth0\.com|passport\.amazon\.jobs|secure\.indeed\.com/(?:auth|account|oauth)|"
-    r"signin\.aws|login\.microsoft|oneclick\.smartrecruiters",
+    r"signin\.aws|login\.microsoft|oneclick\.smartrecruiters|"
+    r"login\.cognizant|cognizant\.okta|eightfold\.ai/(?:login|signin|auth)",
     re.I,
 )
 
@@ -93,8 +95,56 @@ WORKDAY_HOST_RE = re.compile(
 
 GREENHOUSE_HOST_RE = re.compile(
     r"greenhouse\.io|job-boards\.greenhouse|smartrecruiters\.com|lever\.co|"
-    r"ashbyhq\.com|icims\.com|taleo\.net|successfactors|oraclecloud\.com|phenompeople",
+    r"ashbyhq\.com|icims\.com|taleo\.net|successfactors|oraclecloud\.com|"
+    r"phenompeople|eightfold\.ai",
     re.I,
+)
+
+FALSE_APPLY_CTA_RE = re.compile(
+    r"view applied|applied jobs|already applied|my applications|"
+    r"see (all )?applied|applications? sent",
+    re.I,
+)
+
+BROCHURE_URL_RE = re.compile(
+    r"/careers\.html(?:$|[?#])|/about(?:-us)?(?:/|$)|/life-at|/why[- ]join|"
+    r"/join[- ]us(?:\.html)?(?:$|[?#])|/our[- ]team|/culture(?:/|$)|"
+    r"/careers/?$|/careers/?[?#]|/jobs/?$|/job-openings/?$",
+    re.I,
+)
+
+JOB_DETAIL_URL_RE = re.compile(
+    r"/job/|/jobs/\d|gh_jid=|requisition|reqid=|pid=\d|"
+    r"myworkdayjobs|greenhouse\.io|lever\.co|smartrecruiters|ashbyhq|icims|eightfold",
+    re.I,
+)
+
+BROCHURE_TEXT_RE = re.compile(
+    r"join our (growing )?team|life at |why (work|join) (at|us)|"
+    r"we('re| are) hiring|see (all )?(open )?(roles|positions|jobs)|"
+    r"explore (our )?(careers|opportunities)|view (all )?openings",
+    re.I,
+)
+
+ATS_FORM_HINT_RE = re.compile(
+    r"submit application|apply for this job|upload (your )?resume|"
+    r"cover letter|work history|autofill with resume|apply manually|"
+    r"first name|email address",
+    re.I,
+)
+
+HOP_QUERY_KEYS = (
+    "continueUrl",
+    "continue_url",
+    "dest",
+    "destination",
+    "redirect_url",
+    "redirectUrl",
+    "url",
+    "u",
+    "r",
+    "continue",
+    "target",
 )
 
 CAPTCHA_CHALLENGE_HOSTS = (
@@ -183,6 +233,8 @@ def is_hard_ats_wall(reason: str | None) -> bool:
             "unavailable",
             "maintenance",
             "did_not_leave",
+            "no_ats_form",
+            "brochure",
         )
     ):
         return False
@@ -202,6 +254,153 @@ def is_hard_ats_wall(reason: str | None) -> bool:
 
 def is_submitted_text(text: str | None) -> bool:
     return bool(SUBMITTED_RE.search(text or ""))
+
+
+def looks_like_apply_cta(label: str | None) -> bool:
+    """True for a real Apply/Submit CTA — not 'View applied jobs' chrome."""
+    t = re.sub(r"\s+", " ", label or "").strip()
+    if not t:
+        return False
+    if FALSE_APPLY_CTA_RE.search(t):
+        return False
+    if re.search(r"sign in|log in|create account", t, re.I) and not re.search(r"^apply", t, re.I):
+        return False
+    if re.search(r"with (indeed|linkedin|google|microsoft|facebook|apple)", t, re.I) and not re.search(
+        r"without indeed", t, re.I
+    ):
+        return False
+    return bool(re.search(r"\bapply\b|i'?m interested|start application|submit application", t, re.I))
+
+
+def is_brochure_or_dead_end(
+    url: str | None,
+    text: str | None,
+    *,
+    has_file: bool = False,
+    has_wd: bool = False,
+    has_email: bool = False,
+    has_password: bool = False,
+    has_apply_cta: bool = False,
+) -> bool:
+    """Marketing /careers.html pages with no ATS form — fail fast, do not burn 6.5m."""
+    if has_file or has_wd or has_email or has_password or has_apply_cta:
+        return False
+    u = url or ""
+    t = text or ""
+    if JOB_DETAIL_URL_RE.search(u) and ATS_FORM_HINT_RE.search(t):
+        return False
+    if BROCHURE_URL_RE.search(u):
+        return True
+    if BROCHURE_TEXT_RE.search(t) and not ATS_FORM_HINT_RE.search(t):
+        return True
+    if re.search(r"careers|jobs|join-us|about", u, re.I) and not ATS_FORM_HINT_RE.search(t) and not JOB_DETAIL_URL_RE.search(u):
+        return True
+    return False
+
+
+def unescape_json_url(raw: str) -> str:
+    try:
+        return json.loads(f'"{raw}"')
+    except Exception:
+        return (raw or "").replace("\\u002f", "/").replace("\\/", "/")
+
+
+def extract_offsite_from_text(
+    blob: str | None,
+    *,
+    reject_hosts: tuple[str, ...] = ("linkedin.com",),
+) -> str:
+    """Pull companyApplyUrl / applyUrl from LinkedIn (or similar) page JSON."""
+    text = blob or ""
+    if not text:
+        return ""
+    keys = (
+        "companyApplyUrl",
+        "companyApplyURL",
+        "offsiteApplyUrl",
+        "externalApplyUrl",
+        "companyJobApplyUrl",
+    )
+    for key in keys:
+        m = re.search(rf'"{key}"\s*:\s*"(https?:[^"]+)"', text, re.I)
+        if not m:
+            continue
+        url = unescape_json_url(m.group(1))
+        if not url.startswith("http"):
+            continue
+        low = url.lower()
+        if any(h in low for h in reject_hosts):
+            continue
+        return url
+    return ""
+
+
+def extract_hop_destination_from_url(url: str | None) -> str:
+    """Indeed/LinkedIn tracking hops often stash the real ATS in a query param."""
+    raw = url or ""
+    if not raw:
+        return ""
+    try:
+        q = parse_qs(urlparse(raw).query)
+    except Exception:
+        return ""
+    for key in HOP_QUERY_KEYS:
+        vals = q.get(key) or []
+        for val in vals:
+            dest = unquote(val or "")
+            if not dest.startswith("http"):
+                continue
+            if is_board_tracking_url(dest):
+                continue
+            if re.search(r"indeed\.com/|linkedin\.com/jobs|naukri\.com|foundit\.in", dest, re.I):
+                continue
+            return dest
+    return ""
+
+
+def extract_hop_destination(page) -> str:
+    """Resolve the employer ATS URL from a board tracking hop page."""
+    dest = extract_hop_destination_from_url(getattr(page, "url", "") or "")
+    if dest:
+        return dest
+    try:
+        content = page.locator("meta[http-equiv='refresh']").first.get_attribute("content") or ""
+        m = re.search(r"url\s*=\s*(.+)", content, re.I)
+        if m:
+            cand = m.group(1).strip().strip("'\"")
+            if cand.startswith("http") and not is_board_tracking_url(cand):
+                return cand
+    except Exception:
+        pass
+    try:
+        cand = page.evaluate(
+            """() => {
+              const opened = window.__atsOpenedUrls || window.__naukriOpenedUrls || window.__liOpenedUrls || [];
+              for (const u of opened) {
+                if (u && /^https?:/i.test(u) && !/indeed\\.com\\/(?:applystart|rc\\/clk)|linkedin\\.com\\/jobs|naukri\\.com/i.test(u))
+                  return u;
+              }
+              const meta = document.querySelector("meta[http-equiv='refresh']");
+              if (meta) {
+                const m = /url\\s*=\\s*(.+)/i.exec(meta.getAttribute("content") || "");
+                if (m && /^https?:/i.test(m[1].trim())) return m[1].trim().replace(/^['"]|['"]$/g, "");
+              }
+              const cands = [...document.querySelectorAll("a[href^='http']")];
+              for (const a of cands) {
+                const href = a.href || "";
+                const label = ((a.innerText || "") + " " + (a.getAttribute("aria-label") || "")).toLowerCase();
+                if (/indeed\\.com|linkedin\\.com|naukri\\.com|foundit\\.in/i.test(href)) continue;
+                if (/apply|career|workday|greenhouse|lever|smartrecruiters|ashby|icims|eightfold/i.test(href + " " + label))
+                  return href;
+              }
+              return "";
+            }"""
+        )
+        if cand and str(cand).startswith("http") and not is_board_tracking_url(str(cand)):
+            return str(cand)
+    except Exception:
+        pass
+    return ""
 
 
 def classify_ats_host(url: str | None) -> str:
@@ -340,6 +539,13 @@ def page_flags(page) -> dict:
         )
     except Exception:
         pass
+    has_apply_cta = bool(
+        re.search(
+            r"\bapply (now|for this job)|start application|i'?m interested|submit application",
+            text,
+            re.I,
+        )
+    )
     return {
         "url": url,
         "text": text,
@@ -347,6 +553,7 @@ def page_flags(page) -> dict:
         "has_file": has_file,
         "has_email": has_email,
         "has_wd": has_wd,
+        "has_apply_cta": has_apply_cta,
     }
 
 
@@ -389,6 +596,9 @@ def _click_text(page, labels: tuple[str, ...]) -> bool:
             for i in range(min(btn.count(), 3)):
                 b = btn.nth(i)
                 if b.is_visible() and b.is_enabled():
+                    label = ((b.inner_text() or "") + " " + (b.get_attribute("aria-label") or "")).strip()
+                    if re.search(r"apply", name, re.I) and not looks_like_apply_cta(label):
+                        continue
                     try:
                         b.click(timeout=3000, force=True)
                     except Exception:
@@ -400,6 +610,15 @@ def _click_text(page, labels: tuple[str, ...]) -> bool:
         try:
             link = page.get_by_role("link", name=re.compile(rf"{re.escape(name)}", re.I))
             if link.count() and link.first.is_visible():
+                label = (
+                    (link.first.inner_text() or "")
+                    + " "
+                    + (link.first.get_attribute("aria-label") or "")
+                    + " "
+                    + (link.first.get_attribute("href") or "")
+                ).strip()
+                if re.search(r"apply", name, re.I) and not looks_like_apply_cta(label):
+                    continue
                 link.first.click(timeout=3000)
                 _sleep(1.2)
                 return True
@@ -408,6 +627,9 @@ def _click_text(page, labels: tuple[str, ...]) -> bool:
         try:
             loc = page.get_by_text(name, exact=False).first
             if loc.is_visible():
+                label = (loc.inner_text() or "").strip()
+                if re.search(r"apply", name, re.I) and not looks_like_apply_cta(label):
+                    continue
                 loc.click(timeout=2500, force=True)
                 _sleep(1.2)
                 return True
@@ -599,8 +821,10 @@ def prefer_guest_apply(page) -> bool:
                 b = btn.nth(i)
                 if not (b.is_visible() and b.is_enabled()):
                     continue
-                label = ((b.inner_text() or "") + " " + (b.get_attribute("aria-label") or "")).lower()
-                if re.search(r"oneclick|with indeed|with linkedin|with google|with microsoft", label):
+                label = ((b.inner_text() or "") + " " + (b.get_attribute("aria-label") or "")).strip()
+                if re.search(r"oneclick|with indeed|with linkedin|with google|with microsoft", label, re.I):
+                    continue
+                if re.search(r"apply", name, re.I) and not looks_like_apply_cta(label):
                     continue
                 try:
                     b.click(timeout=3000, force=True)
@@ -613,8 +837,10 @@ def prefer_guest_apply(page) -> bool:
         try:
             link = page.get_by_role("link", name=re.compile(rf"{re.escape(name)}", re.I))
             if link.count() and link.first.is_visible():
-                label = ((link.first.inner_text() or "") + " " + (link.first.get_attribute("href") or "")).lower()
-                if re.search(r"oneclick|indeed\.com/oauth|with indeed", label):
+                label = ((link.first.inner_text() or "") + " " + (link.first.get_attribute("href") or "")).strip()
+                if re.search(r"oneclick|indeed\.com/oauth|with indeed", label, re.I):
+                    continue
+                if re.search(r"apply", name, re.I) and not looks_like_apply_cta(label):
                     continue
                 link.first.click(timeout=3000)
                 _sleep(1.2)
@@ -953,6 +1179,17 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
     stuck = 0
     leave_oneclick_oauth(page)
     prefer_guest_apply(page)
+    flags = page_flags(page)
+    if is_brochure_or_dead_end(
+        flags["url"],
+        flags["text"],
+        has_file=flags["has_file"],
+        has_wd=flags["has_wd"],
+        has_email=flags["has_email"],
+        has_password=flags["has_password"],
+        has_apply_cta=flags.get("has_apply_cta", False),
+    ):
+        return "skipped", "no_ats_form"
     while time.time() - start < time_cap_s and stuck < 8:
         if looks_submitted(page):
             return "applied", "confirmation"
@@ -1023,6 +1260,27 @@ def complete_ats(page, time_cap_s: int | None = None) -> tuple[str, str]:
         return "blocked", wall
     if host == "workday" or flags["has_wd"]:
         return complete_workday(page, cap)
+    if is_brochure_or_dead_end(
+        flags["url"],
+        flags["text"],
+        has_file=flags["has_file"],
+        has_wd=flags["has_wd"],
+        has_email=flags["has_email"],
+        has_password=flags["has_password"],
+        has_apply_cta=flags.get("has_apply_cta", False),
+    ):
+        prefer_guest_apply(page)
+        flags = page_flags(page)
+        if is_brochure_or_dead_end(
+            flags["url"],
+            flags["text"],
+            has_file=flags["has_file"],
+            has_wd=flags["has_wd"],
+            has_email=flags["has_email"],
+            has_password=flags["has_password"],
+            has_apply_cta=flags.get("has_apply_cta", False),
+        ):
+            return "skipped", "no_ats_form"
     return complete_generic(page, cap)
 
 
@@ -1048,18 +1306,35 @@ def complete_ats_url(url: str, time_cap_s: int | None = None, cdp: str | None = 
             page.goto(url, wait_until="domcontentloaded", timeout=60000)
             _sleep(1.2)
             # Indeed/LinkedIn/Naukri "Apply on company site" often lands on a
-            # tracking hop (applystart / rc/clk). Wait for the real ATS host.
+            # tracking hop (applystart / rc/clk). Follow dest query / meta /
+            # outbound apply link instead of waiting 18s then giving up.
             deadline = time.time() + 18
             while time.time() < deadline and is_board_tracking_url(getattr(page, "url", "") or ""):
+                dest = extract_hop_destination(page)
+                if dest:
+                    try:
+                        page.goto(dest, wait_until="domcontentloaded", timeout=45000)
+                        _sleep(1.0)
+                        break
+                    except Exception:
+                        pass
                 _sleep(0.8)
             if is_unavailable_text(f"{getattr(page, 'url', '')}\n{_body(page, 1200)}"):
                 return "skipped", "job_unavailable", page.url or url
             if is_board_tracking_url(getattr(page, "url", "") or ""):
-                host = classify_ats_host(page.url or url)
-                if host == "indeed":
-                    return "blocked", "did_not_leave_indeed", page.url or url
-                if host == "linkedin":
-                    return "blocked", "did_not_leave_linkedin", page.url or url
+                dest = extract_hop_destination(page)
+                if dest:
+                    try:
+                        page.goto(dest, wait_until="domcontentloaded", timeout=45000)
+                        _sleep(1.0)
+                    except Exception:
+                        dest = ""
+                if is_board_tracking_url(getattr(page, "url", "") or ""):
+                    host = classify_ats_host(page.url or url)
+                    if host == "indeed":
+                        return "blocked", "did_not_leave_indeed", page.url or url
+                    if host == "linkedin":
+                        return "blocked", "did_not_leave_linkedin", page.url or url
             status, reason = complete_ats(page, time_cap_s=cap)
             return status, reason, page.url or url
         finally:

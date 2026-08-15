@@ -193,7 +193,10 @@ def test_indeed_oauth_url_is_login_wall():
     )
     assert auth_wall_url("https://accounts.google.com/gsi/button?client_id=x")
     assert auth_wall_url("https://passport.amazon.jobs/login")
+    assert auth_wall_url("https://app.eightfold.ai/login?next=/careers")
+    assert auth_wall_url("https://login.cognizant.com/oauth2")
     assert not auth_wall_url("https://jobs.smartrecruiters.com/Experian/123-Solution-Architect")
+    assert not auth_wall_url("https://app.eightfold.ai/careers/job?pid=123")
     page = _FakePage("Sign In | Indeed Accounts\nContinue with Google", file_inputs=0)
     page.url = "https://secure.indeed.com/auth?oauth_client_id=x"
     assert blocked_wall(page) == "login/account wall"

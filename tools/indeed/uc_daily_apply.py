@@ -80,6 +80,18 @@ def _default_seed_profile() -> str:
 SEED_PROFILE = _default_seed_profile()
 
 
+def warm_passport_session(sb) -> None:
+    """Touch Indeed Passport so applystart/rc/clk hops inherit the logged-in session."""
+    try:
+        sb.uc_open_with_reconnect("https://secure.indeed.com/settings/account", 4)
+        time.sleep(2.0)
+        sb.uc_open_with_reconnect("https://in.indeed.com/", 3)
+        time.sleep(1.0)
+        print("PASSPORT_WARM ok", flush=True)
+    except Exception as exc:
+        print(f"PASSPORT_WARM skip {exc}"[:160], flush=True)
+
+
 def complete_external_ats(url: str, time_cap_s: int | None = None) -> tuple[str, str, str]:
     """Finish a company-site ATS after Indeed opens it. Confirmation only.
 
@@ -126,14 +138,32 @@ def finish_company_site(sb, item, report, handles_before=None) -> None:
     except Exception:
         ats_url = ""
     if ats_url and "indeed.com" in ats_url.lower():
-        for _ in range(15):
-            time.sleep(1.0)
-            try:
-                ats_url = sb.get_current_url() or ats_url
-            except Exception:
-                break
-            if "indeed.com" not in ats_url.lower():
-                break
+        dest = ""
+        try:
+            sys.path.insert(0, str(ROOT))
+            from tools.ats.complete import extract_hop_destination_from_url
+
+            dest = extract_hop_destination_from_url(ats_url)
+        except Exception:
+            dest = ""
+        if dest:
+            ats_url = dest
+        else:
+            for _ in range(15):
+                time.sleep(1.0)
+                try:
+                    ats_url = sb.get_current_url() or ats_url
+                except Exception:
+                    break
+                if "indeed.com" not in ats_url.lower():
+                    break
+                try:
+                    dest = extract_hop_destination_from_url(ats_url)
+                except Exception:
+                    dest = ""
+                if dest:
+                    ats_url = dest
+                    break
     status, reason, final_url = complete_external_ats(ats_url)
     _record_external_result(item, report, status, reason, final_url, ats_url)
     try:
@@ -2333,6 +2363,8 @@ def main() -> int:
                 home_title = sb.get_title() or ""
             except Exception:
                 pass
+        if not _signed_out(home_body):
+            warm_passport_session(sb)
         if _signed_out(home_body):
             report["blocked"].append(
                 {

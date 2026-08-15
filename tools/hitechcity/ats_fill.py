@@ -46,7 +46,8 @@ AUTH_WALL_URL = re.compile(
     r"secure\.indeed\.com/(?:auth|account)|indeed\.com/auth|"
     r"okta\.com|login\.microsoft|signin\.aws|"
     r"/checkpoint/challenge|linkedin\.com/uas/login|"
-    r"smartrecruiters\.com/[^/]+/login",
+    r"smartrecruiters\.com/[^/]+/login|"
+    r"login\.cognizant|cognizant\.okta|eightfold\.ai/(?:login|signin|auth)",
     re.I,
 )
 
@@ -300,6 +301,11 @@ def try_click_named(page: Page, names: tuple[str, ...]) -> bool:
             for i in range(min(btn.count(), 3)):
                 b = btn.nth(i)
                 if b.is_visible() and b.is_enabled():
+                    label = ((b.inner_text() or "") + " " + (b.get_attribute("aria-label") or "")).strip()
+                    if re.search(r"apply", name, re.I) and re.search(
+                        r"view applied|applied jobs|already applied", label, re.I
+                    ):
+                        continue
                     try:
                         b.click(timeout=3000, force=True)
                     except Exception:

@@ -6,6 +6,11 @@
 
 const { completeWorkdayApply, isSubmittedText } = require("../naukri/workday_apply");
 const { fillCommonAtsQuestions } = require("../naukri/ats_form");
+const {
+  isFalseApplyCta,
+  looksLikeApplyCta,
+  isBrochureOrDeadEnd,
+} = require("./apply_cta");
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -47,13 +52,17 @@ async function preferGuestApply(page) {
     "a:has-text('Apply')",
     "button:has-text('Apply')",
   ]) {
-    const b = page.locator(sel).first();
-    if (await b.isVisible().catch(() => false)) {
+    const loc = page.locator(sel);
+    const n = await loc.count().catch(() => 0);
+    for (let i = 0; i < Math.min(n, 8); i++) {
+      const b = loc.nth(i);
+      if (!(await b.isVisible().catch(() => false))) continue;
       const label = ((await b.innerText().catch(() => "")) || "").trim();
       const href = ((await b.getAttribute("href").catch(() => "")) || "").trim();
       if (/oneclick|with indeed|with linkedin|with google|indeed\.com\/oauth/i.test(`${label} ${href}`)) {
         continue;
       }
+      if (isFalseApplyCta(label) || !looksLikeApplyCta(label)) continue;
       if (/sign in|log in|applied/i.test(label) && !/^apply/i.test(label)) continue;
       await b.click().catch(() => {});
       await sleep(1200);
@@ -61,6 +70,22 @@ async function preferGuestApply(page) {
     }
   }
   return false;
+}
+
+async function pageFlags(page) {
+  const url = page.url() || "";
+  const text = await page
+    .evaluate(() => (document.body?.innerText || "").slice(0, 2500))
+    .catch(() => "");
+  const hasFile = (await page.locator("input[type='file']").count().catch(() => 0)) > 0;
+  const hasPassword = (await page.locator("input[type='password']").count().catch(() => 0)) > 0;
+  const hasEmail =
+    (await page.locator("input[type='email'], [data-automation-id='email']").count().catch(() => 0)) > 0;
+  const hasWd = await looksWorkday(page);
+  const hasApplyCta = /apply (now|for this job)|start application|i'?m interested|submit application/i.test(
+    text
+  );
+  return { url, text, hasFile, hasPassword, hasEmail, hasWd, hasApplyCta };
 }
 
 async function completeExternalPage(page, resumePath, { maxMs = 6.5 * 60 * 1000 } = {}) {
@@ -76,9 +101,13 @@ async function completeExternalPage(page, resumePath, { maxMs = 6.5 * 60 * 1000 
   }
   let noAdvance = 0;
   await preferGuestApply(page);
+  const afterClick = await pageFlags(page);
+  if (isBrochureOrDeadEnd(afterClick)) {
+    return { ok: false, reason: "no_ats_form", url: afterClick.url };
+  }
   while (Date.now() - start < maxMs && noAdvance < 6) {
     const url = page.url() || "";
-    if (/b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|secure\.indeed\.com\/(?:auth|oauth)|oneclick\.smartrecruiters/i.test(url)) {
+    if (/b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|secure\.indeed\.com\/(?:auth|oauth)|oneclick\.smartrecruiters|login\.cognizant|eightfold\.ai\/(?:login|signin|auth)/i.test(url)) {
       return { ok: false, reason: "ats_login_wall", url };
     }
     const text = await page
@@ -116,6 +145,7 @@ async function completeExternalPage(page, resumePath, { maxMs = 6.5 * 60 * 1000 
       if (await b.isVisible().catch(() => false)) {
         const label = ((await b.innerText().catch(() => "")) || "").trim();
         if (/sign in|log in|create account/i.test(label)) continue;
+        if (isFalseApplyCta(label)) continue;
         await b.click({ force: true }).catch(() => {});
         noAdvance = 0;
         await sleep(1600);
@@ -132,4 +162,4 @@ async function completeExternalPage(page, resumePath, { maxMs = 6.5 * 60 * 1000 
   return { ok: false, reason: "external_incomplete_or_timeout", url: page.url() };
 }
 
-module.exports = { completeExternalPage, looksWorkday };
+module.exports = { completeExternalPage, looksWorkday, pageFlags, preferGuestApply };
