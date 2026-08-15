@@ -1198,6 +1198,13 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
             pass
         if re.search(r"take assessment", _body(page, 1200), re.I):
             return "blocked", "assessment_required"
+        try:
+            for pg in page.context.pages:
+                u = getattr(pg, "url", "") or ""
+                if re.search(r"tcs\.adp\.com|wotc|work opportunity tax credit", u, re.I):
+                    return "blocked", "assessment_required"
+        except Exception:
+            pass
     stuck = 0
     while time.time() - start < time_cap_s and stuck < 10:
         if looks_submitted(page):
