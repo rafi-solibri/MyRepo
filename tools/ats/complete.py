@@ -84,7 +84,8 @@ SSO_HOST_RE = re.compile(
     r"b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|"
     r"auth0\.com|passport\.amazon\.jobs|secure\.indeed\.com/(?:auth|account|oauth)|"
     r"signin\.aws|login\.microsoft|oneclick\.smartrecruiters|"
-    r"login\.cognizant|cognizant\.okta|eightfold\.ai/(?:login|signin|auth)",
+    r"login\.cognizant|cognizant\.okta|talent\.cognizant\.com/[^?\s]*(?:login|login2)|"
+    r"eightfold\.ai/(?:login|signin|auth)",
     re.I,
 )
 
@@ -469,9 +470,13 @@ def auth_wall_reason(
         return None
     if has_file:
         return None
-    if has_password and re.search(
+    # Email-only Eightfold/Phenom SSO (Qualcomm careers/apply) has an email
+    # box + "Sign in using Google" and no resume upload — not guest-applyable.
+    if re.search(
         r"sign in to (continue|apply)|log in to apply|create an account|"
-        r"sign in using (microsoft|google)|employees must sign in",
+        r"sign in using (microsoft|google)|employees must sign in|"
+        r"current \w+ employees must sign in|first time here\?|"
+        r"we don't recognize this email",
         text or "",
         re.I,
     ):

@@ -47,7 +47,8 @@ AUTH_WALL_URL = re.compile(
     r"okta\.com|login\.microsoft|signin\.aws|"
     r"/checkpoint/challenge|linkedin\.com/uas/login|"
     r"smartrecruiters\.com/[^/]+/login|"
-    r"login\.cognizant|cognizant\.okta|eightfold\.ai/(?:login|signin|auth)",
+    r"login\.cognizant|cognizant\.okta|talent\.cognizant\.com/[^?\s]*(?:login|login2)|"
+    r"eightfold\.ai/(?:login|signin|auth)",
     re.I,
 )
 
