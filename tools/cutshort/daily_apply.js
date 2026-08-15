@@ -328,7 +328,10 @@ function createCdpSession() {
 
   async function disconnect() {
     // Never browser.close() on Windows home — Playwright can tear down Chrome CDP.
-    await page?.close().catch(() => {});
+    // page.close() can hang on a dying CDP target — bound it.
+    if (page) {
+      await Promise.race([page.close().catch(() => {}), sleep(3000)]);
+    }
     page = null;
     context = null;
     browser = null;
