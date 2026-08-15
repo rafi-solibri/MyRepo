@@ -45,16 +45,41 @@ async function main() {
     }
   }
 
+  // Windows system Chrome often answers /json/version before the CDP handshake
+  // is stable — retry instead of one-shot Timeout 30000ms after ws connected.
+  const connectRetries = Math.max(
+    1,
+    Number(process.env.LINKEDIN_CDP_CONNECT_RETRIES || "5")
+  );
   let browser;
-  try {
-    browser = await chromium.connectOverCDP(CDP);
-  } catch (err) {
+  let lastConnectErr = null;
+  const connectAttempts = [];
+  for (let i = 0; i < connectRetries; i++) {
+    try {
+      browser = await chromium.connectOverCDP(CDP, { timeout: 60000 });
+      lastConnectErr = null;
+      break;
+    } catch (err) {
+      lastConnectErr = err;
+      connectAttempts.push({
+        n: i + 1,
+        error: String(err && err.message ? err.message : err).slice(0, 160),
+      });
+      await new Promise((r) => setTimeout(r, 1500 + i * 500));
+    }
+  }
+  if (!browser) {
     console.error(
       JSON.stringify({
         ok: false,
         reason: "cdp_connect_failed",
         cdp: CDP,
-        error: String(err && err.message ? err.message : err),
+        error: String(
+          lastConnectErr && lastConnectErr.message
+            ? lastConnectErr.message
+            : lastConnectErr
+        ),
+        connectAttempts,
         hint: "bash scripts/launch-chrome-cdp.sh linkedin",
       })
     );

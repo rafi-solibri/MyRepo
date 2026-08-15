@@ -115,6 +115,10 @@ def _on_captcha(page) -> bool:
     return False
 
 
+class BrowserGoneError(RuntimeError):
+    """CDP browser/context closed mid-login (Chrome restart or TargetClosed)."""
+
+
 def _pick_linkedin_page(ctx):
     pages = list(ctx.pages or [])
     for p in pages:
@@ -132,12 +136,12 @@ def _pick_linkedin_page(ctx):
         return pages[0]
     try:
         return ctx.new_page()
-    except Exception:
+    except Exception as e:
         # Browser may refuse new tabs mid-challenge — reuse any open page.
         pages = list(ctx.pages or [])
         if pages:
             return pages[0]
-        raise
+        raise BrowserGoneError(f"no pages and new_page failed: {e}") from e
 
 
 
@@ -439,6 +443,24 @@ def _wait_signed_in(ctx, page, deadline: float, via: str, out: dict) -> int | No
     return None
 
 
+def _connect_cdp(playwright, out: dict):
+    """Connect with retries — Windows Chrome often accepts HTTP before CDP handshake is ready."""
+    last_err = None
+    attempts = int(os.environ.get("LINKEDIN_CDP_CONNECT_RETRIES", "5"))
+    for i in range(max(1, attempts)):
+        try:
+            browser = playwright.chromium.connect_over_cdp(CDP, timeout=60000)
+            return browser
+        except Exception as e:
+            last_err = e
+            out.setdefault("cdp_connect_attempts", []).append(
+                {"n": i + 1, "error": str(e)[:160]}
+            )
+            time.sleep(1.5 + i)
+    out.update(reason="cdp_connect_failed", error=str(last_err)[:200] if last_err else "unknown")
+    return None
+
+
 def main() -> int:
     out: dict = {"ok": False, "attempts": []}
     deadline = time.time() + TIMEOUT_S
@@ -450,113 +472,140 @@ def main() -> int:
 
     with sync_playwright() as p:
         try:
-            browser = p.chromium.connect_over_cdp(CDP)
-        except Exception as e:
-            out.update(reason="cdp_connect_failed", error=str(e)[:200])
-            print(json.dumps(out))
-            return 4
+            browser = _connect_cdp(p, out)
+            if browser is None:
+                print(json.dumps(out))
+                return 4
 
-        ctx = browser.contexts[0] if browser.contexts else browser.new_context()
-        page = _pick_linkedin_page(ctx)
-        try:
-            page.bring_to_front()
-        except Exception:
-            pass
+            ctx = browser.contexts[0] if browser.contexts else browser.new_context()
+            page = _pick_linkedin_page(ctx)
+            try:
+                page.bring_to_front()
+            except Exception:
+                pass
 
-        try:
-            page.goto("https://www.linkedin.com/feed/", wait_until="domcontentloaded", timeout=60000)
-            time.sleep(2)
-        except Exception as e:
-            out["attempts"].append({"step": "goto_feed", "error": str(e)[:120]})
-
-        if _is_signed_in(ctx, page):
-            out.update(ok=True, reason="already_signed_in", url=page.url)
-            print(json.dumps(out))
-            return 0
-
-        page = _goto_login_clean(ctx, page)
-        google_session = _has_google_session(ctx)
-        out["google_session"] = google_session
-
-        def try_password() -> int | None:
-            if not PASSWORD:
-                out["attempts"].append(
-                    {
-                        "step": "password",
-                        "skipped": True,
-                        "hint": "Set Cursor secrets LINKEDIN_EMAIL + LINKEDIN_PASSWORD for password fallback",
-                    }
+            try:
+                page.goto(
+                    "https://www.linkedin.com/feed/",
+                    wait_until="domcontentloaded",
+                    timeout=60000,
                 )
-                return None
-            nonlocal_page = _goto_login_clean(ctx, _pick_linkedin_page(ctx))
-            out["attempts"].append({"step": "password", "email": email[:3] + "***"})
-            if not _password_login(nonlocal_page, email, PASSWORD):
-                out["attempts"].append({"step": "password", "submitted": False})
-                return None
-            return _wait_signed_in(ctx, nonlocal_page, deadline, "password", out)
+                time.sleep(2)
+            except Exception as e:
+                out["attempts"].append({"step": "goto_feed", "error": str(e)[:120]})
 
-        def try_google() -> int | None:
-            nonlocal_page = _goto_login_clean(ctx, _pick_linkedin_page(ctx))
-            out["attempts"].append({"step": "google_sso", "started": True})
-            if not _click_continue_google(ctx, nonlocal_page):
-                out["attempts"].append({"step": "google_sso", "clicked": False})
-                return None
-            out["attempts"].append({"step": "google_sso", "clicked": True})
-            return _wait_signed_in(ctx, nonlocal_page, deadline, "google_sso", out)
-
-        # Prefer Google SSO when the CDP profile already has Google cookies.
-        # Password-first often burns a checkpoint before GSI gets a clean shot;
-        # welcome-back UI also hid the GSI button until "another account".
-        prefer_google = google_session and os.environ.get(
-            "LINKEDIN_PREFER_GOOGLE_IF_SESSION", "1"
-        ).strip() not in ("0", "false", "no")
-        if prefer_google:
-            order = ("google_sso", "password")
-        elif prefer_password:
-            order = ("password", "google_sso")
-        else:
-            order = ("google_sso", "password")
-        out["order"] = list(order)
-        captcha_seen = False
-        for step in order:
-            rc = try_password() if step == "password" else try_google()
-            if rc == 0:
+            if _is_signed_in(ctx, page):
+                out.update(ok=True, reason="already_signed_in", url=page.url)
+                print(json.dumps(out))
                 return 0
-            if rc == 6:
-                captcha_seen = True
-                # Do not hard-stop — try the other method (password after SSO CAPTCHA).
-                continue
 
-        page = _pick_linkedin_page(ctx)
-        if _cookies_has_li_at(ctx) and _is_signed_in(ctx, page):
-            out.update(ok=True, reason="recovered", url=page.url)
-            print(json.dumps(out))
-            return 0
-        if captcha_seen or (_on_captcha(page) and not _cookies_has_li_at(ctx)):
+            page = _goto_login_clean(ctx, page)
+            google_session = _has_google_session(ctx)
+            out["google_session"] = google_session
+
+            def try_password() -> int | None:
+                if not PASSWORD:
+                    out["attempts"].append(
+                        {
+                            "step": "password",
+                            "skipped": True,
+                            "hint": "Set Cursor secrets LINKEDIN_EMAIL + LINKEDIN_PASSWORD for password fallback",
+                        }
+                    )
+                    return None
+                nonlocal_page = _goto_login_clean(ctx, _pick_linkedin_page(ctx))
+                out["attempts"].append({"step": "password", "email": email[:3] + "***"})
+                if not _password_login(nonlocal_page, email, PASSWORD):
+                    out["attempts"].append({"step": "password", "submitted": False})
+                    return None
+                return _wait_signed_in(ctx, nonlocal_page, deadline, "password", out)
+
+            def try_google() -> int | None:
+                nonlocal_page = _goto_login_clean(ctx, _pick_linkedin_page(ctx))
+                out["attempts"].append({"step": "google_sso", "started": True})
+                if not _click_continue_google(ctx, nonlocal_page):
+                    out["attempts"].append({"step": "google_sso", "clicked": False})
+                    return None
+                out["attempts"].append({"step": "google_sso", "clicked": True})
+                return _wait_signed_in(ctx, nonlocal_page, deadline, "google_sso", out)
+
+            # Prefer Google SSO when the CDP profile already has Google cookies.
+            # Password-first often burns a checkpoint before GSI gets a clean shot;
+            # welcome-back UI also hid the GSI button until "another account".
+            prefer_google = google_session and os.environ.get(
+                "LINKEDIN_PREFER_GOOGLE_IF_SESSION", "1"
+            ).strip() not in ("0", "false", "no")
+            if prefer_google:
+                order = ("google_sso", "password")
+            elif prefer_password:
+                order = ("password", "google_sso")
+            else:
+                order = ("google_sso", "password")
+            out["order"] = list(order)
+            captcha_seen = False
+            for step in order:
+                rc = try_password() if step == "password" else try_google()
+                if rc == 0:
+                    return 0
+                if rc == 6:
+                    captcha_seen = True
+                    # Do not hard-stop — try the other method (password after SSO CAPTCHA).
+                    continue
+
+            page = _pick_linkedin_page(ctx)
+            if _cookies_has_li_at(ctx) and _is_signed_in(ctx, page):
+                out.update(ok=True, reason="recovered", url=page.url)
+                print(json.dumps(out))
+                return 0
+            if captcha_seen or (_on_captcha(page) and not _cookies_has_li_at(ctx)):
+                out.update(
+                    ok=False,
+                    reason="captcha_checkpoint",
+                    url=page.url,
+                    google_session=google_session,
+                    hint=(
+                        "Owner CAPTCHA/checkpoint required"
+                        if google_session
+                        else "CAPTCHA with no Google session — bash scripts/home-headed-login.sh linkedin"
+                    ),
+                )
+                print(json.dumps(out))
+                return 6
+
             out.update(
                 ok=False,
-                reason="captcha_checkpoint",
+                reason="linkedin_login_required",
                 url=page.url,
+                has_li_at=_cookies_has_li_at(ctx),
                 google_session=google_session,
-                hint=(
-                    "Owner CAPTCHA/checkpoint required"
-                    if google_session
-                    else "CAPTCHA with no Google session — bash scripts/home-headed-login.sh linkedin"
-                ),
+                hint="CAPTCHA/checkpoint or Google SSO failed; set Cursor secret LINKEDIN_PASSWORD and re-run",
             )
             print(json.dumps(out))
-            return 6
-
-        out.update(
-            ok=False,
-            reason="linkedin_login_required",
-            url=page.url,
-            has_li_at=_cookies_has_li_at(ctx),
-            google_session=google_session,
-            hint="CAPTCHA/checkpoint or Google SSO failed; set Cursor secret LINKEDIN_PASSWORD and re-run",
-        )
-        print(json.dumps(out))
-        return 5
+            return 5
+        except BrowserGoneError as e:
+            out.update(
+                ok=False,
+                reason="browser_closed_mid_login",
+                error=str(e)[:200],
+                hint="bash scripts/launch-chrome-cdp.sh linkedin then bash scripts/home-headed-login.sh linkedin",
+            )
+            print(json.dumps(out))
+            return 5
+        except Exception as e:
+            # TargetClosedError and friends — never traceback-crash the launcher.
+            name = type(e).__name__
+            if "TargetClosed" in name or "closed" in str(e).lower():
+                out.update(
+                    ok=False,
+                    reason="browser_closed_mid_login",
+                    error=f"{name}: {str(e)[:160]}",
+                    hint="bash scripts/home-headed-login.sh linkedin",
+                )
+                print(json.dumps(out))
+                return 5
+            out.update(ok=False, reason="auto_login_exception", error=f"{name}: {str(e)[:200]}")
+            print(json.dumps(out))
+            return 5
 
 
 if __name__ == "__main__":

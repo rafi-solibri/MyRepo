@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-08-15 (home)
+
+| Issue | Fix |
+| --- | --- |
+| auto_login TargetClosedError crash + CDP connect timeout after ws connected on Windows home | retry CDP connect (auto_login + wait_for_cdp_login); catch browser-closed as exit 5; settle delay after Chrome ready; fix taskkill //F on Git Bash |
+
+
 ## 2026-08-15 (cloud)
 
 | Issue | Fix |

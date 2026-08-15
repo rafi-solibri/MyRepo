@@ -94,7 +94,11 @@ if [[ "$cdp_ready" -eq 0 ]]; then
     # System profile is locked by any normal Chrome window — must close Chrome first.
     echo "Closing existing Chrome so Default profile can open with remote debugging…"
     if command -v taskkill.exe >/dev/null 2>&1; then
-      taskkill.exe /F /IM chrome.exe >/dev/null 2>&1 || true
+      # Git Bash mangles /F → F:/ — use //F //IM (same as sync-chrome-sessions.sh).
+      taskkill.exe //F //IM chrome.exe >/dev/null 2>&1 || true
+      powershell.exe -NoProfile -Command \
+        "Get-Process chrome -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue" \
+        >/dev/null 2>&1 || true
     else
       bash "$ROOT/scripts/kill-chrome-cdp.sh" all || true
     fi
@@ -105,6 +109,16 @@ if [[ "$cdp_ready" -eq 0 ]]; then
       >/dev/null 2>&1 || true
   else
     bash "$ROOT/scripts/kill-chrome-cdp.sh" cdp || true
+  fi
+  # Confirm :9222 is actually down before claiming relaunch (stale CDP fools reuse).
+  for _i in 1 2 3 4 5; do
+    if ! curl -fsS "http://127.0.0.1:9222/json/version" >/dev/null 2>&1; then
+      break
+    fi
+    sleep 1
+  done
+  if curl -fsS "http://127.0.0.1:9222/json/version" >/dev/null 2>&1; then
+    echo "WARNING: :9222 still up after kill — Playwright may attach to stale Chrome." >&2
   fi
   sleep 1
 fi
@@ -263,6 +277,8 @@ raise SystemExit(1)
 PY
 
 echo "Chrome CDP ready for $portal using $profile (log: $log)"
+# Brief settle so Playwright connectOverCDP does not race a half-ready DevTools socket.
+sleep "${CHROME_CDP_SETTLE_SEC:-2}"
 
 # LinkedIn on Windows ABE: SQLite cookie names can lie. Live-probe CDP when asked.
 if [[ "$portal" == "linkedin" || "$portal" == "hitechcity" ]]; then
