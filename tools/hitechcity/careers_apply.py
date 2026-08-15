@@ -85,6 +85,7 @@ CAREERS_TITLE_SKIP = re.compile(
     r"memory\s*subsystem|foundry\s*solutions|"
     # Silicon / chip design (Principal Physical Design matched TITLE_HINT via Principal).
     r"physical\s*design|chiplet|\basic\b|\bvlsi\b|rtl\s*design|dft\s*engineer|"
+    r"silicon\s*design|silicon\s*engineer|"
     r"analog\s*design|digital\s*design\s*engineer|verification\s*engineer|"
     r"sales\s*specialist|especialista|"
     r"\bai\s*native\b|\bdata\s*&\s*ai\b|staff\s*engineer\s*\(\s*ai|"
@@ -104,6 +105,7 @@ JD_WRONG_STACK = re.compile(
 AUTH_HOST = re.compile(
     r"passport\.amazon\.jobs|login\.microsoftonline|accounts\.google|"
     r"secure\.indeed\.com|indeed\.com/auth|okta\.com|login\.microsoft|"
+    r"talent\.cognizant|"
     r"auth\.|signin\.|sso\.",
     re.I,
 )

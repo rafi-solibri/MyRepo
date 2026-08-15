@@ -54,7 +54,7 @@ LI_TITLE_SKIP = re.compile(
     r"product\s*manager|network\s*architect|system\s*test|quality\s*(platform|assurance|engineering)|"
     r"threat\s*detection|industrial\s*design|hardware\s*architect|machine\s*learning\s*hardware|"
     r"gpu\s*software|embedded\s*software|field\s*robotics|platform\s*power|network\s*hardware|"
-    r"kernel\s*optimization|rtl\s*design|physical\s*design",
+    r"kernel\s*optimization|rtl\s*design|physical\s*design|silicon\s*design|silicon\s*engineer",
     re.I,
 )
 

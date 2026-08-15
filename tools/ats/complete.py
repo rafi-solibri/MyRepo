@@ -82,7 +82,7 @@ BOARD_TRACKING_RE = re.compile(
 SSO_HOST_RE = re.compile(
     r"b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|"
     r"auth0\.com|passport\.amazon\.jobs|secure\.indeed\.com/(?:auth|account|oauth)|"
-    r"signin\.aws|login\.microsoft|oneclick\.smartrecruiters",
+    r"signin\.aws|login\.microsoft|oneclick\.smartrecruiters|talent\.cognizant\.com",
     re.I,
 )
 
@@ -289,6 +289,15 @@ def _body(page, limit: int = 4500) -> str:
 
 def _sleep(seconds: float) -> None:
     time.sleep(seconds)
+
+
+def page_fingerprint(page) -> str:
+    """URL + short body so Apply clicks that do not change the page count as stuck."""
+    try:
+        url = getattr(page, "url", "") or ""
+    except Exception:
+        url = ""
+    return f"{url}|{_body(page, 600)}"
 
 
 def looks_submitted(page) -> bool:
@@ -953,6 +962,7 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
     stuck = 0
     leave_oneclick_oauth(page)
     prefer_guest_apply(page)
+    last_fp = page_fingerprint(page)
     while time.time() - start < time_cap_s and stuck < 8:
         if looks_submitted(page):
             return "applied", "confirmation"
@@ -981,12 +991,15 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
         fill_yes_no(page)
         fill_greenhouse_combos(page)
         tick_consents(page)
-        if click_advance(page):
+        advanced = click_advance(page)
+        _sleep(1.4 if advanced else 1.0)
+        fp = page_fingerprint(page)
+        if advanced and fp != last_fp:
             stuck = 0
-            _sleep(1.4)
+            last_fp = fp
             continue
         stuck += 1
-        _sleep(1.0)
+        last_fp = fp
     if looks_submitted(page):
         return "applied", "confirmation"
     return "blocked", "external_incomplete_or_timeout"

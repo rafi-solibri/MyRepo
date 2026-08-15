@@ -37,6 +37,8 @@ def test_title_ok():
     assert CAREERS_TITLE_SKIP.search("Product Manager, Principal")
     assert CAREERS_TITLE_SKIP.search("Principal Physical Design Engineer (Chiplet Design)")
     assert CAREERS_TITLE_SKIP.search("Staff ASIC Design Engineer")
+    assert CAREERS_TITLE_SKIP.search("Principal Silicon Design Engineer India, Telangana, Hyderabad")
+    assert LI_TITLE_SKIP.search("Principal Silicon Design Engineer")
     assert JD_WRONG_STACK.search(
         "designing and implementing Salesforce solutions ... SFDC Development and Customization"
     )
@@ -193,6 +195,10 @@ def test_indeed_oauth_url_is_login_wall():
     )
     assert auth_wall_url("https://accounts.google.com/gsi/button?client_id=x")
     assert auth_wall_url("https://passport.amazon.jobs/login")
+    assert auth_wall_url(
+        "https://talent.cognizant.com/4681/login2?RRID=00068354023&TenantID=1"
+    )
+    assert auth_wall_url("https://talent.cognizant.com/4681/?RRID=00069002931")
     assert not auth_wall_url("https://jobs.smartrecruiters.com/Experian/123-Solution-Architect")
     page = _FakePage("Sign In | Indeed Accounts\nContinue with Google", file_inputs=0)
     page.url = "https://secure.indeed.com/auth?oauth_client_id=x"

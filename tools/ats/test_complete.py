@@ -20,6 +20,7 @@ from tools.ats.complete import (
     is_hard_ats_wall,
     is_submitted_text,
     is_unavailable_text,
+    page_fingerprint,
 )
 
 
@@ -47,6 +48,10 @@ assert_true(classify_ats_host("https://boards.greenhouse.io/acme/jobs/1") == "gr
 assert_true(classify_ats_host("https://jobs.lever.co/acme/abc") == "greenhouse", "lever grouped")
 assert_true(classify_ats_host("https://acme.icims.com/jobs/1") == "greenhouse", "icims grouped")
 assert_true(classify_ats_host("https://login.microsoftonline.com/xyz") == "sso", "sso host")
+assert_true(
+    classify_ats_host("https://talent.cognizant.com/4681/login2?RRID=1") == "sso",
+    "cognizant talent login is sso",
+)
 assert_true(classify_ats_host("https://www.linkedin.com/jobs/view/1") == "linkedin", "li host")
 assert_true(classify_ats_host("https://careers.acme.com/apply") == "generic", "generic host")
 assert_true(
@@ -59,6 +64,28 @@ assert_true(is_board_tracking_url("https://www.indeed.com/rc/clk?jk=abc"), "rc/c
 assert_true(not is_board_tracking_url("https://acme.wd1.myworkdayjobs.com/en-US/job"), "wd not tracking")
 assert_true(is_unavailable_text("We'll be back shortly — scheduled maintenance"), "maint text")
 assert_true(is_submitted_text("Thanks for applying — we've got your application"), "got-app must count")
+
+
+class _FpPage:
+    def __init__(self, url: str, text: str):
+        self.url = url
+        self._text = text
+
+    def locator(self, sel: str):
+        page = self
+
+        class _Body:
+            def inner_text(self, *a, **k):
+                return page._text
+
+        return _Body()
+
+
+_fp_a = page_fingerprint(_FpPage("https://apply.careers.microsoft.com/careers/apply?pid=1", "Apply now"))
+_fp_b = page_fingerprint(_FpPage("https://apply.careers.microsoft.com/careers/apply?pid=1", "Apply now"))
+_fp_c = page_fingerprint(_FpPage("https://apply.careers.microsoft.com/careers/apply?pid=1", "Thank you for applying"))
+assert_true(_fp_a == _fp_b, "same page fingerprint")
+assert_true(_fp_a != _fp_c, "changed body changes fingerprint")
 
 assert_true(frame_url_is_captcha_challenge("https://www.google.com/recaptcha/api2/bframe?x=1"), "bframe")
 assert_true(not frame_url_is_captcha_challenge("https://www.google.com/recaptcha/api2/anchor"), "hidden badge")
@@ -117,6 +144,17 @@ assert_true(
     )
     == "job_unavailable",
     "closed requisition",
+)
+
+assert_true(
+    auth_wall_reason(
+        "https://talent.cognizant.com/4681/login2?RRID=1",
+        "Sign in",
+        has_password=True,
+        has_file=False,
+    )
+    == "ats_login_wall",
+    "Cognizant talent login2 is a hard wall",
 )
 
 print("tools/ats/test_complete.py OK")
