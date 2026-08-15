@@ -346,7 +346,8 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
             }"""
         for fr in frames:
             try:
-                part = fr.evaluate(js, timeout=12000)
+                # Frame.evaluate has no timeout kwarg (TypeError was emptying every scan).
+                part = fr.evaluate(js)
             except Exception:
                 continue
             raw.extend(part or [])

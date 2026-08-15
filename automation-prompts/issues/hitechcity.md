@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Second careers pass extracted 0 jobs — Frame.evaluate(timeout=) TypeError skipped every frame | Remove invalid evaluate timeout kwarg; hang hosts still skipped so Goldman cannot starve the run |
 | Goldman Sachs higher.gs.com hung extract_job_links and starved remaining career portals | Skip hang-scan hosts + 12s evaluate timeout so Workday/iCIMS/Oracle still get applied |
 | Careers-only still launched WARP + LinkedIn auto-login (CAPTCHA + ERR_SOCKS on Workday) | HITECHCITY_CAREERS_ONLY skips WARP and LinkedIn auto-login so guest ATS uses direct IP |
 | Workday Create Account burned 390s then 0 applies when secret failed tenant complexity / empty /login | Fail-fast inputAlert + standalone /login; Create Account uses deterministic 12+ complexity password so guest Workday can submit |
