@@ -143,7 +143,7 @@ function skipTitleReason(title) {
   // Pure AI / data titles need .NET|C#|dotnet on the TITLE (skills laundry lists are noisy).
   // Naukri parity: AI Solution Architect + Data Engineering Manager (not only "data engineer").
   if (
-    /\b(ai\s+(?:solution\s+)?architect|ai\s+engineer|ml\s+engineer|genai|data\s+scientist|data\s+engineer(?:ing)?)\b/i.test(
+    /\b(ai\s+(?:specialist\s+)?(?:solution\s+)?architect|ai\s+engineer|ml\s+engineer|genai|data\s+scientist|data\s+engineer(?:ing)?)\b/i.test(
       t
     ) &&
     !hasDotNet(t, "")
@@ -159,7 +159,7 @@ function skipTitleReason(title) {
     return "infra/ops without .NET on title";
   // EXTRA_QUERIES Arch/Lead wave pulled non-software EM/Principal titles (2026-08-15).
   if (
-    /\b(facilities|electrical|mechanical|civil|structural|hvac|power\s+generation)\b/i.test(t) &&
+    /\b(facilities|electrical|mechanical|civil|structural|hvac|power\s+generation|wastewater|water)\b/i.test(t) &&
     !hasDotNet(t, "")
   )
     return "non-software engineering without .NET on title";

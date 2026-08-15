@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Engineering Manager Water and AI Specialist Solution Architect still applied after first filter pass | skip water/wastewater titles; AI Specialist Solution Architect in pure-AI skip |
 | EXTRA_QUERIES Arch/Lead wave applied Facilities/Electrical/Mechanical/Oracle Fusion/AI Solution/Data Engineering titles | skipTitleReason: non-software engineering, ops EM, Oracle Fusion/ERP, AI Solution Architect, data engineering (Naukri parity) |
 | .NET-only Raven queries already Applied so 0 new company-site inventory | EXTRA_QUERIES Arch/Lead wave always searched; completeExternalPage fail-fast no_ats_form |
 | Generic ATS loop timed out (ats_incomplete_or_cap) and Workday maintenance burned 6.5m | Use shared completeExternalPage; fail-fast job_unavailable on community.workday.com/maintenance |

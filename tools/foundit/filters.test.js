@@ -457,4 +457,32 @@ assert.strictEqual(
   "Hyd Application Architect without .NET skills laundry may still pass"
 );
 
+assert.strictEqual(
+  classifyJob({
+    jobId: 30,
+    title: "Engineering Manager, Water",
+    companyName: "Jacobs",
+    locations: [{ text: "Singapore | remote" }],
+    skills: [{ text: "Azure" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  false,
+  "Water/civil EM must skip"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 31,
+    title: "AI Specialist Solution Architect, Southeast Asia (Singapore)",
+    companyName: "Red Hat",
+    locations: [{ text: "Singapore | remote" }],
+    skills: [{ text: "Azure" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "pure AI/data without .NET on title",
+  "AI Specialist Solution Architect must skip"
+);
+
 console.log("filters.test.js OK");
