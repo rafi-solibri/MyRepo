@@ -97,10 +97,11 @@ function main() {
   // Home residential: INDEED_SKIP_WARP=1 → UC without proxy.
   if (process.env.INDEED_SKIP_UC_APPLY !== "1") {
     const uc = path.join(__dirname, "uc_daily_apply.py");
-    // Full inventory can take >15m (search + SmartApply questions per job).
+    // Full inventory: search + SmartApply + company-site ATS (up to ~390s each).
+    // 30m was killing the runner mid-inventory after a few ATS timeouts.
     const apply = runPython(
       [uc],
-      Number(process.env.INDEED_UC_TIMEOUT_MS || 1800000),
+      Number(process.env.INDEED_UC_TIMEOUT_MS || 5400000),
     );
     report.ucApplyExit = apply.status;
     const parsed = parseJsonTail(apply.stdout || "");

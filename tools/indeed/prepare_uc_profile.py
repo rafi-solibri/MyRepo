@@ -21,6 +21,9 @@ DEFAULT_SRC = Path(
 DEFAULT_DST = Path("/tmp/cursor/indeed-uc-hybrid")
 
 COPY_PATHS = [
+    # Root Local State holds Chrome's OSCrypt key. Without it, copied v10
+    # cookies cannot decrypt and Indeed paints anonymous "Get Started".
+    "Local State",
     "Default/Cookies",
     "Default/Cookies-journal",
     "Default/Login Data",
