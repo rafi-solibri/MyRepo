@@ -63,10 +63,12 @@ run_once() {
       ;;
     foundit)
       bash "$ROOT/scripts/preflight-portal-run.sh" foundit || return $?
+      bash "$ROOT/scripts/launch-chrome-cdp.sh" foundit || return $?
       node "$ROOT/tools/foundit/daily_apply.js" || return $?
       ;;
     cutshort)
       bash "$ROOT/scripts/preflight-portal-run.sh" cutshort || return $?
+      bash "$ROOT/scripts/launch-chrome-cdp.sh" cutshort || return $?
       node "$ROOT/tools/cutshort/daily_apply.js" || return $?
       ;;
     naukri)

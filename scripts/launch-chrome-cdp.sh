@@ -145,6 +145,14 @@ if [[ "$portal" == "indeed" ]]; then
     echo "Using INDEED_HTTP_PROXY for Chrome CDP (${INDEED_HTTP_PROXY})"
   fi
 elif [[ "$portal" == "linkedin" || "$portal" == "hitechcity" ]]; then
+  # Careers-only Hitech City: WARP SOCKS breaks Workday/Greenhouse hosts
+  # (ERR_SOCKS_CONNECTION_FAILED) and LinkedIn auto-login only burns CAPTCHA time.
+  if [[ "$portal" == "hitechcity" && "${HITECHCITY_CAREERS_ONLY:-}" =~ ^(1|true|yes)$ ]]; then
+    export LINKEDIN_SKIP_WARP="${LINKEDIN_SKIP_WARP:-1}"
+    export LINKEDIN_AUTO_LOGIN="${LINKEDIN_AUTO_LOGIN:-0}"
+    export CDP_LIVE_LOGIN_CHECK="${CDP_LIVE_LOGIN_CHECK:-0}"
+    echo "NOTE: HITECHCITY_CAREERS_ONLY — skip LinkedIn WARP + auto-login; career ATS uses direct IP."
+  fi
   if [[ "${LINKEDIN_SKIP_WARP:-}" == "1" ]]; then
     echo "NOTE: LINKEDIN_SKIP_WARP=1 — launching LinkedIn Chrome without WARP."
   elif [[ "$is_win" -eq 1 ]]; then

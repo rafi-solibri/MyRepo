@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| daily_apply connectOverCDP ECONNREFUSED when Chrome was not launched after preflight | run-portal-with-autofix launches Chrome CDP for foundit/cutshort/instahyre before apply |
 | Thailand/Singapore country-only inherited JD remote-first; underscore titles; SF-in-skills | hasSpecificPlace for non-India country; titleForMatch; Salesforce-in-skills without .NET on title |
 | Engineering Manager Water and AI Specialist Solution Architect still applied after first filter pass | skip water/wastewater titles; AI Specialist Solution Architect in pure-AI skip |
 | EXTRA_QUERIES Arch/Lead wave applied Facilities/Electrical/Mechanical/Oracle Fusion/AI Solution/Data Engineering titles | skipTitleReason: non-software engineering, ops EM, Oracle Fusion/ERP, AI Solution Architect, data engineering (Naukri parity) |

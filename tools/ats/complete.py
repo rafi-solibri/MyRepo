@@ -214,6 +214,38 @@ def ats_password() -> str:
     return ""
 
 
+def workday_compliant_password(raw: str) -> str:
+    """Deterministic Workday-safe password (12+, upper, lower, digit, special).
+
+    Same input always yields the same output so Sign In matches Create Account
+    across runs. If the secret already meets common tenant rules, return it.
+    """
+    pw = (raw or "").strip()
+    if (
+        len(pw) >= 12
+        and re.search(r"[A-Z]", pw)
+        and re.search(r"[a-z]", pw)
+        and re.search(r"[0-9]", pw)
+        and re.search(r"[^A-Za-z0-9]", pw)
+    ):
+        return pw
+    extra = ""
+    if not re.search(r"[A-Z]", pw):
+        extra += "A"
+    if not re.search(r"[a-z]", pw):
+        extra += "a"
+    if not re.search(r"[0-9]", pw):
+        extra += "1"
+    if not re.search(r"[^A-Za-z0-9]", pw):
+        extra += "!"
+    pw = pw + extra
+    if len(pw) < 12:
+        pw = (pw + "Aa1!")[:12] if len(pw) + 4 >= 12 else pw + "Aa1!"
+        while len(pw) < 12:
+            pw += "x"
+    return pw
+
+
 def is_hard_ats_wall(reason: str | None) -> bool:
     """True only for walls that will repeat for the same company this run.
 
@@ -256,6 +288,18 @@ def is_hard_ats_wall(reason: str | None) -> bool:
 
 def is_submitted_text(text: str | None) -> bool:
     return bool(SUBMITTED_RE.search(text or ""))
+
+
+ALREADY_APPLIED_RE = re.compile(
+    r"you have already applied|already applied to this (job|position|requisition)|"
+    r"you previously applied|application is already (in progress|submitted)|"
+    r"you applied for this job|this requisition is already",
+    re.I,
+)
+
+
+def looks_already_applied(page) -> bool:
+    return bool(ALREADY_APPLIED_RE.search(_body(page, 4000)))
 
 
 def looks_like_apply_cta(label: str | None) -> bool:
@@ -705,6 +749,8 @@ def fill_labeled_fields(page) -> None:
             continue
         if not text or len(text) > 90:
             continue
+        if re.search(r"robots only|beecatcher|do not enter if you.re human", text, re.I):
+            continue
         for pat, val in pairs:
             if not re.search(pat, text, re.I):
                 continue
@@ -795,6 +841,9 @@ def click_advance(page) -> bool:
             if el.count() and el.is_visible() and el.is_enabled():
                 label = ((el.inner_text() or "") + " " + (el.get_attribute("aria-label") or "")).lower()
                 if re.search(r"sign in with (google|microsoft|linkedin|apple)", label):
+                    continue
+                # Password-rule reject: do not keep submitting Create Account.
+                if "createAccountSubmit" in sel and workday_password_alert(page):
                     continue
                 el.click(timeout=3000, force=True)
                 _sleep(1.6)
@@ -897,14 +946,41 @@ def _type_automation(page, automation_id: str, value: str) -> bool:
 
 
 def workday_password_rejected(text: str | None) -> bool:
-    """True when Workday Create Account rejects the typed password rules."""
+    """True when Workday Create Account rejects the typed password rules.
+
+    Do not match the static "Password Requirements:" help list — only the
+    live error ("Password must include" / "does not meet the password").
+    """
     return bool(
         re.search(
-            r"password must include|does not meet (the )?password|password requirements",
+            r"password must include|does not meet (the )?password|"
+            r"error:\s*password|password (is )?too weak",
             text or "",
             re.I,
         )
     )
+
+
+def workday_on_standalone_login(url: str | None) -> bool:
+    """True for Workday /login (not the in-flow Create Account/apply steps)."""
+    return bool(re.search(r"myworkdayjobs\.com/.+/login(?:\?|$)", url or "", re.I))
+
+
+def workday_password_alert(page) -> bool:
+    """True when the live Create Account form shows a password-rule error.
+
+    Workday progress-bar chrome often exceeds a 1500-char body slice, so the
+    visible ``inputAlert`` (or a longer body) must be checked — otherwise
+    complete_workday burns the 390s cap re-clicking Create Account.
+    """
+    try:
+        alert = page.locator("[data-automation-id='inputAlert']").first
+        if alert.count() and alert.is_visible():
+            if workday_password_rejected(alert.inner_text(timeout=800) or ""):
+                return True
+    except Exception:
+        pass
+    return workday_password_rejected(_body(page, 8000))
 
 
 def workday_open_apply(page) -> None:
@@ -967,33 +1043,49 @@ def workday_auth(page) -> str | None:
         return None
     if not password:
         return "ats_password_missing"
+    create_password = workday_compliant_password(password)
     # Prefer Sign In — prior runs often already created the tenant account.
     # Create Account is what Solera rejects on password-complexity rules.
+    chose_sign_in = False
     try:
         sign = page.locator(
             "[data-automation-id='signInLink'], [data-automation-id='utilityButtonSignIn']"
         ).first
         if sign.count() and sign.is_visible():
             sign.click(force=True)
-            _sleep(1.0)
+            chose_sign_in = True
+            # Wait for Sign In form — do not bounce back to Create Account.
+            for _ in range(8):
+                _sleep(0.35)
+                try:
+                    if page.locator("[data-automation-id='signInSubmitButton']").first.is_visible():
+                        break
+                except Exception:
+                    pass
     except Exception:
         pass
     verify = page.locator("[data-automation-id='verifyPassword']").first
     try:
         if not (verify.count() and verify.is_visible()):
             sign_in = page.locator("[data-automation-id='signInSubmitButton']").first
-            if not (sign_in.count() and sign_in.is_visible()):
+            if not (sign_in.count() and sign_in.is_visible()) and not chose_sign_in:
                 create = page.locator("[data-automation-id='createAccountLink']").first
                 if create.count() and create.is_visible():
                     create.click(force=True)
                     _sleep(1.2)
     except Exception:
         pass
-    _type_automation(page, "email", email)
-    _type_automation(page, "password", password)
+    creating = False
     try:
-        if page.locator("[data-automation-id='verifyPassword']").first.is_visible():
-            _type_automation(page, "verifyPassword", password)
+        creating = page.locator("[data-automation-id='verifyPassword']").first.is_visible()
+    except Exception:
+        creating = False
+    use_pw = create_password if creating else password
+    _type_automation(page, "email", email)
+    _type_automation(page, "password", use_pw)
+    try:
+        if creating:
+            _type_automation(page, "verifyPassword", create_password)
             tick_consents(page)
             submit = page.locator(
                 "[data-automation-id='createAccountSubmitButton'], button:has-text('Create Account')"
@@ -1017,23 +1109,45 @@ def workday_auth(page) -> str | None:
         _type_automation(page, "password", password)
         _click_text(page, ("Sign In",))
         _sleep(2.0)
-    if workday_password_rejected(_body(page, 1500)):
-        # Tenant complexity (Solera: uppercase+numeric) rejects the stored secret.
-        # Try Sign In once, then fail-fast — do not burn the 390s cap.
+    if workday_password_alert(page):
+        # Raw secret failed complexity — retry Create Account with compliant
+        # password, then Sign In. Do not burn the 390s cap looping Create.
         try:
-            sign = page.locator(
-                "[data-automation-id='signInLink'], [data-automation-id='utilityButtonSignIn']"
-            ).first
-            if sign.count() and sign.is_visible():
-                sign.click(force=True)
-                _sleep(1.2)
-                _type_automation(page, "email", email)
-                _type_automation(page, "password", password)
-                _click_text(page, ("Sign In",))
-                _sleep(2.0)
+            if page.locator("[data-automation-id='verifyPassword']").first.is_visible():
+                _type_automation(page, "password", create_password)
+                _type_automation(page, "verifyPassword", create_password)
+                tick_consents(page)
+                submit = page.locator(
+                    "[data-automation-id='createAccountSubmitButton']"
+                ).first
+                if submit.count() and submit.is_visible():
+                    submit.click(force=True)
+                    _sleep(2.8)
         except Exception:
             pass
-        if workday_password_rejected(_body(page, 1500)) or page.locator(
+        if workday_password_alert(page):
+            try:
+                sign = page.locator(
+                    "[data-automation-id='signInLink'], [data-automation-id='utilityButtonSignIn']"
+                ).first
+                if sign.count() and sign.is_visible():
+                    sign.click(force=True)
+                    _sleep(1.2)
+                    _type_automation(page, "email", email)
+                    _type_automation(page, "password", password)
+                    _click_text(page, ("Sign In",))
+                    _sleep(2.0)
+                    if re.search(
+                        r"wrong email address or password|incorrect email or password",
+                        _body(page, 1500),
+                        re.I,
+                    ) and create_password != password:
+                        _type_automation(page, "password", create_password)
+                        _click_text(page, ("Sign In",))
+                        _sleep(2.0)
+            except Exception:
+                pass
+        if workday_password_alert(page) and page.locator(
             "[data-automation-id='createAccountSubmitButton']"
         ).count():
             return "ats_login_wall"
@@ -1159,18 +1273,45 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
     start = time.time()
     if is_unavailable_text(f"{getattr(page, 'url', '')}\n{_body(page, 1500)}"):
         return "skipped", "job_unavailable"
+    if looks_already_applied(page):
+        return "skipped", "already_applied"
     workday_open_apply(page)
     if looks_submitted(page):
         return "applied", "confirmation"
+    if looks_already_applied(page):
+        return "skipped", "already_applied"
     auth = workday_auth(page)
     if auth:
         return "blocked", auth
-    if workday_password_rejected(_body(page, 1500)):
+    if workday_password_alert(page):
         return "blocked", "ats_login_wall"
+    try:
+        login_url = getattr(page, "url", "") or ""
+    except Exception:
+        login_url = ""
+    if workday_on_standalone_login(login_url):
+        # Sign In navigated to /login. One more credential pass, then fail-fast
+        # so empty Sign In + click_advance cannot burn the 390s cap.
+        auth = workday_auth(page)
+        if auth:
+            return "blocked", auth
+        try:
+            login_url = getattr(page, "url", "") or ""
+        except Exception:
+            login_url = ""
+        if workday_on_standalone_login(login_url) or workday_password_alert(page):
+            return "blocked", "ats_login_wall"
     stuck = 0
     while time.time() - start < time_cap_s and stuck < 10:
         if looks_submitted(page):
             return "applied", "confirmation"
+        if workday_password_alert(page):
+            return "blocked", "ats_login_wall"
+        try:
+            if workday_on_standalone_login(getattr(page, "url", "") or ""):
+                return "blocked", "ats_login_wall"
+        except Exception:
+            pass
         wall = blocked_wall(page)
         if wall == "CAPTCHA/bot wall":
             return "blocked", wall
@@ -1302,6 +1443,8 @@ def complete_ats(page, time_cap_s: int | None = None) -> tuple[str, str]:
     cap = int(time_cap_s or DEFAULT_TIME_CAP_S)
     if looks_submitted(page):
         return "applied", "confirmation"
+    if looks_already_applied(page):
+        return "skipped", "already_applied"
     if visible_captcha_challenge(page):
         return "blocked", "CAPTCHA/bot wall"
     flags = page_flags(page)

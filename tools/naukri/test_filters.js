@@ -228,5 +228,11 @@ assert.strictEqual(
   "Solutions Architect .NET",
   "homepage card: role before location before CTA"
 );
+const { workdayCompliantPassword } = require("./workday_apply");
+assert.strictEqual(workdayCompliantPassword("GoodPass123!"), "GoodPass123!");
+const weak = workdayCompliantPassword("short");
+assert.ok(weak.length >= 12);
+assert.ok(/[A-Z]/.test(weak) && /[0-9]/.test(weak) && /[^A-Za-z0-9]/.test(weak));
+assert.strictEqual(workdayCompliantPassword("short"), workdayCompliantPassword("short"));
 console.log("resume_and_filters self-test OK");
 

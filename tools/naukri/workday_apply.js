@@ -30,6 +30,32 @@ if (PASS) {
   process.env.ATS_PASSWORD = process.env.ATS_PASSWORD || PASS;
 }
 
+function workdayCompliantPassword(raw) {
+  let pw = String(raw || "").trim();
+  if (
+    pw.length >= 12 &&
+    /[A-Z]/.test(pw) &&
+    /[a-z]/.test(pw) &&
+    /[0-9]/.test(pw) &&
+    /[^A-Za-z0-9]/.test(pw)
+  ) {
+    return pw;
+  }
+  let extra = "";
+  if (!/[A-Z]/.test(pw)) extra += "A";
+  if (!/[a-z]/.test(pw)) extra += "a";
+  if (!/[0-9]/.test(pw)) extra += "1";
+  if (!/[^A-Za-z0-9]/.test(pw)) extra += "!";
+  pw += extra;
+  if (pw.length < 12) {
+    pw = (pw + "Aa1!").slice(0, Math.max(12, pw.length));
+    while (pw.length < 12) pw += "x";
+  }
+  return pw;
+}
+
+const CREATE_PASS = workdayCompliantPassword(PASS);
+
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
@@ -250,8 +276,8 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
 
   async function submitCreateAccount() {
     await typeInto(page, "[data-automation-id='email']", EMAIL);
-    await typeInto(page, "[data-automation-id='password']", PASS);
-    await typeInto(page, "[data-automation-id='verifyPassword']", PASS);
+    await typeInto(page, "[data-automation-id='password']", CREATE_PASS);
+    await typeInto(page, "[data-automation-id='verifyPassword']", CREATE_PASS);
     const consented = await ensureCreateAccountConsent();
     if (!consented) {
       // Do not burn submit without consent — Workday silently stays on Create Account.
@@ -837,5 +863,6 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
 module.exports = {
   completeWorkdayApply,
   isSubmittedText,
+  workdayCompliantPassword,
   EMAIL,
 };
