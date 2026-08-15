@@ -699,7 +699,7 @@ def fill_common_questions(sb) -> None:
                 const hit =
                   (want === 'yes' && /\\byes\\b|yep|true|agree|available/.test(lab) && !/\\bno\\b/.test(lab)) ||
                   (want === 'male' && /\\bmale\\b/.test(lab) && !/female/.test(lab)) ||
-                  (want === 'Immediate' && /immediate|0\\s*day|serving|less than|currently serving/.test(lab)) ||
+                  (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than|currently serving|serving notice/.test(lab)) ||
                   (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not|do not want/.test(lab));
                 if (hit) {
                   try { r.click(); } catch (e) {}
@@ -712,7 +712,7 @@ def fill_common_questions(sb) -> None:
                   const t = (opt.text||'').toLowerCase();
                   if (
                     (want === 'yes' && /\\byes\\b/.test(t)) ||
-                    (want === 'Immediate' && /immediate|0\\s*day|0-15|less than/.test(t)) ||
+                    (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than/.test(t)) ||
                     (want === 'Hyderabad' && /hyderabad/.test(t)) ||
                     (want === '52' && /\\b52\\b|50-55|45-55/.test(t)) ||
                     (want === '65' && /\\b65\\b|60-70|60-65/.test(t)) ||
@@ -746,7 +746,7 @@ def fill_common_questions(sb) -> None:
                 const t = ((el.innerText||'') + ' ' + (el.getAttribute('aria-label')||'')).trim().toLowerCase();
                 if (!t || t.length > 80) continue;
                 if (want === 'yes' && /\\byes\\b/.test(t) && !/\\bno\\b/.test(t)) { el.click(); return true; }
-                if (want === 'Immediate' && /immediate|0\\s*day/.test(t)) { el.click(); return true; }
+                if (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15/.test(t)) { el.click(); return true; }
                 if (want === 'B.Tech' && /b\\.?\\s*tech|bachelor|b\\.e\\b|undergraduate|master'?s?|m\\.?\\s*tech/.test(t)
                     && !/select an option|highest degree/.test(t)) {
                   el.click(); return true;
