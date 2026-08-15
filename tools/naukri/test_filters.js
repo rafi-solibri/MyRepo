@@ -161,6 +161,18 @@ assert.strictEqual(
   "Cyber Security Architect must skip"
 );
 assert.strictEqual(
+  shouldSkipTitle(
+    "Manager-Tech Consulting-FS-CNS-TC-Cyber Architecture, OT & Engineering"
+  ),
+  true,
+  "Cyber Architecture / OT consulting must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Senior Technical Consultant D365"),
+  true,
+  "D365 / Dynamics abbreviation must skip"
+);
+assert.strictEqual(
   shouldSkipTitle("TOSCA Automation Architect"),
   true,
   "TOSCA / test automation architect must skip"

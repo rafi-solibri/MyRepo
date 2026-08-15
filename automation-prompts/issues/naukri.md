@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-08-15 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| False-attempt EY Cyber Architecture + Ray D365 (dynamics skip missed D365 abbr) | resume_and_filters.js: skip D365 + cyber/cyber architecture; test_filters.js coverage |
+
+
 ## 2026-08-14 (home)
 
 | Issue | Fix |
