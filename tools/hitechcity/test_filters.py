@@ -39,6 +39,7 @@ def test_title_ok():
     assert CAREERS_TITLE_SKIP.search("Staff ASIC Design Engineer")
     assert CAREERS_TITLE_SKIP.search("Principal Silicon Design Engineer")
     assert CAREERS_TITLE_SKIP.search("Principal Product Design Manager")
+    assert CAREERS_TITLE_SKIP.search("Artificial Intelligence Engineer - Senior Manager")
     assert JD_WRONG_STACK.search(
         "designing and implementing Salesforce solutions ... SFDC Development and Customization"
     )

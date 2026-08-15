@@ -27,6 +27,7 @@ TITLE_BLACKLIST = re.compile(
     r"solutions engineer|presales|pre-sales|"
     r"\binfor\b|\berp\b.?primary|dft architect|\beda\b|"
     r"ai compiler|gen[- ]?ai architect|ai/?\s*ml architect|ai architect(?!.*\.net)|"
+    r"artificial\s+intelligence\s+engineer|"
     r"ai technical (lead|architect)|"
     r"quality engineering|quality assurance|qa engineer|\bsdet\b|"
     r"netsuite|nice cxone",

@@ -11,6 +11,11 @@ assert.strictEqual(shouldSkipTitle("Solution Architect .NET"), false);
 assert.strictEqual(shouldSkipTitle("QA Engineer"), true);
 assert.strictEqual(shouldSkipTitle("AI Architect"), true, "pure AI title must skip");
 assert.strictEqual(
+  shouldSkipTitle("Artificial Intelligence Engineer - Senior Manager"),
+  true,
+  "Artificial Intelligence Engineer without .NET must skip"
+);
+assert.strictEqual(
   shouldSkipTitle("AI Architect .NET"),
   false,
   "AI Architect with .NET on title OK"
