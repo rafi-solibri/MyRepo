@@ -576,9 +576,15 @@ def fill_common_questions(sb) -> None:
               if (/current.*(ctc|salary|compensation|pay)|ctc.*current|present.*ctc|current.*package|current salary/.test(t)) return '52';
               if (/expected.*(ctc|salary|compensation|pay)|ctc.*expected|desired.*salary|expected.*package/.test(t)) return '65';
               if (/notice|joining|how soon|availability|immediate|serve notice/.test(t)) return 'Immediate';
-              if (/total.*(experience|exp)|years of experience|overall experience|relevant experience/.test(t)) return '14';
+              if (/full\\s*time or contract|fte or c-?h|contract or full/.test(t)) return 'Full time';
+              if (/rate\\s*\\/?\\s*hr|hourly rate|rate per hour|contract.*rate/.test(t)) return '3500';
+              if (/are you (experienced?|proficient|familiar|skilled)|have you (designed|implemented|worked|used)/.test(t)
+                  && !/how many|years of|years'/.test(t)) {
+                return 'yes';
+              }
+              if (/total.*(experience|exp)|years of experience|years'\\s*experience|overall experience|relevant experience/.test(t)) return '14';
               // Years with a specific stack (Blazor / FHIR / .NET / Angular / Azure / C#).
-              if (/how many years|years? (of |with |in )?(exp|experience)?|experience (with|in|on)/.test(t)
+              if (/how many years|years'? (of |with |in )?(exp|experience)|years'\\s*experience/.test(t)
                   && /(\\.net|c#|asp\\.\\s*net|blazor|fhir|angular|azure|react|microservices|architect|lead|manag)/.test(t)) {
                 return '10';
               }
@@ -633,6 +639,8 @@ def fill_common_questions(sb) -> None:
                     (want === '10' && /\\b10\\b|8-10|10\\+|8\\+|7\\+|5\\+/.test(t)) ||
                     (want === 'Expert' && /expert|advanced|proficient|high/.test(t)) ||
                     (want === 'B.Tech' && /b\\.?tech|bachelor|b\\.e\\b|undergraduate/.test(t)) ||
+                    (want === 'Full time' && /full\\s*time|fte|permanent/.test(t)) ||
+                    (want === '3500' && /3500|3000|2500-4000/.test(t)) ||
                     (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not/.test(t))
                   ) {
                     sel.value = opt.value;
@@ -783,8 +791,19 @@ def fill_common_questions(sb) -> None:
                 if (named && setNative(el, named)) answered += 1;
                 continue;
               }
-              const w = wantFromText(lab) || (/how many|years|experience/.test(lab) ? '14' : (/salary|ctc|lpa|package/.test(lab) ? '65' : 'Yes'));
-              if (setNative(el, w)) answered += 1;
+              if (/rate\\s*\\/?\\s*hr|hourly|per hour/.test(lab)) {
+                if (setNative(el, '3500')) answered += 1;
+                continue;
+              }
+              if (/full\\s*time|contract role|fte/.test(lab) && !/rate|ctc|salary/.test(lab)) {
+                if (setNative(el, 'Full time')) answered += 1;
+                continue;
+              }
+              const w = wantFromText(lab)
+                || (/how many years|years of experience|years'\\s*experience/.test(lab) ? '14'
+                  : (/salary|ctc|lpa|package/.test(lab) ? '65'
+                    : (/are you |willing |able to |have you /.test(lab) ? 'Yes' : null)));
+              if (w && setNative(el, w)) answered += 1;
             }
             return {answered, url: location.href};
             """

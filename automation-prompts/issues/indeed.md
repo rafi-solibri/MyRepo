@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| SmartApply put Yes in numeric rate/hr and 14 in yes/no Azure-experience questions | Map FTE vs contract + hourly rate 3500; require how-many-years before numeric experience; yes/no for are-you-experienced |
 | SmartApply Full name got Yes; education/years custom dropdowns stayed Select an option | Map full name; never Yes-fallback name fields; open comboboxes and pick B.Tech / 10+ years |
 | SmartApply DOB fields got Yes fallback and failed DD/MM/YYYY validation | Fill known DOB 16/01/1989; skip PAN/Aadhaar invent |
 | CF-cleared homepage stayed anonymous Get Started despite valid Passport cookies | After Turnstile, open secure.indeed.com/settings/account then return home so Welcome paints; copy Local State into hybrid UC profile |
