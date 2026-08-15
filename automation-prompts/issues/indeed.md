@@ -4,6 +4,8 @@
 
 | Issue | Fix |
 | --- | --- |
+| Same Indeed jk reprocessed via unique pagead/clk hrefs (BytesEdge ATS 11x) | Dedupe on jk= from URL, not raw href |
+| SmartApply education combobox left on Select an option (Choose an option to continue) | Open education combobox and pick B.Tech/Bachelor; recover validation wall |
 | India homepage Get Started treated as signed-out after CF (false indeed_login_required; account settings + SERP Messages were logged in) | Confirm session on secure.indeed.com/settings/account; do not exit 5 on marketing-home Get Started copy |
 | Indeed applystart/rc/clk still counted as company-site (did_not_leave_indeed) and Easy Apply 'external' credited a click | Follow applystart hops; complete_ats_url waits off Indeed; finish_company_site on both company-site click and Easy Apply flip; confirmation only |
 | Company-site clicks counted as external without ATS submit (28 opened / 0 completed) | complete_external_ats via Playwright; only count confirmation; do not credit external_opened |

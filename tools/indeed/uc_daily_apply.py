@@ -453,6 +453,20 @@ def looks_anonymous_marketing_home(body: str) -> bool:
     ) and not looks_signed_in(body)
 
 
+def job_dedupe_key(href: str, jk: str = "") -> str:
+    """Stable key so the same listing is not Easy-Applied / ATS-opened twice.
+
+    SERP cards often omit data-jk and use unique pagead/clk hrefs; extract jk=
+    from the URL so BytesEdge-style repeats do not burn the ATS time cap.
+    """
+    if jk:
+        return jk.strip()
+    m = re.search(r"[?&]jk=([a-f0-9]+)", href or "", re.I)
+    if m:
+        return m.group(1)
+    return (href or "").split("?")[0]
+
+
 def already_applied(body: str, url: str = "") -> bool:
     """True when the job-view page shows this listing was already submitted."""
     b = (body or "").lower()
@@ -643,7 +657,7 @@ def fill_common_questions(sb) -> None:
               if (/linkedin(\\.com)?|profile url|portfolio url/.test(t)) {
                 return 'https://www.linkedin.com/in/rafi-ahmed';
               }
-              if (/highest (degree|education|qualification)|education level|degree obtained|university|college/.test(t)) {
+              if (/highest (degree|education|qualification)|degree of education|education level|degree obtained|university|college/.test(t)) {
                 return 'B.Tech';
               }
               if (/current.*(ctc|salary|compensation|pay)|ctc.*current|present.*ctc|current.*package|current salary/.test(t)) return '52';
@@ -705,7 +719,7 @@ def fill_common_questions(sb) -> None:
                     (want === '14' && /\\b14\\b|12-15|10\\+/.test(t)) ||
                     (want === '10' && /\\b10\\b|8-10|10\\+|8\\+|7\\+|5\\+/.test(t)) ||
                     (want === 'Expert' && /expert|advanced|proficient|high/.test(t)) ||
-                    (want === 'B.Tech' && /b\\.?tech|bachelor|b\\.e\\b|undergraduate/.test(t)) ||
+                    (want === 'B.Tech' && /b\\.?tech|bachelor|b\\.e\\b|undergraduate|master|m\\.?tech/.test(t)) ||
                     (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not/.test(t))
                   ) {
                     sel.value = opt.value;
@@ -719,12 +733,24 @@ def fill_common_questions(sb) -> None:
                 if (want === 'decline') continue;
                 if (want) { setNative(el, want); return true; }
               }
-              // Custom listbox / button options
+              // Custom listbox / button options (Indeed education is often a combobox).
+              if (want === 'B.Tech') {
+                for (const btn of root.querySelectorAll('button, [role=combobox], [aria-haspopup=listbox]')) {
+                  const t = ((btn.innerText||'') + ' ' + (btn.getAttribute('aria-label')||'')).toLowerCase();
+                  if (/select an option|choose an option|^select$/.test(t) || btn.getAttribute('aria-expanded') === 'false') {
+                    try { btn.click(); } catch (e) {}
+                  }
+                }
+              }
               for (const el of root.querySelectorAll('button, [role=option], li, label, span')) {
                 const t = ((el.innerText||'') + ' ' + (el.getAttribute('aria-label')||'')).trim().toLowerCase();
                 if (!t || t.length > 80) continue;
                 if (want === 'yes' && /\\byes\\b/.test(t) && !/\\bno\\b/.test(t)) { el.click(); return true; }
                 if (want === 'Immediate' && /immediate|0\\s*day/.test(t)) { el.click(); return true; }
+                if (want === 'B.Tech' && /b\\.?\\s*tech|bachelor|b\\.e\\b|undergraduate|master'?s?|m\\.?\\s*tech/.test(t)
+                    && !/select an option|highest degree/.test(t)) {
+                  el.click(); return true;
+                }
                 if (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not/.test(t)) {
                   el.click(); return true;
                 }
@@ -918,11 +944,22 @@ def tick_required_agreements(sb) -> dict:
               .find(e => /choose an option to continue/i.test(e.innerText || ''));
             if (err) {
               const root = err.closest('fieldset, [class*="question"], [class*="Question"], li, section, form, div') || document.body;
+              const ctx = (root.innerText || '').toLowerCase();
               const opt = [...root.querySelectorAll('label, button, [role=option], [role=radio], [role=checkbox], input')]
                 .find(e => /^agree\b|^yes\b/i.test(((e.innerText || '') + ' ' + (e.getAttribute('aria-label') || '') + ' ' + (e.value || '')).trim()));
               if (opt) {
                 const box = associatedBox(opt) || opt;
                 if (!isOn(box)) tick(box, 'validation-agree');
+              }
+              if (/education|degree|qualification/.test(ctx)) {
+                const combo = [...root.querySelectorAll('button, [role=combobox], [aria-haspopup=listbox]')]
+                  .find(e => /select an option|choose an option|^select$/i.test((e.innerText || '') + ' ' + (e.getAttribute('aria-label') || '')));
+                if (combo) { try { combo.click(); } catch (e) {} }
+                const deg = [...document.querySelectorAll('[role=option], li, button, label')]
+                  .find(e => /b\.?\s*tech|bachelor|b\.e\b|undergraduate|master/i.test((e.innerText || '').trim())
+                    && (e.innerText || '').trim().length < 60
+                    && !/select an option|highest degree/i.test(e.innerText || ''));
+                if (deg) { try { deg.click(); } catch (e) {} }
               }
             }
             return {clicked, url: location.href};
@@ -2453,7 +2490,7 @@ def main() -> int:
                     break
                 if report["counts"]["seen"] >= MAX_SEEN:
                     break
-                key = jk or href.split("?")[0]
+                key = job_dedupe_key(href, jk)
                 if key in seen_keys:
                     continue
                 seen_keys.add(key)

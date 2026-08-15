@@ -11,6 +11,7 @@ if str(ROOT) not in sys.path:
 
 from tools.indeed.uc_daily_apply import (  # noqa: E402
     already_applied,
+    job_dedupe_key,
     looks_anonymous_marketing_home,
     looks_login_wall,
     looks_signed_in,
@@ -93,6 +94,12 @@ def test_skip_salesforce_service_cloud_title():
     ) is None
 
 
+def test_job_dedupe_key_extracts_jk():
+    assert job_dedupe_key("https://in.indeed.com/viewjob?jk=e9bbb7477d605a5b&from=serp", "") == "e9bbb7477d605a5b"
+    assert job_dedupe_key("https://in.indeed.com/pagead/clk?mo=r&jk=e9bbb7477d605a5b", "") == "e9bbb7477d605a5b"
+    assert job_dedupe_key("https://in.indeed.com/viewjob?jk=abc", "cardjk") == "cardjk"
+
+
 def test_already_applied_job_view_only():
     assert already_applied("You applied to this job on 12 Aug", "https://in.indeed.com/viewjob?jk=abc")
     assert already_applied("You have already applied for this position", "https://in.indeed.com/viewjob?jk=abc")
@@ -140,6 +147,7 @@ if __name__ == "__main__":
     test_skip_title_not_target()
     test_enterprise_system_architect_ok()
     test_skip_salesforce_service_cloud_title()
+    test_job_dedupe_key_extracts_jk()
     test_already_applied_job_view_only()
     test_india_home_get_started_is_not_login_proof()
     test_account_settings_and_serp_are_signed_in()
