@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| SmartApply full name got Yes leftover; years/education combobox stayed Select an option | map full name; pick B.Tech/10+ years on custom listboxes; FTE/rate/reason-for-change; no Yes fallback on identity fields |
 | CF-cleared homepage stayed anonymous Get Started (false indeed_login_required) despite valid Passport cookies | warm Passport via secure.indeed.com/settings/account then return home; copy Local State into hybrid UC profile |
 | Indeed applystart/rc/clk still counted as company-site (did_not_leave_indeed) and Easy Apply 'external' credited a click | Follow applystart hops; complete_ats_url waits off Indeed; finish_company_site on both company-site click and Easy Apply flip; confirmation only |
 | Company-site clicks counted as external without ATS submit (28 opened / 0 completed) | complete_external_ats via Playwright; only count confirmation; do not credit external_opened |
