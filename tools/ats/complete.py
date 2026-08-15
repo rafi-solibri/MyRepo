@@ -1476,7 +1476,14 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
             return "skipped", "job_unavailable"
         wall = blocked_wall(page)
         if wall == "CAPTCHA/bot wall":
-            return "blocked", wall
+            try:
+                from tools.ats.captcha_solve import hcaptcha_token_present, try_clear_hcaptcha
+                if hcaptcha_token_present(page) or try_clear_hcaptcha(page):
+                    wall = None
+                else:
+                    return "blocked", wall
+            except Exception:
+                return "blocked", wall
         if wall in ("job_closed", "job_unavailable"):
             return "skipped", wall
         if wall == "ats_login_wall":
@@ -1511,6 +1518,69 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
     return "blocked", "external_incomplete_or_timeout"
 
 
+def icims_active_frame(page):
+    """Prefer the in-iframe apply/login document over Hyland marketing chrome."""
+    try:
+        frames = list(getattr(page, "frames", []) or [])
+    except Exception:
+        frames = []
+    for fr in frames:
+        u = getattr(fr, "url", "") or ""
+        if re.search(r"icims\.com/jobs/\d+", u, re.I) and (
+            "in_iframe=1" in u or "/login" in u or "mode=apply" in u
+        ):
+            return fr
+    return page
+
+
+def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
+    """Click iframe Apply, clear hCaptcha (checkbox or CapSolver/2Captcha), then fill."""
+    from tools.ats.captcha_solve import (
+        captcha_solver_configured,
+        try_clear_hcaptcha,
+    )
+
+    prefer_icims_apply(page)
+    _sleep(1.6)
+    target = icims_active_frame(page)
+    email = ats_email()
+    if email:
+        try:
+            box = target.locator(
+                "input[type='email'], input[name*='email' i], input[id*='email' i]"
+            ).first
+            if box.count():
+                box.fill(email, timeout=4000)
+                _sleep(0.4)
+        except Exception:
+            pass
+    try:
+        acc = target.get_by_text(re.compile(r"^I accept$", re.I)).first
+        if acc.count() and acc.is_visible():
+            acc.click(timeout=2500)
+            _sleep(0.6)
+    except Exception:
+        pass
+    if icims_hcaptcha_login(page) or visible_captcha_challenge(page):
+        cleared = try_clear_hcaptcha(page)
+        if not cleared:
+            if not captcha_solver_configured():
+                return "blocked", "captcha_solver_key_missing"
+            return "blocked", "CAPTCHA/bot wall"
+        try:
+            _click_text(
+                target,
+                ("Continue", "Next", "Submit", "I accept", "Apply"),
+            )
+            _sleep(1.5)
+        except Exception:
+            pass
+    if looks_submitted(page) or looks_submitted(target):
+        return "applied", "confirmation"
+    remaining = max(30, int(time_cap_s) - 5)
+    return complete_generic(page, remaining)
+
+
 def complete_ats(page, time_cap_s: int | None = None) -> tuple[str, str]:
     """Fill + submit the current ATS page. Returns (status, reason)."""
     cap = int(time_cap_s or DEFAULT_TIME_CAP_S)
@@ -1518,10 +1588,21 @@ def complete_ats(page, time_cap_s: int | None = None) -> tuple[str, str]:
         return "applied", "confirmation"
     if looks_already_applied(page):
         return "skipped", "already_applied"
-    if visible_captcha_challenge(page):
-        return "blocked", "CAPTCHA/bot wall"
     flags = page_flags(page)
     host = classify_ats_host(flags["url"])
+    icims_url = bool(re.search(r"icims\.com/jobs/\d+", flags["url"], re.I))
+    if not icims_url:
+        try:
+            icims_url = any(
+                re.search(r"icims\.com/jobs/\d+", getattr(fr, "url", "") or "", re.I)
+                for fr in getattr(page, "frames", []) or []
+            )
+        except Exception:
+            icims_url = False
+    if icims_url:
+        return complete_icims(page, cap)
+    if visible_captcha_challenge(page):
+        return "blocked", "CAPTCHA/bot wall"
     if host == "unavailable" or is_unavailable_text(f"{flags['url']}\n{flags['text']}"):
         return "skipped", "job_unavailable"
     if host == "sso":
@@ -1544,19 +1625,6 @@ def complete_ats(page, time_cap_s: int | None = None) -> tuple[str, str]:
         return "blocked", wall
     if host == "workday" or flags["has_wd"]:
         return complete_workday(page, cap)
-    icims_url = bool(re.search(r"icims\.com/jobs/\d+", flags["url"], re.I))
-    if not icims_url:
-        try:
-            icims_url = any(
-                re.search(r"icims\.com/jobs/\d+", getattr(fr, "url", "") or "", re.I)
-                for fr in getattr(page, "frames", []) or []
-            )
-        except Exception:
-            icims_url = False
-    if icims_url:
-        prefer_icims_apply(page)
-        if icims_hcaptcha_login(page) or visible_captcha_challenge(page):
-            return "blocked", "CAPTCHA/bot wall"
     if is_brochure_or_dead_end(
         flags["url"],
         flags["text"],
