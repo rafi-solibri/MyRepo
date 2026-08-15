@@ -4,6 +4,8 @@
 
 | Issue | Fix |
 | --- | --- |
+| SmartApply put Yes into Date of birth / PAN and stalled on required employer questions | Fill DOB 16/01/1989 and title Mr.; never invent PAN/Aadhaar; stop defaulting leftover required text to Yes |
+| UC CF cleared but India Get Started home false indeed_login_required (Passport cookies present; Local State not copied so v10 cookies could not decrypt) | Copy Local State into UC hybrid profile; restore session via Sign-in/account/myjobs; only exit login_required on a real Sign-in wall |
 | applystart/rc/clk hops returned did_not_leave_indeed after 18s wait; company-site apply lost Passport session | extract hop dest from continueUrl/meta/outbound apply; warm_passport_session via secure.indeed.com/settings/account |
 | Indeed applystart/rc/clk still counted as company-site (did_not_leave_indeed) and Easy Apply 'external' credited a click | Follow applystart hops; complete_ats_url waits off Indeed; finish_company_site on both company-site click and Easy Apply flip; confirmation only |
 | Company-site clicks counted as external without ATS submit (28 opened / 0 completed) | complete_external_ats via Playwright; only count confirmation; do not credit external_opened |

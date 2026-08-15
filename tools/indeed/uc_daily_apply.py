@@ -437,6 +437,135 @@ def skip_reason(title: str, company: str, location: str, snippet: str) -> str | 
     return None
 
 
+ACCOUNT_SETTINGS_URL = "https://secure.indeed.com/settings/account"
+
+
+def looks_signed_in(body: str, url: str = "") -> bool:
+    """True when nav/account chrome shows an authenticated jobseeker session.
+
+    in.indeed.com marketing home still says "Get Started" / "Sign in" while
+    logged in — do not use that copy. Account settings and SERP nav (Messages)
+    are the reliable signals.
+    """
+    blob = f"{url}\n{body}"
+    return bool(
+        re.search(
+            r"account settings|messages unread|manage your account security|"
+            r"change account type|device management|privacy settings|"
+            r"welcome,\s*\w+|sign out|unread count|sign out of indeed",
+            blob,
+            re.I,
+        )
+    )
+
+
+def looks_login_wall(body: str, url: str = "") -> bool:
+    blob = f"{url}\n{body}"
+    return bool(
+        re.search(
+            r"sign in \| indeed accounts|ready to take the next step|"
+            r"continue with apple|enter your email address",
+            blob,
+            re.I,
+        )
+    ) and not looks_signed_in(body, url)
+
+
+def looks_anonymous_marketing_home(body: str) -> bool:
+    """India homepage marketing hero — shown to signed-in and anonymous users."""
+    return bool(
+        re.search(
+            r"create an account or sign in|get started|"
+            r"sign in to see your personalised|your next job starts here",
+            body,
+            re.I,
+        )
+    ) and not looks_signed_in(body)
+
+
+def restore_signed_in(sb) -> dict:
+    """Attach Passport cookies after CF leaves the marketing homepage.
+
+    A homepage reload alone is not enough: Turnstile clearance on a new WARP
+    IP often keeps "Get Started" until we hit Sign-in / account / myjobs.
+    """
+    info: dict = {"tried": [], "ok": False}
+
+    def _snap() -> tuple[str, str, str]:
+        try:
+            return (
+                (sb.get_text("body") or "")[:2500],
+                sb.get_title() or "",
+                sb.get_current_url() or "",
+            )
+        except Exception:
+            return "", "", ""
+
+    def _done(body: str, url: str, via: str) -> bool:
+        if looks_signed_in(body, url):
+            info["ok"] = True
+            info["via"] = via
+            return True
+        return False
+
+    for sel in (
+        "a[data-gnav-element-name='SignIn']",
+        "a[href*='account/login']",
+        "a[href*='secure.indeed.com/auth']",
+        "a[href*='login']",
+    ):
+        try:
+            if sb.is_element_visible(sel):
+                sb.click(sel)
+                time.sleep(3)
+                clear_cf(sb)
+                body, _title, url = _snap()
+                info["tried"].append({"click": sel, "signedIn": looks_signed_in(body, url)})
+                if _done(body, url, f"click:{sel}"):
+                    return info
+        except Exception as exc:
+            info["tried"].append({"click": sel, "error": str(exc)[:120]})
+
+    for url in (
+        ACCOUNT_SETTINGS_URL,
+        "https://secure.indeed.com/settings",
+        "https://in.indeed.com/myjobs",
+        "https://secure.indeed.com/auth?hl=en_IN&co=IN"
+        "&continue=https%3A%2F%2Fin.indeed.com%2F",
+        "https://www.indeed.com/account/login"
+        "?continue=https%3A%2F%2Fin.indeed.com%2F",
+        "https://in.indeed.com/",
+    ):
+        try:
+            sb.uc_open_with_reconnect(url, 5)
+            time.sleep(3)
+            clear_cf(sb)
+            body, title, cur = _snap()
+            info["tried"].append(
+                {
+                    "url": url,
+                    "signedIn": looks_signed_in(body, cur),
+                    "loginWall": looks_login_wall(body, cur),
+                    "title": title[:80],
+                }
+            )
+            if _done(body, cur, url):
+                try:
+                    sb.uc_open_with_reconnect("https://in.indeed.com/", 4)
+                    time.sleep(2)
+                    clear_cf(sb)
+                except Exception:
+                    pass
+                return info
+            if looks_login_wall(body, cur):
+                info["loginWall"] = True
+                info["via"] = url
+                return info
+        except Exception as exc:
+            info["tried"].append({"url": url, "error": str(exc)[:120]})
+    return info
+
+
 def already_applied(body: str, url: str = "") -> bool:
     """True when the job-view page shows this listing was already submitted."""
     b = (body or "").lower()
@@ -576,7 +705,10 @@ def fill_common_questions(sb) -> None:
             const vals = {
               first: 'Mohammed Abdul Rafi',
               last: 'Ahmed',
+              full: 'Mohammed Abdul Rafi Ahmed',
               phone: '8790251698',
+              dob: '16/01/1989',
+              title: 'Mr.',
               email: 'rafi.success@gmail.com',
               city: 'Hyderabad',
               current: '52',
@@ -627,8 +759,18 @@ def fill_common_questions(sb) -> None:
               if (/linkedin(\\.com)?|profile url|portfolio url/.test(t)) {
                 return 'https://www.linkedin.com/in/rafi-ahmed';
               }
-              if (/highest (degree|education|qualification)|education level|degree obtained|university|college/.test(t)) {
+              if (/highest (degree|education|qualification)|degree of education|education level|degree obtained|university|college/.test(t)) {
                 return 'B.Tech';
+              }
+              if (/(date of birth|\\bdob\\b|birth date|birthday)/.test(t) && !/place of birth/.test(t)) {
+                return '16/01/1989';
+              }
+              if (/(^|\\s)(title|salutation|honorific)\\b/.test(t) && !/job title|current position|position\\?/.test(t)) {
+                return 'Mr.';
+              }
+              // Never invent government IDs.
+              if (/\\bpan\\b|aadhaar|aadhar|passport number|national id/.test(t)) {
+                return null;
               }
               if (/current.*(ctc|salary|compensation|pay)|ctc.*current|present.*ctc|current.*package|current salary/.test(t)) return '52';
               if (/expected.*(ctc|salary|compensation|pay)|ctc.*expected|desired.*salary|expected.*package/.test(t)) return '65';
@@ -669,7 +811,8 @@ def fill_common_questions(sb) -> None:
                 const hit =
                   (want === 'yes' && /\\byes\\b|yep|true|agree|available/.test(lab) && !/\\bno\\b/.test(lab)) ||
                   (want === 'male' && /\\bmale\\b/.test(lab) && !/female/.test(lab)) ||
-                  (want === 'Immediate' && /immediate|0\\s*day|serving|less than|currently serving/.test(lab)) ||
+                  (want === 'Mr.' && /\\bmr\\.?\\b/.test(lab) && !/mrs|miss/.test(lab)) ||
+                  (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than|currently serving|serving notice/.test(lab)) ||
                   (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not|do not want/.test(lab));
                 if (hit) {
                   try { r.click(); } catch (e) {}
@@ -682,7 +825,8 @@ def fill_common_questions(sb) -> None:
                   const t = (opt.text||'').toLowerCase();
                   if (
                     (want === 'yes' && /\\byes\\b/.test(t)) ||
-                    (want === 'Immediate' && /immediate|0\\s*day|0-15|less than/.test(t)) ||
+                    (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs/.test(t)) ||
+                    (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than/.test(t)) ||
                     (want === 'Hyderabad' && /hyderabad/.test(t)) ||
                     (want === '52' && /\\b52\\b|50-55|45-55/.test(t)) ||
                     (want === '65' && /\\b65\\b|60-70|60-65/.test(t)) ||
@@ -708,7 +852,8 @@ def fill_common_questions(sb) -> None:
                 const t = ((el.innerText||'') + ' ' + (el.getAttribute('aria-label')||'')).trim().toLowerCase();
                 if (!t || t.length > 80) continue;
                 if (want === 'yes' && /\\byes\\b/.test(t) && !/\\bno\\b/.test(t)) { el.click(); return true; }
-                if (want === 'Immediate' && /immediate|0\\s*day/.test(t)) { el.click(); return true; }
+                if (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs/.test(t)) { el.click(); return true; }
+                if (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15/.test(t)) { el.click(); return true; }
                 if (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not/.test(t)) {
                   el.click(); return true;
                 }
@@ -728,7 +873,7 @@ def fill_common_questions(sb) -> None:
             }
             for (const lab of document.querySelectorAll('label, legend, h1, h2, h3, p, span')) {
               const t = (lab.innerText||'').trim();
-              if (t.length > 6 && t.length < 220 && /\\?|ctc|salary|notice|experience|relocat|authori|location|package|lpa|gender|hybrid|bond|veteran|disability|ethnicity|race|hispanic|voluntary|self.?ident/.test(t.toLowerCase())) {
+              if (t.length > 6 && t.length < 220 && /\\?|ctc|salary|notice|experience|relocat|authori|location|package|lpa|gender|hybrid|bond|veteran|disability|ethnicity|race|hispanic|voluntary|self.?ident|birth|dob|title|salutation/.test(t.toLowerCase())) {
                 const want = wantFromText(t);
                 if (want && clickMatching(lab.closest('div, fieldset, li, section, [class*="question"]') || lab.parentElement || lab, want)) {
                   answered += 1;
@@ -744,6 +889,9 @@ def fill_common_questions(sb) -> None:
               let val = null;
               if (/first\\s*name|given\\s*name|fname/.test(lab)) val = vals.first;
               else if (/last\\s*name|surname|family\\s*name|lname/.test(lab)) val = vals.last;
+              else if (/full\\s*name|candidate name|your name/.test(lab) && !/first|last|company|employer/.test(lab)) val = vals.full;
+              else if (/(date of birth|\\bdob\\b|birth date|birthday)/.test(lab)) val = vals.dob;
+              else if (/\\bpan\\b|aadhaar|aadhar|passport number|national id/.test(lab)) val = null;
               else if (/phone|mobile|tel/.test(lab) || type === 'tel') val = vals.phone;
               else if (/e-?mail/.test(lab) || type === 'email') val = vals.email;
               else if (/current.*(position|role|title|designation)|job title/.test(lab) && !/salary|ctc/.test(lab)) val = 'Solutions Architect';
@@ -759,7 +907,7 @@ def fill_common_questions(sb) -> None:
                 const w = wantFromText(lab);
                 if (w) val = w;
               }
-              if (val != null && (!(el.value || '').trim() || /phone|mobile|tel|first|last|ctc|salary|notice|city|experience|package|linkedin|employer|company|education|degree/.test(lab))) {
+              if (val != null && (!(el.value || '').trim() || /phone|mobile|tel|first|last|ctc|salary|notice|city|experience|package|linkedin|employer|company|education|degree|birth|dob|date/.test(lab) || /^(yes|no)$/i.test(el.value || ''))) {
                 if (setNative(el, val)) answered += 1;
               }
             }
@@ -774,7 +922,7 @@ def fill_common_questions(sb) -> None:
                 const lab = ((r.getAttribute('aria-label')||'') + ' ' + (r.parentElement?.innerText||'') + ' ' + (r.value||'')).toLowerCase();
                 let s = 0;
                 if (/decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not/.test(lab)) s += 4;
-                if (/\\byes\\b|immediate|agree|available|hyderabad|male\\b/.test(lab)) s += 3;
+                if (/\\byes\\b|immediate|agree|available|hyderabad|male\\b|\\bmr\\.?\\b/.test(lab)) s += 3;
                 if (/\\bno\\b|female|not available|never/.test(lab)) s -= 2;
                 return {r, s, lab};
               }).sort((a,b) => b.s - a.s);
@@ -821,8 +969,9 @@ def fill_common_questions(sb) -> None:
               const lab = labelFor(el);
               const req = el.required || el.getAttribute('aria-required') === 'true' || /required|\\*/.test(lab);
               if (!req && !/question|ctc|salary|notice|experience/.test(lab)) continue;
-              const w = wantFromText(lab) || (/how many|years|experience/.test(lab) ? '14' : (/salary|ctc|lpa|package/.test(lab) ? '65' : 'Yes'));
-              if (setNative(el, w)) answered += 1;
+              if (/\\bpan\\b|aadhaar|aadhar|passport number|national id/.test(lab)) continue;
+              const w = wantFromText(lab) || (/how many|years|experience/.test(lab) ? '14' : (/salary|ctc|lpa|package/.test(lab) ? '65' : (/birth|\\bdob\\b|date/.test(lab) ? vals.dob : null)));
+              if (w && setNative(el, w)) answered += 1;
             }
             return {answered, url: location.href};
             """
@@ -2330,30 +2479,19 @@ def main() -> int:
             _emit(report)
             return 5
 
-        # CF can clear while the account is still anonymous ("Get Started" / Sign in).
-        # One hard reload: preflight-style clear sometimes paints Welcome only after
-        # a second navigation once cf_clearance is set.
+        # in.indeed.com marketing home always shows "Get Started" / "Sign in"
+        # even with a valid Passport session. Confirm on account settings
+        # (and treat SERP Messages nav as signed-in). Homepage-only heuristics
+        # caused a false indeed_login_required after CF clear (2026-08-15).
         try:
             home_body = (sb.get_text("body") or "")[:2500]
             home_title = sb.get_title() or ""
+            home_url = sb.get_current_url() or ""
         except Exception:
-            home_body, home_title = "", ""
+            home_body, home_title, home_url = "", "", ""
 
-        def _signed_out(body: str) -> bool:
-            return bool(
-                re.search(
-                    r"create an account or sign in|get started|sign in to see your personalised|"
-                    r"your next job starts here",
-                    body,
-                    re.I,
-                )
-            ) and not re.search(
-                r"welcome,\s*\w+|sign out|account settings|my jobs|profile",
-                body,
-                re.I,
-            )
-
-        if _signed_out(home_body):
+        session_ok = looks_signed_in(home_body, home_url)
+        if not session_ok:
             try:
                 sb.uc_open_with_reconnect("https://in.indeed.com/", 5)
                 time.sleep(3)
@@ -2361,25 +2499,40 @@ def main() -> int:
                     pass
                 home_body = (sb.get_text("body") or "")[:2500]
                 home_title = sb.get_title() or ""
+                home_url = sb.get_current_url() or ""
+                session_ok = looks_signed_in(home_body, home_url)
             except Exception:
                 pass
-        if not _signed_out(home_body):
-            warm_passport_session(sb)
-        if _signed_out(home_body):
-            report["blocked"].append(
-                {
-                    "reason": "indeed_login_required",
-                    "title": home_title[:120],
-                    "bodySample": home_body[:400],
-                    "hint": "CF cleared but session is anonymous — refresh Indeed cookies via headed login / home CDP",
-                }
-            )
-            report["counts"]["blocked"] = 1
-            report["blockerSummary"] = "indeed_login_required"
-            OUT.parent.mkdir(parents=True, exist_ok=True)
-            OUT.write_text(json.dumps(report, indent=2))
-            _emit(report)
-            return 5
+        if not session_ok:
+            warmed = restore_signed_in(sb)
+            report["sessionRestore"] = warmed
+            try:
+                home_body = (sb.get_text("body") or "")[:2500]
+                home_title = sb.get_title() or ""
+                home_url = sb.get_current_url() or ""
+            except Exception:
+                pass
+            if warmed.get("ok") or looks_signed_in(home_body, home_url):
+                session_ok = True
+            elif warmed.get("loginWall") or looks_login_wall(home_body, home_url):
+                report["blocked"].append(
+                    {
+                        "reason": "indeed_login_required",
+                        "title": home_title[:120],
+                        "bodySample": home_body[:400],
+                        "hint": "Account/auth is a Sign-in wall — refresh Indeed cookies via headed login / home CDP",
+                    }
+                )
+                report["counts"]["blocked"] = 1
+                report["blockerSummary"] = "indeed_login_required"
+                OUT.parent.mkdir(parents=True, exist_ok=True)
+                OUT.write_text(json.dumps(report, indent=2))
+                _emit(report)
+                return 5
+            else:
+                # Marketing home alone is not proof of logout. Continue;
+                # search/apply paths still skip already-applied and login walls.
+                report["sessionWarm"] = "unconfirmed_continue"
 
         seen_keys: set[str] = set()
         for query, location in search_queries():
