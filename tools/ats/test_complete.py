@@ -15,8 +15,10 @@ from tools.ats.complete import (
     classify_ats_host,
     frame_url_is_captcha_challenge,
     iframe_box_is_onscreen,
+    is_board_tracking_url,
     is_hard_ats_wall,
     is_submitted_text,
+    is_unavailable_text,
 )
 
 
@@ -36,6 +38,8 @@ assert_true(is_hard_ats_wall("ats_login_wall"), "login is hard")
 assert_true(not is_hard_ats_wall("external_incomplete_or_timeout"), "timeout is not a company wall")
 assert_true(not is_hard_ats_wall("ats_time_cap"), "time_cap is not a company wall")
 assert_true(not is_hard_ats_wall("stuck/time cap after 3 steps"), "stuck is not a company wall")
+assert_true(not is_hard_ats_wall("job_unavailable"), "maintenance is not a company wall")
+assert_true(not is_hard_ats_wall("did_not_leave_indeed"), "tracking hop is not a company wall")
 
 assert_true(classify_ats_host("https://acme.wd1.myworkdayjobs.com/en-US/job") == "workday", "wd host")
 assert_true(classify_ats_host("https://boards.greenhouse.io/acme/jobs/1") == "greenhouse", "gh host")
@@ -44,6 +48,16 @@ assert_true(classify_ats_host("https://acme.icims.com/jobs/1") == "greenhouse", 
 assert_true(classify_ats_host("https://login.microsoftonline.com/xyz") == "sso", "sso host")
 assert_true(classify_ats_host("https://www.linkedin.com/jobs/view/1") == "linkedin", "li host")
 assert_true(classify_ats_host("https://careers.acme.com/apply") == "generic", "generic host")
+assert_true(
+    classify_ats_host("https://community.workday.com/maintenance-page") == "unavailable",
+    "workday maintenance host",
+)
+assert_true(classify_ats_host("https://www.indeed.com/applystart?jk=1") == "indeed", "indeed hop")
+assert_true(is_board_tracking_url("https://www.indeed.com/applystart?jk=abc"), "applystart tracking")
+assert_true(is_board_tracking_url("https://www.indeed.com/rc/clk?jk=abc"), "rc/clk tracking")
+assert_true(not is_board_tracking_url("https://acme.wd1.myworkdayjobs.com/en-US/job"), "wd not tracking")
+assert_true(is_unavailable_text("We'll be back shortly — scheduled maintenance"), "maint text")
+assert_true(is_submitted_text("Thanks for applying — we've got your application"), "got-app must count")
 
 assert_true(frame_url_is_captcha_challenge("https://www.google.com/recaptcha/api2/bframe?x=1"), "bframe")
 assert_true(not frame_url_is_captcha_challenge("https://www.google.com/recaptcha/api2/anchor"), "hidden badge")
@@ -93,7 +107,7 @@ assert_true(
         "This position has been filled",
         has_file=True,
     )
-    == "job_closed",
+    == "job_unavailable",
     "closed requisition",
 )
 

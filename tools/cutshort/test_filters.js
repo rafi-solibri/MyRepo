@@ -143,6 +143,17 @@ function job(partial) {
 }
 
 {
+  const j = job({
+    title: "Associate Technical Architect",
+    skills: ["Azure", ".NET"],
+  });
+  assert.ok(
+    classify(j)?.tier === 1,
+    `Associate Technical Architect must not hard-skip, got ${JSON.stringify(classify(j))}`
+  );
+}
+
+{
   const j = job({ title: "Solutions Architect", skills: ["AWS"] });
   assert.strictEqual(titleOf(j), "Solutions Architect");
   assert.ok(classify(j)?.tier === 1);

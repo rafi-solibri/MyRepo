@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Generic ATS loop timed out (ats_incomplete_or_cap) and Workday maintenance burned 6.5m | Use shared completeExternalPage; fail-fast job_unavailable on community.workday.com/maintenance |
 | Workday Create Account treated as ats_login_wall (Aveva etc.) so 0 company-site completes | Reuse naukri completeWorkdayApply; 6.5m cap; fillCommonAtsQuestions on generic ATS |
 
 

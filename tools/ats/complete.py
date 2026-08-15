@@ -56,14 +56,33 @@ SUBMITTED_RE = re.compile(
     r"successfully (applied|submitted)|your application was sent|"
     r"application complete|you have successfully applied|"
     r"thanks for (your )?interest|application has been received|"
-    r"you('re| are) all set|applied successfully",
+    r"you('re| are) all set|applied successfully|"
+    r"application was successfully submitted|thanks for applying|"
+    r"we('ve| have) got your application",
+    re.I,
+)
+
+UNAVAILABLE_RE = re.compile(
+    r"maintenance-page|scheduled maintenance|we('ll| will) be back|"
+    r"this site is temporarily unavailable|community\.workday\.com/maintenance|"
+    r"this job is no longer|position has been filled|"
+    r"no longer accepting applications|requisition is closed|"
+    r"job is no longer available",
+    re.I,
+)
+
+BOARD_TRACKING_RE = re.compile(
+    r"indeed\.com/(?:applystart|rc/clk|pagead|viewjob|clk)|"
+    r"linkedin\.com/jobs/(?:view|search)|"
+    r"naukri\.com/job-listings|"
+    r"foundit\.in/job/",
     re.I,
 )
 
 SSO_HOST_RE = re.compile(
     r"b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|"
-    r"auth0\.com|passport\.amazon\.jobs|secure\.indeed\.com/(?:auth|account)|"
-    r"signin\.aws|login\.microsoft",
+    r"auth0\.com|passport\.amazon\.jobs|secure\.indeed\.com/(?:auth|account|oauth)|"
+    r"signin\.aws|login\.microsoft|oneclick\.smartrecruiters",
     re.I,
 )
 
@@ -120,7 +139,20 @@ def is_hard_ats_wall(reason: str | None) -> bool:
     why = (reason or "").lower()
     if not why:
         return False
-    if any(x in why for x in ("incomplete", "timeout", "time_cap", "stuck", "errors found")):
+    if any(
+        x in why
+        for x in (
+            "incomplete",
+            "timeout",
+            "time_cap",
+            "stuck",
+            "errors found",
+            "job_closed",
+            "unavailable",
+            "maintenance",
+            "did_not_leave",
+        )
+    ):
         return False
     return any(
         x in why
@@ -142,6 +174,8 @@ def is_submitted_text(text: str | None) -> bool:
 
 def classify_ats_host(url: str | None) -> str:
     u = url or ""
+    if UNAVAILABLE_RE.search(u):
+        return "unavailable"
     if WORKDAY_HOST_RE.search(u):
         return "workday"
     if GREENHOUSE_HOST_RE.search(u):
@@ -150,7 +184,17 @@ def classify_ats_host(url: str | None) -> str:
         return "sso"
     if re.search(r"linkedin\.com", u, re.I):
         return "linkedin"
+    if re.search(r"indeed\.com", u, re.I):
+        return "indeed"
     return "generic"
+
+
+def is_board_tracking_url(url: str | None) -> bool:
+    return bool(BOARD_TRACKING_RE.search(url or ""))
+
+
+def is_unavailable_text(text: str | None) -> bool:
+    return bool(UNAVAILABLE_RE.search(text or ""))
 
 
 def frame_url_is_captcha_challenge(url: str | None) -> bool:
@@ -182,13 +226,8 @@ def auth_wall_reason(
     if host == "sso":
         return "ats_login_wall"
     blob = f"{url or ''}\n{text or ''}"
-    if re.search(
-        r"no longer accepting applications|this position has been filled|"
-        r"job is no longer available|requisition is closed",
-        blob,
-        re.I,
-    ):
-        return "job_closed"
+    if host == "unavailable" or is_unavailable_text(blob):
+        return "job_unavailable"
     if host == "workday" or has_workday_apply:
         # Workday Create Account / Sign In is completable when we have a password
         # and an email field — do NOT treat it as a hard wall.
@@ -429,6 +468,8 @@ def fill_yes_no(page) -> None:
         (r"relatives? (employed|work)", r"^No$"),
         (r"at least 18", r"^Yes$"),
         (r"willing to relocate", r"^Yes$"),
+        (r"military|armed forces|served in the", r"^No$"),
+        (r"need (any )?visa|require (a )?visa", r"^No$"),
     ]
     for q_re, a_re in pairs:
         try:
@@ -496,13 +537,72 @@ def click_advance(page) -> bool:
             "Send application",
             "Save and Continue",
             "Create Account",
+            "I'm interested",
             "Submit",
             "Continue",
             "Next",
             "Apply Manually",
+            "Apply for this job online",
             "Apply",
         ),
     )
+
+
+def prefer_guest_apply(page) -> bool:
+    """Open the guest/manual apply form. Never click OneClick / Indeed OAuth."""
+    for name in (
+        "Apply without Indeed",
+        "Apply manually",
+        "Apply with resume",
+        "I'm interested",
+        "Apply for this job online",
+        "Apply for this job",
+        "Start application",
+        "Apply Now",
+        "Apply",
+    ):
+        try:
+            btn = page.get_by_role("button", name=re.compile(rf"{re.escape(name)}", re.I))
+            for i in range(min(btn.count(), 4)):
+                b = btn.nth(i)
+                if not (b.is_visible() and b.is_enabled()):
+                    continue
+                label = ((b.inner_text() or "") + " " + (b.get_attribute("aria-label") or "")).lower()
+                if re.search(r"oneclick|with indeed|with linkedin|with google|with microsoft", label):
+                    continue
+                try:
+                    b.click(timeout=3000, force=True)
+                except Exception:
+                    b.evaluate("el => el.click()")
+                _sleep(1.2)
+                return True
+        except Exception:
+            continue
+        try:
+            link = page.get_by_role("link", name=re.compile(rf"{re.escape(name)}", re.I))
+            if link.count() and link.first.is_visible():
+                label = ((link.first.inner_text() or "") + " " + (link.first.get_attribute("href") or "")).lower()
+                if re.search(r"oneclick|indeed\.com/oauth|with indeed", label):
+                    continue
+                link.first.click(timeout=3000)
+                _sleep(1.2)
+                return True
+        except Exception:
+            continue
+    return False
+
+
+def leave_oneclick_oauth(page) -> None:
+    """SmartRecruiters OneClick often dumps us on Indeed OAuth — go back to guest apply."""
+    url = getattr(page, "url", "") or ""
+    if not re.search(r"oneclick|indeed\.com/oauth|secure\.indeed\.com/(?:auth|oauth)", url, re.I):
+        return
+    try:
+        page.go_back(wait_until="domcontentloaded", timeout=8000)
+        _sleep(1.0)
+    except Exception:
+        pass
+    prefer_guest_apply(page)
 
 
 def _type_automation(page, automation_id: str, value: str) -> bool:
@@ -737,6 +837,8 @@ def workday_fill_core(page) -> None:
 
 def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
     start = time.time()
+    if is_unavailable_text(f"{getattr(page, 'url', '')}\n{_body(page, 1500)}"):
+        return "skipped", "job_unavailable"
     workday_open_apply(page)
     if looks_submitted(page):
         return "applied", "confirmation"
@@ -750,7 +852,7 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
         wall = blocked_wall(page)
         if wall == "CAPTCHA/bot wall":
             return "blocked", wall
-        if wall == "job_closed":
+        if wall in ("job_closed", "job_unavailable"):
             return "skipped", wall
         text = _body(page, 2000)
         if re.search(r"^\s*Loading\b", text, re.I) and not re.search(r"First Name|My Information", text, re.I):
@@ -817,15 +919,17 @@ def fill_greenhouse_combos(page) -> None:
 def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
     start = time.time()
     stuck = 0
-    # Greenhouse / Lever landings: open the application form first.
-    _click_text(page, ("Apply for this job", "Apply Now", "Apply", "Start application"))
+    leave_oneclick_oauth(page)
+    prefer_guest_apply(page)
     while time.time() - start < time_cap_s and stuck < 8:
         if looks_submitted(page):
             return "applied", "confirmation"
+        if is_unavailable_text(f"{getattr(page, 'url', '')}\n{_body(page, 1200)}"):
+            return "skipped", "job_unavailable"
         wall = blocked_wall(page)
         if wall == "CAPTCHA/bot wall":
             return "blocked", wall
-        if wall == "job_closed":
+        if wall in ("job_closed", "job_unavailable"):
             return "skipped", wall
         if wall == "ats_login_wall":
             guest = page.get_by_text(re.compile(r"Continue as guest|Apply without|Don't have an account", re.I)).first
@@ -865,10 +969,14 @@ def complete_ats(page, time_cap_s: int | None = None) -> tuple[str, str]:
         return "blocked", "CAPTCHA/bot wall"
     flags = page_flags(page)
     host = classify_ats_host(flags["url"])
+    if host == "unavailable" or is_unavailable_text(f"{flags['url']}\n{flags['text']}"):
+        return "skipped", "job_unavailable"
     if host == "sso":
         return "blocked", "ats_login_wall"
     if host == "linkedin":
         return "blocked", "did_not_leave_linkedin"
+    if host == "indeed" and is_board_tracking_url(flags["url"]):
+        return "blocked", "did_not_leave_indeed"
     wall = auth_wall_reason(
         flags["url"],
         flags["text"],
@@ -877,7 +985,7 @@ def complete_ats(page, time_cap_s: int | None = None) -> tuple[str, str]:
         has_workday_apply=flags["has_wd"],
         has_email_field=flags["has_email"],
     )
-    if wall == "job_closed":
+    if wall in ("job_closed", "job_unavailable"):
         return "skipped", wall
     if wall and host != "workday" and not flags["has_wd"]:
         return "blocked", wall
@@ -906,7 +1014,20 @@ def complete_ats_url(url: str, time_cap_s: int | None = None, cdp: str | None = 
             owned = True
         try:
             page.goto(url, wait_until="domcontentloaded", timeout=60000)
-            _sleep(1.5)
+            _sleep(1.2)
+            # Indeed/LinkedIn/Naukri "Apply on company site" often lands on a
+            # tracking hop (applystart / rc/clk). Wait for the real ATS host.
+            deadline = time.time() + 18
+            while time.time() < deadline and is_board_tracking_url(getattr(page, "url", "") or ""):
+                _sleep(0.8)
+            if is_unavailable_text(f"{getattr(page, 'url', '')}\n{_body(page, 1200)}"):
+                return "skipped", "job_unavailable", page.url or url
+            if is_board_tracking_url(getattr(page, "url", "") or ""):
+                host = classify_ats_host(page.url or url)
+                if host == "indeed":
+                    return "blocked", "did_not_leave_indeed", page.url or url
+                if host == "linkedin":
+                    return "blocked", "did_not_leave_linkedin", page.url or url
             status, reason = complete_ats(page, time_cap_s=cap)
             return status, reason, page.url or url
         finally:
