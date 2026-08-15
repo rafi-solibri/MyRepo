@@ -847,13 +847,29 @@ def fill_common_questions(sb) -> None:
                 if (want === 'decline') continue;
                 if (want) { setNative(el, want); return true; }
               }
-              // Custom listbox / button options
+              // Custom listbox / button options (Indeed education is often a combobox).
+              if (want === 'B.Tech' || want === '14' || want === '10') {
+                for (const btn of root.querySelectorAll('button, [role=combobox], [aria-haspopup=listbox]')) {
+                  const t = ((btn.innerText||'') + ' ' + (btn.getAttribute('aria-label')||'')).toLowerCase();
+                  if (/select an option|choose an option|^select$/.test(t) || btn.getAttribute('aria-expanded') === 'false') {
+                    try { btn.click(); } catch (e) {}
+                  }
+                }
+              }
               for (const el of root.querySelectorAll('button, [role=option], li, label, span')) {
                 const t = ((el.innerText||'') + ' ' + (el.getAttribute('aria-label')||'')).trim().toLowerCase();
                 if (!t || t.length > 80) continue;
                 if (want === 'yes' && /\\byes\\b/.test(t) && !/\\bno\\b/.test(t)) { el.click(); return true; }
                 if (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs/.test(t)) { el.click(); return true; }
                 if (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15/.test(t)) { el.click(); return true; }
+                if (want === 'B.Tech' && /b\\.?\\s*tech|bachelor|b\\.e\\b|undergraduate|master'?s?|m\\.?\\s*tech/.test(t)
+                    && !/select an option|highest degree/.test(t)) {
+                  el.click(); return true;
+                }
+                if ((want === '14' || want === '10') && /\\b(14|13|12|10|15)\\b|12-15|10\\+|8-10|10-15/.test(t)
+                    && !/select an option|how many years/.test(t)) {
+                  el.click(); return true;
+                }
                 if (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not/.test(t)) {
                   el.click(); return true;
                 }
@@ -1056,6 +1072,20 @@ def tick_required_agreements(sb) -> dict:
               if (opt) {
                 const box = associatedBox(opt) || opt;
                 if (!isOn(box)) tick(box, 'validation-agree');
+              }
+              const ctx = (root.innerText || '').toLowerCase();
+              if (/education|degree|qualification|years of experience|how many years/.test(ctx)) {
+                const combo = [...root.querySelectorAll('button, [role=combobox], [aria-haspopup=listbox]')]
+                  .find(e => /select an option|choose an option|^select$/i.test((e.innerText || '') + ' ' + (e.getAttribute('aria-label') || '')));
+                if (combo) { try { combo.click(); } catch (e) {} }
+                const pick = [...document.querySelectorAll('[role=option], li, button, label')]
+                  .find(e => {
+                    const t = (e.innerText || '').trim();
+                    if (t.length > 60 || /select an option|highest degree|how many years/i.test(t)) return false;
+                    if (/education|degree/.test(ctx)) return /b\\.?\\s*tech|bachelor|b\\.e\\b|undergraduate|master/i.test(t);
+                    return /\\b(14|13|12|10|15)\\b|12-15|10\\+|10-15/.test(t);
+                  });
+                if (pick) { try { pick.click(); clicked.push('combo:' + (pick.innerText||'').slice(0,40)); } catch (e) {} }
               }
             }
             return {clicked, url: location.href};
