@@ -95,6 +95,20 @@ assert_true(classify_ats_host("https://boards.greenhouse.io/acme/jobs/1") == "gr
 assert_true(classify_ats_host("https://jobs.lever.co/acme/abc") == "greenhouse", "lever grouped")
 assert_true(classify_ats_host("https://acme.icims.com/jobs/1") == "greenhouse", "icims grouped")
 assert_true(classify_ats_host("https://login.microsoftonline.com/xyz") == "sso", "sso host")
+assert_true(
+    classify_ats_host("https://talent.cognizant.com/4681/login2?RRID=00068354023") == "sso",
+    "Cognizant SuccessFactors login2 is SSO",
+)
+assert_true(
+    auth_wall_reason(
+        "https://talent.cognizant.com/4681/login2?RRID=00068354023&TenantID=1",
+        "Sign in",
+        has_password=True,
+        has_file=False,
+    )
+    == "ats_login_wall",
+    "Cognizant login2 must fail-fast as login wall",
+)
 assert_true(classify_ats_host("https://www.linkedin.com/jobs/view/1") == "linkedin", "li host")
 assert_true(classify_ats_host("https://careers.acme.com/apply") == "generic", "generic host")
 assert_true(

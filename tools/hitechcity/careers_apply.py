@@ -105,7 +105,7 @@ AUTH_HOST = re.compile(
     r"passport\.amazon\.jobs|login\.microsoftonline|accounts\.google|"
     r"secure\.indeed\.com|indeed\.com/auth|okta\.com|login\.microsoft|"
     r"auth\.|signin\.|sso\.|login\.cognizant|cognizant\.okta|"
-    r"eightfold\.ai/(?:login|signin|auth)",
+    r"eightfold\.ai/(?:login|signin|auth)|talent\.cognizant\.com|/login2(?:\?|$|/)",
     re.I,
 )
 

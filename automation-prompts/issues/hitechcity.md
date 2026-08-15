@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Cognizant talent.cognizant.com/login2 burned 390s ATS cap as incomplete instead of fail-fast login wall | Treat talent.cognizant.com and /login2 as SSO/auth wall in complete.py + ats_fill + careers AUTH_HOST |
 | Cognizant/Eightfold SSO burned ATS cap; brochure careers pages timed out | auth_wall_url fail-fast login.cognizant + eightfold.ai/login; shared no_ats_form + skip View applied CTAs |
 | Workday maintenance and SmartRecruiters OneClick burned ATS budget then tripped walls | Shared completer fail-fasts maintenance; skips OneClick/Indeed OAuth; timeouts/unavailable are not company walls |
 | First ATS timeout counted as company wall (cap 1) so remaining externals were skipped | is_hard_ats_wall ignores timeout/incomplete; caps 4 walls / 10 attempts |
