@@ -229,9 +229,26 @@ def test_hyland_icims_url():
 
     data = json.loads(Path(__file__).with_name("companies.json").read_text())
     hyland = next(c for c in data["companies"] if c["name"] == "Hyland")
-    assert any("icims.com" in u for u in hyland["careersUrls"])
+    assert any("icims.com" in u and "in_iframe=1" in u for u in hyland["careersUrls"])
     intel = next(c for c in data["companies"] if c["name"] == "Intel")
     assert any("myworkdayjobs.com" in u for u in intel["careersUrls"])
+    assert any("location=Hyderabad" in u for u in intel["careersUrls"])
+    byonder = next(c for c in data["companies"] if c["name"] == "Blue Yonder")
+    assert any("search-results" in u for u in byonder["careersUrls"])
+    href = "https://careers-hyland.icims.com/jobs/13991/senior-software-architect---.net/job?in_iframe=1"
+    assert JOB_ID_HREF_RE.search(href)
+    assert not JOB_ID_HREF_RE.search(
+        "https://careers-hyland.icims.com/jobs/search?ss=1&searchKeyword=architect"
+    )
+    assert not JOB_ID_HREF_RE.search(
+        "https://careers-hyland.icims.com/jobs/search?ss=1#icims_content_iframe"
+    )
+    from tools.hitechcity.careers_apply import CAPTCHA_PRONE_HOST_RE, _company_ats_rank
+
+    assert CAPTCHA_PRONE_HOST_RE.search("https://jobs.smartrecruiters.com/Experian/1")
+    assert _company_ats_rank({"careersUrls": ["https://careers-hyland.icims.com/jobs/search"]}) < (
+        _company_ats_rank({"careersUrls": ["https://jobs.smartrecruiters.com/Experian/1"]})
+    )
 
 
 if __name__ == "__main__":
