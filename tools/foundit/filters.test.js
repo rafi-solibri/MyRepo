@@ -394,4 +394,48 @@ assert.strictEqual(
   "Technical Architect_.NET Core Hyd must pass"
 );
 
+assert.strictEqual(
+  classifyJob({
+    jobId: 24,
+    title: "Solutions Architect",
+    companyName: "Allianz Technology",
+    locations: [{ country: "Thailand" }],
+    description: "Work from home. Remote-first culture across APAC.",
+    skills: [{ text: "software architecture" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  false,
+  "country-only Thailand must not inherit JD WFH/remote-first"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 25,
+    title: "Software Engineering Manager, AI i18n and Evaluations",
+    companyName: "Google India",
+    locations: [{ country: "Singapore" }],
+    description: "This is a remote-first role based in Singapore.",
+    skills: [{ text: "AI" }, { text: "i18n" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  false,
+  "country-only Singapore must not inherit JD remote-first"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 26,
+    title: "Principal Electrical Engineer, Data Center",
+    companyName: "Jacobs",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: "AutoCAD" }],
+    minimumExperience: { years: 12 },
+    maximumExperience: { years: 18 },
+  }).pass,
+  false,
+  "electrical principal is not a software Arch/Lead apply"
+);
+
 console.log("filters.test.js OK");

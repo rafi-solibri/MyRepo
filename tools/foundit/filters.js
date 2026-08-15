@@ -34,7 +34,12 @@ function locationsFrom(job) {
           if (!/^(india|in)$/i.test(String(place).trim())) hasSpecificPlace = true;
         }
         // Country-only rows still expose country; keep for debugging but city may be empty.
-        if (!l.city && !l.text && !l.name && l.country) parts.push(String(l.country));
+        // Only India/empty cards may pick up JD Remote/Hyd. Singapore/Thailand/etc.
+        // country-only must not inherit marketing "remote-first" / WFH copy.
+        if (!l.city && !l.text && !l.name && l.country) {
+          parts.push(String(l.country));
+          if (!/^(india|in)$/i.test(String(l.country).trim())) hasSpecificPlace = true;
+        }
       }
     }
   }
@@ -168,6 +173,13 @@ function skipTitleReason(title) {
     !hasDotNet(t, "")
   )
     return "infra/ops without .NET on title";
+  // Civil/electrical/mechanical principals are not software Arch/Lead (Jacobs Data Center case).
+  if (
+    /\b(electrical|civil|mechanical|structural|power\s+generation|hvac|aec\s+software)\b/i.test(t) &&
+    !hasDotNet(t, "") &&
+    !/\b(software|application|\.net|dotnet|c#)\b/i.test(t)
+  )
+    return "non-software engineering title";
   if (/\bwpf\b/i.test(t) && !/\basp\.?\s*net|web\s*api|azure|\.net\s*core\b/i.test(t))
     return "WPF/hardware desktop";
   return null;
