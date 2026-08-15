@@ -485,4 +485,58 @@ assert.strictEqual(
   "AI Specialist Solution Architect must skip"
 );
 
+// Campus board mode: country-only India + Lead 6-9 bands.
+{
+  const prev = process.env.HITECHCITY_BOARD_MODE; // pragma: allowlist secret
+  process.env.HITECHCITY_BOARD_MODE = "1"; // pragma: allowlist secret
+  try {
+    assert.strictEqual(
+      classifyJob({
+        jobId: 22,
+        title: ".NET Tech Lead",
+        companyName: "Virtusa",
+        locations: [{ country: "India" }],
+        skills: [{ text: ".NET Core" }],
+        minimumExperience: { years: 10 },
+        maximumExperience: { years: 15 },
+      }).pass,
+      true,
+      "Hitech board: country-only India .NET Tech Lead must apply"
+    );
+    assert.strictEqual(
+      experienceOk(
+        { minimumExperience: { years: 6 }, maximumExperience: { years: 9 } },
+        ".Net Azure / AWS Lead|6-9 Yrs|Bangalore,Pune,Chennai,Hyderabad"
+      ).ok,
+      true,
+      "Hitech board: Lead 6-9 with Hyd in title must apply"
+    );
+    assert.strictEqual(
+      classifyJob({
+        jobId: 23,
+        title: ".Net Azure / AWS Lead|6-9 Yrs|Bangalore,Pune,Chennai,Hyderabad",
+        companyName: "Capgemini",
+        locations: [{ text: "Bengaluru / Bangalore | India" }],
+        skills: [{ text: ".NET" }, { text: "Azure" }],
+        minimumExperience: { years: 6 },
+        maximumExperience: { years: 9 },
+      }).pass,
+      true,
+      "Hitech board: Capgemini Lead with Hyderabad in title must apply"
+    );
+  } finally {
+    if (prev == null) delete process.env.HITECHCITY_BOARD_MODE; // pragma: allowlist secret
+    else process.env.HITECHCITY_BOARD_MODE = prev; // pragma: allowlist secret
+  }
+}
+
+assert.strictEqual(
+  experienceOk(
+    { minimumExperience: { years: 6 }, maximumExperience: { years: 9 } },
+    ".Net Azure / AWS Lead|6-9 Yrs|Hyderabad"
+  ).ok,
+  false,
+  "Foundit daily (no board mode) still rejects 6-9 mid band"
+);
+
 console.log("filters.test.js OK");

@@ -84,7 +84,8 @@ SSO_HOST_RE = re.compile(
     r"b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|"
     r"auth0\.com|passport\.amazon\.jobs|secure\.indeed\.com/(?:auth|account|oauth)|"
     r"signin\.aws|login\.microsoft|oneclick\.smartrecruiters|"
-    r"login\.cognizant|cognizant\.okta|eightfold\.ai/(?:login|signin|auth)",
+    r"login\.cognizant|cognizant\.okta|eightfold\.ai/(?:login|signin|auth)|"
+    r"talent\.cognizant\.com|/login2",
     re.I,
 )
 

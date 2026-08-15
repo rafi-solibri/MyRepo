@@ -318,7 +318,8 @@ def _harvest_portal_report(row: dict[str, Any], portal: str) -> None:
         data = json.loads(rp.read_text(encoding="utf-8"))
         started = row.get("startedAt") or ""
         report_finished = str(data.get("finishedAt") or data.get("endedAt") or "")
-        report_started = str(data.get("startedAt") or "")
+        # Foundit / Instahyre write `ts` instead of startedAt.
+        report_started = str(data.get("startedAt") or data.get("ts") or "")
         # Accept report only if it finished/started at/after this board portal started.
         # Timed-out Indeed runs often lack finishedAt but have a fresh startedAt + applied[].
         fresh = False

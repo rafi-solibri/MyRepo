@@ -95,6 +95,10 @@ assert_true(classify_ats_host("https://boards.greenhouse.io/acme/jobs/1") == "gr
 assert_true(classify_ats_host("https://jobs.lever.co/acme/abc") == "greenhouse", "lever grouped")
 assert_true(classify_ats_host("https://acme.icims.com/jobs/1") == "greenhouse", "icims grouped")
 assert_true(classify_ats_host("https://login.microsoftonline.com/xyz") == "sso", "sso host")
+assert_true(
+    classify_ats_host("https://talent.cognizant.com/4681/login2?RRID=1") == "sso",
+    "cognizant login2 is sso",
+)
 assert_true(classify_ats_host("https://www.linkedin.com/jobs/view/1") == "linkedin", "li host")
 assert_true(classify_ats_host("https://careers.acme.com/apply") == "generic", "generic host")
 assert_true(
