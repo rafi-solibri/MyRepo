@@ -177,7 +177,7 @@ NAV_CHROME_RE = re.compile(
 JOB_ID_HREF_RE = re.compile(
     r"/jobs?/\d|/job/\d|gh_jid=|[?&](jobId|pid|reqId)=\d|/jobs/\d{4,}|"
     r"smartrecruiters\.com/[^/]+/\d{6,}|myworkdayjobs\.com/.+/job/|"
-    r"icims\.com/jobs/\d+",
+    r"icims\.com/jobs/\d+|jobdetails\?id=|/careers/jobdetails",
     re.I,
 )
 
@@ -344,7 +344,7 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
               for (const a of anchors) {
                 const href = a.href || '';
                 const h = href.toLowerCase();
-                const looksJobId = /\\/jobs?\\/\\d+|\\/job\\/\\d+|gh_jid=|[?&](?:jobId|pid|reqId)=\\d+|smartrecruiters\\.com\\/[^/]+\\/\\d{6,}|myworkdayjobs\\.com\\/.+\\/job\\/|icims\\.com\\/jobs\\/\\d+/i.test(h);
+                const looksJobId = /\\/jobs?\\/\\d+|\\/job\\/\\d+|gh_jid=|[?&](?:jobId|pid|reqId)=\\d+|smartrecruiters\\.com\\/[^/]+\\/\\d{6,}|myworkdayjobs\\.com\\/.+\\/job\\/|icims\\.com\\/jobs\\/\\d+|jobdetails\\?id=|\\/careers\\/jobdetails/i.test(h);
                 // Path job slugs only — do NOT treat vendor hostnames (icims/career) as jobs.
                 // Parent iCIMS chrome has 40+ marketing links on careers-*.icims.com and
                 // used to fill the 40-cap before the in_iframe=1 listing was evaluated.
@@ -362,6 +362,14 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
                 if (/^\\d+\\s+jobs?\\b/i.test(rawLabel) || /\\bturn on job alerts\\b/i.test(rawLabel)) continue;
                 let text = (a.innerText || a.textContent || a.getAttribute('aria-label') || a.getAttribute('title') || '')
                   .trim().replace(/\\s+/g, ' ').replace(/^job title\\s+/i, '');
+                if (!text || text.length < 8) {
+                  // Accenture jobdetails anchors are often icon-only; title lives in ?title=.
+                  try {
+                    const u = new URL(href);
+                    const qt = u.searchParams.get('title');
+                    if (qt && qt.trim().length >= 8) text = qt.trim().replace(/\\+/g, ' ');
+                  } catch (e) {}
+                }
                 if (!text || text.length < 8) {
                   // Oracle Cloud HCM / JPMC: <a class="job-grid-item__link"> has empty innerText.
                   // closest('[class*="job"]') matches the anchor itself — walk parents instead.
@@ -899,6 +907,7 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                     page.wait_for_selector(
                         '[data-automation-id="jobTitle"], a[data-automation-id="jobTitle"], '
                         'a[href*="icims.com/jobs/"][href*="/job"], '
+                        'a[href*="jobdetails?id="], a[href*="/jobs/job/"], '
                         "a.job-grid-item__link, [data-qa='jobRequisitionTitle']",
                         timeout=10000,
                     )

@@ -284,6 +284,12 @@ def test_skip_uhg_default():
         os.environ["HITECHCITY_SKIP_COMPANIES"] = "Hyland,Solera"
         assert company_skip_reason({"name": "Hyland"}) == "skip_company"
         assert company_skip_reason({"name": "ModMed"}) is None
+        assert JOB_ID_HREF_RE.search(
+            "https://www.accenture.com/in-en/careers/jobdetails?id=ATCI-5721872-S2064313_en&title=Business+Capability+Architect"
+        )
+        assert JOB_ID_HREF_RE.search(
+            "https://jobs.gartner.com/jobs/job/112613-executive-partner-enterprise-architecture-ea/"
+        )
     finally:
         if prev_uhg is None:
             os.environ.pop("HITECHCITY_SKIP_UHG", None)
