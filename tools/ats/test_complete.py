@@ -24,6 +24,7 @@ from tools.ats.complete import (
     is_submitted_text,
     is_unavailable_text,
     looks_like_apply_cta,
+    workday_password_rejected,
 )
 
 
@@ -156,6 +157,14 @@ assert_true(
     is None,
     "Greenhouse with resume input is guest-applyable",
 )
+
+assert_true(
+    workday_password_rejected(
+        "Error: Password must include:\n\t  - An uppercase character\n\t  - A numeric character"
+    ),
+    "Solera Workday password-rule error is a reject",
+)
+assert_true(not workday_password_rejected("Password*\nVerify New Password*"), "labels are not a reject")
 
 assert_true(
     classify_ats_host("https://talent.cognizant.com/en_US/careers/Login2") == "sso",
