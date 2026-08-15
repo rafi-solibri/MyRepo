@@ -83,10 +83,34 @@ SOFTWAREISH = re.compile(
     re.I,
 )
 
+# LinkedIn company-search noise: directories, communities, geo keywords mistaken for tenants.
+JUNK_TENANT_RE = re.compile(
+    r"(?i)^software\s+companies?\b|"
+    r"\b(tech\s+)?community\b|"
+    r"\b(meetup|user\s*group|chamber\s+of\s+commerce|coworking)\b|"
+    r"\b(erbil|kurdistan)\b|"
+    r"\bhiring\s+for\b|"
+    r"^companies?\s+in\b|"
+    r"^\d+$"
+)
+
 
 def _slugify(name: str) -> str:
     s = re.sub(r"[^a-z0-9]+", "-", (name or "").lower()).strip("-")
     return s[:64]
+
+
+def _is_junk_tenant(name: str, slug: str = "") -> bool:
+    """Reject LinkedIn directory / community hits that are not campus employers."""
+    blob = f"{name or ''} {slug or ''}".strip()
+    if not blob:
+        return True
+    if JUNK_TENANT_RE.search(name or "") or JUNK_TENANT_RE.search(slug or ""):
+        return True
+    # Slug-shaped search leftovers: software-companies-*, *-tech-community
+    if re.search(r"(?i)software-companies|tech-community|user-group", slug or ""):
+        return True
+    return False
 
 
 def _already_listed(companies: list[dict], name: str, slug: str = "") -> bool:
@@ -103,6 +127,9 @@ def _merge_candidate(companies: list[dict], cand: dict[str, Any], source: str) -
     if not name or len(name) < 2:
         return None
     slug = (cand.get("linkedinSlug") or _slugify(name)).strip()
+    # Never add junk from LinkedIn/board discovery; seeds may still curate intentionally.
+    if source != "seed" and _is_junk_tenant(name, slug):
+        return None
     if _already_listed(companies, name, slug):
         # Expand campuses if we learn new ones
         for c in companies:
@@ -256,6 +283,27 @@ def discover_from_board_hints(companies: list[dict]) -> dict[str, list[str]]:
     return {"added": added, "updated": updated}
 
 
+def prune_junk_tenants(companies: list[dict]) -> list[str]:
+    """Drop previously merged LinkedIn junk (never remove priority-1 curated rows)."""
+    removed: list[str] = []
+    keep: list[dict] = []
+    for c in companies:
+        name = c.get("name") or ""
+        slug = c.get("linkedinSlug") or ""
+        priority = int(c.get("priority") or 9)
+        source = (c.get("source") or "").lower()
+        if priority <= 1:
+            keep.append(c)
+            continue
+        # Auto-prune discovery noise (linkedin_search / board_hint), not hand-curated seeds.
+        if source in ("linkedin_search", "board_hint") and _is_junk_tenant(name, slug):
+            removed.append(name)
+            continue
+        keep.append(c)
+    companies[:] = keep
+    return removed
+
+
 def run(persist: bool = True) -> dict[str, Any]:
     if os.environ.get("HITECHCITY_DISCOVERY", "1") != "1":
         return {"ok": True, "skipped": True, "reason": "HITECHCITY_DISCOVERY=0"}
@@ -263,6 +311,7 @@ def run(persist: bool = True) -> dict[str, Any]:
     data = json.loads(COMPANIES_PATH.read_text(encoding="utf-8"))
     companies = list(data.get("companies") or [])
     before = len(companies)
+    pruned = prune_junk_tenants(companies)
 
     seed = discover_from_seeds(companies)
     li = discover_from_linkedin(companies)
@@ -281,6 +330,7 @@ def run(persist: bool = True) -> dict[str, Any]:
         "startedAt": datetime.now(timezone.utc).isoformat(),
         "beforeCount": before,
         "afterCount": len(companies),
+        "prunedJunk": pruned,
         "seed": seed,
         "linkedin": {k: v for k, v in li.items() if k != "error" or v},
         "linkedinError": li.get("error"),

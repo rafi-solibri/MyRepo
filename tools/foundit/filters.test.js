@@ -6,6 +6,7 @@ const {
   experienceOk,
   classifyJob,
   hasDotNet,
+  isArchLeadTitle,
 } = require("./filters");
 
 assert.deepStrictEqual(parseTitleExperience(".Net Lead|6-9 Yrs|Hyderabad"), {
@@ -325,6 +326,23 @@ assert.strictEqual(
   }).pass,
   true,
   "Infrastructure + .NET on title may still pass"
+);
+
+assert.strictEqual(
+  isArchLeadTitle("Solution Architecture Apps & AI"),
+  true,
+  "Architecture (not only Architect) is arch/lead band"
+);
+assert.strictEqual(
+  classifyJob({
+    jobId: 21,
+    title: "Solution Architecture Apps & AI",
+    companyName: "Microsoft Corp",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: "Azure" }, { text: "Apps" }],
+  }).pass,
+  true,
+  "Solution Architecture Hyd titles may apply without .NET skills laundry"
 );
 
 console.log("filters.test.js OK");
