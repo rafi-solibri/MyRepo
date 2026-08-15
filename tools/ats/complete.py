@@ -54,7 +54,9 @@ SUBMITTED_RE = re.compile(
     r"application (has been )?submitted|thank you for (your )?appl|"
     r"we (have )?received your (application|appl)|application received|"
     r"successfully (applied|submitted)|your application was sent|"
-    r"application complete|you have successfully applied",
+    r"application complete|you have successfully applied|"
+    r"thanks for (your )?interest|application has been received|"
+    r"you('re| are) all set|applied successfully",
     re.I,
 )
 
@@ -71,7 +73,8 @@ WORKDAY_HOST_RE = re.compile(
 )
 
 GREENHOUSE_HOST_RE = re.compile(
-    r"greenhouse\.io|job-boards\.greenhouse|smartrecruiters\.com|lever\.co|ashbyhq\.com",
+    r"greenhouse\.io|job-boards\.greenhouse|smartrecruiters\.com|lever\.co|"
+    r"ashbyhq\.com|icims\.com|taleo\.net|successfactors|oraclecloud\.com|phenompeople",
     re.I,
 )
 
@@ -100,11 +103,37 @@ def ats_password() -> str:
         "ATS_PASSWORD",
         "NAUKRI_WORKDAY_PASSWORD",
         "NAUKRI_ATS_PASSWORD",
+        "LINKEDIN_PASSWORD",
     ):
         val = (os.environ.get(key) or "").strip()
         if val:
             return val
     return ""
+
+
+def is_hard_ats_wall(reason: str | None) -> bool:
+    """True only for walls that will repeat for the same company this run.
+
+    Timeouts / incomplete forms must NOT trip a per-company wall cap — that
+    previously stopped all remaining externals after the first Workday miss.
+    """
+    why = (reason or "").lower()
+    if not why:
+        return False
+    if any(x in why for x in ("incomplete", "timeout", "time_cap", "stuck", "errors found")):
+        return False
+    return any(
+        x in why
+        for x in (
+            "captcha",
+            "login",
+            "account wall",
+            "ats_login_wall",
+            "ats_password_missing",
+            "ats_email_missing",
+            "sso",
+        )
+    )
 
 
 def is_submitted_text(text: str | None) -> bool:
@@ -597,15 +626,110 @@ def workday_auth(page) -> str | None:
     return None
 
 
+def _pick_workday_option(page, form_field_id: str, patterns: list[str]) -> bool:
+    try:
+        root = page.locator(f"[data-automation-id='{form_field_id}']").first
+        if not root.count() or not root.is_visible():
+            return False
+        already = (root.inner_text(timeout=800) or "").strip()
+        if already and not re.search(r"select one|0 items selected|^$", already, re.I):
+            if any(re.search(p, already, re.I) for p in patterns):
+                return True
+        opener = root.locator(
+            "button[aria-haspopup='listbox'], [data-automation-id='selectWidget'], "
+            "[data-automation-id='multiselectInputContainer'], button, input"
+        ).first
+        if opener.count() and opener.is_visible():
+            opener.click(force=True)
+            _sleep(0.6)
+        for pat in patterns:
+            opt = page.locator(
+                "[data-automation-id='promptOption'], [role='option'], "
+                "[data-automation-id='promptLeafNode']"
+            ).filter(has_text=re.compile(pat, re.I)).first
+            if opt.count() and opt.is_visible():
+                opt.click(force=True)
+                _sleep(0.35)
+                page.keyboard.press("Escape")
+                return True
+            hint = re.sub(r"[^A-Za-z0-9 ]", "", pat)[:12]
+            if hint:
+                page.keyboard.type(hint, delay=30)
+                page.keyboard.press("Enter")
+                _sleep(0.35)
+                page.keyboard.press("Escape")
+                return True
+        page.keyboard.press("Escape")
+    except Exception:
+        return False
+    return False
+
+
 def workday_fill_core(page) -> None:
+    # Prefer India when the tenant defaults to United States.
+    try:
+        country = page.locator(
+            "[data-automation-id='formField-country'] button, [data-automation-id='countryDropdown']"
+        ).first
+        if country.count() and country.is_visible():
+            c_text = (country.inner_text(timeout=800) or "").strip()
+            if re.search(r"united states|select one|^$", c_text, re.I) and not re.search(r"india", c_text, re.I):
+                country.click(force=True)
+                _sleep(0.5)
+                india = page.get_by_text(re.compile(r"^India$"), exact=True).first
+                if india.count() and india.is_visible():
+                    india.click(force=True)
+                    _sleep(0.6)
+    except Exception:
+        pass
     _type_automation(page, "legalNameSection_firstName", PROFILE["first"])
     _type_automation(page, "legalNameSection_lastName", PROFILE["last"])
     _type_automation(page, "formField-legalName--firstName", PROFILE["first"])
     _type_automation(page, "formField-legalName--lastName", PROFILE["last"])
     _type_automation(page, "addressSection_city", PROFILE["city"])
+    _type_automation(page, "formField-addressLine1", "Hyderabad, Telangana")
     _type_automation(page, "formField-city", PROFILE["city"])
     _type_automation(page, "formField-postalCode", PROFILE["postal"])
+    _type_automation(page, "phone", PROFILE["phone"])
     _type_automation(page, "formField-phoneNumber", PROFILE["phone"])
+    _pick_workday_option(page, "formField-phoneType", [r"^Mobile$", r"Cell", r"Mobile"])
+    _pick_workday_option(
+        page,
+        "formField-source",
+        [r"^Job Board$", r"Naukri", r"Internet", r"Online", r"Other", r"Company Websites"],
+    )
+    _pick_workday_option(page, "formField-degree", [r"^BS$", r"Bachelor of Science", r"B\.?\s*Tech", r"^Bachelor"])
+    _pick_workday_option(
+        page,
+        "formField-fieldOfStudy",
+        [r"Information Technology", r"Computer Science", r"Computer Engineering"],
+    )
+    try:
+        school = page.locator("[data-automation-id='formField-schoolName']").first
+        if school.count() and school.is_visible():
+            st = school.inner_text(timeout=600) or ""
+            if not re.search(r"Acharya Nagarjuna|University", st, re.I):
+                opener = school.locator("input, button, [data-automation-id='multiselectInputContainer']").first
+                if opener.count():
+                    opener.click(force=True)
+                    page.keyboard.type(PROFILE["school"], delay=20)
+                    _sleep(0.7)
+                    opt = page.locator("[data-automation-id='promptOption']").filter(
+                        has_text=re.compile(r"Acharya Nagarjuna", re.I)
+                    ).first
+                    if opt.count() and opt.is_visible():
+                        opt.click(force=True)
+                    else:
+                        _type_automation(page, "formField-schoolName", PROFILE["school"])
+                    page.keyboard.press("Escape")
+    except Exception:
+        pass
+    try:
+        prev = page.locator("[data-automation-id='formField-candidateIsPreviousWorker']").first
+        if prev.count() and prev.is_visible():
+            prev.get_by_text(re.compile(r"^No$"), exact=True).first.click(force=True)
+    except Exception:
+        pass
     fill_labeled_fields(page)
     fill_yes_no(page)
     tick_consents(page)
@@ -620,7 +744,7 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
     if auth:
         return "blocked", auth
     stuck = 0
-    while time.time() - start < time_cap_s and stuck < 6:
+    while time.time() - start < time_cap_s and stuck < 10:
         if looks_submitted(page):
             return "applied", "confirmation"
         wall = blocked_wall(page)
@@ -655,10 +779,47 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
     return "blocked", "external_incomplete_or_timeout"
 
 
+def fill_greenhouse_combos(page) -> None:
+    """Greenhouse / Lever / SmartRecruiters react-select required answers."""
+    pairs = [
+        (r"country of residence|current country", "India"),
+        (r"^state", "N/A"),
+        (r"authorized to work|legally authori[sz]ed", "Yes"),
+        (r"require sponsorship|visa sponsorship", "No"),
+        (r"ever been employed|previously employed", "No"),
+        (r"gender", "Male"),
+        (r"how did you hear", "LinkedIn"),
+        (r"willing to relocate", "Yes"),
+    ]
+    for label_re, answer in pairs:
+        try:
+            lab = page.locator("label").filter(has_text=re.compile(label_re, re.I)).first
+            if not lab.count() or not lab.is_visible():
+                continue
+            for_id = lab.get_attribute("for")
+            combo = page.locator(f'[id="{for_id}"]').first if for_id else lab.locator("xpath=following::*[@role='combobox'][1]").first
+            if not combo.count():
+                continue
+            combo.click(force=True)
+            _sleep(0.25)
+            page.keyboard.type(str(answer), delay=15)
+            _sleep(0.35)
+            opt = page.locator("[role='option']:visible").filter(has_text=re.compile(rf"^{re.escape(answer)}", re.I)).first
+            if opt.count() and opt.is_visible():
+                opt.click(force=True)
+            else:
+                page.keyboard.press("Enter")
+            _sleep(0.2)
+        except Exception:
+            continue
+
+
 def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
     start = time.time()
     stuck = 0
-    while time.time() - start < time_cap_s and stuck < 5:
+    # Greenhouse / Lever landings: open the application form first.
+    _click_text(page, ("Apply for this job", "Apply Now", "Apply", "Start application"))
+    while time.time() - start < time_cap_s and stuck < 8:
         if looks_submitted(page):
             return "applied", "confirmation"
         wall = blocked_wall(page)
@@ -682,6 +843,7 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
             pass
         fill_labeled_fields(page)
         fill_yes_no(page)
+        fill_greenhouse_combos(page)
         tick_consents(page)
         if click_advance(page):
             stuck = 0

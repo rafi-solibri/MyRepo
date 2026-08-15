@@ -1,5 +1,12 @@
 # Instahyre — issues & fixes
 
+## 2026-08-15 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| external_ats_detected logged but company-site never completed | Follow ATS href via tools/ats/complete_page.js |
+
+
 ## 2026-08-14 (cloud)
 
 | Issue | Fix |

@@ -133,7 +133,9 @@ MAX_SCAN_PER_SEARCH = int(os.environ.get("LINKEDIN_MAX_SCAN", "60"))
 TPR_WINDOWS = ("r86400", "r259200", "r604800", "r1209600")
 # After Easy Apply pass, also search without f_AL so company-site / Apply jobs are visible.
 EASY_APPLY_ONLY = os.environ.get("LINKEDIN_EASY_APPLY_ONLY", "0") == "1"
-NON_EA_IF_BELOW = int(os.environ.get("LINKEDIN_NON_EA_IF_BELOW", "20"))
+# Always collect company-website jobs unless LINKEDIN_EASY_APPLY_ONLY=1.
+# NON_EA_IF_BELOW is kept for logs; the non-EA pass no longer stops after N Easy Applies.
+NON_EA_IF_BELOW = int(os.environ.get("LINKEDIN_NON_EA_IF_BELOW", "50"))
 SEEN_IDS_PATH = Path(
     os.environ.get(
         "LINKEDIN_SEEN_IDS_PATH",
@@ -2135,8 +2137,8 @@ def main() -> None:
             return len([r for r in results if r.status == "submitted"])
 
         def run_search_wave(*, easy_apply: bool, tpr: str) -> None:
-            titles_hyd = TITLES if easy_apply else TITLES[:6]
-            titles_remote = TITLES[:5] if easy_apply else TITLES[:3]
+            titles_hyd = TITLES if easy_apply else TITLES
+            titles_remote = TITLES[:5] if easy_apply else TITLES[:6]
             for title in titles_hyd:
                 process_search(
                     page,
@@ -2148,9 +2150,13 @@ def main() -> None:
                     tpr=tpr,
                     easy_apply=easy_apply,
                 )
-                if submitted_n() >= MAX_APPLY or hit_daily_limit():
+                if submitted_n() >= MAX_APPLY:
                     return
-            if submitted_n() >= MAX_APPLY or hit_daily_limit():
+                if easy_apply and hit_daily_limit():
+                    return
+            if submitted_n() >= MAX_APPLY:
+                return
+            if easy_apply and hit_daily_limit():
                 return
             for title in titles_remote:
                 process_search(
@@ -2163,24 +2169,21 @@ def main() -> None:
                     tpr=tpr,
                     easy_apply=easy_apply,
                 )
-                if submitted_n() >= MAX_APPLY or hit_daily_limit():
+                if submitted_n() >= MAX_APPLY:
+                    return
+                if easy_apply and hit_daily_limit():
                     return
 
         try:
             for tpr in TPR_WINDOWS:
-                if submitted_n() >= MAX_APPLY or hit_daily_limit():
+                if submitted_n() >= MAX_APPLY:
                     break
                 # Hyderabad + Remote Easy Apply first
                 run_search_wave(easy_apply=True, tpr=tpr)
-                # Non-Easy Apply pass so company-site / Apply jobs are not invisible
-                if (
-                    not EASY_APPLY_ONLY
-                    and submitted_n() < MAX_APPLY
-                    and submitted_n() < NON_EA_IF_BELOW
-                    and not hit_daily_limit()
-                ):
+                # Always collect company-website / Apply jobs (even after Easy Apply daily limit).
+                if not EASY_APPLY_ONLY and submitted_n() < MAX_APPLY:
                     print(
-                        f"=== NON-EASY-APPLY SEARCH PASS (submitted={submitted_n()} < {NON_EA_IF_BELOW}) ===",
+                        f"=== NON-EASY-APPLY SEARCH PASS (submitted={submitted_n()}) ===",
                         flush=True,
                     )
                     run_search_wave(easy_apply=False, tpr=tpr)

@@ -15,6 +15,7 @@ const PASS =
   process.env.ATS_PASSWORD ||
   process.env.NAUKRI_WORKDAY_PASSWORD ||
   process.env.NAUKRI_ATS_PASSWORD ||
+  process.env.LINKEDIN_PASSWORD ||
   "";
 
 function sleep(ms) {
