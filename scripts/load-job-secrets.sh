@@ -36,4 +36,24 @@ done
 if [[ -n "$_loaded" && "${JOB_APPLY_SECRETS_VERBOSE:-0}" == "1" ]]; then
   echo "load-job-secrets: loaded $_loaded" >&2
 fi
+
+# Owner sets one password / email (NAUKRI_WORKDAY_PASSWORD + LINKEDIN_EMAIL).
+# Alias so every ATS helper that reads WORKDAY_PASSWORD / APPLY_EMAIL sees them.
+if [[ -z "${WORKDAY_PASSWORD:-}" ]]; then
+  WORKDAY_PASSWORD="${NAUKRI_WORKDAY_PASSWORD:-${ATS_PASSWORD:-${NAUKRI_ATS_PASSWORD:-${LINKEDIN_PASSWORD:-}}}}"
+  export WORKDAY_PASSWORD
+fi
+if [[ -z "${ATS_PASSWORD:-}" && -n "${WORKDAY_PASSWORD:-}" ]]; then
+  ATS_PASSWORD="$WORKDAY_PASSWORD"
+  export ATS_PASSWORD
+fi
+if [[ -z "${APPLY_EMAIL:-}" ]]; then
+  APPLY_EMAIL="${NAUKRI_APPLY_EMAIL:-${LINKEDIN_EMAIL:-}}"
+  export APPLY_EMAIL
+fi
+if [[ -z "${NAUKRI_APPLY_EMAIL:-}" && -n "${APPLY_EMAIL:-}" ]]; then
+  NAUKRI_APPLY_EMAIL="$APPLY_EMAIL"
+  export NAUKRI_APPLY_EMAIL
+fi
+
 unset _ROOT _candidates _f _loaded

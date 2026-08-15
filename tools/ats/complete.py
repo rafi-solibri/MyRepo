@@ -108,7 +108,38 @@ CAPTCHA_CHALLENGE_HOSTS = (
 DEFAULT_TIME_CAP_S = int(os.environ.get("ATS_TIME_CAP_S", "390"))
 
 
+def _alias_owner_secrets() -> None:
+    """Copy the one env password/email onto the names every helper reads."""
+    pw = ""
+    for key in (
+        "WORKDAY_PASSWORD",
+        "ATS_PASSWORD",
+        "NAUKRI_WORKDAY_PASSWORD",
+        "NAUKRI_ATS_PASSWORD",
+        "LINKEDIN_PASSWORD",
+    ):
+        pw = (os.environ.get(key) or "").strip()
+        if pw:
+            break
+    if pw:
+        os.environ.setdefault("WORKDAY_PASSWORD", pw)
+        os.environ.setdefault("ATS_PASSWORD", pw)
+    email = ""
+    for key in ("APPLY_EMAIL", "NAUKRI_APPLY_EMAIL", "LINKEDIN_EMAIL"):
+        email = (os.environ.get(key) or "").strip()
+        if email and "@" in email:
+            break
+        email = ""
+    if email:
+        os.environ.setdefault("APPLY_EMAIL", email)
+        os.environ.setdefault("NAUKRI_APPLY_EMAIL", email)
+
+
+_alias_owner_secrets()
+
+
 def ats_email() -> str:
+    _alias_owner_secrets()
     for key in ("APPLY_EMAIL", "NAUKRI_APPLY_EMAIL", "LINKEDIN_EMAIL"):
         val = (os.environ.get(key) or "").strip()
         if val and "@" in val:
@@ -117,6 +148,7 @@ def ats_email() -> str:
 
 
 def ats_password() -> str:
+    _alias_owner_secrets()
     for key in (
         "WORKDAY_PASSWORD",
         "ATS_PASSWORD",

@@ -11,6 +11,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.ats.complete import (
+    ats_password,
     auth_wall_reason,
     classify_ats_host,
     frame_url_is_captcha_challenge,
@@ -63,6 +64,13 @@ assert_true(frame_url_is_captcha_challenge("https://www.google.com/recaptcha/api
 assert_true(not frame_url_is_captcha_challenge("https://www.google.com/recaptcha/api2/anchor"), "hidden badge")
 assert_true(iframe_box_is_onscreen({"width": 300, "height": 140}), "onscreen box")
 assert_true(not iframe_box_is_onscreen({"width": 0, "height": 0}), "hidden 0x0")
+
+# The one owner secret (NAUKRI_WORKDAY_PASSWORD) must satisfy ats_password().
+for k in ("WORKDAY_PASSWORD", "ATS_PASSWORD", "NAUKRI_ATS_PASSWORD", "LINKEDIN_PASSWORD"):
+    os.environ.pop(k, None)
+os.environ["NAUKRI_WORKDAY_PASSWORD"] = "owner-secret-18chars"
+assert_true(ats_password() == "owner-secret-18chars", "NAUKRI_WORKDAY_PASSWORD is the owner password")
+assert_true(os.environ.get("WORKDAY_PASSWORD") == "owner-secret-18chars", "alias WORKDAY_PASSWORD")
 
 # Workday Create Account is completable — not a hard wall when email+password exist.
 os.environ["WORKDAY_PASSWORD"] = "x" * 12

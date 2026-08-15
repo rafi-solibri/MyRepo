@@ -5,18 +5,30 @@
  */
 "use strict";
 
-const EMAIL =
-  process.env.APPLY_EMAIL ||
-  process.env.NAUKRI_APPLY_EMAIL ||
-  process.env.LINKEDIN_EMAIL ||
-  "";
-const PASS =
-  process.env.WORKDAY_PASSWORD ||
-  process.env.ATS_PASSWORD ||
-  process.env.NAUKRI_WORKDAY_PASSWORD ||
-  process.env.NAUKRI_ATS_PASSWORD ||
-  process.env.LINKEDIN_PASSWORD ||
-  "";
+function firstEnv(...keys) {
+  for (const k of keys) {
+    const v = String(process.env[k] || "").trim();
+    if (v) return v;
+  }
+  return "";
+}
+
+const EMAIL = firstEnv("APPLY_EMAIL", "NAUKRI_APPLY_EMAIL", "LINKEDIN_EMAIL");
+const PASS = firstEnv(
+  "WORKDAY_PASSWORD",
+  "ATS_PASSWORD",
+  "NAUKRI_WORKDAY_PASSWORD",
+  "NAUKRI_ATS_PASSWORD",
+  "LINKEDIN_PASSWORD"
+);
+if (EMAIL) {
+  process.env.APPLY_EMAIL = process.env.APPLY_EMAIL || EMAIL;
+  process.env.NAUKRI_APPLY_EMAIL = process.env.NAUKRI_APPLY_EMAIL || EMAIL;
+}
+if (PASS) {
+  process.env.WORKDAY_PASSWORD = process.env.WORKDAY_PASSWORD || PASS;
+  process.env.ATS_PASSWORD = process.env.ATS_PASSWORD || PASS;
+}
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
