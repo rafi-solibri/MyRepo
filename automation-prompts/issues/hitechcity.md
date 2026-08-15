@@ -11,6 +11,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| iCIMS 'application was submitted successfully' / 'currently submitted' missed as confirmation | Match those banners + read iCIMS iframe body so already-applied skip works |
 | Owner will not pay CapSolver/2Captcha so unattended iCIMS hCaptcha still blocks Hyland | Headed wait (ATS_CAPTCHA_WAIT_SEC / HOME_LOCAL) + scripts/home-headed-careers-apply.sh so owner clicks captcha for free; paid solver stays optional |
 | Hyland iCIMS Apply blocked on hCaptcha so 0 career applies | complete_icims fills email + I accept, clicks checkbox, then CapSolver/2Captcha token inject (same secrets as Indeed); DataDome boards stay owner/residential |
 | Hyland iCIMS opened 6 Hyd architect JDs then burned ATS cap — Apply is in iframe and apply lands on GDPR email + hCaptcha | Click iframe mode=apply; fail-fast CAPTCHA/bot wall on iCIMS /login + hCaptcha so the company wall cap trips instead of 6x timeout |

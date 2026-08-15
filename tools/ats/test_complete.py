@@ -29,6 +29,7 @@ from tools.ats.complete import (
     looks_like_apply_cta,
     page_fingerprint,
     ALREADY_APPLIED_RE,
+    SUBMITTED_RE,
     workday_compliant_password,
     workday_on_standalone_login,
     workday_password_alert,
@@ -283,6 +284,14 @@ assert_true(
 assert_true(
     bool(ALREADY_APPLIED_RE.search("You have already applied to this job.")),
     "already-applied banner is skipped not walled",
+)
+assert_true(
+    bool(ALREADY_APPLIED_RE.search("You are currently submitted to this job.")),
+    "iCIMS currently-submitted is already applied",
+)
+assert_true(
+    bool(SUBMITTED_RE.search("Your application was submitted successfully. Thank you for applying.")),
+    "iCIMS success banner counts as submitted",
 )
 assert_true(
     workday_compliant_password("GoodPass123!") == "GoodPass123!",
