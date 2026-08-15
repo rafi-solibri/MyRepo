@@ -103,6 +103,11 @@ def test_already_applied_job_view_only():
         "Application submitted",
         "https://smartapply.indeed.com/beta/indeedapply/apply/questions",
     )
+    # Post-click SmartApply for a job submitted earlier today.
+    assert already_applied(
+        "You have already applied to this job\nReturn to job search",
+        "https://smartapply.indeed.com/beta/indeedapply/applybyapplyablejobid?indeedApplyableJobId=abc",
+    )
 
 
 def test_hybrid_profile_copies_local_state():

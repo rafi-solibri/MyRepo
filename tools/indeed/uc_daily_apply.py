@@ -605,18 +605,25 @@ def restore_signed_in(sb) -> dict:
 
 
 def already_applied(body: str, url: str = "") -> bool:
-    """True when the job-view page shows this listing was already submitted."""
+    """True when the listing was already submitted (job view or post-click SmartApply)."""
     b = (body or "").lower()
     u = (url or "").lower()
-    if "smartapply" in u or "indeedapply" in u:
-        return False
-    return bool(
+    prior = bool(
         re.search(
             r"you applied to this job|already applied to this|"
             r"you have already applied|application submitted on",
             b,
         )
     )
+    if "smartapply" in u or "indeedapply" in u:
+        # "Application submitted" is THIS apply's confirmation — not a prior apply.
+        return bool(
+            re.search(
+                r"you have already applied to this job|already applied to this job",
+                b,
+            )
+        )
+    return prior
 
 
 def search_queries() -> list[tuple[str, str]]:
@@ -816,7 +823,7 @@ def fill_common_questions(sb) -> None:
               }
               if (/current.*(ctc|salary|compensation|pay)|ctc.*current|present.*ctc|current.*package|current salary/.test(t)) return '52';
               if (/expected.*(ctc|salary|compensation|pay)|ctc.*expected|desired.*salary|expected.*package/.test(t)) return '65';
-              if (/earliest start|start date|available from|joining date|when can you (start|join)/.test(t)
+              if (/earliest start|start date|available from|joining date|start employment|able to start|when (can|would) you.{0,40}(start|join)/.test(t)
                   && !/salary|ctc/.test(t)) {
                 return '15/08/2026';
               }
@@ -848,7 +855,10 @@ def fill_common_questions(sb) -> None:
                 return 'yes';
               }
               if (/relocat|willing to work|hybrid|work from office|bond|service agreement|background check|drug test/.test(t)) return 'yes';
-              if (/authorized|work authori|visa|citizen|india|legally/.test(t)) return 'yes';
+              if (/sponsor/.test(t)) return 'no';
+              if (/employed by any (department|agency|instrumentality)|government.*(employ|department)|currently employed by/.test(t)
+                  && !/current.*(employer|company)/.test(t)) return 'no';
+              if (/authorized|work authori|visa|citizen|india|legally/.test(t) && !/sponsor/.test(t)) return 'yes';
               if (/gender/.test(t)) return 'male';
               if (/city|current location|prefer.*location|job location|base location/.test(t)) return 'Hyderabad';
               if (/\\?/.test(t) && /(yes|no)/.test(t)) return 'yes';
@@ -863,6 +873,7 @@ def fill_common_questions(sb) -> None:
                 const lab = ((r.getAttribute('aria-label')||'') + ' ' + (r.parentElement?.innerText||'') + ' ' + (r.value||'')).toLowerCase().slice(0,160);
                 const hit =
                   (want === 'yes' && /\\byes\\b|yep|true|agree|available/.test(lab) && !/\\bno\\b/.test(lab)) ||
+                  (want === 'no' && /\\bno\\b|do not require|don't require|not required|false/.test(lab) && !/\\byes\\b/.test(lab)) ||
                   (want === 'male' && /\\bmale\\b/.test(lab) && !/female/.test(lab)) ||
                   (want === 'Mr.' && /\\bmr\\.?\\b/.test(lab) && !/mrs|miss/.test(lab)) ||
                   (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than|currently serving|serving notice/.test(lab)) ||
@@ -878,6 +889,7 @@ def fill_common_questions(sb) -> None:
                   const t = (opt.text||'').toLowerCase();
                   if (
                     (want === 'yes' && /\\byes\\b/.test(t)) ||
+                    (want === 'no' && /\\bno\\b/.test(t) && !/\\byes\\b/.test(t)) ||
                     (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs/.test(t)) ||
                     (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than/.test(t)) ||
                     (want === 'Hyderabad' && /hyderabad/.test(t)) ||
@@ -913,6 +925,7 @@ def fill_common_questions(sb) -> None:
                 const t = ((el.innerText||'') + ' ' + (el.getAttribute('aria-label')||'')).trim().toLowerCase();
                 if (!t || t.length > 80) continue;
                 if (want === 'yes' && /\\byes\\b|i certify|yes, i certify/.test(t) && !/don'?t certify|\\bno,/.test(t)) { el.click(); return true; }
+                if (want === 'no' && /\\bno\\b|do not require|don't require/.test(t) && !/\\byes\\b/.test(t)) { el.click(); return true; }
                 if (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs/.test(t)) { el.click(); return true; }
                 if (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15/.test(t)) { el.click(); return true; }
                 if (want === 'B.Tech' && /b\\.?\\s*tech|bachelor|b\\.e\\b|undergraduate|master'?s?|m\\.?\\s*tech/.test(t)
@@ -970,7 +983,7 @@ def fill_common_questions(sb) -> None:
               else if (/highest (degree|education|qualification)|education|university|college|degree/.test(lab)) val = 'B.Tech';
               else if (/current.*(ctc|salary|compensation|package)|ctc.*current|current salary/.test(lab)) val = vals.current;
               else if (/expected.*(ctc|salary|compensation|package)|ctc.*expected/.test(lab)) val = vals.expected;
-              else if (/earliest start|start date|available from|joining date/.test(lab) || (type === 'date' && /start|join|avail/.test(lab))) val = '15/08/2026';
+              else if (/earliest start|start date|available from|joining date|start employment|able to start/.test(lab) || (type === 'date' && /start|join|avail|employ/.test(lab))) val = '15/08/2026';
               else if (/notice/.test(lab) && /(in days|\\(days\\)|\\bdays\\b|number of days)/.test(lab)) val = '0';
               else if (/notice|joining|availability/.test(lab) && !/start date|available from|privacy notice/.test(lab)) val = vals.notice;
               else if (/city|location|current\\s*location/.test(lab)) val = vals.city;
@@ -2313,6 +2326,8 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
             pass
         if _is_submitted(body, url):
             return "submitted"
+        if already_applied(body, url):
+            return "already"
         if "apply on company site" in body and "indeed apply" not in body:
             return "external"
         # Review page: dedicated submit path (JS click alone often no-ops).
@@ -2865,6 +2880,11 @@ def main() -> int:
                     report["applied"].append(item)
                     report["counts"]["applied"] += 1
                     print("APPLIED", page_title[:80], flush=True)
+                elif result == "already":
+                    item["reason"] = "already_applied"
+                    report["skipped"].append(item)
+                    report["counts"]["skipped"] += 1
+                    print("SKIP already_applied", page_title[:80], flush=True)
                 elif result == "external":
                     # Easy Apply flipped to company-site — complete ATS, do not credit a click.
                     handles_now = []

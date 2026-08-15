@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| SmartApply already-applied counted rejected; start-employment date empty; sponsorship/gov Yes | Detect already applied on SmartApply; fill start-employment DD/MM/YYYY; answer No for visa sponsorship and government employment |
 | SmartApply Notice Period (in days) rejected Immediate (valid number) | Fill numeric notice-period-in-days as 0; keep Immediate only for dropdowns |
 | SERP pagead repeats + SmartApply name/certify/start-date/tel=tell | job_dedupe_key from jk=; fill full name/start date/certify; stop tel matching tell |
 | SmartApply put Yes into Date of birth / PAN and stalled on required employer questions | Fill DOB 16/01/1989 and title Mr.; never invent PAN/Aadhaar; stop defaulting leftover required text to Yes |
