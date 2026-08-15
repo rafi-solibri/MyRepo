@@ -20,6 +20,8 @@ from tools.ats.complete import (
     frame_url_is_captcha_challenge,
     complete_icims,
     icims_hcaptcha_login,
+    icims_logged_in,
+    icims_should_wait_captcha,
     iframe_box_is_onscreen,
     is_board_tracking_url,
     is_brochure_or_dead_end,
@@ -368,6 +370,9 @@ class _FakeFrame:
         self.url = url
         self._body = body
 
+    def inner_text(self, sel: str = "body"):
+        return self._body
+
     def locator(self, sel: str):
         page = self
 
@@ -437,6 +442,17 @@ assert_true(
     is_hard_ats_wall("owner_captcha_unsolved"),
     "headed owner-wait miss trips company wall cap",
 )
+_logged_q = _FakeIframesPage(
+    "https://careers-hyland.icims.com/jobs/14169/senior-software-architect/questions",
+    [
+        _FakeFrame(
+            "https://careers-hyland.icims.com/jobs/14169/senior-software-architect/questions?in_iframe=1",
+            "Mohammed Abdul Rafi Ahmed\nDashboard | Log Out\nCandidate Questions\nAre you willing to relocate?",
+        )
+    ],
+)
+assert_true(icims_logged_in(_logged_q), "Log Out on questions is logged in")
+assert_true(not icims_should_wait_captcha(_logged_q), "logged-in questions skip captcha wait")
 assert_true(callable(complete_icims), "complete_icims is wired")
 
 print("tools/ats/test_complete.py OK")

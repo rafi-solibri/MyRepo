@@ -648,6 +648,109 @@ def prefer_icims_apply(page) -> bool:
     return False
 
 
+def icims_logged_in(page) -> bool:
+    """True after iCIMS candidate login (Dashboard / Log Out in the apply iframe)."""
+    return bool(re.search(r"\bLog Out\b|Dashboard\s*\|", _body(page, 4000), re.I))
+
+
+def icims_should_wait_captcha(page) -> bool:
+    """Wait for a human/solver only on the GDPR /login wall, not mid-form hCaptcha chrome."""
+    if icims_hcaptcha_login(page):
+        return True
+    if icims_logged_in(page):
+        return False
+    return visible_captcha_challenge(page)
+
+
+def fill_icims_questions(page) -> bool:
+    """Answer Hyland iCIMS Candidate Questions (relocate / salary / work auth)."""
+    target = icims_active_frame(page)
+    clicked = False
+    pairs = (
+        (r"willing to relocate", r"^Yes$"),
+        (r"worked for Hyland|ever worked for", r"^No$"),
+        (r"Thoma Bravo", r"^No$"),
+        (r"work authorization|authori[sz]ed to work", r"^Yes$"),
+    )
+    for q_re, a_re in pairs:
+        try:
+            block = target.locator("fieldset, div, li, tr, section, table").filter(
+                has_text=re.compile(q_re, re.I)
+            ).first
+            if not block.count():
+                continue
+            ans = block.get_by_text(re.compile(a_re, re.I)).first
+            if ans.count() and ans.is_visible():
+                ans.click(timeout=2500)
+                clicked = True
+                _sleep(0.25)
+        except Exception:
+            continue
+    for box in (
+        target.get_by_label(re.compile(r"salary|languages", re.I)),
+        target.locator("textarea"),
+        target.locator("input[type='text']"),
+    ):
+        try:
+            n = min(box.count(), 6)
+        except Exception:
+            continue
+        for i in range(n):
+            el = box.nth(i)
+            try:
+                if not el.is_visible():
+                    continue
+                name = ((el.get_attribute("name") or "") + " " + (el.get_attribute("aria-label") or "")).lower()
+                nearby = ""
+                try:
+                    nearby = (el.evaluate("e => (e.closest('tr,fieldset,div')||e.parentElement).innerText") or "")[:200]
+                except Exception:
+                    nearby = name
+                if re.search(r"salary|ctc|compensation", nearby, re.I):
+                    el.fill(PROFILE["expected_ctc"], timeout=3000)
+                    clicked = True
+                elif re.search(r"language", nearby, re.I):
+                    el.fill("English, Hindi", timeout=3000)
+                    clicked = True
+            except Exception:
+                continue
+    return clicked
+
+
+def advance_icims_us_forms(page) -> bool:
+    """Skip US-only EEO / self-ID packets (India applicants)."""
+    target = icims_active_frame(page)
+    moved = False
+    for name in (
+        r"I Don.?t Wish To Answer",
+        r"I do not wish to answer",
+        r"Decline to (self-)?identify",
+        r"I don't wish to answer",
+    ):
+        try:
+            loc = target.get_by_text(re.compile(name, re.I))
+            for i in range(min(loc.count(), 6)):
+                el = loc.nth(i)
+                if el.is_visible():
+                    el.click(timeout=2500)
+                    moved = True
+                    _sleep(0.3)
+        except Exception:
+            continue
+    if _click_text(
+        target,
+        (
+            "Advance to next form",
+            "Next form",
+            "Continue",
+            "Submit",
+            "Next",
+        ),
+    ):
+        return True
+    return moved
+
+
 def icims_hcaptcha_login(page) -> bool:
     """True when iCIMS apply opened the GDPR/email login that is gated by hCaptcha."""
     try:
@@ -945,6 +1048,7 @@ def click_advance(page) -> bool:
             "Submit application",
             "Submit Application",
             "Send application",
+            "Advance to next form",
             "Save and Continue",
             "Create Account",
             "I'm interested",
@@ -1492,14 +1596,17 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
             return "skipped", "job_unavailable"
         wall = blocked_wall(page)
         if wall == "CAPTCHA/bot wall":
-            try:
-                from tools.ats.captcha_solve import hcaptcha_token_present, try_clear_hcaptcha
-                if hcaptcha_token_present(page) or try_clear_hcaptcha(page):
-                    wall = None
-                else:
+            if icims_logged_in(page) and not icims_hcaptcha_login(page):
+                wall = None
+            else:
+                try:
+                    from tools.ats.captcha_solve import hcaptcha_token_present, try_clear_hcaptcha
+                    if hcaptcha_token_present(page) or try_clear_hcaptcha(page):
+                        wall = None
+                    else:
+                        return "blocked", wall
+                except Exception:
                     return "blocked", wall
-            except Exception:
-                return "blocked", wall
         if wall in ("job_closed", "job_unavailable"):
             return "skipped", wall
         if wall == "ats_login_wall":
@@ -1543,7 +1650,13 @@ def icims_active_frame(page):
     for fr in frames:
         u = getattr(fr, "url", "") or ""
         if re.search(r"icims\.com/jobs/\d+", u, re.I) and (
-            "in_iframe=1" in u or "/login" in u or "mode=apply" in u
+            "in_iframe=1" in u
+            or "/login" in u
+            or "mode=apply" in u
+            or "/questions" in u
+            or "/form" in u
+            or "/eeo" in u
+            or "/candidate" in u
         ):
             return fr
     return page
@@ -1578,7 +1691,7 @@ def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
             _sleep(0.6)
     except Exception:
         pass
-    if icims_hcaptcha_login(page) or visible_captcha_challenge(page):
+    if icims_should_wait_captcha(page):
         cleared = try_clear_hcaptcha(page)
         if not cleared:
             if owner_captcha_wait_sec() > 0:
@@ -1596,7 +1709,23 @@ def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
             pass
     if looks_submitted(page) or looks_submitted(target):
         return "applied", "confirmation"
-    remaining = max(30, int(time_cap_s) - 5)
+    start = time.time()
+    while time.time() - start < max(20, int(time_cap_s) - 10):
+        if looks_submitted(page) or looks_submitted(target):
+            return "applied", "confirmation"
+        if looks_already_applied(page):
+            return "skipped", "already_applied"
+        fill_icims_questions(page)
+        if advance_icims_us_forms(page):
+            _sleep(1.2)
+            target = icims_active_frame(page)
+            continue
+        if _click_text(target, ("Submit", "Next", "Continue", "Save and Continue")):
+            _sleep(1.4)
+            target = icims_active_frame(page)
+            continue
+        break
+    remaining = max(30, int(time_cap_s) - int(time.time() - start) - 5)
     return complete_generic(page, remaining)
 
 
