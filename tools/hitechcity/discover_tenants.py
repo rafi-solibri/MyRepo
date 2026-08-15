@@ -182,7 +182,7 @@ def discover_from_linkedin(companies: list[dict]) -> dict[str, Any]:
 
     try:
         with sync_playwright() as p:
-            browser = p.chromium.connect_over_cdp(CDP)
+            browser = p.chromium.connect_over_cdp(CDP, timeout=20_000)
             context = browser.contexts[0]
             page = context.new_page()
             page.set_default_timeout(45000)

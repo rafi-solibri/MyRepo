@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-15 (home)
+
+| Issue | Fix |
+| --- | --- |
+| hCaptcha owner-wait poll evaluate hung on cross-origin hcaptcha iframes; CDP connect_over_cdp default 180s starved careers after Chrome flap | Skip hcaptcha/recaptcha frames + 2.5s poll timeout in captcha_solve; connect_over_cdp timeout=20s for discovery/careers/linkedin |
+
+
 ## 2026-08-15 (cloud)
 
 | Issue | Fix |
