@@ -130,7 +130,7 @@ SKIP_COMPANY_LOC = re.compile(
     r"indore|بنغالور|مومباي|دلهي|تشيناي|بوني|إندور",
     re.I,
 )
-MAX_EXTERNAL = int(os.environ.get("LINKEDIN_MAX_EXTERNAL", "25"))
+MAX_EXTERNAL = int(os.environ.get("LINKEDIN_MAX_EXTERNAL", "40"))
 ATS_TIME_CAP_S = int(os.environ.get("LINKEDIN_ATS_TIME_CAP_S", "390"))  # Workday needs ~6.5m
 
 

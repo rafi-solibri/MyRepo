@@ -15,6 +15,7 @@ from tools.ats.complete import (
     classify_ats_host,
     frame_url_is_captcha_challenge,
     iframe_box_is_onscreen,
+    is_hard_ats_wall,
     is_submitted_text,
 )
 
@@ -27,11 +28,19 @@ def assert_true(cond, msg):
 assert_true(is_submitted_text("Thank you for applying to Acme"), "thank-you must count")
 assert_true(is_submitted_text("Your application was sent"), "sent must count")
 assert_true(is_submitted_text("We have received your application"), "received must count")
+assert_true(is_submitted_text("Thanks for your interest — you're all set"), "all-set must count")
 assert_true(not is_submitted_text("Apply now to submit your application"), "CTA text must not count")
+
+assert_true(is_hard_ats_wall("CAPTCHA/bot wall"), "captcha is hard")
+assert_true(is_hard_ats_wall("ats_login_wall"), "login is hard")
+assert_true(not is_hard_ats_wall("external_incomplete_or_timeout"), "timeout is not a company wall")
+assert_true(not is_hard_ats_wall("ats_time_cap"), "time_cap is not a company wall")
+assert_true(not is_hard_ats_wall("stuck/time cap after 3 steps"), "stuck is not a company wall")
 
 assert_true(classify_ats_host("https://acme.wd1.myworkdayjobs.com/en-US/job") == "workday", "wd host")
 assert_true(classify_ats_host("https://boards.greenhouse.io/acme/jobs/1") == "greenhouse", "gh host")
 assert_true(classify_ats_host("https://jobs.lever.co/acme/abc") == "greenhouse", "lever grouped")
+assert_true(classify_ats_host("https://acme.icims.com/jobs/1") == "greenhouse", "icims grouped")
 assert_true(classify_ats_host("https://login.microsoftonline.com/xyz") == "sso", "sso host")
 assert_true(classify_ats_host("https://www.linkedin.com/jobs/view/1") == "linkedin", "li host")
 assert_true(classify_ats_host("https://careers.acme.com/apply") == "generic", "generic host")

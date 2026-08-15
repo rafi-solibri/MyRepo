@@ -20,6 +20,7 @@ const path = require("path");
 const { chromium } = require("playwright-core");
 const { skipReason, locationOk, hasDotNet } = require("./filters");
 const { findResume } = require("./resume");
+const { completeExternalPage } = require("../ats/complete_page");
 const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
 
 const CDP = process.env.INSTAHYRE_CDP || "http://127.0.0.1:9222";
@@ -514,8 +515,9 @@ async function main() {
           await maybeApply(page, c, report);
         }
 
-        // Spot-check up to 6 submitted pages for Application sent vs external ATS
-        const toCheck = report.applied.slice(0, 6);
+        // Follow company-site ATS links (do not stop at "detected").
+        const toCheck = report.applied.slice(0, 12);
+        const resume = findResume();
         for (const a of toCheck) {
           const info = await spotCheckExternal(page, { id: a.id, public_url: a.publicUrl }, report);
           if (!info) continue;
@@ -526,14 +528,37 @@ async function main() {
               : "unknown";
           if (info.external?.length) {
             a.externalLinks = info.external;
-            report.blocked.push({
-              reason: "external_ats_detected",
-              id: a.id,
-              title: a.title,
-              company: a.company,
-              links: info.external,
-              note: "Complete ATS with Rafi_Resume.docx + 52→65 if apply did not finish in-app",
-            });
+            const href = info.external[0].href;
+            const atsPage = await page.context().newPage();
+            try {
+              await atsPage.goto(href, { waitUntil: "domcontentloaded", timeout: 60000 });
+              const done = await completeExternalPage(atsPage, resume);
+              if (done.ok) {
+                report.applied.push({
+                  ...a,
+                  path: "company_ATS",
+                  atsUrl: done.url || href,
+                  confirmed: true,
+                });
+              } else {
+                report.blocked.push({
+                  reason: done.reason || "external_incomplete_or_timeout",
+                  id: a.id,
+                  title: a.title,
+                  company: a.company,
+                  url: done.url || href,
+                  path: "company_ATS",
+                });
+              }
+            } catch (e) {
+              report.blocked.push({
+                reason: "external_ats_error",
+                id: a.id,
+                error: String(e).slice(0, 200),
+              });
+            } finally {
+              await atsPage.close().catch(() => {});
+            }
           }
         }
 

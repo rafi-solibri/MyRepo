@@ -1,5 +1,12 @@
 # Cutshort — issues & fixes
 
+## 2026-08-15 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| status=external recorded without opening/completing company site | Extract Apply href and completeExternalPage |
+
+
 ## 2026-08-14 (cloud)
 
 | Issue | Fix |

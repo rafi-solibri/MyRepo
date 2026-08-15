@@ -64,9 +64,9 @@ REFERRAL_NOTE = (
     "If you're open to it, I'd appreciate a referral or a brief 15–20 min screen. Thanks!"
 )
 # After this many CAPTCHA/login walls on company-website ATS, skip further EXT for that company.
-MAX_EXT_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "1"))
-# Hard cap on external ATS attempts per company (incomplete Phenom/guest forms burn the run).
-MAX_EXT_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "2"))
+MAX_EXT_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "4"))
+# Hard cap on external ATS attempts per company (incomplete forms must not starve the run).
+MAX_EXT_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "10"))
 EXT_ATS_TIME_CAP_S = int(os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S", "390"))
 
 
@@ -761,15 +761,12 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                     report.skipped.append(ext)
                 else:
                     report.blocked.append(ext)
-                    why = (ext.get("reason") or "").lower()
-                    if (
-                        "captcha" in why
-                        or "login" in why
-                        or "account wall" in why
-                        or "incomplete" in why
-                        or "time_cap" in why
-                        or "stuck" in why
-                    ):
+                    why = ext.get("reason") or ""
+                    try:
+                        from tools.ats.complete import is_hard_ats_wall
+                    except Exception:
+                        from ats.complete import is_hard_ats_wall  # type: ignore
+                    if is_hard_ats_wall(why):
                         ext_walls += 1
                         print(
                             f"LI EXT WALL {company_found} walls={ext_walls}/{MAX_EXT_WALLS_PER_COMPANY} "

@@ -21,6 +21,7 @@ const {
   findResume,
 } = require("./questionnaire.js");
 const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
+const { completeExternalPage } = require("../ats/complete_page");
 
 const SEEKER_ID = "6a3e4526cc1fad8f39dccc0f";
 const CDP = process.env.CUTSHORT_CDP || "http://127.0.0.1:9222";
@@ -761,8 +762,45 @@ async function main() {
         console.error("[Q] per-apply aborted:", msg.slice(0, 200));
         if (!/has been closed|Target closed|Browser closed|Connection closed/i.test(msg)) throw e;
       }
-    } else if (result.status === "already_applied") stats.already.push({ ...row, result });
-    else if (result.status === "external") stats.external.push({ ...row, result });
+    }     else if (result.status === "already_applied") stats.already.push({ ...row, result });
+    else if (result.status === "external") {
+      const href = await page
+        .evaluate(() => {
+          const a = [...document.querySelectorAll("a")].find((el) =>
+            /company website|apply on company|greenhouse|myworkdayjobs|lever\.co|smartrecruiters|ashbyhq|careers\.|jobs\./i.test(
+              `${el.innerText || ""} ${el.href || ""}`
+            )
+          );
+          return a?.href || "";
+        })
+        .catch(() => "");
+      if (href) {
+        const ats = await page.context().newPage();
+        try {
+          await ats.goto(href, { waitUntil: "domcontentloaded", timeout: 60000 });
+          const done = await completeExternalPage(ats, findResume());
+          if (done.ok) {
+            stats.applied.push({
+              ...row,
+              result: { status: "applied", path: "company_ATS", atsUrl: done.url || href },
+            });
+            console.log(`[EXT] submitted ${href.slice(0, 80)}`);
+          } else {
+            stats.external.push({
+              ...row,
+              result: { ...result, reason: done.reason, atsUrl: done.url || href },
+            });
+            console.log(`[EXT] blocked ${done.reason} ${href.slice(0, 80)}`);
+          }
+        } catch (e) {
+          stats.external.push({ ...row, result: { ...result, error: String(e).slice(0, 180) } });
+        } finally {
+          await ats.close().catch(() => {});
+        }
+      } else {
+        stats.external.push({ ...row, result });
+      }
+    }
     else stats.failed.push({ ...row, result });
     await sleep(500);
   }

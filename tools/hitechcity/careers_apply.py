@@ -45,8 +45,8 @@ MAX_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_PER_COMPANY", "4"))
 MAX_COMPANIES = int(os.environ.get("HITECHCITY_MAX_COMPANIES", "40"))
 # Tight default: SSO walls must fail fast; guest ATS rarely needs 3+ minutes.
 TIME_CAP_S = int(os.environ.get("HITECHCITY_ATS_TIME_CAP_S", "390"))
-MAX_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "1"))
-MAX_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "2"))
+MAX_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "4"))
+MAX_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "10"))
 
 TITLE_HINT = re.compile(
     r"architect|technical lead|tech lead|engineering manager|principal|staff|"
@@ -616,8 +616,12 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                         report.skipped.append(result)
                     else:
                         report.blocked.append(result)
-                        why = (result.get("reason") or "").lower()
-                        if "login" in why or "captcha" in why or "account wall" in why or "time_cap" in why:
+                        why = result.get("reason") or ""
+                        try:
+                            from tools.ats.complete import is_hard_ats_wall
+                        except Exception:
+                            from ats.complete import is_hard_ats_wall  # type: ignore
+                        if is_hard_ats_wall(why):
                             company_walls += 1
                 if company_applied >= MAX_PER_COMPANY:
                     break
