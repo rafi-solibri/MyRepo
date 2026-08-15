@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Hyland iCIMS opened 6 Hyd architect JDs then burned ATS cap — Apply is in iframe and apply lands on GDPR email + hCaptcha | Click iframe mode=apply; fail-fast CAPTCHA/bot wall on iCIMS /login + hCaptcha so the company wall cap trips instead of 6x timeout |
 | Hyland/Intel/JPMC jobCount 0 — iCIMS parent chrome (icims in hostname) filled the 40-link cap before the in_iframe listing; Phenom search URLs redirected home | Extract only job-id/path slugs (not vendor hostnames); scan in_iframe first; Hyland URL uses in_iframe=1; rank CAPTCHA hosts later; Phenom search-results URLs |
 | Guest ATS boards (Hyland/Intel/JPMC) jobCount 0; Solera already-applied counted as login wall | Wait for Workday/iCIMS/Oracle job cards before extract; already-applied is skip not wall |
 | Second careers pass extracted 0 jobs — Frame.evaluate(timeout=) TypeError skipped every frame | Remove invalid evaluate timeout kwarg; hang hosts still skipped so Goldman cannot starve the run |

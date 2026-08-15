@@ -577,9 +577,82 @@ def visible_captcha_challenge(page) -> bool:
                     box = None
                 if iframe_box_is_onscreen(box):
                     return True
+        blob = _frames_text(page, 1500)
+        if re.search(
+            r"verify you are human|press and hold|i'?m not a robot|protected by hcaptcha",
+            blob,
+            re.I,
+        ):
+            return True
     except Exception:
         return False
     return bool(re.search(r"verify you are human|press and hold|i'?m not a robot", _body(page, 1500), re.I))
+
+
+def _frames_text(page, limit: int = 2000) -> str:
+    """Main body plus same-origin frame bodies (iCIMS apply lives in iframe)."""
+    chunks = [_body(page, limit)]
+    try:
+        for fr in getattr(page, "frames", []) or []:
+            try:
+                chunks.append((fr.locator("body").inner_text(timeout=800) or "")[:limit])
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return "\n".join(chunks)
+
+
+def prefer_icims_apply(page) -> bool:
+    """Click iCIMS 'Apply for this job online' inside #icims_content_iframe."""
+    try:
+        frames = list(getattr(page, "frames", []) or [])
+    except Exception:
+        frames = []
+    for fr in frames:
+        u = getattr(fr, "url", "") or ""
+        if "icims.com" not in u.lower():
+            continue
+        try:
+            link = fr.locator("a[href*='mode=apply']").first
+            if link.count():
+                link.click(timeout=4000)
+                _sleep(2.0)
+                return True
+        except Exception:
+            pass
+        try:
+            link = fr.get_by_role("link", name=re.compile(r"Apply for this job online", re.I))
+            if link.count() and link.first.is_visible():
+                link.first.click(timeout=4000)
+                _sleep(2.0)
+                return True
+        except Exception:
+            continue
+    return False
+
+
+def icims_hcaptcha_login(page) -> bool:
+    """True when iCIMS apply opened the GDPR/email login that is gated by hCaptcha."""
+    try:
+        frames = list(getattr(page, "frames", []) or [])
+    except Exception:
+        frames = []
+    for fr in frames:
+        u = getattr(fr, "url", "") or ""
+        if not re.search(r"icims\.com/.+/login", u, re.I):
+            continue
+        try:
+            text = (fr.locator("body").inner_text(timeout=1500) or "")[:2500]
+        except Exception:
+            text = ""
+        if re.search(r"hcaptcha|i accept|enter your information", text, re.I):
+            return True
+    try:
+        url = getattr(page, "url", "") or ""
+    except Exception:
+        url = ""
+    return bool(re.search(r"icims\.com/.+/login", url, re.I))
 
 
 def page_flags(page) -> dict:
@@ -1471,6 +1544,19 @@ def complete_ats(page, time_cap_s: int | None = None) -> tuple[str, str]:
         return "blocked", wall
     if host == "workday" or flags["has_wd"]:
         return complete_workday(page, cap)
+    icims_url = bool(re.search(r"icims\.com/jobs/\d+", flags["url"], re.I))
+    if not icims_url:
+        try:
+            icims_url = any(
+                re.search(r"icims\.com/jobs/\d+", getattr(fr, "url", "") or "", re.I)
+                for fr in getattr(page, "frames", []) or []
+            )
+        except Exception:
+            icims_url = False
+    if icims_url:
+        prefer_icims_apply(page)
+        if icims_hcaptcha_login(page) or visible_captcha_challenge(page):
+            return "blocked", "CAPTCHA/bot wall"
     if is_brochure_or_dead_end(
         flags["url"],
         flags["text"],

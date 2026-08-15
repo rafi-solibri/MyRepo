@@ -606,7 +606,12 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         row["finalUrl"] = page.url
         return row
 
-    # Click apply if listing page
+    # Click apply if listing page (iCIMS Apply lives in #icims_content_iframe).
+    try:
+        from tools.ats.complete import prefer_icims_apply
+        prefer_icims_apply(page)
+    except Exception:
+        pass
     before_pages = set(page.context.pages)
     try_click_named(
         page,

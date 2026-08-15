@@ -18,6 +18,7 @@ from tools.ats.complete import (
     extract_hop_destination_from_url,
     extract_offsite_from_text,
     frame_url_is_captcha_challenge,
+    icims_hcaptcha_login,
     iframe_box_is_onscreen,
     is_board_tracking_url,
     is_brochure_or_dead_end,
@@ -351,5 +352,68 @@ assert_true(
     == "ats_login_wall",
     "Microsoft Eightfold SSO chooser (no password) is a hard wall",
 )
+
+class _FakeFrame:
+    def __init__(self, url: str, body: str = ""):
+        self.url = url
+        self._body = body
+
+    def locator(self, sel: str):
+        page = self
+
+        class _Body:
+            def inner_text(self, *a, **k):
+                return page._body
+
+        if sel == "body":
+            return _Body()
+        return _Body()
+
+
+class _FakeIframesPage:
+    def __init__(self, url: str, frames: list):
+        self.url = url
+        self.frames = frames
+
+    def locator(self, sel: str):
+        class _Empty:
+            def inner_text(self, *a, **k):
+                return ""
+
+            def count(self):
+                return 0
+
+        return _Empty()
+
+
+assert_true(
+    icims_hcaptcha_login(
+        _FakeIframesPage(
+            "https://careers-hyland.icims.com/jobs/13991/senior-software-architect---.net/job",
+            [
+                _FakeFrame(
+                    "https://careers-hyland.icims.com/jobs/13991/senior-software-architect---.net/login?in_iframe=1",
+                    "Enter Your Information\nEmail\nI accept\nProtected by hCaptcha",
+                )
+            ],
+        )
+    ),
+    "iCIMS GDPR login + hCaptcha is a captcha wall",
+)
+assert_true(
+    not icims_hcaptcha_login(
+        _FakeIframesPage(
+            "https://careers-hyland.icims.com/jobs/13991/senior-software-architect---.net/job",
+            [
+                _FakeFrame(
+                    "https://careers-hyland.icims.com/jobs/13991/senior-software-architect---.net/job?in_iframe=1",
+                    "Apply for this job online\nHyderabad, India",
+                )
+            ],
+        )
+    ),
+    "iCIMS JD iframe is not a login wall",
+)
+assert_true(is_hard_ats_wall("CAPTCHA/bot wall"), "iCIMS hCaptcha must trip company wall cap")
 
 print("tools/ats/test_complete.py OK")
