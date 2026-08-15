@@ -61,7 +61,7 @@ function main() {
   const pre = run(
     process.execPath,
     [path.join(__dirname, "preflight.js")],
-    Number(process.env.INDEED_PREFLIGHT_TIMEOUT_MS || 360000),
+    Number(process.env.INDEED_PREFLIGHT_TIMEOUT_MS || 600000),
   );
   report.preflightExit = pre.status;
   const preParsed = parseJsonTail(
