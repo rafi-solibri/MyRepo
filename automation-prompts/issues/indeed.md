@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| SmartApply Title/salutation Mr/Ms/Mrs left unselected | Map title/salutation to Mr. |
 | Notice period radios 1-30/30-60/90 not matched to Immediate | Map Immediate to 1-30 Days / 0-15 as well as Immediate |
 | SmartApply years-of-experience combobox + full name filled with Yes | Open years combobox (14/10+); map full name; never default name fields to Yes |
 | Card data-jk is per-impression so same viewjob jk was ATS-opened many times | Prefer jk= from the job URL over card data-jk |

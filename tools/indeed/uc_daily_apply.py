@@ -685,6 +685,7 @@ def fill_common_questions(sb) -> None:
               if (/relocat|willing to work|hybrid|work from office|bond|service agreement|background check|drug test/.test(t)) return 'yes';
               if (/authorized|work authori|visa|citizen|india|legally/.test(t)) return 'yes';
               if (/gender/.test(t)) return 'male';
+              if (/(^|\\s)(title|salutation|honorific)\\b/.test(t) && !/job title|current position|position\\?/.test(t)) return 'Mr.';
               if (/city|current location|prefer.*location|job location|base location/.test(t)) return 'Hyderabad';
               if (/\\?/.test(t) && /(yes|no)/.test(t)) return 'yes';
               if (/cover letter|why (do )?you|tell us|about yourself|summary|additional information/.test(t)) {
@@ -699,6 +700,7 @@ def fill_common_questions(sb) -> None:
                 const hit =
                   (want === 'yes' && /\\byes\\b|yep|true|agree|available/.test(lab) && !/\\bno\\b/.test(lab)) ||
                   (want === 'male' && /\\bmale\\b/.test(lab) && !/female/.test(lab)) ||
+                  (want === 'Mr.' && /\\bmr\\.?\\b/.test(lab) && !/mrs|miss/.test(lab)) ||
                   (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than|currently serving|serving notice/.test(lab)) ||
                   (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not|do not want/.test(lab));
                 if (hit) {
@@ -712,6 +714,7 @@ def fill_common_questions(sb) -> None:
                   const t = (opt.text||'').toLowerCase();
                   if (
                     (want === 'yes' && /\\byes\\b/.test(t)) ||
+                    (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs/.test(t)) ||
                     (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than/.test(t)) ||
                     (want === 'Hyderabad' && /hyderabad/.test(t)) ||
                     (want === '52' && /\\b52\\b|50-55|45-55/.test(t)) ||
