@@ -5,6 +5,7 @@
 | Issue | Fix |
 | --- | --- |
 | findjobs defaulted to 5/page so inventory stayed thin; Associate Technical Architect hard-skipped | pageSize=50 on /findjobs/q; associate skip allows Technical/Architect/Lead |
+| page_size=5 + expMax<8 dropped Senior Full-Stack/remote Principal; associate skip hit Associate Technical Architect | findjobs pageSize=50 covers ~3200 inventory; senior/fullstack exp>=6; associate skip allows Technical/Architect |
 | status=external recorded without opening/completing company site | Extract Apply href and completeExternalPage |
 
 

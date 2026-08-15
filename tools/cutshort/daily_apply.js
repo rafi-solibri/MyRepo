@@ -221,12 +221,18 @@ function classify(job) {
     "";
   if (allowlistActive() && !companyAllowed(company)) return null;
   if (SKIP_RE.test(title)) return null;
-  // Tier-1 Architect/EM/Lead: allow listed max exp ≥6 (was 8 — missed 5–7 bands).
-  // Tier-2 .NET titles: also allow max ≥6 so 5–7 yr senior/.NET bands are not dropped.
+  // Tier-1 / .NET / senior-fullstack-lead: allow listed max exp ≥6 (was 8).
+  // Non-senior titles still need max ≥8 so mid-level inventory is not applied.
   const expMax = job?.expRange?.max;
   const isTier1Title = TIER1_TITLE_RE.test(title);
   const isNetTitle = NET_STACK_RE.test(title) || NET_STACK_RE.test(blob);
-  const minMax = isTier1Title || isNetTitle ? 6 : 8;
+  const isSeniorishTitle =
+    isTier1Title ||
+    isNetTitle ||
+    /\b(senior|sr\.?|lead|staff|principal|architect|fullstack|full\s*-?\s*stack|head|manager)\b/i.test(
+      title
+    );
+  const minMax = isSeniorishTitle ? 6 : 8;
   if (expMax != null && expMax < minMax) return null;
   if (ctc != null && ctc < 35) return null;
   if (!isHydOrRemote(job)) return null;
@@ -238,12 +244,14 @@ function classify(job) {
   }
   if (
     NET_STACK_RE.test(blob) &&
-    /\b(senior|lead|principal|staff|architect|full\s*-?\s*stack|backend)\b/i.test(title + " " + blob)
+    /\b(senior|sr\.?|lead|principal|staff|architect|full\s*-?\s*stack|backend)\b/i.test(
+      title + " " + blob
+    )
   ) {
     return { tier: 2, reason: "tier2-net" };
   }
   if (
-    /\b(senior\s*(full\s*-?\s*stack|fullstack|backend|software)|full\s*-?\s*stack|platform lead|backend lead|lead (engineer|developer))\b/i.test(
+    /\b((?:senior|sr\.?)\s*(full\s*-?\s*stack|fullstack|backend|software)|full\s*-?\s*stack|platform lead|backend lead|lead (engineer|developer))\b/i.test(
       title
     ) &&
     STACK_SIGNAL_RE.test(blob)
@@ -253,7 +261,7 @@ function classify(job) {
   // Tier 3 stretch: Hyd/remote with band ≥35L — senior/lead + cloud/stack signal.
   // Prefer APPLY when uncertain (title-first hard-skips already applied above).
   if (
-    /\b(lead|staff|principal|architect|manager|head|senior|fullstack|full\s*-?\s*stack)\b/i.test(
+    /\b(lead|staff|principal|architect|manager|head|senior|sr\.?|fullstack|full\s*-?\s*stack)\b/i.test(
       title
     ) &&
     STACK_SIGNAL_RE.test(blob) &&
@@ -599,27 +607,41 @@ async function scan(page) {
   const byId = new Map();
   async function pull(query, maxPages, label) {
     for (let p = 1; p <= maxPages; p++) {
+      // Default API page is 5; pageSize=50 is honored (page_size field still says 5).
       const qs = new URLSearchParams({ page: String(p), pageSize: "50", ...query }).toString();
       const res = await api(page, "GET", `/findjobs/q?${qs}`);
       const results = res.json?.results || [];
       if (!results.length) break;
       for (const j of results) byId.set(j._id, j);
-      if (p === 1) console.log(`[scan:${label}] ${res.json?.total_count}`);
+      if (p === 1) {
+        console.log(`[scan:${label}] ${res.json?.total_count} n=${results.length}`);
+      }
       if (res.json?.totalPages && p >= res.json.totalPages) break;
       await sleep(60);
     }
   }
   // Cap pages so daily runs finish in-session; classify() decides quality.
   // Note: bare `q=`/`query=` params are ignored by /findjobs/q (same total as newest).
-  await pull({}, 120, "newest");
-  await pull({ matchesfor: SEEKER_ID }, 40, "matchesfor");
-  await pull({ locations: "Hyderabad" }, 50, "hyd");
-  await pull({ locations: "Telangana" }, 25, "telangana");
-  await pull({ locations: "India", remoteType: "remote_okay" }, 40, "india-remote");
-  await pull({ remoteType: "remote_okay" }, 40, "remote_okay");
-  await pull({ remoteType: "remote_only" }, 25, "remote_only");
-  for (const skills of ["00001", "00075", "00486", "00054", "00368", "00002", "00115"]) {
-    await pull({ skills }, 35, skills);
+  // pageSize=50 → 70 newest pages covers the ~3200 public inventory.
+  await pull({}, 70, "newest");
+  await pull({ matchesfor: SEEKER_ID }, 20, "matchesfor");
+  await pull({ locations: "Hyderabad" }, 10, "hyd");
+  await pull({ locations: "Telangana" }, 8, "telangana");
+  await pull({ locations: "India", remoteType: "remote_okay" }, 15, "india-remote");
+  await pull({ remoteType: "remote_okay" }, 15, "remote_okay");
+  await pull({ remoteType: "remote_only" }, 15, "remote_only");
+  for (const skills of [
+    "00001",
+    "00075",
+    "00486",
+    "00054",
+    "00368",
+    "00002",
+    "00115",
+    "dotnet",
+    "azure",
+  ]) {
+    await pull({ skills }, 8, skills);
   }
   return [...byId.values()];
 }
