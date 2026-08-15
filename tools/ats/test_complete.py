@@ -18,6 +18,7 @@ from tools.ats.complete import (
     extract_hop_destination_from_url,
     extract_offsite_from_text,
     frame_url_is_captcha_challenge,
+    complete_icims,
     icims_hcaptcha_login,
     iframe_box_is_onscreen,
     is_board_tracking_url,
@@ -415,5 +416,10 @@ assert_true(
     "iCIMS JD iframe is not a login wall",
 )
 assert_true(is_hard_ats_wall("CAPTCHA/bot wall"), "iCIMS hCaptcha must trip company wall cap")
+assert_true(
+    is_hard_ats_wall("captcha_solver_key_missing"),
+    "missing CapSolver/2Captcha key trips company wall cap",
+)
+assert_true(callable(complete_icims), "complete_icims is wired")
 
 print("tools/ats/test_complete.py OK")

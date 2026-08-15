@@ -648,9 +648,21 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         _close_auth_popups(page)
         return row
     wall = blocked_wall(page)
-    if wall in ("CAPTCHA/bot wall", "job_closed") and not looks_workday_page(page):
+    icims_job = bool(re.search(r"icims\.com/jobs/\d+", page.url or "", re.I))
+    # iCIMS hCaptcha is solved inside complete_ats — do not abort before the solver runs.
+    if wall == "job_closed" and not looks_workday_page(page):
         row["reason"] = wall
-        row["status"] = "skipped" if wall == "job_closed" else "blocked"
+        row["status"] = "skipped"
+        row["finalUrl"] = page.url
+        _close_auth_popups(page)
+        return row
+    if (
+        wall == "CAPTCHA/bot wall"
+        and not looks_workday_page(page)
+        and not icims_job
+    ):
+        row["reason"] = wall
+        row["status"] = "blocked"
         row["finalUrl"] = page.url
         _close_auth_popups(page)
         return row
