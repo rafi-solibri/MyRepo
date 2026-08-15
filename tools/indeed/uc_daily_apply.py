@@ -734,7 +734,7 @@ def fill_common_questions(sb) -> None:
                 if (want) { setNative(el, want); return true; }
               }
               // Custom listbox / button options (Indeed education is often a combobox).
-              if (want === 'B.Tech') {
+              if (want === 'B.Tech' || want === '14' || want === '10') {
                 for (const btn of root.querySelectorAll('button, [role=combobox], [aria-haspopup=listbox]')) {
                   const t = ((btn.innerText||'') + ' ' + (btn.getAttribute('aria-label')||'')).toLowerCase();
                   if (/select an option|choose an option|^select$/.test(t) || btn.getAttribute('aria-expanded') === 'false') {
@@ -749,6 +749,10 @@ def fill_common_questions(sb) -> None:
                 if (want === 'Immediate' && /immediate|0\\s*day/.test(t)) { el.click(); return true; }
                 if (want === 'B.Tech' && /b\\.?\\s*tech|bachelor|b\\.e\\b|undergraduate|master'?s?|m\\.?\\s*tech/.test(t)
                     && !/select an option|highest degree/.test(t)) {
+                  el.click(); return true;
+                }
+                if ((want === '14' || want === '10') && /\\b(14|13|12|10|15)\\b|12-15|10\\+|8-10|10-15/.test(t)
+                    && !/select an option|how many years/.test(t)) {
                   el.click(); return true;
                 }
                 if (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not/.test(t)) {
@@ -784,7 +788,8 @@ def fill_common_questions(sb) -> None:
               if (el.disabled || el.readOnly) continue;
               const lab = labelFor(el);
               let val = null;
-              if (/first\\s*name|given\\s*name|fname/.test(lab)) val = vals.first;
+              if (/full\\s*name|candidate name|your name/.test(lab) && !/first|last|company|employer/.test(lab)) val = 'Mohammed Abdul Rafi Ahmed';
+              else if (/first\\s*name|given\\s*name|fname/.test(lab)) val = vals.first;
               else if (/last\\s*name|surname|family\\s*name|lname/.test(lab)) val = vals.last;
               else if (/phone|mobile|tel/.test(lab) || type === 'tel') val = vals.phone;
               else if (/e-?mail/.test(lab) || type === 'email') val = vals.email;
@@ -863,7 +868,9 @@ def fill_common_questions(sb) -> None:
               const lab = labelFor(el);
               const req = el.required || el.getAttribute('aria-required') === 'true' || /required|\\*/.test(lab);
               if (!req && !/question|ctc|salary|notice|experience/.test(lab)) continue;
-              const w = wantFromText(lab) || (/how many|years|experience/.test(lab) ? '14' : (/salary|ctc|lpa|package/.test(lab) ? '65' : 'Yes'));
+              if (/name|email|phone|linkedin/.test(lab)) continue;
+              const w = wantFromText(lab) || (/how many|years|experience/.test(lab) ? '14' : (/salary|ctc|lpa|package/.test(lab) ? '65' : null));
+              if (!w) continue;
               if (setNative(el, w)) answered += 1;
             }
             return {answered, url: location.href};
@@ -951,15 +958,18 @@ def tick_required_agreements(sb) -> dict:
                 const box = associatedBox(opt) || opt;
                 if (!isOn(box)) tick(box, 'validation-agree');
               }
-              if (/education|degree|qualification/.test(ctx)) {
+              if (/education|degree|qualification|years of experience|how many years/.test(ctx)) {
                 const combo = [...root.querySelectorAll('button, [role=combobox], [aria-haspopup=listbox]')]
                   .find(e => /select an option|choose an option|^select$/i.test((e.innerText || '') + ' ' + (e.getAttribute('aria-label') || '')));
                 if (combo) { try { combo.click(); } catch (e) {} }
-                const deg = [...document.querySelectorAll('[role=option], li, button, label')]
-                  .find(e => /b\.?\s*tech|bachelor|b\.e\b|undergraduate|master/i.test((e.innerText || '').trim())
-                    && (e.innerText || '').trim().length < 60
-                    && !/select an option|highest degree/i.test(e.innerText || ''));
-                if (deg) { try { deg.click(); } catch (e) {} }
+                const pick = [...document.querySelectorAll('[role=option], li, button, label')]
+                  .find(e => {
+                    const t = (e.innerText || '').trim();
+                    if (t.length > 60 || /select an option|highest degree|how many years/i.test(t)) return false;
+                    if (/education|degree/.test(ctx)) return /b\.?\s*tech|bachelor|b\.e\b|undergraduate|master/i.test(t);
+                    return /\b(14|13|12|10|15)\b|12-15|10\+|10-15/.test(t);
+                  });
+                if (pick) { try { pick.click(); } catch (e) {} }
               }
             }
             return {clicked, url: location.href};
