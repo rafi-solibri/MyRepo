@@ -59,7 +59,9 @@ SUBMITTED_RE = re.compile(
     r"thanks for (your )?interest|application has been received|"
     r"you('re| are) all set|applied successfully|"
     r"application was successfully submitted|thanks for applying|"
-    r"we('ve| have) got your application",
+    r"we('ve| have) got your application|"
+    r"application was submitted successfully|"
+    r"you are currently submitted to this job",
     re.I,
 )
 
@@ -293,7 +295,8 @@ def is_submitted_text(text: str | None) -> bool:
 ALREADY_APPLIED_RE = re.compile(
     r"you have already applied|already applied to this (job|position|requisition)|"
     r"you previously applied|application is already (in progress|submitted)|"
-    r"you applied for this job|this requisition is already",
+    r"you applied for this job|this requisition is already|"
+    r"you are currently submitted to this job|currently submitted to this job",
     re.I,
 )
 
@@ -533,10 +536,23 @@ def auth_wall_reason(
 
 
 def _body(page, limit: int = 4500) -> str:
+    chunks: list[str] = []
     try:
-        return (page.locator("body").inner_text(timeout=4000) or "")[:limit]
+        chunks.append(page.locator("body").inner_text(timeout=4000) or "")
     except Exception:
-        return ""
+        pass
+    try:
+        for fr in getattr(page, "frames", []) or []:
+            u = (getattr(fr, "url", "") or "").lower()
+            if "icims.com" not in u and "in_iframe=1" not in u:
+                continue
+            try:
+                chunks.append(fr.inner_text("body") or "")
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return "\n".join(chunks)[:limit]
 
 
 def _sleep(seconds: float) -> None:

@@ -94,7 +94,9 @@ def looks_submitted(page: Page) -> bool:
         re.search(
             r"application (has been )?submitted|thank you for (your )?appl|"
             r"we (have )?received your (application|appl)|application received|"
-            r"successfully applied|your application was sent|application complete",
+            r"successfully applied|your application was sent|application complete|"
+            r"application was submitted successfully|"
+            r"you are currently submitted to this job",
             body,
             re.I,
         )
