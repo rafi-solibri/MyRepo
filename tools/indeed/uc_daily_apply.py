@@ -794,8 +794,14 @@ def fill_common_questions(sb) -> None:
                   && !/gender identity|ethnicity|hispanic|veteran|disability/.test(t)) {
                 return 'yes';
               }
+              if (/sponsor|visa sponsor|require sponsorship/.test(t)) return 'no';
+              if (/employed by any (department|agency|instrumentality)|government (department|agency|employ)/.test(t)) return 'no';
+              if (/when would you be able to start|start employment|available to start|start date/.test(t)
+                  && !/birth/.test(t)) {
+                return '15/08/2026';
+              }
               if (/relocat|willing to work|hybrid|work from office|bond|service agreement|background check|drug test/.test(t)) return 'yes';
-              if (/authorized|work authori|visa|citizen|india|legally/.test(t)) return 'yes';
+              if (/authorized|work authori|visa|citizen|india|legally/.test(t) && !/sponsor/.test(t)) return 'yes';
               if (/gender/.test(t)) return 'male';
               if (/city|current location|prefer.*location|job location|base location/.test(t)) return 'Hyderabad';
               if (/\\?/.test(t) && /(yes|no)/.test(t)) return 'yes';
@@ -810,6 +816,7 @@ def fill_common_questions(sb) -> None:
                 const lab = ((r.getAttribute('aria-label')||'') + ' ' + (r.parentElement?.innerText||'') + ' ' + (r.value||'')).toLowerCase().slice(0,160);
                 const hit =
                   (want === 'yes' && /\\byes\\b|yep|true|agree|available/.test(lab) && !/\\bno\\b/.test(lab)) ||
+                  (want === 'no' && /\\bno\\b|no,? i do not|do not require|not require/.test(lab) && !/\\byes\\b/.test(lab)) ||
                   (want === 'male' && /\\bmale\\b/.test(lab) && !/female/.test(lab)) ||
                   (want === 'Mr.' && /\\bmr\\.?\\b/.test(lab) && !/mrs|miss/.test(lab)) ||
                   (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than|currently serving|serving notice/.test(lab)) ||
@@ -860,6 +867,7 @@ def fill_common_questions(sb) -> None:
                 const t = ((el.innerText||'') + ' ' + (el.getAttribute('aria-label')||'')).trim().toLowerCase();
                 if (!t || t.length > 80) continue;
                 if (want === 'yes' && /\\byes\\b/.test(t) && !/\\bno\\b/.test(t)) { el.click(); return true; }
+                if (want === 'no' && /\\bno\\b/.test(t) && !/\\byes\\b/.test(t)) { el.click(); return true; }
                 if (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs/.test(t)) { el.click(); return true; }
                 if (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15/.test(t)) { el.click(); return true; }
                 if (want === 'B.Tech' && /b\\.?\\s*tech|bachelor|b\\.e\\b|undergraduate|master'?s?|m\\.?\\s*tech/.test(t)
@@ -907,6 +915,7 @@ def fill_common_questions(sb) -> None:
               else if (/last\\s*name|surname|family\\s*name|lname/.test(lab)) val = vals.last;
               else if (/full\\s*name|candidate name|your name/.test(lab) && !/first|last|company|employer/.test(lab)) val = vals.full;
               else if (/(date of birth|\\bdob\\b|birth date|birthday)/.test(lab)) val = vals.dob;
+              else if (/when would you be able to start|start employment|available to start|start date/.test(lab) && !/birth/.test(lab)) val = '15/08/2026';
               else if (/\\bpan\\b|aadhaar|aadhar|passport number|national id/.test(lab)) val = null;
               else if (/phone|mobile|tel/.test(lab) || type === 'tel') val = vals.phone;
               else if (/e-?mail/.test(lab) || type === 'email') val = vals.email;
@@ -938,7 +947,9 @@ def fill_common_questions(sb) -> None:
                 const lab = ((r.getAttribute('aria-label')||'') + ' ' + (r.parentElement?.innerText||'') + ' ' + (r.value||'')).toLowerCase();
                 let s = 0;
                 if (/decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not/.test(lab)) s += 4;
+                if (/sponsor|government (department|agency)|employed by any/.test(lab) && /\\bno\\b|do not require|not require/.test(lab)) s += 5;
                 if (/\\byes\\b|immediate|agree|available|hyderabad|male\\b|\\bmr\\.?\\b/.test(lab)) s += 3;
+                if (/sponsor|government (department|agency)|employed by any/.test(lab) && /\\byes\\b|require sponsorship/.test(lab)) s -= 4;
                 if (/\\bno\\b|female|not available|never/.test(lab)) s -= 2;
                 return {r, s, lab};
               }).sort((a,b) => b.s - a.s);
@@ -1006,6 +1017,51 @@ def fill_common_questions(sb) -> None:
         except Exception:
             pass
     tick_required_agreements(sb)
+    complete_open_comboboxes(sb)
+
+
+def complete_open_comboboxes(sb) -> None:
+    """Second pass for Indeed custom listboxes (education / years / start).
+
+    Opening the combobox and picking an option in one JS turn often races
+    the popup. Click Select-an-option, wait, then pick B.Tech / years.
+    """
+    _switch_smartapply_frame(sb)
+    try:
+        opened = sb.execute_script(
+            r"""
+            const btns = [...document.querySelectorAll('button, [role=combobox], [aria-haspopup=listbox]')];
+            let n = 0;
+            for (const btn of btns) {
+              const t = ((btn.innerText||'') + ' ' + (btn.getAttribute('aria-label')||'')).toLowerCase();
+              if (/select an option|choose an option|^select$/.test(t) || btn.getAttribute('aria-expanded') === 'false') {
+                try { btn.click(); n += 1; } catch (e) {}
+              }
+            }
+            return n;
+            """
+        )
+        if opened:
+            time.sleep(0.7)
+            picked = sb.execute_script(
+                r"""
+                const picks = [...document.querySelectorAll('[role=option], li, button, label')];
+                let hit = '';
+                for (const el of picks) {
+                  const t = (el.innerText || '').trim();
+                  if (!t || t.length > 60) continue;
+                  if (/select an option|highest degree|how many years|choose an option/i.test(t)) continue;
+                  if (/b\.?\s*tech|bachelor|b\.e\b|undergraduate|master'?s?|m\.?\s*tech/i.test(t)
+                      || /\b(14|13|12|10|15)\b|12-15|10\+|10-15/.test(t)) {
+                    try { el.click(); hit = t.slice(0, 40); break; } catch (e) {}
+                  }
+                }
+                return hit;
+                """
+            )
+            print(f"  combobox opened={opened} picked={picked!r}", flush=True)
+    except Exception as exc:
+        print(f"  combobox_error={exc!s}"[:180], flush=True)
 
 
 def tick_required_agreements(sb) -> dict:
