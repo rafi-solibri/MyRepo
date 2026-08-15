@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Parallel home portals taskkill shared system Chrome mid-run; apiFetch still called context.cookies and aborted | Cache Cookie header after login; Raven/Falcon continue cookie-only; soft-skip applied-count/ATS when CDP dies |
 | Windows home: page.evaluate Raven search killed CDP Chrome; confirmLogin false-failed on Hi Seeker despite MSSOAT; browser.close killed shared Chrome; launch --disable-gpu / short CDP wait | apiFetch via cookies for Raven/Falcon; accept MSSOAT+onApp login; never browser.close over CDP; skip --disable-gpu on Windows launch; wait 45s for CDP |
 
 
