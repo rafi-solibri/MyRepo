@@ -1,31 +1,30 @@
 # Hitech City / Knowledge City daily — 2026-08-15 (career portals)
 
 ## Status
-**Careers passes completed** — 0 new confirmation applies this session. LinkedIn skipped (CAPTCHA/checkpoint). Boards skipped (careers-only).
+**Careers passes completed.** Confirmation applies only (no invented counts).
 
-## Totals (final careers pass)
-- Career ATS submitted: **0**
-- Hyland iCIMS: **6 Hyd architect JDs extracted** including **Senior Software Architect - .NET** (Hyderabad hybrid). Apply opens GDPR email + **hCaptcha** (owner-only). Fail-fast CAPTCHA in ~37s for 4 jobs (company wall cap) — no more 6×390s timeouts.
-- Other guest boards: Intel/JPMC/Oracle/AMD titles were hardware, Java, or non-Hyd. Blue Yonder Phenom search now loads (TMS architect skipped: not Hyd).
-- CAPTCHA boards (Experian / Blackbaud / Palo Alto) ranked later; still owner DataDome/reCAPTCHA.
+## Applied (confirmation text)
+1. **Hyland — Platform Infrastructure Architect - Core Services** (job 14269, Remote India) — “Your application was submitted successfully.”
+2. **Hyland — Senior Software Architect** (job 14169) — iCIMS confirmation after logged-in retry.
 
-## Applied
-None this session (confirmation text only). Earlier same-day cloud run already submitted **Solera JR-019000** (Workday).
+Earlier same-day (other run): **Solera JR-019000** Principal Software Engineer (Workday).
 
-## Blockers fixed this run (will not repeat)
-| Issue | Fix |
-| --- | --- |
-| Instahyre autofix never launched Chrome (`ECONNREFUSED`) | `run-portal-with-autofix.sh` launches CDP (#171) |
-| Hyland/Intel/JPMC `jobCount: 0` — iCIMS parent chrome filled the 40-link cap | Extract job-id/path slugs only; scan `in_iframe=1` first (#172) |
-| Hyland Apply timed out on parent chrome; 6× ATS cap | Click iframe `mode=apply`; fail-fast hCaptcha login (#173) |
-| Phenom Taleo search URLs bounced to `/us/en` | Blue Yonder / Fiserv `search-results` URLs |
-| CAPTCHA boards scanned first and starved guest ATS | Rank SmartRecruiters/Blackbaud/PAN later |
+## Totals (this continue pass)
+- Career ATS submitted this continue: **2** (both Hyland, confirmation)
+- Blocked: other Hyland reqs timed out on Candidate Questions / US EEO packets; Solera Sign In; Experian / Blackbaud / Palo Alto DataDome
+- Skipped: non-Hyd, wrong stack, no ATS form, hang-scan hosts (Apple / Goldman / Meta)
 
-## Owner-only (cannot fix in code)
-- LinkedIn `/checkpoint/challenge` — `bash scripts/home-headed-login.sh linkedin` + Save snapshot
-- Hyland iCIMS **hCaptcha** on Apply (Senior Software Architect .NET, Hyderabad)
-- Experian / Blackbaud / Palo Alto DataDome or reCAPTCHA
-- Solera Workday Sign In for other reqs if `NAUKRI_WORKDAY_PASSWORD` does not match the tenant account
+## Not submitted (do not count)
+- Hyland AI Security and Governance Architect
+- Hyland Lead Software Security Architect
+- Hyland Lead Software Security Architect (Cloud Security)
+- Hyland Senior Software Architect - .NET  
+  Last URL was `/questions` or US voluntary self-ID `/form`. Logged in; leftover captcha wait is fixed in #185.
+
+## Owner-only leftovers
+- Experian / Blackbaud / Palo Alto **DataDome** — home/residential only
+- Solera other Workday reqs — Sign In wall (JR-019000 already submitted)
+- LinkedIn `/checkpoint/challenge`
 
 ## Artifacts
-`/opt/cursor/artifacts/hitechcity-daily.json`, `hitechcity-careers.json`, `guest-ats-probe.json`
+`/opt/cursor/artifacts/hitechcity-careers.json`, `hitechcity-confirmed-apply.json`, `hyland-midfunnel.json`
