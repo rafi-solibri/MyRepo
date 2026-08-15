@@ -19,6 +19,15 @@ _root = Path(__file__).resolve().parents[2]
 if str(_root) not in sys.path:
     sys.path.insert(0, str(_root))
 try:
+    from tools.ats.complete import extract_hop_destination_from_url, extract_offsite_from_text
+except Exception:  # pragma: no cover
+    def extract_hop_destination_from_url(url):
+        return ""
+
+    def extract_offsite_from_text(blob, *, reject_hosts=("linkedin.com",)):
+        return ""
+
+try:
     from tools.resume_paths import resume_upload_path
 except Exception:
     def resume_upload_path():
@@ -270,6 +279,61 @@ def try_submit(page: Page) -> bool:
     return False
 
 
+def extract_linkedin_offsite_url(page: Page, apply_href: str = "", current_url: str = "") -> str:
+    """Resolve the employer ATS URL when Apply does not leave LinkedIn."""
+    href = (apply_href or "").strip()
+    if href.startswith("http") and "linkedin.com" not in href.lower():
+        return href
+    hop = extract_hop_destination_from_url(href or current_url)
+    if hop:
+        return hop
+    try:
+        opened = page.evaluate("() => (window.__liOpenedUrls || []).slice()") or []
+        for u in opened:
+            u = str(u or "").strip()
+            if u.startswith("http") and "linkedin.com" not in u.lower():
+                return u
+    except Exception:
+        pass
+    try:
+        hrefs = page.evaluate(
+            """() => {
+              const out = [];
+              const sels = [
+                "a[data-tracking-control-name*='apply']",
+                "a[aria-label*='Apply on company']",
+                "a.jobs-apply-button[href]",
+                "a[href*='companyApply']",
+              ];
+              for (const sel of sels) {
+                for (const a of document.querySelectorAll(sel)) {
+                  const h = a.href || a.getAttribute("href") || "";
+                  if (h.startsWith("http") && !/linkedin\\.com/i.test(h)) out.push(h);
+                }
+              }
+              for (const a of document.querySelectorAll("a[href^='http']")) {
+                const h = a.href || "";
+                const label = ((a.innerText || "") + " " + (a.getAttribute("aria-label") || "")).toLowerCase();
+                if (!h || /linkedin\\.com/i.test(h)) continue;
+                if (/apply|career|workday|greenhouse|lever|smartrecruiters|ashby|icims/i.test(h + " " + label))
+                  out.push(h);
+              }
+              return out;
+            }"""
+        ) or []
+        for h in hrefs:
+            h = str(h or "").strip()
+            if h.startswith("http") and "linkedin.com" not in h.lower():
+                return h
+    except Exception:
+        pass
+    try:
+        blob = page.evaluate("() => document.documentElement.innerHTML.slice(0, 500000)") or ""
+    except Exception:
+        blob = ""
+    return extract_offsite_from_text(blob, reject_hosts=("linkedin.com",))
+
+
 def process_external(page: Page, job: dict) -> ExtResult:
     res = ExtResult(
         status="blocked",
@@ -336,6 +400,8 @@ def process_external(page: Page, job: dict) -> ExtResult:
     for sel in [
         "a[aria-label*='Apply on company website']",
         "button[aria-label*='Apply on company website']",
+        "a[data-tracking-control-name*='apply']",
+        "button[data-tracking-control-name*='apply']",
         "button.jobs-apply-button",
         "a.jobs-apply-button",
         "button:has-text('Apply')",
@@ -367,6 +433,22 @@ def process_external(page: Page, job: dict) -> ExtResult:
     except Exception:
         apply_href = ""
 
+    try:
+        page.evaluate(
+            """() => {
+              if (window.__liOpenHooked) return;
+              window.__liOpenHooked = true;
+              window.__liOpenedUrls = window.__liOpenedUrls || [];
+              const orig = window.open;
+              window.open = function (url, ...rest) {
+                try { if (url) window.__liOpenedUrls.push(String(url)); } catch (_) {}
+                return orig.apply(this, [url, ...rest]);
+              };
+            }"""
+        )
+    except Exception:
+        pass
+
     before = {p for p in page.context.pages}
     try:
         with page.context.expect_page(timeout=8000) as new_page_info:
@@ -393,18 +475,8 @@ def process_external(page: Page, job: dict) -> ExtResult:
     print(f"  ATS {ats_url[:140]}", flush=True)
 
     if "linkedin.com" in (ats_url or "") and "jobs" in (ats_url or ""):
-        # 2026 UI often keeps the job view and puts the real ATS on href / offsite.
-        offsite = apply_href if apply_href.startswith("http") and "linkedin.com" not in apply_href.lower() else ""
-        if not offsite:
-            try:
-                for a in page.locator("a[href^='http']").all()[:20]:
-                    href = (a.get_attribute("href") or "").strip()
-                    label = ((a.inner_text() or "") + " " + (a.get_attribute("aria-label") or "")).lower()
-                    if href and "linkedin.com" not in href.lower() and "apply" in label:
-                        offsite = href
-                        break
-            except Exception:
-                offsite = ""
+        # 2026 UI often keeps the job view and puts the real ATS on href / JSON / window.open.
+        offsite = extract_linkedin_offsite_url(page, apply_href, ats_url)
         if offsite:
             try:
                 ats.goto(offsite, wait_until="domcontentloaded", timeout=60000)

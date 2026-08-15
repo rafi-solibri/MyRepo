@@ -16,9 +16,10 @@ const {
   CURRENT_CTC_LPA,
 } = require("./resume_and_filters");
 const { completeWorkdayApply, isSubmittedText } = require("./workday_apply");
-const { fillCommonAtsQuestions } = require("./ats_form");
 const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
 const { artifactPaths, writeArtifactJson } = require("../artifact_path");
+const { completeExternalPage } = require("../ats/complete_page");
+const { isFalseApplyCta, isBrochureOrDeadEnd } = require("../ats/apply_cta");
 
 const CDP = process.env.NAUKRI_CDP || "http://127.0.0.1:9222";
 const REPORT =
@@ -243,6 +244,7 @@ function isAlreadyAppliedCta(text) {
     .trim();
   if (!t) return false;
   if (isAppliedFilterChip(t)) return false;
+  if (isFalseApplyCta(t)) return false;
   // Dual-layer buttons: do NOT treat concatenated "Quick apply Applied" as applied.
   // Callers must use readVisibleApplyCta(page) for live buttons.
   if (/Quick apply/i.test(t) && /Applied/i.test(t)) return false;
@@ -554,6 +556,7 @@ async function readDetail(page) {
       )
       .filter((t) => {
         if (!t || /^Applied\s*\(\d+\)\s*$/i.test(t)) return false; // filter chip
+        if (/view applied|applied jobs/i.test(t)) return false;
         return /Quick apply|Apply|Applied|Go to company site|On company site|Apply on company|On hirist/i.test(
           t
         );
@@ -1009,6 +1012,7 @@ async function fillApplyForm(page) {
       const t = ((await b.innerText().catch(() => "")) || "").trim();
       if (/Applied/i.test(t) && /Quick apply/i.test(t)) continue;
       if (/^Applied$/i.test(t)) break;
+      if (isFalseApplyCta(t)) continue;
       await b.click({ force: true }).catch(() => {});
       await sleep(1500);
     }
@@ -1047,6 +1051,7 @@ async function clickQuickApply(page) {
         .replace(/\s+/g, " ")
         .trim();
       if (/company site|on company/i.test(label)) continue;
+      if (isFalseApplyCta(label)) continue;
       // Dual-layer buttons always include both words — click unless visible state is applied.
       if (/^Applied$/i.test(label) && !/Quick apply/i.test(label)) {
         return { already: true, label };
@@ -1089,6 +1094,7 @@ async function clickQuickApply(page) {
             .trim();
           if (!/Quick apply/i.test(raw)) continue;
           if (/company site|hirist/i.test(raw)) continue;
+          if (/view applied|applied jobs/i.test(raw)) continue;
           const overlays = [...btn.querySelectorAll("span")].filter((s) => {
             const st = window.getComputedStyle(s);
             return (
@@ -1412,324 +1418,69 @@ async function handleExternal(context, page, detail, jobMeta, report) {
     return;
   }
 
-  let noAdvance = 0;
-  while (Date.now() - start < MAX_EXTERNAL_MS) {
-    const url = newPage.url();
-    if (isJunkAtsUrl(url)) {
-      report.blocked.push({
-        ...jobMeta,
-        reason: "infoedge_false_link",
-        url,
-        path: "company_ATS",
-      });
-      if (newPage !== page) safeClose(newPage);
-      return;
-    }
-    const text = await newPage
-      .evaluate(() => (document.body?.innerText || "").slice(0, 2500))
-      .catch(() => "");
-    if (
-      /maintenance-page|scheduled maintenance|we('ll| will) be back|temporarily unavailable|community\.workday\.com\/maintenance|no longer accepting applications|position has been filled/i.test(
-        `${url} ${text}`
-      )
-    ) {
-      report.skipped.push({
-        ...jobMeta,
-        reason: "job_unavailable",
-        url,
-        path: "company_ATS",
-      });
-      if (newPage !== page) safeClose(newPage);
-      return;
-    }
-    const hasVisibleChallenge = await newPage
-      .locator(
-        "iframe[src*='recaptcha/bframe'], iframe[src*='hcaptcha.com'], iframe[src*='challenges.cloudflare.com'], iframe[src*='captcha-delivery.com']"
-      )
-      .first()
-      .isVisible()
-      .catch(() => false);
-    const hasRecaptcha =
-      hasVisibleChallenge ||
-      /verify you are human|press and hold|i'?m not a robot/i.test(text);
-    if (hasRecaptcha) {
-      report.blocked.push({
-        ...jobMeta,
-        reason: "captcha_wall",
-        url,
-        path: "company_ATS",
-      });
-      if (newPage !== page) safeClose(newPage);
-      return;
-    }
-
-    // Real auth wall = password field / create-account step — NOT header "Sign In".
-    const hasPassword = (await newPage.locator("input[type='password']").count()) > 0;
-    const hasApplyCta = await newPage
-      .locator(
-        "a[data-automation-id='adventureButton'], button:has-text('Apply'), a:has-text('Apply'), text=/Autofill with Resume|Apply Manually|Submit application/i"
-      )
-      .first()
-      .isVisible()
-      .catch(() => false);
-    if (hasPassword && !hasApplyCta && !/thank you for appl|application submitted/i.test(text)) {
-      if (/hirist/i.test(url + text)) {
-        report.skipped.push({
-          ...jobMeta,
-          reason: "hirist_login_required_skip",
-          url,
-          path: "hirist",
-        });
-        if (newPage !== page) safeClose(newPage);
-        return;
-      }
-      // Accenture / Azure B2C and similar SSO walls — do not burn the full external budget.
-      if (
-        /b2clogin\.com|login\.microsoftonline\.com|accounts\.google\.com|okta\.com|auth0\.com/i.test(
-          url
-        )
-      ) {
-        report.blocked.push({
-          ...jobMeta,
-          reason: "ats_login_wall",
-          url,
-          path: "company_ATS",
-        });
-        if (newPage !== page) safeClose(newPage);
-        return;
-      }
-      const guest = newPage
-        .locator("text=/Continue as guest|Apply without|Don't have an account/i")
-        .first();
-      if (await guest.isVisible().catch(() => false)) {
-        await guest.click().catch(() => {});
-        await sleep(1000);
-      } else {
-        report.blocked.push({
-          ...jobMeta,
-          reason: "ats_login_wall",
-          url,
-          path: "company_ATS",
-        });
-        if (newPage !== page) safeClose(newPage);
-        return;
-      }
-    }
-
-    // Prefer clicking Apply before declaring defeat on careers pages
-    for (const sel of [
-      "a:has-text('Apply for this job')",
-      "button:has-text('Apply for this job')",
-      "a:has-text('Apply')",
-      "button:has-text('Apply')",
-      "button:has-text('Apply Now')",
-    ]) {
-      const b = newPage.locator(sel).first();
-      if (await b.isVisible().catch(() => false)) {
-        const label = ((await b.innerText().catch(() => "")) || "").trim();
-        if (/Applied|Sign In|Log In/i.test(label) && !/^Apply/i.test(label)) continue;
-        await b.click().catch(() => {});
-        await sleep(2000);
-        break;
-      }
-    }
-
-    if (RESUME) {
-      const files = newPage.locator("input[type='file']");
-      const nFiles = await files.count();
-      for (let fi = 0; fi < Math.min(nFiles, 3); fi++) {
-        await files.nth(fi).setInputFiles(RESUME).catch(() => {});
-      }
-      if (nFiles) await sleep(1200);
-    }
-
-    // Greenhouse / Infor / generic ATS named fields
-    for (const [sel, val] of [
-      [
-        "input[name='first_name'], #first_name, input[name*='first_name'], input[placeholder='First name' i]",
-        "Mohammed Abdul Rafi",
-      ],
-      [
-        "input[name='last_name'], #last_name, input[name*='last_name'], input[placeholder='Last name' i]",
-        "Ahmed",
-      ],
-      [
-        "input[name='email'], #email, input[type='email'], input[name*='[email]']",
-        "rafi.success@gmail.com",
-      ],
-      [
-        "input[name='phone'], #phone, input[type='tel'], input[name*='[phone]']",
-        "8790251698",
-      ],
-      ["#address1, input[name*='[address1]']", "Hyderabad"],
-      ["#town, input[name*='[town]']", "Hyderabad"],
-      ["#postcode, input[name*='[postcode]']", "500032"],
-    ]) {
-      const el = newPage.locator(sel).first();
-      if (await el.isVisible().catch(() => false)) {
-        await el.fill(val).catch(() => {});
-      }
-    }
-    // Infor / Phenom-style Yes/No radios + acknowledgement.
-    for (const [qRe, yes] of [
-      [/at least 18/i, true],
-      [/legally authorised|legally authorized|authorised to work|authorized to work/i, true],
-      [/relatives who are currently employed/i, false],
-      [/non-compete|previously worked for/i, false],
-    ]) {
-      const block = newPage.locator("fieldset, div, li, section").filter({ hasText: qRe }).first();
-      if (!(await block.isVisible().catch(() => false))) continue;
-      const choice = block
-        .locator(yes ? "label:has-text('Yes'), input[value='true']" : "label:has-text('No'), input[value='false']")
-        .first();
-      await choice.click({ force: true }).catch(() => {});
-    }
-    const ack = newPage.locator("select").filter({ hasText: /I confirm/i }).first();
-    if (await ack.count().catch(() => 0)) {
-      await ack.selectOption({ label: "I confirm" }).catch(() => {});
-    }
-    const ackText = newPage
-      .locator("#application_form_application_answers_attributes_5_text_answer, input[aria-label*='Acknowledgement' i]")
-      .first();
-    if (await ackText.isVisible().catch(() => false)) {
-      await ackText.fill("I confirm").catch(() => {});
-    }
-    const countrySel = newPage.locator("select[aria-label='Country'], select#application_form\\[application\\]\\[country\\]").first();
-    if (await countrySel.isVisible().catch(() => false)) {
-      await countrySel.selectOption({ label: "India" }).catch(() => {});
-    }
-
-    // Greenhouse / SmartRecruiters / Lever / Ashby / Phenom / generic boards.
-    await fillCommonAtsQuestions(newPage).catch(() => {});
-
-    // SmartRecruiters often needs an explicit "Submit" after consent checkbox.
-    if (/smartrecruiters\.com/i.test(newPage.url())) {
-      const consent = newPage
-        .locator(
-          "input[type='checkbox'], [role='checkbox']"
-        )
-        .first();
-      if (await consent.isVisible().catch(() => false)) {
-        await consent.check({ force: true }).catch(() => {});
-        await consent.click({ force: true }).catch(() => {});
-      }
-    }
-
-    await newPage
-      .evaluate(
-        ({ cur, exp }) => {
-          const setVal = (inp, val) => {
-            inp.focus();
-            inp.value = String(val);
-            inp.dispatchEvent(new Event("input", { bubbles: true }));
-            inp.dispatchEvent(new Event("change", { bubbles: true }));
-          };
-          const inputs = [
-            ...document.querySelectorAll("input, textarea, select"),
-          ];
-          for (const inp of inputs) {
-            if (inp.offsetParent === null && inp.type !== "file") continue;
-            if (inp.type === "password" || inp.type === "hidden") continue;
-            const ctx = (
-              (inp.getAttribute("placeholder") || "") +
-              " " +
-              (inp.getAttribute("name") || "") +
-              " " +
-              (inp.getAttribute("aria-label") || "") +
-              " " +
-              (inp.id || "") +
-              " " +
-              (inp.closest("label,div,fieldset,li")?.innerText || "")
-            ).slice(0, 240);
-            if (
-              /expected/i.test(ctx) &&
-              /ctc|salary|compensation|lpa|pay/i.test(ctx)
-            ) {
-              if (inp.tagName === "SELECT") continue;
-              setVal(inp, exp * 100000);
-            } else if (
-              /current/i.test(ctx) &&
-              /ctc|salary|compensation|lpa|pay/i.test(ctx)
-            ) {
-              if (inp.tagName === "SELECT") continue;
-              setVal(inp, cur * 100000);
-            } else if (/email/i.test(ctx) && !inp.value) {
-              setVal(inp, "rafi.success@gmail.com");
-            } else if (/phone|mobile/i.test(ctx) && !inp.value) {
-              setVal(inp, "8790251698");
-            } else if (/first[_ ]?name/i.test(ctx) && !inp.value) {
-              setVal(inp, "Mohammed Abdul Rafi");
-            } else if (/last[_ ]?name/i.test(ctx) && !inp.value) {
-              setVal(inp, "Ahmed");
-            } else if (/location|city|hyderabad/i.test(ctx) && !inp.value) {
-              setVal(inp, "Hyderabad");
-            }
-          }
-        },
-        { cur: CURRENT_CTC_LPA, exp: EXPECTED_CTC_LPA }
-      )
-      .catch(() => {});
-
-    for (const sel of [
-      "button:has-text('Submit application')",
-      "button:has-text('Submit Application')",
-      "input[type='submit'][value*='Submit' i]",
-      "button:has-text('Submit')",
-      "button:has-text('Apply')",
-      "input[type='submit']",
-    ]) {
-      const b = newPage.locator(sel).first();
-      if (await b.isVisible().catch(() => false)) {
-        const label = ((await b.innerText().catch(() => "")) || "").trim();
-        if (/sign in|log in|create account/i.test(label)) continue;
-        await b.click({ force: true }).catch(() => {});
-        await sleep(2500);
-      }
-    }
-
-    const after = await newPage
-      .evaluate(() => (document.body?.innerText || "").slice(0, 2500))
-      .catch(() => "");
-    if (isSubmittedText(after)) {
-      report.external.push({
-        ...jobMeta,
-        path: "company_ATS",
-        atsUrl: newPage.url(),
-        resume: RESUME,
-        confirmed: true,
-      });
-      report.applied.push({
-        ...jobMeta,
-        path: "company_ATS",
-        atsUrl: newPage.url(),
-        resume: RESUME,
-      });
-      if (newPage !== page) safeClose(newPage);
-      return;
-    }
-
-    const next = newPage
-      .locator(
-        "button:has-text('Next'), button:has-text('Continue'), button:has-text('Save and Continue')"
-      )
-      .first();
-    if (await next.isVisible().catch(() => false)) {
-      await next.click().catch(() => {});
-      noAdvance = 0;
-      await sleep(1500);
-      continue;
-    }
-    noAdvance += 1;
-    if (noAdvance >= 4) break;
-    await sleep(1500);
+  // Brochure / marketing careers pages (no file, no Workday, no apply form)
+  // used to burn the full 6.5m as external_incomplete_or_timeout.
+  const landingText = await newPage
+    .evaluate(() => (document.body?.innerText || "").slice(0, 2500))
+    .catch(() => "");
+  const brochureFlags = {
+    url: newPage.url() || "",
+    text: landingText,
+    hasFile: (await newPage.locator("input[type='file']").count().catch(() => 0)) > 0,
+    hasWd: looksWorkdayUrl || looksWorkdayUi,
+    hasEmail:
+      (await newPage
+        .locator("input[type='email'], [data-automation-id='email']")
+        .count()
+        .catch(() => 0)) > 0,
+    hasPassword: (await newPage.locator("input[type='password']").count().catch(() => 0)) > 0,
+    hasApplyCta: /apply (now|for this job)|start application|i'?m interested|submit application/i.test(
+      landingText
+    ),
+  };
+  if (isBrochureOrDeadEnd(brochureFlags)) {
+    report.skipped.push({
+      ...jobMeta,
+      reason: "no_ats_form",
+      url: newPage.url(),
+      path: "company_ATS",
+    });
+    if (newPage !== page) safeClose(newPage);
+    return;
   }
 
-  report.blocked.push({
-    ...jobMeta,
-    reason: "external_incomplete_or_timeout",
-    url: newPage.url(),
-    path: "company_ATS",
+  const done = await completeExternalPage(newPage, RESUME, {
+    maxMs: Math.max(60_000, MAX_EXTERNAL_MS - (Date.now() - start)),
   });
+  if (done.ok) {
+    report.external.push({
+      ...jobMeta,
+      path: "company_ATS",
+      atsUrl: done.url || newPage.url(),
+      resume: RESUME,
+      confirmed: true,
+    });
+    report.applied.push({
+      ...jobMeta,
+      path: "company_ATS",
+      atsUrl: done.url || newPage.url(),
+      resume: RESUME,
+    });
+  } else if (done.reason === "job_unavailable" || done.reason === "no_ats_form") {
+    report.skipped.push({
+      ...jobMeta,
+      reason: done.reason,
+      url: done.url || newPage.url(),
+      path: "company_ATS",
+    });
+  } else {
+    report.blocked.push({
+      ...jobMeta,
+      reason: done.reason || "external_incomplete_or_timeout",
+      url: done.url || newPage.url(),
+      path: "company_ATS",
+    });
+  }
   if (newPage !== page) safeClose(newPage);
 }
 
@@ -2204,3 +1955,9 @@ if (require.main === module) {
       process.exit(1);
     });
 }
+
+module.exports = {
+  isAlreadyAppliedCta,
+  isFalseApplyCta,
+  isCompanySiteCta,
+};

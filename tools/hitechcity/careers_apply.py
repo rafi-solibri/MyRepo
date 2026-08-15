@@ -104,7 +104,8 @@ JD_WRONG_STACK = re.compile(
 AUTH_HOST = re.compile(
     r"passport\.amazon\.jobs|login\.microsoftonline|accounts\.google|"
     r"secure\.indeed\.com|indeed\.com/auth|okta\.com|login\.microsoft|"
-    r"auth\.|signin\.|sso\.",
+    r"auth\.|signin\.|sso\.|login\.cognizant|cognizant\.okta|"
+    r"eightfold\.ai/(?:login|signin|auth)",
     re.I,
 )
 

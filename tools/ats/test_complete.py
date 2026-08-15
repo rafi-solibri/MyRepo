@@ -14,12 +14,16 @@ from tools.ats.complete import (
     ats_password,
     auth_wall_reason,
     classify_ats_host,
+    extract_hop_destination_from_url,
+    extract_offsite_from_text,
     frame_url_is_captcha_challenge,
     iframe_box_is_onscreen,
     is_board_tracking_url,
+    is_brochure_or_dead_end,
     is_hard_ats_wall,
     is_submitted_text,
     is_unavailable_text,
+    looks_like_apply_cta,
 )
 
 
@@ -41,6 +45,50 @@ assert_true(not is_hard_ats_wall("ats_time_cap"), "time_cap is not a company wal
 assert_true(not is_hard_ats_wall("stuck/time cap after 3 steps"), "stuck is not a company wall")
 assert_true(not is_hard_ats_wall("job_unavailable"), "maintenance is not a company wall")
 assert_true(not is_hard_ats_wall("did_not_leave_indeed"), "tracking hop is not a company wall")
+assert_true(not is_hard_ats_wall("no_ats_form"), "brochure miss is not a company wall")
+assert_true(not looks_like_apply_cta("View applied jobs (20+)"), "naukri chrome is not Apply")
+assert_true(not looks_like_apply_cta("Applied jobs"), "applied-jobs chrome is not Apply")
+assert_true(looks_like_apply_cta("Apply now"), "Apply now is a real CTA")
+assert_true(looks_like_apply_cta("Apply for this job"), "Apply for this job is a real CTA")
+assert_true(looks_like_apply_cta("Quick apply"), "Quick apply is a real CTA")
+assert_true(
+    is_brochure_or_dead_end(
+        "https://www.mihira.ai/careers.html",
+        "Join our growing team. See all open roles.",
+    ),
+    "marketing careers.html is brochure",
+)
+assert_true(
+    not is_brochure_or_dead_end(
+        "https://boards.greenhouse.io/acme/jobs/1",
+        "Apply for this job\nFirst name\nUpload resume",
+        has_file=True,
+    ),
+    "Greenhouse form is not brochure",
+)
+assert_true(
+    extract_hop_destination_from_url(
+        "https://www.indeed.com/applystart?jk=abc&continueUrl=https%3A%2F%2Facme.wd1.myworkdayjobs.com%2Fen-US%2Fjob"
+    )
+    == "https://acme.wd1.myworkdayjobs.com/en-US/job",
+    "Indeed applystart dest",
+)
+assert_true(
+    extract_offsite_from_text(
+        '{"companyApplyUrl":"https://acme.wd5.myworkdayjobs.com/en-US/Apply"}'
+    )
+    == "https://acme.wd5.myworkdayjobs.com/en-US/Apply",
+    "LinkedIn companyApplyUrl",
+)
+assert_true(
+    not extract_offsite_from_text('{"companyApplyUrl":"https://www.linkedin.com/jobs/view/1"}'),
+    "reject LinkedIn self-url",
+)
+assert_true(classify_ats_host("https://app.eightfold.ai/careers/job?pid=1") == "greenhouse", "eightfold is ATS")
+assert_true(
+    classify_ats_host("https://login.microsoftonline.com/cognizant") == "sso",
+    "cognizant SSO host",
+)
 
 assert_true(classify_ats_host("https://acme.wd1.myworkdayjobs.com/en-US/job") == "workday", "wd host")
 assert_true(classify_ats_host("https://boards.greenhouse.io/acme/jobs/1") == "greenhouse", "gh host")
