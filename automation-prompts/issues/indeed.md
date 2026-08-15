@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| SmartApply Title/Mr-Ms salutation left unset (LTM) | map Title/salutation to Mr. on radios and selects |
 | SmartApply unique pitch got phone (tel matched tell); certify/start-date left empty | word-boundary tel; 150-char unique pitch; Yes I certify; earliest start 15/08/2026 |
 | SmartApply full name got Yes leftover; years/education combobox stayed Select an option | map full name; pick B.Tech/10+ years on custom listboxes; FTE/rate/reason-for-change; no Yes fallback on identity fields |
 | CF-cleared homepage stayed anonymous Get Started (false indeed_login_required) despite valid Passport cookies | warm Passport via secure.indeed.com/settings/account then return home; copy Local State into hybrid UC profile |

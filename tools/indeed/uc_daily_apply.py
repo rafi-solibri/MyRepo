@@ -644,6 +644,10 @@ def fill_common_questions(sb) -> None:
                   && !/first|last|middle|company/.test(t)) {
                 return 'Mohammed Abdul Rafi Ahmed';
               }
+              if (/^(title|salutation|prefix)\\b|\\b(title|salutation)\\s*\\*?$/.test(t.trim())
+                  || (/\\btitle\\b/.test(t) && /\\b(mr|ms|mrs|mx)\\b/.test(t) && !/job title|current title|position/.test(t))) {
+                return 'Mr.';
+              }
               if (/date of birth|\\bdob\\b|birth\\s*date|birthday/.test(t)) return '16/01/1989';
               if (/\\bpan\\b|aadhaar|aadhar|passport\\s*(no|number|id)|ssn|social security/.test(t)) return null;
               if (/current.*(ctc|salary|compensation|pay)|ctc.*current|present.*ctc|current.*package|current salary/.test(t)) return '52';
@@ -701,6 +705,7 @@ def fill_common_questions(sb) -> None:
                 const lab = ((r.getAttribute('aria-label')||'') + ' ' + (r.parentElement?.innerText||'') + ' ' + (r.value||'')).toLowerCase().slice(0,160);
                 const hit =
                   (want === 'yes' && /\\byes\\b|yep|true|agree|available/.test(lab) && !/\\bno\\b/.test(lab)) ||
+                  (want === 'Mr.' && /\\bmr\\.?\\b/.test(lab) && !/mrs/.test(lab)) ||
                   (want === 'male' && /\\bmale\\b/.test(lab) && !/female/.test(lab)) ||
                   (want === 'Immediate' && /immediate|0\\s*day|serving|less than|currently serving/.test(lab)) ||
                   (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not|do not want/.test(lab));
@@ -724,6 +729,7 @@ def fill_common_questions(sb) -> None:
                     (want === 'Expert' && /expert|advanced|proficient|high/.test(t)) ||
                     (want === 'B.Tech' && /b\\.?tech|bachelor|b\\.e\\b|undergraduate/.test(t)) ||
                     (want === 'Full time' && /full\\s*time|fte|permanent/.test(t)) ||
+                    (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs/.test(t)) ||
                     (want === '3500' && /3500|3000|2500-4000/.test(t)) ||
                     (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not/.test(t))
                   ) {
