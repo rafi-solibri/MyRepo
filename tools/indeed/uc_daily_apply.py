@@ -567,6 +567,8 @@ def fill_common_questions(sb) -> None:
               if (/highest (degree|education|qualification)|education level|degree obtained|university|college/.test(t)) {
                 return 'B.Tech';
               }
+              if (/date of birth|\\bdob\\b|birth\\s*date|birthday/.test(t)) return '16/01/1989';
+              if (/\\bpan\\b|aadhaar|aadhar|passport\\s*(no|number|id)|ssn|social security/.test(t)) return null;
               if (/current.*(ctc|salary|compensation|pay)|ctc.*current|present.*ctc|current.*package|current salary/.test(t)) return '52';
               if (/expected.*(ctc|salary|compensation|pay)|ctc.*expected|desired.*salary|expected.*package/.test(t)) return '65';
               if (/notice|joining|how soon|availability|immediate|serve notice/.test(t)) return 'Immediate';
@@ -690,8 +692,10 @@ def fill_common_questions(sb) -> None:
               else if (/current.*(ctc|salary|compensation|package)|ctc.*current|current salary/.test(lab)) val = vals.current;
               else if (/expected.*(ctc|salary|compensation|package)|ctc.*expected/.test(lab)) val = vals.expected;
               else if (/notice|joining|availability/.test(lab)) val = vals.notice;
-              else if (/city|location|current\\s*location/.test(lab)) val = vals.city;
-              else if (/experience|years/.test(lab)) val = vals.experience;
+              else if (/date of birth|\\bdob\\b|birth\\s*date|birthday/.test(lab) || type === 'date') val = '16/01/1989';
+              else if (/\\bpan\\b|aadhaar|aadhar|passport\\s*(no|number|id)/.test(lab)) val = null;
+              else if (/city|current\\s*location|prefer.*location|base location/.test(lab) && !/compan/.test(lab)) val = vals.city;
+              else if (/experience|years/.test(lab) && !/date|birth|pan|aadhaar/.test(lab)) val = vals.experience;
               else if (!(el.value || '').trim()) {
                 const w = wantFromText(lab);
                 if (w) val = w;
