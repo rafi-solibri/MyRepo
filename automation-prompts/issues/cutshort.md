@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| session.disconnect page.close() hung after successful scan; HOME_REPORT preferred stale /opt path | Bound page.close with 3s race; prefer cwd artifacts/cutshort-daily-run.json over /opt |
 | CDP page/browser closed mid-scan → hard exit 1 with no home report | createCdpSession reconnect + scan/apply retry; never browser.close() on Windows; still write report on closed-page abort |
 
 
