@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Quick Apply success recorded as apply_unconfirmed when CTA became View applied jobs (20+) | confirmApplied treats visible View applied jobs as success; ignore that widget as the pre-apply CTA |
 | Manager, SW Engineering (and CTO) skipped as skip_no_dotnet — ARCH_LEAD_RE missed SW/EM phrasing | Treat Manager, SW Engineering and CTO as arch/lead so Hyd/remote EM applies proceed without .NET on the card |
 | SmartRecruiters/Workday timeouts + Lloyds maintenance + chatbot ignored .NET/Java checkboxes and Never served | Fail-fast unavailable; skip D365/cyber architecture; chatbot stack checkboxes + military No |
 | Workday Python/JS password miss when only LINKEDIN_PASSWORD/NAUKRI_WORKDAY_PASSWORD set | Password chain includes NAUKRI_WORKDAY_PASSWORD + LINKEDIN_PASSWORD; richer Workday fill |

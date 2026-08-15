@@ -203,6 +203,16 @@ assert.strictEqual(
   "CTO is director-band apply title"
 );
 assert.strictEqual(
+  isArchLeadTitle("CTO"),
+  true,
+  "Bare CTO title is director-band"
+);
+assert.strictEqual(
+  isArchLeadTitle("Cloud Engineering, Senior Specialist CTO AI Ready Data/DTR"),
+  false,
+  "Product-string CTO must not count as arch/lead"
+);
+assert.strictEqual(
   shouldSkipTitle("Manager, SW Engineering"),
   false,
   "EM-class SW Engineering manager must not title-skip"

@@ -57,7 +57,7 @@ const DOTNET_RE = /(\.net|dotnet|asp\.?\s*net|c#|csharp)/i;
 
 /** Architect / Lead / EM / Principal / Staff / Director — apply even if card omits .NET. */
 const ARCH_LEAD_RE =
-  /\b(architect(?:ure)?|technical lead|tech lead|technology lead|engineering manager|engineering lead|engineer manager|software engineer manager|principal|staff|director|avp|head of|cto|chief technology|\bsw engineering manager|solution architect(?:ure)?|cloud architect(?:ure)?|azure architect(?:ure)?|\.net lead|dotnet lead|lead (software|development|engineer)|software (engineering )?manager|senior manager|manager[, -]?\s*(sw|software|engineering|technology|platform)|senior engineering)\b/i;
+  /\b(architect(?:ure)?|technical lead|tech lead|technology lead|engineering manager|engineering lead|engineer manager|software engineer manager|principal|staff|director|avp|head of|chief technology|\bsw engineering manager|solution architect(?:ure)?|cloud architect(?:ure)?|azure architect(?:ure)?|\.net lead|dotnet lead|lead (software|development|engineer)|software (engineering )?manager|senior manager|manager[, -]?\s*(sw|software|engineering|technology|platform)|senior engineering)\b/i;
 
 function normalizeAspNet(text) {
   return String(text || "").replace(/asp\.?\s*net/gi, "DOTNET");
@@ -69,7 +69,10 @@ function hasDotNet(title, skills) {
 }
 
 function isArchLeadTitle(title) {
-  return ARCH_LEAD_RE.test(title || "");
+  const t = String(title || "").trim();
+  if (ARCH_LEAD_RE.test(t)) return true;
+  // Bare "CTO" only — do not match product strings like "Specialist CTO AI Ready".
+  return /^cto\b/i.test(t);
 }
 
 function shouldSkipTitle(title) {
