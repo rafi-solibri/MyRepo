@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Manager, SW Engineering (and CTO) skipped as skip_no_dotnet — ARCH_LEAD_RE missed SW/EM phrasing | Treat Manager, SW Engineering and CTO as arch/lead so Hyd/remote EM applies proceed without .NET on the card |
 | SmartRecruiters/Workday timeouts + Lloyds maintenance + chatbot ignored .NET/Java checkboxes and Never served | Fail-fast unavailable; skip D365/cyber architecture; chatbot stack checkboxes + military No |
 | Workday Python/JS password miss when only LINKEDIN_PASSWORD/NAUKRI_WORKDAY_PASSWORD set | Password chain includes NAUKRI_WORKDAY_PASSWORD + LINKEDIN_PASSWORD; richer Workday fill |
 | external_incomplete_or_timeout — hidden reCAPTCHA treated as wall; GH questions only on some hosts; one Next then bail | Visible-challenge CAPTCHA only; always fillCommonAtsQuestions; retry 4x; 6.5m budget; shared WORKDAY_PASSWORD |

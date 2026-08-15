@@ -192,5 +192,20 @@ assert.strictEqual(
   true,
   "Architecture titles count as arch/lead band"
 );
+assert.strictEqual(
+  isArchLeadTitle("Manager, SW Engineering"),
+  true,
+  "Manager, SW Engineering is an EM-class apply title"
+);
+assert.strictEqual(
+  isArchLeadTitle("Chief Technology Officer"),
+  true,
+  "CTO is director-band apply title"
+);
+assert.strictEqual(
+  shouldSkipTitle("Manager, SW Engineering"),
+  false,
+  "EM-class SW Engineering manager must not title-skip"
+);
 console.log("resume_and_filters self-test OK");
 
