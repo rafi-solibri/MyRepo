@@ -816,10 +816,16 @@ async function answerNaukriChatbot(page) {
         const scoreBand = (v) => {
           const s = String(v || "").trim();
           if (/^yes$/i.test(s)) return 10_000;
-          if (/immediate|serving notice|available/i.test(s)) return 9_000;
+          if (/never served/i.test(s)) return 9_500;
+          if (
+            /immediate|serving notice|available/i.test(s) &&
+            !/currently serving|previously served/i.test(s)
+          )
+            return 9_000;
           if (/hyderabad|secunderabad|remote|work from home|wfh|any location/i.test(s))
             return 8_000;
           if (/\.net|dotnet|c#|csharp|azure/i.test(s)) return 7_500;
+          if (/currently serving|previously served/i.test(s)) return -1;
           if (/^no$/i.test(s)) return -1;
           const nums = (s.match(/\d+/g) || []).map(Number);
           if (!nums.length) return 0;
@@ -902,16 +908,21 @@ async function answerNaukriChatbot(page) {
 
         const chips = [
           ...root.querySelectorAll(
-            "label, button, [role='button'], div[class*='chip'], span[class*='chip'], span.ssrc__label, li[role='option']"
+            ".chatbot_Chip, .chipItem, label, button, [role='button'], div[class*='chip'], span[class*='chip'], span.ssrc__label, li[role='option']"
           ),
         ].filter((e) => {
           const t = (e.innerText || "").replace(/\s+/g, " ").trim();
-          return (
-            t &&
-            t.length < 48 &&
-            /^(Yes|No|Immediate|Serving notice|Available|>?\d+.*years|\d+\s*-\s*\d+\s*years|Hyderabad|Secunderabad|Remote|Work from home|WFH|Any location|15\+|Agree|Proceed|\.NET|DotNet|C#|Azure|Java)$/i.test(
-              t
-            )
+          if (!t || t.length >= 64) return false;
+          if (
+            (e.classList &&
+              (e.classList.contains("chatbot_Chip") ||
+                e.classList.contains("chipItem"))) ||
+            /chatbot_Chip|chipItem/i.test(e.className || "")
+          ) {
+            return true;
+          }
+          return /^(Yes|No|Immediate|Serving notice|Available|>?\d+.*years|\d+\s*-\s*\d+\s*years|Hyderabad|Secunderabad|Remote|Work from home|WFH|Any location|15\+|Agree|Proceed|\.NET|DotNet|C#|Azure|Java|Never served|Currently serving|Previously served)$/i.test(
+            t
           );
         });
         if (chips.length) {

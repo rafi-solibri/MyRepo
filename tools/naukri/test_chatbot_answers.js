@@ -15,5 +15,17 @@ assert.deepStrictEqual(
   ["Azure", ".NET Core"]
 );
 assert.deepStrictEqual(preferChatbotCheckboxValues(["Yes", "No"]), ["Yes"]);
+assert.ok(
+  scoreChatbotOption("Never served") >
+    scoreChatbotOption("Currently serving")
+);
+assert.deepStrictEqual(
+  preferChatbotCheckboxValues([
+    "Currently serving",
+    "Previously served",
+    "Never served",
+  ]),
+  ["Never served"]
+);
 assert.deepStrictEqual(preferChatbotCheckboxValues([]), []);
 console.log("chatbot_answers self-test OK");

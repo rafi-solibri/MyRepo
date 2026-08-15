@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| PwC apply_unconfirmed: military-service chatbot chips (Never served) ignored | daily_apply.js collects .chatbot_Chip; score Never served over Currently/Previously served |
 | Jade/PwC apply_unconfirmed: chatbot Save disabled on .Net/Java multiselect checkboxes (mcc__checkbox) | daily_apply.js answers multiselect skill checkboxes preferring .NET; chatbot_answers.js + tests; also skip D365/cyber architecture titles |
 
 

@@ -11,10 +11,13 @@ const CHATBOT_PREFER_RE =
 function scoreChatbotOption(text) {
   const s = String(text || "").trim();
   if (/^yes$/i.test(s)) return 10_000;
-  if (/immediate|serving notice|available/i.test(s)) return 9_000;
+  if (/never served/i.test(s)) return 9_500;
+  if (/immediate|serving notice|available/i.test(s) && !/currently serving|previously served/i.test(s))
+    return 9_000;
   if (/hyderabad|secunderabad|remote|work from home|wfh|any location/i.test(s))
     return 8_000;
   if (/\.net|dotnet|c#|csharp|azure/i.test(s)) return 7_500;
+  if (/currently serving|previously served/i.test(s)) return -1;
   if (/^no$/i.test(s)) return -1;
   const nums = (s.match(/\d+/g) || []).map(Number);
   if (!nums.length) return 0;
