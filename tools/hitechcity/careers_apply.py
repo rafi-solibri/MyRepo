@@ -710,6 +710,16 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                     time.sleep(0.4)
                 except Exception:
                     pass
+                # Wait for guest ATS cards (Workday / iCIMS / Oracle HCM) before extract.
+                try:
+                    page.wait_for_selector(
+                        '[data-automation-id="jobTitle"], a[data-automation-id="jobTitle"], '
+                        'a[href*="/job/"], a[href*="icims.com/jobs/"], '
+                        "a.job-grid-item__link, [data-qa='jobRequisitionTitle']",
+                        timeout=10000,
+                    )
+                except Exception:
+                    pass
                 # Experian SmartRecruiters location groups collapse job links until expanded.
                 try:
                     hyd = page.get_by_text(re.compile(r"Hyderabad,\s*India", re.I))

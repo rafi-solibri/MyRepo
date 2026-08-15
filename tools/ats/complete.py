@@ -290,6 +290,18 @@ def is_submitted_text(text: str | None) -> bool:
     return bool(SUBMITTED_RE.search(text or ""))
 
 
+ALREADY_APPLIED_RE = re.compile(
+    r"you have already applied|already applied to this (job|position|requisition)|"
+    r"you previously applied|application is already (in progress|submitted)|"
+    r"you applied for this job|this requisition is already",
+    re.I,
+)
+
+
+def looks_already_applied(page) -> bool:
+    return bool(ALREADY_APPLIED_RE.search(_body(page, 4000)))
+
+
 def looks_like_apply_cta(label: str | None) -> bool:
     """True for a real Apply/Submit CTA — not 'View applied jobs' chrome."""
     t = re.sub(r"\s+", " ", label or "").strip()
@@ -1261,9 +1273,13 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
     start = time.time()
     if is_unavailable_text(f"{getattr(page, 'url', '')}\n{_body(page, 1500)}"):
         return "skipped", "job_unavailable"
+    if looks_already_applied(page):
+        return "skipped", "already_applied"
     workday_open_apply(page)
     if looks_submitted(page):
         return "applied", "confirmation"
+    if looks_already_applied(page):
+        return "skipped", "already_applied"
     auth = workday_auth(page)
     if auth:
         return "blocked", auth
@@ -1427,6 +1443,8 @@ def complete_ats(page, time_cap_s: int | None = None) -> tuple[str, str]:
     cap = int(time_cap_s or DEFAULT_TIME_CAP_S)
     if looks_submitted(page):
         return "applied", "confirmation"
+    if looks_already_applied(page):
+        return "skipped", "already_applied"
     if visible_captcha_challenge(page):
         return "blocked", "CAPTCHA/bot wall"
     flags = page_flags(page)

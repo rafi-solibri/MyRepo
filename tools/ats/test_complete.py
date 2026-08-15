@@ -26,6 +26,7 @@ from tools.ats.complete import (
     is_unavailable_text,
     looks_like_apply_cta,
     page_fingerprint,
+    ALREADY_APPLIED_RE,
     workday_compliant_password,
     workday_on_standalone_login,
     workday_password_alert,
@@ -276,6 +277,10 @@ assert_true(
         "https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site/job/Hyderabad/Principal-Software-Engineer_JR-1/apply/autofillWithResume"
     ),
     "in-flow apply URL is not standalone login",
+)
+assert_true(
+    bool(ALREADY_APPLIED_RE.search("You have already applied to this job.")),
+    "already-applied banner is skipped not walled",
 )
 assert_true(
     workday_compliant_password("GoodPass123!") == "GoodPass123!",
