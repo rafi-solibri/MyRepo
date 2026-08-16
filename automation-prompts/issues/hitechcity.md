@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| HighRadius Greenhouse JDs skipped no_ats_form because /about/careers-list/?gh_jid= matched brochure /about/ and the form lives in grnhse_iframe | Job-detail URLs are never brochure; page_flags+complete_generic fill job-boards.greenhouse.io embed iframe |
 | 34 seed tenants (incl HighRadius Greenhouse) had empty careersUrls so careers-only burned MAX_COMPANIES and never opened Hyd architect JDs | Curate verified ATS URLs; seed merge fills empty careersUrls; skip no_careers_url so the 40-company cap is real portals |
 | Gartner Workday Sign In on applyManually + Remote Canada/US burned 390s×N without walling; bare Remote rescued foreign workplaces | Fail-fast workday_stuck_on_sign_in; reject Remote+foreign in card_location_ok/location_allowed; tighten HITECHCITY_MAX_EXT_WALLS=1 MAX_EXT_ATTEMPTS=2 ATS_TIME_CAP=90 |
 

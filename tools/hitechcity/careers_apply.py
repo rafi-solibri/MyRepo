@@ -121,7 +121,7 @@ HANG_SCAN_HOST_RE = re.compile(
 )
 GUEST_ATS_HOST_RE = re.compile(
     r"myworkdayjobs|icims\.com|oraclecloud\.com|taleo\.net|smartrecruiters\.com|"
-    r"greenhouse\.io|lever\.co|myworkdaysite",
+    r"greenhouse\.io|lever\.co|myworkdaysite|highradius\.com",
     re.I,
 )
 # DataDome / reCAPTCHA boards burn the run if scanned first (Experian/Blackbaud/PAN).

@@ -57,7 +57,7 @@ function isBrochureOrDeadEnd({
   if (hasApplyCta) return false;
   const u = String(url || "");
   const t = String(text || "");
-  if (JOB_DETAIL_URL_RE.test(u) && ATS_FORM_HINT_RE.test(t)) return false;
+  if (JOB_DETAIL_URL_RE.test(u)) return false;
   if (BROCHURE_URL_RE.test(u)) return true;
   if (BROCHURE_TEXT_RE.test(t) && !ATS_FORM_HINT_RE.test(t)) return true;
   if (/careers|jobs|join-us|about/i.test(u) && !ATS_FORM_HINT_RE.test(t) && !JOB_DETAIL_URL_RE.test(u)) {

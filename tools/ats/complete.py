@@ -100,7 +100,7 @@ WORKDAY_HOST_RE = re.compile(
 GREENHOUSE_HOST_RE = re.compile(
     r"greenhouse\.io|job-boards\.greenhouse|smartrecruiters\.com|lever\.co|"
     r"ashbyhq\.com|icims\.com|taleo\.net|successfactors|oraclecloud\.com|"
-    r"phenompeople|eightfold\.ai",
+    r"phenompeople|eightfold\.ai|gh_jid=",
     re.I,
 )
 
@@ -336,7 +336,9 @@ def is_brochure_or_dead_end(
         return False
     u = url or ""
     t = text or ""
-    if JOB_DETAIL_URL_RE.search(u) and ATS_FORM_HINT_RE.search(t):
+    # HighRadius (and similar) embed Greenhouse on /about/careers-list/?gh_jid= —
+    # BROCHURE_URL_RE matches /about/ and would skip a real JD.
+    if JOB_DETAIL_URL_RE.search(u):
         return False
     if BROCHURE_URL_RE.search(u):
         return True
@@ -774,6 +776,19 @@ def icims_hcaptcha_login(page) -> bool:
     return bool(re.search(r"icims\.com/.+/login", url, re.I))
 
 
+def greenhouse_embed_frame(page):
+    """HighRadius (and similar) host Greenhouse in #grnhse_iframe / job-boards.greenhouse.io."""
+    try:
+        frames = list(getattr(page, "frames", []) or [])
+    except Exception:
+        frames = []
+    for fr in frames:
+        u = getattr(fr, "url", "") or ""
+        if re.search(r"job-boards\.greenhouse\.io|boards\.greenhouse\.io/embed|grnhse_iframe", u, re.I):
+            return fr
+    return None
+
+
 def page_flags(page) -> dict:
     url = getattr(page, "url", "") or ""
     text = _body(page, 2500)
@@ -793,6 +808,20 @@ def page_flags(page) -> dict:
         )
     except Exception:
         pass
+    embed = greenhouse_embed_frame(page)
+    if embed is not None:
+        try:
+            has_file = has_file or embed.locator("input[type='file']").count() > 0
+            has_email = has_email or embed.locator("input[type='email']").count() > 0
+            embed_text = ""
+            try:
+                embed_text = embed.locator("body").inner_text(timeout=2000) or ""
+            except Exception:
+                embed_text = ""
+            if embed_text:
+                text = f"{text}\n{embed_text[:1500]}"
+        except Exception:
+            pass
     has_apply_cta = bool(
         re.search(
             r"\bapply (now|for this job)|start application|i'?m interested|submit application",
@@ -1621,6 +1650,12 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
     stuck = 0
     leave_oneclick_oauth(page)
     prefer_guest_apply(page)
+    target = greenhouse_embed_frame(page) or page
+    if target is not page:
+        try:
+            _click_text(target, ("Apply", "Apply now", "Submit application"))
+        except Exception:
+            pass
     flags = page_flags(page)
     if is_brochure_or_dead_end(
         flags["url"],
@@ -1632,9 +1667,10 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
         has_apply_cta=flags.get("has_apply_cta", False),
     ):
         return "skipped", "no_ats_form"
-    last_fp = page_fingerprint(page)
+    last_fp = page_fingerprint(target)
     while time.time() - start < time_cap_s and stuck < 8:
-        if looks_submitted(page):
+        target = greenhouse_embed_frame(page) or page
+        if looks_submitted(page) or looks_submitted(target):
             return "applied", "confirmation"
         if is_unavailable_text(f"{getattr(page, 'url', '')}\n{_body(page, 1200)}"):
             return "skipped", "job_unavailable"
@@ -1664,14 +1700,14 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
             except Exception:
                 return "blocked", wall
         try:
-            upload_resume(page)
+            upload_resume(target)
         except Exception:
             pass
-        fill_labeled_fields(page)
-        fill_yes_no(page)
-        fill_greenhouse_combos(page)
-        tick_consents(page)
-        advanced = click_advance(page)
+        fill_labeled_fields(target)
+        fill_yes_no(target)
+        fill_greenhouse_combos(target)
+        tick_consents(target)
+        advanced = click_advance(target)
         _sleep(1.4 if advanced else 1.0)
         fp = page_fingerprint(page)
         if advanced and fp != last_fp:
@@ -1680,7 +1716,7 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
             continue
         stuck += 1
         last_fp = fp
-    if looks_submitted(page):
+    if looks_submitted(page) or looks_submitted(greenhouse_embed_frame(page) or page):
         return "applied", "confirmation"
     return "blocked", "external_incomplete_or_timeout"
 

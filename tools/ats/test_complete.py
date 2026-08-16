@@ -80,6 +80,18 @@ assert_true(
     "Greenhouse form is not brochure",
 )
 assert_true(
+    not is_brochure_or_dead_end(
+        "https://www.highradius.com/about/careers-list/?gh_jid=7807736003",
+        "Grow With Us - Join The HighRadius Team\nAbout Us\nContact Us",
+    ),
+    "HighRadius Greenhouse gh_jid on /about/ is not brochure",
+)
+assert_true(
+    classify_ats_host("https://www.highradius.com/about/careers-list/?gh_jid=7807736003")
+    == "greenhouse",
+    "gh_jid host is greenhouse",
+)
+assert_true(
     extract_hop_destination_from_url(
         "https://www.indeed.com/applystart?jk=abc&continueUrl=https%3A%2F%2Facme.wd1.myworkdayjobs.com%2Fen-US%2Fjob"
     )
