@@ -1738,6 +1738,13 @@ def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
     if icims_should_wait_captcha(page):
         cleared = try_clear_hcaptcha(page)
         if not cleared:
+            # Owner may have finished apply during the wait; confirmation beats wall.
+            if looks_submitted(page) or looks_already_applied(page):
+                return (
+                    ("applied", "confirmation")
+                    if looks_submitted(page)
+                    else ("skipped", "already_applied")
+                )
             if owner_captcha_wait_sec() > 0:
                 return "blocked", "owner_captcha_unsolved"
             if not captcha_solver_configured():
