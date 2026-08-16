@@ -802,7 +802,98 @@ def fill_icims_questions(page) -> bool:
                     clicked = True
     except Exception:
         pass
+    # Years-of-experience / skill matrix required selects (AMD job-specific questions).
+    if icims_fill_required_selects(page):
+        clicked = True
     return clicked
+
+
+def icims_empty_required_fields(page) -> list[str]:
+    """Return labels/names of empty required selects in the active iCIMS frame."""
+    target = icims_active_frame(page)
+    try:
+        return list(
+            target.evaluate(
+                """() => {
+                  const bad = [];
+                  for (const sel of document.querySelectorAll('select')) {
+                    const near = ((sel.closest('tr,fieldset,li,div,td,section') || sel.parentElement)
+                      .innerText || '').slice(0, 180);
+                    const req = sel.required || sel.getAttribute('i_required') === 'true' ||
+                      /iCIMS_Forms_RequiredField/i.test(sel.className || '') ||
+                      /years of professional|work experience with/i.test(near);
+                    if (!req) continue;
+                    const cur = (sel.selectedOptions[0] && sel.selectedOptions[0].text || '').trim();
+                    if (!sel.value || /^make a selection|^select|^—/i.test(cur)) {
+                      bad.push((near.split('\\n').find(Boolean) || sel.name || 'required').slice(0, 80));
+                    }
+                  }
+                  return bad;
+                }"""
+            )
+            or []
+        )
+    except Exception:
+        return []
+
+
+def icims_fill_required_selects(page) -> bool:
+    """Fill empty required iCIMS selects (skill years, etc.) before any Submit click."""
+    target = icims_active_frame(page)
+    try:
+        n = int(
+            target.evaluate(
+                """() => {
+                  let filled = 0;
+                  const yearPrefs = [/^more than 8/i, /^10\\+/i, /^7-10/i, /^6-8/i, /^4-6/i, /^3-5/i];
+                  for (const sel of document.querySelectorAll('select')) {
+                    const near = ((sel.closest('tr,fieldset,li,div,td,section') || sel.parentElement)
+                      .innerText || '').slice(0, 200);
+                    const req = sel.required || sel.getAttribute('i_required') === 'true' ||
+                      /iCIMS_Forms_RequiredField/i.test(sel.className || '') ||
+                      /years of professional|work experience with/i.test(near);
+                    if (!req) continue;
+                    const cur = (sel.selectedOptions[0] && sel.selectedOptions[0].text || '').trim();
+                    if (sel.value && !/^make a selection|^select|^—/i.test(cur)) continue;
+                    let hit = null;
+                    for (const pref of yearPrefs) {
+                      hit = [...sel.options].find(o => pref.test((o.text || '').trim()) && o.value);
+                      if (hit) break;
+                    }
+                    if (!hit) hit = [...sel.options].filter(o => o.value).slice(-1)[0];
+                    if (hit) {
+                      sel.value = hit.value;
+                      sel.dispatchEvent(new Event('change', { bubbles: true }));
+                      filled++;
+                    }
+                  }
+                  return filled;
+                }"""
+            )
+            or 0
+        )
+        if n:
+            print(f"icims=filled_required_selects n={n}", flush=True)
+        return n > 0
+    except Exception:
+        return False
+
+
+def icims_click_submit_if_ready(page) -> bool:
+    """Click Submit/Next only when no required selects are still empty."""
+    target = icims_active_frame(page)
+    icims_fill_required_selects(page)
+    empty = icims_empty_required_fields(page)
+    if empty:
+        print(
+            f"icims=skip_submit empty_required={len(empty)} sample={empty[:3]}",
+            flush=True,
+        )
+        return False
+    return _click_text(
+        target,
+        ("Submit Profile", "Submit Application", "Submit", "Next", "Continue", "Save and Continue"),
+    )
 
 
 def advance_icims_us_forms(page) -> bool:
@@ -2547,10 +2638,8 @@ def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
             last_fp = page_fingerprint(page)
             _sleep(0.5)
             continue
-        if _click_text(
-            target,
-            ("Submit Profile", "Submit", "Next", "Continue", "Save and Continue"),
-        ):
+        # Never Submit while required selects are still empty.
+        if icims_click_submit_if_ready(page):
             stuck = 0
             last_fp = page_fingerprint(page)
             _sleep(0.7)
@@ -2574,10 +2663,8 @@ def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
             upload_resume(icims_active_frame(page))
         except Exception:
             pass
-        _click_text(
-            icims_active_frame(page),
-            ("Submit Profile", "Submit", "Next", "Continue"),
-        )
+        icims_fill_required_selects(page)
+        icims_click_submit_if_ready(page)
         status, reason = complete_generic(page, max(90, remaining))
     return status, reason
 
