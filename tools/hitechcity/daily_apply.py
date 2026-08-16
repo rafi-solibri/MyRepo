@@ -35,6 +35,7 @@ os.environ.setdefault("HITECHCITY_DISCOVERY", "1")
 os.environ.setdefault("HITECHCITY_DISCOVERY_LINKEDIN", "0")
 os.environ.setdefault("HITECHCITY_DISCOVERY_WEB", "1")
 os.environ.setdefault("ATS_CAPTCHA_POLL_SEC", "0.4")
+os.environ.setdefault("ATS_OWNER_FOCUS_EVERY_SEC", "2")
 
 from tools.hitechcity.board_campus_apply import run as run_boards
 from tools.hitechcity.careers_apply import load_companies, run as run_careers

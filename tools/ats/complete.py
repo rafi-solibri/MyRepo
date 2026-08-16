@@ -2095,13 +2095,22 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
     if wait <= 0:
         return None
     msg = hint or "required fields (e.g. Source / How did you hear), login, or Submit"
+    try:
+        from tools.ats.captcha_solve import focus_page_for_owner, owner_focus_interval_sec
+
+        focus_page_for_owner(page, reason="ask_owner_start")
+        focus_every = owner_focus_interval_sec()
+    except Exception:
+        focus_page_for_owner = None  # type: ignore
+        focus_every = 2.0
     print(
-        f"ASK_OWNER wait={wait}s — finish {msg} in Chrome, then Submit. "
+        f"ASK_OWNER wait={wait}s — finish {msg} in the focused Chrome tab, then Submit. "
         f"Helper keeps filling Source/required blanks and resumes on confirmation.",
         flush=True,
     )
     deadline = time.time() + wait
     last_beat = 0.0
+    last_focus = 0.0
     last_fp = page_fingerprint(page)
     extended = False
     poll = float(os.environ.get("ATS_CAPTCHA_POLL_SEC", "0.4") or "0.4")
@@ -2114,6 +2123,13 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
             if looks_already_applied(page):
                 print("ASK_OWNER resolved=already_applied", flush=True)
                 return "skipped", "already_applied"
+            now = time.time()
+            if focus_page_for_owner and now - last_focus >= focus_every:
+                try:
+                    focus_page_for_owner(page, reason="ask_owner_hold")
+                except Exception:
+                    pass
+                last_focus = now
             try:
                 # Prefer the iCIMS nested form document when present.
                 target = page
@@ -2153,7 +2169,7 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
             now = time.time()
             if now - last_beat >= 8.0:
                 left = max(0, int(deadline - now))
-                print(f"ASK_OWNER waiting {left}s left — complete the form in Chrome", flush=True)
+                print(f"ASK_OWNER waiting {left}s left — tab kept focused for you", flush=True)
                 last_beat = now
             _sleep(poll)
         if looks_submitted(page):
@@ -2170,6 +2186,12 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
                 flush=True,
             )
             last_beat = 0.0
+            last_focus = 0.0
+            if focus_page_for_owner:
+                try:
+                    focus_page_for_owner(page, reason="ask_owner_extend")
+                except Exception:
+                    pass
             continue
         print("ASK_OWNER timeout — form still incomplete", flush=True)
         return None

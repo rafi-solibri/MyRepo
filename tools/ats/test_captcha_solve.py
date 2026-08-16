@@ -14,8 +14,10 @@ from tools.ats.captcha_solve import (
     _captcha_poll_frames,
     captcha_solver_configured,
     extract_sitekey_from_text,
+    focus_page_for_owner,
     inject_hcaptcha_token,
     owner_captcha_wait_sec,
+    owner_focus_interval_sec,
     owner_hcaptcha_cleared,
 )
 
@@ -166,5 +168,35 @@ _wall = _ClearPage(
     "I accept\nEnter your information\nprotected by hCaptcha",
 )
 assert_true(owner_hcaptcha_cleared(_wall, start_url=_wall.url) is None, "login wall still waiting")
+
+_focus_saved = os.environ.get("ATS_OWNER_FOCUS_EVERY_SEC")
+os.environ.pop("ATS_OWNER_FOCUS_EVERY_SEC", None)
+assert_true(owner_focus_interval_sec() == 2.0, "default focus every 2s")
+os.environ["ATS_OWNER_FOCUS_EVERY_SEC"] = "1.5"
+assert_true(owner_focus_interval_sec() == 1.5, "explicit focus interval")
+os.environ["ATS_OWNER_FOCUS_EVERY_SEC"] = "99"
+assert_true(owner_focus_interval_sec() == 10.0, "focus interval capped")
+if _focus_saved is None:
+    os.environ.pop("ATS_OWNER_FOCUS_EVERY_SEC", None)
+else:
+    os.environ["ATS_OWNER_FOCUS_EVERY_SEC"] = _focus_saved
+
+
+class _FocusPage:
+    def __init__(self):
+        self.front = 0
+        self.evals = 0
+        self.context = None
+
+    def bring_to_front(self):
+        self.front += 1
+
+    def evaluate(self, _js):
+        self.evals += 1
+
+
+_fp = _FocusPage()
+assert_true(focus_page_for_owner(_fp, reason="test") is True, "focus ok without cdp")
+assert_true(_fp.front == 1 and _fp.evals == 1, "bring_to_front + window")
 
 print("tools/ats/test_captcha_solve.py OK")

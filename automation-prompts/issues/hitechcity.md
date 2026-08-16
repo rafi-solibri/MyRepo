@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| parallel tabs stole focus so owner missed captcha; one-shot bring_to_front not enough for every daily run | focus_page_for_owner + CDP activate; re-focus every ATS_OWNER_FOCUS_EVERY_SEC=2 during hcaptcha and ASK_OWNER waits; daily_apply/home-headed setdefault |
 | parallel multi-tab careers only via one-off launcher; cron/daily risked serial apply | daily_apply setdefault HITECHCITY_PARALLEL_TABS=10 + volume caps; prompt/home-headed/portal-home/rerun document parallel every run |
 
 
