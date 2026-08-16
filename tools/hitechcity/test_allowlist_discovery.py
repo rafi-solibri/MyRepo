@@ -63,6 +63,20 @@ def test_discovery_seeds_merge():
     ms = next(c for c in companies if c["name"] == "Microsoft")
     assert "mindspace-madhapur" in ms["campuses"]
     assert len(DISCOVERY_SEEDS) >= 10
+    # Seeds must fill empty careersUrls so careers-only runs can open Greenhouse/Workday.
+    hr = next(c for c in companies if c["name"] == "HighRadius")
+    assert any("highradius.com" in u for u in (hr.get("careersUrls") or []))
+    empty_hr = [{"name": "HighRadius", "campuses": ["mindspace-madhapur"], "linkedinSlug": "highradius", "careersUrls": []}]
+    assert _merge_candidate(
+        empty_hr,
+        {
+            "name": "HighRadius",
+            "linkedinSlug": "highradius",
+            "careersUrls": ["https://www.highradius.com/about/career/"],
+        },
+        "seed",
+    ) == "updated"
+    assert empty_hr[0]["careersUrls"] == ["https://www.highradius.com/about/career/"]
 
 
 def test_discovery_junk_rejected_and_pruned():

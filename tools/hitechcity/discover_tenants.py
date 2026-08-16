@@ -36,33 +36,123 @@ CDP = os.environ.get("HITECHCITY_CDP") or os.environ.get("LINKEDIN_CDP", "http:/
 # Known / commonly cited tenants to merge when missing (priority 2 unless noted).
 DISCOVERY_SEEDS: list[dict[str, Any]] = [
     # Knowledge City / Octave
-    {"name": "ServiceNow", "campuses": ["sattva-knowledge-city"], "linkedinSlug": "servicenow", "priority": 2},
-    {"name": "Wells Fargo", "campuses": ["sattva-knowledge-city"], "linkedinSlug": "wells-fargo", "priority": 2},
+    {
+        "name": "ServiceNow",
+        "campuses": ["sattva-knowledge-city"],
+        "linkedinSlug": "servicenow",
+        "priority": 2,
+        "careersUrls": ["https://careers.smartrecruiters.com/ServiceNow?search=architect"],
+    },
+    {
+        "name": "Wells Fargo",
+        "campuses": ["sattva-knowledge-city"],
+        "linkedinSlug": "wells-fargo",
+        "priority": 2,
+        "careersUrls": [
+            "https://www.wellsfargojobs.com/en/jobs/?search=architect&location=Hyderabad",
+            "https://wd1.myworkdaysite.com/recruiting/wf/WellsFargoJobs?q=architect",
+        ],
+    },
     {"name": "Invesco", "campuses": ["sattva-knowledge-city"], "linkedinSlug": "invesco", "priority": 2},
     {"name": "ValueLabs", "campuses": ["sattva-knowledge-city"], "linkedinSlug": "valuelabs", "priority": 2},
-    {"name": "Micron Technology", "campuses": ["sattva-knowledge-city"], "linkedinSlug": "micron-technology", "priority": 2},
+    {
+        "name": "Micron Technology",
+        "campuses": ["sattva-knowledge-city"],
+        "linkedinSlug": "micron-technology",
+        "priority": 2,
+        "careersUrls": ["https://micron.wd1.myworkdayjobs.com/External?q=architect&location=Hyderabad"],
+    },
     {"name": "RealPage", "campuses": ["sattva-knowledge-city"], "linkedinSlug": "realpage", "priority": 2},
     # Knowledge Park
-    {"name": "Virtusa", "campuses": ["sattva-knowledge-park", "mindspace-madhapur"], "linkedinSlug": "virtusa", "priority": 2},
-    {"name": "Hexaware", "campuses": ["sattva-knowledge-park"], "linkedinSlug": "hexaware-technologies", "priority": 2},
+    {
+        "name": "Virtusa",
+        "campuses": ["sattva-knowledge-park", "mindspace-madhapur"],
+        "linkedinSlug": "virtusa",
+        "priority": 2,
+        "careersUrls": ["https://www.virtusa.com/careers/job-search/global/en"],
+    },
+    {
+        "name": "Hexaware",
+        "campuses": ["sattva-knowledge-park"],
+        "linkedinSlug": "hexaware-technologies",
+        "priority": 2,
+        "careersUrls": ["https://jobs.hexaware.com/"],
+    },
     {"name": "Tech Mahindra", "campuses": ["sattva-knowledge-park", "mindspace-madhapur"], "linkedinSlug": "tech-mahindra", "priority": 2},
     # Raheja Mindspace Madhapur
-    {"name": "ADP", "campuses": ["mindspace-madhapur"], "linkedinSlug": "adp", "priority": 2},
-    {"name": "HighRadius", "campuses": ["mindspace-madhapur"], "linkedinSlug": "highradius", "priority": 1},
+    {
+        "name": "ADP",
+        "campuses": ["mindspace-madhapur"],
+        "linkedinSlug": "adp",
+        "priority": 2,
+        "careersUrls": ["https://jobs.adp.com/en/"],
+    },
+    {
+        "name": "HighRadius",
+        "campuses": ["mindspace-madhapur"],
+        "linkedinSlug": "highradius",
+        "priority": 1,
+        "careersUrls": [
+            "https://www.highradius.com/about/career/",
+            "https://www.highradius.com/about/careers-list/",
+        ],
+    },
     {"name": "Progress Software", "campuses": ["mindspace-madhapur"], "linkedinSlug": "progress-software", "priority": 2},
-    {"name": "OpenText", "campuses": ["mindspace-madhapur"], "linkedinSlug": "opentext", "priority": 2},
+    {
+        "name": "OpenText",
+        "campuses": ["mindspace-madhapur"],
+        "linkedinSlug": "opentext",
+        "priority": 2,
+        "careersUrls": ["https://careers.opentext.com/us/en/search-results?keywords=architect"],
+    },
     {"name": "NCR Voyix", "campuses": ["mindspace-madhapur"], "linkedinSlug": "ncr-voyix", "priority": 2},
-    {"name": "Broadridge", "campuses": ["mindspace-madhapur"], "linkedinSlug": "broadridge", "priority": 2},
-    {"name": "S&P Global", "campuses": ["mindspace-madhapur"], "linkedinSlug": "s-and-p-global", "priority": 2},
-    {"name": "Uber", "campuses": ["mindspace-madhapur"], "linkedinSlug": "uber-com", "priority": 2},
-    {"name": "PayPal", "campuses": ["mindspace-madhapur"], "linkedinSlug": "paypal", "priority": 2},
+    {
+        "name": "Broadridge",
+        "campuses": ["mindspace-madhapur"],
+        "linkedinSlug": "broadridge",
+        "priority": 2,
+        "careersUrls": ["https://broadridge.wd5.myworkdayjobs.com/en-GB/Careers?q=architect"],
+    },
+    {
+        "name": "S&P Global",
+        "campuses": ["mindspace-madhapur"],
+        "linkedinSlug": "s-and-p-global",
+        "priority": 2,
+        "careersUrls": ["https://careers.spglobal.com/jobs?keywords=architect&location=Hyderabad"],
+    },
+    {
+        "name": "Uber",
+        "campuses": ["mindspace-madhapur"],
+        "linkedinSlug": "uber-com",
+        "priority": 2,
+        "careersUrls": ["https://jobs.uber.com/en/jobs/?location=Hyderabad&query=architect"],
+    },
+    {
+        "name": "PayPal",
+        "campuses": ["mindspace-madhapur"],
+        "linkedinSlug": "paypal",
+        "priority": 2,
+        "careersUrls": ["https://paypal.wd1.myworkdayjobs.com/jobs?q=architect&location=Hyderabad"],
+    },
     {"name": "Thomson Reuters", "campuses": ["mindspace-madhapur"], "linkedinSlug": "thomson-reuters", "priority": 2},
     {"name": "Infor", "campuses": ["mindspace-madhapur"], "linkedinSlug": "infor", "priority": 2},
     {"name": "Kony / Temenos", "campuses": ["mindspace-madhapur"], "linkedinSlug": "temenos", "priority": 3},
-    {"name": "Capgemini", "campuses": ["mindspace-madhapur", "the-v"], "linkedinSlug": "capgemini", "priority": 2},
+    {
+        "name": "Capgemini",
+        "campuses": ["mindspace-madhapur", "the-v"],
+        "linkedinSlug": "capgemini",
+        "priority": 2,
+        "careersUrls": ["https://www.capgemini.com/jobs/?search_keyword=architect&location=Hyderabad"],
+    },
     {"name": "Infosys", "campuses": ["mindspace-madhapur"], "linkedinSlug": "infosys", "priority": 3},
     {"name": "Wipro", "campuses": ["mindspace-madhapur"], "linkedinSlug": "wipro", "priority": 3},
-    {"name": "HCLTech", "campuses": ["mindspace-madhapur"], "linkedinSlug": "hcltech", "priority": 3},
+    {
+        "name": "HCLTech",
+        "campuses": ["mindspace-madhapur"],
+        "linkedinSlug": "hcltech",
+        "priority": 3,
+        "careersUrls": ["https://careers.hcltech.com/go/India/9553955/"],
+    },
     # The V / Cyber Pearl / peer
     {"name": "UnitedHealth Group", "campuses": ["dlf-cyber-city", "divyasree-orion"], "linkedinSlug": "unitedhealth-group", "priority": 2},
     {"name": "Novartis", "campuses": ["mindspace-madhapur"], "linkedinSlug": "novartis", "priority": 2},
@@ -131,7 +221,8 @@ def _merge_candidate(companies: list[dict], cand: dict[str, Any], source: str) -
     if source != "seed" and _is_junk_tenant(name, slug):
         return None
     if _already_listed(companies, name, slug):
-        # Expand campuses if we learn new ones
+        # Expand campuses and fill empty careersUrls (seeds used to leave 30+ tenants
+        # with [] so careers-only runs burned MAX_COMPANIES on no-op scans).
         for c in companies:
             if company_name_match(name, c.get("name") or "") or (
                 slug and (c.get("linkedinSlug") or "").lower() == slug.lower()
@@ -141,6 +232,11 @@ def _merge_candidate(companies: list[dict], cand: dict[str, Any], source: str) -
                     if x not in camps:
                         camps.append(x)
                 c["campuses"] = camps
+                existing_urls = list(c.get("careersUrls") or [])
+                for u in cand.get("careersUrls") or []:
+                    if u and u not in existing_urls:
+                        existing_urls.append(u)
+                c["careersUrls"] = existing_urls
                 return "updated"
         return None
     row = {

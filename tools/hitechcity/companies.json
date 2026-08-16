@@ -185,7 +185,10 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "highradius",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://www.highradius.com/about/career/",
+        "https://www.highradius.com/about/careers-list/"
+      ],
       "priority": 1,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -337,7 +340,9 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "adp",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://jobs.adp.com/en/"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -348,7 +353,9 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "broadridge",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://broadridge.wd5.myworkdayjobs.com/en-GB/Careers?q=architect"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -360,7 +367,9 @@
         "the-v"
       ],
       "linkedinSlug": "capgemini",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://www.capgemini.com/jobs/?search_keyword=architect&location=Hyderabad"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -461,7 +470,9 @@
         "sattva-knowledge-park"
       ],
       "linkedinSlug": "hexaware-technologies",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://jobs.hexaware.com/"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -539,7 +550,9 @@
         "sattva-knowledge-city"
       ],
       "linkedinSlug": "micron-technology",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://micron.wd1.myworkdayjobs.com/External?q=architect&location=Hyderabad"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -572,7 +585,9 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "opentext",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://careers.opentext.com/us/en/search-results?keywords=architect"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -583,7 +598,9 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "paypal",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://paypal.wd1.myworkdayjobs.com/jobs?q=architect&location=Hyderabad"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -638,7 +655,9 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "s-and-p-global",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://careers.spglobal.com/jobs?keywords=architect&location=Hyderabad"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -661,7 +680,9 @@
         "sattva-knowledge-city"
       ],
       "linkedinSlug": "servicenow",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://careers.smartrecruiters.com/ServiceNow?search=architect"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -728,7 +749,9 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "uber-com",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://jobs.uber.com/en/jobs/?location=Hyderabad&query=architect"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -774,7 +797,9 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "virtusa",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://www.virtusa.com/careers/job-search/global/en"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -785,7 +810,10 @@
         "sattva-knowledge-city"
       ],
       "linkedinSlug": "wells-fargo",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://www.wellsfargojobs.com/en/jobs/?search=architect&location=Hyderabad",
+        "https://wd1.myworkdaysite.com/recruiting/wf/WellsFargoJobs?q=architect"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -807,7 +835,9 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "hcltech",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://careers.hcltech.com/go/India/9553955/"
+      ],
       "priority": 3,
       "source": "seed",
       "discoveredAt": "2026-08-13"

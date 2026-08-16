@@ -266,6 +266,9 @@ def test_hyland_icims_url():
     assert any("location=Hyderabad" in u for u in intel["careersUrls"])
     byonder = next(c for c in data["companies"] if c["name"] == "Blue Yonder")
     assert any("search-results" in u for u in byonder["careersUrls"])
+    highradius = next(c for c in data["companies"] if c["name"] == "HighRadius")
+    assert any("highradius.com/about/career" in u for u in highradius["careersUrls"])
+    assert JOB_ID_HREF_RE.search("https://www.highradius.com/about/careers-list/?gh_jid=7807811003")
     href = "https://careers-hyland.icims.com/jobs/13991/senior-software-architect---.net/job?in_iframe=1"
     assert JOB_ID_HREF_RE.search(href)
     assert not JOB_ID_HREF_RE.search(
@@ -298,6 +301,7 @@ def test_skip_uhg_default():
         assert company_skip_reason({"name": "Hyland", "careersUrls": [
             "https://careers-hyland.icims.com/jobs/search"
         ]}) is None
+        assert company_skip_reason({"name": "Invesco", "careersUrls": []}) == "no_careers_url"
         os.environ["HITECHCITY_SKIP_UHG"] = "0"
         assert company_skip_reason({"name": "Optum", "careersUrls": [
             "https://careers.unitedhealthgroup.com/search-jobs/Hyderabad/"
@@ -305,7 +309,7 @@ def test_skip_uhg_default():
         assert not is_uhg_skip_url("https://uhg.taleo.net/careersection/iam/accessmanagement/login.jsf")
         os.environ["HITECHCITY_SKIP_COMPANIES"] = "Hyland,Solera"
         assert company_skip_reason({"name": "Hyland"}) == "skip_company"
-        assert company_skip_reason({"name": "ModMed"}) is None
+        assert company_skip_reason({"name": "ModMed", "careersUrls": ["https://www.modmed.com/careers/"]}) is None
         assert JOB_ID_HREF_RE.search(
             "https://www.accenture.com/in-en/careers/jobdetails?id=ATCI-5721872-S2064313_en&title=Business+Capability+Architect"
         )

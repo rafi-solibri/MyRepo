@@ -260,6 +260,8 @@ def company_skip_reason(company: dict[str, Any]) -> str | None:
     urls = " ".join(company.get("careersUrls") or [])
     if is_uhg_skip_url(urls):
         return "skip_uhg"
+    if not (company.get("careersUrls") or []):
+        return "no_careers_url"
     return None
 
 
