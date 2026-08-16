@@ -39,10 +39,16 @@ def test_browser_session_dead():
 def test_title_ok():
     assert title_matches_senior_stack("Solution Architect .NET")
     assert title_matches_senior_stack("Engineering Manager")
+    assert title_matches_senior_stack("Manager of Software Engineering")
+    assert title_matches_senior_stack("Director of Engineering")
     assert title_matches_senior_stack("Staff Software Engineer")
     assert title_matches_senior_stack("Lead Software Engineer")
     assert title_matches_senior_stack("Software Development Manager")
     assert title_matches_senior_stack("Principal Software Engineer")
+    assert title_matches_senior_stack("Senior Software Engineer - .NET")
+    assert title_matches_senior_stack("Sr. Software Engineer")
+    assert not title_matches_senior_stack("Software Engineer II")
+    assert not title_matches_senior_stack("Software Engineer")
     assert skip_reason("Salesforce Developer") is not None
     assert skip_reason("QA Engineer") is not None
     assert CAREERS_TITLE_SKIP.search("Staff Project Analyst")

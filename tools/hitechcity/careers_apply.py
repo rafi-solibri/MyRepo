@@ -689,13 +689,26 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         row["reason"] = "location_non_hyd_city"
         row["finalUrl"] = page.url
         return row
-    # Require an explicit Hyd/campus/remote/India signal on role, top card, or title.
+    # Require Hyd/campus/remote/India — OR apply-bias when no foreign city is stated
+    # (search listings are often Hyd-scoped but the JD top card omits location).
     loc_blob = f"{role} {top or ''} {page_title}"
-    if not LOC_HINT.search(loc_blob) and not location_or_campus_ok(loc_blob, "", ""):
-        row["status"] = "skipped"
-        row["reason"] = "location_not_hyd_or_campus"
-        row["finalUrl"] = page.url
-        return row
+    has_hyd = bool(LOC_HINT.search(loc_blob) or location_or_campus_ok(loc_blob, "", ""))
+    has_foreign = bool(BAD_LOC_HINT.search(loc_blob)) and not re.search(
+        r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|gachibowli|raidurg",
+        loc_blob,
+        re.I,
+    )
+    if not has_hyd:
+        if has_foreign:
+            row["status"] = "skipped"
+            row["reason"] = "location_not_hyd_or_campus"
+            row["finalUrl"] = page.url
+            return row
+        # Uncertain (no Hyd pill, no foreign city) → APPLY bias per campus prompt.
+        print(
+            f"CAREERS LOC apply_bias_no_city_pill | {job['company']} | {role[:60]}",
+            flush=True,
+        )
 
     # Title-generic Architect roles that are clearly Salesforce/wrong-stack in the JD.
     try:

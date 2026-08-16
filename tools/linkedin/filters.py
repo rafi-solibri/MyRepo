@@ -52,8 +52,14 @@ TITLE_OK = re.compile(
     r"principal|staff|solution architect|software architect|application architect|"
     r"cloud architect|azure architect|platform architect|technical architect|"
     r"\.net|dotnet|c#|software (development )?manager|"
+    # "Manager of Software Engineering" / "Director of Engineering" (JPMC-style titles)
+    r"manager of (software|engineering)|director of (software|engineering)|"
+    r"software engineering manager|development manager|"
     r"lead (software|development|engineer)|director|head of eng|"
-    r"senior engineering|engineering director",
+    r"senior engineering|engineering director|"
+    # Senior IC titles (campus .NET / platform runs) — not junior Software Engineer II
+    r"senior software engineer|sr\.?\s*software engineer|senior (dotnet|\.net|c#)|"
+    r"senior (application|platform|backend) engineer",
     re.I,
 )
 

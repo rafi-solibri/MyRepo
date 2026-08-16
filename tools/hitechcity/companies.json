@@ -26,7 +26,7 @@
       "Azure Architect",
       "Cloud Architect"
     ],
-    "lastDiscoveryAt": "2026-08-16T08:41:34.795904+00:00"
+    "lastDiscoveryAt": "2026-08-16T08:49:46.119042+00:00"
   },
   "campuses": [
     {
@@ -321,7 +321,7 @@
       ],
       "linkedinSlug": "solera-holdings",
       "careersUrls": [
-        "https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site?q=architect"
+        "https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site?q=engineer"
       ],
       "priority": 1
     },
@@ -427,6 +427,28 @@
       "priority": 2
     },
     {
+      "name": "Cyient",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "cyient",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-16"
+    },
+    {
+      "name": "Darwinbox",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "darwinbox",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-16"
+    },
+    {
       "name": "Deloitte",
       "campuses": [
         "the-v",
@@ -470,6 +492,17 @@
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "Homes.com",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "homes-com",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-16"
     },
     {
       "name": "IBM",
@@ -517,6 +550,17 @@
       "discoveredAt": "2026-08-14"
     },
     {
+      "name": "LTIMindtree",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "ltimindtree",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-16"
+    },
+    {
       "name": "MathWorks",
       "campuses": [
         "sattva-knowledge-city"
@@ -548,6 +592,17 @@
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "Mphasis",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "mphasis",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-16"
     },
     {
       "name": "NCR Voyix",
@@ -592,6 +647,17 @@
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "Persistent Systems",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "persistent-systems",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "seed",
+      "discoveredAt": "2026-08-16"
     },
     {
       "name": "Progress Software",
@@ -717,6 +783,17 @@
       "discoveredAt": "2026-08-13"
     },
     {
+      "name": "Temenos+Agility",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "temenosagility",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "linkedin_company_name",
+      "discoveredAt": "2026-08-16"
+    },
+    {
       "name": "Thomson Reuters",
       "campuses": [
         "mindspace-madhapur"
@@ -764,7 +841,9 @@
     {
       "name": "Verizon",
       "campuses": [
-        "mindspace-madhapur"
+        "mindspace-madhapur",
+        "the-v",
+        "cyber-pearl"
       ],
       "linkedinSlug": "verizon",
       "careersUrls": [
@@ -798,7 +877,8 @@
     {
       "name": "DXC Technology",
       "campuses": [
-        "mindspace-madhapur"
+        "mindspace-madhapur",
+        "cyber-pearl"
       ],
       "linkedinSlug": "dxc-technology",
       "careersUrls": [
