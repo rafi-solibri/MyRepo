@@ -159,4 +159,112 @@ function job(partial) {
   assert.ok(classify(j)?.tier === 1);
 }
 
+{
+  const j = job({
+    title: "AWS Cloud Engineer",
+    skills: ["AWS", "Troubleshooting"],
+    locations: ["Hyderabad"],
+    remoteType: "remote_not_okay",
+  });
+  assert.ok(classify(j)?.tier === 1, `AWS Cloud Engineer Hyd should be tier1, got ${JSON.stringify(classify(j))}`);
+}
+
+{
+  const j = job({
+    title: "Cloud AI Engineer",
+    skills: ["GCP", "RAG"],
+    locations: [],
+    remoteType: "remote_only",
+  });
+  assert.ok(classify(j)?.tier === 1, `Cloud AI Engineer should be tier1, got ${JSON.stringify(classify(j))}`);
+}
+
+{
+  const j = job({
+    title: "Frontend Engineer",
+    skills: ["React.js", "TypeScript"],
+    locations: [],
+    remoteType: "remote_only",
+  });
+  assert.ok(
+    classify(j)?.tier === 3,
+    `Frontend Engineer + React should be tier3, got ${JSON.stringify(classify(j))}`
+  );
+}
+
+{
+  const j = job({
+    title: "Software Engineer, Agent Infrastructure",
+    skills: ["Python", "LLM", "Generative AI"],
+    locations: [],
+    remoteType: "remote_only",
+  });
+  assert.ok(
+    classify(j)?.tier === 3,
+    `SWE + GenAI should be tier3, got ${JSON.stringify(classify(j))}`
+  );
+}
+
+{
+  const j = job({
+    title: "Software Developer",
+    skills: ["C++", "AWS", "Python"],
+    locations: [],
+    remoteType: "remote_only",
+  });
+  assert.ok(
+    classify(j)?.tier === 3,
+    `Software Developer + AWS should be tier3, got ${JSON.stringify(classify(j))}`
+  );
+}
+
+{
+  const j = job({
+    title: "Robotics Hardware Engineer",
+    skills: ["Python", "ROS2"],
+    locations: ["Almaty (Kazakhstan)"],
+    remoteType: "remote_okay",
+  });
+  assert.strictEqual(isHydOrRemote(j), false, "foreign-only remote_okay must skip");
+  assert.strictEqual(classify(j), null);
+}
+
+{
+  const j = job({
+    title: "Product Marketing Manager",
+    skills: ["SaaS", "GTM"],
+    locations: [],
+    remoteType: "remote_only",
+  });
+  assert.strictEqual(classify(j), null, "marketing title must hard-skip");
+}
+
+{
+  const j = job({
+    title: "Data Scientist",
+    skills: ["Python", "SQL"],
+    locations: ["Hyderabad"],
+  });
+  assert.strictEqual(classify(j), null, "pure data title must hard-skip");
+}
+
+{
+  const j = job({
+    title: "SailPoint Identity Security Cloud Developer",
+    skills: ["SailPoint", "IAM"],
+    locations: ["Hyderabad"],
+  });
+  assert.strictEqual(classify(j), null, "IAM/SailPoint title must hard-skip");
+}
+
+{
+  const j = job({
+    title: "Sales Executive",
+    locations: ["Hyderabad"],
+    salaryRange: { max: 600000, maxVanity: 600000 },
+  });
+  assert.strictEqual(maxCtcLpa(j), 6);
+  assert.strictEqual(classify(j), null, "sales + 6 LPA must skip");
+}
+
 console.log("cutshort test_filters: ok");

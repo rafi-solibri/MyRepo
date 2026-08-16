@@ -135,14 +135,20 @@ function isLoggedOut(url, bodyText) {
 }
 
 const SKIP_RE =
-  /\b(qa engineer|quality assurance|quality engineer|sdet|test engineer|intern|trainee|associate(?!\s+(director|technical|architect|principal|lead|vice))|junior|workday|dynamics|\bsap\b|shoppay|shopify|business development|\bbdm\b|recruiter|data architect|data engineer|analytics engineer|penetration|product manager|ios developer|android developer|flutter|php developer|wordpress|game developer|mobile engineer)\b/i;
+  /\b(qa engineer|quality assurance|quality engineer|sdet|test engineer|intern|trainee|associate(?!\s+(director|technical|architect|principal|lead|vice))|junior|workday|dynamics|\bsap\b|shoppay|shopify|business development|\bbdm\b|recruiter|data architect|data engineer|analytics engineer|data scientist|data specialist|data modeller|data modeler|data platform|master data|\bmdm\b|analytical engineer|database (developer|migration|administrator)|\bdba\b|penetration|product manager|product marketing|marketing manager|\bmarketing\b|sales executive|regional partner|pre-?sales|customer success|ios developer|android developer|flutter|php developer|\bphp\b|wordpress|game developer|mobile engineer|ontologist|ux\/?ui designer|product designer|sailpoint|identity security|\biam\b|servicenow|salesforce|calypso|robotics|hardware engineer|cad\/?cam|oracle integration|oic consultant|recommendation engineer|machine learning engineer|ml inference|(?:senior|business|data)\s+analyst)\b/i;
 
 /** C# / .NET need non-\b patterns: `\bc#\b` never matches "C#" (# is non-word). */
 const NET_STACK_RE = /(\.net|\bdotnet\b|asp\.?\s*net|c#|\bcsharp\b|\bazure\b)/i;
 const STACK_SIGNAL_RE =
   /(\.net|\bdotnet\b|asp\.?\s*net|c#|\bcsharp\b|\bazure\b|\baws\b|\breact\b|microservices|\bnode\.?js\b|\bnodejs\b|\btypescript\b|\bjava\b|genai|gen\s*ai|generative\s*ai|\bllm\b|platform engineer)/i;
 const TIER1_TITLE_RE =
-  /\b(solutions?\s*architect|technical\s*architect|cloud\s*architect|platform\s*architect|enterprise\s*architect|application\s*architect|tech(?:nical)?\s*lead|engineering\s*manager|engineering\s*leader|principal|staff|head of eng(?:ineering)?|director of eng(?:ineering)?|delivery lead|engineering lead|architect)\b/i;
+  /\b(solutions?\s*architect|technical\s*architect|cloud\s*architect|platform\s*architect|enterprise\s*architect|application\s*architect|tech(?:nical)?\s*lead|engineering\s*manager|engineering\s*leader|principal|staff|head of eng(?:ineering)?|director of eng(?:ineering)?|delivery lead|engineering lead|architect|(?:aws|azure|gcp|cloud)(?:\s+ai|\s+cloud)?\s*engineer)\b/i;
+const SWE_TITLE_RE =
+  /\b((?:software|backend|frontend|full\s*-?\s*stack)\s*(?:engineer|developer)|software\s*engineer)\b/i;
+const FOREIGN_LOC_RE =
+  /\b(kazakhstan|almaty|canada|united states|\busa\b|\buk\b|united kingdom|london|europe|germany|berlin|singapore|dubai|uae|australia|sydney|poland|ukraine|mexico|brazil)\b/i;
+const INDIA_LOC_RE =
+  /\b(india|hyderabad|telangana|hitec|madhapur|\bhyd\b|bengaluru|bangalore|pune|mumbai|chennai|noida|gurgaon|gurugram|delhi|kolkata)\b/i;
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -154,9 +160,12 @@ function titleOf(job) {
 
 function maxCtcLpa(job) {
   const r = job?.salaryRange || {};
-  const max = r.maxVanity ?? r.max ?? null;
-  if (max == null || max === 0) return null;
-  return max > 1000 ? max / 1e5 : max;
+  let max = Number(r.maxVanity ?? r.max ?? NaN);
+  if (!Number.isFinite(max) || max === 0) return null;
+  // Listing APIs mix LPA vanity (35–80) with rupees (3500000) and raw mistakes (600000).
+  if (max > 1000) max = max / 1e5;
+  if (max > 200) return null;
+  return max;
 }
 
 function isHydOrRemote(job) {
@@ -170,6 +179,14 @@ function isHydOrRemote(job) {
       /\bhyd\b/.test(l)
   );
   const rt = String(job?.remoteType || "").toLowerCase();
+  // Foreign-only workplaces (Almaty / US / UK) stay skipped even when remote_okay.
+  if (
+    locs.length > 0 &&
+    locs.every((l) => FOREIGN_LOC_RE.test(l) && !INDIA_LOC_RE.test(l)) &&
+    !hyd
+  ) {
+    return false;
+  }
   if (hyd || rt === "remote_okay" || rt === "remote_only") return true;
   // Country-only / empty location cards often hide Hyd/remote in headline.
   const title = titleOf(job).toLowerCase();
@@ -260,6 +277,14 @@ function classify(job) {
     (ctc == null ? !!job?.salaryRange?.hideSalary : ctc >= 35)
   ) {
     return { tier: 3, reason: "tier3-stretch" };
+  }
+  // Software/backend/frontend engineer + stack signal, even without "senior" in title.
+  if (
+    SWE_TITLE_RE.test(title) &&
+    STACK_SIGNAL_RE.test(blob) &&
+    (ctc == null ? !!job?.salaryRange?.hideSalary : ctc >= 35)
+  ) {
+    return { tier: 3, reason: "tier3-swe-stack" };
   }
   return null;
 }
