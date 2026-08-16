@@ -975,6 +975,8 @@ ${stats.failed.map((a) => `- T${a.tier} ${a.title} @ ${a.company} — ${a.result
   console.log(report);
   console.log("home_report:", homePath);
   await session.disconnect();
+  // Playwright CDP can leave sockets/handles open even after browser.disconnect().
+  process.exit(0);
 }
 
 if (require.main === module) {
