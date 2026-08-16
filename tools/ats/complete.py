@@ -1866,7 +1866,92 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
         _sleep(1.2)
     if looks_submitted(page):
         return "applied", "confirmation"
+    owner = wait_owner_finish_apply(
+        page, hint="Source / required fields / Submit on this Workday apply"
+    )
+    if owner:
+        return owner
     return "blocked", "external_incomplete_or_timeout"
+
+
+def owner_form_wait_sec() -> int:
+    """Seconds to wait for the owner to finish a matching-job form (Source, login, etc.).
+
+    Headed / HOME_LOCAL defaults to the same budget as captcha waits so we never
+    abandon a criteria-matching apply without asking the owner first.
+    """
+    raw = (os.environ.get("ATS_OWNER_FORM_WAIT_SEC") or "").strip()
+    if raw:
+        try:
+            return max(0, int(raw))
+        except ValueError:
+            return 0
+    # Reuse captcha wait budget when set; else headed defaults.
+    try:
+        from tools.ats.captcha_solve import owner_captcha_wait_sec
+
+        cap = owner_captcha_wait_sec()
+        if cap > 0:
+            return cap
+    except Exception:
+        pass
+    if (os.environ.get("HOME_LOCAL") or "").strip().lower() in ("1", "true", "yes"):
+        return 360
+    if (os.environ.get("CHROME_HEADLESS") or "1").strip() in ("0", "false", "no"):
+        return 360
+    return 0
+
+
+def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
+    """Ask the owner to finish required fields / submit; do not abandon matching jobs.
+
+    Returns (status, reason) when submitted / already-applied, else None after timeout.
+    Keeps auto-filling Source and other gaps while waiting.
+    """
+    wait = owner_form_wait_sec()
+    if wait <= 0:
+        return None
+    msg = hint or "required fields (e.g. Source / How did you hear), login, or Submit"
+    print(
+        f"ASK_OWNER wait={wait}s — finish {msg} in Chrome, then Submit. "
+        f"Helper keeps filling Source/required blanks and resumes on confirmation.",
+        flush=True,
+    )
+    deadline = time.time() + wait
+    last_beat = 0.0
+    poll = float(os.environ.get("ATS_CAPTCHA_POLL_SEC", "0.4") or "0.4")
+    poll = min(1.0, max(0.25, poll))
+    while time.time() < deadline:
+        if looks_submitted(page):
+            print("ASK_OWNER resolved=submitted", flush=True)
+            return "applied", "confirmation"
+        if looks_already_applied(page):
+            print("ASK_OWNER resolved=already_applied", flush=True)
+            return "skipped", "already_applied"
+        try:
+            fill_source_fields(page)
+            fill_validation_gaps(page)
+            fill_labeled_fields(page)
+            fill_yes_no(page)
+            tick_consents(page)
+            # iCIMS GDPR gate if visible
+            if re.search(r"icims\.com", getattr(page, "url", "") or "", re.I):
+                icims_fill_gdpr_gate(page)
+            click_advance(page)
+        except Exception:
+            pass
+        now = time.time()
+        if now - last_beat >= 8.0:
+            left = max(0, int(deadline - now))
+            print(f"ASK_OWNER waiting {left}s left — complete the form in Chrome", flush=True)
+            last_beat = now
+        _sleep(poll)
+    if looks_submitted(page):
+        return "applied", "confirmation"
+    if looks_already_applied(page):
+        return "skipped", "already_applied"
+    print("ASK_OWNER timeout — form still incomplete", flush=True)
+    return None
 
 
 def fill_greenhouse_combos(page) -> None:
@@ -1981,6 +2066,11 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
         last_fp = fp
     if looks_submitted(page):
         return "applied", "confirmation"
+    owner = wait_owner_finish_apply(
+        page, hint="Source / How did you hear / required fields / Submit"
+    )
+    if owner:
+        return owner
     return "blocked", "external_incomplete_or_timeout"
 
 

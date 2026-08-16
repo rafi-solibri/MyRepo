@@ -1,13 +1,15 @@
 # Hitech City / Knowledge City — issues & fixes
 
-## 2026-08-16 (home — owner requests baked into every run)
+## 2026-08-16 (home — every-run defaults, owner requirements)
 
 | Issue | Fix |
 | --- | --- |
-| Careers/LinkedIn looked architect-only; company search didn't click jobs; location not pinned | Careers `expand_careers_scan_urls` EM→Lead→Staff→… + `pin_careers_hyderabad_location`; LI `geoId=105556991` + `f_C` jobs/search; discovery LI company-search default off |
-| Relevant LI/careers hits skipped: Manager of Software Engineering failed TITLE_OK; raw jobPosting ids opened junk then title_not_senior; careers required Hyd pill even when no foreign city | TITLE_OK manager-of/senior-SWE; extract_job_cards title-filter before open; careers apply-bias when no foreign city |
-| LI searched architect-first TITLES[:5]; discovery used Knowledge City/Raheja LinkedIn queries that return nothing | SEARCH_KEYWORDS lead/staff/manager-first (10); discover via seeds + employer-name LinkedIn slug resolve only |
-| Owner captcha wait burned full ATS_CAPTCHA_WAIT_SEC after solve (only checked h-captcha-response token) | owner_hcaptcha_cleared detects submitted/Log Out/left login/form; poll 0.4s; re-check confirmation after timeout |
+| Matching jobs left incomplete (Source / required blanks); attempt caps skipped remaining roles | `fill_source_fields` + `fill_validation_gaps`; `ASK_OWNER`/`wait_owner_finish_apply` before incomplete; soft incompletes do not burn attempt caps; headed TIME_CAP≥180 |
+| iCIMS Email / I accept / Next not filled (outer login chrome) | Prefer `in_iframe=1`; `icims_fill_gdpr_gate` every iCIMS apply |
+| Careers/LinkedIn architect-only; company search no job clicks; location not pinned | Careers expand EM→… + Hyd location pin; LI `geoId=105556991` + `f_C` jobs/search; discovery LI company-search default off |
+| Relevant LI/careers hits skipped: Manager of Software Engineering failed TITLE_OK; raw jobPosting ids; careers required Hyd pill | TITLE_OK manager-of/senior-SWE; extract_job_cards; careers apply-bias when no foreign city |
+| LI searched architect-first; discovery used Knowledge City/Raheja queries | SEARCH_KEYWORDS EM-first; seeds + employer-name only |
+| Owner captcha wait burned full wait after solve | owner_hcaptcha_cleared beyond token; poll 0.4s |
 
 
 ## 2026-08-16 (cloud)

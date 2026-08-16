@@ -54,6 +54,20 @@ assert_true(not is_submitted_text("Apply now to submit your application"), "CTA 
 assert_true(is_hard_ats_wall("CAPTCHA/bot wall"), "captcha is hard")
 assert_true(is_hard_ats_wall("ats_login_wall"), "login is hard")
 assert_true(not is_hard_ats_wall("external_incomplete_or_timeout"), "timeout is not a company wall")
+assert_true(not is_hard_ats_wall("easy_apply_incomplete"), "easy incomplete is not a company wall")
+from tools.ats.complete import owner_form_wait_sec
+_saved_form = {k: os.environ.get(k) for k in ("ATS_OWNER_FORM_WAIT_SEC", "ATS_CAPTCHA_WAIT_SEC", "HOME_LOCAL", "CHROME_HEADLESS")}
+for k in ("ATS_OWNER_FORM_WAIT_SEC", "ATS_CAPTCHA_WAIT_SEC", "HOME_LOCAL", "CHROME_HEADLESS"):
+    os.environ.pop(k, None)
+os.environ["HOME_LOCAL"] = "1"
+assert_true(owner_form_wait_sec() >= 180, "headed owner form wait defaults on")
+os.environ["ATS_OWNER_FORM_WAIT_SEC"] = "0"
+assert_true(owner_form_wait_sec() == 0, "explicit 0 disables owner form wait")
+for k, v in _saved_form.items():
+    if v is None:
+        os.environ.pop(k, None)
+    else:
+        os.environ[k] = v
 assert_true(not is_hard_ats_wall("ats_time_cap"), "time_cap is not a company wall")
 assert_true(not is_hard_ats_wall("stuck/time cap after 3 steps"), "stuck is not a company wall")
 assert_true(not is_hard_ats_wall("job_unavailable"), "maintenance is not a company wall")

@@ -49,10 +49,12 @@ Do NOT apply to random Hyderabad employers outside this campus tenant set. Job b
 ONLY apply if Hyderabad / Greater Hyderabad / Telangana / Madhapur / HITEC / Gachibowli / Raidurg / Knowledge City OR Fully Remote / WFH / India Remote.
 Judge location from the TOP CARD / workplace pills / job location field — never the full page body.
 
-## Apply bias (CRITICAL — volume)
+## Apply bias (CRITICAL — volume + never abandon matching jobs)
 - Default to APPLY for Hyd/remote Architect / Tech Lead / EM / Principal / Staff / Director .NET/cloud roles at campus companies.
 - When uncertain between skip and apply → APPLY (then state expected 65 LPA on forms).
-- Aim for a solid daily batch across career portals + LinkedIn (helpers default ~35 LinkedIn applies + career-portal attempts). Do not invent applies; confirm Application submitted / ATS confirmation.
+- **NEVER skip a criteria-matching job without applying.** Auto-fill all fields (including Source / How did you hear, iCIMS Email + I accept + Next). If a field/login/captcha still blocks submit, print `ASK_OWNER` and wait (headed/`HOME_LOCAL`) for the owner to finish — do not mark incomplete and move on.
+- Soft `external_incomplete_or_timeout` must NOT trip per-company attempt caps that skip remaining matching roles.
+- Aim for a solid daily batch across career portals + LinkedIn. Do not invent applies; confirm Application submitted / ATS confirmation.
 
 ## Apply order (CRITICAL)
 1. Run `python3 tools/hitechcity/daily_apply.py` which executes:
@@ -68,10 +70,10 @@ Judge location from the TOP CARD / workplace pills / job location field — neve
 3. LinkedIn: company-targeted **job** searches via `/jobs/search/?f_C=<companyId>&keywords=…&location=Hyderabad, Telangana, India&geoId=105556991&distance=25` (never company `/jobs/` alone — those pages lack clickable cards; never search campus strings like "Knowledge City" / "Raheja"). Keywords every run (EM-first, not architect-only): Engineering Manager, Technical Lead, Staff/Principal/Lead Software Engineer, Software Development Manager, Solution/Technical Architect, Principal .NET, Azure/.NET.
 4. Easy Apply AND company-website / ATS redirects — both required paths
 5. After a successful apply, try referral: message the job poster (poster-specific Message) OR send a short LinkedIn connection note to a Hyd engineer/recruiter/EM at that company asking for a referral / 15–20 min screen
-6. For each company: open official careers URLs from companies.json **rewritten every run** to (a) multi-role keywords EM/Tech Lead/Staff/Principal/SDM/Architect/.NET and (b) Hyderabad on any available location query param (`location` / `loc` / `loc_query` / `city`). Find Hyd/India qualifying roles, COMPLETE Greenhouse / Lever / Workday / SmartRecruiters / SuccessFactors / company ATS when guest/logged apply is possible (skip US-only cards and SSO passport walls quickly)
+6. For each company: open official careers URLs from companies.json **rewritten every run** to (a) multi-role keywords EM/Tech Lead/Staff/Principal/SDM/Architect/.NET and (b) Hyderabad on any available location query param (`location` / `loc` / `loc_query` / `city`). Find Hyd/India qualifying roles, COMPLETE Greenhouse / Lever / Workday / SmartRecruiters / SuccessFactors / company ATS when guest/logged apply is possible. iCIMS: fill Email + I accept + Next in nested `in_iframe=1` before captcha wait. Skip only clear non-Hyd / SSO-only hosts — never abandon a matching Hyd form mid-apply without `ASK_OWNER` wait.
 7. Boards: each portal gets its own preflight + CDP launch + allowlist; keep per-board caps modest (defaults ~6–12). **Cutshort/Indeed are login-probed first** (`chrome_session.js check`) — skip immediately on `*_login_required` so the phase is not burned. Other board login walls → log blocked, continue.
-8. External ATS: default wall/attempt caps are tight (`HITECHCITY_MAX_EXT_WALLS=1`, `HITECHCITY_MAX_EXT_ATTEMPTS=2`, `HITECHCITY_EXT_ATS_TIME_CAP_S=45`) so Phenom/guest walls fail fast and more companies are attempted.
-8. Cap stuck ATS/CAPTCHA/OTP at ~3–4 minutes — log blocked, continue. Do **not** require a paid captcha-solver key. Cloud headless cannot click hCaptcha; the free path is owner-headed `bash scripts/home-headed-careers-apply.sh` (helper fills, owner clicks). Optional `CAPSOLVER_API_KEY` only if the owner already set it.
+8. External ATS: hard walls (captcha/login) still use tight per-company wall caps (`HITECHCITY_MAX_EXT_WALLS=1`). Soft incompletes do not burn matching inventory. Headed runs use longer ATS time caps + `ASK_OWNER` form wait (default shares `ATS_CAPTCHA_WAIT_SEC` / 360s).
+8b. Cap stuck captcha waits with owner poll 0.4s — resume immediately after solve. Do **not** require a paid captcha-solver key. Optional `CAPSOLVER_API_KEY` only if the owner already set it.
 9. Skip already Applied; expand inventory to 14-day window when thin
 10. Discovery default: seed merge every run; LinkedIn *company-name* slug search is **off by default** (`HITECHCITY_DISCOVERY_LINKEDIN=0`) so the browser is not stuck on Companies results without job clicks. Set `=1` only when refreshing slugs.
 ## Skip rules (TITLE-FIRST — do not over-filter)

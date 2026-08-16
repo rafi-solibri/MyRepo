@@ -48,7 +48,14 @@ MAX_COMPANIES = int(os.environ.get("HITECHCITY_MAX_COMPANIES", "40"))
 # Tight default: SSO / Sign-In walls must fail fast so more campus tenants are tried.
 TIME_CAP_S = int(os.environ.get("HITECHCITY_ATS_TIME_CAP_S", os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S", "90")))
 MAX_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "1"))
-MAX_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "2"))
+# Soft incompletes must not starve remaining matching roles at the same company.
+MAX_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "8"))
+# Headed/owner-available runs get a longer ATS budget so forms can be finished.
+if (os.environ.get("HOME_LOCAL") or "").strip().lower() in ("1", "true", "yes") or (
+    os.environ.get("CHROME_HEADLESS") or "1"
+).strip() in ("0", "false", "no"):
+    if not (os.environ.get("HITECHCITY_ATS_TIME_CAP_S") or os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S")):
+        TIME_CAP_S = max(TIME_CAP_S, 180)
 
 # Portal search terms — lead/staff/manager first (companies.json often baked "architect" only).
 CAREERS_SEARCH_KEYWORDS = [
@@ -1071,22 +1078,18 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                     seen_urls.add(job["url"])
                     if company_applied >= MAX_PER_COMPANY:
                         break
-                    if company_walls >= MAX_WALLS_PER_COMPANY or company_attempts >= MAX_ATTEMPTS_PER_COMPANY:
+                    if company_walls >= MAX_WALLS_PER_COMPANY:
                         report.skipped.append(
                             {
                                 "company": name,
                                 "role": job.get("role"),
                                 "url": job.get("url"),
                                 "status": "skipped",
-                                "reason": (
-                                    f"company_wall_cap_{company_walls}"
-                                    if company_walls >= MAX_WALLS_PER_COMPANY
-                                    else f"company_attempt_cap_{company_attempts}"
-                                ),
+                                "reason": f"company_wall_cap_{company_walls}",
                             }
                         )
                         break
-                    company_attempts += 1
+                    # Never burn matching inventory on soft incompletes — only hard walls cap.
                     result = apply_job(page, job, campuses)
                     _safe_print(
                         f"CAREERS {result.get('status', '?').upper()} {name} | "
@@ -1095,6 +1098,7 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                     if result["status"] == "applied":
                         report.applied.append(result)
                         company_applied += 1
+                        company_attempts += 1
                     elif result["status"] == "skipped":
                         report.skipped.append(result)
                     else:
@@ -1106,10 +1110,18 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                             from ats.complete import is_hard_ats_wall  # type: ignore
                         if is_hard_ats_wall(why):
                             company_walls += 1
-                if company_applied >= MAX_PER_COMPANY:
-                    break
-                if company_walls >= MAX_WALLS_PER_COMPANY or company_attempts >= MAX_ATTEMPTS_PER_COMPANY:
-                    break
+                            company_attempts += 1
+                        elif "incomplete" not in (why or "").lower():
+                            company_attempts += 1
+                    if company_applied >= MAX_PER_COMPANY:
+                        break
+                    if company_walls >= MAX_WALLS_PER_COMPANY:
+                        break
+                    if company_attempts >= MAX_ATTEMPTS_PER_COMPANY:
+                        break
+                else:
+                    continue
+                break
 
     report.finishedAt = datetime.now(timezone.utc).isoformat()
     REPORT.parent.mkdir(parents=True, exist_ok=True)

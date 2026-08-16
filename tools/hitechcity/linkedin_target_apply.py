@@ -83,9 +83,14 @@ REFERRAL_NOTE = (
 )
 # After this many CAPTCHA/login walls on company-website ATS, skip further EXT for that company.
 MAX_EXT_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "1"))
-# Hard cap on external ATS attempts per company (incomplete forms must not starve the run).
-MAX_EXT_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "2"))
+# Soft incompletes must not starve remaining matching LinkedIn externals.
+MAX_EXT_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "8"))
 EXT_ATS_TIME_CAP_S = int(os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S", "90"))
+if (os.environ.get("HOME_LOCAL") or "").strip().lower() in ("1", "true", "yes") or (
+    os.environ.get("CHROME_HEADLESS") or "1"
+).strip() in ("0", "false", "no"):
+    if not os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S"):
+        EXT_ATS_TIME_CAP_S = max(EXT_ATS_TIME_CAP_S, 180)
 
 
 @dataclass
@@ -579,6 +584,13 @@ def fill_easy_apply(page: Page) -> tuple[str, str]:
         pass
     if re.search(r"application (sent|submitted)|applied to ", body, re.I):
         return "applied", "easy_apply_submitted"
+    try:
+        from tools.ats.complete import wait_owner_finish_apply
+    except Exception:
+        from ats.complete import wait_owner_finish_apply  # type: ignore
+    owner = wait_owner_finish_apply(page, hint="LinkedIn Easy Apply required fields / Submit")
+    if owner:
+        return owner
     return "blocked", "easy_apply_incomplete"
 
 
@@ -1015,14 +1027,9 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                         pass
                     continue
 
-                if ext_walls >= MAX_EXT_WALLS_PER_COMPANY or ext_attempts >= MAX_EXT_ATTEMPTS_PER_COMPANY:
-                    reason_cap = (
-                        "ext_wall_cap"
-                        if ext_walls >= MAX_EXT_WALLS_PER_COMPANY
-                        else "ext_attempt_cap"
-                    )
+                if ext_walls >= MAX_EXT_WALLS_PER_COMPANY:
                     print(
-                        f"LI SKIP {reason_cap} | {company_found} | {role[:50]} | {jid}",
+                        f"LI SKIP ext_wall_cap | {company_found} | {role[:50]} | {jid}",
                         flush=True,
                     )
                     report.skipped.append(
@@ -1030,14 +1037,13 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                             "company": company_found,
                             "role": role,
                             "job_id": jid,
-                            "reason": reason_cap,
+                            "reason": "ext_wall_cap",
                             "location": loc,
                         }
                     )
                     continue
 
                 print(f"LI EXT {company_found} | {role} | {jid}", flush=True)
-                ext_attempts += 1
                 ext = follow_external(page, meta)
                 ext["campusCompany"] = name
                 ext["location"] = loc
@@ -1045,6 +1051,7 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                     report.external.append(ext)
                     report.applied.append(ext)
                     applied += 1
+                    ext_attempts += 1
                     if referrals < MAX_REFERRALS:
                         ref = referral_people_search(page, company_found or name, role)
                         report.referrals.append(ref)
@@ -1061,11 +1068,14 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                         from ats.complete import is_hard_ats_wall  # type: ignore
                     if is_hard_ats_wall(why):
                         ext_walls += 1
+                        ext_attempts += 1
                         print(
                             f"LI EXT WALL {company_found} walls={ext_walls}/{MAX_EXT_WALLS_PER_COMPANY} "
                             f"attempts={ext_attempts}/{MAX_EXT_ATTEMPTS_PER_COMPANY} | {why}",
                             flush=True,
                         )
+                    elif "incomplete" not in why.lower():
+                        ext_attempts += 1
 
         # Extra referral sweep for priority-1 companies even if thin inventory
         for company in companies:
