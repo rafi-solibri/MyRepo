@@ -12,6 +12,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.ats.complete import (
+    greenhouse_embed_frame,
     ats_password,
     auth_wall_reason,
     classify_ats_host,
@@ -91,6 +92,7 @@ assert_true(
     == "greenhouse",
     "gh_jid host is greenhouse",
 )
+assert_true(callable(greenhouse_embed_frame), "greenhouse_embed_frame exported")
 assert_true(
     extract_hop_destination_from_url(
         "https://www.indeed.com/applystart?jk=abc&continueUrl=https%3A%2F%2Facme.wd1.myworkdayjobs.com%2Fen-US%2Fjob"

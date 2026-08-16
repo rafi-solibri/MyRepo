@@ -777,15 +777,29 @@ def icims_hcaptcha_login(page) -> bool:
 
 
 def greenhouse_embed_frame(page):
-    """HighRadius (and similar) host Greenhouse in #grnhse_iframe / job-boards.greenhouse.io."""
+    """HighRadius (and similar) host Greenhouse in #grnhse_iframe / job-boards.greenhouse.io.
+
+    Cross-origin OOPIFs often show up with an empty Frame.url; fall back to the
+    iframe element's content_frame().
+    """
     try:
         frames = list(getattr(page, "frames", []) or [])
     except Exception:
         frames = []
     for fr in frames:
         u = getattr(fr, "url", "") or ""
-        if re.search(r"job-boards\.greenhouse\.io|boards\.greenhouse\.io/embed|grnhse_iframe", u, re.I):
+        if re.search(r"job-boards\.greenhouse\.io|boards\.greenhouse\.io/embed|grnhse", u, re.I):
             return fr
+    try:
+        loc = page.locator("iframe#grnhse_iframe, iframe[src*='greenhouse.io']").first
+        if loc.count():
+            handle = loc.element_handle()
+            if handle:
+                fr = handle.content_frame()
+                if fr:
+                    return fr
+    except Exception:
+        pass
     return None
 
 
@@ -1650,6 +1664,12 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
     stuck = 0
     leave_oneclick_oauth(page)
     prefer_guest_apply(page)
+    try:
+        if re.search(r"gh_jid=|grnhse_iframe|greenhouse\.io", getattr(page, "url", "") or "", re.I):
+            page.wait_for_selector("iframe#grnhse_iframe, iframe[src*='greenhouse.io']", timeout=8000)
+            _sleep(1.0)
+    except Exception:
+        pass
     target = greenhouse_embed_frame(page) or page
     if target is not page:
         try:

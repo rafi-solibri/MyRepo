@@ -767,6 +767,15 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         row["finalUrl"] = page.url
         _close_auth_popups(page)
         return row
+    # HighRadius Greenhouse embed is often an OOPIF — wait before complete_ats.
+    try:
+        page.wait_for_selector(
+            "iframe#grnhse_iframe, iframe[src*='greenhouse.io']",
+            timeout=8000,
+        )
+        time.sleep(1.2)
+    except Exception:
+        pass
     status, reason = attempt_ats_apply(page, time_cap_s=TIME_CAP_S)
     if auth_wall_url(page.url or "") or "passport.amazon.jobs" in (page.url or ""):
         row["status"] = "blocked"
