@@ -43,20 +43,20 @@ def _safe_print(msg: str) -> None:
 CDP = os.environ.get("HITECHCITY_CDP") or os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222")
 COMPANIES_PATH = Path(__file__).with_name("companies.json")
 REPORT = Path(os.environ.get("HITECHCITY_CAREERS_REPORT", "/opt/cursor/artifacts/hitechcity-careers.json"))
-MAX_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_PER_COMPANY", "4"))
+MAX_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_PER_COMPANY", "8"))
 # Raised for discovery-expanded campus tenant list (still priority-sorted).
-MAX_COMPANIES = int(os.environ.get("HITECHCITY_MAX_COMPANIES", "40"))
+MAX_COMPANIES = int(os.environ.get("HITECHCITY_MAX_COMPANIES", "60"))
 # Tight default: SSO / Sign-In walls must fail fast so more campus tenants are tried.
 TIME_CAP_S = int(os.environ.get("HITECHCITY_ATS_TIME_CAP_S", os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S", "90")))
-MAX_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "1"))
+MAX_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "3"))
 # Soft incompletes must not starve remaining matching roles at the same company.
-MAX_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "8"))
+MAX_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "16"))
 # Headed/owner-available runs get a longer ATS budget so forms can be finished.
 if (os.environ.get("HOME_LOCAL") or "").strip().lower() in ("1", "true", "yes") or (
     os.environ.get("CHROME_HEADLESS") or "1"
 ).strip() in ("0", "false", "no"):
     if not (os.environ.get("HITECHCITY_ATS_TIME_CAP_S") or os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S")):
-        TIME_CAP_S = max(TIME_CAP_S, 180)
+        TIME_CAP_S = max(TIME_CAP_S, 120)
 
 # Portal search terms — lead/staff/manager first (companies.json often baked "architect" only).
 CAREERS_SEARCH_KEYWORDS = [
@@ -69,7 +69,7 @@ CAREERS_SEARCH_KEYWORDS = [
     ".NET Architect",
     "Lead Software Engineer",
 ]
-MAX_CAREERS_KEYWORD_SEARCHES = int(os.environ.get("HITECHCITY_CAREERS_KEYWORD_SEARCHES", "6"))
+MAX_CAREERS_KEYWORD_SEARCHES = int(os.environ.get("HITECHCITY_CAREERS_KEYWORD_SEARCHES", "4"))
 
 _SEARCH_PARAM_KEYS = (
     "keywords",
@@ -1169,7 +1169,12 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
             company_applied = 0
             company_walls = 0
             company_attempts = 0
+            workday_no_hyd = False
+            loc_ui_done = False
             for url in urls:
+                if workday_no_hyd and re.search(r"myworkdayjobs\.com", url, re.I):
+                    # One confirmed "no Hyderabad facet" is enough — don't burn 6–12 keyword URLs.
+                    continue
                 if is_sso_only_careers_url(url):
                     report.skipped.append(
                         {
@@ -1236,18 +1241,40 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                     except Exception:
                         pass
                     continue
-                time.sleep(2.2)
+                time.sleep(1.0)
                 dismiss_cookie_banners(page)
-                # HARD: set Hyderabad in URL already; also pin on-page Location UI.
-                workday_loc: dict[str, Any] = {}
+                # HARD: set Hyderabad in URL already; also pin on-page Location UI (once/company for speed).
+                workday_loc: dict[str, Any] = {"pinned": False, "available": False, "note": "skipped_repeat"}
                 try:
-                    workday_loc = pin_portal_location_ui(page)
-                    _safe_print(
-                        f"CAREERS LOC_UI {name} | pinned={workday_loc.get('pinned')} "
-                        f"available={workday_loc.get('available')} | {workday_loc.get('note')}"
-                    )
+                    if not loc_ui_done:
+                        workday_loc = pin_portal_location_ui(page)
+                        loc_ui_done = True
+                        _safe_print(
+                            f"CAREERS LOC_UI {name} | pinned={workday_loc.get('pinned')} "
+                            f"available={workday_loc.get('available')} | {workday_loc.get('note')}"
+                        )
+                        if (
+                            re.search(r"myworkdayjobs\.com", url, re.I)
+                            and not workday_loc.get("available")
+                            and not workday_loc.get("pinned")
+                            and workday_loc.get("note") == "no_hyderabad_in_location_filter"
+                        ):
+                            workday_no_hyd = True
+                            _safe_print(
+                                f"CAREERS SKIP {name} | workday_no_hyderabad_facet — advance to next company"
+                            )
+                            report.skipped.append(
+                                {
+                                    "company": name,
+                                    "url": url,
+                                    "status": "skipped",
+                                    "reason": "workday_no_hyderabad_facet",
+                                }
+                            )
+                            break
                 except Exception as e:
                     workday_loc = {"pinned": False, "available": False, "note": str(e)[:120]}
+                    loc_ui_done = True
                 # Oracle Cloud HCM / Workday-style boards lazy-render cards; nudge into view.
                 try:
                     for _ in range(3):
