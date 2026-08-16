@@ -12,6 +12,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.ats.complete import (
+    EMAIL_OTP_RE,
     greenhouse_embed_frame,
     ats_password,
     auth_wall_reason,
@@ -54,6 +55,11 @@ assert_true(not is_submitted_text("Apply now to submit your application"), "CTA 
 
 assert_true(is_hard_ats_wall("CAPTCHA/bot wall"), "captcha is hard")
 assert_true(is_hard_ats_wall("ats_login_wall"), "login is hard")
+assert_true(is_hard_ats_wall("email_otp_wall"), "greenhouse email OTP is a hard wall")
+assert_true(
+    bool(EMAIL_OTP_RE.search("A verification code was sent to you. Enter the 8-character code.")),
+    "greenhouse OTP copy matches",
+)
 assert_true(not is_hard_ats_wall("external_incomplete_or_timeout"), "timeout is not a company wall")
 assert_true(not is_hard_ats_wall("ats_time_cap"), "time_cap is not a company wall")
 assert_true(not is_hard_ats_wall("stuck/time cap after 3 steps"), "stuck is not a company wall")

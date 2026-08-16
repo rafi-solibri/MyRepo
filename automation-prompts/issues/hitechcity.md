@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| HighRadius Greenhouse filled resume+profile then burned 90s on email OTP human-check | Fill react-select #country as India; fail-fast email_otp_wall (owner inbox) so the company wall cap trips |
 | HighRadius Greenhouse OOPIF had empty Frame.url so embed fill never ran and timed out | Resolve #grnhse_iframe via content_frame(); wait for iframe before complete_ats |
 | HighRadius Greenhouse JDs skipped no_ats_form because /about/careers-list/?gh_jid= matched brochure /about/ and the form lives in grnhse_iframe | Job-detail URLs are never brochure; page_flags+complete_generic fill job-boards.greenhouse.io embed iframe |
 | 34 seed tenants (incl HighRadius Greenhouse) had empty careersUrls so careers-only burned MAX_COMPANIES and never opened Hyd architect JDs | Curate verified ATS URLs; seed merge fills empty careersUrls; skip no_careers_url so the 40-company cap is real portals |

@@ -136,6 +136,11 @@ ATS_FORM_HINT_RE = re.compile(
     r"first name|email address",
     re.I,
 )
+EMAIL_OTP_RE = re.compile(
+    r"verification code was sent|enter the \d+-character code|"
+    r"security code|confirm you.?re a human",
+    re.I,
+)
 
 HOP_QUERY_KEYS = (
     "continueUrl",
@@ -284,6 +289,7 @@ def is_hard_ats_wall(reason: str | None) -> bool:
             "ats_password_missing",
             "ats_email_missing",
             "sso",
+            "email_otp",
         )
     )
 
@@ -858,6 +864,8 @@ def blocked_wall(page) -> str | None:
     if visible_captcha_challenge(page):
         return "CAPTCHA/bot wall"
     flags = page_flags(page)
+    if EMAIL_OTP_RE.search(flags.get("text") or ""):
+        return "email_otp_wall"
     return auth_wall_reason(
         flags["url"],
         flags["text"],
@@ -1627,7 +1635,7 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
 def fill_greenhouse_combos(page) -> None:
     """Greenhouse / Lever / SmartRecruiters react-select required answers."""
     pairs = [
-        (r"country of residence|current country", "India"),
+        (r"country of residence|current country|^country$|\bcountry\b", "India"),
         (r"^state", "N/A"),
         (r"authorized to work|legally authori[sz]ed", "Yes"),
         (r"require sponsorship|visa sponsorship", "No"),
@@ -1657,6 +1665,26 @@ def fill_greenhouse_combos(page) -> None:
             _sleep(0.2)
         except Exception:
             continue
+    # Greenhouse embed: react-select #country (not a plain <select>).
+    try:
+        control = page.locator("#country").locator(
+            "xpath=ancestor::div[contains(@class,'select__control')][1]"
+        )
+        if control.count():
+            control.click(force=True)
+            _sleep(0.25)
+            page.locator("#country").type("India", delay=15)
+            _sleep(0.4)
+            opt = page.locator("[role='option']:visible").filter(
+                has_text=re.compile(r"^India(\s|\+|$)")
+            ).first
+            if opt.count() and opt.is_visible():
+                opt.click(force=True)
+            else:
+                page.keyboard.press("Enter")
+            _sleep(0.2)
+    except Exception:
+        pass
 
 
 def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
@@ -1709,6 +1737,8 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
                     return "blocked", wall
         if wall in ("job_closed", "job_unavailable"):
             return "skipped", wall
+        if wall == "email_otp_wall":
+            return "blocked", wall
         if wall == "ats_login_wall":
             guest = page.get_by_text(re.compile(r"Continue as guest|Apply without|Don't have an account", re.I)).first
             try:
