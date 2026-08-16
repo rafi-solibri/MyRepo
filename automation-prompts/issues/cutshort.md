@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| 3202 scanned / 0 qualifying: AWS Cloud Engineer + SWE+stack dropped as no_tier_match; Almaty remote_okay leaked | tier1 cloud/AWS engineer; tier3 SWE+stack without senior; skip marketing/data/IAM/Salesforce-primary; reject foreign-only remote |
 | daily_apply still hung after browser.disconnect (CDP sockets/handles remain) | process.exit(0) after disconnect on success path (same pattern as naukri) |
 | daily_apply.js hung after report: CDP WebSocket kept Node alive (page.close race alone insufficient) | call browser.disconnect() in createCdpSession.disconnect after bounded page.close |
 
