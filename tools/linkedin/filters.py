@@ -91,7 +91,10 @@ def location_allowed(loc: str, workplace: str = "", *, remote_search: bool = Fal
     # Hyderabad (even dual-city "Delhi & Hyderabad") is allowed.
     if HYD_OK.search(text):
         return True
+    # India-remote / bare Remote / WFH is OK — but Remote Canada/US/UK is not.
     if REMOTE_OK.search(text):
+        if BAD_CITY.search(text) and not HYD_OK.search(text):
+            return False
         return True
     # Non-Hyd bad cities without Remote → reject
     if BAD_CITY.search(text) and not REMOTE_OK.search(text):

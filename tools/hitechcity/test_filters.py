@@ -70,6 +70,8 @@ def test_campus_location():
     assert location_or_campus_ok("Knowledge City, HITEC City")
     assert location_or_campus_ok("Remote, India", "WFH")
     assert not location_or_campus_ok("Bengaluru, Karnataka")
+    assert not location_or_campus_ok("Remote, Canada")
+    assert not location_or_campus_ok("Remote - United States")
     # Regression: bare "hitec" must not match inside "Architect"
     assert not location_or_campus_ok("Solutions Architect", "", "Solutions Architect role summary")
 
@@ -130,6 +132,26 @@ def test_careers_card_location():
         "Senior Lead Engineer – AI Platform Architecture Hyderabad, Telangana, India"
     )
     assert card_location_ok("Solutions Architect", "Hyderabad, Telangana, India")
+    # Remote Canada / Remote US / Remote UK are not India-remote (Gartner Workday path).
+    assert not card_location_ok(
+        "Sr. Director Analyst, Enterprise Architecture (Remote)",
+        "Remote, Nova Scotia, Canada",
+    )
+    gartner_ca = (
+        "https://gartner.wd5.myworkdayjobs.com/en-US/EXT/job/Remote---Nova-Scotia/"
+        "Sr-Director-Analyst--Enterprise-Architecture--Remote-Canada-_106975/apply/applyManually"
+    )
+    assert "nova scotia" in url_loc_hint(gartner_ca).lower()
+    assert not card_location_ok(
+        "Sr. Director Analyst, Enterprise Architecture (Remote)",
+        url_loc_hint(gartner_ca),
+    )
+    assert not card_location_ok(
+        "Sr. Director Analyst, Enterprise Architecture (Remote US)",
+        "Remote - United States",
+    )
+    assert card_location_ok("Solution Architect", "Fully Remote")
+    assert card_location_ok("Solution Architect", "Remote, India")
     # Workday URL encodes workplace when card title omits city.
     modmed = "https://modmed.wd501.myworkdayjobs.com/en-US/ModMed12/job/Boca-Raton-FL/Cloud-Engineering-Manager_R4806"
     assert "boca" in url_loc_hint(modmed).lower()

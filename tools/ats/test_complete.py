@@ -36,6 +36,7 @@ from tools.ats.complete import (
     workday_on_standalone_login,
     workday_password_alert,
     workday_password_rejected,
+    workday_stuck_on_sign_in,
 )
 
 
@@ -282,6 +283,70 @@ assert_true(
         "https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site/job/Hyderabad/Principal-Software-Engineer_JR-1/apply/autofillWithResume"
     ),
     "in-flow apply URL is not standalone login",
+)
+
+
+class _SignInPage:
+    def __init__(self, title: str, *, sign_in: bool = True, app_fields: bool = False):
+        self._title = title
+        self._sign_in = sign_in
+        self._app = app_fields
+        self.url = (
+            "https://gartner.wd5.myworkdayjobs.com/en-US/EXT/job/Remote---Nova-Scotia/"
+            "Sr-Director/apply/applyManually"
+        )
+
+    def title(self):
+        return self._title
+
+    def locator(self, sel):
+        page = self
+
+        class _Loc:
+            def __init__(self):
+                self._n = 0
+                s = sel or ""
+                if "signInSubmit" in s and page._sign_in:
+                    self._n = 1
+                if page._app and any(
+                    x in s
+                    for x in (
+                        "legalNameSection",
+                        "formField-name",
+                        "file-upload",
+                        "type='file'",
+                        "applyManually",
+                        "adventureButton",
+                        "createAccountSubmit",
+                        "verifyPassword",
+                    )
+                ):
+                    self._n = 1
+
+            def count(self):
+                return self._n
+
+            def is_visible(self):
+                return self._n > 0
+
+            @property
+            def first(self):
+                return self
+
+        return _Loc()
+
+
+assert_true(
+    workday_stuck_on_sign_in(_SignInPage("Sign In - Gartner")),
+    "Gartner Sign In title on applyManually is a login wall",
+)
+assert_true(
+    not workday_stuck_on_sign_in(_SignInPage("My Information", sign_in=False, app_fields=True)),
+    "application form is not a Sign In wall",
+)
+assert_true(
+    not workday_stuck_on_sign_in(_SignInPage("Create Account/Sign In", sign_in=True, app_fields=True)),
+    "Create Account with verifyPassword is completable",
 )
 assert_true(
     bool(ALREADY_APPLIED_RE.search("You have already applied to this job.")),

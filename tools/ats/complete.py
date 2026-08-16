@@ -1159,6 +1159,43 @@ def workday_on_standalone_login(url: str | None) -> bool:
     return bool(re.search(r"myworkdayjobs\.com/.+/login(?:\?|$)", url or "", re.I))
 
 
+def workday_stuck_on_sign_in(page) -> bool:
+    """True when Workday shows only a Sign In form (no guest application fields).
+
+    Some tenants (e.g. Gartner) keep the URL on `/apply/applyManually` while the
+    document title is ``Sign In - …`` and only ``signInSubmitButton`` is present.
+    That must fail-fast as ``ats_login_wall`` — otherwise click_advance burns the
+    full ATS time cap and ``external_incomplete_or_timeout`` never trips the
+    per-company hard-wall budget.
+    """
+    try:
+        title = (page.title() or "").strip()
+    except Exception:
+        title = ""
+    if re.search(r"^sign\s*in\b", title, re.I):
+        return True
+    try:
+        sign = page.locator("[data-automation-id='signInSubmitButton']").first
+        if not (sign.count() and sign.is_visible()):
+            return False
+        for sel in (
+            "[data-automation-id='legalNameSection']",
+            "[data-automation-id='formField-name']",
+            "[data-automation-id='file-upload-input-ref']",
+            "input[type='file']",
+            "[data-automation-id='applyManually']",
+            "[data-automation-id='adventureButton']",
+            "[data-automation-id='createAccountSubmitButton']",
+            "[data-automation-id='verifyPassword']",
+        ):
+            el = page.locator(sel).first
+            if el.count() and el.is_visible():
+                return False
+        return True
+    except Exception:
+        return False
+
+
 def workday_password_alert(page) -> bool:
     """True when the live Create Account form shows a password-rule error.
 
@@ -1482,9 +1519,10 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
         login_url = getattr(page, "url", "") or ""
     except Exception:
         login_url = ""
-    if workday_on_standalone_login(login_url):
-        # Sign In navigated to /login. One more credential pass, then fail-fast
-        # so empty Sign In + click_advance cannot burn the 390s cap.
+    if workday_on_standalone_login(login_url) or workday_stuck_on_sign_in(page):
+        # Sign In navigated to /login OR tenant kept applyManually URL with a
+        # Sign In document. One more credential pass, then fail-fast so empty
+        # Sign In + click_advance cannot burn the ATS time cap.
         auth = workday_auth(page)
         if auth:
             return "blocked", auth
@@ -1492,7 +1530,11 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
             login_url = getattr(page, "url", "") or ""
         except Exception:
             login_url = ""
-        if workday_on_standalone_login(login_url) or workday_password_alert(page):
+        if (
+            workday_on_standalone_login(login_url)
+            or workday_stuck_on_sign_in(page)
+            or workday_password_alert(page)
+        ):
             return "blocked", "ats_login_wall"
     stuck = 0
     while time.time() - start < time_cap_s and stuck < 10:
@@ -1505,6 +1547,8 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
                 return "blocked", "ats_login_wall"
         except Exception:
             pass
+        if workday_stuck_on_sign_in(page):
+            return "blocked", "ats_login_wall"
         wall = blocked_wall(page)
         if wall == "CAPTCHA/bot wall":
             return "blocked", wall
