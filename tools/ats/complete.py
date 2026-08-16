@@ -592,7 +592,18 @@ def page_fingerprint(page) -> str:
 
 
 def looks_submitted(page) -> bool:
-    return is_submitted_text(_body(page, 7000))
+    text = _body(page, 7000)
+    if is_submitted_text(text):
+        return True
+    url = getattr(page, "url", "") or ""
+    # Oracle Cloud Candidate Experience lands on My Profile after apply.
+    if re.search(r"oraclecloud\.com|.*/my-profile", url, re.I) and re.search(
+        r"under consideration|active job applications.*applied on",
+        text,
+        re.I | re.S,
+    ):
+        return True
+    return False
 
 
 def visible_captcha_challenge(page) -> bool:

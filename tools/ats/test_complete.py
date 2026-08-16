@@ -51,6 +51,34 @@ assert_true(is_submitted_text("We have received your application"), "received mu
 assert_true(is_submitted_text("Thanks for your interest — you're all set"), "all-set must count")
 assert_true(not is_submitted_text("Apply now to submit your application"), "CTA text must not count")
 
+
+# Oracle Cloud My Profile after apply
+from tools.ats.complete import looks_submitted as _looks_submitted
+from tools.ats import complete as _complete_mod
+
+class _OraclePage:
+    url = "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/my-profile"
+    def __init__(self, text):
+        self._text = text
+
+_orig_body = _complete_mod._body
+_complete_mod._body = lambda page, limit=4000: getattr(page, "_text", "")[:limit]
+try:
+    assert_true(
+        _looks_submitted(
+            _OraclePage(
+                "MY APPLICATIONS\nACTIVE JOB APPLICATIONS\nManager\nHyderabad\nStatus\nUnder Consideration\nApplied on 16/08/2026"
+            )
+        ),
+        "Oracle Under Consideration on my-profile must count as submitted",
+    )
+    assert_true(
+        not _looks_submitted(_OraclePage("Apply now to join our team")),
+        "generic apply text must not count",
+    )
+finally:
+    _complete_mod._body = _orig_body
+
 assert_true(is_hard_ats_wall("CAPTCHA/bot wall"), "captcha is hard")
 assert_true(is_hard_ats_wall("ats_login_wall"), "login is hard")
 assert_true(not is_hard_ats_wall("external_incomplete_or_timeout"), "timeout is not a company wall")

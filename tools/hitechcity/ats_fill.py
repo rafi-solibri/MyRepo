@@ -14,7 +14,7 @@ PROFILE = {
     "last": "Ahmed",
     "full": "Mohammed Abdul Rafi Ahmed",
     "phone": "8790251698",
-    "email": "rafi.success@gmail.com",
+    "email": "",
     "linkedin": "https://linkedin.com/in/rafi-ahmed-mohammed-abdul-151644ba",
     "city": "Hyderabad",
     "state": "Telangana",
@@ -26,6 +26,20 @@ PROFILE = {
     "notice": "0",
     "experience_years": "15",
 }
+
+
+def profile_email() -> str:
+    """Resolve applicant email from env, then PROFILE (skip placeholders)."""
+    import os
+
+    for key in ("APPLY_EMAIL", "NAUKRI_APPLY_EMAIL", "LINKEDIN_EMAIL"):
+        val = (os.environ.get(key) or "").strip()
+        if val and "@" in val and "REDACT" not in val.upper():
+            return val
+    val = (PROFILE.get("email") or "").strip()
+    if val and "@" in val and "REDACT" not in val.upper():
+        return val
+    return ""
 
 
 def resume_path() -> str:
@@ -254,7 +268,7 @@ def fill_common(page: Page) -> None:
         (r"first name|given name", PROFILE["first"]),
         (r"last name|surname|family name", PROFILE["last"]),
         (r"^full name$|legal name|your name", PROFILE["full"]),
-        (r"email|e-mail", PROFILE["email"]),
+        (r"email|e-mail", profile_email()),
         (r"phone|mobile|tel", PROFILE["phone"]),
         (r"linkedin|profile url", PROFILE["linkedin"]),
         (r"city|current city", PROFILE["city"]),

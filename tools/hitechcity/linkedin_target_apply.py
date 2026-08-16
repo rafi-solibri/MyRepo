@@ -539,7 +539,7 @@ def fill_easy_apply(page: Page) -> tuple[str, str]:
         # Common fields
         for label, val in (
             (r"phone|mobile", "8790251698"),
-            (r"email", "rafi.success@gmail.com"),
+            (r"email", (os.environ.get("APPLY_EMAIL") or os.environ.get("LINKEDIN_EMAIL") or "").strip()),
             (r"current.*(ctc|salary|compensation)", "5200000"),
             (r"expected.*(ctc|salary|compensation)", "6500000"),
             (r"notice", "0"),
