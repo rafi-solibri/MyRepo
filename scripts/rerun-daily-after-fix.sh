@@ -32,7 +32,7 @@ TITLE_ARG=""
 FILES_ARGS=()
 
 APPLY_PORTALS=(linkedin foundit cutshort naukri instahyre indeed hitechcity)
-ALL_JOBS=(linkedin foundit cutshort naukri instahyre indeed hitechcity notification hotels)
+ALL_JOBS=(linkedin foundit cutshort naukri instahyre indeed hitechcity notification)
 
 usage() {
   cat <<'EOF'
@@ -95,7 +95,6 @@ portals_from_title() {
     fix\(indeed\)*|*\(indeed\)*|fix/indeed*|cursor/indeed-*) echo indeed ;;
     fix\(hitechcity\)*|fix\(hitech-city\)*|*\(hitechcity\)*|*\(hitech-city\)*|cursor/hitechcity-*|cursor/hitech-city-*) echo hitechcity ;;
     fix\(notification\)*|*\(notification\)*|cursor/notification-*) echo notification ;;
-    fix\(hotels\)*|fix\(hotel\)*|*\(hotels\)*|cursor/hotels-*) echo hotels ;;
   esac
 }
 
@@ -126,7 +125,6 @@ portals_from_files() {
       scripts/send-job-status-email.mjs|scripts/fetch-home-result.sh|scripts/fetch-indeed-home-result.sh|scripts/notification-home-daily.sh|automation-prompts/issues/notification.md)
         seen[notification]=1
         ;;
-      tools/hotels/*|automation-prompts/issues/hotels.md) seen[hotels]=1 ;;
       scripts/ensure-missing-daily-runs.sh|scripts/run-portal-with-autofix.sh|scripts/append-issue-fix.sh|scripts/assert-no-conflict-markers.sh)
         # Infra helpers — docs/merge safety only; do not fan out to every portal.
         ;;
@@ -174,7 +172,6 @@ automation_id() {
     indeed) echo 91b09fd7-9093-11f1-ba66-0e7d0216e441 ;;
     notification) echo 8e34696c-90b1-11f1-ba66-0e7d0216e441 ;;
     hitechcity) echo b65968f7-953d-11f1-ba66-0e7d0216e441 ;;
-    hotels) echo "" ;;
   esac
 }
 
@@ -188,7 +185,6 @@ job_label() {
     indeed) echo "Indeed Daily" ;;
     notification) echo "Notification Job" ;;
     hitechcity) echo "Hitech City / Knowledge City Daily" ;;
-    hotels) echo "Hotel Price Tracker" ;;
     *) echo "$1" ;;
   esac
 }
@@ -203,7 +199,6 @@ prompt_file_for() {
     indeed) echo "automation-prompts/06-indeed.md" ;;
     notification) echo "automation-prompts/07-notification.md" ;;
     hitechcity) echo "automation-prompts/08-hitech-city.md" ;;
-    hotels) echo "tools/hotels/AUTOMATION.md" ;;
   esac
 }
 
@@ -244,9 +239,6 @@ agent_prompt_for() {
       ;;
     notification)
       extra="Compile today's portal results and email rafi.success@gmail.com. Fetch home JSON with bash scripts/fetch-home-result.sh <portal> --today."
-      ;;
-    hotels)
-      extra="Run PYTHONPATH=. python3 -m tools.hotels.automation -v --out-dir /tmp/hotel-email and send the email."
       ;;
   esac
   cat <<EOF
@@ -526,12 +518,6 @@ exec_portal_job() {
       rc=$?
       set -e
       ;;
-    hotels)
-      set +e
-      PYTHONPATH="$ROOT" "$py" -m tools.hotels.automation -v --out-dir /tmp/hotel-email
-      rc=$?
-      set -e
-      ;;
     notification)
       echo "same-session exec: notification is agent-composed mail — launching/re-prompting, not a blind send."
       echo "SAME_SESSION_RERUN_REQUIRED=notification"
@@ -562,6 +548,8 @@ collect_portals() {
   if [[ -n "$PORTAL_ARG" ]]; then
     # `read` returns 1 at EOF even on success — must not trip `set -e`.
     IFS=',' read -r -a found <<<"$PORTAL_ARG" || true
+    uniq_portals "${found[@]}"
+    return
   fi
   if [[ -n "${PORTAL:-}" ]]; then
     found+=("$PORTAL")
