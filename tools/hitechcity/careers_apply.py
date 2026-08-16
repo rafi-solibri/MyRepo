@@ -877,13 +877,21 @@ def _connect_careers_cdp(p):
         raise RuntimeError("cdp_no_contexts")
     context = browser.contexts[0]
     _close_uhg_tabs(context)
-    page = context.pages[0] if context.pages else context.new_page()
+    # Parallel workers always get a dedicated tab so 10 companies apply at once.
+    if os.environ.get("HITECHCITY_PARALLEL_WORKER"):
+        page = context.new_page()
+    else:
+        page = context.pages[0] if context.pages else context.new_page()
     if is_uhg_skip_url(getattr(page, "url", "") or ""):
         try:
             page = context.new_page()
         except Exception:
             pass
     page.set_default_timeout(45000)
+    try:
+        page.bring_to_front()
+    except Exception:
+        pass
     return browser, context, page
 
 
@@ -1151,6 +1159,16 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
             continue
         kept.append(company)
     companies = kept[:MAX_COMPANIES]
+    # Multi-tab fan-out (default 10) unless this process is already a worker.
+    parallel_tabs = int(os.environ.get("HITECHCITY_PARALLEL_TABS", "10"))
+    if (
+        parallel_tabs > 1
+        and len(companies) > 1
+        and not os.environ.get("HITECHCITY_PARALLEL_WORKER")
+    ):
+        from tools.hitechcity.careers_parallel import run_parallel
+
+        return run_parallel(companies)
     seen_urls: set[str] = set()
 
     with sync_playwright() as p:
@@ -1410,9 +1428,13 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                 break
 
     report.finishedAt = datetime.now(timezone.utc).isoformat()
-    REPORT.parent.mkdir(parents=True, exist_ok=True)
-    REPORT.write_text(json.dumps(asdict(report), indent=2))
-    print(json.dumps({"applied": len(report.applied), "blocked": len(report.blocked), "skipped": len(report.skipped)}))
+    out_path = REPORT
+    worker = os.environ.get("HITECHCITY_PARALLEL_WORKER")
+    if worker:
+        out_path = REPORT.with_name(f"hitechcity-careers-w{worker}.json")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(asdict(report), indent=2))
+    print(json.dumps({"applied": len(report.applied), "blocked": len(report.blocked), "skipped": len(report.skipped), "worker": worker or ""}))
     return report
 
 

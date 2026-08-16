@@ -32,6 +32,8 @@ def notify_application_result(
     url: str = "",
 ) -> None:
     """Announce submitted vs not-submitted for chat / owner visibility."""
+    import fcntl
+
     st = (status or "").strip().lower()
     company = (company or "").strip() or "?"
     role = (role or "").strip()
@@ -58,10 +60,22 @@ def notify_application_result(
         "reason": reason[:200],
         "path": path,
         "url": (url or "")[:240],
+        "worker": os.environ.get("HITECHCITY_PARALLEL_WORKER") or "",
     }
     try:
         NOTIFY_PATH.parent.mkdir(parents=True, exist_ok=True)
         with NOTIFY_PATH.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(row, ensure_ascii=False) + "\n")
+            try:
+                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+            except Exception:
+                pass
+            try:
+                f.write(json.dumps(row, ensure_ascii=False) + "\n")
+                f.flush()
+            finally:
+                try:
+                    fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+                except Exception:
+                    pass
     except Exception:
         pass
