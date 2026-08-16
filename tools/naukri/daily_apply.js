@@ -251,8 +251,7 @@ function isAlreadyAppliedCta(text) {
   // Callers must use readVisibleApplyCta(page) for live buttons.
   if (/Quick apply/i.test(t) && /Applied/i.test(t)) return false;
   if (/^Applied$/i.test(t)) return true;
-  // Post-apply widget after instant Quick Apply (Meltwater 2026-08-15).
-  if (/view applied jobs/i.test(t)) return true;
+  // "View applied jobs" is a nav/filter widget (isFalseApplyCta) — never per-job status.
   if (
     t.length < 48 &&
     /\bApplied\b/i.test(t) &&
@@ -1397,7 +1396,8 @@ async function confirmApplied(page, chatHint = null) {
       })
     )
     .catch(() => false);
-  if (viewApplied) return { ok: true, cta: "view_applied_jobs" };
+  // Persistent "View applied jobs" nav is NOT proof this job was submitted.
+  if (viewApplied) return { ok: false, cta: "view_applied_jobs" };
   // Close stuck chatbot drawer and re-read CTA once (Principal Financial pattern).
   if (chatHint?.reason === "chat_steps_exhausted") {
     await page.keyboard.press("Escape").catch(() => {});

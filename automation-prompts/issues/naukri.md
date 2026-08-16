@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| False apply: Deputy Head of Manufacturing counted via View applied jobs nav; profile resume lost last good upload after empty SPA | confirmApplied never treats view_applied_jobs as success; skip manufacturing/non-tech Head; waitForProfileReady + keep last successful upload |
 | 0 applies: Gemini Platform Architect attempted + apply_unconfirmed (empty CTA/no_chat); Principal Financial chat_steps_exhausted; thin eligible inventory (CTC<35 skips Valuelabs/Sonata/Highradius/Watania) | resume_and_filters: skip gemini/llm GenAI titles; daily_apply: longer Applied poll + disabled CTA + drawer Submit/Continue recovery + Escape re-read after chat_steps_exhausted |
 
 

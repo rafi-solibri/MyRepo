@@ -196,6 +196,21 @@ assert.strictEqual(
   true,
   "Cyber Architecture must skip"
 );
+assert.strictEqual(
+  shouldSkipTitle("Deputy Head of Manufacturing"),
+  true,
+  "Manufacturing / non-tech Head must skip"
+);
+assert.strictEqual(
+  isArchLeadTitle("Deputy Head of Manufacturing"),
+  false,
+  "Head of Manufacturing is not an arch/lead software title"
+);
+assert.strictEqual(
+  isArchLeadTitle("Head of Engineering"),
+  true,
+  "Head of Engineering remains an apply title"
+);
 assert.strictEqual(shouldSkipTitle("Senior .NET Architect"), false);
 assert.strictEqual(isArchLeadTitle("Dot Net Fullstack Developer"), false);
 assert.strictEqual(
@@ -238,6 +253,14 @@ assert.strictEqual(
   "Solutions Architect .NET",
   "homepage card: role before location before CTA"
 );
+const { isAlreadyAppliedCta } = require("./daily_apply");
+assert.strictEqual(
+  isAlreadyAppliedCta("View applied jobs"),
+  false,
+  "View applied jobs nav is not per-job Applied"
+);
+assert.strictEqual(isAlreadyAppliedCta("Applied"), true);
+
 const { workdayCompliantPassword } = require("./workday_apply");
 assert.strictEqual(workdayCompliantPassword("GoodPass123!"), "GoodPass123!");
 const weak = workdayCompliantPassword("short");

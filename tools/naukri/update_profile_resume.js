@@ -109,10 +109,48 @@ async function dismissPopups(page) {
   }
 }
 
+async function profileReadyState(page) {
+  return page
+    .evaluate(() => {
+      const text = (document.body && document.body.innerText) || "";
+      return {
+        len: text.length,
+        hasAttach: Boolean(document.querySelector("#attachCV, #lazyAttachCV")),
+        fileCount: document.querySelectorAll("input[type=file]").length,
+        hasResumeWord: /\bresume\b|\battach cv\b|\bupdate resume\b/i.test(text),
+      };
+    })
+    .catch(() => ({ len: 0, hasAttach: false, fileCount: 0, hasResumeWord: false }));
+}
+
+async function waitForProfileReady(page) {
+  await page
+    .waitForSelector("#attachCV, #lazyAttachCV, input[type=file], text=/Resume/i", {
+      timeout: 15000,
+    })
+    .catch(() => {});
+  await page.waitForTimeout(800);
+  let ready = await profileReadyState(page);
+  const sparse = ready.len < 200 || (!ready.hasAttach && !ready.fileCount && !ready.hasResumeWord);
+  if (sparse) {
+    await page.reload({ waitUntil: "domcontentloaded", timeout: 60000 }).catch(() => {});
+    await page.waitForTimeout(4000);
+    await dismissPopups(page);
+    await page
+      .waitForSelector("#attachCV, #lazyAttachCV, input[type=file], text=/Resume/i", {
+        timeout: 12000,
+      })
+      .catch(() => {});
+    ready = await profileReadyState(page);
+  }
+  return ready;
+}
+
 async function ensureLoggedIn(page) {
   await page.goto(PROFILE_URL, { waitUntil: "domcontentloaded", timeout: 60000 });
   await page.waitForTimeout(2500);
   await dismissPopups(page);
+  await waitForProfileReady(page);
   const url = page.url();
   if (/nlogin|login/i.test(url)) {
     return { ok: false, reason: "naukri_login_required", url };
@@ -245,6 +283,7 @@ async function confirmSave(page) {
 }
 
 async function uploadResume(page, resumePath) {
+  await waitForProfileReady(page);
   await scrollResumeSection(page);
   await dismissPopups(page);
 
@@ -381,6 +420,7 @@ async function verifyUpdated(page) {
   await page.goto(PROFILE_URL, { waitUntil: "domcontentloaded", timeout: 60000 }).catch(() => {});
   await page.waitForTimeout(2500);
   await dismissPopups(page);
+  await waitForProfileReady(page);
   await scrollResumeSection(page);
   await page.waitForTimeout(1000);
 
@@ -442,11 +482,12 @@ async function runRefresh(page, resumePath) {
 
   for (let i = 1; i <= MAX_ATTEMPTS; i++) {
     const up = await uploadResume(page, resumePath);
-    lastUpload = up;
     if (!up.ok) {
+      if (!lastUpload) lastUpload = up;
       attempts.push({ attempt: i, upload: up });
       continue;
     }
+    lastUpload = up;
     lastHeadline = await touchHeadline(page);
     // Give Naukri a moment to persist
     await page.waitForTimeout(2500);
@@ -594,5 +635,6 @@ module.exports = {
   touchHeadline,
   verifyUpdated,
   runRefresh,
+  waitForProfileReady,
   PROFILE_URL,
 };
