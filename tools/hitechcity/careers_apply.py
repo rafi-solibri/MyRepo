@@ -127,7 +127,7 @@ BAD_LOC_HINT = re.compile(
 CAREERS_TITLE_SKIP = re.compile(
     r"system\s*test|quality\s*(platform|assurance|engineering)|threat\s*detection|"
     r"project\s*analyst|project\s*manager|industrial\s*design|hardware\s*architect|"
-    r"machine\s*learning|gpu\s*software|embedded\s*software|"
+    r"machine\s*learning|gpu\s*software|gpu\s*/\s*cpu|kernel\s*optimization|embedded\s*software|"
     r"field\s*robotics|platform\s*power|network\s*hardware|"
     r"product\s*manager|network\s*architect|"
     r"chemical\s*mechanical|planarization|\bcmp\b|soc\s*compute|"
