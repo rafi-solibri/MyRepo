@@ -7,6 +7,28 @@ replicas** run in the evening on your residential IP + local Chrome logins via:
 2. Cursor CLI (`agent`) on this machine
 3. Same prompts as cloud (`automation-prompts/0*.md`)
 
+## Disable all home-local job automations (this PC)
+
+**Windows** (Task Scheduler — preferred):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\disable-all-home-tasks.ps1
+```
+
+Disable only (reversible). To remove tasks entirely: add `-Unregister`.
+Dry-run: add `-WhatIf`.
+
+**macOS / Linux / WSL** (cron):
+
+```bash
+bash scripts/disable-all-home-cron.sh
+```
+
+Dry-run: `bash scripts/disable-all-home-cron.sh --what-if`.
+
+This does **not** toggle Cursor dashboard Automations
+(https://cursor.com/automations) — those are cloud morning jobs.
+
 Every run must **auto-fix → push a ready PR → merge → same-day re-run** (`AUTO_FIX.md`,
 `scripts/auto-merge-fix-pr.sh`, `scripts/rerun-daily-after-fix.sh`). Batch runners also sweep leftovers with
 `scripts/merge-open-fix-prs.sh`.
@@ -121,7 +143,21 @@ SQLite cookie **names** alone can be stale under App-Bound Encryption — Chrome
 
 ## Uninstall
 
+Prefer the disable script (Disable by default, or `-Unregister` to remove):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\disable-all-home-tasks.ps1 -Unregister
+```
+
+Manual equivalent:
+
 ```powershell
 Get-ScheduledTask HomeDaily-* | Unregister-ScheduledTask -Confirm:$false
 Unregister-ScheduledTask -TaskName IndeedHomeDaily -Confirm:$false
+```
+
+WSL/Linux cron:
+
+```bash
+bash scripts/disable-all-home-cron.sh
 ```
