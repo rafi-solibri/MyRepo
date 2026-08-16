@@ -323,14 +323,15 @@ def _parse_mindspace_top_tenants(html: str) -> list[str]:
 
 def _parse_cityinfo_tenants(html: str) -> list[str]:
     text = unescape(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html)))
+    # Stop at "Related Projects" / next section — not at periods inside "J.P. Morgan".
     m = re.search(
-        r"current tenants? of this building (?:is|are)\s+([^.]+)",
+        r"current tenants? of this building (?:is|are)\s+(.+?)(?:\s+Related Projects|\s+Tenants To Unlock|\s+Overview\s|$)",
         text,
         re.I,
     )
     if not m:
         return []
-    blob = m.group(1)
+    blob = m.group(1).strip().rstrip(".")
     # Split on commas / " and " (incl. Oxford comma ", and ").
     parts = re.split(r"\s*,\s*|\s+and\s+", blob)
     out: list[str] = []

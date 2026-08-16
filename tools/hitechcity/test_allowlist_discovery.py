@@ -160,12 +160,17 @@ def test_parse_mindspace_and_cityinfo_html():
     assert "AMD" in _parse_mindspace_top_tenants(ms_html)
     ci = (
         "<p>The current tenants of this building are Apple India, Blue Yonder India "
-        "(JDA Software), and Intel Technology India.</p>"
+        "(JDA Software), and Intel Technology India. Related Projects Foo</p>"
     )
     parsed = _parse_cityinfo_tenants(ci)
     assert "Apple" in parsed
     assert "Blue Yonder" in parsed
     assert "Intel" in parsed
+    jpmc = (
+        "<p>The current tenant of this building is J.P. Morgan India. "
+        "Related Projects Salarpuria</p>"
+    )
+    assert "JPMorgan Chase" in _parse_cityinfo_tenants(jpmc)
 
 
 if __name__ == "__main__":
