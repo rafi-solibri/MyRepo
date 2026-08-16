@@ -127,7 +127,7 @@ BAD_LOC_HINT = re.compile(
 CAREERS_TITLE_SKIP = re.compile(
     r"system\s*test|quality\s*(platform|assurance|engineering)|threat\s*detection|"
     r"project\s*analyst|project\s*manager|industrial\s*design|hardware\s*architect|"
-    r"machine\s*learning\s*hardware|gpu\s*software|embedded\s*software|"
+    r"machine\s*learning|gpu\s*software|embedded\s*software|"
     r"field\s*robotics|platform\s*power|network\s*hardware|"
     r"product\s*manager|network\s*architect|"
     r"chemical\s*mechanical|planarization|\bcmp\b|soc\s*compute|"
@@ -138,6 +138,10 @@ CAREERS_TITLE_SKIP = re.compile(
     r"analog\s*design|digital\s*design\s*engineer|verification\s*engineer|"
     r"sales\s*specialist|especialista|"
     r"\bai\s*native\b|\bdata\s*&\s*ai\b|staff\s*engineer\s*\(\s*ai|"
+    r"\bai\s*/\s*ml\b|\bai\s*&\s*ml\b|\baiml\b|\bai-ml\b|"
+    r"\bdeep\s*learning\b|\bgen(?:erative)?\s*ai\b|\bllm\b|"
+    r"\bai\s*engineer\b|\bml\s*engineer\b|\bai\s*architect\b|\bml\s*architect\b|"
+    r"\bartificial\s*intelligence\b|\bcuda\b|\brocm\b|"
     r"engineer in test|\bsdet\b|cyber\s*security|cybersecurity|"
     r"database engineer",
     re.I,

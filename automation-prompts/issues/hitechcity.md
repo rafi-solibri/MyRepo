@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Owner: do not apply to AI/ML jobs (e.g. AMD Staff/Principal AI/ML Validation) | Hard-skip AI/ML titles in `filters.AIML_TITLE_SKIP` + careers/LI title skips |
 | After owner captcha/help, profile left unfinished and runner advanced | Post-captcha `icims=post_captcha_continue`; ASK_OWNER extends while form open; persist_retry on incomplete; never treat invisible hCaptcha/footer as wall |
 | Matching jobs left incomplete (Source / required blanks); attempt caps skipped remaining roles | `fill_source_fields` + `fill_validation_gaps`; `ASK_OWNER`/`wait_owner_finish_apply` before incomplete; soft incompletes do not burn attempt caps; headed TIME_CAP≥180 |
 | iCIMS Email / I accept / Next not filled (outer login chrome) | Prefer `in_iframe=1`; `icims_fill_gdpr_gate` every iCIMS apply |

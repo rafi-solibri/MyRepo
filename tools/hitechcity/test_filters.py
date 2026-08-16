@@ -49,6 +49,15 @@ def test_title_ok():
     assert title_matches_senior_stack("Sr. Software Engineer")
     assert not title_matches_senior_stack("Software Engineer II")
     assert not title_matches_senior_stack("Software Engineer")
+    # Owner: never apply to AI/ML titles.
+    assert not title_matches_senior_stack(
+        "Staff/Principal Engineer - AI/ML & System-Level Validation"
+    )
+    assert skip_reason("Staff/Principal Engineer - AI/ML & System-Level Validation") == "title: AI/ML excluded"
+    assert skip_reason("Machine Learning Engineer") == "title: AI/ML excluded"
+    assert skip_reason("GenAI Architect") == "title: AI/ML excluded"
+    assert CAREERS_TITLE_SKIP.search("Staff/Principal Engineer - AI/ML & System-Level Validation")
+    assert LI_TITLE_SKIP.search("Staff/Principal Engineer - AI/ML & System-Level Validation")
     assert skip_reason("Salesforce Developer") is not None
     assert skip_reason("QA Engineer") is not None
     assert CAREERS_TITLE_SKIP.search("Staff Project Analyst")

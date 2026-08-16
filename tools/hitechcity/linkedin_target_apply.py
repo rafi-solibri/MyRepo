@@ -70,10 +70,15 @@ MAX_TITLE_SEARCHES = int(os.environ.get("HITECHCITY_LI_TITLE_SEARCHES", "10"))
 # Title matches TITLE_OK via architect/principal/staff but are wrong for this .NET campus run.
 LI_TITLE_SKIP = re.compile(
     r"product\s*manager|network\s*architect|system\s*test|quality\s*(platform|assurance|engineering)|"
-    r"threat\s*detection|industrial\s*design|hardware\s*architect|machine\s*learning\s*hardware|"
-    r"gpu\s*software|embedded\s*software|field\s*robotics|platform\s*power|network\s*hardware|"
+    r"threat\s*detection|industrial\s*design|hardware\s*architect|"
+    r"machine\s*learning|gpu\s*software|embedded\s*software|field\s*robotics|platform\s*power|network\s*hardware|"
     r"kernel\s*optimization|rtl\s*design|physical\s*design|silicon\s*design|"
-    r"silicon\s*engineer|product\s*design\s*manager",
+    r"silicon\s*engineer|product\s*design\s*manager|"
+    r"\bai\s*/\s*ml\b|\bai\s*&\s*ml\b|\baiml\b|\bai-ml\b|"
+    r"\bdeep\s*learning\b|\bgen(?:erative)?\s*ai\b|\bllm\b|"
+    r"\bai\s*engineer\b|\bml\s*engineer\b|\bai\s*architect\b|\bml\s*architect\b|"
+    r"\bartificial\s*intelligence\b|\bcuda\b|\brocm\b|"
+    r"\bdata\s*scientist\b|\bcomputer\s*vision\b",
     re.I,
 )
 

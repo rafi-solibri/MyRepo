@@ -45,12 +45,31 @@ CAMPUS_OK = re.compile(
 
 DOTNETISH = re.compile(r"\.net|dotnet|\bc#\b|asp\.net|azure", re.I)
 
+# Owner: do not apply to AI/ML roles (campus .NET/EM/Staff track only).
+AIML_TITLE_SKIP = re.compile(
+    r"\bai\s*/\s*ml\b|\bai\s*&\s*ml\b|\baiml\b|\bai-ml\b|"
+    r"\bmachine\s*learning\b|\bdeep\s*learning\b|\bneural\s*net|"
+    r"\bgen(?:erative)?\s*ai\b|\bllm\b|\blarge\s*language\s*model\b|"
+    r"\bnlp\b|\bcomputer\s*vision\b|\bdata\s*scientist\b|"
+    r"\bai\s*engineer\b|\bml\s*engineer\b|\bai\s*scientist\b|"
+    r"\bai\s*architect\b|\bml\s*architect\b|\bai\s*technical\b|"
+    r"\bartificial\s*intelligence\b|"
+    r"\brocm\b|\bcuda\b|"
+    r"\bai\s*native\b|\bdata\s*&\s*ai\b|\(\s*ai\b|\bai\s*\)",
+    re.I,
+)
+
 
 def skip_reason(role: str, company: str = "", jd: str = "") -> str | None:
+    title = role or ""
+    if AIML_TITLE_SKIP.search(title):
+        return "title: AI/ML excluded"
     return linkedin_skip_reason(role, company, jd)
 
 
 def title_matches_senior_stack(role: str) -> bool:
+    if AIML_TITLE_SKIP.search(role or ""):
+        return False
     return bool(TITLE_OK.search(role or ""))
 
 
