@@ -56,7 +56,7 @@ New campus-focused automation (same profile/CTC/resume rules as portal dailies):
 | Automation | `b65968f7-953d-11f1-ba66-0e7d0216e441` (rename Untitled → **Hitech City / Knowledge City Daily**) |
 | Prompt | `automation-prompts/08-hitech-city.md` + ONE_TIME_LOADERS entry |
 | Company list | `tools/hitechcity/companies.json` — Knowledge City / Knowledge Park / Mindspace Madhapur / The V / Cyber Pearl / peer Grade-A tenants |
-| Runner | `python3 tools/hitechcity/daily_apply.py` — career portals first, then LinkedIn company applies + referral notes |
+| Runner | `python3 tools/hitechcity/daily_apply.py` — **parallel multi-tab careers** (`HITECHCITY_PARALLEL_TABS=10` every cron/daily) first, then LinkedIn company applies + referral notes |
 | CDP | `hitechcity` portal alias reuses LinkedIn Chrome profile |
 | Notification | `07-notification.md` includes this automation’s totals |
 

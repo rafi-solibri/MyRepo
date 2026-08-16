@@ -26,7 +26,8 @@
       "Azure Architect",
       "Cloud Architect"
     ],
-    "lastDiscoveryAt": "2026-08-16T08:49:46.119042+00:00"
+    "lastDiscoveryAt": "2026-08-16T16:25:31.326705+00:00",
+    "discoveryMode": "campus_catalog+web_directories+seeds+linkedin_optional+board_hints"
   },
   "campuses": [
     {
@@ -106,11 +107,12 @@
     {
       "name": "AMD",
       "campuses": [
-        "sattva-knowledge-city"
+        "sattva-knowledge-city",
+        "mindspace-madhapur"
       ],
       "linkedinSlug": "amd",
       "careersUrls": [
-        "https://careers.amd.com/careers-home/jobs?keywords=architect&location=Hyderabad"
+        "https://careers.amd.com/careers-home/jobs?keywords=Engineering+Manager&location=Hyderabad"
       ],
       "priority": 1,
       "notes": "Includes former Xilinx India footprint in Knowledge City Octave"
@@ -122,7 +124,7 @@
       ],
       "linkedinSlug": "apple",
       "careersUrls": [
-        "https://jobs.apple.com/en-in/search?search=architect&location=hyderabad-HST430090"
+        "https://jobs.apple.com/en-in/search?search=Engineering+Manager&location=hyderabad-HST430090"
       ],
       "priority": 1
     },
@@ -134,7 +136,7 @@
       ],
       "linkedinSlug": "blackbaud",
       "careersUrls": [
-        "https://careers.blackbaud.com/search/?createNewAlert=false&q=architect&locationsearch=Hyderabad"
+        "https://careers.blackbaud.com/search/?createNewAlert=false&q=Engineering+Manager&locationsearch=Hyderabad"
       ],
       "priority": 1
     },
@@ -145,7 +147,7 @@
       ],
       "linkedinSlug": "blue-yonder",
       "careersUrls": [
-        "https://careers.blueyonder.com/us/en/search-results?keywords=architect&location=Hyderabad"
+        "https://careers.blueyonder.com/us/en/search-results?keywords=Engineering+Manager&location=Hyderabad"
       ],
       "priority": 1
     },
@@ -157,7 +159,7 @@
       ],
       "linkedinSlug": "experian",
       "careersUrls": [
-        "https://careers.smartrecruiters.com/Experian?search=architect"
+        "https://careers.smartrecruiters.com/Experian?search=Engineering+Manager"
       ],
       "priority": 1
     },
@@ -169,7 +171,7 @@
       ],
       "linkedinSlug": "gevernova",
       "careersUrls": [
-        "https://careers.gevernova.com/global/en/search-results?keywords=architect"
+        "https://careers.gevernova.com/global/en/search-results?keywords=Engineering+Manager"
       ],
       "priority": 1
     },
@@ -180,7 +182,7 @@
       ],
       "linkedinSlug": "goldman-sachs",
       "careersUrls": [
-        "https://higher.gs.com/results?keyword=architect"
+        "https://higher.gs.com/results?keyword=Engineering+Manager"
       ],
       "priority": 1
     },
@@ -203,7 +205,7 @@
       ],
       "linkedinSlug": "hyland-software",
       "careersUrls": [
-        "https://careers-hyland.icims.com/jobs/search?ss=1&searchKeyword=architect&in_iframe=1"
+        "https://careers-hyland.icims.com/jobs/search?ss=1&searchKeyword=Engineering+Manager&in_iframe=1"
       ],
       "priority": 1
     },
@@ -214,10 +216,11 @@
       ],
       "linkedinSlug": "intel-corporation",
       "careersUrls": [
-        "https://intel.wd1.myworkdayjobs.com/en-US/External?q=software%20architect&location=Hyderabad",
-        "https://intel.wd1.myworkdayjobs.com/External?q=architect"
+        "https://intel.wd1.myworkdayjobs.com/en-US/External?q=Engineering+Manager",
+        "https://intel.wd1.myworkdayjobs.com/External?q=Engineering+Manager"
       ],
-      "priority": 1
+      "priority": 1,
+      "notes": "Workday has no Hyderabad location facet currently (India=Bangalore only). Skip non-Hyd roles; do not trust location= query text."
     },
     {
       "name": "JPMorgan Chase",
@@ -227,9 +230,10 @@
       ],
       "linkedinSlug": "jpmorganchase",
       "careersUrls": [
-        "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/requisitions?keyword=architect&location=Hyderabad%2C+Telangana%2C+India"
+        "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/requisitions?keyword=Engineering+Manager&location=Hyderabad%2C+Telangana%2C+India"
       ],
-      "priority": 1
+      "priority": 1,
+      "linkedinCompanyId": "1068"
     },
     {
       "name": "Meta",
@@ -238,7 +242,7 @@
       ],
       "linkedinSlug": "meta",
       "careersUrls": [
-        "https://www.metacareers.com/jobs?q=architect&location=Hyderabad"
+        "https://www.metacareers.com/jobs?q=Engineering+Manager&location=Hyderabad"
       ],
       "priority": 1
     },
@@ -251,7 +255,7 @@
       ],
       "linkedinSlug": "microsoft",
       "careersUrls": [
-        "https://apply.careers.microsoft.com/careers?keywords=architect&location=Hyderabad%2C+Telangana%2C+India"
+        "https://apply.careers.microsoft.com/careers?keywords=Engineering+Manager&location=Hyderabad%2C+Telangana%2C+India"
       ],
       "priority": 1
     },
@@ -286,7 +290,7 @@
       ],
       "linkedinSlug": "oracle",
       "careersUrls": [
-        "https://careers.oracle.com/en/sites/jobsearch/jobs?keyword=architect&location=Hyderabad%2C+Telangana%2C+India"
+        "https://careers.oracle.com/en/sites/jobsearch/jobs?keyword=Engineering+Manager&location=Hyderabad%2C+Telangana%2C+India"
       ],
       "priority": 1
     },
@@ -309,7 +313,7 @@
       ],
       "linkedinSlug": "qualcomm",
       "careersUrls": [
-        "https://careers.qualcomm.com/careers?query=architect&location=Hyderabad"
+        "https://careers.qualcomm.com/careers?query=Engineering+Manager&location=Hyderabad"
       ],
       "priority": 1
     },
@@ -324,6 +328,17 @@
         "https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site?q=engineer"
       ],
       "priority": 1
+    },
+    {
+      "name": "Vanguard",
+      "campuses": [
+        "sattva-knowledge-park"
+      ],
+      "linkedinSlug": "vanguard",
+      "careersUrls": [],
+      "priority": 1,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
     },
     {
       "name": "Accenture",
@@ -346,6 +361,39 @@
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "BA Continuum",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "bank-of-america",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
+      "name": "Bayer",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "bayer",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
+      "name": "BluJay Solutions",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "blujay-solutions",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
     },
     {
       "name": "Broadridge",
@@ -382,37 +430,15 @@
       "discoveredAt": "2026-08-14"
     },
     {
-      "name": "City Tech Consultants",
+      "name": "Chubb",
       "campuses": [
         "sattva-knowledge-city"
       ],
-      "linkedinSlug": "city-tech-consultants",
+      "linkedinSlug": "chubb",
       "careersUrls": [],
       "priority": 2,
-      "source": "linkedin_search",
-      "discoveredAt": "2026-08-14"
-    },
-    {
-      "name": "CityScanner",
-      "campuses": [
-        "sattva-knowledge-city"
-      ],
-      "linkedinSlug": "city-scanner",
-      "careersUrls": [],
-      "priority": 2,
-      "source": "linkedin_search",
-      "discoveredAt": "2026-08-14"
-    },
-    {
-      "name": "CoEnterprise",
-      "campuses": [
-        "sattva-knowledge-city"
-      ],
-      "linkedinSlug": "coenterprise",
-      "careersUrls": [],
-      "priority": 2,
-      "source": "linkedin_search",
-      "discoveredAt": "2026-08-14"
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
     },
     {
       "name": "Cognizant",
@@ -422,7 +448,7 @@
       ],
       "linkedinSlug": "cognizant",
       "careersUrls": [
-        "https://careers.cognizant.com/global-en/jobs/?keyword=architect&location=Hyderabad"
+        "https://careers.cognizant.com/global-en/jobs/?keyword=Engineering+Manager&location=Hyderabad"
       ],
       "priority": 2
     },
@@ -467,7 +493,7 @@
       ],
       "linkedinSlug": "fiserv",
       "careersUrls": [
-        "https://careers.fiserv.com/us/en/search-results?keywords=architect&location=Hyderabad"
+        "https://careers.fiserv.com/us/en/search-results?keywords=Engineering+Manager&location=Hyderabad"
       ],
       "priority": 2
     },
@@ -478,7 +504,7 @@
       ],
       "linkedinSlug": "gartner",
       "careersUrls": [
-        "https://jobs.gartner.com/jobs/?search=architect&location=Hyderabad"
+        "https://jobs.gartner.com/jobs/?search=Engineering+Manager&location=Hyderabad"
       ],
       "priority": 2
     },
@@ -511,7 +537,7 @@
       ],
       "linkedinSlug": "ibm",
       "careersUrls": [
-        "https://www.ibm.com/careers/search?q=architect&loc=Hyderabad"
+        "https://www.ibm.com/careers/search?q=Engineering+Manager&loc=Hyderabad"
       ],
       "priority": 2
     },
@@ -539,15 +565,15 @@
       "discoveredAt": "2026-08-13"
     },
     {
-      "name": "Knowledge Bridge Solutions",
+      "name": "InvoiceCloud",
       "campuses": [
-        "sattva-knowledge-city"
+        "sattva-knowledge-park"
       ],
-      "linkedinSlug": "knowledgebridgesolutions",
+      "linkedinSlug": "invoicecloud",
       "careersUrls": [],
       "priority": 2,
-      "source": "linkedin_search",
-      "discoveredAt": "2026-08-14"
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
     },
     {
       "name": "LTIMindtree",
@@ -558,6 +584,17 @@
       "careersUrls": [],
       "priority": 2,
       "source": "seed",
+      "discoveredAt": "2026-08-16"
+    },
+    {
+      "name": "Macquarie",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "macquarie",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
       "discoveredAt": "2026-08-16"
     },
     {
@@ -578,7 +615,7 @@
       ],
       "linkedinSlug": "mcafee",
       "careersUrls": [
-        "https://careers.mcafee.com/jobs?keywords=architect"
+        "https://careers.mcafee.com/jobs?keywords=Engineering+Manager"
       ],
       "priority": 2
     },
@@ -605,6 +642,17 @@
       "discoveredAt": "2026-08-16"
     },
     {
+      "name": "MTX Group",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "mtx",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
       "name": "NCR Voyix",
       "campuses": [
         "mindspace-madhapur"
@@ -618,13 +666,25 @@
     {
       "name": "Novartis",
       "campuses": [
-        "mindspace-madhapur"
+        "mindspace-madhapur",
+        "sattva-knowledge-city"
       ],
       "linkedinSlug": "novartis",
       "careersUrls": [],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "NTT DATA",
+      "campuses": [
+        "cyber-pearl"
+      ],
+      "linkedinSlug": "ntt-data",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
     },
     {
       "name": "OpenText",
@@ -638,6 +698,17 @@
       "discoveredAt": "2026-08-13"
     },
     {
+      "name": "Parexel",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "parexel",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
       "name": "PayPal",
       "campuses": [
         "mindspace-madhapur"
@@ -649,6 +720,17 @@
       "discoveredAt": "2026-08-13"
     },
     {
+      "name": "Pegasystems",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "pegasystems",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
       "name": "Persistent Systems",
       "campuses": [
         "mindspace-madhapur"
@@ -657,6 +739,17 @@
       "careersUrls": [],
       "priority": 2,
       "source": "seed",
+      "discoveredAt": "2026-08-16"
+    },
+    {
+      "name": "Postman",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "postman",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
       "discoveredAt": "2026-08-16"
     },
     {
@@ -693,6 +786,17 @@
       "priority": 2
     },
     {
+      "name": "Rackspace",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "rackspace",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
       "name": "RealPage",
       "campuses": [
         "sattva-knowledge-city"
@@ -717,11 +821,12 @@
     {
       "name": "Salesforce",
       "campuses": [
-        "mindspace-madhapur"
+        "mindspace-madhapur",
+        "cyber-pearl"
       ],
       "linkedinSlug": "salesforce",
       "careersUrls": [
-        "https://careers.salesforce.com/en/jobs/?search=architect&country=India&city=Hyderabad"
+        "https://careers.salesforce.com/en/jobs/?search=Engineering+Manager&country=India&city=Hyderabad"
       ],
       "priority": 2,
       "notes": "Skip Salesforce-product-primary titles via title blacklist; keep .NET/cloud architect roles"
@@ -738,26 +843,15 @@
       "discoveredAt": "2026-08-13"
     },
     {
-      "name": "Softeq",
+      "name": "Silicon Labs",
       "campuses": [
         "sattva-knowledge-city"
       ],
-      "linkedinSlug": "softeq",
+      "linkedinSlug": "silicon-laboratories",
       "careersUrls": [],
       "priority": 2,
-      "source": "linkedin_search",
-      "discoveredAt": "2026-08-14"
-    },
-    {
-      "name": "Software Development Aegona Ltd",
-      "campuses": [
-        "sattva-knowledge-city"
-      ],
-      "linkedinSlug": "aegona",
-      "careersUrls": [],
-      "priority": 2,
-      "source": "linkedin_search",
-      "discoveredAt": "2026-08-14"
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
     },
     {
       "name": "Storable",
@@ -774,7 +868,8 @@
       "name": "Tech Mahindra",
       "campuses": [
         "sattva-knowledge-park",
-        "mindspace-madhapur"
+        "mindspace-madhapur",
+        "cyber-pearl"
       ],
       "linkedinSlug": "tech-mahindra",
       "careersUrls": [],
@@ -819,7 +914,8 @@
       "name": "UnitedHealth Group",
       "campuses": [
         "dlf-cyber-city",
-        "divyasree-orion"
+        "divyasree-orion",
+        "mindspace-madhapur"
       ],
       "linkedinSlug": "unitedhealth-group",
       "careersUrls": [],
@@ -847,7 +943,7 @@
       ],
       "linkedinSlug": "verizon",
       "careersUrls": [
-        "https://www.verizon.com/about/work/search/jobs?q=architect&location=Hyderabad"
+        "https://www.verizon.com/about/work/search/jobs?q=Engineering+Manager&location=Hyderabad"
       ],
       "priority": 2
     },
@@ -882,7 +978,7 @@
       ],
       "linkedinSlug": "dxc-technology",
       "careersUrls": [
-        "https://careers.dxc.com/job-search-results/?keywords=architect"
+        "https://careers.dxc.com/job-search-results/?keywords=Engineering+Manager"
       ],
       "priority": 3
     },
@@ -909,6 +1005,17 @@
       "discoveredAt": "2026-08-13"
     },
     {
+      "name": "JLL",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "jll",
+      "careersUrls": [],
+      "priority": 3,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
       "name": "Kony / Temenos",
       "campuses": [
         "mindspace-madhapur"
@@ -931,6 +1038,39 @@
       "priority": 3
     },
     {
+      "name": "Redbrick Offices",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "redbrick-offices",
+      "careersUrls": [],
+      "priority": 3,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
+      "name": "Smartworks",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "smartworks",
+      "careersUrls": [],
+      "priority": 3,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
+      "name": "Tablespace",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "tablespace",
+      "careersUrls": [],
+      "priority": 3,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
       "name": "TCS",
       "campuses": [
         "the-v"
@@ -942,6 +1082,39 @@
       "priority": 3
     },
     {
+      "name": "UTC",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "rtx",
+      "careersUrls": [],
+      "priority": 3,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
+      "name": "WeWork",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "wework",
+      "careersUrls": [],
+      "priority": 3,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
+      "name": "Winshuttle",
+      "campuses": [
+        "cyber-pearl"
+      ],
+      "linkedinSlug": "winshuttle",
+      "careersUrls": [],
+      "priority": 3,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
       "name": "Wipro",
       "campuses": [
         "mindspace-madhapur"
@@ -951,6 +1124,17 @@
       "priority": 3,
       "source": "seed",
       "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "ZenQ",
+      "campuses": [
+        "cyber-pearl"
+      ],
+      "linkedinSlug": "zenq",
+      "careersUrls": [],
+      "priority": 3,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
     }
   ]
 }

@@ -231,7 +231,7 @@ agent_prompt_for() {
       extra="Run bash scripts/preflight-portal-run.sh $portal then bash scripts/launch-chrome-cdp.sh $portal."
       ;;
     hitechcity)
-      extra="Run bash scripts/preflight-portal-run.sh hitechcity then bash scripts/launch-chrome-cdp.sh hitechcity. Set HITECHCITY_CAREERS_ONLY=1 and run python3 tools/hitechcity/daily_apply.py so company career portals apply first (do not wait on LinkedIn CAPTCHA). Success = confirmation text only."
+      extra="Run bash scripts/preflight-portal-run.sh hitechcity then bash scripts/launch-chrome-cdp.sh hitechcity. Set HITECHCITY_CAREERS_ONLY=1 and run python3 tools/hitechcity/daily_apply.py so company career portals apply first in parallel (HITECHCITY_PARALLEL_TABS=10 default; do not wait on LinkedIn CAPTCHA). Success = confirmation text only."
       ;;
     foundit|cutshort|instahyre)
       extra="Run bash scripts/preflight-portal-run.sh $portal first."

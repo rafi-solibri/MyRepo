@@ -20,6 +20,8 @@ from tools.ats.complete import (
     frame_url_is_captcha_challenge,
     complete_icims,
     icims_hcaptcha_login,
+    apply_form_still_open,
+    visible_captcha_challenge,
     icims_logged_in,
     icims_should_wait_captcha,
     iframe_box_is_onscreen,
@@ -51,9 +53,51 @@ assert_true(is_submitted_text("We have received your application"), "received mu
 assert_true(is_submitted_text("Thanks for your interest — you're all set"), "all-set must count")
 assert_true(not is_submitted_text("Apply now to submit your application"), "CTA text must not count")
 
+
+# Oracle Cloud My Profile after apply
+from tools.ats.complete import looks_submitted as _looks_submitted
+from tools.ats import complete as _complete_mod
+
+class _OraclePage:
+    url = "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/my-profile"
+    def __init__(self, text):
+        self._text = text
+
+_orig_body = _complete_mod._body
+_complete_mod._body = lambda page, limit=4000: getattr(page, "_text", "")[:limit]
+try:
+    assert_true(
+        _looks_submitted(
+            _OraclePage(
+                "MY APPLICATIONS\nACTIVE JOB APPLICATIONS\nManager\nHyderabad\nStatus\nUnder Consideration\nApplied on 16/08/2026"
+            )
+        ),
+        "Oracle Under Consideration on my-profile must count as submitted",
+    )
+    assert_true(
+        not _looks_submitted(_OraclePage("Apply now to join our team")),
+        "generic apply text must not count",
+    )
+finally:
+    _complete_mod._body = _orig_body
+
 assert_true(is_hard_ats_wall("CAPTCHA/bot wall"), "captcha is hard")
 assert_true(is_hard_ats_wall("ats_login_wall"), "login is hard")
 assert_true(not is_hard_ats_wall("external_incomplete_or_timeout"), "timeout is not a company wall")
+assert_true(not is_hard_ats_wall("easy_apply_incomplete"), "easy incomplete is not a company wall")
+from tools.ats.complete import owner_form_wait_sec
+_saved_form = {k: os.environ.get(k) for k in ("ATS_OWNER_FORM_WAIT_SEC", "ATS_CAPTCHA_WAIT_SEC", "HOME_LOCAL", "CHROME_HEADLESS")}
+for k in ("ATS_OWNER_FORM_WAIT_SEC", "ATS_CAPTCHA_WAIT_SEC", "HOME_LOCAL", "CHROME_HEADLESS"):
+    os.environ.pop(k, None)
+os.environ["HOME_LOCAL"] = "1"
+assert_true(owner_form_wait_sec() >= 180, "headed owner form wait defaults on")
+os.environ["ATS_OWNER_FORM_WAIT_SEC"] = "0"
+assert_true(owner_form_wait_sec() == 0, "explicit 0 disables owner form wait")
+for k, v in _saved_form.items():
+    if v is None:
+        os.environ.pop(k, None)
+    else:
+        os.environ[k] = v
 assert_true(not is_hard_ats_wall("ats_time_cap"), "time_cap is not a company wall")
 assert_true(not is_hard_ats_wall("stuck/time cap after 3 steps"), "stuck is not a company wall")
 assert_true(not is_hard_ats_wall("job_unavailable"), "maintenance is not a company wall")
@@ -519,5 +563,29 @@ _logged_q = _FakeIframesPage(
 assert_true(icims_logged_in(_logged_q), "Log Out on questions is logged in")
 assert_true(not icims_should_wait_captcha(_logged_q), "logged-in questions skip captcha wait")
 assert_true(callable(complete_icims), "complete_icims is wired")
+
+
+# Footer "Protected by hCaptcha" alone is not a challenge wall.
+class _FooterCaptchaPage:
+    url = "https://example.com/apply"
+    frames = []
+    def locator(self, sel):
+        class _Empty:
+            def count(self):
+                return 0
+        return _Empty()
+    def evaluate(self, *a, **k):
+        return ""
+assert_true(not visible_captcha_challenge(_FooterCaptchaPage()), "footer hCaptcha text must not block")
+
+class _CandPage:
+    url = "https://global-external-amd.icims.com/jobs/80159/x/candidate"
+    frames = []
+    def locator(self, sel):
+        class _Empty:
+            def count(self):
+                return 0
+        return _Empty()
+assert_true(apply_form_still_open(_CandPage()), "candidate profile must count as open form")
 
 print("tools/ats/test_complete.py OK")

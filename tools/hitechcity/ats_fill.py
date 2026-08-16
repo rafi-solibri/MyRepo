@@ -14,7 +14,7 @@ PROFILE = {
     "last": "Ahmed",
     "full": "Mohammed Abdul Rafi Ahmed",
     "phone": "8790251698",
-    "email": "rafi.success@gmail.com",
+    "email": "",
     "linkedin": "https://linkedin.com/in/rafi-ahmed-mohammed-abdul-151644ba",
     "city": "Hyderabad",
     "state": "Telangana",
@@ -26,6 +26,20 @@ PROFILE = {
     "notice": "0",
     "experience_years": "15",
 }
+
+
+def profile_email() -> str:
+    """Resolve applicant email from env, then PROFILE (skip placeholders)."""
+    import os
+
+    for key in ("APPLY_EMAIL", "NAUKRI_APPLY_EMAIL", "LINKEDIN_EMAIL"):
+        val = (os.environ.get(key) or "").strip()
+        if val and "@" in val and "REDACT" not in val.upper():
+            return val
+    val = (PROFILE.get("email") or "").strip()
+    if val and "@" in val and "REDACT" not in val.upper():
+        return val
+    return ""
 
 
 def resume_path() -> str:
@@ -254,7 +268,7 @@ def fill_common(page: Page) -> None:
         (r"first name|given name", PROFILE["first"]),
         (r"last name|surname|family name", PROFILE["last"]),
         (r"^full name$|legal name|your name", PROFILE["full"]),
-        (r"email|e-mail", PROFILE["email"]),
+        (r"email|e-mail", profile_email()),
         (r"phone|mobile|tel", PROFILE["phone"]),
         (r"linkedin|profile url", PROFILE["linkedin"]),
         (r"city|current city", PROFILE["city"]),
@@ -365,9 +379,25 @@ def try_submit(page: Page) -> bool:
 
 
 def attempt_ats_apply(page: Page, time_cap_s: int = 390) -> tuple[str, str]:
-    """Fill + submit current ATS page. Returns (status, reason)."""
+    """Fill + submit current ATS page. Returns (status, reason).
+
+    Soft incompletes get one persist retry so we do not leave a form after the
+    owner solved captcha / helped with fields.
+    """
     try:
-        from tools.ats.complete import complete_ats
+        from tools.ats.complete import apply_form_still_open, complete_ats
     except Exception:
-        from ats.complete import complete_ats  # type: ignore
-    return complete_ats(page, time_cap_s=time_cap_s)
+        from ats.complete import apply_form_still_open, complete_ats  # type: ignore
+    status, reason = complete_ats(page, time_cap_s=time_cap_s)
+    if status == "blocked" and "incomplete" in (reason or "").lower():
+        try:
+            still = apply_form_still_open(page)
+        except Exception:
+            still = True
+        if still:
+            print(
+                "ATS persist_retry — form still open after incomplete; continuing to submit",
+                flush=True,
+            )
+            status, reason = complete_ats(page, time_cap_s=max(120, int(time_cap_s)))
+    return status, reason

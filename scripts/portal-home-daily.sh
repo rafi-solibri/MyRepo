@@ -120,7 +120,7 @@ CRITICAL STEP 0 before applies: node tools/naukri/update_profile_resume.js (prof
 fi
 if [[ "$PORTAL" == "hitechcity" ]]; then
   EXTRA_STEPS="$EXTRA_STEPS
-Run: python tools/hitechcity/daily_apply.py (or py -3). Write artifacts/hitechcity-daily.json AND artifacts/hitechcity-daily-run.json (home schema)."
+Run: python tools/hitechcity/daily_apply.py (or py -3). Every daily run uses parallel multi-tab careers (HITECHCITY_PARALLEL_TABS=10 by default) — do not set tabs=1. Write artifacts/hitechcity-daily.json AND artifacts/hitechcity-daily-run.json (home schema)."
 fi
 
 # Home-local evening replica: keep applies on this machine (do not launch cloud).

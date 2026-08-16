@@ -2,9 +2,12 @@
 """Discover software / IT tenants at Madhapur / HITEC premium campuses.
 
 Sources (best-effort; never wipe curated Priority-1 rows):
-1. Static seed expansion for Knowledge City / Knowledge Park / Raheja Mindspace
-2. LinkedIn company search when CDP session is live
-3. Optional board-surface companies passed via env JSON
+1. Full campus tenant catalog (Raheja / Knowledge City / Knowledge Park /
+   Madhapur–HITEC peer parks) — every daily run
+2. Live scrape of Mindspace REIT + Cityinfo Knowledge City parcel directories
+3. Legacy DISCOVERY_SEEDS merge (subset / aliases)
+4. LinkedIn *company-name* slug resolve when enabled (off by default)
+5. Optional board-surface companies passed via env JSON
 
 Writes:
   - merges new rows into tools/hitechcity/companies.json
@@ -22,6 +25,10 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
+from tools.hitechcity.campus_tenant_catalog import (
+    catalog_candidates,
+    fetch_web_directory_tenants,
+)
 from tools.hitechcity.filters import company_name_match
 
 COMPANIES_PATH = Path(__file__).with_name("companies.json")
@@ -112,11 +119,13 @@ SOFTWAREISH = re.compile(
 JUNK_TENANT_RE = re.compile(
     r"(?i)^software\s+companies?\b|"
     r"\b(tech\s+)?community\b|"
-    r"\b(meetup|user\s*group|chamber\s+of\s+commerce|coworking)\b|"
+    r"\b(meetup|user\s*group|chamber\s+of\s+commerce)\b|"
     r"\b(erbil|kurdistan)\b|"
     r"\bhiring\s+for\b|"
     r"^companies?\s+in\b|"
-    r"^\d+$"
+    r"^\d+$|"
+    r"city\s*scanner|city\s*tech\s*consultants|knowledge\s*bridge\s*solutions|"
+    r"software\s*development\s*aegona|coenterprise|\bsofteq\b"
 )
 
 
@@ -193,6 +202,38 @@ def discover_from_seeds(companies: list[dict]) -> dict[str, list[str]]:
     return {"added": added, "updated": updated}
 
 
+def discover_from_campus_catalog(companies: list[dict]) -> dict[str, list[str]]:
+    """Merge full Raheja / KC / KP / Madhapur–HITEC tenant catalog every run."""
+    added, updated = [], []
+    for cand in catalog_candidates():
+        status = _merge_candidate(companies, cand, "campus_catalog")
+        if status == "added":
+            added.append(cand["name"])
+        elif status == "updated":
+            updated.append(cand["name"])
+    return {"added": added, "updated": updated}
+
+
+def discover_from_web_directories(companies: list[dict]) -> dict[str, Any]:
+    """Live-scrape Mindspace + Cityinfo directories (soft-fail)."""
+    if os.environ.get("HITECHCITY_DISCOVERY_WEB", "1") != "1":
+        return {"added": [], "updated": [], "skipped": True}
+    found, meta = fetch_web_directory_tenants()
+    added, updated = [], []
+    for cand in found:
+        status = _merge_candidate(companies, cand, "web_directory")
+        if status == "added":
+            added.append(cand["name"])
+        elif status == "updated":
+            updated.append(cand["name"])
+    return {
+        "added": added,
+        "updated": updated,
+        "sources": meta.get("sources") or [],
+        "errors": meta.get("errors") or [],
+    }
+
+
 def discover_from_linkedin(companies: list[dict]) -> dict[str, Any]:
     """Resolve tenants via LinkedIn *company-name* search when session is live.
 
@@ -200,8 +241,9 @@ def discover_from_linkedin(companies: list[dict]) -> dict[str, Any]:
     those queries do not return employer pages. Seeds + employer-name queries only.
     """
     out: dict[str, Any] = {"added": [], "updated": [], "searches": 0, "error": None}
-    if os.environ.get("HITECHCITY_DISCOVERY_LINKEDIN", "1") != "1":
-        out["error"] = "disabled"
+    if os.environ.get("HITECHCITY_DISCOVERY_LINKEDIN", "0") != "1":
+        out["skipped"] = True
+        out["reason"] = "HITECHCITY_DISCOVERY_LINKEDIN=0 (seed-only; avoid company-search without job clicks)"
         return out
     try:
         from playwright.sync_api import sync_playwright
@@ -246,9 +288,11 @@ def discover_from_linkedin(companies: list[dict]) -> dict[str, Any]:
 
             for q, campuses in uniq[:24]:
                 out["searches"] += 1
+                # Pin Hyderabad HQ geo so company hits stay India/Hyd-relevant.
                 url = (
                     "https://www.linkedin.com/search/results/companies/"
                     f"?keywords={quote(q)}&origin=GLOBAL_SEARCH_HEADER"
+                    f"&companyHqGeo={quote('[\"105556991\"]')}"
                 )
                 try:
                     page.goto(url, wait_until="domcontentloaded", timeout=60000)
@@ -349,8 +393,19 @@ def prune_junk_tenants(companies: list[dict]) -> list[str]:
         if priority <= 1:
             keep.append(c)
             continue
-        # Auto-prune discovery noise (linkedin company-name / board_hint), not hand-curated seeds.
-        if source in ("linkedin_search", "linkedin_company_name", "board_hint") and _is_junk_tenant(name, slug):
+        # Auto-prune discovery noise; never remove priority-1 curated rows.
+        if _is_junk_tenant(name, slug) and (
+            source in (
+                "linkedin_search",
+                "linkedin_company_name",
+                "board_hint",
+                "web_directory",
+                "campus_catalog",
+                "seed",
+                "",
+            )
+            or priority >= 2
+        ):
             removed.append(name)
             continue
         keep.append(c)
@@ -367,30 +422,61 @@ def run(persist: bool = True) -> dict[str, Any]:
     before = len(companies)
     pruned = prune_junk_tenants(companies)
 
+    catalog = discover_from_campus_catalog(companies)
+    web = discover_from_web_directories(companies)
     seed = discover_from_seeds(companies)
     li = discover_from_linkedin(companies)
     board = discover_from_board_hints(companies)
+    # Second prune after merges (web/LI may reintroduce junk aliases).
+    pruned2 = prune_junk_tenants(companies)
+    pruned = sorted(set(pruned + pruned2))
 
     # Stable sort: priority then name
     companies.sort(key=lambda c: (int(c.get("priority") or 9), (c.get("name") or "").lower()))
     data["companies"] = companies
     data.setdefault("meta", {})["lastDiscoveryAt"] = datetime.now(timezone.utc).isoformat()
+    data["meta"]["discoveryMode"] = (
+        "campus_catalog+web_directories+seeds"
+        "+linkedin_optional+board_hints"
+    )
 
     if persist:
         COMPANIES_PATH.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 
+    added_all = (
+        catalog["added"]
+        + web.get("added", [])
+        + seed["added"]
+        + li.get("added", [])
+        + board["added"]
+    )
+    updated_all = (
+        catalog["updated"]
+        + web.get("updated", [])
+        + seed["updated"]
+        + li.get("updated", [])
+        + board["updated"]
+    )
     report = {
         "ok": True,
         "startedAt": datetime.now(timezone.utc).isoformat(),
         "beforeCount": before,
         "afterCount": len(companies),
         "prunedJunk": pruned,
+        "campusCatalog": {"added": catalog["added"], "updated": catalog["updated"]},
+        "webDirectories": {
+            "added": web.get("added") or [],
+            "updated": web.get("updated") or [],
+            "sources": web.get("sources") or [],
+            "errors": web.get("errors") or [],
+            "skipped": web.get("skipped"),
+        },
         "seed": seed,
         "linkedin": {k: v for k, v in li.items() if k != "error" or v},
         "linkedinError": li.get("error"),
         "boardHints": board,
-        "added": sorted(set(seed["added"] + li.get("added", []) + board["added"])),
-        "updated": sorted(set(seed["updated"] + li.get("updated", []) + board["updated"])),
+        "added": sorted(set(added_all)),
+        "updated": sorted(set(updated_all)),
         "companiesPath": str(COMPANIES_PATH),
     }
     try:

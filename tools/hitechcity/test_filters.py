@@ -19,6 +19,7 @@ from tools.hitechcity.careers_apply import (
     is_hang_scan_url,
     is_sso_only_careers_url,
     is_uhg_skip_url,
+    role_has_foreign_location,
     url_loc_hint,
 )
 from tools.hitechcity.filters import (
@@ -49,6 +50,15 @@ def test_title_ok():
     assert title_matches_senior_stack("Sr. Software Engineer")
     assert not title_matches_senior_stack("Software Engineer II")
     assert not title_matches_senior_stack("Software Engineer")
+    # Owner: never apply to AI/ML titles.
+    assert not title_matches_senior_stack(
+        "Staff/Principal Engineer - AI/ML & System-Level Validation"
+    )
+    assert skip_reason("Staff/Principal Engineer - AI/ML & System-Level Validation") == "title: AI/ML excluded"
+    assert skip_reason("Machine Learning Engineer") == "title: AI/ML excluded"
+    assert skip_reason("GenAI Architect") == "title: AI/ML excluded"
+    assert CAREERS_TITLE_SKIP.search("Staff/Principal Engineer - AI/ML & System-Level Validation")
+    assert LI_TITLE_SKIP.search("Staff/Principal Engineer - AI/ML & System-Level Validation")
     assert skip_reason("Salesforce Developer") is not None
     assert skip_reason("QA Engineer") is not None
     assert CAREERS_TITLE_SKIP.search("Staff Project Analyst")
@@ -63,6 +73,10 @@ def test_title_ok():
     assert CAREERS_TITLE_SKIP.search("Principal Silicon Design Engineer")
     assert CAREERS_TITLE_SKIP.search("Principal Silicon Design Engineer India, Telangana, Hyderabad")
     assert CAREERS_TITLE_SKIP.search("Product Design Manager")
+    assert CAREERS_TITLE_SKIP.search(
+        "Lead Principal Technical Program Manager DUBAI, United Arab Emirates"
+    )
+    assert CAREERS_TITLE_SKIP.search("Technical Program Manager")
     assert LI_TITLE_SKIP.search("Principal Silicon Design Engineer")
     assert JD_WRONG_STACK.search("We need a Mobile Architect for Ionic Capacitor and Zscaler")
     assert JD_WRONG_STACK.search(
@@ -83,6 +97,63 @@ def test_title_ok():
     assert any("Lead" in k for k in SEARCH_KEYWORDS)
     assert any("Manager" in k for k in SEARCH_KEYWORDS)
     assert SEARCH_KEYWORDS.index("Engineering Manager") < SEARCH_KEYWORDS.index("Solution Architect")
+    from tools.hitechcity.linkedin_target_apply import company_jobs_url
+
+    url_fc = company_jobs_url("jpmorganchase", "Engineering Manager", company_f_c="1068")
+    assert "jobs/search" in url_fc and "f_C=1068" in url_fc
+    assert "Hyderabad" in url_fc and "geoId=105556991" in url_fc and "distance=25" in url_fc
+    url_fb = company_jobs_url("jpmorganchase", "Engineering Manager")
+    assert "/company/jpmorganchase/jobs/" in url_fb and "geoId=105556991" in url_fb
+    # Careers portals: multi-role + Hyderabad location on every scan URL.
+    from tools.hitechcity.careers_apply import (
+        CAREERS_SEARCH_KEYWORDS,
+        expand_careers_scan_urls,
+        pin_careers_hyderabad_location,
+        rewrite_careers_search_keyword,
+    )
+
+    assert CAREERS_SEARCH_KEYWORDS[0] == "Engineering Manager"
+    assert CAREERS_SEARCH_KEYWORDS.index("Engineering Manager") < CAREERS_SEARCH_KEYWORDS.index(
+        "Solution Architect"
+    )
+    by = "https://careers.blueyonder.com/us/en/search-results?keywords=architect&location=Bengaluru"
+    assert "Engineering%20Manager" in rewrite_careers_search_keyword(by, "Engineering Manager") or (
+        "Engineering+Manager" in rewrite_careers_search_keyword(by, "Engineering Manager")
+    )
+    pinned = pin_careers_hyderabad_location(by)
+    assert "Hyderabad" in pinned and "Bengaluru" not in pinned
+    expanded = expand_careers_scan_urls([by])
+    assert len(expanded) >= 4
+    assert any("Engineering" in u for u in expanded)
+    assert all("Hyderabad" in u for u in expanded)
+    # Workday: always invent/keep location=Hyderabad on the URL; UI facet is separate.
+    intel = (
+        "https://intel.wd1.myworkdayjobs.com/en-US/External"
+        "?q=Engineering+Manager"
+    )
+    pinned_intel = pin_careers_hyderabad_location(intel)
+    assert "location=Hyderabad" in pinned_intel or "location=Hyderabad".lower() in pinned_intel.lower()
+    # Portals with NO location param must still get Hyderabad invented.
+    ge = pin_careers_hyderabad_location(
+        "https://careers.gevernova.com/global/en/search-results?keywords=Engineering+Manager"
+    )
+    assert "location=Hyderabad" in ge
+    hyland = pin_careers_hyderabad_location(
+        "https://careers-hyland.icims.com/jobs/search?ss=1&searchKeyword=Engineering+Manager&in_iframe=1"
+    )
+    assert "Hyderabad" in hyland
+    assert not card_location_ok(
+        "Security Researcher Technical Lead · Israel, Haifa",
+        url_loc_hint(
+            "https://intel.wd1.myworkdayjobs.com/en-US/External/job/Israel-Haifa/"
+            "Security-Researcher-Technical-Lead_JR0286006"
+        ),
+    )
+    assert role_has_foreign_location("Security Researcher Technical Lead · Israel, Haifa")
+    assert not card_location_ok(
+        "CPU DFT Manager · India, Bangalore",
+        "India Bangalore",
+    )
     # Discovery must not use campus-name LinkedIn queries.
     from tools.hitechcity import discover_tenants as disc
 
@@ -108,6 +179,17 @@ def test_oraclecloud_parent_card_location():
     # Oracle Cloud HCM parent-card text often bundles title + city (Bengaluru must skip).
     assert not card_location_ok(
         "System Architect BENGALURU, KARNATAKA, India and 2 more HOT JOB"
+    )
+    # Regression: Dubai/UAE must never open — even with Hyd search URL / "and 1 more".
+    assert not card_location_ok(
+        "Lead Principal Technical Program Manager DUBAI, United Arab Emirates and 1 more"
+    )
+    assert role_has_foreign_location(
+        "Lead Principal Technical Program Manager DUBAI, United Arab Emirates and 1 more"
+    )
+    # Multi-location naming Dubai + Hyderabad is still not Hyd-only.
+    assert not card_location_ok(
+        "Technical Program Manager Hyderabad, Telangana, India and Dubai, UAE"
     )
     assert card_location_ok(
         "Senior Lead Architect - Solution Architect Hyderabad, Telangana, India TechnologyArchitecture"
@@ -291,7 +373,7 @@ def test_hyland_icims_url():
     assert any("icims.com" in u and "in_iframe=1" in u for u in hyland["careersUrls"])
     intel = next(c for c in data["companies"] if c["name"] == "Intel")
     assert any("myworkdayjobs.com" in u for u in intel["careersUrls"])
-    assert any("location=Hyderabad" in u for u in intel["careersUrls"])
+    # URL may omit location=; pin_careers_hyderabad_location invents it every scan.
     byonder = next(c for c in data["companies"] if c["name"] == "Blue Yonder")
     assert any("search-results" in u for u in byonder["careersUrls"])
     href = "https://careers-hyland.icims.com/jobs/13991/senior-software-architect---.net/job?in_iframe=1"

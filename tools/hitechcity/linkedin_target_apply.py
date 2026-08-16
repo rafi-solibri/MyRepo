@@ -22,6 +22,7 @@ from tools.hitechcity.filters import (
     skip_reason,
     title_matches_senior_stack,
 )
+from tools.hitechcity.apply_notify import notify_application_result
 
 try:
     from tools.linkedin.filters import location_allowed
@@ -37,6 +38,11 @@ MAX_APPLY = int(os.environ.get("HITECHCITY_MAX_APPLY", "35"))
 MAX_REFERRALS = int(os.environ.get("HITECHCITY_MAX_REFERRALS", "12"))
 MAX_SCAN = int(os.environ.get("HITECHCITY_MAX_SCAN", "40"))
 TPR = os.environ.get("HITECHCITY_TPR", "r1209600")  # 14 days
+
+# LinkedIn location filter — text alone is unreliable; geoId pins Hyderabad metro.
+LI_LOCATION = os.environ.get("HITECHCITY_LI_LOCATION", "Hyderabad, Telangana, India")
+LI_GEO_ID = os.environ.get("HITECHCITY_LI_GEO_ID", "105556991")  # Hyderabad, Telangana, India
+LI_DISTANCE = os.environ.get("HITECHCITY_LI_DISTANCE", "25")
 
 # Company-jobs keyword searches — lead/staff/manager first (not architect-only).
 # LinkedIn company /jobs/?keywords= is a free-text field; keep phrases short.
@@ -64,10 +70,15 @@ MAX_TITLE_SEARCHES = int(os.environ.get("HITECHCITY_LI_TITLE_SEARCHES", "10"))
 # Title matches TITLE_OK via architect/principal/staff but are wrong for this .NET campus run.
 LI_TITLE_SKIP = re.compile(
     r"product\s*manager|network\s*architect|system\s*test|quality\s*(platform|assurance|engineering)|"
-    r"threat\s*detection|industrial\s*design|hardware\s*architect|machine\s*learning\s*hardware|"
-    r"gpu\s*software|embedded\s*software|field\s*robotics|platform\s*power|network\s*hardware|"
+    r"threat\s*detection|industrial\s*design|hardware\s*architect|"
+    r"machine\s*learning|gpu\s*software|embedded\s*software|field\s*robotics|platform\s*power|network\s*hardware|"
     r"kernel\s*optimization|rtl\s*design|physical\s*design|silicon\s*design|"
-    r"silicon\s*engineer|product\s*design\s*manager",
+    r"silicon\s*engineer|product\s*design\s*manager|"
+    r"\bai\s*/\s*ml\b|\bai\s*&\s*ml\b|\baiml\b|\bai-ml\b|"
+    r"\bdeep\s*learning\b|\bgen(?:erative)?\s*ai\b|\bllm\b|"
+    r"\bai\s*engineer\b|\bml\s*engineer\b|\bai\s*architect\b|\bml\s*architect\b|"
+    r"\bartificial\s*intelligence\b|\bcuda\b|\brocm\b|"
+    r"\bdata\s*scientist\b|\bcomputer\s*vision\b",
     re.I,
 )
 
@@ -78,9 +89,14 @@ REFERRAL_NOTE = (
 )
 # After this many CAPTCHA/login walls on company-website ATS, skip further EXT for that company.
 MAX_EXT_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "1"))
-# Hard cap on external ATS attempts per company (incomplete forms must not starve the run).
-MAX_EXT_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "2"))
+# Soft incompletes must not starve remaining matching LinkedIn externals.
+MAX_EXT_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "8"))
 EXT_ATS_TIME_CAP_S = int(os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S", "90"))
+if (os.environ.get("HOME_LOCAL") or "").strip().lower() in ("1", "true", "yes") or (
+    os.environ.get("CHROME_HEADLESS") or "1"
+).strip() in ("0", "false", "no"):
+    if not os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S"):
+        EXT_ATS_TIME_CAP_S = max(EXT_ATS_TIME_CAP_S, 180)
 
 
 @dataclass
@@ -97,6 +113,26 @@ class LiReport:
 def load_companies() -> list[dict[str, Any]]:
     data = json.loads(COMPANIES_PATH.read_text())
     return sorted(data.get("companies", []), key=lambda c: (c.get("priority", 9), c.get("name", "")))
+
+
+def persist_linkedin_company_ids(updates: dict[str, str]) -> int:
+    """Write resolved f_C ids back to companies.json (matched by linkedinSlug)."""
+    if not updates:
+        return 0
+    data = json.loads(COMPANIES_PATH.read_text())
+    saved = 0
+    for row in data.get("companies", []):
+        slug = (row.get("linkedinSlug") or "").strip()
+        f_c = updates.get(slug) or ""
+        if not f_c:
+            continue
+        if (row.get("linkedinCompanyId") or "").strip() == f_c:
+            continue
+        row["linkedinCompanyId"] = f_c
+        saved += 1
+    if saved:
+        COMPANIES_PATH.write_text(json.dumps(data, indent=2) + "\n")
+    return saved
 
 
 def goto_retry(page: Page, url: str, *, timeout: int = 70000, attempts: int = 3) -> None:
@@ -121,7 +157,33 @@ def goto_retry(page: Page, url: str, *, timeout: int = 70000, attempts: int = 3)
     raise last
 
 
+def attach_js_dialog_guard(page: Page) -> None:
+    """Dismiss native JS dialogs without crashing CDP sessions.
+
+    Playwright's default auto-dismiss races with Chrome when a dialog is already
+    gone → ProtocolError Page.handleJavaScriptDialog / No dialog is showing.
+    """
+    if getattr(page, "_hitechcity_dialog_guard", False):
+        return
+
+    def _on_dialog(dialog) -> None:  # type: ignore[no-untyped-def]
+        try:
+            dialog.dismiss()
+        except Exception:
+            try:
+                dialog.accept()
+            except Exception:
+                pass
+
+    try:
+        page.on("dialog", _on_dialog)
+        setattr(page, "_hitechcity_dialog_guard", True)
+    except Exception:
+        pass
+
+
 def dismiss(page: Page) -> None:
+    attach_js_dialog_guard(page)
     for sel in (
         "button.artdeco-modal__dismiss",
         "button[aria-label='Dismiss']",
@@ -145,10 +207,76 @@ def dismiss(page: Page) -> None:
         pass
 
 
-def company_jobs_url(slug: str, title: str) -> str:
+def resolve_company_f_c(page: Page, slug: str) -> str:
+    """Resolve LinkedIn numeric company id(s) for f_C= jobs search filter.
+
+    Company /jobs/ pages no longer expose /jobs/view/ anchors — searchable results
+    live on /jobs/search/?f_C=<id>. Pull id from company page urn or Show-all link.
+    """
+    slug = (slug or "").strip().strip("/")
+    if not slug:
+        return ""
+    try:
+        goto_retry(page, f"https://www.linkedin.com/company/{slug}/jobs/", timeout=60000)
+        time.sleep(2.0)
+        dismiss(page)
+    except Exception:
+        return ""
+    try:
+        found = page.evaluate(
+            """() => {
+              const ids = [];
+              const push = (v) => {
+                const s = String(v || '');
+                for (const m of s.matchAll(/(?:f_C=|fsd_company:|organization:|company:)(\\d{3,})/g)) {
+                  if (!ids.includes(m[1])) ids.push(m[1]);
+                }
+                for (const m of s.matchAll(/[?&]f_C=([^&]+)/g)) {
+                  for (const part of decodeURIComponent(m[1]).split(',')) {
+                    const id = part.trim();
+                    if (/^\\d{3,}$/.test(id) && !ids.includes(id)) ids.push(id);
+                  }
+                }
+              };
+              push(document.documentElement.innerHTML.slice(0, 500000));
+              for (const a of document.querySelectorAll('a[href*="f_C="], a[href*="search-results"]')) {
+                push(a.href || '');
+              }
+              return ids.slice(0, 8);
+            }"""
+        )
+    except Exception:
+        found = []
+    ids = [str(x) for x in (found or []) if str(x).isdigit()]
+    if not ids:
+        return ""
+    # Prefer classic short org ids (e.g. 1068) — long marketing urns are noisier.
+    ids_sorted = sorted(ids, key=lambda x: (len(x), x))
+    return ids_sorted[0]
+
+
+def company_jobs_url(slug: str, title: str, *, company_f_c: str = "") -> str:
+    """Hyderabad jobs search for one campus employer.
+
+    Prefer /jobs/search/?f_C=…&geoId=… (has /jobs/view/ cards). Fall back to
+    company /jobs/ page only when f_C is unknown (caller should resolve first).
+    Always pin Hyderabad via location + geoId so results stay campus-relevant.
+    """
+    loc_q = (
+        f"&location={quote(LI_LOCATION)}"
+        f"&geoId={quote(LI_GEO_ID)}"
+        f"&distance={quote(LI_DISTANCE)}"
+    )
+    if company_f_c:
+        return (
+            "https://www.linkedin.com/jobs/search/"
+            f"?keywords={quote(title)}"
+            f"{loc_q}"
+            f"&f_C={company_f_c}"
+        )
     return (
         f"https://www.linkedin.com/company/{slug}/jobs/"
-        f"?keywords={quote(title)}&location={quote('Hyderabad')}"
+        f"?keywords={quote(title)}{loc_q}"
     )
 
 
@@ -163,7 +291,10 @@ def extract_job_ids(page: Page) -> list[str]:
         html = ""
     ids = []
     seen = set()
-    for m in re.finditer(r"(?:jobPosting:|/jobs/view/|currentJobId=)(\d{6,})", html):
+    for m in re.finditer(
+        r"(?:jobPosting:|/jobs/view/|currentJobId=|data-occludable-job-id=\"|originToLandingJobPostings=)(\d{6,})",
+        html,
+    ):
         jid = m.group(1)
         if jid not in seen:
             seen.add(jid)
@@ -174,9 +305,9 @@ def extract_job_ids(page: Page) -> list[str]:
 def extract_job_cards(page: Page) -> list[dict[str, str]]:
     """Parse LinkedIn job result cards (id + title + location) and drop junk early.
 
-    Company /jobs/?keywords= pages embed many unrelated jobPosting ids in chrome /
-    recommendations. Opening those then LI SKIP title_not_senior looks like we
-    "found then skipped" a relevant search hit.
+    Prefer /jobs/search result list (/jobs/view/ + data-occludable-job-id). Company
+    /jobs/ square cards only link to search-results clusters — still harvest title
+    + originToLandingJobPostings when needed.
     """
     try:
         raw = page.evaluate(
@@ -192,18 +323,29 @@ def extract_job_cards(page: Page) -> list[dict[str, str]]:
                   location: (loc || '').trim().replace(/\\s+/g, ' ').slice(0, 120),
                 });
               };
-              // Primary: result-list anchors with visible titles.
+              const cleanTitle = (t) => {
+                t = (t || '').trim();
+                t = t.replace(/^Job Title\\s+/i, '');
+                const lines = t.split('\\n').map(s => s.trim()).filter(Boolean);
+                // Prefer first non-meta line.
+                for (const l of lines) {
+                  if (/^(company name|with verification|\\d+ (school|connect))/i.test(l)) continue;
+                  return l.slice(0, 180);
+                }
+                return (lines[0] || t).slice(0, 180);
+              };
+
+              // 1) Standard jobs search results (clickable /jobs/view/).
               for (const a of document.querySelectorAll('a[href*="/jobs/view/"]')) {
                 const m = (a.href || '').match(/\\/jobs\\/view\\/(\\d+)/);
                 if (!m) continue;
                 const card = a.closest('li') || a.closest('[data-occludable-job-id]') || a.parentElement;
-                let title = (a.innerText || a.getAttribute('aria-label') || '').trim();
-                title = title.split('\\n').map(s => s.trim()).filter(Boolean)[0] || title;
+                let title = cleanTitle(a.innerText || a.getAttribute('aria-label') || '');
                 if (!title || title.length < 4) {
                   const tEl = card && card.querySelector(
                     '.base-search-card__title, .job-card-list__title, strong, h3, h4'
                   );
-                  if (tEl) title = (tEl.innerText || '').trim().split('\\n')[0];
+                  if (tEl) title = cleanTitle(tEl.innerText || '');
                 }
                 let loc = '';
                 if (card) {
@@ -213,19 +355,45 @@ def extract_job_cards(page: Page) -> list[dict[str, str]]:
                   );
                   if (locEl) loc = (locEl.innerText || '').trim().split('\\n')[0];
                 }
-                // Skip nav chrome ("See all jobs", counts).
-                if (/^\\d+\\s+jobs?\\b/i.test(title) || /see all jobs|show more/i.test(title)) continue;
+                if (/^\\d+\\s+jobs?\\b/i.test(title) || /see all jobs|show more|show all jobs/i.test(title)) continue;
                 push(m[1], title, loc);
                 if (out.length >= 40) break;
               }
-              // data-occludable-job-id cards (jobs search layout).
-              if (out.length < 5) {
-                for (const el of document.querySelectorAll('[data-occludable-job-id], [data-job-id]')) {
-                  const id = el.getAttribute('data-occludable-job-id') || el.getAttribute('data-job-id');
-                  if (!id) continue;
-                  const tEl = el.querySelector('a[href*="/jobs/view/"], strong, h3, .job-card-list__title');
-                  const title = tEl ? (tEl.innerText || '').trim().split('\\n')[0] : '';
-                  push(id, title, '');
+
+              // 2) Occludable job cards (jobs search layout).
+              for (const el of document.querySelectorAll('[data-occludable-job-id]')) {
+                const id = el.getAttribute('data-occludable-job-id');
+                if (!id || seen.has(id)) continue;
+                const tEl = el.querySelector('a[href*="/jobs/view/"], strong, h3, .job-card-list__title, .artdeco-entity-lockup__title');
+                const title = cleanTitle(tEl ? (tEl.innerText || '') : (el.innerText || ''));
+                let loc = '';
+                const locEl = el.querySelector('.job-search-card__location, .artdeco-entity-lockup__caption, [class*="location"]');
+                if (locEl) loc = (locEl.innerText || '').trim().split('\\n')[0];
+                push(id, title, loc);
+                if (out.length >= 40) break;
+              }
+
+              // 3) Company-page square cards: title in text, id in originToLandingJobPostings.
+              if (out.length < 3) {
+                for (const a of document.querySelectorAll('a.job-card-square__link, a[class*="job-card-square"]')) {
+                  const title = cleanTitle(a.innerText || '');
+                  const href = a.href || '';
+                  const m = href.match(/originToLandingJobPostings=([^&]+)/i);
+                  let id = '';
+                  if (m) {
+                    id = decodeURIComponent(m[1]).split(',')[0].trim();
+                  }
+                  if (!id) {
+                    const m2 = href.match(/\\/jobs\\/view\\/(\\d+)/);
+                    if (m2) id = m2[1];
+                  }
+                  if (!id || !title) continue;
+                  let loc = '';
+                  if (/hyderabad|bengaluru|bangalore|mumbai|remote|india/i.test(a.innerText || '')) {
+                    const lm = (a.innerText || '').match(/Hyderabad|Bengaluru|Bangalore|Mumbai|Remote[^\\n]{0,20}|India/i);
+                    if (lm) loc = lm[0];
+                  }
+                  push(id, title, loc);
                   if (out.length >= 40) break;
                 }
               }
@@ -241,7 +409,6 @@ def extract_job_cards(page: Page) -> list[dict[str, str]]:
         loc = (row.get("location") or "").strip()
         if not jid:
             continue
-        # No title yet — keep (view page will re-check); prefer titled matches.
         if title:
             if skip_reason(title):
                 continue
@@ -252,7 +419,6 @@ def extract_job_cards(page: Page) -> list[dict[str, str]]:
             if loc and not location_allowed(loc) and not location_or_campus_ok(loc, "", ""):
                 continue
         cards.append({"id": jid, "title": title, "location": loc})
-    # Prefer cards that already have a qualifying title.
     titled = [c for c in cards if c.get("title")]
     return (titled or cards)[:MAX_SCAN]
 
@@ -378,7 +544,7 @@ def fill_easy_apply(page: Page) -> tuple[str, str]:
         # Common fields
         for label, val in (
             (r"phone|mobile", "8790251698"),
-            (r"email", "rafi.success@gmail.com"),
+            (r"email", (os.environ.get("APPLY_EMAIL") or os.environ.get("LINKEDIN_EMAIL") or "").strip()),
             (r"current.*(ctc|salary|compensation)", "5200000"),
             (r"expected.*(ctc|salary|compensation)", "6500000"),
             (r"notice", "0"),
@@ -424,6 +590,13 @@ def fill_easy_apply(page: Page) -> tuple[str, str]:
         pass
     if re.search(r"application (sent|submitted)|applied to ", body, re.I):
         return "applied", "easy_apply_submitted"
+    try:
+        from tools.ats.complete import wait_owner_finish_apply
+    except Exception:
+        from ats.complete import wait_owner_finish_apply  # type: ignore
+    owner = wait_owner_finish_apply(page, hint="LinkedIn Easy Apply required fields / Submit")
+    if owner:
+        return owner
     return "blocked", "easy_apply_incomplete"
 
 
@@ -617,11 +790,16 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
     applied = 0
     referrals = 0
 
+    f_c_updates: dict[str, str] = {}
+
     with sync_playwright() as p:
         browser = p.chromium.connect_over_cdp(CDP, timeout=20_000)
         context = browser.contexts[0]
         page = context.pages[0] if context.pages else context.new_page()
         page.set_default_timeout(45000)
+        attach_js_dialog_guard(page)
+        for pg in list(context.pages):
+            attach_js_dialog_guard(pg)
 
         goto_retry(page, "https://www.linkedin.com/feed/", timeout=60000)
         time.sleep(2.5)
@@ -660,13 +838,23 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
             ext_walls = 0
             ext_attempts = 0
 
+            # Resolve numeric company id once — /jobs/search/?f_C= has clickable cards.
+            company_f_c = (company.get("linkedinCompanyId") or "").strip()
+            if not company_f_c:
+                company_f_c = resolve_company_f_c(page, slug)
+                if company_f_c:
+                    company["linkedinCompanyId"] = company_f_c
+                    f_c_updates[slug] = company_f_c
+                    print(f"LI COMPANY ID {name} | f_C={company_f_c}", flush=True)
+                else:
+                    print(f"LI COMPANY ID miss {name} | slug={slug} (fallback company/jobs)", flush=True)
+
             job_ids: list[str] = []
-            # Search lead/staff/manager/.NET keywords on the *company* jobs page —
-            # never campus strings like "Knowledge City" / "Raheja" (those return nothing useful).
+            # Search lead/staff/manager/.NET keywords via jobs/search + company filter.
             for title in SEARCH_KEYWORDS[:MAX_TITLE_SEARCHES]:
                 if len(job_ids) >= MAX_SCAN:
                     break
-                url = company_jobs_url(slug, title)
+                url = company_jobs_url(slug, title, company_f_c=company_f_c)
                 print(f"LI COMPANY JOBS {name} | {title}", flush=True)
                 try:
                     goto_retry(page, url, timeout=70000)
@@ -675,10 +863,25 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                     continue
                 time.sleep(2.5)
                 dismiss(page)
-                for jid in extract_job_ids(page):
-                    if jid not in seen_jobs:
+                try:
+                    for _ in range(2):
+                        page.mouse.wheel(0, 1200)
+                        time.sleep(0.6)
+                except Exception:
+                    pass
+                cards = extract_job_cards(page)
+                print(f"LI CARDS {name} | {title} | n={len(cards)}", flush=True)
+                for card in cards:
+                    jid = card.get("id") or ""
+                    if jid and jid not in seen_jobs:
                         job_ids.append(jid)
                         seen_jobs.add(jid)
+                # Fallback: raw ids only when card parse empty (still better than nothing).
+                if not cards:
+                    for jid in extract_job_ids(page):
+                        if jid not in seen_jobs:
+                            job_ids.append(jid)
+                            seen_jobs.add(jid)
 
             job_ids = job_ids[: min(len(job_ids), MAX_SCAN)]
             print(f"LI IDS {name} count={len(job_ids)}", flush=True)
@@ -808,6 +1011,14 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                         "reason": why,
                         "campusCompany": name,
                     }
+                    notify_application_result(
+                        status=status,
+                        company=str(row["company"]),
+                        role=str(role),
+                        reason=str(why),
+                        path="linkedin-easy-apply",
+                        url=view,
+                    )
                     if status == "applied":
                         report.applied.append(row)
                         applied += 1
@@ -830,14 +1041,9 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                         pass
                     continue
 
-                if ext_walls >= MAX_EXT_WALLS_PER_COMPANY or ext_attempts >= MAX_EXT_ATTEMPTS_PER_COMPANY:
-                    reason_cap = (
-                        "ext_wall_cap"
-                        if ext_walls >= MAX_EXT_WALLS_PER_COMPANY
-                        else "ext_attempt_cap"
-                    )
+                if ext_walls >= MAX_EXT_WALLS_PER_COMPANY:
                     print(
-                        f"LI SKIP {reason_cap} | {company_found} | {role[:50]} | {jid}",
+                        f"LI SKIP ext_wall_cap | {company_found} | {role[:50]} | {jid}",
                         flush=True,
                     )
                     report.skipped.append(
@@ -845,21 +1051,29 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                             "company": company_found,
                             "role": role,
                             "job_id": jid,
-                            "reason": reason_cap,
+                            "reason": "ext_wall_cap",
                             "location": loc,
                         }
                     )
                     continue
 
                 print(f"LI EXT {company_found} | {role} | {jid}", flush=True)
-                ext_attempts += 1
                 ext = follow_external(page, meta)
                 ext["campusCompany"] = name
                 ext["location"] = loc
+                notify_application_result(
+                    status=str(ext.get("status") or ""),
+                    company=str(ext.get("company") or company_found or name),
+                    role=str(ext.get("role") or role),
+                    reason=str(ext.get("reason") or ""),
+                    path="linkedin-external-ats",
+                    url=str(ext.get("url") or view),
+                )
                 if ext["status"] == "applied":
                     report.external.append(ext)
                     report.applied.append(ext)
                     applied += 1
+                    ext_attempts += 1
                     if referrals < MAX_REFERRALS:
                         ref = referral_people_search(page, company_found or name, role)
                         report.referrals.append(ref)
@@ -876,11 +1090,14 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                         from ats.complete import is_hard_ats_wall  # type: ignore
                     if is_hard_ats_wall(why):
                         ext_walls += 1
+                        ext_attempts += 1
                         print(
                             f"LI EXT WALL {company_found} walls={ext_walls}/{MAX_EXT_WALLS_PER_COMPANY} "
                             f"attempts={ext_attempts}/{MAX_EXT_ATTEMPTS_PER_COMPANY} | {why}",
                             flush=True,
                         )
+                    elif "incomplete" not in why.lower():
+                        ext_attempts += 1
 
         # Extra referral sweep for priority-1 companies even if thin inventory
         for company in companies:
@@ -892,6 +1109,10 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
             report.referrals.append(ref)
             if ref.get("status") == "sent":
                 referrals += 1
+
+    n_saved = persist_linkedin_company_ids(f_c_updates)
+    if n_saved:
+        print(f"LI COMPANY ID persisted={n_saved}", flush=True)
 
     report.finishedAt = datetime.now(timezone.utc).isoformat()
     REPORT.parent.mkdir(parents=True, exist_ok=True)

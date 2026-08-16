@@ -49,7 +49,30 @@ PROFILE = {
     "notice": "0",
     "experience_years": "15",
     "school": "Acharya Nagarjuna University",
+    # Preferred answers for Source / How did you hear dropdowns (try in order).
+    "source": "LinkedIn",
 }
+
+# Source / "how did you hear" option matchers — LinkedIn first (owner preference).
+SOURCE_OPTION_PATTERNS = [
+    r"^LinkedIn$",
+    r"\bLinkedIn\b",
+    r"^Job Board$",
+    r"\bNaukri\b",
+    r"\bIndeed\b",
+    r"Company Websites?",
+    r"^Internet$",
+    r"^Online$",
+    r"Social Media",
+    r"^Other$",
+]
+SOURCE_LABEL_RE = re.compile(
+    r"^(source|candidate source|application source)$|"
+    r"how did you (hear|find|learn)|hear about (us|this|the)|"
+    r"where did you hear|referral source|sourcing channel|"
+    r"how were you referred",
+    re.I,
+)
 
 SUBMITTED_RE = re.compile(
     r"application (has been )?submitted|thank you for (your )?appl|"
@@ -569,17 +592,38 @@ def page_fingerprint(page) -> str:
 
 
 def looks_submitted(page) -> bool:
-    return is_submitted_text(_body(page, 7000))
+    text = _body(page, 7000)
+    if is_submitted_text(text):
+        return True
+    url = getattr(page, "url", "") or ""
+    # Oracle Cloud Candidate Experience lands on My Profile after apply.
+    if re.search(r"oraclecloud\.com|.*/my-profile", url, re.I) and re.search(
+        r"under consideration|active job applications.*applied on",
+        text,
+        re.I | re.S,
+    ):
+        return True
+    return False
 
 
 def visible_captcha_challenge(page) -> bool:
+    """True only for an on-screen challenge — not invisible widgets or footer badges.
+
+    Invisible hCaptcha always injects ``hcaptcha.com`` frames, and iCIMS footers say
+    "Protected by hCaptcha". Treating those as walls caused multi-minute false waits
+    and left the real apply form (AMD profile, Oracle sections) abandoned.
+    """
     try:
         for fr in getattr(page, "frames", []) or []:
-            if frame_url_is_captcha_challenge(getattr(fr, "url", None)):
+            fu = (getattr(fr, "url", None) or "").lower()
+            # Challenge documents only — skip api.js / static checkbox shells.
+            if "recaptcha" in fu and ("/bframe" in fu or "challenge" in fu):
+                return True
+            if "hcaptcha.com" in fu and "challenge" in fu:
                 return True
         for sel in (
             "iframe[src*='recaptcha/bframe']",
-            "iframe[src*='hcaptcha.com']",
+            "iframe[src*='hcaptcha.com'][src*='challenge']",
             "iframe[src*='challenges.cloudflare.com']",
             "iframe[src*='captcha-delivery.com']",
         ):
@@ -591,18 +635,37 @@ def visible_captcha_challenge(page) -> bool:
                     box = el.bounding_box()
                 except Exception:
                     box = None
-                if iframe_box_is_onscreen(box):
+                # Real challenge widgets are large; ignore tiny/invisible hosts.
+                if box and float(box.get("width") or 0) >= 100 and float(box.get("height") or 0) >= 60:
                     return True
+        # Broad hcaptcha iframes only when clearly on-screen (checkbox / challenge).
+        loc = page.locator("iframe[src*='hcaptcha.com']")
+        n = min(loc.count(), 8)
+        for i in range(n):
+            el = loc.nth(i)
+            try:
+                box = el.bounding_box()
+            except Exception:
+                box = None
+            if box and float(box.get("width") or 0) >= 200 and float(box.get("height") or 0) >= 50:
+                return True
         blob = _frames_text(page, 1500)
         if re.search(
-            r"verify you are human|press and hold|i'?m not a robot|protected by hcaptcha",
+            r"verify you are human|press and hold|i'?m not a robot|"
+            r"complete the captcha|solve the captcha|attention required",
             blob,
             re.I,
         ):
             return True
     except Exception:
         return False
-    return bool(re.search(r"verify you are human|press and hold|i'?m not a robot", _body(page, 1500), re.I))
+    return bool(
+        re.search(
+            r"verify you are human|press and hold|i'?m not a robot",
+            _body(page, 1500),
+            re.I,
+        )
+    )
 
 
 def _frames_text(page, limit: int = 2000) -> str:
@@ -714,7 +777,123 @@ def fill_icims_questions(page) -> bool:
                     clicked = True
             except Exception:
                 continue
+    # Source / how-did-you-hear selects inside the iCIMS iframe.
+    try:
+        if fill_source_fields(target):
+            clicked = True
+    except Exception:
+        pass
+    try:
+        selects = target.locator("select")
+        for i in range(min(selects.count(), 20)):
+            sel = selects.nth(i)
+            if not sel.is_visible():
+                continue
+            meta = ""
+            try:
+                meta = sel.evaluate(
+                    "e => ((e.name||'')+' '+(e.id||'')+' '+(e.getAttribute('aria-label')||'')+' '+"
+                    "((e.labels&&e.labels[0]&&e.labels[0].innerText)||'')).slice(0,160)"
+                )
+            except Exception:
+                continue
+            if re.search(r"source|hear about|how did you|referral", meta or "", re.I):
+                if _select_matching_option(sel, SOURCE_OPTION_PATTERNS):
+                    clicked = True
+    except Exception:
+        pass
+    # Years-of-experience / skill matrix required selects (AMD job-specific questions).
+    if icims_fill_required_selects(page):
+        clicked = True
     return clicked
+
+
+def icims_empty_required_fields(page) -> list[str]:
+    """Return labels/names of empty required selects in the active iCIMS frame."""
+    target = icims_active_frame(page)
+    try:
+        return list(
+            target.evaluate(
+                """() => {
+                  const bad = [];
+                  for (const sel of document.querySelectorAll('select')) {
+                    const near = ((sel.closest('tr,fieldset,li,div,td,section') || sel.parentElement)
+                      .innerText || '').slice(0, 180);
+                    const req = sel.required || sel.getAttribute('i_required') === 'true' ||
+                      /iCIMS_Forms_RequiredField/i.test(sel.className || '') ||
+                      /years of professional|work experience with/i.test(near);
+                    if (!req) continue;
+                    const cur = (sel.selectedOptions[0] && sel.selectedOptions[0].text || '').trim();
+                    if (!sel.value || /^make a selection|^select|^—/i.test(cur)) {
+                      bad.push((near.split('\\n').find(Boolean) || sel.name || 'required').slice(0, 80));
+                    }
+                  }
+                  return bad;
+                }"""
+            )
+            or []
+        )
+    except Exception:
+        return []
+
+
+def icims_fill_required_selects(page) -> bool:
+    """Fill empty required iCIMS selects (skill years, etc.) before any Submit click."""
+    target = icims_active_frame(page)
+    try:
+        n = int(
+            target.evaluate(
+                """() => {
+                  let filled = 0;
+                  const yearPrefs = [/^more than 8/i, /^10\\+/i, /^7-10/i, /^6-8/i, /^4-6/i, /^3-5/i];
+                  for (const sel of document.querySelectorAll('select')) {
+                    const near = ((sel.closest('tr,fieldset,li,div,td,section') || sel.parentElement)
+                      .innerText || '').slice(0, 200);
+                    const req = sel.required || sel.getAttribute('i_required') === 'true' ||
+                      /iCIMS_Forms_RequiredField/i.test(sel.className || '') ||
+                      /years of professional|work experience with/i.test(near);
+                    if (!req) continue;
+                    const cur = (sel.selectedOptions[0] && sel.selectedOptions[0].text || '').trim();
+                    if (sel.value && !/^make a selection|^select|^—/i.test(cur)) continue;
+                    let hit = null;
+                    for (const pref of yearPrefs) {
+                      hit = [...sel.options].find(o => pref.test((o.text || '').trim()) && o.value);
+                      if (hit) break;
+                    }
+                    if (!hit) hit = [...sel.options].filter(o => o.value).slice(-1)[0];
+                    if (hit) {
+                      sel.value = hit.value;
+                      sel.dispatchEvent(new Event('change', { bubbles: true }));
+                      filled++;
+                    }
+                  }
+                  return filled;
+                }"""
+            )
+            or 0
+        )
+        if n:
+            print(f"icims=filled_required_selects n={n}", flush=True)
+        return n > 0
+    except Exception:
+        return False
+
+
+def icims_click_submit_if_ready(page) -> bool:
+    """Click Submit/Next only when no required selects are still empty."""
+    target = icims_active_frame(page)
+    icims_fill_required_selects(page)
+    empty = icims_empty_required_fields(page)
+    if empty:
+        print(
+            f"icims=skip_submit empty_required={len(empty)} sample={empty[:3]}",
+            flush=True,
+        )
+        return False
+    return _click_text(
+        target,
+        ("Submit Profile", "Submit Application", "Submit", "Next", "Continue", "Save and Continue"),
+    )
 
 
 def advance_icims_us_forms(page) -> bool:
@@ -1391,13 +1570,18 @@ def workday_auth(page) -> str | None:
 
 
 def _pick_workday_option(page, form_field_id: str, patterns: list[str]) -> bool:
+    """Open a Workday select/multiselect and pick the first matching option.
+
+    Verifies the widget text actually changed — never claim success on a blind
+    typeahead Enter (that left Source empty and abandoned submits).
+    """
     try:
         root = page.locator(f"[data-automation-id='{form_field_id}']").first
         if not root.count() or not root.is_visible():
             return False
-        already = (root.inner_text(timeout=800) or "").strip()
-        if already and not re.search(r"select one|0 items selected|^$", already, re.I):
-            if any(re.search(p, already, re.I) for p in patterns):
+        before = (root.inner_text(timeout=800) or "").strip()
+        if before and not re.search(r"select one|0 items selected|^$", before, re.I):
+            if any(re.search(p, before, re.I) for p in patterns):
                 return True
         opener = root.locator(
             "button[aria-haspopup='listbox'], [data-automation-id='selectWidget'], "
@@ -1405,28 +1589,254 @@ def _pick_workday_option(page, form_field_id: str, patterns: list[str]) -> bool:
         ).first
         if opener.count() and opener.is_visible():
             opener.click(force=True)
-            _sleep(0.6)
+            _sleep(0.55)
         for pat in patterns:
             opt = page.locator(
                 "[data-automation-id='promptOption'], [role='option'], "
-                "[data-automation-id='promptLeafNode']"
+                "[data-automation-id='promptLeafNode'], li[role='option']"
             ).filter(has_text=re.compile(pat, re.I)).first
             if opt.count() and opt.is_visible():
                 opt.click(force=True)
                 _sleep(0.35)
                 page.keyboard.press("Escape")
-                return True
-            hint = re.sub(r"[^A-Za-z0-9 ]", "", pat)[:12]
-            if hint:
-                page.keyboard.type(hint, delay=30)
-                page.keyboard.press("Enter")
+                after = (root.inner_text(timeout=800) or "").strip()
+                if after and (
+                    any(re.search(p, after, re.I) for p in patterns)
+                    or (after != before and not re.search(r"select one|0 items selected", after, re.I))
+                ):
+                    return True
+            # Typeahead fallback — still verify the widget accepted a match.
+            hint = re.sub(r"[^A-Za-z0-9 ]", " ", pat)
+            hint = re.sub(r"\s+", " ", hint).strip()[:18]
+            if not hint or hint in ("^",):
+                continue
+            try:
+                page.keyboard.type(hint, delay=25)
+                _sleep(0.35)
+                opt2 = page.locator(
+                    "[data-automation-id='promptOption'], [role='option']"
+                ).filter(has_text=re.compile(pat, re.I)).first
+                if opt2.count() and opt2.is_visible():
+                    opt2.click(force=True)
+                else:
+                    page.keyboard.press("Enter")
                 _sleep(0.35)
                 page.keyboard.press("Escape")
-                return True
-        page.keyboard.press("Escape")
+                after = (root.inner_text(timeout=800) or "").strip()
+                if after and any(re.search(p, after, re.I) for p in patterns):
+                    return True
+                if after and after != before and not re.search(r"select one|0 items selected", after, re.I):
+                    return True
+            except Exception:
+                try:
+                    page.keyboard.press("Escape")
+                except Exception:
+                    pass
+                continue
+        try:
+            page.keyboard.press("Escape")
+        except Exception:
+            pass
     except Exception:
         return False
     return False
+
+
+def _select_matching_option(ctrl, patterns: list[str]) -> bool:
+    """Fill a native <select> from option label patterns."""
+    try:
+        tag = ctrl.evaluate("e => e.tagName.toLowerCase()")
+        if tag != "select":
+            return False
+        options = ctrl.evaluate(
+            """e => Array.from(e.options||[]).map(o => ({v:o.value, t:(o.text||o.label||'').trim()}))"""
+        )
+        for pat in patterns:
+            for opt in options or []:
+                text = opt.get("t") or ""
+                if re.search(pat, text, re.I) and text and not re.search(r"^select|choose|—|-+\s*$", text, re.I):
+                    try:
+                        ctrl.select_option(label=text)
+                    except Exception:
+                        ctrl.select_option(value=opt.get("v"))
+                    return True
+    except Exception:
+        return False
+    return False
+
+
+def fill_source_fields(page) -> bool:
+    """Fill Source / How did you hear — required on many Workday/iCIMS/GH forms.
+
+    Owner often has to pick these manually; leaving them empty causes
+    external_incomplete_or_timeout without submitting.
+    """
+    filled = False
+    # Workday automation-id widgets (common variants).
+    for fid in (
+        "formField-source",
+        "formField-sourceType",
+        "formField-candidateSource",
+        "formField-howDidYouHear",
+        "formField-howDidYouHearAboutUs",
+        "sourceDropdown",
+        "candidateSource",
+        "howDidYouHear",
+    ):
+        if _pick_workday_option(page, fid, SOURCE_OPTION_PATTERNS):
+            filled = True
+
+    # Native <select> by name/id/aria/nearby label.
+    try:
+        selects = page.locator("select")
+        n = min(selects.count(), 25)
+    except Exception:
+        n = 0
+    for i in range(n):
+        sel = selects.nth(i)
+        try:
+            if not sel.is_visible():
+                continue
+            meta = sel.evaluate(
+                """e => {
+                  const lab = e.labels && e.labels[0] ? e.labels[0].innerText : '';
+                  const near = (e.closest('fieldset,tr,div,li,section')||e.parentElement);
+                  return [e.name||'', e.id||'', e.getAttribute('aria-label')||'', lab||'',
+                          (near && near.innerText||'').slice(0,120)].join(' | ');
+                }"""
+            )
+            if not SOURCE_LABEL_RE.search(meta or ""):
+                # Also catch loose "Source*" labels in nearby text.
+                if not re.search(r"\bsource\b|how did you hear|hear about", meta or "", re.I):
+                    continue
+            if _select_matching_option(sel, SOURCE_OPTION_PATTERNS):
+                filled = True
+        except Exception:
+            continue
+
+    # Label → combobox / following control (Greenhouse, SmartRecruiters, generic).
+    try:
+        labels = page.locator("label, legend, [data-automation-id*='formField']")
+        ln = min(labels.count(), 80)
+    except Exception:
+        ln = 0
+    for i in range(ln):
+        lab = labels.nth(i)
+        try:
+            text = (lab.inner_text(timeout=300) or "").strip()
+        except Exception:
+            continue
+        if not text or len(text) > 100:
+            continue
+        if not (SOURCE_LABEL_RE.search(text) or re.search(r"\bsource\b|how did you hear", text, re.I)):
+            continue
+        try:
+            for_id = lab.get_attribute("for")
+            ctrl = (
+                page.locator(f'[id="{for_id}"]').first
+                if for_id
+                else lab.locator(
+                    "xpath=following::*[self::input or self::select or self::button or @role='combobox'][1]"
+                ).first
+            )
+            if not ctrl.count():
+                # Workday: label node IS the formField container
+                aid = lab.get_attribute("data-automation-id") or ""
+                if aid.startswith("formField-") and _pick_workday_option(page, aid, SOURCE_OPTION_PATTERNS):
+                    filled = True
+                continue
+            tag = ""
+            try:
+                tag = ctrl.evaluate("e => (e.tagName||'').toLowerCase()")
+            except Exception:
+                tag = ""
+            if tag == "select":
+                if _select_matching_option(ctrl, SOURCE_OPTION_PATTERNS):
+                    filled = True
+                continue
+            # Custom dropdown / combobox
+            ctrl.click(force=True)
+            _sleep(0.35)
+            preferred = PROFILE.get("source") or "LinkedIn"
+            page.keyboard.type(preferred, delay=20)
+            _sleep(0.35)
+            opt = page.locator("[role='option']:visible, [data-automation-id='promptOption']").filter(
+                has_text=re.compile(r"LinkedIn|Job Board|Naukri|Indeed|Internet|Other", re.I)
+            ).first
+            if opt.count() and opt.is_visible():
+                opt.click(force=True)
+                filled = True
+            else:
+                page.keyboard.press("Enter")
+                filled = True
+            _sleep(0.2)
+            try:
+                page.keyboard.press("Escape")
+            except Exception:
+                pass
+        except Exception:
+            continue
+    return filled
+
+
+def fill_validation_gaps(page) -> bool:
+    """After 'Errors Found' / required blanks — fill leftover required controls."""
+    progressed = False
+    if fill_source_fields(page):
+        progressed = True
+    # Required empty native selects: pick first non-placeholder option when label known.
+    try:
+        empties = page.evaluate(
+            """() => {
+              const out = [];
+              for (const s of document.querySelectorAll('select')) {
+                const req = s.required || s.getAttribute('aria-required') === 'true';
+                const bad = s.getAttribute('aria-invalid') === 'true';
+                const val = (s.value || '').trim();
+                const t = (s.options[s.selectedIndex] && s.options[s.selectedIndex].text || '').trim();
+                const empty = !val || /select|choose|^-$/i.test(t);
+                if ((req || bad || empty) && s.offsetParent !== null) {
+                  const lab = s.labels && s.labels[0] ? s.labels[0].innerText : (s.name||s.id||'');
+                  out.push({name: s.name||'', id: s.id||'', label: (lab||'').slice(0,80), empty});
+                }
+              }
+              return out.slice(0, 15);
+            }"""
+        )
+    except Exception:
+        empties = []
+    for row in empties or []:
+        label = row.get("label") or ""
+        sid = row.get("id") or ""
+        name = row.get("name") or ""
+        try:
+            ctrl = (
+                page.locator(f"select#{sid}").first
+                if sid
+                else page.locator(f"select[name='{name}']").first
+                if name
+                else None
+            )
+            if not ctrl or not ctrl.count():
+                continue
+            if re.search(r"source|hear about|how did you", f"{label} {name} {sid}", re.I):
+                if _select_matching_option(ctrl, SOURCE_OPTION_PATTERNS):
+                    progressed = True
+                continue
+            if re.search(r"country", f"{label} {name}", re.I):
+                if _select_matching_option(ctrl, [r"^India$", r"\bIndia\b"]):
+                    progressed = True
+                continue
+            if re.search(r"state|province|region", f"{label} {name}", re.I):
+                if _select_matching_option(ctrl, [r"Telangana", r"Andhra", r"^Other$", r"N/A", r"Not Applicable"]):
+                    progressed = True
+                continue
+            if re.search(r"phone\s*type|type of phone", f"{label} {name}", re.I):
+                if _select_matching_option(ctrl, [r"Mobile", r"Cell", r"Home"]):
+                    progressed = True
+        except Exception:
+            continue
+    return progressed
 
 
 def workday_fill_core(page) -> None:
@@ -1457,11 +1867,8 @@ def workday_fill_core(page) -> None:
     _type_automation(page, "phone", PROFILE["phone"])
     _type_automation(page, "formField-phoneNumber", PROFILE["phone"])
     _pick_workday_option(page, "formField-phoneType", [r"^Mobile$", r"Cell", r"Mobile"])
-    _pick_workday_option(
-        page,
-        "formField-source",
-        [r"^Job Board$", r"Naukri", r"Internet", r"Online", r"Other", r"Company Websites"],
-    )
+    _pick_workday_option(page, "formField-source", SOURCE_OPTION_PATTERNS)
+    fill_source_fields(page)
     _pick_workday_option(page, "formField-degree", [r"^BS$", r"Bachelor of Science", r"B\.?\s*Tech", r"^Bachelor"])
     _pick_workday_option(
         page,
@@ -1496,6 +1903,7 @@ def workday_fill_core(page) -> None:
         pass
     fill_labeled_fields(page)
     fill_yes_no(page)
+    fill_source_fields(page)
     tick_consents(page)
 
 
@@ -1537,7 +1945,7 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
         ):
             return "blocked", "ats_login_wall"
     stuck = 0
-    while time.time() - start < time_cap_s and stuck < 10:
+    while time.time() - start < time_cap_s and stuck < 14:
         if looks_submitted(page):
             return "applied", "confirmation"
         if workday_password_alert(page):
@@ -1570,15 +1978,223 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
             continue
         if looks_submitted(page):
             return "applied", "confirmation"
-        if re.search(r"Errors Found|is required and must have a value", _body(page, 1500), re.I):
-            stuck += 1
+        body_now = _body(page, 1800)
+        if re.search(r"Errors Found|is required and must have a value|this field is required", body_now, re.I):
+            # Do not abandon — fill Source / required blanks and retry advance.
+            progressed = fill_validation_gaps(page)
+            workday_fill_core(page)
+            if click_advance(page):
+                stuck = 0
+                _sleep(1.8)
+                continue
+            if progressed:
+                stuck = max(0, stuck - 1)
+            else:
+                stuck += 1
             _sleep(0.8)
             continue
         stuck += 1
         _sleep(1.2)
     if looks_submitted(page):
         return "applied", "confirmation"
+    owner = wait_owner_finish_apply(
+        page, hint="Source / required fields / Submit on this Workday apply"
+    )
+    if owner:
+        return owner
+    if apply_form_still_open(page):
+        print(
+            "workday=persist_retry — form still open after owner wait; continuing",
+            flush=True,
+        )
+        burst_start = time.time()
+        while time.time() - burst_start < 45:
+            if looks_submitted(page):
+                return "applied", "confirmation"
+            try:
+                upload_resume(page)
+                workday_fill_core(page)
+                fill_source_fields(page)
+                fill_validation_gaps(page)
+                click_advance(page)
+            except Exception:
+                pass
+            _sleep(1.0)
+        if looks_submitted(page):
+            return "applied", "confirmation"
     return "blocked", "external_incomplete_or_timeout"
+
+
+def owner_form_wait_sec() -> int:
+    """Seconds to wait for the owner to finish a matching-job form (Source, login, etc.).
+
+    Headed / HOME_LOCAL defaults to the same budget as captcha waits so we never
+    abandon a criteria-matching apply without asking the owner first.
+    """
+    raw = (os.environ.get("ATS_OWNER_FORM_WAIT_SEC") or "").strip()
+    if raw:
+        try:
+            return max(0, int(raw))
+        except ValueError:
+            return 0
+    # Reuse captcha wait budget when set; else headed defaults.
+    try:
+        from tools.ats.captcha_solve import owner_captcha_wait_sec
+
+        cap = owner_captcha_wait_sec()
+        if cap > 0:
+            return cap
+    except Exception:
+        pass
+    if (os.environ.get("HOME_LOCAL") or "").strip().lower() in ("1", "true", "yes"):
+        return 360
+    if (os.environ.get("CHROME_HEADLESS") or "1").strip() in ("0", "false", "no"):
+        return 360
+    return 0
+
+
+def apply_form_still_open(page) -> bool:
+    """True when the page still looks like an unfinished apply (do not abandon)."""
+    try:
+        url = getattr(page, "url", "") or ""
+    except Exception:
+        url = ""
+    if re.search(
+        r"/apply|/candidate|/questions|/login|mode=apply|mode=submit|"
+        r"oraclecloud\.com/.*/(?:job|apply)|greenhouse\.io/.*/application|"
+        r"myworkdayjobs\.com/.*/apply",
+        url,
+        re.I,
+    ):
+        return True
+    text = _frames_text(page, 2500)
+    if re.search(
+        r"candidate profile|submit profile|submit application|required field|"
+        r"how did you hear|upload your resume|personal info|work experience|"
+        r"please be sure to fill|enter your information|i accept",
+        text,
+        re.I,
+    ):
+        return True
+    try:
+        if page.locator("input[type='file']").count() > 0:
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
+    """Ask the owner to finish required fields / submit; do not abandon matching jobs.
+
+    Returns (status, reason) when submitted / already-applied, else None after timeout.
+    Keeps auto-filling Source and other gaps while waiting. Extends once if the form
+    is still open after owner activity (captcha/login) so we never walk away mid-apply.
+    """
+    wait = owner_form_wait_sec()
+    if wait <= 0:
+        return None
+    msg = hint or "required fields (e.g. Source / How did you hear), login, or Submit"
+    try:
+        from tools.ats.captcha_solve import focus_page_for_owner, owner_focus_interval_sec
+
+        focus_page_for_owner(page, reason="ask_owner_start")
+        focus_every = owner_focus_interval_sec()
+    except Exception:
+        focus_page_for_owner = None  # type: ignore
+        focus_every = 2.0
+    print(
+        f"ASK_OWNER wait={wait}s — finish {msg} in the focused Chrome tab, then Submit. "
+        f"Helper keeps filling Source/required blanks and resumes on confirmation.",
+        flush=True,
+    )
+    deadline = time.time() + wait
+    last_beat = 0.0
+    last_focus = 0.0
+    last_fp = page_fingerprint(page)
+    extended = False
+    poll = float(os.environ.get("ATS_CAPTCHA_POLL_SEC", "0.4") or "0.4")
+    poll = min(1.0, max(0.25, poll))
+    while True:
+        while time.time() < deadline:
+            if looks_submitted(page):
+                print("ASK_OWNER resolved=submitted", flush=True)
+                return "applied", "confirmation"
+            if looks_already_applied(page):
+                print("ASK_OWNER resolved=already_applied", flush=True)
+                return "skipped", "already_applied"
+            now = time.time()
+            if focus_page_for_owner and now - last_focus >= focus_every:
+                try:
+                    focus_page_for_owner(page, reason="ask_owner_hold")
+                except Exception:
+                    pass
+                last_focus = now
+            try:
+                # Prefer the iCIMS nested form document when present.
+                target = page
+                if re.search(r"icims\.com", getattr(page, "url", "") or "", re.I):
+                    target = icims_active_frame(page)
+                    icims_fill_gdpr_gate(page)
+                    fill_icims_candidate_profile(page)
+                try:
+                    upload_resume(target)
+                except Exception:
+                    try:
+                        upload_resume(page)
+                    except Exception:
+                        pass
+                fill_source_fields(target)
+                fill_validation_gaps(target)
+                # Skip slow label crawl on iCIMS — fast name fill already ran.
+                if not re.search(r"icims\.com", getattr(page, "url", "") or "", re.I):
+                    fill_labeled_fields(target)
+                    fill_yes_no(target)
+                tick_consents(target)
+                try:
+                    fill_icims_questions(page)
+                except Exception:
+                    pass
+                click_advance(target)
+                click_advance(page)
+            except Exception:
+                pass
+            fp = page_fingerprint(page)
+            if fp != last_fp:
+                # Owner or helper progressed — keep working; nudge deadline forward once.
+                last_fp = fp
+                if not extended and time.time() + 90 > deadline:
+                    deadline = max(deadline, time.time() + 120)
+                    print("ASK_OWNER progress — extending while form still open", flush=True)
+            now = time.time()
+            if now - last_beat >= 8.0:
+                left = max(0, int(deadline - now))
+                print(f"ASK_OWNER waiting {left}s left — tab kept focused for you", flush=True)
+                last_beat = now
+            _sleep(poll)
+        if looks_submitted(page):
+            return "applied", "confirmation"
+        if looks_already_applied(page):
+            return "skipped", "already_applied"
+        if not extended and apply_form_still_open(page):
+            extended = True
+            extra = max(120, min(wait, 360))
+            deadline = time.time() + extra
+            print(
+                f"ASK_OWNER extend={extra}s — form still open after owner action; "
+                f"continuing fill/submit (will not abandon)",
+                flush=True,
+            )
+            last_beat = 0.0
+            last_focus = 0.0
+            if focus_page_for_owner:
+                try:
+                    focus_page_for_owner(page, reason="ask_owner_extend")
+                except Exception:
+                    pass
+            continue
+        print("ASK_OWNER timeout — form still incomplete", flush=True)
+        return None
 
 
 def fill_greenhouse_combos(page) -> None:
@@ -1590,8 +2206,9 @@ def fill_greenhouse_combos(page) -> None:
         (r"require sponsorship|visa sponsorship", "No"),
         (r"ever been employed|previously employed", "No"),
         (r"gender", "Male"),
-        (r"how did you hear", "LinkedIn"),
+        (r"how did you hear|source|where did you hear", "LinkedIn"),
         (r"willing to relocate", "Yes"),
+        (r"candidate source|application source", "LinkedIn"),
     ]
     for label_re, answer in pairs:
         try:
@@ -1614,6 +2231,7 @@ def fill_greenhouse_combos(page) -> None:
             _sleep(0.2)
         except Exception:
             continue
+    fill_source_fields(page)
 
 
 def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
@@ -1670,6 +2288,8 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
         fill_labeled_fields(page)
         fill_yes_no(page)
         fill_greenhouse_combos(page)
+        fill_source_fields(page)
+        fill_validation_gaps(page)
         tick_consents(page)
         advanced = click_advance(page)
         _sleep(1.4 if advanced else 1.0)
@@ -1678,24 +2298,92 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
             stuck = 0
             last_fp = fp
             continue
+        # Validation errors — fill gaps and retry instead of abandoning.
+        if re.search(r"required|please (select|complete|fill)|errors? found", _body(page, 1200), re.I):
+            if fill_validation_gaps(page) or fill_source_fields(page):
+                if click_advance(page):
+                    stuck = 0
+                    last_fp = page_fingerprint(page)
+                    continue
         stuck += 1
         last_fp = fp
     if looks_submitted(page):
         return "applied", "confirmation"
+    owner = wait_owner_finish_apply(
+        page, hint="Source / How did you hear / required fields / Submit"
+    )
+    if owner:
+        return owner
+    if apply_form_still_open(page):
+        print(
+            "generic=persist_retry — ASK_OWNER timed out but form still open; fill again",
+            flush=True,
+        )
+        # Short aggressive burst — do not nest another full owner wait.
+        burst_start = time.time()
+        while time.time() - burst_start < 45:
+            if looks_submitted(page):
+                return "applied", "confirmation"
+            if looks_already_applied(page):
+                return "skipped", "already_applied"
+            try:
+                upload_resume(page)
+                fill_labeled_fields(page)
+                fill_source_fields(page)
+                fill_validation_gaps(page)
+                fill_yes_no(page)
+                tick_consents(page)
+                click_advance(page)
+            except Exception:
+                pass
+            _sleep(1.0)
+        if looks_submitted(page):
+            return "applied", "confirmation"
     return "blocked", "external_incomplete_or_timeout"
 
 
 def icims_active_frame(page):
-    """Prefer the in-iframe apply/login document over Hyland marketing chrome."""
+    """Prefer the nested ``in_iframe=1`` apply/login document (has Email / I accept).
+
+    Outer ``/jobs/N/login`` chrome often matches first but has no form fields —
+    always scan for ``in_iframe=1`` (or a frame that actually exposes email) first.
+    """
     try:
         frames = list(getattr(page, "frames", []) or [])
     except Exception:
         frames = []
+
+    def _frame_has_gdpr_form(fr) -> bool:
+        try:
+            return bool(
+                fr.evaluate(
+                    """() => {
+                      const email = document.querySelector(
+                        "input[type='email'], input[name*='email' i], input[id*='email' i]"
+                      );
+                      const t = (document.body && document.body.innerText || '');
+                      return !!(email || /I accept/i.test(t));
+                    }"""
+                )
+            )
+        except Exception:
+            return False
+
+    # 1) Explicit in_iframe=1 apply/login documents
+    for fr in frames:
+        u = getattr(fr, "url", "") or ""
+        if "in_iframe=1" in u and re.search(r"icims\.com/jobs/\d+", u, re.I):
+            return fr
+    # 2) Any icims frame that actually has Email / I accept
+    for fr in frames:
+        u = getattr(fr, "url", "") or ""
+        if re.search(r"icims\.com/jobs/\d+", u, re.I) and _frame_has_gdpr_form(fr):
+            return fr
+    # 3) Fallback: login/apply/questions URLs
     for fr in frames:
         u = getattr(fr, "url", "") or ""
         if re.search(r"icims\.com/jobs/\d+", u, re.I) and (
-            "in_iframe=1" in u
-            or "/login" in u
+            "/login" in u
             or "mode=apply" in u
             or "/questions" in u
             or "/form" in u
@@ -1704,6 +2392,190 @@ def icims_active_frame(page):
         ):
             return fr
     return page
+
+
+def fill_icims_candidate_profile(page) -> bool:
+    """Fast-path iCIMS Candidate Profile fill by field name (not slow label crawl).
+
+    Post-captcha profiles were taking minutes because ``fill_labeled_fields`` walks
+    ~70 labels with per-label timeouts. iCIMS exposes stable ``PersonProfileFields.*``
+    names — fill those in one frame.evaluate.
+    """
+    target = icims_active_frame(page)
+    email = ats_email()
+    payload = {
+        "email": email,
+        "first": PROFILE["first"],
+        "last": PROFILE["last"],
+        "phone": PROFILE["phone"],
+        "linkedin": PROFILE["linkedin"],
+        "city": PROFILE["city"],
+        "state": PROFILE["state"],
+        "country": PROFILE["country"],
+        "postal": PROFILE.get("postal") or "500081",
+        "school": PROFILE.get("school") or "JNTU Hyderabad",
+        "sourceText": "LinkedIn",
+    }
+    try:
+        ok = target.evaluate(
+            """(p) => {
+              const setter = Object.getOwnPropertyDescriptor(
+                window.HTMLInputElement.prototype, 'value'
+              ).set;
+              let n = 0;
+              const text = (name, val) => {
+                const el = document.querySelector('[name=\"' + name + '\"]');
+                if (!el || val == null || val === '') return;
+                try {
+                  el.focus();
+                  setter.call(el, String(val));
+                  el.dispatchEvent(new Event('input', { bubbles: true }));
+                  el.dispatchEvent(new Event('change', { bubbles: true }));
+                  n++;
+                } catch (e) {}
+              };
+              const sel = (name, prefs) => {
+                const el = document.querySelector('[name=\"' + name + '\"]');
+                if (!el || !el.options) return;
+                const opts = Array.from(el.options);
+                for (const pref of prefs) {
+                  const hit =
+                    opts.find(o => (o.text || '').trim().toLowerCase() === pref.toLowerCase()) ||
+                    opts.find(o => (o.text || '').toLowerCase().includes(pref.toLowerCase()));
+                  if (hit) {
+                    el.value = hit.value;
+                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                    n++;
+                    return;
+                  }
+                }
+              };
+              const flag = document.querySelector('[name=icimsCookiesEnabledCheck]');
+              if (flag) flag.value = 'true';
+              text('PersonProfileFields.Login', p.email);
+              text('PersonProfileFields.FirstName', p.first);
+              text('PersonProfileFields.LastName', p.last);
+              text('PersonProfileFields.Email', p.email);
+              text('rcf2268', p.linkedin);
+              sel('-1_PersonProfileFields.PhoneType', ['Mobile', 'Cell', 'Home']);
+              text('-1_PersonProfileFields.PhoneNumber', p.phone);
+              sel('-1_PersonProfileFields.AddressType', ['Home', 'Mailing']);
+              text('-1_PersonProfileFields.AddressStreet1', p.city);
+              text('-1_PersonProfileFields.AddressCity', p.city);
+              text('-1_PersonProfileFields.AddressZip', p.postal);
+              sel('-1_PersonProfileFields.AddressCountry', [p.country, 'India']);
+              sel('-1_PersonProfileFields.AddressState', [p.state, 'Telangana', 'Andhra Pradesh']);
+              sel('rcf3048', ['Internet Job Board', 'Job Board', 'LinkedIn', 'Company Website']);
+              text('rcf3049_Text', p.sourceText);
+              text('-1_CandProfileFields.OtherSchool', p.school);
+              sel('-1_CandProfileFields.IsGraduated', ['Received', 'Yes']);
+              sel('-1_CandProfileFields.GraduationDate_Month', ['May', '5']);
+              text('-1_CandProfileFields.GraduationDate_Year', '2008');
+              // iCIMS ajax dropdowns (Degree/Major) — type into sibling search + click result.
+              const ajaxPick = (selectName, query, pickRe) => {
+                const selEl = document.querySelector('[name="' + selectName + '"]');
+                if (!selEl) return;
+                let box = selEl.parentElement;
+                for (let i = 0; i < 6 && box; i++) {
+                  if (box.querySelector && box.querySelector('input.dropdown-search')) break;
+                  box = box.parentElement;
+                }
+                if (!box) return;
+                const search = box.querySelector('input.dropdown-search');
+                if (!search) return;
+                search.focus();
+                search.value = query;
+                search.dispatchEvent(new Event('input', { bubbles: true }));
+                search.dispatchEvent(new Event('keyup', { bubbles: true }));
+                const results = box.querySelector('.dropdown-results') || document.querySelector('.dropdown-results');
+                if (!results) return;
+                results.style.display = 'block';
+                const pre = new RegExp(pickRe, 'i');
+                const hit = [...results.querySelectorAll('div, li, a, span')].find(
+                  (k) => pre.test((k.innerText || '').trim()) && (k.innerText || '').trim().length < 90
+                );
+                if (hit) {
+                  hit.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+                  hit.click();
+                  n++;
+                }
+              };
+              ajaxPick('-1_CandProfileFields.Degree', 'Bachelor', 'Bachelor');
+              ajaxPick('-1_CandProfileFields.Major', 'Computer Science', 'Computer Science|Computer Eng');
+              return n > 0;
+            }""",
+            payload,
+        )
+        if ok:
+            print(f"icims=fast_profile_fill fields_ok", flush=True)
+        return bool(ok)
+    except Exception as exc:
+        print(f"icims=fast_profile_fill_err {exc!s}"[:180], flush=True)
+        return False
+
+
+def icims_fill_gdpr_gate(page) -> bool:
+    """Fill Email + check I accept + click Next on iCIMS GDPR/login gate."""
+    target = icims_active_frame(page)
+    email = ats_email()
+    progressed = False
+    if email:
+        try:
+            box = target.locator(
+                "input[type='email'], input[name*='email' i], input[id*='email' i]"
+            ).first
+            if box.count() and box.is_visible():
+                box.click(timeout=2000)
+                box.fill(email, timeout=4000)
+                progressed = True
+                _sleep(0.3)
+        except Exception:
+            pass
+    # Checkbox + "I accept" label (Next stays disabled until checked).
+    try:
+        cbs = target.locator("input[type='checkbox']")
+        for i in range(min(cbs.count(), 6)):
+            cb = cbs.nth(i)
+            if not cb.is_visible():
+                continue
+            near = ""
+            try:
+                near = cb.evaluate(
+                    "e => ((e.closest('label,div,li,tr,fieldset')||e.parentElement).innerText||'')"
+                )
+            except Exception:
+                near = ""
+            if re.search(r"accept|privacy|notice|consent|agree", near or "", re.I) or cbs.count() == 1:
+                if not cb.is_checked():
+                    try:
+                        cb.check(force=True)
+                    except Exception:
+                        cb.click(force=True)
+                if cb.is_checked():
+                    progressed = True
+                break
+    except Exception:
+        pass
+    try:
+        acc = target.get_by_text(re.compile(r"^I accept$", re.I)).first
+        if acc.count() and acc.is_visible():
+            acc.click(timeout=2500, force=True)
+            progressed = True
+            _sleep(0.3)
+    except Exception:
+        pass
+    try:
+        lab = target.locator("label").filter(has_text=re.compile(r"I accept", re.I)).first
+        if lab.count() and lab.is_visible():
+            lab.click(force=True)
+            progressed = True
+            _sleep(0.3)
+    except Exception:
+        pass
+    if _click_text(target, ("Next", "Continue", "Submit", "I accept")):
+        progressed = True
+        _sleep(0.8)
+    return progressed
 
 
 def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
@@ -1716,25 +2588,9 @@ def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
 
     prefer_icims_apply(page)
     _sleep(1.6)
+    # Always fill GDPR gate in the nested in_iframe=1 document first.
+    icims_fill_gdpr_gate(page)
     target = icims_active_frame(page)
-    email = ats_email()
-    if email:
-        try:
-            box = target.locator(
-                "input[type='email'], input[name*='email' i], input[id*='email' i]"
-            ).first
-            if box.count():
-                box.fill(email, timeout=4000)
-                _sleep(0.4)
-        except Exception:
-            pass
-    try:
-        acc = target.get_by_text(re.compile(r"^I accept$", re.I)).first
-        if acc.count() and acc.is_visible():
-            acc.click(timeout=2500)
-            _sleep(0.6)
-    except Exception:
-        pass
     if icims_should_wait_captcha(page):
         cleared = try_clear_hcaptcha(page)
         if not cleared:
@@ -1750,34 +2606,89 @@ def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
             if not captcha_solver_configured():
                 return "blocked", "captcha_needs_owner_or_solver"
             return "blocked", "CAPTCHA/bot wall"
+        # After owner captcha — stay on this application and finish profile/submit.
+        print("icims=post_captcha_continue — filling profile through submit", flush=True)
+        dismiss_cookies(page)
+        icims_fill_gdpr_gate(page)
+        target = icims_active_frame(page)
         try:
             _click_text(
                 target,
                 ("Continue", "Next", "Submit", "I accept", "Apply"),
             )
-            _sleep(1.5)
+            _sleep(0.6)
         except Exception:
             pass
     if looks_submitted(page) or looks_submitted(target):
         return "applied", "confirmation"
     start = time.time()
-    while time.time() - start < max(20, int(time_cap_s) - 10):
+    stuck = 0
+    last_fp = page_fingerprint(page)
+    while time.time() - start < max(20, int(time_cap_s) - 10) and stuck < 14:
+        target = icims_active_frame(page)
         if looks_submitted(page) or looks_submitted(target):
             return "applied", "confirmation"
         if looks_already_applied(page):
             return "skipped", "already_applied"
-        fill_icims_questions(page)
+        # Re-assert GDPR fields if the wall reappears mid-flow.
+        if icims_hcaptcha_login(page) or re.search(r"/login", getattr(target, "url", "") or "", re.I):
+            icims_fill_gdpr_gate(page)
+            target = icims_active_frame(page)
+        progressed = False
+        # Fast name-based profile fill first (seconds, not minutes).
+        if fill_icims_candidate_profile(page):
+            progressed = True
+        try:
+            upload_resume(target)
+            progressed = True
+        except Exception:
+            try:
+                upload_resume(page)
+            except Exception:
+                pass
+        try:
+            fill_source_fields(target)
+            fill_validation_gaps(target)
+            tick_consents(target)
+            progressed = True
+        except Exception:
+            pass
+        if fill_icims_questions(page):
+            progressed = True
         if advance_icims_us_forms(page):
-            _sleep(1.2)
-            target = icims_active_frame(page)
+            stuck = 0
+            last_fp = page_fingerprint(page)
+            _sleep(0.5)
             continue
-        if _click_text(target, ("Submit", "Next", "Continue", "Save and Continue")):
-            _sleep(1.4)
-            target = icims_active_frame(page)
+        # Never Submit while required selects are still empty.
+        if icims_click_submit_if_ready(page):
+            stuck = 0
+            last_fp = page_fingerprint(page)
+            _sleep(0.7)
             continue
-        break
-    remaining = max(30, int(time_cap_s) - int(time.time() - start) - 5)
-    return complete_generic(page, remaining)
+        fp = page_fingerprint(page)
+        if fp != last_fp or progressed:
+            stuck = max(0, stuck - 1)
+            last_fp = fp
+        else:
+            stuck += 1
+        _sleep(0.4)
+    if looks_submitted(page):
+        return "applied", "confirmation"
+    remaining = max(60, int(time_cap_s) - int(time.time() - start) - 5)
+    status, reason = complete_generic(page, remaining)
+    if status == "blocked" and "incomplete" in (reason or "") and apply_form_still_open(page):
+        print("icims=persist_retry — form still open after owner wait; one more fill pass", flush=True)
+        # One more fast profile + submit burst before giving up.
+        fill_icims_candidate_profile(page)
+        try:
+            upload_resume(icims_active_frame(page))
+        except Exception:
+            pass
+        icims_fill_required_selects(page)
+        icims_click_submit_if_ready(page)
+        status, reason = complete_generic(page, max(90, remaining))
+    return status, reason
 
 
 def complete_ats(page, time_cap_s: int | None = None) -> tuple[str, str]:

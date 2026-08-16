@@ -77,7 +77,7 @@ https://cursor.com/automations/b65968f7-953d-11f1-ba66-0e7d0216e441
 Rename this automation in the UI to **Hitech City / Knowledge City Daily** (it is currently Untitled). Paste once:
 
 ```text
-Read and OBEY the full instructions in automation-prompts/08-hitech-city.md (the fenced text block). Run `bash scripts/preflight-portal-run.sh hitechcity` first, then `bash scripts/launch-chrome-cdp.sh hitechcity`. Use resumes/Rafi_Resume.docx. Execute the daily Hitech City / Knowledge City / Madhapur premium-campus career-portal + LinkedIn referral apply job now via `python3 tools/hitechcity/daily_apply.py`.
+Read and OBEY the full instructions in automation-prompts/08-hitech-city.md (the fenced text block). Run `bash scripts/preflight-portal-run.sh hitechcity` first, then `bash scripts/launch-chrome-cdp.sh hitechcity`. Use resumes/Rafi_Resume.docx. Execute the daily Hitech City / Knowledge City / Madhapur premium-campus career-portal + LinkedIn referral apply job now via `python3 tools/hitechcity/daily_apply.py` (every run uses parallel multi-tab careers, `HITECHCITY_PARALLEL_TABS=10` by default — do not set tabs=1).
 ```
 
 ## Ensure Missing Daily Runs (~10:30 AM IST) — CREATE THIS

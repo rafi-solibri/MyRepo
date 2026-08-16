@@ -12,7 +12,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from playwright.sync_api import Page, sync_playwright
 
@@ -30,6 +30,7 @@ from tools.hitechcity.filters import (
     skip_reason,
     title_matches_senior_stack,
 )
+from tools.hitechcity.apply_notify import notify_application_result
 
 
 def _safe_print(msg: str) -> None:
@@ -42,13 +43,55 @@ def _safe_print(msg: str) -> None:
 CDP = os.environ.get("HITECHCITY_CDP") or os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222")
 COMPANIES_PATH = Path(__file__).with_name("companies.json")
 REPORT = Path(os.environ.get("HITECHCITY_CAREERS_REPORT", "/opt/cursor/artifacts/hitechcity-careers.json"))
-MAX_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_PER_COMPANY", "4"))
+MAX_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_PER_COMPANY", "8"))
 # Raised for discovery-expanded campus tenant list (still priority-sorted).
-MAX_COMPANIES = int(os.environ.get("HITECHCITY_MAX_COMPANIES", "40"))
+MAX_COMPANIES = int(os.environ.get("HITECHCITY_MAX_COMPANIES", "60"))
 # Tight default: SSO / Sign-In walls must fail fast so more campus tenants are tried.
 TIME_CAP_S = int(os.environ.get("HITECHCITY_ATS_TIME_CAP_S", os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S", "90")))
-MAX_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "1"))
-MAX_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "2"))
+MAX_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "3"))
+# Soft incompletes must not starve remaining matching roles at the same company.
+MAX_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "16"))
+# Headed/owner-available runs get a longer ATS budget so forms can be finished.
+if (os.environ.get("HOME_LOCAL") or "").strip().lower() in ("1", "true", "yes") or (
+    os.environ.get("CHROME_HEADLESS") or "1"
+).strip() in ("0", "false", "no"):
+    if not (os.environ.get("HITECHCITY_ATS_TIME_CAP_S") or os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S")):
+        TIME_CAP_S = max(TIME_CAP_S, 120)
+
+# Portal search terms — lead/staff/manager first (companies.json often baked "architect" only).
+CAREERS_SEARCH_KEYWORDS = [
+    "Engineering Manager",
+    "Technical Lead",
+    "Staff Software Engineer",
+    "Principal Software Engineer",
+    "Software Development Manager",
+    "Solution Architect",
+    ".NET Architect",
+    "Lead Software Engineer",
+]
+MAX_CAREERS_KEYWORD_SEARCHES = int(os.environ.get("HITECHCITY_CAREERS_KEYWORD_SEARCHES", "4"))
+
+_SEARCH_PARAM_KEYS = (
+    "keywords",
+    "keyword",
+    "q",
+    "search",
+    "query",
+    "searchKeyword",
+    "base_query",
+)
+_LOCATION_PARAM_KEYS = (
+    "location",
+    "locations",
+    "loc",
+    "loc_query",
+    "locationsearch",
+    "city",
+)
+CAREERS_LOCATION = os.environ.get("HITECHCITY_CAREERS_LOCATION", "Hyderabad")
+CAREERS_LOCATION_FULL = os.environ.get(
+    "HITECHCITY_CAREERS_LOCATION_FULL", "Hyderabad, Telangana, India"
+)
 
 TITLE_HINT = re.compile(
     r"architect|technical lead|tech lead|technology lead|engineering manager|"
@@ -74,6 +117,12 @@ BAD_LOC_HINT = re.compile(
     r"bengaluru|bangalore|pune|chennai|mumbai|noida|gurgaon|gurugram|"
     r"brazil|s[aã]o\s*carlos|malaysia|cyberjaya|costa\s*rica|heredia|nottingham|"
     r"kuala\s*lumpur|mexico|colombia|chile|argentina|"
+    # Middle East / APAC / other foreign workplaces (Oracle multi-location cards).
+    r"dubai|abu\s*dhabi|united\s*arab\s*emirates|\buae\b|saudi|riyadh|jeddah|"
+    r"qatar|doha|kuwait|bahrain|oman|muscat|"
+    r"singapore|hong\s*kong|tokyo|japan|seoul|korea|sydney|melbourne|australia|"
+    r"auckland|new\s*zealand|manila|philippines|jakarta|indonesia|bangkok|thailand|"
+    r"israel|tel\s*aviv|haifa|switzerland|zurich|geneva|france|paris|sweden|stockholm|"
     r"us[- ](?:texas|oregon|california|washington|arizona|colorado|massachusetts|"
     r"florida|georgia|illinois|new[- ]york)|india[- ](?:bangalore|bengaluru)|"
     r"hillsboro|santa[- ]clara|folsom|"
@@ -84,7 +133,7 @@ BAD_LOC_HINT = re.compile(
 CAREERS_TITLE_SKIP = re.compile(
     r"system\s*test|quality\s*(platform|assurance|engineering)|threat\s*detection|"
     r"project\s*analyst|project\s*manager|industrial\s*design|hardware\s*architect|"
-    r"machine\s*learning\s*hardware|gpu\s*software|embedded\s*software|"
+    r"machine\s*learning|gpu\s*software|gpu\s*/\s*cpu|kernel\s*optimization|embedded\s*software|"
     r"field\s*robotics|platform\s*power|network\s*hardware|"
     r"product\s*manager|network\s*architect|"
     r"chemical\s*mechanical|planarization|\bcmp\b|soc\s*compute|"
@@ -94,7 +143,12 @@ CAREERS_TITLE_SKIP = re.compile(
     r"chiplet|\basic\b|\bvlsi\b|rtl\s*design|dft\s*engineer|"
     r"analog\s*design|digital\s*design\s*engineer|verification\s*engineer|"
     r"sales\s*specialist|especialista|"
+    r"program\s*manager|technical\s*program\s*manager|\btpm\b|"
     r"\bai\s*native\b|\bdata\s*&\s*ai\b|staff\s*engineer\s*\(\s*ai|"
+    r"\bai\s*/\s*ml\b|\bai\s*&\s*ml\b|\baiml\b|\bai-ml\b|"
+    r"\bdeep\s*learning\b|\bgen(?:erative)?\s*ai\b|\bllm\b|"
+    r"\bai\s*engineer\b|\bml\s*engineer\b|\bai\s*architect\b|\bml\s*architect\b|"
+    r"\bartificial\s*intelligence\b|\bcuda\b|\brocm\b|"
     r"engineer in test|\bsdet\b|cyber\s*security|cybersecurity|"
     r"database engineer",
     re.I,
@@ -203,6 +257,254 @@ def load_companies() -> list[dict[str, Any]]:
         key=lambda c: (_company_ats_rank(c), c.get("priority", 9), c.get("name", "")),
     )
     return companies
+
+
+def rewrite_careers_search_keyword(url: str, keyword: str) -> str:
+    """Replace baked search terms (often 'architect') with the requested role keyword."""
+    if not url or not keyword:
+        return url
+    parts = urlparse(url)
+    qs = parse_qs(parts.query, keep_blank_values=True)
+    hit = False
+    for key in _SEARCH_PARAM_KEYS:
+        if key in qs and qs[key]:
+            qs[key] = [keyword]
+            hit = True
+    if not hit:
+        # Prefer 'keywords' when the portal has no search param yet.
+        qs["keywords"] = [keyword]
+    # Flatten for urlencode
+    flat: list[tuple[str, str]] = []
+    for k, vals in qs.items():
+        for v in vals:
+            flat.append((k, v))
+    return urlunparse(parts._replace(query=urlencode(flat, doseq=True)))
+
+
+def pin_careers_hyderabad_location(url: str) -> str:
+    """HARD: every careers search URL must carry Hyderabad.
+
+    Always set/overwrite location-like query params. Invent `location=Hyderabad`
+    when missing. Host-specific keys: loc_query (Amazon), locationsearch
+    (Blackbaud), loc (IBM), lc (Accenture), city+country (Salesforce),
+    searchLocation (iCIMS). Path hubs like `/search-jobs/Hyderabad/` stay.
+    Workday still gets location= for consistency; UI facet pin is separate.
+    """
+    if not url:
+        return url
+    parts = urlparse(url)
+    path = parts.path or ""
+    host = (parts.netloc or "").lower()
+    if re.search(r"/search-jobs/[^/]*hyderabad|/job/hyderabad|/jobs/hyderabad", path, re.I):
+        return url
+
+    qs = parse_qs(parts.query, keep_blank_values=True)
+    target_short = CAREERS_LOCATION
+    target_full = CAREERS_LOCATION_FULL
+
+    def _set(key: str, value: str) -> None:
+        qs[key] = [value]
+
+    if "amazon.jobs" in host:
+        _set("loc_query", target_full)
+    elif "blackbaud.com" in host:
+        _set("locationsearch", target_short)
+    elif "ibm.com" in host:
+        _set("loc", target_short)
+    elif "accenture.com" in host:
+        _set("lc", target_short)
+    elif "salesforce.com" in host:
+        _set("city", target_short)
+        _set("country", "India")
+    elif "apple.com" in host:
+        cur = (qs.get("location") or [""])[0]
+        if not (re.search(r"hyderabad", cur, re.I) and "-" in cur and len(cur) > 12):
+            _set("location", "hyderabad-HST430090")
+    elif "icims.com" in host:
+        _set("searchLocation", target_full)
+        _set("location", target_short)
+    elif "oraclecloud.com" in host or "careers.oracle.com" in host:
+        _set("location", target_full)
+    else:
+        hit = False
+        for key in _LOCATION_PARAM_KEYS:
+            if key not in qs or qs[key] is None:
+                continue
+            cur = (qs[key][0] or "").strip()
+            if re.search(r"hyderabad", cur, re.I) and "-" in cur and len(cur) > 12:
+                hit = True
+                continue
+            if key in ("loc_query",) or "," in cur or re.search(r"telangana|india", cur, re.I):
+                _set(key, target_full)
+            else:
+                _set(key, target_short)
+            hit = True
+        if not hit:
+            _set("location", target_short)
+
+    if "city" in qs and qs["city"]:
+        if not re.search(r"hyderabad", qs["city"][0] or "", re.I):
+            _set("city", target_short)
+        if "country" in qs or "salesforce.com" in host:
+            _set("country", "India")
+
+    flat: list[tuple[str, str]] = []
+    for k, vals in qs.items():
+        for v in vals:
+            flat.append((k, v))
+    return urlunparse(parts._replace(query=urlencode(flat, doseq=True)))
+
+
+def pin_portal_location_ui(page: Page) -> dict[str, Any]:
+    """Best-effort: set Hyderabad in on-page location filters after navigation."""
+    try:
+        url = page.url or ""
+    except Exception:
+        url = ""
+    if re.search(r"myworkdayjobs\.com", url, re.I):
+        return workday_pin_hyderabad_location_ui(page)
+
+    out: dict[str, Any] = {"pinned": False, "available": False, "note": "generic_ui"}
+    selectors = [
+        'input[placeholder*="Location" i]',
+        'input[aria-label*="Location" i]',
+        'input[name*="location" i]',
+        'input[id*="location" i]',
+        'input[data-automation-id*="location" i]',
+        'input[placeholder*="City" i]',
+        'input[aria-label*="City" i]',
+    ]
+    for sel in selectors:
+        try:
+            loc = page.locator(sel)
+            if not loc.count() or not loc.first.is_visible():
+                continue
+            loc.first.click(timeout=1500)
+            loc.first.fill("")
+            loc.first.fill(CAREERS_LOCATION, timeout=2000)
+            time.sleep(0.8)
+            opt = page.get_by_role("option", name=re.compile(r"Hyderabad", re.I))
+            if opt.count():
+                opt.first.click(timeout=2000)
+                out.update(pinned=True, available=True, note=f"selected_option:{sel}")
+                time.sleep(1.0)
+                return out
+            loc.first.press("Enter")
+            out.update(pinned=True, available=True, note=f"typed_enter:{sel}")
+            time.sleep(1.0)
+            return out
+        except Exception:
+            continue
+    try:
+        btn = page.get_by_role("button", name=re.compile(r"^Location", re.I))
+        if btn.count() and btn.first.is_visible():
+            btn.first.click(timeout=2000)
+            time.sleep(0.6)
+            inp = page.locator(
+                'input[type="text"], input[type="search"], input[placeholder*="Search" i]'
+            )
+            if inp.count():
+                inp.first.fill(CAREERS_LOCATION, timeout=2000)
+                time.sleep(0.8)
+                hyd = page.get_by_text(re.compile(r"Hyderabad", re.I))
+                if hyd.count():
+                    hyd.first.click(timeout=2000)
+                    out.update(pinned=True, available=True, note="button_menu_hyd")
+                    time.sleep(1.0)
+                    return out
+                out.update(note="button_menu_no_hyd", available=False)
+    except Exception as e:
+        out["note"] = f"generic_failed:{e}"
+    return out
+
+
+def workday_pin_hyderabad_location_ui(page: Page) -> dict[str, Any]:
+    """Open Workday Location filter and select Hyderabad when present.
+
+    Returns {pinned: bool, available: bool, note: str}. When Hyderabad is not in
+    the location list (e.g. Intel today), available=False — caller should skip
+    non-Hyd roles rather than open Haifa/Bangalore/US cards.
+    """
+    out: dict[str, Any] = {"pinned": False, "available": False, "note": ""}
+    try:
+        url = page.url or ""
+    except Exception:
+        url = ""
+    if not re.search(r"myworkdayjobs\.com", url, re.I):
+        out["note"] = "not_workday"
+        return out
+    try:
+        btn = page.locator('[data-automation-id="distanceLocation"]')
+        if not btn.count() or not btn.first.is_visible():
+            out["note"] = "no_location_button"
+            return out
+        btn.first.click(timeout=4000)
+        time.sleep(1.0)
+    except Exception as e:
+        out["note"] = f"open_failed:{e}"
+        return out
+    try:
+        menu = page.locator('[data-automation-id="filterMenu"]')
+        menu.wait_for(state="visible", timeout=4000)
+        menu_text = (menu.inner_text(timeout=2000) or "")
+        if re.search(r"hyderabad|telangana|madhapur", menu_text, re.I):
+            out["available"] = True
+        inp = menu.locator(
+            'input[type="text"], input[type="search"], '
+            '[data-automation-id="searchBox"] input, '
+            'input[placeholder*="Search" i]'
+        )
+        if inp.count():
+            inp.first.fill(CAREERS_LOCATION, timeout=2500)
+            time.sleep(1.2)
+            menu_text = (menu.inner_text(timeout=2000) or "")
+            if re.search(r"hyderabad|telangana|madhapur", menu_text, re.I):
+                out["available"] = True
+        if out["available"]:
+            opt = menu.get_by_text(re.compile(r"Hyderabad", re.I)).first
+            if opt.count():
+                opt.click(timeout=3000)
+                out["pinned"] = True
+                out["note"] = "selected_hyderabad"
+                time.sleep(1.5)
+            else:
+                out["note"] = "hyd_visible_not_clickable"
+        else:
+            out["note"] = "no_hyderabad_in_location_filter"
+            try:
+                page.keyboard.press("Escape")
+            except Exception:
+                pass
+    except Exception as e:
+        out["note"] = f"filter_failed:{e}"
+        try:
+            page.keyboard.press("Escape")
+        except Exception:
+            pass
+    return out
+
+
+def workday_card_location_blob(role: str, url: str) -> str:
+    """Combine title + Workday path workplace (e.g. /job/Israel-Haifa/)."""
+    return f"{role or ''} {url_loc_hint(url or '')}".strip()
+
+
+def expand_careers_scan_urls(urls: list[str]) -> list[str]:
+    """Emit role-diverse Hyd-scoped scan URLs (EM/Lead/Staff first) per careers link."""
+    base = [u for u in (urls or []) if u]
+    if not base:
+        return []
+    keywords = CAREERS_SEARCH_KEYWORDS[:MAX_CAREERS_KEYWORD_SEARCHES]
+    out: list[str] = []
+    seen: set[str] = set()
+    for kw in keywords:
+        for url in base:
+            rewritten = pin_careers_hyderabad_location(rewrite_careers_search_keyword(url, kw))
+            if rewritten in seen:
+                continue
+            seen.add(rewritten)
+            out.append(rewritten)
+    return out
 
 
 def _company_ats_rank(company: dict[str, Any]) -> int:
@@ -338,7 +640,16 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
               )];
               for (const a of wdTitles) {
                 const href = a.href || a.closest('a')?.href || '';
-                const text = (a.innerText || a.textContent || a.getAttribute('aria-label') || '').trim().replace(/\\s+/g, ' ');
+                let text = (a.innerText || a.textContent || a.getAttribute('aria-label') || '').trim().replace(/\\s+/g, ' ');
+                // Workday lists workplace under data-automation-id="locations" near the title.
+                try {
+                  const row = a.closest('li') || a.closest('[data-automation-id="jobTitle"]')?.parentElement || a.parentElement;
+                  const locEl = row && row.querySelector('[data-automation-id="locations"]');
+                  const loc = (locEl && (locEl.innerText || '').trim().replace(/^locations\\s*/i, '')) || '';
+                  if (loc && loc.length >= 3 && loc.length < 80 && !text.toLowerCase().includes(loc.toLowerCase().split(',')[0])) {
+                    text = (text + ' · ' + loc).replace(/\\s+/g, ' ').slice(0, 180);
+                  }
+                } catch (e) {}
                 if (href && text && text.length >= 8 && !seen.has(href)) {
                   seen.add(href);
                   out.push({ href, text: text.slice(0, 180) });
@@ -481,15 +792,32 @@ def card_location_ok(role_text: str, top_card: str = "") -> bool:
         return True
     # Explicit non-Hyd city/country wins — including Remote Canada / Remote US / Remote UK.
     # Bare "Remote" / footer "India" must NOT rescue Bengaluru or foreign workplaces.
+    # Multi-location cards that name Dubai/Bengaluru AND Hyderabad are still not Hyd-only.
     hyd_city = re.compile(
         r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|gachibowli|raidurg",
         re.I,
     )
-    if BAD_LOC_HINT.search(blob) and not hyd_city.search(blob):
+    if BAD_LOC_HINT.search(blob):
         return False
-    if LOC_HINT.search(blob) or location_or_campus_ok(blob, "", ""):
+    if hyd_city.search(blob) or location_or_campus_ok(blob, "", ""):
         return True
-    return True
+    # Vague India/Remote without a foreign city — allow; apply_job still re-checks.
+    if re.search(r"\bremote\b|\bwfh\b|work from home|\bindia\b", blob, re.I):
+        return True
+    # Unknown city text (no Hyd, no known foreign) — do not assume Hyd.
+    return False
+
+
+def role_has_foreign_location(role: str) -> bool:
+    """True when the job title/card itself names a non-Hyd city or country."""
+    role = role or ""
+    if re.search(
+        r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|gachibowli|raidurg",
+        role,
+        re.I,
+    ):
+        return False
+    return bool(BAD_LOC_HINT.search(role))
 
 
 def dismiss_cookie_banners(page: Page) -> None:
@@ -549,13 +877,21 @@ def _connect_careers_cdp(p):
         raise RuntimeError("cdp_no_contexts")
     context = browser.contexts[0]
     _close_uhg_tabs(context)
-    page = context.pages[0] if context.pages else context.new_page()
+    # Parallel workers always get a dedicated tab so 10 companies apply at once.
+    if os.environ.get("HITECHCITY_PARALLEL_WORKER"):
+        page = context.new_page()
+    else:
+        page = context.pages[0] if context.pages else context.new_page()
     if is_uhg_skip_url(getattr(page, "url", "") or ""):
         try:
             page = context.new_page()
         except Exception:
             pass
     page.set_default_timeout(45000)
+    try:
+        page.bring_to_front()
+    except Exception:
+        pass
     return browser, context, page
 
 
@@ -637,6 +973,11 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         row["status"] = "skipped"
         row["reason"] = "location_non_hyd_city"
         return row
+    # Title itself names Dubai/Bengaluru/etc. — never open, even if search URL said Hyd.
+    if role_has_foreign_location(job.get("role") or ""):
+        row["status"] = "skipped"
+        row["reason"] = "location_foreign_in_title"
+        return row
     try:
         page.goto(job["url"], wait_until="domcontentloaded", timeout=60000)
     except Exception as e:
@@ -689,21 +1030,26 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         row["reason"] = "location_non_hyd_city"
         row["finalUrl"] = page.url
         return row
-    # Require Hyd/campus/remote/India — OR apply-bias when no foreign city is stated
-    # (search listings are often Hyd-scoped but the JD top card omits location).
+    # Require Hyd/campus/remote/India — never apply-bias past Dubai/UAE/Bengaluru/etc.
+    # (search listings are often Hyd-scoped but Oracle multi-loc cards still name foreign cities).
     loc_blob = f"{role} {top or ''} {page_title}"
-    has_hyd = bool(LOC_HINT.search(loc_blob) or location_or_campus_ok(loc_blob, "", ""))
-    has_foreign = bool(BAD_LOC_HINT.search(loc_blob)) and not re.search(
-        r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|gachibowli|raidurg",
-        loc_blob,
-        re.I,
+    if BAD_LOC_HINT.search(loc_blob) or role_has_foreign_location(role):
+        row["status"] = "skipped"
+        row["reason"] = "location_not_hyd_or_campus"
+        row["finalUrl"] = page.url
+        return row
+    has_hyd = bool(
+        re.search(
+            r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|gachibowli|raidurg",
+            loc_blob,
+            re.I,
+        )
+        or location_or_campus_ok(loc_blob, "", "")
     )
+    # Bare "India" / Remote alone is OK only when no foreign city (already checked).
+    if not has_hyd and re.search(r"\bremote\b|\bwfh\b|work from home|\bindia\b", loc_blob, re.I):
+        has_hyd = True
     if not has_hyd:
-        if has_foreign:
-            row["status"] = "skipped"
-            row["reason"] = "location_not_hyd_or_campus"
-            row["finalUrl"] = page.url
-            return row
         # Uncertain (no Hyd pill, no foreign city) → APPLY bias per campus prompt.
         print(
             f"CAREERS LOC apply_bias_no_city_pill | {job['company']} | {role[:60]}",
@@ -813,6 +1159,16 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
             continue
         kept.append(company)
     companies = kept[:MAX_COMPANIES]
+    # Multi-tab fan-out (default 10) unless this process is already a worker.
+    parallel_tabs = int(os.environ.get("HITECHCITY_PARALLEL_TABS", "10"))
+    if (
+        parallel_tabs > 1
+        and len(companies) > 1
+        and not os.environ.get("HITECHCITY_PARALLEL_WORKER")
+    ):
+        from tools.hitechcity.careers_parallel import run_parallel
+
+        return run_parallel(companies)
     seen_urls: set[str] = set()
 
     with sync_playwright() as p:
@@ -826,12 +1182,17 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                 break
             name = company["name"]
             campuses = ",".join(company.get("campuses") or [])
-            urls = company.get("careersUrls") or []
-            _safe_print(f"CAREERS SCAN {name}")
+            urls = expand_careers_scan_urls(company.get("careersUrls") or [])
+            _safe_print(f"CAREERS SCAN {name} | urls={len(urls)} roles={MAX_CAREERS_KEYWORD_SEARCHES}")
             company_applied = 0
             company_walls = 0
             company_attempts = 0
+            workday_no_hyd = False
+            loc_ui_done = False
             for url in urls:
+                if workday_no_hyd and re.search(r"myworkdayjobs\.com", url, re.I):
+                    # One confirmed "no Hyderabad facet" is enough — don't burn 6–12 keyword URLs.
+                    continue
                 if is_sso_only_careers_url(url):
                     report.skipped.append(
                         {
@@ -898,8 +1259,40 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                     except Exception:
                         pass
                     continue
-                time.sleep(2.2)
+                time.sleep(1.0)
                 dismiss_cookie_banners(page)
+                # HARD: set Hyderabad in URL already; also pin on-page Location UI (once/company for speed).
+                workday_loc: dict[str, Any] = {"pinned": False, "available": False, "note": "skipped_repeat"}
+                try:
+                    if not loc_ui_done:
+                        workday_loc = pin_portal_location_ui(page)
+                        loc_ui_done = True
+                        _safe_print(
+                            f"CAREERS LOC_UI {name} | pinned={workday_loc.get('pinned')} "
+                            f"available={workday_loc.get('available')} | {workday_loc.get('note')}"
+                        )
+                        if (
+                            re.search(r"myworkdayjobs\.com", url, re.I)
+                            and not workday_loc.get("available")
+                            and not workday_loc.get("pinned")
+                            and workday_loc.get("note") == "no_hyderabad_in_location_filter"
+                        ):
+                            workday_no_hyd = True
+                            _safe_print(
+                                f"CAREERS SKIP {name} | workday_no_hyderabad_facet — advance to next company"
+                            )
+                            report.skipped.append(
+                                {
+                                    "company": name,
+                                    "url": url,
+                                    "status": "skipped",
+                                    "reason": "workday_no_hyderabad_facet",
+                                }
+                            )
+                            break
+                except Exception as e:
+                    workday_loc = {"pinned": False, "available": False, "note": str(e)[:120]}
+                    loc_ui_done = True
                 # Oracle Cloud HCM / Workday-style boards lazy-render cards; nudge into view.
                 try:
                     for _ in range(3):
@@ -947,6 +1340,33 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                 except Exception:
                     pass
                 jobs = extract_job_links(page, name)
+                # Workday with no Hyderabad in the location filter → drop foreign cards.
+                if (
+                    re.search(r"myworkdayjobs\.com", url, re.I)
+                    and workday_loc
+                    and not workday_loc.get("available")
+                    and not workday_loc.get("pinned")
+                ):
+                    before = len(jobs)
+                    jobs = [
+                        j
+                        for j in jobs
+                        if card_location_ok(
+                            j.get("role") or "",
+                            url_loc_hint(j.get("url") or ""),
+                        )
+                        and not role_has_foreign_location(j.get("role") or "")
+                        and re.search(
+                            r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|"
+                            r"gachibowli|raidurg|\bremote\b",
+                            f"{j.get('role') or ''} {url_loc_hint(j.get('url') or '')}",
+                            re.I,
+                        )
+                    ]
+                    _safe_print(
+                        f"CAREERS WORKDAY SKIP_NON_HYD {name} | kept={len(jobs)} dropped={before - len(jobs)} "
+                        f"| no Hyderabad in location filter"
+                    )
                 report.scanned.append({"company": name, "url": url, "jobCount": len(jobs)})
                 for job in jobs:
                     if job["url"] in seen_urls:
@@ -954,30 +1374,35 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                     seen_urls.add(job["url"])
                     if company_applied >= MAX_PER_COMPANY:
                         break
-                    if company_walls >= MAX_WALLS_PER_COMPANY or company_attempts >= MAX_ATTEMPTS_PER_COMPANY:
+                    if company_walls >= MAX_WALLS_PER_COMPANY:
                         report.skipped.append(
                             {
                                 "company": name,
                                 "role": job.get("role"),
                                 "url": job.get("url"),
                                 "status": "skipped",
-                                "reason": (
-                                    f"company_wall_cap_{company_walls}"
-                                    if company_walls >= MAX_WALLS_PER_COMPANY
-                                    else f"company_attempt_cap_{company_attempts}"
-                                ),
+                                "reason": f"company_wall_cap_{company_walls}",
                             }
                         )
                         break
-                    company_attempts += 1
+                    # Never burn matching inventory on soft incompletes — only hard walls cap.
                     result = apply_job(page, job, campuses)
                     _safe_print(
                         f"CAREERS {result.get('status', '?').upper()} {name} | "
                         f"{(result.get('reason') or '')[:60]}"
                     )
+                    notify_application_result(
+                        status=str(result.get("status") or ""),
+                        company=str(result.get("company") or name),
+                        role=str(result.get("role") or job.get("role") or ""),
+                        reason=str(result.get("reason") or ""),
+                        path=str(result.get("path") or "company-careers"),
+                        url=str(result.get("url") or job.get("url") or ""),
+                    )
                     if result["status"] == "applied":
                         report.applied.append(result)
                         company_applied += 1
+                        company_attempts += 1
                     elif result["status"] == "skipped":
                         report.skipped.append(result)
                     else:
@@ -989,15 +1414,27 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                             from ats.complete import is_hard_ats_wall  # type: ignore
                         if is_hard_ats_wall(why):
                             company_walls += 1
-                if company_applied >= MAX_PER_COMPANY:
-                    break
-                if company_walls >= MAX_WALLS_PER_COMPANY or company_attempts >= MAX_ATTEMPTS_PER_COMPANY:
-                    break
+                            company_attempts += 1
+                        elif "incomplete" not in (why or "").lower():
+                            company_attempts += 1
+                    if company_applied >= MAX_PER_COMPANY:
+                        break
+                    if company_walls >= MAX_WALLS_PER_COMPANY:
+                        break
+                    if company_attempts >= MAX_ATTEMPTS_PER_COMPANY:
+                        break
+                else:
+                    continue
+                break
 
     report.finishedAt = datetime.now(timezone.utc).isoformat()
-    REPORT.parent.mkdir(parents=True, exist_ok=True)
-    REPORT.write_text(json.dumps(asdict(report), indent=2))
-    print(json.dumps({"applied": len(report.applied), "blocked": len(report.blocked), "skipped": len(report.skipped)}))
+    out_path = REPORT
+    worker = os.environ.get("HITECHCITY_PARALLEL_WORKER")
+    if worker:
+        out_path = REPORT.with_name(f"hitechcity-careers-w{worker}.json")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(asdict(report), indent=2))
+    print(json.dumps({"applied": len(report.applied), "blocked": len(report.blocked), "skipped": len(report.skipped), "worker": worker or ""}))
     return report
 
 
