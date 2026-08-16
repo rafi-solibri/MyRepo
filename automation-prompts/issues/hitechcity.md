@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| owner sleeping; captcha waits blocked workers for minutes and navigating away lost the captcha tab | OWNER_ASLEEP short wait; park captcha/apply tabs and continue on another tab; never prune parked owner tabs |
 | dozens of leftover Chrome tabs; workers new_page() every restart and PARALLEL_TABS=1 pruned siblings | hard cap 10 apply tabs + 1 LinkedIn; claim/reuse hitech-wN; workers never prune siblings; MAX_CHROME_TABS=10 |
 | 10 tabs sat idle after fixed chunks; one ASK_OWNER froze remaining companies; many urls=0 | shared company queue so idle tabs steal next careers URL tenant; skip no-URL companies from careers tabs |
 | agent stopped for chat; captcha tabs not always focused; early CAPTCHA wall skipped owner wait; need continuous apply + SUBMITTED/NOT reports every run | prompt HARD continuous-apply; focus_page + owner wait before careers CAPTCHA block; scripts/hitechcity-keep-applying.sh; CHAT_SUMMARY rollup in daily_apply |

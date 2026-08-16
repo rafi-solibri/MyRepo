@@ -887,6 +887,53 @@ def _worker_tab_mark(worker_id: str) -> str:
     return f"hitech-w{worker_id}"
 
 
+def url_is_owner_park(url: str) -> bool:
+    """Captcha / mid-apply tabs the owner will finish later — never close these."""
+    u = (url or "").lower()
+    if any(x in u for x in ("hcaptcha", "checkpoint", "/challenge", "captcha")):
+        return True
+    if any(x in u for x in ("/apply", "mode=apply", "/questions", "/eeo", "jobapplication")):
+        if any(x in u for x in ("icims.com", "myworkdayjobs", "oraclecloud", "smartrecruiters", "greenhouse", "lever.co")):
+            return True
+    return False
+
+
+def park_and_continue(context, page, worker_id: str):
+    """Leave the captcha/form tab open; continue applying on a different tab."""
+    try:
+        u = getattr(page, "url", "") or ""
+    except Exception:
+        u = ""
+    _safe_print(f"CAREERS PARK owner tab — leave open for tomorrow | {u[:120]}")
+    return _claim_fresh_working_page(context, worker_id or "0", exclude=page)
+
+
+def _claim_fresh_working_page(context, worker_id: str, exclude=None):
+    """New or unmarked working tab; never navigate away from a parked captcha."""
+    mark = _worker_tab_mark(worker_id)
+    apply_pages = []
+    try:
+        for pg in list(context.pages):
+            if exclude is not None and pg is exclude:
+                continue
+            u = getattr(pg, "url", "") or ""
+            ul = u.lower()
+            if "linkedin.com" in ul or url_is_owner_park(u):
+                continue
+            apply_pages.append(pg)
+    except Exception:
+        apply_pages = []
+    if apply_pages:
+        return apply_pages[0]
+    page = context.new_page()
+    try:
+        page.goto(f"about:blank#{mark}", wait_until="domcontentloaded", timeout=8000)
+    except Exception:
+        pass
+    page.set_default_timeout(45000)
+    return page
+
+
 def prune_surplus_tabs(context, *, keep_linkedin: bool = True) -> int:
     """Hard-cap Chrome to PARALLEL_TABS apply tabs (+ optional one LinkedIn).
 
@@ -919,6 +966,8 @@ def prune_surplus_tabs(context, *, keep_linkedin: bool = True) -> int:
         if keep_linkedin and "linkedin.com" in ul and linkedin is None:
             linkedin = pg
             continue
+        if url_is_owner_park(u):
+            continue
         extras.append(pg)
     for pg in extras:
         try:
@@ -943,14 +992,15 @@ def _claim_worker_page(context, worker_id: str):
     apply_pages = []
     try:
         for pg in list(context.pages):
-            u = (getattr(pg, "url", "") or "").lower()
-            if "linkedin.com" in u:
+            u = getattr(pg, "url", "") or ""
+            ul = u.lower()
+            if "linkedin.com" in ul or url_is_owner_park(u):
                 continue
             apply_pages.append(pg)
     except Exception:
         apply_pages = []
     if len(apply_pages) >= _max_apply_tabs():
-        # Cap hit — reuse an existing apply tab instead of opening another.
+        # Cap hit — reuse an existing working tab, never a parked captcha tab.
         try:
             idx = int(worker_id) % len(apply_pages)
         except Exception:
@@ -1356,6 +1406,13 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                     _safe_print(f"CAREERS SKIP {name} | skip_uhg")
                     continue
                 try:
+                    if url_is_owner_park(getattr(page, "url", "") or ""):
+                        page = park_and_continue(
+                            context, page, os.environ.get("HITECHCITY_PARALLEL_WORKER") or "0"
+                        )
+                except Exception:
+                    pass
+                try:
                     scan_goto(page, url, timeout=75000)
                 except Exception as e:
                     report.blocked.append({"company": name, "url": url, "reason": f"scan_nav:{e}"})
@@ -1541,6 +1598,15 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                             company_attempts += 1
                         elif "incomplete" not in (why or "").lower():
                             company_attempts += 1
+                        if re.search(r"captcha|owner_|ask_owner|login wall", why, re.I):
+                            try:
+                                page = park_and_continue(
+                                    context,
+                                    page,
+                                    os.environ.get("HITECHCITY_PARALLEL_WORKER") or "0",
+                                )
+                            except Exception:
+                                pass
                     if company_applied >= MAX_PER_COMPANY:
                         break
                     if company_walls >= MAX_WALLS_PER_COMPANY:

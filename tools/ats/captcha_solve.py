@@ -319,6 +319,9 @@ def owner_captcha_wait_sec() -> int:
             return max(0, int(raw))
         except ValueError:
             return 0
+    # Owner asleep / overnight: leave captcha tab open, do not block workers for minutes.
+    if (os.environ.get("HITECHCITY_OWNER_ASLEEP") or "").strip().lower() in ("1", "true", "yes"):
+        return 12
     if (os.environ.get("HOME_LOCAL") or "").strip().lower() in ("1", "true", "yes"):
         return 180
     if (os.environ.get("CHROME_HEADLESS") or "1").strip() in ("0", "false", "no"):

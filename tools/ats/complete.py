@@ -2037,6 +2037,8 @@ def owner_form_wait_sec() -> int:
             return max(0, int(raw))
         except ValueError:
             return 0
+    if (os.environ.get("HITECHCITY_OWNER_ASLEEP") or "").strip().lower() in ("1", "true", "yes"):
+        return 12
     # Reuse captcha wait budget when set; else headed defaults.
     try:
         from tools.ats.captcha_solve import owner_captcha_wait_sec

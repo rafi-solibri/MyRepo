@@ -77,6 +77,18 @@ def test_daily_apply_import_sets_parallel_when_unset():
             os.environ["HITECHCITY_PARALLEL_TABS"] = prev
 
 
+def test_url_is_owner_park():
+    from tools.hitechcity.careers_apply import url_is_owner_park
+
+    assert url_is_owner_park("https://jobs.example.com/apply?hcaptcha=1") or url_is_owner_park(
+        "https://careers-hyland.icims.com/jobs/1/login?hcaptcha=1"
+    )
+    assert url_is_owner_park(
+        "https://modmed.wd501.myworkdayjobs.com/en-US/x/job/y/apply/autofill"
+    )
+    assert not url_is_owner_park("https://careers.example.com/jobs?q=lead")
+
+
 def test_prune_surplus_tabs_caps_apply_pages():
     from tools.hitechcity.careers_apply import prune_surplus_tabs
 
@@ -120,6 +132,7 @@ if __name__ == "__main__":
     test_workable_companies_prefer_careers_urls()
     test_daily_apply_setdefault_parallel_tabs()
     test_daily_apply_import_sets_parallel_when_unset()
+    test_url_is_owner_park()
     test_prune_surplus_tabs_caps_apply_pages()
     test_home_headed_exports_parallel()
     print("ok")
