@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Small unit tests for Hitech City filters."""
 
+import re
+
 from tools.hitechcity.ats_fill import (
     auth_wall_url,
     blocked_wall,
@@ -37,6 +39,10 @@ def test_browser_session_dead():
 def test_title_ok():
     assert title_matches_senior_stack("Solution Architect .NET")
     assert title_matches_senior_stack("Engineering Manager")
+    assert title_matches_senior_stack("Staff Software Engineer")
+    assert title_matches_senior_stack("Lead Software Engineer")
+    assert title_matches_senior_stack("Software Development Manager")
+    assert title_matches_senior_stack("Principal Software Engineer")
     assert skip_reason("Salesforce Developer") is not None
     assert skip_reason("QA Engineer") is not None
     assert CAREERS_TITLE_SKIP.search("Staff Project Analyst")
@@ -63,6 +69,22 @@ def test_title_ok():
     assert not LI_TITLE_SKIP.search("Solution Architect")
     assert not CAREERS_TITLE_SKIP.search("Principal Software Engineer")
     assert not CAREERS_TITLE_SKIP.search("Solution Architect (Microsoft .NET/Azure Cloud)")
+    # LinkedIn company-jobs keywords must not be architect-only / architect-first.
+    from tools.hitechcity.linkedin_target_apply import SEARCH_KEYWORDS
+
+    assert SEARCH_KEYWORDS[0] == "Engineering Manager"
+    assert any("Staff" in k for k in SEARCH_KEYWORDS)
+    assert any("Lead" in k for k in SEARCH_KEYWORDS)
+    assert any("Manager" in k for k in SEARCH_KEYWORDS)
+    assert SEARCH_KEYWORDS.index("Engineering Manager") < SEARCH_KEYWORDS.index("Solution Architect")
+    # Discovery must not use campus-name LinkedIn queries.
+    from tools.hitechcity import discover_tenants as disc
+
+    assert not hasattr(disc, "LI_SEARCHES") or not any(
+        re.search(r"knowledge city|raheja mindspace", q, re.I) for q in getattr(disc, "LI_SEARCHES", [])
+    )
+    assert any("HighRadius" in q for q in disc.LI_COMPANY_NAME_QUERIES)
+    assert not any(re.search(r"knowledge city|raheja", q, re.I) for q in disc.LI_COMPANY_NAME_QUERIES)
 
 
 def test_campus_location():

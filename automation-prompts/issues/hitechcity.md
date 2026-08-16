@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| LI searched architect-first TITLES[:5]; discovery used Knowledge City/Raheja LinkedIn queries that return nothing | SEARCH_KEYWORDS lead/staff/manager-first (10); discover via seeds + employer-name LinkedIn slug resolve only |
 | Owner captcha wait burned full ATS_CAPTCHA_WAIT_SEC after solve (only checked h-captcha-response token) | owner_hcaptcha_cleared detects submitted/Log Out/left login/form; poll 0.4s; re-check confirmation after timeout |
 
 

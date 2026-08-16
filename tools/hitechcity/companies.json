@@ -10,18 +10,23 @@
       "Telangana"
     ],
     "roleBias": [
+      "Engineering Manager",
+      "Technical Lead",
+      "Tech Lead",
+      "Staff Software Engineer",
+      "Staff Engineer",
+      "Principal Software Engineer",
+      "Lead Software Engineer",
+      "Software Development Manager",
       "Solution Architect",
       "Technical Architect",
-      "Software Architect",
-      "Technical Lead",
-      "Engineering Manager",
       "Principal .NET",
       "Staff .NET",
       ".NET Architect",
       "Azure Architect",
       "Cloud Architect"
     ],
-    "lastDiscoveryAt": "2026-08-14T06:22:29.002267+00:00"
+    "lastDiscoveryAt": "2026-08-16T08:41:34.795904+00:00"
   },
   "campuses": [
     {
@@ -94,7 +99,7 @@
       ],
       "linkedinSlug": "amazon",
       "careersUrls": [
-        "https://www.amazon.jobs/en/search?base_query=architect&loc_query=Hyderabad%2C+Telangana%2C+India"
+        "https://www.amazon.jobs/en/search?base_query=engineer&loc_query=Hyderabad%2C+Telangana%2C+India"
       ],
       "priority": 1
     },

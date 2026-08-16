@@ -51,8 +51,11 @@ MAX_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "1"))
 MAX_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "2"))
 
 TITLE_HINT = re.compile(
-    r"architect|technical lead|tech lead|engineering manager|principal|staff|"
-    r"\.net|dotnet|azure|cloud architect|solution",
+    r"architect|technical lead|tech lead|technology lead|engineering manager|"
+    r"engineering lead|development manager|software (development )?manager|"
+    r"principal|staff|lead (software|development|engineer)|"
+    r"\.net|dotnet|azure|cloud architect|solution|"
+    r"director.*eng|head of eng",
     re.I,
 )
 LOC_HINT = re.compile(

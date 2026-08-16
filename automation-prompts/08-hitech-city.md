@@ -8,7 +8,7 @@ Copy everything inside the block below:
 FIRST: run `bash scripts/preflight-portal-run.sh hitechcity` so resume + LinkedIn cookies are ready (this flow reuses the LinkedIn CDP profile for career portals + referrals).
 Then run `bash scripts/launch-chrome-cdp.sh hitechcity`.
 Use helper: `python3 tools/hitechcity/daily_apply.py`
-Company campus list: `tools/hitechcity/companies.json` (Knowledge City, Knowledge Park, Mindspace Madhapur / Raheja, The V, Cyber Pearl, DLF Cyber City, Divyasree Orion — premium Grade-A buildings). The helper **discovers** additional software tenants into this list before applying.
+Company campus list: `tools/hitechcity/companies.json` (Knowledge City, Knowledge Park, Mindspace Madhapur / Raheja, The V, Cyber Pearl, DLF Cyber City, Divyasree Orion — premium Grade-A buildings). The helper **discovers** additional software tenants into this list before applying (seed employer list + LinkedIn *company-name* slug resolve — not campus-name LinkedIn searches).
 
 Apply to senior .NET / architect / tech-lead / EM roles for Mohammed Abdul Rafi Ahmed at companies in these Madhapur / HITEC City campuses. Maximize BOTH application volume and referral outreach.
 
@@ -65,7 +65,7 @@ Judge location from the TOP CARD / workplace pills / job location field — neve
    - `python3 tools/hitechcity/linkedin_target_apply.py`
    - `python3 tools/hitechcity/careers_apply.py`
    - `python3 tools/hitechcity/board_campus_apply.py`
-3. LinkedIn: company-targeted searches (Solution Architect, Technical Architect, Software Architect, Technical Lead, Engineering Manager, Principal .NET, Azure/Cloud Architect) restricted to campus companies in companies.json
+3. LinkedIn: company-targeted searches on each campus **employer** in `companies.json` (never search campus strings like "Knowledge City" / "Raheja" — discover tenants via seeds + employer-name lookup, then search that company). Keywords: Engineering Manager, Technical Lead, Staff/Principal/Lead Software Engineer, Software Development Manager, Solution/Technical Architect, Principal .NET, Azure/.NET — not architect-only.
 4. Easy Apply AND company-website / ATS redirects — both required paths
 5. After a successful apply, try referral: message the job poster (poster-specific Message) OR send a short LinkedIn connection note to a Hyd engineer/recruiter/EM at that company asking for a referral / 15–20 min screen
 6. For each company: also open official careers URL from companies.json, find Hyd/India qualifying roles, COMPLETE Greenhouse / Lever / Workday / SmartRecruiters / SuccessFactors / company ATS when guest/logged apply is possible (skip US-only cards and SSO passport walls quickly)
