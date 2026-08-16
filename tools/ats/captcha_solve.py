@@ -451,8 +451,14 @@ def wait_for_owner_hcaptcha(page) -> bool:
     if wait <= 0:
         return False
     start_url = _page_url(page)
+    try:
+        page.bring_to_front()
+    except Exception:
+        pass
+    worker = os.environ.get("HITECHCITY_PARALLEL_WORKER") or ""
     print(
-        f"hcaptcha=wait_owner {wait}s — click the captcha in the Chrome window (no paid API key)",
+        f"hcaptcha=wait_owner {wait}s — click the captcha in the Chrome window "
+        f"(no paid API key){' worker=' + worker if worker else ''}",
         flush=True,
     )
     deadline = time.time() + wait
