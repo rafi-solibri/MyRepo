@@ -153,6 +153,10 @@ def company_jobs_url(slug: str, title: str) -> str:
 
 
 def extract_job_ids(page: Page) -> list[str]:
+    """Backward-compatible id list — prefers title-filtered cards when available."""
+    cards = extract_job_cards(page)
+    if cards:
+        return [c["id"] for c in cards][:MAX_SCAN]
     try:
         html = page.content()
     except Exception:
@@ -165,6 +169,92 @@ def extract_job_ids(page: Page) -> list[str]:
             seen.add(jid)
             ids.append(jid)
     return ids[:MAX_SCAN]
+
+
+def extract_job_cards(page: Page) -> list[dict[str, str]]:
+    """Parse LinkedIn job result cards (id + title + location) and drop junk early.
+
+    Company /jobs/?keywords= pages embed many unrelated jobPosting ids in chrome /
+    recommendations. Opening those then LI SKIP title_not_senior looks like we
+    "found then skipped" a relevant search hit.
+    """
+    try:
+        raw = page.evaluate(
+            """() => {
+              const out = [];
+              const seen = new Set();
+              const push = (id, title, loc) => {
+                if (!id || seen.has(id)) return;
+                seen.add(id);
+                out.push({
+                  id: String(id),
+                  title: (title || '').trim().replace(/\\s+/g, ' ').slice(0, 180),
+                  location: (loc || '').trim().replace(/\\s+/g, ' ').slice(0, 120),
+                });
+              };
+              // Primary: result-list anchors with visible titles.
+              for (const a of document.querySelectorAll('a[href*="/jobs/view/"]')) {
+                const m = (a.href || '').match(/\\/jobs\\/view\\/(\\d+)/);
+                if (!m) continue;
+                const card = a.closest('li') || a.closest('[data-occludable-job-id]') || a.parentElement;
+                let title = (a.innerText || a.getAttribute('aria-label') || '').trim();
+                title = title.split('\\n').map(s => s.trim()).filter(Boolean)[0] || title;
+                if (!title || title.length < 4) {
+                  const tEl = card && card.querySelector(
+                    '.base-search-card__title, .job-card-list__title, strong, h3, h4'
+                  );
+                  if (tEl) title = (tEl.innerText || '').trim().split('\\n')[0];
+                }
+                let loc = '';
+                if (card) {
+                  const locEl = card.querySelector(
+                    '.job-search-card__location, .artdeco-entity-lockup__caption, '
+                    + '.base-search-card__metadata, [class*="location"]'
+                  );
+                  if (locEl) loc = (locEl.innerText || '').trim().split('\\n')[0];
+                }
+                // Skip nav chrome ("See all jobs", counts).
+                if (/^\\d+\\s+jobs?\\b/i.test(title) || /see all jobs|show more/i.test(title)) continue;
+                push(m[1], title, loc);
+                if (out.length >= 40) break;
+              }
+              // data-occludable-job-id cards (jobs search layout).
+              if (out.length < 5) {
+                for (const el of document.querySelectorAll('[data-occludable-job-id], [data-job-id]')) {
+                  const id = el.getAttribute('data-occludable-job-id') || el.getAttribute('data-job-id');
+                  if (!id) continue;
+                  const tEl = el.querySelector('a[href*="/jobs/view/"], strong, h3, .job-card-list__title');
+                  const title = tEl ? (tEl.innerText || '').trim().split('\\n')[0] : '';
+                  push(id, title, '');
+                  if (out.length >= 40) break;
+                }
+              }
+              return out;
+            }"""
+        )
+    except Exception:
+        raw = []
+    cards: list[dict[str, str]] = []
+    for row in raw or []:
+        jid = str(row.get("id") or "").strip()
+        title = (row.get("title") or "").strip()
+        loc = (row.get("location") or "").strip()
+        if not jid:
+            continue
+        # No title yet — keep (view page will re-check); prefer titled matches.
+        if title:
+            if skip_reason(title):
+                continue
+            if LI_TITLE_SKIP.search(title):
+                continue
+            if not title_matches_senior_stack(title):
+                continue
+            if loc and not location_allowed(loc) and not location_or_campus_ok(loc, "", ""):
+                continue
+        cards.append({"id": jid, "title": title, "location": loc})
+    # Prefer cards that already have a qualifying title.
+    titled = [c for c in cards if c.get("title")]
+    return (titled or cards)[:MAX_SCAN]
 
 
 def card_meta(page: Page) -> dict[str, str]:
@@ -642,7 +732,8 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                         }
                     )
                     continue
-                if not title_matches_senior_stack(role):
+                # Empty title parse → apply bias (do not invent title_not_senior).
+                if (role or "").strip() and not title_matches_senior_stack(role):
                     print(f"LI SKIP title_not_senior | {role[:60]}", flush=True)
                     report.skipped.append(
                         {
@@ -653,6 +744,8 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                         }
                     )
                     continue
+                if not (role or "").strip():
+                    print(f"LI WARN empty_title_apply_bias | {jid}", flush=True)
                 # HARD: top-card location only — never bodyHead (sidebar/footer contaminate).
                 # Empty location → apply bias (uncertain between skip and apply → APPLY).
                 if (loc or "").strip():
