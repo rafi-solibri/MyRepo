@@ -5,6 +5,7 @@
 | Issue | Fix |
 | --- | --- |
 | Kochi/Kerala title with empty SERP location Easy-Applied; SmartApply 'already applied' misclassified as incomplete; mid-run secure.indeed.com/auth became incomplete | Expand LOC_HARD_SKIP for non-Hyd cities/states; detect already_applied + login_required inside easy_apply_flow and reclassify incomplete samples |
+| Easy Apply submitted Impelsys Bangalore/LATAM Remote (foreign remote matched LOC_OK via 'remote') | Skip LATAM/US/UK/EU remote unless Hyd/India is also present |
 | SmartApply already-applied counted as rejected; State dropdown left Select an option; required PAN stalled Continue | Detect already-applied on SmartApply (skip, not reject); fill State=Telangana; skip government_id_required instead of inventing PAN |
 
 

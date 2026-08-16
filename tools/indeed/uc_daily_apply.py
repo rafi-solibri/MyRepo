@@ -221,6 +221,17 @@ LOC_HARD_SKIP = re.compile(
     r"west\s*bengal|odisha|punjab|haryana)\b(?!.{0,40}(remote|wfh|hybrid))",
     re.I,
 )
+# "Remote" alone is OK (India Remote / WFH). LATAM/US/UK/EU remote is not.
+LOC_FOREIGN_REMOTE = re.compile(
+    r"\b(latam|latin\s*america|united\s*states|\busa\b|u\.s\.a?\.?|"
+    r"united\s*kingdom|\buk\b|europe|emea|canada|australia|germany|"
+    r"singapore|philippines|mexico|brazil|north\s*america)\b",
+    re.I,
+)
+LOC_INDIA = re.compile(
+    r"hyderabad|telangana|\bhyd\b|india\s*remote|\bindia\b",
+    re.I,
+)
 
 
 def ensure_warp() -> str:
@@ -431,6 +442,9 @@ def skip_reason(title: str, company: str, location: str, snippet: str) -> str | 
     # Job location + title decide Hyd/Remote. Do not let SERP chrome
     # ("Find remote jobs") in the snippet override a Bengaluru-only posting.
     loc_blob = f"{loc_field} {t}"
+    # Bangalore / LATAM Remote is not India Remote (2026-08-16 Impelsys).
+    if LOC_FOREIGN_REMOTE.search(loc_blob) and not LOC_INDIA.search(loc_blob):
+        return "location"
     if LOC_HARD_SKIP.search(loc_blob) and not LOC_OK.search(loc_blob):
         return "location"
     if loc_field and not LOC_OK.search(loc_blob):

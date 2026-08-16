@@ -37,6 +37,38 @@ def test_skip_hyd_remote_ok():
     ) is None
 
 
+def test_skip_latam_remote_not_india():
+    # 2026-08-16: Impelsys ".Net Lead" Easy Apply was Bangalore / LATAM Remote.
+    assert (
+        skip_reason(
+            ".Net Lead/Senior Software Engineer - Impelsys",
+            "Impelsys",
+            "Work Location: Bangalore / LATAM Remote",
+            "",
+        )
+        == "location"
+    )
+    assert (
+        skip_reason(
+            "Solutions Architect - Remote - United States - Indeed.com",
+            "Acme",
+            "Remote, United States",
+            "",
+        )
+        == "location"
+    )
+    # India Remote / Hyd still OK even if "remote" is present.
+    assert (
+        skip_reason(
+            "Solution Architect - Remote - Indeed.com",
+            "Emgage",
+            "India Remote",
+            "",
+        )
+        is None
+    )
+
+
 def test_skip_bengaluru_not_overridden_by_snippet_remote():
     # Regression 2026-08-13: SERP chrome "Find remote jobs" must not keep
     # a Bengaluru-only posting (TechBiz Senior Full-Stack .NET Consultant).
@@ -203,6 +235,7 @@ def test_job_dedupe_key_from_jk():
 
 if __name__ == "__main__":
     test_skip_hyd_remote_ok()
+    test_skip_latam_remote_not_india()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
     test_skip_title_not_target()
     test_enterprise_system_architect_ok()
