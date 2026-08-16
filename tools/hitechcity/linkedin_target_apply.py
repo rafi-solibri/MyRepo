@@ -795,7 +795,13 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
     with sync_playwright() as p:
         browser = p.chromium.connect_over_cdp(CDP, timeout=20_000)
         context = browser.contexts[0]
-        page = context.pages[0] if context.pages else context.new_page()
+        worker = os.environ.get("HITECHCITY_PARALLEL_WORKER")
+        if worker:
+            from tools.hitechcity.careers_apply import _claim_worker_page
+
+            page = _claim_worker_page(context, worker)
+        else:
+            page = context.pages[0] if context.pages else context.new_page()
         page.set_default_timeout(45000)
         attach_js_dialog_guard(page)
         for pg in list(context.pages):

@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-17 (home)
+
+| Issue | Fix |
+| --- | --- |
+| only JPMC tab moved; other workers finished fixed chunks and sat idle (queue code was reverted) | restore shared company queue; skip urls=0/hang-scan; idle tabs steal next careers then LinkedIn |
+
+
 ## 2026-08-16 (home)
 
 | Issue | Fix |

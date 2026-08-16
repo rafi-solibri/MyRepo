@@ -41,6 +41,19 @@ def test_daily_apply_import_sets_parallel_when_unset():
             os.environ["HITECHCITY_PARALLEL_TABS"] = prev
 
 
+def test_workable_careers_skips_empty_and_hang():
+    from tools.hitechcity.careers_parallel import _workable_careers
+
+    got = _workable_careers(
+        [
+            {"name": "NoUrl"},
+            {"name": "Hang", "careersUrls": ["https://jobs.apple.com/x"]},
+            {"name": "Ok", "careersUrls": ["https://example.myworkdayjobs.com/x"]},
+        ]
+    )
+    assert [c["name"] for c in got] == ["Ok"]
+
+
 def test_home_headed_exports_parallel():
     sh = Path(__file__).resolve().parents[2] / "scripts" / "home-headed-careers-apply.sh"
     text = sh.read_text(encoding="utf-8")
@@ -52,5 +65,6 @@ if __name__ == "__main__":
     test_careers_parallel_default_is_ten()
     test_daily_apply_setdefault_parallel_tabs()
     test_daily_apply_import_sets_parallel_when_unset()
+    test_workable_careers_skips_empty_and_hang()
     test_home_headed_exports_parallel()
     print("ok")

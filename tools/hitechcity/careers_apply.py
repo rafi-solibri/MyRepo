@@ -870,6 +870,42 @@ def _close_uhg_tabs(context) -> None:
         pass
 
 
+def _claim_worker_page(context, worker_id: str):
+    """Reuse this worker's one tab (about:blank#hitech-wN). Do not open extras."""
+    mark = f"hitech-w{worker_id}"
+    try:
+        for pg in list(getattr(context, "pages", []) or []):
+            if mark in (getattr(pg, "url", "") or ""):
+                return pg
+    except Exception:
+        pass
+    apply_pages = []
+    try:
+        for pg in list(context.pages):
+            u = (getattr(pg, "url", "") or "").lower()
+            if "linkedin.com" in u:
+                continue
+            apply_pages.append(pg)
+    except Exception:
+        apply_pages = []
+    cap = 10
+    try:
+        cap = max(1, min(12, int(os.environ.get("HITECHCITY_MAX_CHROME_TABS", "10"))))
+    except ValueError:
+        cap = 10
+    if len(apply_pages) >= cap:
+        try:
+            return apply_pages[int(worker_id) % len(apply_pages)]
+        except Exception:
+            return apply_pages[0]
+    page = context.new_page()
+    try:
+        page.goto(f"about:blank#{mark}", wait_until="domcontentloaded", timeout=8000)
+    except Exception:
+        pass
+    return page
+
+
 def _connect_careers_cdp(p):
     """Connect (or reconnect) to Chrome CDP for careers scanning."""
     browser = p.chromium.connect_over_cdp(CDP, timeout=20_000)
@@ -877,14 +913,14 @@ def _connect_careers_cdp(p):
         raise RuntimeError("cdp_no_contexts")
     context = browser.contexts[0]
     _close_uhg_tabs(context)
-    # Parallel workers always get a dedicated tab so 10 companies apply at once.
-    if os.environ.get("HITECHCITY_PARALLEL_WORKER"):
-        page = context.new_page()
+    worker = os.environ.get("HITECHCITY_PARALLEL_WORKER")
+    if worker:
+        page = _claim_worker_page(context, worker)
     else:
         page = context.pages[0] if context.pages else context.new_page()
     if is_uhg_skip_url(getattr(page, "url", "") or ""):
         try:
-            page = context.new_page()
+            page = _claim_worker_page(context, worker or "0") if worker else context.new_page()
         except Exception:
             pass
     page.set_default_timeout(45000)
