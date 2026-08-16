@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| UST SmartApply stalled on Notice period combobox, Expected last working day, Preferred Location | Open notice/location comboboxes; fill LWD/start as today IST; recover Choose-an-option with Hyderabad/Immediate |
 | Kochi/Kerala title with empty SERP location Easy-Applied; SmartApply 'already applied' misclassified as incomplete; mid-run secure.indeed.com/auth became incomplete | Expand LOC_HARD_SKIP for non-Hyd cities/states; detect already_applied + login_required inside easy_apply_flow and reclassify incomplete samples |
 
 

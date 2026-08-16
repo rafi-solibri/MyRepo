@@ -13,9 +13,47 @@ import subprocess
 import sys
 import time
 import urllib.parse
+from datetime import datetime
 from pathlib import Path
 
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:  # pragma: no cover
+    ZoneInfo = None  # type: ignore
+
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def ist_today_dmy() -> str:
+    """Immediate-joiner dates (last working day / start) as DD/MM/YYYY IST."""
+    if ZoneInfo is not None:
+        now = datetime.now(ZoneInfo("Asia/Kolkata"))
+    else:
+        now = datetime.utcnow()
+    return now.strftime("%d/%m/%Y")
+
+
+def smartapply_question_want(text: str, today_dmy: str | None = None) -> str | None:
+    """Map SmartApply employer-question labels to a fill value.
+
+    Keep in sync with wantFromText inside fill_common_questions().
+    """
+    t = (text or "").lower()
+    today = today_dmy or ist_today_dmy()
+    if re.search(r"last working day|\blwd\b|expected last working|last day of work", t):
+        return today
+    if re.search(
+        r"earliest start|start date|available from|joining date|when can you (start|join)",
+        t,
+    ) and not re.search(r"salary|ctc|last working", t):
+        return today
+    if re.search(r"notice|how soon|availability|immediate|serve notice", t) and not re.search(
+        r"start date|available from|last working|privacy notice", t
+    ):
+        return "Immediate"
+    if re.search(r"prefer(?:red)?\s*location|job location|base location|current location|\bcity\b", t):
+        return "Hyderabad"
+    return None
 
 
 @contextlib.contextmanager
@@ -724,6 +762,8 @@ def fill_common_questions(sb) -> None:
     _switch_smartapply_frame(sb)
     # JS fill by label/aria/placeholder — more reliable on SmartApply modules.
     try:
+        today_dmy = ist_today_dmy()
+        today_iso = datetime.strptime(today_dmy, "%d/%m/%Y").strftime("%Y-%m-%d")
         filled = sb.execute_script(
             """
             const vals = {
@@ -738,7 +778,9 @@ def fill_common_questions(sb) -> None:
               current: '52',
               expected: '65',
               notice: 'Immediate',
-              experience: '14'
+              experience: '14',
+              lwd: '__LWD_DMY__',
+              lwdIso: '__LWD_ISO__'
             };
             const setNative = (el, value) => {
               if (!el) return false;
@@ -802,12 +844,16 @@ def fill_common_questions(sb) -> None:
               }
               if (/current.*(ctc|salary|compensation|pay)|ctc.*current|present.*ctc|current.*package|current salary/.test(t)) return '52';
               if (/expected.*(ctc|salary|compensation|pay)|ctc.*expected|desired.*salary|expected.*package/.test(t)) return '65';
-              if (/earliest start|start date|available from|joining date|when can you (start|join)/.test(t)
+              if (/last working day|\\blwd\\b|expected last working|last day of work/.test(t)
                   && !/salary|ctc/.test(t)) {
-                return '15/08/2026';
+                return vals.lwd;
               }
-              if (/notice|joining|how soon|availability|immediate|serve notice/.test(t)
-                  && !/start date|available from/.test(t)) return 'Immediate';
+              if (/earliest start|start date|available from|joining date|when can you (start|join)/.test(t)
+                  && !/salary|ctc|last working/.test(t)) {
+                return vals.lwd;
+              }
+              if (/notice|how soon|availability|immediate|serve notice/.test(t)
+                  && !/start date|available from|last working|privacy notice/.test(t)) return 'Immediate';
               if (/certify that|i certify|details mentioned in your resume|accurate and truthful/.test(t)) {
                 return 'yes';
               }
@@ -833,7 +879,7 @@ def fill_common_questions(sb) -> None:
               if (/relocat|willing to work|hybrid|work from office|bond|service agreement|background check|drug test/.test(t)) return 'yes';
               if (/authorized|work authori|visa|citizen|india|legally/.test(t)) return 'yes';
               if (/gender/.test(t)) return 'male';
-              if (/city|current location|prefer.*location|job location|base location/.test(t)) return 'Hyderabad';
+              if (/city|current location|prefer(?:red)?\\s*location|job location|base location/.test(t)) return 'Hyderabad';
               if (/\\?/.test(t) && /(yes|no)/.test(t)) return 'yes';
               if (/what makes you unique|cover letter|why (do )?you|tell us|about yourself|summary|additional information/.test(t)) {
                 return 'Solutions Architect / Tech Lead with 14+ years in .NET, Azure, microservices. Immediate joiner. Hyd/Remote. Expected 65 LPA.';
@@ -883,8 +929,8 @@ def fill_common_questions(sb) -> None:
                 if (want === 'decline') continue;
                 if (want) { setNative(el, want); return true; }
               }
-              // Custom listbox / button options (Indeed education / years are often comboboxes).
-              if (want === 'B.Tech' || want === '14' || want === '10') {
+              // Custom listbox / button options (education / years / notice / location).
+              if (want === 'B.Tech' || want === '14' || want === '10' || want === 'Immediate' || want === 'Hyderabad' || want === vals.lwd) {
                 for (const btn of root.querySelectorAll('button, [role=combobox], [aria-haspopup=listbox]')) {
                   const t = ((btn.innerText||'') + ' ' + (btn.getAttribute('aria-label')||'')).toLowerCase();
                   if (/select an option|choose an option|^select$/.test(t) || btn.getAttribute('aria-expanded') === 'false') {
@@ -897,7 +943,11 @@ def fill_common_questions(sb) -> None:
                 if (!t || t.length > 80) continue;
                 if (want === 'yes' && /\\byes\\b|i certify|yes, i certify/.test(t) && !/don'?t certify|\\bno,/.test(t)) { el.click(); return true; }
                 if (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs/.test(t)) { el.click(); return true; }
-                if (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15/.test(t)) { el.click(); return true; }
+                if (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|currently serving|serving notice/.test(t)
+                    && !/select an option|notice period/.test(t)) { el.click(); return true; }
+                if (want === 'Hyderabad' && /hyderabad/.test(t) && !/select an option|preferred location|current location/.test(t)) {
+                  el.click(); return true;
+                }
                 if (want === 'B.Tech' && /b\\.?\\s*tech|bachelor|b\\.e\\b|undergraduate|master'?s?|m\\.?\\s*tech/.test(t)
                     && !/select an option|highest degree/.test(t)) {
                   el.click(); return true;
@@ -953,9 +1003,11 @@ def fill_common_questions(sb) -> None:
               else if (/highest (degree|education|qualification)|education|university|college|degree/.test(lab)) val = 'B.Tech';
               else if (/current.*(ctc|salary|compensation|package)|ctc.*current|current salary/.test(lab)) val = vals.current;
               else if (/expected.*(ctc|salary|compensation|package)|ctc.*expected/.test(lab)) val = vals.expected;
-              else if (/earliest start|start date|available from|joining date/.test(lab) || (type === 'date' && /start|join|avail/.test(lab))) val = '15/08/2026';
-              else if (/notice|joining|availability/.test(lab) && !/start date|available from/.test(lab)) val = vals.notice;
-              else if (/city|location|current\\s*location/.test(lab)) val = vals.city;
+              else if (/last working day|\\blwd\\b|expected last working|last day of work/.test(lab)
+                  || (type === 'date' && /last working|\\blwd\\b/.test(lab))) val = type === 'date' ? vals.lwdIso : vals.lwd;
+              else if (/earliest start|start date|available from|joining date/.test(lab) || (type === 'date' && /start|join|avail/.test(lab))) val = type === 'date' ? vals.lwdIso : vals.lwd;
+              else if (/notice|availability/.test(lab) && !/start date|available from|last working|privacy notice/.test(lab)) val = vals.notice;
+              else if (/prefer(?:red)?\\s*location|job location|base location|current\\s*location|\\bcity\\b/.test(lab)) val = vals.city;
               else if (/experience|years/.test(lab)) val = vals.experience;
               else if (!(el.value || '').trim()) {
                 const w = wantFromText(lab);
@@ -1024,11 +1076,11 @@ def fill_common_questions(sb) -> None:
               const req = el.required || el.getAttribute('aria-required') === 'true' || /required|\\*/.test(lab);
               if (!req && !/question|ctc|salary|notice|experience/.test(lab)) continue;
               if (/\\bpan\\b|aadhaar|aadhar|passport number|national id/.test(lab)) continue;
-              const w = wantFromText(lab) || (/how many|years|experience/.test(lab) ? '14' : (/salary|ctc|lpa|package/.test(lab) ? '65' : (/birth|\\bdob\\b|date/.test(lab) ? vals.dob : null)));
+              const w = wantFromText(lab) || (/how many|years|experience/.test(lab) ? '14' : (/salary|ctc|lpa|package/.test(lab) ? '65' : (/(last working|\\blwd\\b|joining date|start date|available from)/.test(lab) ? vals.lwd : (/(date of birth|\\bdob\\b|birth date)/.test(lab) ? vals.dob : null))));
               if (w && setNative(el, w)) answered += 1;
             }
             return {answered, url: location.href};
-            """
+            """.replace("__LWD_DMY__", today_dmy).replace("__LWD_ISO__", today_iso)
         )
         if isinstance(filled, dict):
             print(f"  fill={filled}", flush=True)
@@ -1111,6 +1163,20 @@ def tick_required_agreements(sb) -> dict:
               if (opt) {
                 const box = associatedBox(opt) || opt;
                 if (!isOn(box)) tick(box, 'validation-agree');
+              } else {
+                for (const btn of root.querySelectorAll('button, [role=combobox], [aria-haspopup=listbox]')) {
+                  const t = ((btn.innerText || '') + ' ' + (btn.getAttribute('aria-label') || '')).toLowerCase();
+                  if (/select an option|choose an option|^select$/.test(t) || btn.getAttribute('aria-expanded') === 'false') {
+                    try { btn.click(); } catch (e) {}
+                  }
+                }
+                const pick = [...root.querySelectorAll('button, [role=option], li, label, span')]
+                  .find(e => {
+                    const t = ((e.innerText || '') + ' ' + (e.getAttribute('aria-label') || '')).trim().toLowerCase();
+                    return t && t.length < 80 && /hyderabad|immediate|0\\s*day|1-30|0-15/.test(t)
+                      && !/select an option|choose an option|preferred location|notice period/.test(t);
+                  });
+                if (pick) { try { pick.click(); clicked.push('validation-option:' + (pick.innerText || '').slice(0, 40)); } catch (e) {} }
               }
             }
             return {clicked, url: location.href};

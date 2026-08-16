@@ -17,6 +17,7 @@ from tools.indeed.uc_daily_apply import (  # noqa: E402
     job_dedupe_key,
     looks_signed_in,
     skip_reason,
+    smartapply_question_want,
 )
 
 
@@ -170,6 +171,18 @@ def test_account_settings_and_serp_are_signed_in():
     assert not looks_signed_in(wall)
 
 
+def test_smartapply_notice_lwd_preferred_location():
+    # Regression 2026-08-16: UST SmartApply stalled on Notice period combobox,
+    # Expected last working day, and Preferred Location ("Choose an option").
+    assert smartapply_question_want("Notice period *", "16/08/2026") == "Immediate"
+    assert smartapply_question_want("Expected last working day *", "16/08/2026") == "16/08/2026"
+    assert smartapply_question_want("Last working day", "16/08/2026") == "16/08/2026"
+    assert smartapply_question_want("Preferred Location *", "16/08/2026") == "Hyderabad"
+    assert smartapply_question_want("Current Location *", "16/08/2026") == "Hyderabad"
+    assert smartapply_question_want("When can you start?", "16/08/2026") == "16/08/2026"
+    assert smartapply_question_want("Privacy notice", "16/08/2026") is None
+
+
 def test_job_dedupe_key_from_jk():
     assert job_dedupe_key("https://in.indeed.com/pagead/clk?jk=abc123def456&from=serp", "") == "abc123def456"
     assert job_dedupe_key("https://in.indeed.com/viewjob?jk=abc123def456", "other") == "abc123def456"
@@ -188,5 +201,6 @@ if __name__ == "__main__":
     test_hybrid_profile_copies_local_state()
     test_india_home_get_started_is_not_login_proof()
     test_account_settings_and_serp_are_signed_in()
+    test_smartapply_notice_lwd_preferred_location()
     test_job_dedupe_key_from_jk()
     print("ok")
