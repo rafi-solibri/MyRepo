@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| 10 tabs sat idle after fixed chunks; one ASK_OWNER froze remaining companies; many urls=0 | shared company queue so idle tabs steal next careers URL tenant; skip no-URL companies from careers tabs |
 | agent stopped for chat; captcha tabs not always focused; early CAPTCHA wall skipped owner wait; need continuous apply + SUBMITTED/NOT reports every run | prompt HARD continuous-apply; focus_page + owner wait before careers CAPTCHA block; scripts/hitechcity-keep-applying.sh; CHAT_SUMMARY rollup in daily_apply |
 | parallel tabs stole focus so owner missed captcha; one-shot bring_to_front not enough for every daily run | focus_page_for_owner + CDP activate; re-focus every ATS_OWNER_FOCUS_EVERY_SEC=2 during hcaptcha and ASK_OWNER waits; daily_apply/home-headed setdefault |
 | parallel multi-tab careers only via one-off launcher; cron/daily risked serial apply | daily_apply setdefault HITECHCITY_PARALLEL_TABS=10 + volume caps; prompt/home-headed/portal-home/rerun document parallel every run |

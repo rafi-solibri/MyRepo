@@ -17,6 +17,18 @@ def test_careers_parallel_default_is_ten():
     ) == 10
 
 
+def test_workable_companies_prefer_careers_urls():
+    from tools.hitechcity.careers_parallel import _workable_companies
+
+    got = _workable_companies(
+        [
+            {"name": "NoUrlCo"},
+            {"name": "HasUrl", "careersUrls": ["https://jobs.example.com"]},
+        ]
+    )
+    assert [c["name"] for c in got] == ["HasUrl"]
+
+
 def test_daily_apply_setdefault_parallel_tabs():
     src = Path(__file__).with_name("daily_apply.py").read_text(encoding="utf-8")
     assert 'os.environ.setdefault("HITECHCITY_PARALLEL_TABS", "10")' in src
@@ -50,6 +62,7 @@ def test_home_headed_exports_parallel():
 
 if __name__ == "__main__":
     test_careers_parallel_default_is_ten()
+    test_workable_companies_prefer_careers_urls()
     test_daily_apply_setdefault_parallel_tabs()
     test_daily_apply_import_sets_parallel_when_unset()
     test_home_headed_exports_parallel()
