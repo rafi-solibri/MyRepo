@@ -200,8 +200,9 @@ def discover_from_linkedin(companies: list[dict]) -> dict[str, Any]:
     those queries do not return employer pages. Seeds + employer-name queries only.
     """
     out: dict[str, Any] = {"added": [], "updated": [], "searches": 0, "error": None}
-    if os.environ.get("HITECHCITY_DISCOVERY_LINKEDIN", "1") != "1":
-        out["error"] = "disabled"
+    if os.environ.get("HITECHCITY_DISCOVERY_LINKEDIN", "0") != "1":
+        out["skipped"] = True
+        out["reason"] = "HITECHCITY_DISCOVERY_LINKEDIN=0 (seed-only; avoid company-search without job clicks)"
         return out
     try:
         from playwright.sync_api import sync_playwright

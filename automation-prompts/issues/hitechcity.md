@@ -1,9 +1,10 @@
 # Hitech City / Knowledge City — issues & fixes
 
-## 2026-08-16 (home)
+## 2026-08-16 (home — owner requests baked into every run)
 
 | Issue | Fix |
 | --- | --- |
+| Careers/LinkedIn looked architect-only; company search didn't click jobs; location not pinned | Careers `expand_careers_scan_urls` EM→Lead→Staff→… + `pin_careers_hyderabad_location`; LI `geoId=105556991` + `f_C` jobs/search; discovery LI company-search default off |
 | Relevant LI/careers hits skipped: Manager of Software Engineering failed TITLE_OK; raw jobPosting ids opened junk then title_not_senior; careers required Hyd pill even when no foreign city | TITLE_OK manager-of/senior-SWE; extract_job_cards title-filter before open; careers apply-bias when no foreign city |
 | LI searched architect-first TITLES[:5]; discovery used Knowledge City/Raheja LinkedIn queries that return nothing | SEARCH_KEYWORDS lead/staff/manager-first (10); discover via seeds + employer-name LinkedIn slug resolve only |
 | Owner captcha wait burned full ATS_CAPTCHA_WAIT_SEC after solve (only checked h-captcha-response token) | owner_hcaptcha_cleared detects submitted/Log Out/left login/form; poll 0.4s; re-check confirmation after timeout |

@@ -12,7 +12,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from playwright.sync_api import Page, sync_playwright
 
@@ -49,6 +49,41 @@ MAX_COMPANIES = int(os.environ.get("HITECHCITY_MAX_COMPANIES", "40"))
 TIME_CAP_S = int(os.environ.get("HITECHCITY_ATS_TIME_CAP_S", os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S", "90")))
 MAX_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "1"))
 MAX_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "2"))
+
+# Portal search terms — lead/staff/manager first (companies.json often baked "architect" only).
+CAREERS_SEARCH_KEYWORDS = [
+    "Engineering Manager",
+    "Technical Lead",
+    "Staff Software Engineer",
+    "Principal Software Engineer",
+    "Software Development Manager",
+    "Solution Architect",
+    ".NET Architect",
+    "Lead Software Engineer",
+]
+MAX_CAREERS_KEYWORD_SEARCHES = int(os.environ.get("HITECHCITY_CAREERS_KEYWORD_SEARCHES", "6"))
+
+_SEARCH_PARAM_KEYS = (
+    "keywords",
+    "keyword",
+    "q",
+    "search",
+    "query",
+    "searchKeyword",
+    "base_query",
+)
+_LOCATION_PARAM_KEYS = (
+    "location",
+    "locations",
+    "loc",
+    "loc_query",
+    "locationsearch",
+    "city",
+)
+CAREERS_LOCATION = os.environ.get("HITECHCITY_CAREERS_LOCATION", "Hyderabad")
+CAREERS_LOCATION_FULL = os.environ.get(
+    "HITECHCITY_CAREERS_LOCATION_FULL", "Hyderabad, Telangana, India"
+)
 
 TITLE_HINT = re.compile(
     r"architect|technical lead|tech lead|technology lead|engineering manager|"
@@ -203,6 +238,88 @@ def load_companies() -> list[dict[str, Any]]:
         key=lambda c: (_company_ats_rank(c), c.get("priority", 9), c.get("name", "")),
     )
     return companies
+
+
+def rewrite_careers_search_keyword(url: str, keyword: str) -> str:
+    """Replace baked search terms (often 'architect') with the requested role keyword."""
+    if not url or not keyword:
+        return url
+    parts = urlparse(url)
+    qs = parse_qs(parts.query, keep_blank_values=True)
+    hit = False
+    for key in _SEARCH_PARAM_KEYS:
+        if key in qs and qs[key]:
+            qs[key] = [keyword]
+            hit = True
+    if not hit:
+        # Prefer 'keywords' when the portal has no search param yet.
+        qs["keywords"] = [keyword]
+    # Flatten for urlencode
+    flat: list[tuple[str, str]] = []
+    for k, vals in qs.items():
+        for v in vals:
+            flat.append((k, v))
+    return urlunparse(parts._replace(query=urlencode(flat, doseq=True)))
+
+
+def pin_careers_hyderabad_location(url: str) -> str:
+    """Force Hyderabad on any location query param the portal already exposes.
+
+    Does not invent location params for portals that only use path geography
+    (e.g. /search-jobs/Hyderabad) — those already encode Hyd.
+    """
+    if not url:
+        return url
+    parts = urlparse(url)
+    qs = parse_qs(parts.query, keep_blank_values=True)
+    changed = False
+    for key in _LOCATION_PARAM_KEYS:
+        if key not in qs or not qs[key]:
+            continue
+        cur = (qs[key][0] or "").strip()
+        # Preserve Apple-style location codes that already mean Hyderabad.
+        if re.search(r"hyderabad", cur, re.I) and "-" in cur and len(cur) > 12:
+            continue
+        if key in ("loc_query",) or "," in cur or re.search(r"telangana|india", cur, re.I):
+            target = CAREERS_LOCATION_FULL
+        else:
+            target = CAREERS_LOCATION
+        if cur != target:
+            qs[key] = [target]
+            changed = True
+    # Salesforce-style city= + country=
+    if "city" in qs and qs["city"]:
+        if not re.search(r"hyderabad", qs["city"][0] or "", re.I):
+            qs["city"] = [CAREERS_LOCATION]
+            changed = True
+        if "country" in qs:
+            qs["country"] = ["India"]
+            changed = True
+    if not changed:
+        return url
+    flat: list[tuple[str, str]] = []
+    for k, vals in qs.items():
+        for v in vals:
+            flat.append((k, v))
+    return urlunparse(parts._replace(query=urlencode(flat, doseq=True)))
+
+
+def expand_careers_scan_urls(urls: list[str]) -> list[str]:
+    """Emit role-diverse Hyd-scoped scan URLs (EM/Lead/Staff first) per careers link."""
+    base = [u for u in (urls or []) if u]
+    if not base:
+        return []
+    keywords = CAREERS_SEARCH_KEYWORDS[:MAX_CAREERS_KEYWORD_SEARCHES]
+    out: list[str] = []
+    seen: set[str] = set()
+    for kw in keywords:
+        for url in base:
+            rewritten = pin_careers_hyderabad_location(rewrite_careers_search_keyword(url, kw))
+            if rewritten in seen:
+                continue
+            seen.add(rewritten)
+            out.append(rewritten)
+    return out
 
 
 def _company_ats_rank(company: dict[str, Any]) -> int:
@@ -826,8 +943,8 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                 break
             name = company["name"]
             campuses = ",".join(company.get("campuses") or [])
-            urls = company.get("careersUrls") or []
-            _safe_print(f"CAREERS SCAN {name}")
+            urls = expand_careers_scan_urls(company.get("careersUrls") or [])
+            _safe_print(f"CAREERS SCAN {name} | urls={len(urls)} roles={MAX_CAREERS_KEYWORD_SEARCHES}")
             company_applied = 0
             company_walls = 0
             company_attempts = 0

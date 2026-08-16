@@ -90,6 +90,28 @@ def test_title_ok():
     assert "Hyderabad" in url_fc and "geoId=105556991" in url_fc and "distance=25" in url_fc
     url_fb = company_jobs_url("jpmorganchase", "Engineering Manager")
     assert "/company/jpmorganchase/jobs/" in url_fb and "geoId=105556991" in url_fb
+    # Careers portals: multi-role + Hyderabad location on every scan URL.
+    from tools.hitechcity.careers_apply import (
+        CAREERS_SEARCH_KEYWORDS,
+        expand_careers_scan_urls,
+        pin_careers_hyderabad_location,
+        rewrite_careers_search_keyword,
+    )
+
+    assert CAREERS_SEARCH_KEYWORDS[0] == "Engineering Manager"
+    assert CAREERS_SEARCH_KEYWORDS.index("Engineering Manager") < CAREERS_SEARCH_KEYWORDS.index(
+        "Solution Architect"
+    )
+    by = "https://careers.blueyonder.com/us/en/search-results?keywords=architect&location=Bengaluru"
+    assert "Engineering%20Manager" in rewrite_careers_search_keyword(by, "Engineering Manager") or (
+        "Engineering+Manager" in rewrite_careers_search_keyword(by, "Engineering Manager")
+    )
+    pinned = pin_careers_hyderabad_location(by)
+    assert "Hyderabad" in pinned and "Bengaluru" not in pinned
+    expanded = expand_careers_scan_urls([by])
+    assert len(expanded) >= 4
+    assert any("Engineering" in u for u in expanded)
+    assert all("Hyderabad" in u for u in expanded)
     # Discovery must not use campus-name LinkedIn queries.
     from tools.hitechcity import discover_tenants as disc
 

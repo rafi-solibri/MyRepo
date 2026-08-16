@@ -65,15 +65,15 @@ Judge location from the TOP CARD / workplace pills / job location field — neve
    - `python3 tools/hitechcity/linkedin_target_apply.py`
    - `python3 tools/hitechcity/careers_apply.py`
    - `python3 tools/hitechcity/board_campus_apply.py`
-3. LinkedIn: company-targeted searches on each campus **employer** in `companies.json` (never search campus strings like "Knowledge City" / "Raheja" — discover tenants via seeds + employer-name lookup, then search that company). Keywords: Engineering Manager, Technical Lead, Staff/Principal/Lead Software Engineer, Software Development Manager, Solution/Technical Architect, Principal .NET, Azure/.NET — not architect-only.
+3. LinkedIn: company-targeted **job** searches via `/jobs/search/?f_C=<companyId>&keywords=…&location=Hyderabad, Telangana, India&geoId=105556991&distance=25` (never company `/jobs/` alone — those pages lack clickable cards; never search campus strings like "Knowledge City" / "Raheja"). Keywords every run (EM-first, not architect-only): Engineering Manager, Technical Lead, Staff/Principal/Lead Software Engineer, Software Development Manager, Solution/Technical Architect, Principal .NET, Azure/.NET.
 4. Easy Apply AND company-website / ATS redirects — both required paths
 5. After a successful apply, try referral: message the job poster (poster-specific Message) OR send a short LinkedIn connection note to a Hyd engineer/recruiter/EM at that company asking for a referral / 15–20 min screen
-6. For each company: also open official careers URL from companies.json, find Hyd/India qualifying roles, COMPLETE Greenhouse / Lever / Workday / SmartRecruiters / SuccessFactors / company ATS when guest/logged apply is possible (skip US-only cards and SSO passport walls quickly)
+6. For each company: open official careers URLs from companies.json **rewritten every run** to (a) multi-role keywords EM/Tech Lead/Staff/Principal/SDM/Architect/.NET and (b) Hyderabad on any available location query param (`location` / `loc` / `loc_query` / `city`). Find Hyd/India qualifying roles, COMPLETE Greenhouse / Lever / Workday / SmartRecruiters / SuccessFactors / company ATS when guest/logged apply is possible (skip US-only cards and SSO passport walls quickly)
 7. Boards: each portal gets its own preflight + CDP launch + allowlist; keep per-board caps modest (defaults ~6–12). **Cutshort/Indeed are login-probed first** (`chrome_session.js check`) — skip immediately on `*_login_required` so the phase is not burned. Other board login walls → log blocked, continue.
 8. External ATS: default wall/attempt caps are tight (`HITECHCITY_MAX_EXT_WALLS=1`, `HITECHCITY_MAX_EXT_ATTEMPTS=2`, `HITECHCITY_EXT_ATS_TIME_CAP_S=45`) so Phenom/guest walls fail fast and more companies are attempted.
 8. Cap stuck ATS/CAPTCHA/OTP at ~3–4 minutes — log blocked, continue. Do **not** require a paid captcha-solver key. Cloud headless cannot click hCaptcha; the free path is owner-headed `bash scripts/home-headed-careers-apply.sh` (helper fills, owner clicks). Optional `CAPSOLVER_API_KEY` only if the owner already set it.
 9. Skip already Applied; expand inventory to 14-day window when thin
-
+10. Discovery default: seed merge every run; LinkedIn *company-name* slug search is **off by default** (`HITECHCITY_DISCOVERY_LINKEDIN=0`) so the browser is not stuck on Companies results without job clicks. Set `=1` only when refreshing slugs.
 ## Skip rules (TITLE-FIRST — do not over-filter)
 Skip ONLY when the TITLE (or clear mandatory JD language) is wrong:
 - Wrong-stack TITLE: Salesforce, ServiceNow, SAP/D365-primary, Guidewire, PEGA, Coupa, Revit/BArch, Hubspot, M365-only, GIS/Esri-primary, QA/SDET/Quality Engineering, BPO, pure AI/data title without .NET on the title
