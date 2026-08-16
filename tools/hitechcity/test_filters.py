@@ -83,6 +83,12 @@ def test_title_ok():
     assert any("Lead" in k for k in SEARCH_KEYWORDS)
     assert any("Manager" in k for k in SEARCH_KEYWORDS)
     assert SEARCH_KEYWORDS.index("Engineering Manager") < SEARCH_KEYWORDS.index("Solution Architect")
+    from tools.hitechcity.linkedin_target_apply import company_jobs_url
+
+    url_fc = company_jobs_url("jpmorganchase", "Engineering Manager", company_f_c="1068")
+    assert "jobs/search" in url_fc and "f_C=1068" in url_fc and "Hyderabad" in url_fc
+    url_fb = company_jobs_url("jpmorganchase", "Engineering Manager")
+    assert "/company/jpmorganchase/jobs/" in url_fb
     # Discovery must not use campus-name LinkedIn queries.
     from tools.hitechcity import discover_tenants as disc
 

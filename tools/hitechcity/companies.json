@@ -26,7 +26,7 @@
       "Azure Architect",
       "Cloud Architect"
     ],
-    "lastDiscoveryAt": "2026-08-16T08:49:46.119042+00:00"
+    "lastDiscoveryAt": "2026-08-16T08:56:49.367902+00:00"
   },
   "campuses": [
     {
@@ -229,7 +229,8 @@
       "careersUrls": [
         "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/requisitions?keyword=architect&location=Hyderabad%2C+Telangana%2C+India"
       ],
-      "priority": 1
+      "priority": 1,
+      "linkedinCompanyId": "1068"
     },
     {
       "name": "Meta",
