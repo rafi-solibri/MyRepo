@@ -588,6 +588,21 @@ def restore_signed_in(sb) -> dict:
     return info
 
 
+_ALREADY_APPLIED_RE = re.compile(
+    r"you have already applied|you applied to this job|already applied to this|"
+    r"already applied for this|application submitted on",
+    re.I,
+)
+# SmartApply confirmation ("Application submitted") is success — not a skip.
+# "You have already applied to this job" on SmartApply is a real skip: job-view
+# often still shows Apply, so we only see this after the Easy Apply click.
+_SMARTAPPLY_ALREADY_RE = re.compile(
+    r"you have already applied|you applied to this job|already applied to this|"
+    r"already applied for this",
+    re.I,
+)
+
+
 def already_applied(body: str, url: str = "") -> bool:
     """True when job-view or SmartApply shows this listing was already submitted.
 
@@ -596,12 +611,18 @@ def already_applied(body: str, url: str = "") -> bool:
     that phrase is handled by _is_submitted. Match "application submitted on <date>" only.
     """
     b = (body or "").lower()
+    u = (url or "").lower()
+    if "smartapply" in u or "indeedapply" in u:
+        return bool(_SMARTAPPLY_ALREADY_RE.search(b))
+    return bool(_ALREADY_APPLIED_RE.search(b))
+
+
+def required_government_id(body: str) -> bool:
+    """True when SmartApply blocks Continue on required PAN/Aadhaar (do not invent)."""
+    b = (body or "").lower()
     return bool(
-        re.search(
-            r"you applied to this job|already applied to this|"
-            r"you have already applied|application submitted on",
-            b,
-        )
+        re.search(r"\bpan\b|aadhaar|aadhar|passport number|national id", b)
+        and re.search(r"answer this question to continue", b)
     )
 
 
@@ -833,7 +854,9 @@ def fill_common_questions(sb) -> None:
               if (/relocat|willing to work|hybrid|work from office|bond|service agreement|background check|drug test/.test(t)) return 'yes';
               if (/authorized|work authori|visa|citizen|india|legally/.test(t)) return 'yes';
               if (/gender/.test(t)) return 'male';
-              if (/city|current location|prefer.*location|job location|base location/.test(t)) return 'Hyderabad';
+              if (/\\bstate\\b|province/.test(t) && !/united states|\\busa\\b/.test(t)) return 'Telangana';
+              if (/city|current location|prefer.*location|job location|base location/.test(t)
+                  && !/\\bstate\\b|province/.test(t)) return 'Hyderabad';
               if (/\\?/.test(t) && /(yes|no)/.test(t)) return 'yes';
               if (/what makes you unique|cover letter|why (do )?you|tell us|about yourself|summary|additional information/.test(t)) {
                 return 'Solutions Architect / Tech Lead with 14+ years in .NET, Azure, microservices. Immediate joiner. Hyd/Remote. Expected 65 LPA.';
@@ -864,6 +887,7 @@ def fill_common_questions(sb) -> None:
                     (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs/.test(t)) ||
                     (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than/.test(t)) ||
                     (want === 'Hyderabad' && /hyderabad/.test(t)) ||
+                    (want === 'Telangana' && /telangana|\\bts\\b/.test(t)) ||
                     (want === '52' && /\\b52\\b|50-55|45-55/.test(t)) ||
                     (want === '65' && /\\b65\\b|60-70|60-65/.test(t)) ||
                     (want === '14' && /\\b14\\b|12-15|10\\+/.test(t)) ||
@@ -884,7 +908,7 @@ def fill_common_questions(sb) -> None:
                 if (want) { setNative(el, want); return true; }
               }
               // Custom listbox / button options (Indeed education / years are often comboboxes).
-              if (want === 'B.Tech' || want === '14' || want === '10') {
+              if (want === 'B.Tech' || want === '14' || want === '10' || want === 'Telangana' || want === 'Hyderabad') {
                 for (const btn of root.querySelectorAll('button, [role=combobox], [aria-haspopup=listbox]')) {
                   const t = ((btn.innerText||'') + ' ' + (btn.getAttribute('aria-label')||'')).toLowerCase();
                   if (/select an option|choose an option|^select$/.test(t) || btn.getAttribute('aria-expanded') === 'false') {
@@ -900,6 +924,14 @@ def fill_common_questions(sb) -> None:
                 if (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15/.test(t)) { el.click(); return true; }
                 if (want === 'B.Tech' && /b\\.?\\s*tech|bachelor|b\\.e\\b|undergraduate|master'?s?|m\\.?\\s*tech/.test(t)
                     && !/select an option|highest degree/.test(t)) {
+                  el.click(); return true;
+                }
+                if (want === 'Telangana' && /telangana|\\bts\\b/.test(t)
+                    && !/select an option|choose an option|state/.test(t)) {
+                  el.click(); return true;
+                }
+                if (want === 'Hyderabad' && /hyderabad/.test(t)
+                    && !/select an option|choose an option/.test(t)) {
                   el.click(); return true;
                 }
                 if ((want === '14' || want === '10') && /\\b(14|12|10|8)\\+?\\b|12-15|10\\+|8-10/.test(t)
@@ -925,7 +957,7 @@ def fill_common_questions(sb) -> None:
             }
             for (const lab of document.querySelectorAll('label, legend, h1, h2, h3, p, span')) {
               const t = (lab.innerText||'').trim();
-              if (t.length > 6 && t.length < 220 && /\\?|ctc|salary|notice|experience|relocat|authori|location|package|lpa|gender|hybrid|bond|veteran|disability|ethnicity|race|hispanic|voluntary|self.?ident|birth|dob|title|salutation/.test(t.toLowerCase())) {
+              if (t.length > 6 && t.length < 220 && /\\?|ctc|salary|notice|experience|relocat|authori|location|package|lpa|gender|hybrid|bond|veteran|disability|ethnicity|race|hispanic|voluntary|self.?ident|birth|dob|title|salutation|\\bstate\\b|province|city/.test(t.toLowerCase())) {
                 const want = wantFromText(t);
                 if (want && clickMatching(lab.closest('div, fieldset, li, section, [class*="question"]') || lab.parentElement || lab, want)) {
                   answered += 1;
@@ -955,7 +987,8 @@ def fill_common_questions(sb) -> None:
               else if (/expected.*(ctc|salary|compensation|package)|ctc.*expected/.test(lab)) val = vals.expected;
               else if (/earliest start|start date|available from|joining date/.test(lab) || (type === 'date' && /start|join|avail/.test(lab))) val = '15/08/2026';
               else if (/notice|joining|availability/.test(lab) && !/start date|available from/.test(lab)) val = vals.notice;
-              else if (/city|location|current\\s*location/.test(lab)) val = vals.city;
+              else if (/\\bstate\\b|province/.test(lab) && !/united states|\\busa\\b/.test(lab)) val = 'Telangana';
+              else if (/city|location|current\\s*location/.test(lab) && !/\\bstate\\b/.test(lab)) val = vals.city;
               else if (/experience|years/.test(lab)) val = vals.experience;
               else if (!(el.value || '').trim()) {
                 const w = wantFromText(lab);
@@ -990,6 +1023,17 @@ def fill_common_questions(sb) -> None:
               if (/country|dial|phone/.test(lab)) {
                 for (const opt of sel.options) {
                   if (/india|\\+91|^in$/i.test(opt.text + ' ' + opt.value)) {
+                    sel.value = opt.value;
+                    sel.dispatchEvent(new Event('change', {bubbles:true}));
+                    answered += 1;
+                    break;
+                  }
+                }
+                continue;
+              }
+              if (/\\bstate\\b|province/.test(lab)) {
+                for (const opt of sel.options) {
+                  if (/telangana|\\bts\\b/i.test(opt.text + ' ' + opt.value)) {
                     sel.value = opt.value;
                     sel.dispatchEvent(new Event('change', {bubbles:true}));
                     answered += 1;
@@ -1210,6 +1254,9 @@ def click_next_or_submit(
 def _is_submitted(body: str, url: str) -> bool:
     b = (body or "").lower()
     u = (url or "").lower()
+    # "You applied to this job on …" is already-applied, not a new confirmation.
+    if already_applied(b, u) or _SMARTAPPLY_ALREADY_RE.search(b):
+        return False
     return any(
         x in b
         for x in (
@@ -2272,7 +2319,7 @@ def submit_review_application(sb, deadline: float | None = None) -> bool:
 
 
 def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> str:
-    """Returns 'submitted' | 'external' | 'failed' | 'recaptcha' | 'already_applied' | 'login_required'."""
+    """Returns 'submitted' | 'external' | 'failed' | 'recaptcha' | 'already_applied' | 'login_required' | 'government_id'."""
     stuck_questions = 0
     review_submit_attempts = 0
     same_cta_streak = 0
@@ -2297,6 +2344,8 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
             return "already_applied"
         if looks_login_wall(body, url):
             return "login_required"
+        if required_government_id(body):
+            return "government_id"
         if _is_submitted(body, url):
             return "submitted"
         if "apply on company site" in body and "indeed apply" not in body:
@@ -2847,6 +2896,18 @@ def main() -> int:
                 result = easy_apply_flow(sb, deadline=job_deadline)
                 item["path"] = "easy_apply"
                 item["result"] = result
+                if result == "already_applied":
+                    item["reason"] = "already_applied"
+                    report["skipped"].append(item)
+                    report["counts"]["skipped"] += 1
+                    print("SKIP already_applied", page_title[:80], flush=True)
+                    continue
+                if result == "government_id":
+                    item["reason"] = "government_id_required"
+                    report["skipped"].append(item)
+                    report["counts"]["skipped"] += 1
+                    print("SKIP government_id_required", page_title[:80], flush=True)
+                    continue
                 if result == "submitted":
                     report["applied"].append(item)
                     report["counts"]["applied"] += 1

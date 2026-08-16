@@ -16,7 +16,9 @@ from tools.indeed.uc_daily_apply import (  # noqa: E402
     looks_login_wall,
     job_dedupe_key,
     looks_signed_in,
+    required_government_id,
     skip_reason,
+    _is_submitted,
 )
 
 
@@ -134,6 +136,28 @@ def test_already_applied_job_view_only():
     )
 
 
+def test_already_applied_smartapply_already_page():
+    # 2026-08-16: job-view still showed Apply; SmartApply then said already applied
+    # and was counted as easy_apply_incomplete / rejected.
+    smart = "https://smartapply.indeed.com/beta/indeedapply/applybyapplyablejobid?x=1"
+    assert already_applied("You have already applied to this job | Return to job search", smart)
+    assert already_applied("You applied to this job on 12 Aug", smart)
+    assert not already_applied("Application submitted", smart)
+    assert not _is_submitted("You have already applied to this job", smart)
+    assert not _is_submitted("You applied to this job on 12 Aug", smart)
+    assert _is_submitted("Application submitted", smart)
+
+
+def test_required_government_id_pan_wall():
+    body = (
+        "Title Mr. Phone No * 8790251698 Date of birth * 16/01/1989 "
+        "PAN Card * Answer this question to continue. Gender * Male "
+        "City * Hyderabad State * Choose an option to continue."
+    )
+    assert required_government_id(body)
+    assert not required_government_id("Phone No * Gender * City * Hyderabad")
+
+
 def test_hybrid_profile_copies_local_state():
     assert "Local State" in COPY_PATHS
 
@@ -185,6 +209,8 @@ if __name__ == "__main__":
     test_skip_salesforce_service_cloud_title()
     test_skip_kochi_kerala_in_title()
     test_already_applied_job_view_only()
+    test_already_applied_smartapply_already_page()
+    test_required_government_id_pan_wall()
     test_hybrid_profile_copies_local_state()
     test_india_home_get_started_is_not_login_proof()
     test_account_settings_and_serp_are_signed_in()
