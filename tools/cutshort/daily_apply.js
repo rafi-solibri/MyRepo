@@ -329,11 +329,19 @@ function createCdpSession() {
   async function disconnect() {
     // Never browser.close() on Windows home — Playwright can tear down Chrome CDP.
     // page.close() can hang on a dying CDP target — bound it.
+    // Must browser.disconnect() or the CDP WebSocket keeps Node alive forever.
     if (page) {
       await Promise.race([page.close().catch(() => {}), sleep(3000)]);
     }
     page = null;
     context = null;
+    if (browser) {
+      try {
+        browser.disconnect();
+      } catch {
+        /* already gone */
+      }
+    }
     browser = null;
   }
 
