@@ -419,6 +419,34 @@ assert.strictEqual(
 
 assert.strictEqual(
   classifyJob({
+    jobId: 26.1,
+    title: "Snowflake Solutions Architect",
+    companyName: "INFOTRON",
+    locations: [{ text: "India" }, { text: "Remote" }],
+    skills: [{ text: "Snowflake" }, { text: "AWS" }, { text: "Azure" }],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "Snowflake/Databricks without .NET on title",
+  "Snowflake Architect must hard-skip even via Arch/Lead without .NET"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 26.2,
+    title: "Databricks Solutions Architect",
+    companyName: "Example",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: ".NET" }, { text: "Databricks" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "Snowflake/Databricks without .NET on title",
+  "Databricks title must skip even with .NET in skills laundry"
+);
+
+assert.strictEqual(
+  classifyJob({
     jobId: 27,
     title: "AI Solution Architect",
     companyName: "hire feed",
