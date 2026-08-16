@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-16 (home)
+
+| Issue | Fix |
+| --- | --- |
+| Owner captcha wait burned full ATS_CAPTCHA_WAIT_SEC after solve (only checked h-captcha-response token) | owner_hcaptcha_cleared detects submitted/Log Out/left login/form; poll 0.4s; re-check confirmation after timeout |
+
+
 ## 2026-08-16 (cloud)
 
 | Issue | Fix |

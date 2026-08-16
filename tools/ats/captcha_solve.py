@@ -326,29 +326,142 @@ def owner_captcha_wait_sec() -> int:
     return 0
 
 
+def _page_url(page) -> str:
+    try:
+        return getattr(page, "url", "") or ""
+    except Exception:
+        return ""
+
+
+def _safe_body_snip(page, limit: int = 2500) -> str:
+    """Same-origin body only — never evaluate cross-origin hCaptcha frames."""
+    chunks: list[str] = []
+    try:
+        page.set_default_timeout(1200)
+    except Exception:
+        pass
+    try:
+        for fr in _captcha_poll_frames(page):
+            try:
+                chunks.append((fr.locator("body").inner_text(timeout=800) or "")[:limit])
+            except Exception:
+                continue
+    finally:
+        try:
+            page.set_default_timeout(45000)
+        except Exception:
+            pass
+    return "\n".join(chunks)
+
+
+def owner_hcaptcha_cleared(page, *, start_url: str = "") -> str | None:
+    """Return a short reason when the owner solve is done — do not wait for token alone.
+
+    After a human click, iCIMS/Workday often navigate or show Log Out / confirmation
+    without leaving a readable ``h-captcha-response`` in a same-origin frame. Treating
+    only the token as success burns the full ATS_CAPTCHA_WAIT_SEC.
+    """
+    if hcaptcha_token_present(page):
+        return "token"
+    url = _page_url(page)
+    url_l = url.lower()
+    start_l = (start_url or "").lower()
+    body = _safe_body_snip(page, 3000)
+    if re.search(
+        r"application (has been )?submitted|thank you for (your )?appl|"
+        r"we (have )?received your (application|appl)|application received|"
+        r"successfully applied|your application was sent|application complete|"
+        r"application was submitted successfully|"
+        r"you are currently submitted to this job|"
+        r"you have already applied",
+        body,
+        re.I,
+    ):
+        return "submitted_or_already"
+    if re.search(r"\bLog Out\b|Dashboard\s*\|", body, re.I):
+        return "icims_logged_in"
+    # Left the GDPR /login wall (parent or iframe URL).
+    if "icims.com" in url_l and "/login" not in url_l:
+        if "icims.com" in start_l and "/login" in start_l:
+            return "left_icims_login"
+        if re.search(r"mode=submit_apply|mode=apply|/questions|/eeo|/form", url_l, re.I):
+            return "icims_apply_flow"
+    try:
+        for fr in getattr(page, "frames", []) or []:
+            fu = (getattr(fr, "url", None) or "").lower()
+            if "icims.com" in fu and "/login" in fu:
+                break
+        else:
+            if "icims.com" in start_l and "/login" in start_l and "icims.com" in url_l:
+                # Start was login; no login iframe remains.
+                if not re.search(r"icims\.com/.+/login", url_l, re.I):
+                    return "icims_login_iframe_gone"
+    except Exception:
+        pass
+    # Guest ATS form appeared after the wall (resume / name fields).
+    try:
+        page.set_default_timeout(1200)
+        has_file = page.locator("input[type='file']").count() > 0
+        has_name = page.locator(
+            "[data-automation-id='legalNameSection'], [data-automation-id='formField-name'], "
+            "input[name*='first' i], input[id*='firstName' i]"
+        ).count() > 0
+    except Exception:
+        has_file = False
+        has_name = False
+    finally:
+        try:
+            page.set_default_timeout(45000)
+        except Exception:
+            pass
+    if (has_file or has_name) and not re.search(
+        r"verify you are human|press and hold|i'?m not a robot", body, re.I
+    ):
+        # Only count as cleared if we are no longer on a bare login URL.
+        if "/login" not in url_l or has_file:
+            return "form_ready"
+    # Navigated off the original challenge URL entirely.
+    if start_l and url_l and url_l.split("?")[0] != start_l.split("?")[0]:
+        if "checkpoint" not in url_l and "challenge" not in url_l and "captcha" not in url_l:
+            if re.search(r"myworkdayjobs|greenhouse|lever\.co|icims\.com|smartrecruiters|oraclecloud", url_l):
+                return "navigated_on"
+    return None
+
+
 def wait_for_owner_hcaptcha(page) -> bool:
-    """Pause so the owner can solve hCaptcha in the visible Chrome window."""
+    """Pause so the owner can solve hCaptcha in the visible Chrome window.
+
+    Polls frequently and resumes as soon as a token, login, confirmation, or
+    post-captcha form is visible — not only when the full wait budget expires.
+    """
     wait = owner_captcha_wait_sec()
     if wait <= 0:
         return False
+    start_url = _page_url(page)
     print(
         f"hcaptcha=wait_owner {wait}s — click the captcha in the Chrome window (no paid API key)",
         flush=True,
     )
     deadline = time.time() + wait
+    last_beat = 0.0
+    poll = float(os.environ.get("ATS_CAPTCHA_POLL_SEC", "0.4") or "0.4")
+    poll = min(1.0, max(0.2, poll))
     while time.time() < deadline:
-        if hcaptcha_token_present(page):
-            print("hcaptcha=owner_solved", flush=True)
+        why = owner_hcaptcha_cleared(page, start_url=start_url)
+        if why:
+            print(f"hcaptcha=owner_solved reason={why}", flush=True)
             return True
-        try:
-            url = getattr(page, "url", "") or ""
-        except Exception:
-            url = ""
-        if "icims.com" in url.lower() and "/login" not in url.lower():
-            # Parent navigated off login chrome.
-            if hcaptcha_token_present(page):
-                return True
-        time.sleep(2.0)
+        now = time.time()
+        if now - last_beat >= 5.0:
+            left = max(0, int(deadline - now))
+            print(f"hcaptcha=waiting {left}s left", flush=True)
+            last_beat = now
+        time.sleep(poll)
+    # Final check — owner may have solved in the last poll window.
+    why = owner_hcaptcha_cleared(page, start_url=start_url)
+    if why:
+        print(f"hcaptcha=owner_solved reason={why}", flush=True)
+        return True
     print("hcaptcha=owner_wait_timeout", flush=True)
     return False
 

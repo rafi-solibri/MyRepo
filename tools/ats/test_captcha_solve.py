@@ -16,6 +16,7 @@ from tools.ats.captcha_solve import (
     extract_sitekey_from_text,
     inject_hcaptcha_token,
     owner_captcha_wait_sec,
+    owner_hcaptcha_cleared,
 )
 
 
@@ -95,5 +96,75 @@ assert_true(_polled[0] is _page, "page first")
 assert_true(len(_polled) == 3, f"skip captcha iframes got {len(_polled)}")
 assert_true(all("hcaptcha" not in getattr(f, "url", "") for f in _polled[1:]), "no hcaptcha frames")
 assert_true(all("recaptcha" not in getattr(f, "url", "") for f in _polled[1:]), "no recaptcha frames")
+
+
+class _BodyLoc:
+    def __init__(self, text: str):
+        self._text = text
+
+    def inner_text(self, *a, **k):
+        return self._text
+
+
+class _CountLoc:
+    def __init__(self, n: int):
+        self._n = n
+
+    def count(self):
+        return self._n
+
+
+class _ClearPage:
+    """Minimal page stub for owner_hcaptcha_cleared."""
+
+    def __init__(self, url: str, body: str, *, files: int = 0, token: str = ""):
+        self.url = url
+        self._body = body
+        self._files = files
+        self._token = token
+        self.frames = [self]
+
+    def set_default_timeout(self, *_a, **_k):
+        return None
+
+    def locator(self, sel):
+        s = sel or ""
+        if "h-captcha-response" in s or "g-recaptcha-response" in s:
+            return _CountLoc(1 if self._token else 0)
+        if "type='file'" in s or 'type="file"' in s:
+            return _CountLoc(self._files)
+        if "first" in s.lower() or "legalName" in s or "formField-name" in s:
+            return _CountLoc(0)
+        if sel == "body" or s == "body":
+            return _BodyLoc(self._body)
+        return _CountLoc(0)
+
+    def evaluate(self, js, *a, **k):
+        # hcaptcha_token_present uses evaluate on frames.
+        if self._token and len(self._token) > 20:
+            return True
+        return False
+
+
+# Confirmation after owner click must clear immediately (not wait for token).
+_sub = _ClearPage(
+    "https://careers-hyland.icims.com/jobs/14269/x/job?mode=submit_apply",
+    "Your application was submitted successfully. Thank you for applying.\nLog Out",
+)
+assert_true(
+    owner_hcaptcha_cleared(
+        _sub,
+        start_url="https://careers-hyland.icims.com/jobs/14269/x/login",
+    )
+    in ("submitted_or_already", "icims_logged_in", "left_icims_login", "icims_apply_flow"),
+    "submitted/login after captcha clears wait",
+)
+_tok = _ClearPage("https://example.com/apply", "captcha", token="x" * 40)
+assert_true(owner_hcaptcha_cleared(_tok) == "token", "token still clears")
+_wall = _ClearPage(
+    "https://careers-hyland.icims.com/jobs/1/login",
+    "I accept\nEnter your information\nprotected by hCaptcha",
+)
+assert_true(owner_hcaptcha_cleared(_wall, start_url=_wall.url) is None, "login wall still waiting")
 
 print("tools/ats/test_captcha_solve.py OK")
