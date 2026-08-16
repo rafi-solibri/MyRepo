@@ -1,5 +1,12 @@
 # Cutshort — issues & fixes
 
+## 2026-08-16 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| daily_apply.js hung after report: CDP WebSocket kept Node alive (page.close race alone insufficient) | call browser.disconnect() in createCdpSession.disconnect after bounded page.close |
+
+
 ## 2026-08-15 (home)
 
 | Issue | Fix |
