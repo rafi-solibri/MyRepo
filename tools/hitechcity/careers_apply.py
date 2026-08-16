@@ -286,14 +286,24 @@ def pin_careers_hyderabad_location(url: str) -> str:
 
     Does not invent location params for portals that only use path geography
     (e.g. /search-jobs/Hyderabad) — those already encode Hyd.
+
+    Workday: plain `location=Hyderabad` is ignored by the SPA. Strip it and rely
+    on UI pin + path/card location checks (Intel has no Hyd facet today).
     """
     if not url:
         return url
     parts = urlparse(url)
     qs = parse_qs(parts.query, keep_blank_values=True)
     changed = False
+    # Workday ignores free-text location= — remove so we don't pretend Hyd is set.
+    if re.search(r"myworkdayjobs\.com", parts.netloc or "", re.I):
+        if "location" in qs:
+            qs.pop("location", None)
+            changed = True
     for key in _LOCATION_PARAM_KEYS:
         if key not in qs or not qs[key]:
+            continue
+        if key == "location" and re.search(r"myworkdayjobs\.com", parts.netloc or "", re.I):
             continue
         cur = (qs[key][0] or "").strip()
         # Preserve Apple-style location codes that already mean Hyderabad.
@@ -321,6 +331,80 @@ def pin_careers_hyderabad_location(url: str) -> str:
         for v in vals:
             flat.append((k, v))
     return urlunparse(parts._replace(query=urlencode(flat, doseq=True)))
+
+
+def workday_pin_hyderabad_location_ui(page: Page) -> dict[str, Any]:
+    """Open Workday Location filter and select Hyderabad when present.
+
+    Returns {pinned: bool, available: bool, note: str}. When Hyderabad is not in
+    the location list (e.g. Intel today), available=False — caller should skip
+    non-Hyd roles rather than open Haifa/Bangalore/US cards.
+    """
+    out: dict[str, Any] = {"pinned": False, "available": False, "note": ""}
+    try:
+        url = page.url or ""
+    except Exception:
+        url = ""
+    if not re.search(r"myworkdayjobs\.com", url, re.I):
+        out["note"] = "not_workday"
+        return out
+    try:
+        btn = page.locator('[data-automation-id="distanceLocation"]')
+        if not btn.count() or not btn.first.is_visible():
+            out["note"] = "no_location_button"
+            return out
+        btn.first.click(timeout=4000)
+        time.sleep(1.0)
+    except Exception as e:
+        out["note"] = f"open_failed:{e}"
+        return out
+    # Search inside the Locations filter menu.
+    try:
+        menu = page.locator('[data-automation-id="filterMenu"]')
+        menu.wait_for(state="visible", timeout=4000)
+        menu_text = (menu.inner_text(timeout=2000) or "")
+        if re.search(r"hyderabad|telangana|madhapur", menu_text, re.I):
+            out["available"] = True
+        # Type into location search if present.
+        inp = menu.locator(
+            'input[type="text"], input[type="search"], '
+            '[data-automation-id="searchBox"] input, '
+            'input[placeholder*="Search" i]'
+        )
+        if inp.count():
+            inp.first.fill(CAREERS_LOCATION, timeout=2500)
+            time.sleep(1.2)
+            menu_text = (menu.inner_text(timeout=2000) or "")
+            if re.search(r"hyderabad|telangana|madhapur", menu_text, re.I):
+                out["available"] = True
+        if out["available"]:
+            opt = menu.get_by_text(re.compile(r"Hyderabad", re.I)).first
+            if opt.count():
+                opt.click(timeout=3000)
+                out["pinned"] = True
+                out["note"] = "selected_hyderabad"
+                time.sleep(1.5)
+            else:
+                out["note"] = "hyd_visible_not_clickable"
+        else:
+            out["note"] = "no_hyderabad_in_location_filter"
+            # Close menu so we don't leave overlay blocking extract.
+            try:
+                page.keyboard.press("Escape")
+            except Exception:
+                pass
+    except Exception as e:
+        out["note"] = f"filter_failed:{e}"
+        try:
+            page.keyboard.press("Escape")
+        except Exception:
+            pass
+    return out
+
+
+def workday_card_location_blob(role: str, url: str) -> str:
+    """Combine title + Workday path workplace (e.g. /job/Israel-Haifa/)."""
+    return f"{role or ''} {url_loc_hint(url or '')}".strip()
 
 
 def expand_careers_scan_urls(urls: list[str]) -> list[str]:
@@ -474,7 +558,16 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
               )];
               for (const a of wdTitles) {
                 const href = a.href || a.closest('a')?.href || '';
-                const text = (a.innerText || a.textContent || a.getAttribute('aria-label') || '').trim().replace(/\\s+/g, ' ');
+                let text = (a.innerText || a.textContent || a.getAttribute('aria-label') || '').trim().replace(/\\s+/g, ' ');
+                // Workday lists workplace under data-automation-id="locations" near the title.
+                try {
+                  const row = a.closest('li') || a.closest('[data-automation-id="jobTitle"]')?.parentElement || a.parentElement;
+                  const locEl = row && row.querySelector('[data-automation-id="locations"]');
+                  const loc = (locEl && (locEl.innerText || '').trim().replace(/^locations\\s*/i, '')) || '';
+                  if (loc && loc.length >= 3 && loc.length < 80 && !text.toLowerCase().includes(loc.toLowerCase().split(',')[0])) {
+                    text = (text + ' · ' + loc).replace(/\\s+/g, ' ').slice(0, 180);
+                  }
+                } catch (e) {}
                 if (href && text && text.length >= 8 && !seen.has(href)) {
                   seen.add(href);
                   out.push({ href, text: text.slice(0, 180) });
@@ -1063,6 +1156,18 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                     continue
                 time.sleep(2.2)
                 dismiss_cookie_banners(page)
+                # Workday: open Location filter and select Hyderabad when listed.
+                # If Hyd is absent (Intel today), skip non-Hyd roles — do not open Haifa/Bangalore.
+                workday_loc: dict[str, Any] = {}
+                try:
+                    if re.search(r"myworkdayjobs\.com", url, re.I):
+                        workday_loc = workday_pin_hyderabad_location_ui(page)
+                        _safe_print(
+                            f"CAREERS WORKDAY LOC {name} | pinned={workday_loc.get('pinned')} "
+                            f"available={workday_loc.get('available')} | {workday_loc.get('note')}"
+                        )
+                except Exception as e:
+                    workday_loc = {"pinned": False, "available": False, "note": str(e)[:120]}
                 # Oracle Cloud HCM / Workday-style boards lazy-render cards; nudge into view.
                 try:
                     for _ in range(3):
@@ -1110,6 +1215,33 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                 except Exception:
                     pass
                 jobs = extract_job_links(page, name)
+                # Workday with no Hyderabad in the location filter → drop foreign cards.
+                if (
+                    re.search(r"myworkdayjobs\.com", url, re.I)
+                    and workday_loc
+                    and not workday_loc.get("available")
+                    and not workday_loc.get("pinned")
+                ):
+                    before = len(jobs)
+                    jobs = [
+                        j
+                        for j in jobs
+                        if card_location_ok(
+                            j.get("role") or "",
+                            url_loc_hint(j.get("url") or ""),
+                        )
+                        and not role_has_foreign_location(j.get("role") or "")
+                        and re.search(
+                            r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|"
+                            r"gachibowli|raidurg|\bremote\b",
+                            f"{j.get('role') or ''} {url_loc_hint(j.get('url') or '')}",
+                            re.I,
+                        )
+                    ]
+                    _safe_print(
+                        f"CAREERS WORKDAY SKIP_NON_HYD {name} | kept={len(jobs)} dropped={before - len(jobs)} "
+                        f"| no Hyderabad in location filter"
+                    )
                 report.scanned.append({"company": name, "url": url, "jobCount": len(jobs)})
                 for job in jobs:
                     if job["url"] in seen_urls:

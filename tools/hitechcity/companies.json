@@ -26,7 +26,7 @@
       "Azure Architect",
       "Cloud Architect"
     ],
-    "lastDiscoveryAt": "2026-08-16T16:24:43.492314+00:00",
+    "lastDiscoveryAt": "2026-08-16T16:25:31.326705+00:00",
     "discoveryMode": "campus_catalog+web_directories+seeds+linkedin_optional+board_hints"
   },
   "campuses": [
@@ -216,10 +216,11 @@
       ],
       "linkedinSlug": "intel-corporation",
       "careersUrls": [
-        "https://intel.wd1.myworkdayjobs.com/en-US/External?q=Engineering+Manager&location=Hyderabad",
+        "https://intel.wd1.myworkdayjobs.com/en-US/External?q=Engineering+Manager",
         "https://intel.wd1.myworkdayjobs.com/External?q=Engineering+Manager"
       ],
-      "priority": 1
+      "priority": 1,
+      "notes": "Workday has no Hyderabad location facet currently (India=Bangalore only). Skip non-Hyd roles; do not trust location= query text."
     },
     {
       "name": "JPMorgan Chase",
