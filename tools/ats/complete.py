@@ -2029,6 +2029,7 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
                 if re.search(r"icims\.com", getattr(page, "url", "") or "", re.I):
                     target = icims_active_frame(page)
                     icims_fill_gdpr_gate(page)
+                    fill_icims_candidate_profile(page)
                 try:
                     upload_resume(target)
                 except Exception:
@@ -2038,17 +2039,13 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
                         pass
                 fill_source_fields(target)
                 fill_validation_gaps(target)
-                fill_labeled_fields(target)
-                fill_yes_no(target)
+                # Skip slow label crawl on iCIMS — fast name fill already ran.
+                if not re.search(r"icims\.com", getattr(page, "url", "") or "", re.I):
+                    fill_labeled_fields(target)
+                    fill_yes_no(target)
                 tick_consents(target)
                 try:
                     fill_icims_questions(page)
-                except Exception:
-                    pass
-                try:
-                    fill_source_fields(page)
-                    fill_validation_gaps(page)
-                    fill_labeled_fields(page)
                 except Exception:
                     pass
                 click_advance(target)
@@ -2284,6 +2281,126 @@ def icims_active_frame(page):
     return page
 
 
+def fill_icims_candidate_profile(page) -> bool:
+    """Fast-path iCIMS Candidate Profile fill by field name (not slow label crawl).
+
+    Post-captcha profiles were taking minutes because ``fill_labeled_fields`` walks
+    ~70 labels with per-label timeouts. iCIMS exposes stable ``PersonProfileFields.*``
+    names — fill those in one frame.evaluate.
+    """
+    target = icims_active_frame(page)
+    email = ats_email()
+    payload = {
+        "email": email,
+        "first": PROFILE["first"],
+        "last": PROFILE["last"],
+        "phone": PROFILE["phone"],
+        "linkedin": PROFILE["linkedin"],
+        "city": PROFILE["city"],
+        "state": PROFILE["state"],
+        "country": PROFILE["country"],
+        "postal": PROFILE.get("postal") or "500081",
+        "school": PROFILE.get("school") or "JNTU Hyderabad",
+        "sourceText": "LinkedIn",
+    }
+    try:
+        ok = target.evaluate(
+            """(p) => {
+              const setter = Object.getOwnPropertyDescriptor(
+                window.HTMLInputElement.prototype, 'value'
+              ).set;
+              let n = 0;
+              const text = (name, val) => {
+                const el = document.querySelector('[name=\"' + name + '\"]');
+                if (!el || val == null || val === '') return;
+                try {
+                  el.focus();
+                  setter.call(el, String(val));
+                  el.dispatchEvent(new Event('input', { bubbles: true }));
+                  el.dispatchEvent(new Event('change', { bubbles: true }));
+                  n++;
+                } catch (e) {}
+              };
+              const sel = (name, prefs) => {
+                const el = document.querySelector('[name=\"' + name + '\"]');
+                if (!el || !el.options) return;
+                const opts = Array.from(el.options);
+                for (const pref of prefs) {
+                  const hit =
+                    opts.find(o => (o.text || '').trim().toLowerCase() === pref.toLowerCase()) ||
+                    opts.find(o => (o.text || '').toLowerCase().includes(pref.toLowerCase()));
+                  if (hit) {
+                    el.value = hit.value;
+                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                    n++;
+                    return;
+                  }
+                }
+              };
+              const flag = document.querySelector('[name=icimsCookiesEnabledCheck]');
+              if (flag) flag.value = 'true';
+              text('PersonProfileFields.Login', p.email);
+              text('PersonProfileFields.FirstName', p.first);
+              text('PersonProfileFields.LastName', p.last);
+              text('PersonProfileFields.Email', p.email);
+              text('rcf2268', p.linkedin);
+              sel('-1_PersonProfileFields.PhoneType', ['Mobile', 'Cell', 'Home']);
+              text('-1_PersonProfileFields.PhoneNumber', p.phone);
+              sel('-1_PersonProfileFields.AddressType', ['Home', 'Mailing']);
+              text('-1_PersonProfileFields.AddressStreet1', p.city);
+              text('-1_PersonProfileFields.AddressCity', p.city);
+              text('-1_PersonProfileFields.AddressZip', p.postal);
+              sel('-1_PersonProfileFields.AddressCountry', [p.country, 'India']);
+              sel('-1_PersonProfileFields.AddressState', [p.state, 'Telangana', 'Andhra Pradesh']);
+              sel('rcf3048', ['Internet Job Board', 'Job Board', 'LinkedIn', 'Company Website']);
+              text('rcf3049_Text', p.sourceText);
+              text('-1_CandProfileFields.OtherSchool', p.school);
+              sel('-1_CandProfileFields.IsGraduated', ['Received', 'Yes']);
+              sel('-1_CandProfileFields.GraduationDate_Month', ['May', '5']);
+              text('-1_CandProfileFields.GraduationDate_Year', '2008');
+              // iCIMS ajax dropdowns (Degree/Major) — type into sibling search + click result.
+              const ajaxPick = (selectName, query, pickRe) => {
+                const selEl = document.querySelector('[name="' + selectName + '"]');
+                if (!selEl) return;
+                let box = selEl.parentElement;
+                for (let i = 0; i < 6 && box; i++) {
+                  if (box.querySelector && box.querySelector('input.dropdown-search')) break;
+                  box = box.parentElement;
+                }
+                if (!box) return;
+                const search = box.querySelector('input.dropdown-search');
+                if (!search) return;
+                search.focus();
+                search.value = query;
+                search.dispatchEvent(new Event('input', { bubbles: true }));
+                search.dispatchEvent(new Event('keyup', { bubbles: true }));
+                const results = box.querySelector('.dropdown-results') || document.querySelector('.dropdown-results');
+                if (!results) return;
+                results.style.display = 'block';
+                const pre = new RegExp(pickRe, 'i');
+                const hit = [...results.querySelectorAll('div, li, a, span')].find(
+                  (k) => pre.test((k.innerText || '').trim()) && (k.innerText || '').trim().length < 90
+                );
+                if (hit) {
+                  hit.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+                  hit.click();
+                  n++;
+                }
+              };
+              ajaxPick('-1_CandProfileFields.Degree', 'Bachelor', 'Bachelor');
+              ajaxPick('-1_CandProfileFields.Major', 'Computer Science', 'Computer Science|Computer Eng');
+              return n > 0;
+            }""",
+            payload,
+        )
+        if ok:
+            print(f"icims=fast_profile_fill fields_ok", flush=True)
+        return bool(ok)
+    except Exception as exc:
+        print(f"icims=fast_profile_fill_err {exc!s}"[:180], flush=True)
+        return False
+
+
 def icims_fill_gdpr_gate(page) -> bool:
     """Fill Email + check I accept + click Next on iCIMS GDPR/login gate."""
     target = icims_active_frame(page)
@@ -2378,6 +2495,7 @@ def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
             return "blocked", "CAPTCHA/bot wall"
         # After owner captcha — stay on this application and finish profile/submit.
         print("icims=post_captcha_continue — filling profile through submit", flush=True)
+        dismiss_cookies(page)
         icims_fill_gdpr_gate(page)
         target = icims_active_frame(page)
         try:
@@ -2385,7 +2503,7 @@ def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
                 target,
                 ("Continue", "Next", "Submit", "I accept", "Apply"),
             )
-            _sleep(1.5)
+            _sleep(0.6)
         except Exception:
             pass
     if looks_submitted(page) or looks_submitted(target):
@@ -2404,6 +2522,9 @@ def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
             icims_fill_gdpr_gate(page)
             target = icims_active_frame(page)
         progressed = False
+        # Fast name-based profile fill first (seconds, not minutes).
+        if fill_icims_candidate_profile(page):
+            progressed = True
         try:
             upload_resume(target)
             progressed = True
@@ -2413,8 +2534,6 @@ def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
             except Exception:
                 pass
         try:
-            fill_labeled_fields(target)
-            fill_yes_no(target)
             fill_source_fields(target)
             fill_validation_gaps(target)
             tick_consents(target)
@@ -2426,7 +2545,7 @@ def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
         if advance_icims_us_forms(page):
             stuck = 0
             last_fp = page_fingerprint(page)
-            _sleep(1.2)
+            _sleep(0.5)
             continue
         if _click_text(
             target,
@@ -2434,7 +2553,7 @@ def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
         ):
             stuck = 0
             last_fp = page_fingerprint(page)
-            _sleep(1.4)
+            _sleep(0.7)
             continue
         fp = page_fingerprint(page)
         if fp != last_fp or progressed:
@@ -2442,13 +2561,23 @@ def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
             last_fp = fp
         else:
             stuck += 1
-        _sleep(1.0)
+        _sleep(0.4)
     if looks_submitted(page):
         return "applied", "confirmation"
     remaining = max(60, int(time_cap_s) - int(time.time() - start) - 5)
     status, reason = complete_generic(page, remaining)
     if status == "blocked" and "incomplete" in (reason or "") and apply_form_still_open(page):
         print("icims=persist_retry — form still open after owner wait; one more fill pass", flush=True)
+        # One more fast profile + submit burst before giving up.
+        fill_icims_candidate_profile(page)
+        try:
+            upload_resume(icims_active_frame(page))
+        except Exception:
+            pass
+        _click_text(
+            icims_active_frame(page),
+            ("Submit Profile", "Submit", "Next", "Continue"),
+        )
         status, reason = complete_generic(page, max(90, remaining))
     return status, reason
 
