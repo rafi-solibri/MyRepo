@@ -1,5 +1,12 @@
 # Indeed — issues & fixes
 
+## 2026-08-16 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Kochi/Kerala title with empty SERP location Easy-Applied; SmartApply 'already applied' misclassified as incomplete; mid-run secure.indeed.com/auth became incomplete | Expand LOC_HARD_SKIP for non-Hyd cities/states; detect already_applied + login_required inside easy_apply_flow and reclassify incomplete samples |
+
+
 ## 2026-08-15 (cloud)
 
 | Issue | Fix |

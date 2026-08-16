@@ -210,9 +210,15 @@ LOC_OK = re.compile(
     r"hyderabad|telangana|\bhyd\b|remote|work\s*from\s*home|\bwfh\b|india\s*remote",
     re.I,
 )
+# Non-Hyd city/state without a remote/WFH signal → skip (HARD location rule).
+# Include Kochi/Kerala etc. — empty SERP location + city-in-title used to slip through.
 LOC_HARD_SKIP = re.compile(
     r"\b(bengaluru|bangalore|pune|chennai|mumbai|noida|gurgaon|gurugram|"
-    r"delhi|kolkata|ahmedabad)\b(?!.{0,40}(remote|wfh|hybrid))",
+    r"delhi|kolkata|ahmedabad|kochi|cochin|coimbatore|madurai|jaipur|"
+    r"chandigarh|indore|lucknow|mysore|mysuru|trivandrum|thiruvananthapuram|"
+    r"vizag|visakhapatnam|nagpur|surat|vadodara|patna|bhubaneswar|"
+    r"kerala|karnataka|maharashtra|tamil\s*nadu|gujarat|rajasthan|"
+    r"west\s*bengal|odisha|punjab|haryana)\b(?!.{0,40}(remote|wfh|hybrid))",
     re.I,
 )
 
@@ -429,7 +435,9 @@ def skip_reason(title: str, company: str, location: str, snippet: str) -> str | 
         return "location"
     if loc_field and not LOC_OK.search(loc_blob):
         if re.search(
-            r"bengaluru|bangalore|pune|chennai|mumbai|noida|gurgaon|delhi",
+            r"bengaluru|bangalore|pune|chennai|mumbai|noida|gurgaon|delhi|"
+            r"kochi|cochin|coimbatore|madurai|kerala|karnataka|maharashtra|"
+            r"tamil\s*nadu",
             loc_field,
             re.I,
         ):
@@ -581,11 +589,13 @@ def restore_signed_in(sb) -> dict:
 
 
 def already_applied(body: str, url: str = "") -> bool:
-    """True when the job-view page shows this listing was already submitted."""
+    """True when job-view or SmartApply shows this listing was already submitted.
+
+    SmartApply duplicate interstitial: "You have already applied to this job".
+    Do not treat bare "application submitted" (post-submit success) as already-applied —
+    that phrase is handled by _is_submitted. Match "application submitted on <date>" only.
+    """
     b = (body or "").lower()
-    u = (url or "").lower()
-    if "smartapply" in u or "indeedapply" in u:
-        return False
     return bool(
         re.search(
             r"you applied to this job|already applied to this|"
@@ -2262,7 +2272,7 @@ def submit_review_application(sb, deadline: float | None = None) -> bool:
 
 
 def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> str:
-    """Returns 'submitted' | 'external' | 'failed' | 'recaptcha'."""
+    """Returns 'submitted' | 'external' | 'failed' | 'recaptcha' | 'already_applied' | 'login_required'."""
     stuck_questions = 0
     review_submit_attempts = 0
     same_cta_streak = 0
@@ -2283,6 +2293,10 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
             body = (sb.get_text("body") or "").lower()
         except Exception:
             pass
+        if already_applied(body, url):
+            return "already_applied"
+        if looks_login_wall(body, url):
+            return "login_required"
         if _is_submitted(body, url):
             return "submitted"
         if "apply on company site" in body and "indeed apply" not in body:
@@ -2845,6 +2859,21 @@ def main() -> int:
                     except Exception:
                         handles_now = []
                     finish_company_site(sb, item, report, handles_before=handles_now[:-1] if handles_now else [])
+                elif result == "already_applied":
+                    item["reason"] = "already_applied"
+                    report["skipped"].append(item)
+                    report["counts"]["skipped"] += 1
+                    print("SKIP already_applied", page_title[:80], flush=True)
+                elif result == "login_required":
+                    item["reason"] = "indeed_login_required"
+                    try:
+                        item["lastUrl"] = (sb.get_current_url() or "")[:200]
+                        item["sample"] = (sb.get_text("body") or "")[:350].replace("\n", " | ")
+                    except Exception:
+                        pass
+                    report["blocked"].append(item)
+                    report["counts"]["blocked"] += 1
+                    print("BLOCKED login_required", page_title[:80], flush=True)
                 elif result == "recaptcha":
                     item["reason"] = "easy_apply_recaptcha"
                     report["blocked"].append(item)
@@ -2857,11 +2886,24 @@ def main() -> int:
                         item["sample"] = (sb.get_text("body") or "")[:350].replace("\n", " | ")
                     except Exception:
                         pass
-                    report["rejected"].append(item)
-                    report["counts"]["rejected"] += 1
-                    print("INCOMPLETE", page_title[:80], flush=True)
-                    if item.get("lastUrl"):
-                        print(f"  incomplete_url={item['lastUrl']}", flush=True)
+                    # Reclassify SmartApply duplicate / auth walls that slipped past early checks.
+                    sample_l = (item.get("sample") or "").lower()
+                    if already_applied(sample_l, item.get("lastUrl") or ""):
+                        item["reason"] = "already_applied"
+                        report["skipped"].append(item)
+                        report["counts"]["skipped"] += 1
+                        print("SKIP already_applied", page_title[:80], flush=True)
+                    elif looks_login_wall(sample_l, item.get("lastUrl") or ""):
+                        item["reason"] = "indeed_login_required"
+                        report["blocked"].append(item)
+                        report["counts"]["blocked"] += 1
+                        print("BLOCKED login_required", page_title[:80], flush=True)
+                    else:
+                        report["rejected"].append(item)
+                        report["counts"]["rejected"] += 1
+                        print("INCOMPLETE", page_title[:80], flush=True)
+                        if item.get("lastUrl"):
+                            print(f"  incomplete_url={item['lastUrl']}", flush=True)
 
                 # Close Easy Apply modal / extra windows so the next job is clean.
                 try:
