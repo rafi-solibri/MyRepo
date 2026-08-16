@@ -12,9 +12,17 @@ Company campus list: `tools/hitechcity/companies.json` (Knowledge City, Knowledg
 
 Apply to senior .NET / architect / tech-lead / EM roles for Mohammed Abdul Rafi Ahmed at companies in these Madhapur / HITEC City campuses. Maximize BOTH application volume and referral outreach. Target ~50 applications/day.
 
-**PRIMARY:** official company career portals in **parallel multi-tab** (default `HITECHCITY_PARALLEL_TABS=10` on every cron/daily/`daily_apply.py` run) + LinkedIn company-targeted applies/referrals.
+## Continuous apply + owner captcha (HARD — every run, never stop)
+- **Keep applying continuously.** Owner chat/messages are NOT a stop signal — do not pause, exit, or wait for chat replies between applies.
+- **You fill and submit everything** (forms, Source, resume, Next/Submit). Owner only clicks captchas / rare login OTP.
+- **Focus the tab that needs the owner** on every captcha / ASK_OWNER wait (`focus_page_for_owner` + CDP activate, re-focus every `ATS_OWNER_FOCUS_EVERY_SEC=2`). Never leave the owner on a random parallel tab.
+- **Report SUBMITTED vs NOT_SUBMITTED** for each outcome via `CHAT_NOTIFY` / `hitechcity-apply-chat.jsonl` — relay those lines in chat without stopping the run.
+- If `daily_apply` exits, restart it immediately (keepalive / same session) and continue until inventory is exhausted or the owner explicitly says stop.
+- Parallel careers default: `HITECHCITY_PARALLEL_TABS=10` every cron/daily/`daily_apply.py` run.
+
+**PRIMARY:** official company career portals in **parallel multi-tab** + LinkedIn company-targeted applies/referrals.
 **ALSO REQUIRED (campus allowlist):** browse Naukri, Foundit, Cutshort, Instahyre, and Indeed for the same campus-company set (capped; do not invent applies). Generic Hyd employers outside the campus tenant list stay skipped.
-Owner only solves captchas: every daily run **re-focuses the captcha / ASK_OWNER tab** (`focus_page_for_owner` + CDP activate, every ~2s via `ATS_OWNER_FOCUS_EVERY_SEC`) so parallel workers cannot leave you on the wrong tab. Workers keep filling/submitting on other company tabs. Do not set `HITECHCITY_PARALLEL_TABS=1` unless debugging a single portal.
+Do not set `HITECHCITY_PARALLEL_TABS=1` unless debugging a single portal.
 
 ## Profile (use exactly)
 - Location preference: Hyderabad, Telangana, India — especially Madhapur / HITEC City / Knowledge City / Knowledge Park / Gachibowli / Raidurg

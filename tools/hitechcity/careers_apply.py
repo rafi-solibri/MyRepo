@@ -990,7 +990,22 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         return row
     # JD chrome ("Sign in" / "Create an account") is not a wall. Only CAPTCHA /
     # closed reqs fail here — Workday Create Account must reach complete_ats.
+    # Headed every-run: focus captcha tab and wait for owner before blocking.
     wall = blocked_wall(page)
+    if wall == "CAPTCHA/bot wall" and not looks_workday_page(page):
+        try:
+            from tools.ats.captcha_solve import (
+                focus_page_for_owner,
+                owner_captcha_wait_sec,
+                try_clear_hcaptcha,
+            )
+
+            if owner_captcha_wait_sec() > 0:
+                focus_page_for_owner(page, reason="careers_jd_captcha")
+                if try_clear_hcaptcha(page):
+                    wall = None
+        except Exception:
+            pass
     if wall in ("CAPTCHA/bot wall", "job_closed") and not looks_workday_page(page):
         row["reason"] = wall
         row["status"] = "skipped" if wall == "job_closed" else "blocked"
@@ -1117,6 +1132,24 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         row["finalUrl"] = page.url
         _close_auth_popups(page)
         return row
+    if (
+        wall == "CAPTCHA/bot wall"
+        and not looks_workday_page(page)
+        and not icims_job
+    ):
+        try:
+            from tools.ats.captcha_solve import (
+                focus_page_for_owner,
+                owner_captcha_wait_sec,
+                try_clear_hcaptcha,
+            )
+
+            if owner_captcha_wait_sec() > 0:
+                focus_page_for_owner(page, reason="careers_pre_ats_captcha")
+                if try_clear_hcaptcha(page):
+                    wall = None
+        except Exception:
+            pass
     if (
         wall == "CAPTCHA/bot wall"
         and not looks_workday_page(page)

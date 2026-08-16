@@ -228,6 +228,33 @@ def main() -> int:
     OUT.write_text(json.dumps(summary, indent=2))
     print(json.dumps(summary["totals"]))
     print(f"REPORT {OUT}", flush=True)
+    # Always print SUBMITTED vs NOT_SUBMITTED rollup for chat (every run).
+    try:
+        from tools.hitechcity.apply_notify import NOTIFY_PATH
+
+        submitted = 0
+        not_sub = 0
+        if NOTIFY_PATH.is_file():
+            for line in NOTIFY_PATH.read_text(encoding="utf-8", errors="replace").splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    row = json.loads(line)
+                except Exception:
+                    continue
+                v = (row.get("verdict") or "").upper()
+                if v == "SUBMITTED":
+                    submitted += 1
+                elif v in ("NOT_SUBMITTED", "ALREADY_APPLIED"):
+                    not_sub += 1
+        print(
+            f"CHAT_SUMMARY SUBMITTED={submitted} NOT_SUBMITTED={not_sub} "
+            f"(this run applied={applied} blocked={blocked} skipped={skipped})",
+            flush=True,
+        )
+    except Exception as e:
+        print(f"CHAT_SUMMARY error={e}", flush=True)
 
     # Exit 3 if LinkedIn login missing and zero applies
     if applied == 0 and any("linkedin_login_required" in str(e) for e in summary["errors"]):
