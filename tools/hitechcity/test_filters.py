@@ -126,14 +126,22 @@ def test_title_ok():
     assert len(expanded) >= 4
     assert any("Engineering" in u for u in expanded)
     assert all("Hyderabad" in u for u in expanded)
-    # Workday ignores free-text location= — strip it so we don't pretend Hyd is set.
+    # Workday: always invent/keep location=Hyderabad on the URL; UI facet is separate.
     intel = (
         "https://intel.wd1.myworkdayjobs.com/en-US/External"
-        "?q=Engineering+Manager&location=Hyderabad"
+        "?q=Engineering+Manager"
     )
     pinned_intel = pin_careers_hyderabad_location(intel)
-    assert "location=Hyderabad" not in pinned_intel
-    assert "q=Engineering" in pinned_intel or "Engineering+Manager" in pinned_intel
+    assert "location=Hyderabad" in pinned_intel or "location=Hyderabad".lower() in pinned_intel.lower()
+    # Portals with NO location param must still get Hyderabad invented.
+    ge = pin_careers_hyderabad_location(
+        "https://careers.gevernova.com/global/en/search-results?keywords=Engineering+Manager"
+    )
+    assert "location=Hyderabad" in ge
+    hyland = pin_careers_hyderabad_location(
+        "https://careers-hyland.icims.com/jobs/search?ss=1&searchKeyword=Engineering+Manager&in_iframe=1"
+    )
+    assert "Hyderabad" in hyland
     assert not card_location_ok(
         "Security Researcher Technical Lead · Israel, Haifa",
         url_loc_hint(
@@ -365,8 +373,7 @@ def test_hyland_icims_url():
     assert any("icims.com" in u and "in_iframe=1" in u for u in hyland["careersUrls"])
     intel = next(c for c in data["companies"] if c["name"] == "Intel")
     assert any("myworkdayjobs.com" in u for u in intel["careersUrls"])
-    # Workday ignores location= text; Intel currently has no Hyd facet — don't require it.
-    assert not any("location=Hyderabad" in u for u in intel["careersUrls"])
+    # URL may omit location=; pin_careers_hyderabad_location invents it every scan.
     byonder = next(c for c in data["companies"] if c["name"] == "Blue Yonder")
     assert any("search-results" in u for u in byonder["careersUrls"])
     href = "https://careers-hyland.icims.com/jobs/13991/senior-software-architect---.net/job?in_iframe=1"

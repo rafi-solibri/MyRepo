@@ -282,55 +282,140 @@ def rewrite_careers_search_keyword(url: str, keyword: str) -> str:
 
 
 def pin_careers_hyderabad_location(url: str) -> str:
-    """Force Hyderabad on any location query param the portal already exposes.
+    """HARD: every careers search URL must carry Hyderabad.
 
-    Does not invent location params for portals that only use path geography
-    (e.g. /search-jobs/Hyderabad) — those already encode Hyd.
-
-    Workday: plain `location=Hyderabad` is ignored by the SPA. Strip it and rely
-    on UI pin + path/card location checks (Intel has no Hyd facet today).
+    Always set/overwrite location-like query params. Invent `location=Hyderabad`
+    when missing. Host-specific keys: loc_query (Amazon), locationsearch
+    (Blackbaud), loc (IBM), lc (Accenture), city+country (Salesforce),
+    searchLocation (iCIMS). Path hubs like `/search-jobs/Hyderabad/` stay.
+    Workday still gets location= for consistency; UI facet pin is separate.
     """
     if not url:
         return url
     parts = urlparse(url)
+    path = parts.path or ""
+    host = (parts.netloc or "").lower()
+    if re.search(r"/search-jobs/[^/]*hyderabad|/job/hyderabad|/jobs/hyderabad", path, re.I):
+        return url
+
     qs = parse_qs(parts.query, keep_blank_values=True)
-    changed = False
-    # Workday ignores free-text location= — remove so we don't pretend Hyd is set.
-    if re.search(r"myworkdayjobs\.com", parts.netloc or "", re.I):
-        if "location" in qs:
-            qs.pop("location", None)
-            changed = True
-    for key in _LOCATION_PARAM_KEYS:
-        if key not in qs or not qs[key]:
-            continue
-        if key == "location" and re.search(r"myworkdayjobs\.com", parts.netloc or "", re.I):
-            continue
-        cur = (qs[key][0] or "").strip()
-        # Preserve Apple-style location codes that already mean Hyderabad.
-        if re.search(r"hyderabad", cur, re.I) and "-" in cur and len(cur) > 12:
-            continue
-        if key in ("loc_query",) or "," in cur or re.search(r"telangana|india", cur, re.I):
-            target = CAREERS_LOCATION_FULL
-        else:
-            target = CAREERS_LOCATION
-        if cur != target:
-            qs[key] = [target]
-            changed = True
-    # Salesforce-style city= + country=
+    target_short = CAREERS_LOCATION
+    target_full = CAREERS_LOCATION_FULL
+
+    def _set(key: str, value: str) -> None:
+        qs[key] = [value]
+
+    if "amazon.jobs" in host:
+        _set("loc_query", target_full)
+    elif "blackbaud.com" in host:
+        _set("locationsearch", target_short)
+    elif "ibm.com" in host:
+        _set("loc", target_short)
+    elif "accenture.com" in host:
+        _set("lc", target_short)
+    elif "salesforce.com" in host:
+        _set("city", target_short)
+        _set("country", "India")
+    elif "apple.com" in host:
+        cur = (qs.get("location") or [""])[0]
+        if not (re.search(r"hyderabad", cur, re.I) and "-" in cur and len(cur) > 12):
+            _set("location", "hyderabad-HST430090")
+    elif "icims.com" in host:
+        _set("searchLocation", target_full)
+        _set("location", target_short)
+    elif "oraclecloud.com" in host or "careers.oracle.com" in host:
+        _set("location", target_full)
+    else:
+        hit = False
+        for key in _LOCATION_PARAM_KEYS:
+            if key not in qs or qs[key] is None:
+                continue
+            cur = (qs[key][0] or "").strip()
+            if re.search(r"hyderabad", cur, re.I) and "-" in cur and len(cur) > 12:
+                hit = True
+                continue
+            if key in ("loc_query",) or "," in cur or re.search(r"telangana|india", cur, re.I):
+                _set(key, target_full)
+            else:
+                _set(key, target_short)
+            hit = True
+        if not hit:
+            _set("location", target_short)
+
     if "city" in qs and qs["city"]:
         if not re.search(r"hyderabad", qs["city"][0] or "", re.I):
-            qs["city"] = [CAREERS_LOCATION]
-            changed = True
-        if "country" in qs:
-            qs["country"] = ["India"]
-            changed = True
-    if not changed:
-        return url
+            _set("city", target_short)
+        if "country" in qs or "salesforce.com" in host:
+            _set("country", "India")
+
     flat: list[tuple[str, str]] = []
     for k, vals in qs.items():
         for v in vals:
             flat.append((k, v))
     return urlunparse(parts._replace(query=urlencode(flat, doseq=True)))
+
+
+def pin_portal_location_ui(page: Page) -> dict[str, Any]:
+    """Best-effort: set Hyderabad in on-page location filters after navigation."""
+    try:
+        url = page.url or ""
+    except Exception:
+        url = ""
+    if re.search(r"myworkdayjobs\.com", url, re.I):
+        return workday_pin_hyderabad_location_ui(page)
+
+    out: dict[str, Any] = {"pinned": False, "available": False, "note": "generic_ui"}
+    selectors = [
+        'input[placeholder*="Location" i]',
+        'input[aria-label*="Location" i]',
+        'input[name*="location" i]',
+        'input[id*="location" i]',
+        'input[data-automation-id*="location" i]',
+        'input[placeholder*="City" i]',
+        'input[aria-label*="City" i]',
+    ]
+    for sel in selectors:
+        try:
+            loc = page.locator(sel)
+            if not loc.count() or not loc.first.is_visible():
+                continue
+            loc.first.click(timeout=1500)
+            loc.first.fill("")
+            loc.first.fill(CAREERS_LOCATION, timeout=2000)
+            time.sleep(0.8)
+            opt = page.get_by_role("option", name=re.compile(r"Hyderabad", re.I))
+            if opt.count():
+                opt.first.click(timeout=2000)
+                out.update(pinned=True, available=True, note=f"selected_option:{sel}")
+                time.sleep(1.0)
+                return out
+            loc.first.press("Enter")
+            out.update(pinned=True, available=True, note=f"typed_enter:{sel}")
+            time.sleep(1.0)
+            return out
+        except Exception:
+            continue
+    try:
+        btn = page.get_by_role("button", name=re.compile(r"^Location", re.I))
+        if btn.count() and btn.first.is_visible():
+            btn.first.click(timeout=2000)
+            time.sleep(0.6)
+            inp = page.locator(
+                'input[type="text"], input[type="search"], input[placeholder*="Search" i]'
+            )
+            if inp.count():
+                inp.first.fill(CAREERS_LOCATION, timeout=2000)
+                time.sleep(0.8)
+                hyd = page.get_by_text(re.compile(r"Hyderabad", re.I))
+                if hyd.count():
+                    hyd.first.click(timeout=2000)
+                    out.update(pinned=True, available=True, note="button_menu_hyd")
+                    time.sleep(1.0)
+                    return out
+                out.update(note="button_menu_no_hyd", available=False)
+    except Exception as e:
+        out["note"] = f"generic_failed:{e}"
+    return out
 
 
 def workday_pin_hyderabad_location_ui(page: Page) -> dict[str, Any]:
@@ -358,14 +443,12 @@ def workday_pin_hyderabad_location_ui(page: Page) -> dict[str, Any]:
     except Exception as e:
         out["note"] = f"open_failed:{e}"
         return out
-    # Search inside the Locations filter menu.
     try:
         menu = page.locator('[data-automation-id="filterMenu"]')
         menu.wait_for(state="visible", timeout=4000)
         menu_text = (menu.inner_text(timeout=2000) or "")
         if re.search(r"hyderabad|telangana|madhapur", menu_text, re.I):
             out["available"] = True
-        # Type into location search if present.
         inp = menu.locator(
             'input[type="text"], input[type="search"], '
             '[data-automation-id="searchBox"] input, '
@@ -388,7 +471,6 @@ def workday_pin_hyderabad_location_ui(page: Page) -> dict[str, Any]:
                 out["note"] = "hyd_visible_not_clickable"
         else:
             out["note"] = "no_hyderabad_in_location_filter"
-            # Close menu so we don't leave overlay blocking extract.
             try:
                 page.keyboard.press("Escape")
             except Exception:
@@ -1156,16 +1238,14 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                     continue
                 time.sleep(2.2)
                 dismiss_cookie_banners(page)
-                # Workday: open Location filter and select Hyderabad when listed.
-                # If Hyd is absent (Intel today), skip non-Hyd roles — do not open Haifa/Bangalore.
+                # HARD: set Hyderabad in URL already; also pin on-page Location UI.
                 workday_loc: dict[str, Any] = {}
                 try:
-                    if re.search(r"myworkdayjobs\.com", url, re.I):
-                        workday_loc = workday_pin_hyderabad_location_ui(page)
-                        _safe_print(
-                            f"CAREERS WORKDAY LOC {name} | pinned={workday_loc.get('pinned')} "
-                            f"available={workday_loc.get('available')} | {workday_loc.get('note')}"
-                        )
+                    workday_loc = pin_portal_location_ui(page)
+                    _safe_print(
+                        f"CAREERS LOC_UI {name} | pinned={workday_loc.get('pinned')} "
+                        f"available={workday_loc.get('available')} | {workday_loc.get('note')}"
+                    )
                 except Exception as e:
                     workday_loc = {"pinned": False, "available": False, "note": str(e)[:120]}
                 # Oracle Cloud HCM / Workday-style boards lazy-render cards; nudge into view.
