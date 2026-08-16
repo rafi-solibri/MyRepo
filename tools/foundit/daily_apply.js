@@ -835,9 +835,11 @@ async function main() {
     fs.mkdirSync(path.dirname(OUT), { recursive: true });
     fs.writeFileSync(OUT, JSON.stringify(report, null, 2));
     console.log(JSON.stringify(report, null, 2));
+    // CDP WebSocket keeps the event loop alive; exit so cron/post-fix wrappers finish.
+    process.exit(0);
   } finally {
     // Never browser.close() over CDP — kills shared system Chrome on Windows home.
-    // Avoid disconnect() hang; process exit drops the CDP client.
+    // Avoid disconnect() hang; process.exit drops the CDP client.
   }
 }
 

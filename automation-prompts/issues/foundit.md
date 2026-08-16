@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| daily_apply.js hung after writing report (CDP WS keeps Node event loop alive; auto-merge waited 11+ min) | process.exit(0) after successful report write/console.log so cron and post-fix wrappers return |
 | Snowflake Solutions Architect (INFOTRON 62845849) passed via Arch/Lead without .NET — data-platform false apply | filters.js skipTitleReason: hard-skip snowflake\|databricks titles without .NET on title (Oracle Fusion parity); filters.test.js 26.1/26.2 |
 
 
