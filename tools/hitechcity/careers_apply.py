@@ -870,6 +870,100 @@ def _close_uhg_tabs(context) -> None:
         pass
 
 
+def _max_apply_tabs() -> int:
+    """Hard Chrome apply-tab cap. Workers set PARALLEL_TABS=1 — that is NOT the cap."""
+    raw = (os.environ.get("HITECHCITY_MAX_CHROME_TABS") or "").strip()
+    if not raw and os.environ.get("HITECHCITY_PARALLEL_WORKER"):
+        raw = "10"
+    if not raw:
+        raw = os.environ.get("HITECHCITY_PARALLEL_TABS", "10")
+    try:
+        return max(1, min(12, int(raw)))
+    except ValueError:
+        return 10
+
+
+def _worker_tab_mark(worker_id: str) -> str:
+    return f"hitech-w{worker_id}"
+
+
+def prune_surplus_tabs(context, *, keep_linkedin: bool = True) -> int:
+    """Hard-cap Chrome to PARALLEL_TABS apply tabs (+ optional one LinkedIn).
+
+    Restarts used to call new_page() every time and left 30–40 leftover tabs.
+    """
+    closed = 0
+    max_tabs = _max_apply_tabs()
+    try:
+        pages = list(getattr(context, "pages", []) or [])
+    except Exception:
+        return 0
+    linkedin = None
+    marked: dict[int, Any] = {}
+    extras: list[Any] = []
+    for pg in pages:
+        try:
+            u = getattr(pg, "url", "") or ""
+        except Exception:
+            extras.append(pg)
+            continue
+        ul = u.lower()
+        m = re.search(r"hitech-w(\d+)", u)
+        if m:
+            wid = int(m.group(1))
+            if wid in marked or wid >= max_tabs:
+                extras.append(pg)
+            else:
+                marked[wid] = pg
+            continue
+        if keep_linkedin and "linkedin.com" in ul and linkedin is None:
+            linkedin = pg
+            continue
+        extras.append(pg)
+    for pg in extras:
+        try:
+            pg.close()
+            closed += 1
+        except Exception:
+            continue
+    if closed:
+        _safe_print(f"CAREERS TABS pruned={closed} kept_workers={len(marked)} cap={max_tabs}")
+    return closed
+
+
+def _claim_worker_page(context, worker_id: str):
+    """Reuse this worker's single tab; never open an 11th apply tab."""
+    mark = _worker_tab_mark(worker_id)
+    try:
+        for pg in list(getattr(context, "pages", []) or []):
+            if mark in (getattr(pg, "url", "") or ""):
+                return pg
+    except Exception:
+        pass
+    apply_pages = []
+    try:
+        for pg in list(context.pages):
+            u = (getattr(pg, "url", "") or "").lower()
+            if "linkedin.com" in u:
+                continue
+            apply_pages.append(pg)
+    except Exception:
+        apply_pages = []
+    if len(apply_pages) >= _max_apply_tabs():
+        # Cap hit — reuse an existing apply tab instead of opening another.
+        try:
+            idx = int(worker_id) % len(apply_pages)
+        except Exception:
+            idx = 0
+        return apply_pages[idx]
+    page = context.new_page()
+    try:
+        page.goto(f"about:blank#{mark}", wait_until="domcontentloaded", timeout=8000)
+    except Exception:
+        pass
+    return page
+
+
 def _connect_careers_cdp(p):
     """Connect (or reconnect) to Chrome CDP for careers scanning."""
     browser = p.chromium.connect_over_cdp(CDP, timeout=20_000)
@@ -877,14 +971,16 @@ def _connect_careers_cdp(p):
         raise RuntimeError("cdp_no_contexts")
     context = browser.contexts[0]
     _close_uhg_tabs(context)
-    # Parallel workers always get a dedicated tab so 10 companies apply at once.
-    if os.environ.get("HITECHCITY_PARALLEL_WORKER"):
-        page = context.new_page()
+    worker = os.environ.get("HITECHCITY_PARALLEL_WORKER")
+    if worker:
+        # Workers must not prune siblings — that closed the other 9 tabs (cap=1 bug).
+        page = _claim_worker_page(context, worker)
     else:
+        prune_surplus_tabs(context)
         page = context.pages[0] if context.pages else context.new_page()
     if is_uhg_skip_url(getattr(page, "url", "") or ""):
         try:
-            page = context.new_page()
+            page = _claim_worker_page(context, worker or "0") if worker else context.new_page()
         except Exception:
             pass
     page.set_default_timeout(45000)
@@ -1284,13 +1380,8 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                             cdp_fatal = True
                             break
                         continue
-                    # Clear poisoned/in-flight navigations before the next company.
+                    # Clear poisoned/in-flight navigations — reuse this worker tab (no extra tabs).
                     _reset_page_nav(page)
-                    try:
-                        page = context.new_page()
-                        page.set_default_timeout(45000)
-                    except Exception:
-                        pass
                     continue
                 time.sleep(1.0)
                 dismiss_cookie_banners(page)

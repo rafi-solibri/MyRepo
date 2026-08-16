@@ -38,6 +38,7 @@ def _worker_loop(payload: tuple[int, Any]) -> dict[str, Any]:
     """Pull companies from the shared queue until empty; keep this tab applying."""
     worker_id, queue = payload
     os.environ["HITECHCITY_PARALLEL_WORKER"] = str(worker_id)
+    os.environ.setdefault("HITECHCITY_MAX_CHROME_TABS", "10")
     os.environ["HITECHCITY_PARALLEL_TABS"] = "1"
     started = datetime.now(timezone.utc).isoformat()
     out: dict[str, Any] = {
@@ -106,6 +107,18 @@ def run_parallel(companies: list[dict[str, Any]]) -> Any:
 
         os.environ["HITECHCITY_PARALLEL_TABS"] = "1"
         return run_careers(work)
+
+    # Parent-only: close leftover tabs before workers start (hard cap 10 apply + LinkedIn).
+    try:
+        from playwright.sync_api import sync_playwright
+        from tools.hitechcity.careers_apply import CDP, prune_surplus_tabs
+
+        with sync_playwright() as p:
+            browser = p.chromium.connect_over_cdp(CDP, timeout=15_000)
+            if browser.contexts:
+                prune_surplus_tabs(browser.contexts[0])
+    except Exception as e:
+        print(f"CAREERS TABS pre-prune skipped: {e}", flush=True)
 
     mgr = Manager()
     queue = mgr.Queue()

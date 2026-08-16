@@ -18,7 +18,7 @@ Apply to senior .NET / architect / tech-lead / EM roles for Mohammed Abdul Rafi 
 - **Focus the tab that needs the owner** on every captcha / ASK_OWNER wait (`focus_page_for_owner` + CDP activate, re-focus every `ATS_OWNER_FOCUS_EVERY_SEC=2`). Never leave the owner on a random parallel tab.
 - **Report SUBMITTED vs NOT_SUBMITTED** for each outcome via `CHAT_NOTIFY` / `hitechcity-apply-chat.jsonl` — relay those lines in chat without stopping the run.
 - If `daily_apply` exits, restart it immediately (keepalive / same session) and continue until inventory is exhausted or the owner explicitly says stop.
-- Parallel careers default: `HITECHCITY_PARALLEL_TABS=10` every cron/daily/`daily_apply.py` run.
+- Parallel careers default: `HITECHCITY_PARALLEL_TABS=10` every cron/daily/`daily_apply.py` run. **Hard cap: 10 apply tabs** — reuse `hitech-wN` tabs; prune leftovers. Never open a new tab when 10 apply tabs already exist.
 
 **PRIMARY:** official company career portals in **parallel multi-tab** + LinkedIn company-targeted applies/referrals.
 **ALSO REQUIRED (campus allowlist):** browse Naukri, Foundit, Cutshort, Instahyre, and Indeed for the same campus-company set (capped; do not invent applies). Generic Hyd employers outside the campus tenant list stay skipped.

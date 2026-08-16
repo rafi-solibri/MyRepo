@@ -26,6 +26,7 @@ if str(_root) not in sys.path:
 
 # ---- Every-run defaults (cron + headed + home) — set before importing apply modules ----
 os.environ.setdefault("HITECHCITY_PARALLEL_TABS", "10")
+os.environ.setdefault("HITECHCITY_MAX_CHROME_TABS", "10")
 os.environ.setdefault("HITECHCITY_MAX_PER_COMPANY", "6")
 os.environ.setdefault("HITECHCITY_MAX_COMPANIES", "60")
 os.environ.setdefault("HITECHCITY_MAX_EXT_WALLS", "3")
