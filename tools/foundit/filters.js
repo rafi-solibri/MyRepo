@@ -185,6 +185,9 @@ function skipTitleReason(title) {
   // Naukri NON_DOTNET_PRIMARY_RE parity — Oracle Fusion/Apps/ERP is not .NET.
   if (/\b(oracle\s+fusion|oracle\s+apps|oracle\s+erp)\b/i.test(t) && !hasDotNet(t, ""))
     return "Oracle Fusion/ERP without .NET on title";
+  // Data-platform primary titles (Snowflake/Databricks) — Arch/Lead exception must not apply.
+  if (/\b(snowflake|databricks)\b/i.test(t) && !hasDotNet(t, ""))
+    return "Snowflake/Databricks without .NET on title";
   if (/\bwpf\b/i.test(t) && !/\basp\.?\s*net|web\s*api|azure|\.net\s*core\b/i.test(t))
     return "WPF/hardware desktop";
   return null;

@@ -1,5 +1,12 @@
 # Foundit — issues & fixes
 
+## 2026-08-16 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Snowflake Solutions Architect (INFOTRON 62845849) passed via Arch/Lead without .NET — data-platform false apply | filters.js skipTitleReason: hard-skip snowflake\|databricks titles without .NET on title (Oracle Fusion parity); filters.test.js 26.1/26.2 |
+
+
 ## 2026-08-15 (home)
 
 | Issue | Fix |
