@@ -19,6 +19,7 @@ from tools.hitechcity.careers_apply import (
     is_hang_scan_url,
     is_sso_only_careers_url,
     is_uhg_skip_url,
+    role_has_foreign_location,
     url_loc_hint,
 )
 from tools.hitechcity.filters import (
@@ -72,6 +73,10 @@ def test_title_ok():
     assert CAREERS_TITLE_SKIP.search("Principal Silicon Design Engineer")
     assert CAREERS_TITLE_SKIP.search("Principal Silicon Design Engineer India, Telangana, Hyderabad")
     assert CAREERS_TITLE_SKIP.search("Product Design Manager")
+    assert CAREERS_TITLE_SKIP.search(
+        "Lead Principal Technical Program Manager DUBAI, United Arab Emirates"
+    )
+    assert CAREERS_TITLE_SKIP.search("Technical Program Manager")
     assert LI_TITLE_SKIP.search("Principal Silicon Design Engineer")
     assert JD_WRONG_STACK.search("We need a Mobile Architect for Ionic Capacitor and Zscaler")
     assert JD_WRONG_STACK.search(
@@ -146,6 +151,17 @@ def test_oraclecloud_parent_card_location():
     # Oracle Cloud HCM parent-card text often bundles title + city (Bengaluru must skip).
     assert not card_location_ok(
         "System Architect BENGALURU, KARNATAKA, India and 2 more HOT JOB"
+    )
+    # Regression: Dubai/UAE must never open — even with Hyd search URL / "and 1 more".
+    assert not card_location_ok(
+        "Lead Principal Technical Program Manager DUBAI, United Arab Emirates and 1 more"
+    )
+    assert role_has_foreign_location(
+        "Lead Principal Technical Program Manager DUBAI, United Arab Emirates and 1 more"
+    )
+    # Multi-location naming Dubai + Hyderabad is still not Hyd-only.
+    assert not card_location_ok(
+        "Technical Program Manager Hyderabad, Telangana, India and Dubai, UAE"
     )
     assert card_location_ok(
         "Senior Lead Architect - Solution Architect Hyderabad, Telangana, India TechnologyArchitecture"

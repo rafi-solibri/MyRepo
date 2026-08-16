@@ -117,6 +117,12 @@ BAD_LOC_HINT = re.compile(
     r"bengaluru|bangalore|pune|chennai|mumbai|noida|gurgaon|gurugram|"
     r"brazil|s[aã]o\s*carlos|malaysia|cyberjaya|costa\s*rica|heredia|nottingham|"
     r"kuala\s*lumpur|mexico|colombia|chile|argentina|"
+    # Middle East / APAC / other foreign workplaces (Oracle multi-location cards).
+    r"dubai|abu\s*dhabi|united\s*arab\s*emirates|\buae\b|saudi|riyadh|jeddah|"
+    r"qatar|doha|kuwait|bahrain|oman|muscat|"
+    r"singapore|hong\s*kong|tokyo|japan|seoul|korea|sydney|melbourne|australia|"
+    r"auckland|new\s*zealand|manila|philippines|jakarta|indonesia|bangkok|thailand|"
+    r"israel|tel\s*aviv|haifa|switzerland|zurich|geneva|france|paris|sweden|stockholm|"
     r"us[- ](?:texas|oregon|california|washington|arizona|colorado|massachusetts|"
     r"florida|georgia|illinois|new[- ]york)|india[- ](?:bangalore|bengaluru)|"
     r"hillsboro|santa[- ]clara|folsom|"
@@ -137,6 +143,7 @@ CAREERS_TITLE_SKIP = re.compile(
     r"chiplet|\basic\b|\bvlsi\b|rtl\s*design|dft\s*engineer|"
     r"analog\s*design|digital\s*design\s*engineer|verification\s*engineer|"
     r"sales\s*specialist|especialista|"
+    r"program\s*manager|technical\s*program\s*manager|\btpm\b|"
     r"\bai\s*native\b|\bdata\s*&\s*ai\b|staff\s*engineer\s*\(\s*ai|"
     r"\bai\s*/\s*ml\b|\bai\s*&\s*ml\b|\baiml\b|\bai-ml\b|"
     r"\bdeep\s*learning\b|\bgen(?:erative)?\s*ai\b|\bllm\b|"
@@ -610,15 +617,32 @@ def card_location_ok(role_text: str, top_card: str = "") -> bool:
         return True
     # Explicit non-Hyd city/country wins — including Remote Canada / Remote US / Remote UK.
     # Bare "Remote" / footer "India" must NOT rescue Bengaluru or foreign workplaces.
+    # Multi-location cards that name Dubai/Bengaluru AND Hyderabad are still not Hyd-only.
     hyd_city = re.compile(
         r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|gachibowli|raidurg",
         re.I,
     )
-    if BAD_LOC_HINT.search(blob) and not hyd_city.search(blob):
+    if BAD_LOC_HINT.search(blob):
         return False
-    if LOC_HINT.search(blob) or location_or_campus_ok(blob, "", ""):
+    if hyd_city.search(blob) or location_or_campus_ok(blob, "", ""):
         return True
-    return True
+    # Vague India/Remote without a foreign city — allow; apply_job still re-checks.
+    if re.search(r"\bremote\b|\bwfh\b|work from home|\bindia\b", blob, re.I):
+        return True
+    # Unknown city text (no Hyd, no known foreign) — do not assume Hyd.
+    return False
+
+
+def role_has_foreign_location(role: str) -> bool:
+    """True when the job title/card itself names a non-Hyd city or country."""
+    role = role or ""
+    if re.search(
+        r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|gachibowli|raidurg",
+        role,
+        re.I,
+    ):
+        return False
+    return bool(BAD_LOC_HINT.search(role))
 
 
 def dismiss_cookie_banners(page: Page) -> None:
@@ -766,6 +790,11 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         row["status"] = "skipped"
         row["reason"] = "location_non_hyd_city"
         return row
+    # Title itself names Dubai/Bengaluru/etc. — never open, even if search URL said Hyd.
+    if role_has_foreign_location(job.get("role") or ""):
+        row["status"] = "skipped"
+        row["reason"] = "location_foreign_in_title"
+        return row
     try:
         page.goto(job["url"], wait_until="domcontentloaded", timeout=60000)
     except Exception as e:
@@ -818,21 +847,26 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         row["reason"] = "location_non_hyd_city"
         row["finalUrl"] = page.url
         return row
-    # Require Hyd/campus/remote/India — OR apply-bias when no foreign city is stated
-    # (search listings are often Hyd-scoped but the JD top card omits location).
+    # Require Hyd/campus/remote/India — never apply-bias past Dubai/UAE/Bengaluru/etc.
+    # (search listings are often Hyd-scoped but Oracle multi-loc cards still name foreign cities).
     loc_blob = f"{role} {top or ''} {page_title}"
-    has_hyd = bool(LOC_HINT.search(loc_blob) or location_or_campus_ok(loc_blob, "", ""))
-    has_foreign = bool(BAD_LOC_HINT.search(loc_blob)) and not re.search(
-        r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|gachibowli|raidurg",
-        loc_blob,
-        re.I,
+    if BAD_LOC_HINT.search(loc_blob) or role_has_foreign_location(role):
+        row["status"] = "skipped"
+        row["reason"] = "location_not_hyd_or_campus"
+        row["finalUrl"] = page.url
+        return row
+    has_hyd = bool(
+        re.search(
+            r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|gachibowli|raidurg",
+            loc_blob,
+            re.I,
+        )
+        or location_or_campus_ok(loc_blob, "", "")
     )
+    # Bare "India" / Remote alone is OK only when no foreign city (already checked).
+    if not has_hyd and re.search(r"\bremote\b|\bwfh\b|work from home|\bindia\b", loc_blob, re.I):
+        has_hyd = True
     if not has_hyd:
-        if has_foreign:
-            row["status"] = "skipped"
-            row["reason"] = "location_not_hyd_or_campus"
-            row["finalUrl"] = page.url
-            return row
         # Uncertain (no Hyd pill, no foreign city) → APPLY bias per campus prompt.
         print(
             f"CAREERS LOC apply_bias_no_city_pill | {job['company']} | {role[:60]}",
