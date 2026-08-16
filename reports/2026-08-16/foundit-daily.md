@@ -19,6 +19,10 @@
 
 ## Code fix this run
 Hard-skip `Snowflake|Databricks` titles without `.NET` on the title so Arch/Lead exception cannot false-apply data-platform SA roles.
+Merged: https://github.com/rafi-solibri/MyRepo/pull/195
+
+## Post-fix re-run
+Applied tab: **480 → 480** (+0). Snowflake `62845849` and Databricks `62830865` now skipped (`Snowflake/Databricks without .NET on title`). 72 duplicates / 1190 skips / 0 blocked. Age → 3650d.
 
 ## LinkedIn referral drafts
 1. **INFOTRON / Snowflake Solutions Architect** — Hi — I'm applying for Snowflake Solutions Architect at INFOTRON. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)
