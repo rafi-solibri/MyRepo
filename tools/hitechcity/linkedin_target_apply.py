@@ -38,6 +38,11 @@ MAX_REFERRALS = int(os.environ.get("HITECHCITY_MAX_REFERRALS", "12"))
 MAX_SCAN = int(os.environ.get("HITECHCITY_MAX_SCAN", "40"))
 TPR = os.environ.get("HITECHCITY_TPR", "r1209600")  # 14 days
 
+# LinkedIn location filter — text alone is unreliable; geoId pins Hyderabad metro.
+LI_LOCATION = os.environ.get("HITECHCITY_LI_LOCATION", "Hyderabad, Telangana, India")
+LI_GEO_ID = os.environ.get("HITECHCITY_LI_GEO_ID", "105556991")  # Hyderabad, Telangana, India
+LI_DISTANCE = os.environ.get("HITECHCITY_LI_DISTANCE", "25")
+
 # Company-jobs keyword searches — lead/staff/manager first (not architect-only).
 # LinkedIn company /jobs/?keywords= is a free-text field; keep phrases short.
 SEARCH_KEYWORDS = [
@@ -242,19 +247,25 @@ def resolve_company_f_c(page: Page, slug: str) -> str:
 def company_jobs_url(slug: str, title: str, *, company_f_c: str = "") -> str:
     """Hyderabad jobs search for one campus employer.
 
-    Prefer /jobs/search/?f_C=… (has /jobs/view/ cards). Fall back to company
-    /jobs/ page only when f_C is unknown (caller should resolve first).
+    Prefer /jobs/search/?f_C=…&geoId=… (has /jobs/view/ cards). Fall back to
+    company /jobs/ page only when f_C is unknown (caller should resolve first).
+    Always pin Hyderabad via location + geoId so results stay campus-relevant.
     """
+    loc_q = (
+        f"&location={quote(LI_LOCATION)}"
+        f"&geoId={quote(LI_GEO_ID)}"
+        f"&distance={quote(LI_DISTANCE)}"
+    )
     if company_f_c:
         return (
             "https://www.linkedin.com/jobs/search/"
             f"?keywords={quote(title)}"
-            f"&location={quote('Hyderabad, Telangana, India')}"
+            f"{loc_q}"
             f"&f_C={company_f_c}"
         )
     return (
         f"https://www.linkedin.com/company/{slug}/jobs/"
-        f"?keywords={quote(title)}&location={quote('Hyderabad')}"
+        f"?keywords={quote(title)}{loc_q}"
     )
 
 

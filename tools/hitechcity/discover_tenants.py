@@ -246,9 +246,11 @@ def discover_from_linkedin(companies: list[dict]) -> dict[str, Any]:
 
             for q, campuses in uniq[:24]:
                 out["searches"] += 1
+                # Pin Hyderabad HQ geo so company hits stay India/Hyd-relevant.
                 url = (
                     "https://www.linkedin.com/search/results/companies/"
                     f"?keywords={quote(q)}&origin=GLOBAL_SEARCH_HEADER"
+                    f"&companyHqGeo={quote('[\"105556991\"]')}"
                 )
                 try:
                     page.goto(url, wait_until="domcontentloaded", timeout=60000)

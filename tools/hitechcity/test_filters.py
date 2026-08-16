@@ -86,9 +86,10 @@ def test_title_ok():
     from tools.hitechcity.linkedin_target_apply import company_jobs_url
 
     url_fc = company_jobs_url("jpmorganchase", "Engineering Manager", company_f_c="1068")
-    assert "jobs/search" in url_fc and "f_C=1068" in url_fc and "Hyderabad" in url_fc
+    assert "jobs/search" in url_fc and "f_C=1068" in url_fc
+    assert "Hyderabad" in url_fc and "geoId=105556991" in url_fc and "distance=25" in url_fc
     url_fb = company_jobs_url("jpmorganchase", "Engineering Manager")
-    assert "/company/jpmorganchase/jobs/" in url_fb
+    assert "/company/jpmorganchase/jobs/" in url_fb and "geoId=105556991" in url_fb
     # Discovery must not use campus-name LinkedIn queries.
     from tools.hitechcity import discover_tenants as disc
 
