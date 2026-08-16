@@ -420,10 +420,23 @@ def owner_hcaptcha_cleared(page, *, start_url: str = "") -> str | None:
         # Only count as cleared if we are no longer on a bare login URL.
         if "/login" not in url_l or has_file:
             return "form_ready"
-    # Navigated off the original challenge URL entirely.
-    if start_l and url_l and url_l.split("?")[0] != start_l.split("?")[0]:
+    # Navigated off the original challenge URL entirely — only if start looked like a wall.
+    # Oracle Cloud / multi-step apply changes path without a captcha; that must NOT clear.
+    start_looks_wall = bool(
+        re.search(r"/login|captcha|challenge|hcaptcha|checkpoint", start_l)
+        or re.search(r"icims\.com/.+/login", start_l)
+    )
+    if (
+        start_looks_wall
+        and start_l
+        and url_l
+        and url_l.split("?")[0] != start_l.split("?")[0]
+    ):
         if "checkpoint" not in url_l and "challenge" not in url_l and "captcha" not in url_l:
-            if re.search(r"myworkdayjobs|greenhouse|lever\.co|icims\.com|smartrecruiters|oraclecloud", url_l):
+            if re.search(
+                r"myworkdayjobs|greenhouse|lever\.co|icims\.com|smartrecruiters",
+                url_l,
+            ):
                 return "navigated_on"
     return None
 

@@ -607,13 +607,23 @@ def looks_submitted(page) -> bool:
 
 
 def visible_captcha_challenge(page) -> bool:
+    """True only for an on-screen challenge — not invisible widgets or footer badges.
+
+    Invisible hCaptcha always injects ``hcaptcha.com`` frames, and iCIMS footers say
+    "Protected by hCaptcha". Treating those as walls caused multi-minute false waits
+    and left the real apply form (AMD profile, Oracle sections) abandoned.
+    """
     try:
         for fr in getattr(page, "frames", []) or []:
-            if frame_url_is_captcha_challenge(getattr(fr, "url", None)):
+            fu = (getattr(fr, "url", None) or "").lower()
+            # Challenge documents only — skip api.js / static checkbox shells.
+            if "recaptcha" in fu and ("/bframe" in fu or "challenge" in fu):
+                return True
+            if "hcaptcha.com" in fu and "challenge" in fu:
                 return True
         for sel in (
             "iframe[src*='recaptcha/bframe']",
-            "iframe[src*='hcaptcha.com']",
+            "iframe[src*='hcaptcha.com'][src*='challenge']",
             "iframe[src*='challenges.cloudflare.com']",
             "iframe[src*='captcha-delivery.com']",
         ):
@@ -625,18 +635,37 @@ def visible_captcha_challenge(page) -> bool:
                     box = el.bounding_box()
                 except Exception:
                     box = None
-                if iframe_box_is_onscreen(box):
+                # Real challenge widgets are large; ignore tiny/invisible hosts.
+                if box and float(box.get("width") or 0) >= 100 and float(box.get("height") or 0) >= 60:
                     return True
+        # Broad hcaptcha iframes only when clearly on-screen (checkbox / challenge).
+        loc = page.locator("iframe[src*='hcaptcha.com']")
+        n = min(loc.count(), 8)
+        for i in range(n):
+            el = loc.nth(i)
+            try:
+                box = el.bounding_box()
+            except Exception:
+                box = None
+            if box and float(box.get("width") or 0) >= 200 and float(box.get("height") or 0) >= 50:
+                return True
         blob = _frames_text(page, 1500)
         if re.search(
-            r"verify you are human|press and hold|i'?m not a robot|protected by hcaptcha",
+            r"verify you are human|press and hold|i'?m not a robot|"
+            r"complete the captcha|solve the captcha|attention required",
             blob,
             re.I,
         ):
             return True
     except Exception:
         return False
-    return bool(re.search(r"verify you are human|press and hold|i'?m not a robot", _body(page, 1500), re.I))
+    return bool(
+        re.search(
+            r"verify you are human|press and hold|i'?m not a robot",
+            _body(page, 1500),
+            re.I,
+        )
+    )
 
 
 def _frames_text(page, limit: int = 2000) -> str:
@@ -1882,6 +1911,26 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
     )
     if owner:
         return owner
+    if apply_form_still_open(page):
+        print(
+            "workday=persist_retry — form still open after owner wait; continuing",
+            flush=True,
+        )
+        burst_start = time.time()
+        while time.time() - burst_start < 45:
+            if looks_submitted(page):
+                return "applied", "confirmation"
+            try:
+                upload_resume(page)
+                workday_fill_core(page)
+                fill_source_fields(page)
+                fill_validation_gaps(page)
+                click_advance(page)
+            except Exception:
+                pass
+            _sleep(1.0)
+        if looks_submitted(page):
+            return "applied", "confirmation"
     return "blocked", "external_incomplete_or_timeout"
 
 
@@ -1913,11 +1962,43 @@ def owner_form_wait_sec() -> int:
     return 0
 
 
+def apply_form_still_open(page) -> bool:
+    """True when the page still looks like an unfinished apply (do not abandon)."""
+    try:
+        url = getattr(page, "url", "") or ""
+    except Exception:
+        url = ""
+    if re.search(
+        r"/apply|/candidate|/questions|/login|mode=apply|mode=submit|"
+        r"oraclecloud\.com/.*/(?:job|apply)|greenhouse\.io/.*/application|"
+        r"myworkdayjobs\.com/.*/apply",
+        url,
+        re.I,
+    ):
+        return True
+    text = _frames_text(page, 2500)
+    if re.search(
+        r"candidate profile|submit profile|submit application|required field|"
+        r"how did you hear|upload your resume|personal info|work experience|"
+        r"please be sure to fill|enter your information|i accept",
+        text,
+        re.I,
+    ):
+        return True
+    try:
+        if page.locator("input[type='file']").count() > 0:
+            return True
+    except Exception:
+        pass
+    return False
+
+
 def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
     """Ask the owner to finish required fields / submit; do not abandon matching jobs.
 
     Returns (status, reason) when submitted / already-applied, else None after timeout.
-    Keeps auto-filling Source and other gaps while waiting.
+    Keeps auto-filling Source and other gaps while waiting. Extends once if the form
+    is still open after owner activity (captcha/login) so we never walk away mid-apply.
     """
     wait = owner_form_wait_sec()
     if wait <= 0:
@@ -1930,39 +2011,80 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
     )
     deadline = time.time() + wait
     last_beat = 0.0
+    last_fp = page_fingerprint(page)
+    extended = False
     poll = float(os.environ.get("ATS_CAPTCHA_POLL_SEC", "0.4") or "0.4")
     poll = min(1.0, max(0.25, poll))
-    while time.time() < deadline:
+    while True:
+        while time.time() < deadline:
+            if looks_submitted(page):
+                print("ASK_OWNER resolved=submitted", flush=True)
+                return "applied", "confirmation"
+            if looks_already_applied(page):
+                print("ASK_OWNER resolved=already_applied", flush=True)
+                return "skipped", "already_applied"
+            try:
+                # Prefer the iCIMS nested form document when present.
+                target = page
+                if re.search(r"icims\.com", getattr(page, "url", "") or "", re.I):
+                    target = icims_active_frame(page)
+                    icims_fill_gdpr_gate(page)
+                try:
+                    upload_resume(target)
+                except Exception:
+                    try:
+                        upload_resume(page)
+                    except Exception:
+                        pass
+                fill_source_fields(target)
+                fill_validation_gaps(target)
+                fill_labeled_fields(target)
+                fill_yes_no(target)
+                tick_consents(target)
+                try:
+                    fill_icims_questions(page)
+                except Exception:
+                    pass
+                try:
+                    fill_source_fields(page)
+                    fill_validation_gaps(page)
+                    fill_labeled_fields(page)
+                except Exception:
+                    pass
+                click_advance(target)
+                click_advance(page)
+            except Exception:
+                pass
+            fp = page_fingerprint(page)
+            if fp != last_fp:
+                # Owner or helper progressed — keep working; nudge deadline forward once.
+                last_fp = fp
+                if not extended and time.time() + 90 > deadline:
+                    deadline = max(deadline, time.time() + 120)
+                    print("ASK_OWNER progress — extending while form still open", flush=True)
+            now = time.time()
+            if now - last_beat >= 8.0:
+                left = max(0, int(deadline - now))
+                print(f"ASK_OWNER waiting {left}s left — complete the form in Chrome", flush=True)
+                last_beat = now
+            _sleep(poll)
         if looks_submitted(page):
-            print("ASK_OWNER resolved=submitted", flush=True)
             return "applied", "confirmation"
         if looks_already_applied(page):
-            print("ASK_OWNER resolved=already_applied", flush=True)
             return "skipped", "already_applied"
-        try:
-            fill_source_fields(page)
-            fill_validation_gaps(page)
-            fill_labeled_fields(page)
-            fill_yes_no(page)
-            tick_consents(page)
-            # iCIMS GDPR gate if visible
-            if re.search(r"icims\.com", getattr(page, "url", "") or "", re.I):
-                icims_fill_gdpr_gate(page)
-            click_advance(page)
-        except Exception:
-            pass
-        now = time.time()
-        if now - last_beat >= 8.0:
-            left = max(0, int(deadline - now))
-            print(f"ASK_OWNER waiting {left}s left — complete the form in Chrome", flush=True)
-            last_beat = now
-        _sleep(poll)
-    if looks_submitted(page):
-        return "applied", "confirmation"
-    if looks_already_applied(page):
-        return "skipped", "already_applied"
-    print("ASK_OWNER timeout — form still incomplete", flush=True)
-    return None
+        if not extended and apply_form_still_open(page):
+            extended = True
+            extra = max(120, min(wait, 360))
+            deadline = time.time() + extra
+            print(
+                f"ASK_OWNER extend={extra}s — form still open after owner action; "
+                f"continuing fill/submit (will not abandon)",
+                flush=True,
+            )
+            last_beat = 0.0
+            continue
+        print("ASK_OWNER timeout — form still incomplete", flush=True)
+        return None
 
 
 def fill_greenhouse_combos(page) -> None:
@@ -2082,6 +2204,31 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
     )
     if owner:
         return owner
+    if apply_form_still_open(page):
+        print(
+            "generic=persist_retry — ASK_OWNER timed out but form still open; fill again",
+            flush=True,
+        )
+        # Short aggressive burst — do not nest another full owner wait.
+        burst_start = time.time()
+        while time.time() - burst_start < 45:
+            if looks_submitted(page):
+                return "applied", "confirmation"
+            if looks_already_applied(page):
+                return "skipped", "already_applied"
+            try:
+                upload_resume(page)
+                fill_labeled_fields(page)
+                fill_source_fields(page)
+                fill_validation_gaps(page)
+                fill_yes_no(page)
+                tick_consents(page)
+                click_advance(page)
+            except Exception:
+                pass
+            _sleep(1.0)
+        if looks_submitted(page):
+            return "applied", "confirmation"
     return "blocked", "external_incomplete_or_timeout"
 
 
@@ -2229,7 +2376,8 @@ def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
             if not captcha_solver_configured():
                 return "blocked", "captcha_needs_owner_or_solver"
             return "blocked", "CAPTCHA/bot wall"
-        # After captcha, re-fill gate if still visible, then advance.
+        # After owner captcha — stay on this application and finish profile/submit.
+        print("icims=post_captcha_continue — filling profile through submit", flush=True)
         icims_fill_gdpr_gate(page)
         target = icims_active_frame(page)
         try:
@@ -2243,7 +2391,10 @@ def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
     if looks_submitted(page) or looks_submitted(target):
         return "applied", "confirmation"
     start = time.time()
-    while time.time() - start < max(20, int(time_cap_s) - 10):
+    stuck = 0
+    last_fp = page_fingerprint(page)
+    while time.time() - start < max(20, int(time_cap_s) - 10) and stuck < 14:
+        target = icims_active_frame(page)
         if looks_submitted(page) or looks_submitted(target):
             return "applied", "confirmation"
         if looks_already_applied(page):
@@ -2252,18 +2403,54 @@ def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
         if icims_hcaptcha_login(page) or re.search(r"/login", getattr(target, "url", "") or "", re.I):
             icims_fill_gdpr_gate(page)
             target = icims_active_frame(page)
-        fill_icims_questions(page)
+        progressed = False
+        try:
+            upload_resume(target)
+            progressed = True
+        except Exception:
+            try:
+                upload_resume(page)
+            except Exception:
+                pass
+        try:
+            fill_labeled_fields(target)
+            fill_yes_no(target)
+            fill_source_fields(target)
+            fill_validation_gaps(target)
+            tick_consents(target)
+            progressed = True
+        except Exception:
+            pass
+        if fill_icims_questions(page):
+            progressed = True
         if advance_icims_us_forms(page):
+            stuck = 0
+            last_fp = page_fingerprint(page)
             _sleep(1.2)
-            target = icims_active_frame(page)
             continue
-        if _click_text(target, ("Submit", "Next", "Continue", "Save and Continue")):
+        if _click_text(
+            target,
+            ("Submit Profile", "Submit", "Next", "Continue", "Save and Continue"),
+        ):
+            stuck = 0
+            last_fp = page_fingerprint(page)
             _sleep(1.4)
-            target = icims_active_frame(page)
             continue
-        break
-    remaining = max(30, int(time_cap_s) - int(time.time() - start) - 5)
-    return complete_generic(page, remaining)
+        fp = page_fingerprint(page)
+        if fp != last_fp or progressed:
+            stuck = max(0, stuck - 1)
+            last_fp = fp
+        else:
+            stuck += 1
+        _sleep(1.0)
+    if looks_submitted(page):
+        return "applied", "confirmation"
+    remaining = max(60, int(time_cap_s) - int(time.time() - start) - 5)
+    status, reason = complete_generic(page, remaining)
+    if status == "blocked" and "incomplete" in (reason or "") and apply_form_still_open(page):
+        print("icims=persist_retry — form still open after owner wait; one more fill pass", flush=True)
+        status, reason = complete_generic(page, max(90, remaining))
+    return status, reason
 
 
 def complete_ats(page, time_cap_s: int | None = None) -> tuple[str, str]:

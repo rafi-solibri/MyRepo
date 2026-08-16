@@ -20,6 +20,8 @@ from tools.ats.complete import (
     frame_url_is_captcha_challenge,
     complete_icims,
     icims_hcaptcha_login,
+    apply_form_still_open,
+    visible_captcha_challenge,
     icims_logged_in,
     icims_should_wait_captcha,
     iframe_box_is_onscreen,
@@ -561,5 +563,29 @@ _logged_q = _FakeIframesPage(
 assert_true(icims_logged_in(_logged_q), "Log Out on questions is logged in")
 assert_true(not icims_should_wait_captcha(_logged_q), "logged-in questions skip captcha wait")
 assert_true(callable(complete_icims), "complete_icims is wired")
+
+
+# Footer "Protected by hCaptcha" alone is not a challenge wall.
+class _FooterCaptchaPage:
+    url = "https://example.com/apply"
+    frames = []
+    def locator(self, sel):
+        class _Empty:
+            def count(self):
+                return 0
+        return _Empty()
+    def evaluate(self, *a, **k):
+        return ""
+assert_true(not visible_captcha_challenge(_FooterCaptchaPage()), "footer hCaptcha text must not block")
+
+class _CandPage:
+    url = "https://global-external-amd.icims.com/jobs/80159/x/candidate"
+    frames = []
+    def locator(self, sel):
+        class _Empty:
+            def count(self):
+                return 0
+        return _Empty()
+assert_true(apply_form_still_open(_CandPage()), "candidate profile must count as open form")
 
 print("tools/ats/test_complete.py OK")

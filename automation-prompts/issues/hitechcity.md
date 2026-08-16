@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| After owner captcha/help, profile left unfinished and runner advanced | Post-captcha `icims=post_captcha_continue`; ASK_OWNER extends while form open; persist_retry on incomplete; never treat invisible hCaptcha/footer as wall |
 | Matching jobs left incomplete (Source / required blanks); attempt caps skipped remaining roles | `fill_source_fields` + `fill_validation_gaps`; `ASK_OWNER`/`wait_owner_finish_apply` before incomplete; soft incompletes do not burn attempt caps; headed TIME_CAP≥180 |
 | iCIMS Email / I accept / Next not filled (outer login chrome) | Prefer `in_iframe=1`; `icims_fill_gdpr_gate` every iCIMS apply |
 | Careers/LinkedIn architect-only; company search no job clicks; location not pinned | Careers expand EM→… + Hyd location pin; LI `geoId=105556991` + `f_C` jobs/search; discovery LI company-search default off |

@@ -379,9 +379,25 @@ def try_submit(page: Page) -> bool:
 
 
 def attempt_ats_apply(page: Page, time_cap_s: int = 390) -> tuple[str, str]:
-    """Fill + submit current ATS page. Returns (status, reason)."""
+    """Fill + submit current ATS page. Returns (status, reason).
+
+    Soft incompletes get one persist retry so we do not leave a form after the
+    owner solved captcha / helped with fields.
+    """
     try:
-        from tools.ats.complete import complete_ats
+        from tools.ats.complete import apply_form_still_open, complete_ats
     except Exception:
-        from ats.complete import complete_ats  # type: ignore
-    return complete_ats(page, time_cap_s=time_cap_s)
+        from ats.complete import apply_form_still_open, complete_ats  # type: ignore
+    status, reason = complete_ats(page, time_cap_s=time_cap_s)
+    if status == "blocked" and "incomplete" in (reason or "").lower():
+        try:
+            still = apply_form_still_open(page)
+        except Exception:
+            still = True
+        if still:
+            print(
+                "ATS persist_retry — form still open after incomplete; continuing to submit",
+                flush=True,
+            )
+            status, reason = complete_ats(page, time_cap_s=max(120, int(time_cap_s)))
+    return status, reason
