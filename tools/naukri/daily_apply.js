@@ -1041,6 +1041,48 @@ async function answerNaukriChatbot(page) {
     }
     return { done: true, reason: finalReason };
   }
+
+  // Exhaustion recovery: Submit/Continue/Done often remain after Save stalls.
+  const finishClicked = await page
+    .evaluate(() => {
+      const root =
+        document.querySelector(
+          ".chatbot_Drawer, ._chatBotContainer, #desktopChatBotContainer"
+        ) || document;
+      root.querySelector(".chatbot_Overlay")?.classList.remove("show");
+      const btns = [
+        ...root.querySelectorAll("button, div.sendMsg, div.send, [role='button']"),
+      ];
+      const finish = btns.find((e) => {
+        const t = (e.innerText || e.getAttribute("aria-label") || "")
+          .replace(/\s+/g, " ")
+          .trim();
+        return /^(submit|continue|done|finish|apply|confirm)(\s+application)?$/i.test(
+          t
+        );
+      });
+      if (!finish) return false;
+      finish.click();
+      return true;
+    })
+    .catch(() => false);
+  if (finishClicked) {
+    await sleep(2500);
+    const afterFinish = await page
+      .evaluate(
+        () =>
+          document.querySelector(
+            ".chatbot_Drawer, ._chatBotContainer, #desktopChatBotContainer"
+          )?.innerText ||
+          document.body.innerText ||
+          ""
+      )
+      .catch(() => "");
+    const late = chatSuccessReason(afterFinish);
+    if (late) return { done: true, reason: late };
+  }
+  await clickChatbotSave(page);
+  await sleep(2000);
   return { done: false, reason: "chat_steps_exhausted" };
 }
 
@@ -1284,13 +1326,46 @@ async function confirmApplied(page, chatHint = null) {
   }
   // Instant Quick Apply (no chatbot): CTA animates Quick→Applied. Do NOT
   // return early on "quick" — wait specifically for Applied / toast.
-  // Also covers chat_steps_exhausted when Save eventually flipped CTA.
-  const visible = await waitForAppliedCta(page, {
-    timeoutMs: chatHint?.reason === "chat_steps_exhausted" ? 8000 : 12000,
-  });
+  // chat_steps_exhausted / no_chat both need a longer poll — TopTier lag + overlays.
+  const pollMs =
+    chatHint?.reason === "chat_steps_exhausted"
+      ? 14000
+      : chatHint?.reason === "no_chat"
+        ? 16000
+        : 12000;
+  await page.bringToFront().catch(() => {});
+  await page
+    .evaluate(() => {
+      const btn = [...document.querySelectorAll("button, a, [role='button']")].find(
+        (e) => /Quick apply|Applied/i.test(e.innerText || "")
+      );
+      btn?.scrollIntoView?.({ block: "center", inline: "nearest" });
+    })
+    .catch(() => {});
+  const visible = await waitForAppliedCta(page, { timeoutMs: pollMs });
   if (visible?.state === "applied") {
     return { ok: true, cta: visible.label || "Applied" };
   }
+  // Disabled dual-layer Quick apply often means submit already landed.
+  const disabledApplied = await page
+    .evaluate(() => {
+      const buttons = [
+        ...document.querySelectorAll("button, a, [role='button']"),
+      ];
+      for (const btn of buttons) {
+        const raw = (btn.innerText || btn.getAttribute("aria-label") || "")
+          .replace(/\s+/g, " ")
+          .trim();
+        if (!/Quick apply|Applied/i.test(raw)) continue;
+        if (/company site|hirist|view applied/i.test(raw)) continue;
+        if (btn.disabled || btn.getAttribute("aria-disabled") === "true") {
+          return raw || "disabled_cta";
+        }
+      }
+      return "";
+    })
+    .catch(() => "");
+  if (disabledApplied) return { ok: true, cta: `disabled:${disabledApplied}` };
   // Late chatbot thanks after exhausted loop / overlay lag.
   const lateChat = await page
     .evaluate(() => {
@@ -1300,7 +1375,11 @@ async function confirmApplied(page, chatHint = null) {
         )?.innerText ||
         document.body.innerText ||
         "";
-      if (/thank you for your responses|successfully applied|application sent/i.test(t))
+      if (
+        /thank you for your responses|successfully applied|application sent|application has been submitted|applied successfully/i.test(
+          t
+        )
+      )
         return "late_thanks";
       return "";
     })
@@ -1319,6 +1398,16 @@ async function confirmApplied(page, chatHint = null) {
     )
     .catch(() => false);
   if (viewApplied) return { ok: true, cta: "view_applied_jobs" };
+  // Close stuck chatbot drawer and re-read CTA once (Principal Financial pattern).
+  if (chatHint?.reason === "chat_steps_exhausted") {
+    await page.keyboard.press("Escape").catch(() => {});
+    await dismiss(page);
+    await sleep(1200);
+    const again = await waitForAppliedCta(page, { timeoutMs: 6000 });
+    if (again?.state === "applied") {
+      return { ok: true, cta: again.label || "Applied" };
+    }
+  }
   const detail = await readDetail(page);
   return { ok: false, cta: detail.cta || visible?.label || "" };
 }

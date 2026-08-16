@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-08-16 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| 0 applies: Gemini Platform Architect attempted + apply_unconfirmed (empty CTA/no_chat); Principal Financial chat_steps_exhausted; thin eligible inventory (CTC<35 skips Valuelabs/Sonata/Highradius/Watania) | resume_and_filters: skip gemini/llm GenAI titles; daily_apply: longer Applied poll + disabled CTA + drawer Submit/Continue recovery + Escape re-read after chat_steps_exhausted |
+
+
 ## 2026-08-15 (home)
 
 | Issue | Fix |
