@@ -49,7 +49,30 @@ PROFILE = {
     "notice": "0",
     "experience_years": "15",
     "school": "Acharya Nagarjuna University",
+    # Preferred answers for Source / How did you hear dropdowns (try in order).
+    "source": "LinkedIn",
 }
+
+# Source / "how did you hear" option matchers — LinkedIn first (owner preference).
+SOURCE_OPTION_PATTERNS = [
+    r"^LinkedIn$",
+    r"\bLinkedIn\b",
+    r"^Job Board$",
+    r"\bNaukri\b",
+    r"\bIndeed\b",
+    r"Company Websites?",
+    r"^Internet$",
+    r"^Online$",
+    r"Social Media",
+    r"^Other$",
+]
+SOURCE_LABEL_RE = re.compile(
+    r"^(source|candidate source|application source)$|"
+    r"how did you (hear|find|learn)|hear about (us|this|the)|"
+    r"where did you hear|referral source|sourcing channel|"
+    r"how were you referred",
+    re.I,
+)
 
 SUBMITTED_RE = re.compile(
     r"application (has been )?submitted|thank you for (your )?appl|"
@@ -714,6 +737,31 @@ def fill_icims_questions(page) -> bool:
                     clicked = True
             except Exception:
                 continue
+    # Source / how-did-you-hear selects inside the iCIMS iframe.
+    try:
+        if fill_source_fields(target):
+            clicked = True
+    except Exception:
+        pass
+    try:
+        selects = target.locator("select")
+        for i in range(min(selects.count(), 20)):
+            sel = selects.nth(i)
+            if not sel.is_visible():
+                continue
+            meta = ""
+            try:
+                meta = sel.evaluate(
+                    "e => ((e.name||'')+' '+(e.id||'')+' '+(e.getAttribute('aria-label')||'')+' '+"
+                    "((e.labels&&e.labels[0]&&e.labels[0].innerText)||'')).slice(0,160)"
+                )
+            except Exception:
+                continue
+            if re.search(r"source|hear about|how did you|referral", meta or "", re.I):
+                if _select_matching_option(sel, SOURCE_OPTION_PATTERNS):
+                    clicked = True
+    except Exception:
+        pass
     return clicked
 
 
@@ -1391,13 +1439,18 @@ def workday_auth(page) -> str | None:
 
 
 def _pick_workday_option(page, form_field_id: str, patterns: list[str]) -> bool:
+    """Open a Workday select/multiselect and pick the first matching option.
+
+    Verifies the widget text actually changed — never claim success on a blind
+    typeahead Enter (that left Source empty and abandoned submits).
+    """
     try:
         root = page.locator(f"[data-automation-id='{form_field_id}']").first
         if not root.count() or not root.is_visible():
             return False
-        already = (root.inner_text(timeout=800) or "").strip()
-        if already and not re.search(r"select one|0 items selected|^$", already, re.I):
-            if any(re.search(p, already, re.I) for p in patterns):
+        before = (root.inner_text(timeout=800) or "").strip()
+        if before and not re.search(r"select one|0 items selected|^$", before, re.I):
+            if any(re.search(p, before, re.I) for p in patterns):
                 return True
         opener = root.locator(
             "button[aria-haspopup='listbox'], [data-automation-id='selectWidget'], "
@@ -1405,28 +1458,254 @@ def _pick_workday_option(page, form_field_id: str, patterns: list[str]) -> bool:
         ).first
         if opener.count() and opener.is_visible():
             opener.click(force=True)
-            _sleep(0.6)
+            _sleep(0.55)
         for pat in patterns:
             opt = page.locator(
                 "[data-automation-id='promptOption'], [role='option'], "
-                "[data-automation-id='promptLeafNode']"
+                "[data-automation-id='promptLeafNode'], li[role='option']"
             ).filter(has_text=re.compile(pat, re.I)).first
             if opt.count() and opt.is_visible():
                 opt.click(force=True)
                 _sleep(0.35)
                 page.keyboard.press("Escape")
-                return True
-            hint = re.sub(r"[^A-Za-z0-9 ]", "", pat)[:12]
-            if hint:
-                page.keyboard.type(hint, delay=30)
-                page.keyboard.press("Enter")
+                after = (root.inner_text(timeout=800) or "").strip()
+                if after and (
+                    any(re.search(p, after, re.I) for p in patterns)
+                    or (after != before and not re.search(r"select one|0 items selected", after, re.I))
+                ):
+                    return True
+            # Typeahead fallback — still verify the widget accepted a match.
+            hint = re.sub(r"[^A-Za-z0-9 ]", " ", pat)
+            hint = re.sub(r"\s+", " ", hint).strip()[:18]
+            if not hint or hint in ("^",):
+                continue
+            try:
+                page.keyboard.type(hint, delay=25)
+                _sleep(0.35)
+                opt2 = page.locator(
+                    "[data-automation-id='promptOption'], [role='option']"
+                ).filter(has_text=re.compile(pat, re.I)).first
+                if opt2.count() and opt2.is_visible():
+                    opt2.click(force=True)
+                else:
+                    page.keyboard.press("Enter")
                 _sleep(0.35)
                 page.keyboard.press("Escape")
-                return True
-        page.keyboard.press("Escape")
+                after = (root.inner_text(timeout=800) or "").strip()
+                if after and any(re.search(p, after, re.I) for p in patterns):
+                    return True
+                if after and after != before and not re.search(r"select one|0 items selected", after, re.I):
+                    return True
+            except Exception:
+                try:
+                    page.keyboard.press("Escape")
+                except Exception:
+                    pass
+                continue
+        try:
+            page.keyboard.press("Escape")
+        except Exception:
+            pass
     except Exception:
         return False
     return False
+
+
+def _select_matching_option(ctrl, patterns: list[str]) -> bool:
+    """Fill a native <select> from option label patterns."""
+    try:
+        tag = ctrl.evaluate("e => e.tagName.toLowerCase()")
+        if tag != "select":
+            return False
+        options = ctrl.evaluate(
+            """e => Array.from(e.options||[]).map(o => ({v:o.value, t:(o.text||o.label||'').trim()}))"""
+        )
+        for pat in patterns:
+            for opt in options or []:
+                text = opt.get("t") or ""
+                if re.search(pat, text, re.I) and text and not re.search(r"^select|choose|—|-+\s*$", text, re.I):
+                    try:
+                        ctrl.select_option(label=text)
+                    except Exception:
+                        ctrl.select_option(value=opt.get("v"))
+                    return True
+    except Exception:
+        return False
+    return False
+
+
+def fill_source_fields(page) -> bool:
+    """Fill Source / How did you hear — required on many Workday/iCIMS/GH forms.
+
+    Owner often has to pick these manually; leaving them empty causes
+    external_incomplete_or_timeout without submitting.
+    """
+    filled = False
+    # Workday automation-id widgets (common variants).
+    for fid in (
+        "formField-source",
+        "formField-sourceType",
+        "formField-candidateSource",
+        "formField-howDidYouHear",
+        "formField-howDidYouHearAboutUs",
+        "sourceDropdown",
+        "candidateSource",
+        "howDidYouHear",
+    ):
+        if _pick_workday_option(page, fid, SOURCE_OPTION_PATTERNS):
+            filled = True
+
+    # Native <select> by name/id/aria/nearby label.
+    try:
+        selects = page.locator("select")
+        n = min(selects.count(), 25)
+    except Exception:
+        n = 0
+    for i in range(n):
+        sel = selects.nth(i)
+        try:
+            if not sel.is_visible():
+                continue
+            meta = sel.evaluate(
+                """e => {
+                  const lab = e.labels && e.labels[0] ? e.labels[0].innerText : '';
+                  const near = (e.closest('fieldset,tr,div,li,section')||e.parentElement);
+                  return [e.name||'', e.id||'', e.getAttribute('aria-label')||'', lab||'',
+                          (near && near.innerText||'').slice(0,120)].join(' | ');
+                }"""
+            )
+            if not SOURCE_LABEL_RE.search(meta or ""):
+                # Also catch loose "Source*" labels in nearby text.
+                if not re.search(r"\bsource\b|how did you hear|hear about", meta or "", re.I):
+                    continue
+            if _select_matching_option(sel, SOURCE_OPTION_PATTERNS):
+                filled = True
+        except Exception:
+            continue
+
+    # Label → combobox / following control (Greenhouse, SmartRecruiters, generic).
+    try:
+        labels = page.locator("label, legend, [data-automation-id*='formField']")
+        ln = min(labels.count(), 80)
+    except Exception:
+        ln = 0
+    for i in range(ln):
+        lab = labels.nth(i)
+        try:
+            text = (lab.inner_text(timeout=300) or "").strip()
+        except Exception:
+            continue
+        if not text or len(text) > 100:
+            continue
+        if not (SOURCE_LABEL_RE.search(text) or re.search(r"\bsource\b|how did you hear", text, re.I)):
+            continue
+        try:
+            for_id = lab.get_attribute("for")
+            ctrl = (
+                page.locator(f'[id="{for_id}"]').first
+                if for_id
+                else lab.locator(
+                    "xpath=following::*[self::input or self::select or self::button or @role='combobox'][1]"
+                ).first
+            )
+            if not ctrl.count():
+                # Workday: label node IS the formField container
+                aid = lab.get_attribute("data-automation-id") or ""
+                if aid.startswith("formField-") and _pick_workday_option(page, aid, SOURCE_OPTION_PATTERNS):
+                    filled = True
+                continue
+            tag = ""
+            try:
+                tag = ctrl.evaluate("e => (e.tagName||'').toLowerCase()")
+            except Exception:
+                tag = ""
+            if tag == "select":
+                if _select_matching_option(ctrl, SOURCE_OPTION_PATTERNS):
+                    filled = True
+                continue
+            # Custom dropdown / combobox
+            ctrl.click(force=True)
+            _sleep(0.35)
+            preferred = PROFILE.get("source") or "LinkedIn"
+            page.keyboard.type(preferred, delay=20)
+            _sleep(0.35)
+            opt = page.locator("[role='option']:visible, [data-automation-id='promptOption']").filter(
+                has_text=re.compile(r"LinkedIn|Job Board|Naukri|Indeed|Internet|Other", re.I)
+            ).first
+            if opt.count() and opt.is_visible():
+                opt.click(force=True)
+                filled = True
+            else:
+                page.keyboard.press("Enter")
+                filled = True
+            _sleep(0.2)
+            try:
+                page.keyboard.press("Escape")
+            except Exception:
+                pass
+        except Exception:
+            continue
+    return filled
+
+
+def fill_validation_gaps(page) -> bool:
+    """After 'Errors Found' / required blanks — fill leftover required controls."""
+    progressed = False
+    if fill_source_fields(page):
+        progressed = True
+    # Required empty native selects: pick first non-placeholder option when label known.
+    try:
+        empties = page.evaluate(
+            """() => {
+              const out = [];
+              for (const s of document.querySelectorAll('select')) {
+                const req = s.required || s.getAttribute('aria-required') === 'true';
+                const bad = s.getAttribute('aria-invalid') === 'true';
+                const val = (s.value || '').trim();
+                const t = (s.options[s.selectedIndex] && s.options[s.selectedIndex].text || '').trim();
+                const empty = !val || /select|choose|^-$/i.test(t);
+                if ((req || bad || empty) && s.offsetParent !== null) {
+                  const lab = s.labels && s.labels[0] ? s.labels[0].innerText : (s.name||s.id||'');
+                  out.push({name: s.name||'', id: s.id||'', label: (lab||'').slice(0,80), empty});
+                }
+              }
+              return out.slice(0, 15);
+            }"""
+        )
+    except Exception:
+        empties = []
+    for row in empties or []:
+        label = row.get("label") or ""
+        sid = row.get("id") or ""
+        name = row.get("name") or ""
+        try:
+            ctrl = (
+                page.locator(f"select#{sid}").first
+                if sid
+                else page.locator(f"select[name='{name}']").first
+                if name
+                else None
+            )
+            if not ctrl or not ctrl.count():
+                continue
+            if re.search(r"source|hear about|how did you", f"{label} {name} {sid}", re.I):
+                if _select_matching_option(ctrl, SOURCE_OPTION_PATTERNS):
+                    progressed = True
+                continue
+            if re.search(r"country", f"{label} {name}", re.I):
+                if _select_matching_option(ctrl, [r"^India$", r"\bIndia\b"]):
+                    progressed = True
+                continue
+            if re.search(r"state|province|region", f"{label} {name}", re.I):
+                if _select_matching_option(ctrl, [r"Telangana", r"Andhra", r"^Other$", r"N/A", r"Not Applicable"]):
+                    progressed = True
+                continue
+            if re.search(r"phone\s*type|type of phone", f"{label} {name}", re.I):
+                if _select_matching_option(ctrl, [r"Mobile", r"Cell", r"Home"]):
+                    progressed = True
+        except Exception:
+            continue
+    return progressed
 
 
 def workday_fill_core(page) -> None:
@@ -1457,11 +1736,8 @@ def workday_fill_core(page) -> None:
     _type_automation(page, "phone", PROFILE["phone"])
     _type_automation(page, "formField-phoneNumber", PROFILE["phone"])
     _pick_workday_option(page, "formField-phoneType", [r"^Mobile$", r"Cell", r"Mobile"])
-    _pick_workday_option(
-        page,
-        "formField-source",
-        [r"^Job Board$", r"Naukri", r"Internet", r"Online", r"Other", r"Company Websites"],
-    )
+    _pick_workday_option(page, "formField-source", SOURCE_OPTION_PATTERNS)
+    fill_source_fields(page)
     _pick_workday_option(page, "formField-degree", [r"^BS$", r"Bachelor of Science", r"B\.?\s*Tech", r"^Bachelor"])
     _pick_workday_option(
         page,
@@ -1496,6 +1772,7 @@ def workday_fill_core(page) -> None:
         pass
     fill_labeled_fields(page)
     fill_yes_no(page)
+    fill_source_fields(page)
     tick_consents(page)
 
 
@@ -1537,7 +1814,7 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
         ):
             return "blocked", "ats_login_wall"
     stuck = 0
-    while time.time() - start < time_cap_s and stuck < 10:
+    while time.time() - start < time_cap_s and stuck < 14:
         if looks_submitted(page):
             return "applied", "confirmation"
         if workday_password_alert(page):
@@ -1570,8 +1847,19 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
             continue
         if looks_submitted(page):
             return "applied", "confirmation"
-        if re.search(r"Errors Found|is required and must have a value", _body(page, 1500), re.I):
-            stuck += 1
+        body_now = _body(page, 1800)
+        if re.search(r"Errors Found|is required and must have a value|this field is required", body_now, re.I):
+            # Do not abandon — fill Source / required blanks and retry advance.
+            progressed = fill_validation_gaps(page)
+            workday_fill_core(page)
+            if click_advance(page):
+                stuck = 0
+                _sleep(1.8)
+                continue
+            if progressed:
+                stuck = max(0, stuck - 1)
+            else:
+                stuck += 1
             _sleep(0.8)
             continue
         stuck += 1
@@ -1590,8 +1878,9 @@ def fill_greenhouse_combos(page) -> None:
         (r"require sponsorship|visa sponsorship", "No"),
         (r"ever been employed|previously employed", "No"),
         (r"gender", "Male"),
-        (r"how did you hear", "LinkedIn"),
+        (r"how did you hear|source|where did you hear", "LinkedIn"),
         (r"willing to relocate", "Yes"),
+        (r"candidate source|application source", "LinkedIn"),
     ]
     for label_re, answer in pairs:
         try:
@@ -1614,6 +1903,7 @@ def fill_greenhouse_combos(page) -> None:
             _sleep(0.2)
         except Exception:
             continue
+    fill_source_fields(page)
 
 
 def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
@@ -1670,6 +1960,8 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
         fill_labeled_fields(page)
         fill_yes_no(page)
         fill_greenhouse_combos(page)
+        fill_source_fields(page)
+        fill_validation_gaps(page)
         tick_consents(page)
         advanced = click_advance(page)
         _sleep(1.4 if advanced else 1.0)
@@ -1678,6 +1970,13 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
             stuck = 0
             last_fp = fp
             continue
+        # Validation errors — fill gaps and retry instead of abandoning.
+        if re.search(r"required|please (select|complete|fill)|errors? found", _body(page, 1200), re.I):
+            if fill_validation_gaps(page) or fill_source_fields(page):
+                if click_advance(page):
+                    stuck = 0
+                    last_fp = page_fingerprint(page)
+                    continue
         stuck += 1
         last_fp = fp
     if looks_submitted(page):
@@ -1686,16 +1985,47 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
 
 
 def icims_active_frame(page):
-    """Prefer the in-iframe apply/login document over Hyland marketing chrome."""
+    """Prefer the nested ``in_iframe=1`` apply/login document (has Email / I accept).
+
+    Outer ``/jobs/N/login`` chrome often matches first but has no form fields —
+    always scan for ``in_iframe=1`` (or a frame that actually exposes email) first.
+    """
     try:
         frames = list(getattr(page, "frames", []) or [])
     except Exception:
         frames = []
+
+    def _frame_has_gdpr_form(fr) -> bool:
+        try:
+            return bool(
+                fr.evaluate(
+                    """() => {
+                      const email = document.querySelector(
+                        "input[type='email'], input[name*='email' i], input[id*='email' i]"
+                      );
+                      const t = (document.body && document.body.innerText || '');
+                      return !!(email || /I accept/i.test(t));
+                    }"""
+                )
+            )
+        except Exception:
+            return False
+
+    # 1) Explicit in_iframe=1 apply/login documents
+    for fr in frames:
+        u = getattr(fr, "url", "") or ""
+        if "in_iframe=1" in u and re.search(r"icims\.com/jobs/\d+", u, re.I):
+            return fr
+    # 2) Any icims frame that actually has Email / I accept
+    for fr in frames:
+        u = getattr(fr, "url", "") or ""
+        if re.search(r"icims\.com/jobs/\d+", u, re.I) and _frame_has_gdpr_form(fr):
+            return fr
+    # 3) Fallback: login/apply/questions URLs
     for fr in frames:
         u = getattr(fr, "url", "") or ""
         if re.search(r"icims\.com/jobs/\d+", u, re.I) and (
-            "in_iframe=1" in u
-            or "/login" in u
+            "/login" in u
             or "mode=apply" in u
             or "/questions" in u
             or "/form" in u
@@ -1704,6 +2034,70 @@ def icims_active_frame(page):
         ):
             return fr
     return page
+
+
+def icims_fill_gdpr_gate(page) -> bool:
+    """Fill Email + check I accept + click Next on iCIMS GDPR/login gate."""
+    target = icims_active_frame(page)
+    email = ats_email()
+    progressed = False
+    if email:
+        try:
+            box = target.locator(
+                "input[type='email'], input[name*='email' i], input[id*='email' i]"
+            ).first
+            if box.count() and box.is_visible():
+                box.click(timeout=2000)
+                box.fill(email, timeout=4000)
+                progressed = True
+                _sleep(0.3)
+        except Exception:
+            pass
+    # Checkbox + "I accept" label (Next stays disabled until checked).
+    try:
+        cbs = target.locator("input[type='checkbox']")
+        for i in range(min(cbs.count(), 6)):
+            cb = cbs.nth(i)
+            if not cb.is_visible():
+                continue
+            near = ""
+            try:
+                near = cb.evaluate(
+                    "e => ((e.closest('label,div,li,tr,fieldset')||e.parentElement).innerText||'')"
+                )
+            except Exception:
+                near = ""
+            if re.search(r"accept|privacy|notice|consent|agree", near or "", re.I) or cbs.count() == 1:
+                if not cb.is_checked():
+                    try:
+                        cb.check(force=True)
+                    except Exception:
+                        cb.click(force=True)
+                if cb.is_checked():
+                    progressed = True
+                break
+    except Exception:
+        pass
+    try:
+        acc = target.get_by_text(re.compile(r"^I accept$", re.I)).first
+        if acc.count() and acc.is_visible():
+            acc.click(timeout=2500, force=True)
+            progressed = True
+            _sleep(0.3)
+    except Exception:
+        pass
+    try:
+        lab = target.locator("label").filter(has_text=re.compile(r"I accept", re.I)).first
+        if lab.count() and lab.is_visible():
+            lab.click(force=True)
+            progressed = True
+            _sleep(0.3)
+    except Exception:
+        pass
+    if _click_text(target, ("Next", "Continue", "Submit", "I accept")):
+        progressed = True
+        _sleep(0.8)
+    return progressed
 
 
 def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
@@ -1716,25 +2110,9 @@ def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
 
     prefer_icims_apply(page)
     _sleep(1.6)
+    # Always fill GDPR gate in the nested in_iframe=1 document first.
+    icims_fill_gdpr_gate(page)
     target = icims_active_frame(page)
-    email = ats_email()
-    if email:
-        try:
-            box = target.locator(
-                "input[type='email'], input[name*='email' i], input[id*='email' i]"
-            ).first
-            if box.count():
-                box.fill(email, timeout=4000)
-                _sleep(0.4)
-        except Exception:
-            pass
-    try:
-        acc = target.get_by_text(re.compile(r"^I accept$", re.I)).first
-        if acc.count() and acc.is_visible():
-            acc.click(timeout=2500)
-            _sleep(0.6)
-    except Exception:
-        pass
     if icims_should_wait_captcha(page):
         cleared = try_clear_hcaptcha(page)
         if not cleared:
@@ -1750,6 +2128,9 @@ def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
             if not captcha_solver_configured():
                 return "blocked", "captcha_needs_owner_or_solver"
             return "blocked", "CAPTCHA/bot wall"
+        # After captcha, re-fill gate if still visible, then advance.
+        icims_fill_gdpr_gate(page)
+        target = icims_active_frame(page)
         try:
             _click_text(
                 target,
@@ -1766,6 +2147,10 @@ def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
             return "applied", "confirmation"
         if looks_already_applied(page):
             return "skipped", "already_applied"
+        # Re-assert GDPR fields if the wall reappears mid-flow.
+        if icims_hcaptcha_login(page) or re.search(r"/login", getattr(target, "url", "") or "", re.I):
+            icims_fill_gdpr_gate(page)
+            target = icims_active_frame(page)
         fill_icims_questions(page)
         if advance_icims_us_forms(page):
             _sleep(1.2)
