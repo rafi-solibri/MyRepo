@@ -37,7 +37,7 @@ const SKIP_TITLE_RE =
 
 /** Pure AI/data titles need .NET|C# on the TITLE (skills laundry lists are noisy). */
 const PURE_AI_DATA_RE =
-  /\b(ai\s+architect|artificial\s+intelligence\s+architect|ai\s+agent|ai\s+engineer|ai\s+solution\s+architect|architect[^.\n]{0,48}\b(ai|ml)\b|data\s*&\s*ai|ml\s+engineer|gen\s*-?\s*ai|genai|agentic\s+ai|data\s+scientist|data\s+engineer|data\s+engineering)\b/i;
+  /\b(ai\s+architect|artificial\s+intelligence\s+architect|ai\s+agent|ai\s+engineer|ai\s+solution\s+architect|architect[^.\n]{0,48}\b(ai|ml)\b|data\s*&\s*ai|ml\s+engineer|gen\s*-?\s*ai|genai|agentic\s+ai|\bgemini\b|\bllm\b|enterprise\s+platform\s+architect[^.\n]{0,24}\b(ai|ml|gemini|llm)\b|data\s+scientist|data\s+engineer|data\s+engineering)\b/i;
 
 /**
  * Primary non-.NET stacks in the TITLE — skip to avoid Java/MEAN ATS dead-ends.

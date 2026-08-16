@@ -177,6 +177,16 @@ assert.strictEqual(
   "Artificial Intelligence Architect without .NET must skip"
 );
 assert.strictEqual(
+  shouldSkipTitle("GCP Gemini Enterprise Platform Architect"),
+  true,
+  "Gemini / GenAI platform architect without .NET must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("LLM Platform Architect"),
+  true,
+  "LLM-primary architect without .NET must skip"
+);
+assert.strictEqual(
   shouldSkipTitle("Senior Technical Consultant D365"),
   true,
   "Dynamics 365 / D365 must skip"
