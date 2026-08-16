@@ -3,9 +3,12 @@
 
 Priority order:
 0) Discover / refresh campus software tenants → companies.json
-1) LinkedIn company-targeted Easy Apply + external ATS + referrals (PRIMARY)
-2) Official company career portals (PRIMARY)
+1) Official company career portals in PARALLEL (PRIMARY) — default 10 Chrome tabs
+2) LinkedIn company-targeted Easy Apply + external ATS + referrals (PRIMARY)
 3) Board browse with campus allowlist: Naukri, Foundit, Cutshort, Instahyre, Indeed
+
+Every daily/cron run uses multi-tab careers apply (HITECHCITY_PARALLEL_TABS=10)
+unless explicitly set to 1. Owner only solves captchas; workers keep submitting.
 """
 
 from __future__ import annotations
@@ -20,6 +23,18 @@ from pathlib import Path
 _root = Path(__file__).resolve().parents[2]
 if str(_root) not in sys.path:
     sys.path.insert(0, str(_root))
+
+# ---- Every-run defaults (cron + headed + home) — set before importing apply modules ----
+os.environ.setdefault("HITECHCITY_PARALLEL_TABS", "10")
+os.environ.setdefault("HITECHCITY_MAX_PER_COMPANY", "6")
+os.environ.setdefault("HITECHCITY_MAX_COMPANIES", "60")
+os.environ.setdefault("HITECHCITY_MAX_EXT_WALLS", "3")
+os.environ.setdefault("HITECHCITY_MAX_EXT_ATTEMPTS", "12")
+os.environ.setdefault("HITECHCITY_CAREERS_KEYWORD_SEARCHES", "4")
+os.environ.setdefault("HITECHCITY_DISCOVERY", "1")
+os.environ.setdefault("HITECHCITY_DISCOVERY_LINKEDIN", "0")
+os.environ.setdefault("HITECHCITY_DISCOVERY_WEB", "1")
+os.environ.setdefault("ATS_CAPTCHA_POLL_SEC", "0.4")
 
 from tools.hitechcity.board_campus_apply import run as run_boards
 from tools.hitechcity.careers_apply import load_companies, run as run_careers
@@ -55,9 +70,18 @@ OUT = default_report_path()
 def main() -> int:
     configure_windows_stdio()
     started = datetime.now(timezone.utc).isoformat()
+    parallel_tabs = os.environ.get("HITECHCITY_PARALLEL_TABS", "10")
+    print(
+        f"HitechCity daily_apply defaults: PARALLEL_TABS={parallel_tabs} "
+        f"MAX_PER_COMPANY={os.environ.get('HITECHCITY_MAX_PER_COMPANY')} "
+        f"MAX_COMPANIES={os.environ.get('HITECHCITY_MAX_COMPANIES')} "
+        f"MAX_EXT_WALLS={os.environ.get('HITECHCITY_MAX_EXT_WALLS')}",
+        flush=True,
+    )
     summary: dict = {
         "startedAt": started,
         "focus": "Knowledge City / Knowledge Park / Mindspace Madhapur / premium HITEC buildings",
+        "parallelTabs": int(parallel_tabs) if str(parallel_tabs).isdigit() else parallel_tabs,
         "discovery": {},
         "careers": {},
         "linkedin": {},

@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-16 (home)
+
+| Issue | Fix |
+| --- | --- |
+| parallel multi-tab careers only via one-off launcher; cron/daily risked serial apply | daily_apply setdefault HITECHCITY_PARALLEL_TABS=10 + volume caps; prompt/home-headed/portal-home/rerun document parallel every run |
+
+
 ## 2026-08-16 (home — every-run defaults, owner requirements)
 
 | Issue | Fix |

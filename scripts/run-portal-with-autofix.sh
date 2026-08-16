@@ -89,6 +89,7 @@ run_once() {
     hitechcity)
       bash "$ROOT/scripts/preflight-portal-run.sh" hitechcity || return $?
       bash "$ROOT/scripts/launch-chrome-cdp.sh" hitechcity || true
+      export HITECHCITY_PARALLEL_TABS="${HITECHCITY_PARALLEL_TABS:-10}"
       python3 "$ROOT/tools/hitechcity/daily_apply.py" || return $?
       ;;
   esac
