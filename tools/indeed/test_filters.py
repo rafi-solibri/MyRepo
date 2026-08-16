@@ -95,9 +95,39 @@ def test_skip_salesforce_service_cloud_title():
     ) is None
 
 
+def test_skip_kochi_kerala_in_title():
+    # Regression 2026-08-16: empty SERP location + "Kochi, Kerala" in title
+    # was Easy-Applied (CogniCor) despite HARD Hyd/Remote-only rule.
+    assert (
+        skip_reason(
+            "Senior / Lead Engineer (Full Stack) - Kochi, Kerala - Indeed.com",
+            "CogniCor",
+            "",
+            "",
+        )
+        == "location"
+    )
+    # Remote still wins when present with another city.
+    assert (
+        skip_reason(
+            "Senior C# Developer - Remote - Indeed.com",
+            "Worklio",
+            "we're expanding our development team in Chennai",
+            "",
+        )
+        is None
+    )
+
+
 def test_already_applied_job_view_only():
     assert already_applied("You applied to this job on 12 Aug", "https://in.indeed.com/viewjob?jk=abc")
     assert already_applied("You have already applied for this position", "https://in.indeed.com/viewjob?jk=abc")
+    # SmartApply duplicate interstitial must count as already applied.
+    assert already_applied(
+        "You have already applied to this job\nReturn to job search",
+        "https://smartapply.indeed.com/beta/indeedapply/applybyapplyablejobid?indeedApplyableJobId=abc",
+    )
+    # Post-submit success copy must NOT be classified as already-applied.
     assert not already_applied(
         "Application submitted",
         "https://smartapply.indeed.com/beta/indeedapply/apply/questions",
@@ -153,6 +183,7 @@ if __name__ == "__main__":
     test_skip_title_not_target()
     test_enterprise_system_architect_ok()
     test_skip_salesforce_service_cloud_title()
+    test_skip_kochi_kerala_in_title()
     test_already_applied_job_view_only()
     test_hybrid_profile_copies_local_state()
     test_india_home_get_started_is_not_login_proof()
