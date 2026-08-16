@@ -12,10 +12,18 @@ from tools.hitechcity.campus_allowlist import (
     reset_allowlist_cache,
     write_allowlist_artifact,
 )
+from tools.hitechcity.campus_tenant_catalog import (
+    CAMPUS_TENANT_CATALOG,
+    canonicalize_tenant_name,
+    fetch_web_directory_tenants,
+    _parse_mindspace_top_tenants,
+    _parse_cityinfo_tenants,
+)
 from tools.hitechcity.discover_tenants import (
     DISCOVERY_SEEDS,
     _is_junk_tenant,
     _merge_candidate,
+    discover_from_campus_catalog,
     discover_from_seeds,
     prune_junk_tenants,
 )
@@ -117,9 +125,55 @@ def test_allowlist_js_module_exists():
     assert "HITECHCITY_COMPANY_ALLOWLIST" in text
 
 
+def test_campus_catalog_covers_priority_parks():
+    assert len(CAMPUS_TENANT_CATALOG) >= 60
+    camps = {c for row in CAMPUS_TENANT_CATALOG for c in row["campuses"]}
+    assert "mindspace-madhapur" in camps  # Raheja
+    assert "sattva-knowledge-city" in camps
+    assert "sattva-knowledge-park" in camps
+    names = {row["name"] for row in CAMPUS_TENANT_CATALOG}
+    assert "HighRadius" in names
+    assert "Vanguard" in names
+    assert "Apple" in names
+    assert canonicalize_tenant_name("Highradius") == "HighRadius"
+    assert canonicalize_tenant_name("Xilinx India Technology Services") == "AMD"
+    assert canonicalize_tenant_name("OTIS Elevator Company") is None
+
+
+def test_discover_from_campus_catalog_adds_knowledge_park():
+    companies: list[dict] = []
+    stats = discover_from_campus_catalog(companies)
+    assert stats["added"]
+    assert any(c["name"] == "Vanguard" for c in companies)
+    kp = [c for c in companies if "sattva-knowledge-park" in (c.get("campuses") or [])]
+    assert len(kp) >= 4
+
+
+def test_parse_mindspace_and_cityinfo_html():
+    ms_html = """
+    <h2>Top Tenants</h2>
+    <ul><li>Cognizant</li><li>Highradius</li><li>AMD</li></ul>
+    <p>(On the basis of % of Gross Rentals)</p>
+    <h3>Location Highlights</h3>
+    """
+    assert "HighRadius" in _parse_mindspace_top_tenants(ms_html)
+    assert "AMD" in _parse_mindspace_top_tenants(ms_html)
+    ci = (
+        "<p>The current tenants of this building are Apple India, Blue Yonder India "
+        "(JDA Software), and Intel Technology India.</p>"
+    )
+    parsed = _parse_cityinfo_tenants(ci)
+    assert "Apple" in parsed
+    assert "Blue Yonder" in parsed
+    assert "Intel" in parsed
+
+
 if __name__ == "__main__":
     test_allowlist_match()
     test_discovery_seeds_merge()
     test_discovery_junk_rejected_and_pruned()
     test_allowlist_js_module_exists()
+    test_campus_catalog_covers_priority_parks()
+    test_discover_from_campus_catalog_adds_knowledge_park()
+    test_parse_mindspace_and_cityinfo_html()
     print("ok")

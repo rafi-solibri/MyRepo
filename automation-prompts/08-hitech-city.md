@@ -41,7 +41,7 @@ Priority campuses:
 3. The V IT Park (Ascendas), Cyber Pearl
 4. Peer Grade-A Madhapur / HITEC buildings on the list (DLF Cyber City, Divyasree Orion) when the company is a known premium tenant
 
-Discovery (required each run): `discover_tenants` merges seed + LinkedIn company-search hits into `companies.json` before applies. Never wipe curated Priority-1 rows.
+Discovery (required each run): `discover_tenants` merges the full Madhapur/HITEC campus tenant catalog (Raheja Mindspace, Knowledge City, Knowledge Park, The V, Cyber Pearl, DLF, Orion) plus live Mindspace REIT / Cityinfo directory scrapes into `companies.json` before applies. Never wipe curated Priority-1 rows. LinkedIn company-name slug search stays off by default.
 
 Do NOT apply to random Hyderabad employers outside this campus tenant set. Job boards must use `HITECHCITY_COMPANY_ALLOWLIST` and skip `hitechcity_campus_allowlist` misses.
 
@@ -75,7 +75,7 @@ Judge location from the TOP CARD / workplace pills / job location field — neve
 8. External ATS: hard walls (captcha/login) still use tight per-company wall caps (`HITECHCITY_MAX_EXT_WALLS=1`). Soft incompletes do not burn matching inventory. Headed runs use longer ATS time caps + `ASK_OWNER` form wait (default shares `ATS_CAPTCHA_WAIT_SEC` / 360s).
 8b. Cap stuck captcha waits with owner poll 0.4s — resume immediately after solve. Do **not** require a paid captcha-solver key. Optional `CAPSOLVER_API_KEY` only if the owner already set it.
 9. Skip already Applied; expand inventory to 14-day window when thin
-10. Discovery default: seed merge every run; LinkedIn *company-name* slug search is **off by default** (`HITECHCITY_DISCOVERY_LINKEDIN=0`) so the browser is not stuck on Companies results without job clicks. Set `=1` only when refreshing slugs.
+10. Discovery default: full campus catalog + web directory scrape every run; LinkedIn *company-name* slug search is **off by default** (`HITECHCITY_DISCOVERY_LINKEDIN=0`). Set `=1` only when refreshing slugs. Set `HITECHCITY_DISCOVERY_WEB=0` only to skip live REIT/Cityinfo fetches.
 ## Skip rules (TITLE-FIRST — do not over-filter)
 Skip ONLY when the TITLE (or clear mandatory JD language) is wrong:
 - Wrong-stack TITLE: Salesforce, ServiceNow, SAP/D365-primary, Guidewire, PEGA, Coupa, Revit/BArch, Hubspot, M365-only, GIS/Esri-primary, QA/SDET/Quality Engineering, BPO, pure AI/data title without .NET on the title

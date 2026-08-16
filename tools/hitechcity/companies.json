@@ -26,7 +26,8 @@
       "Azure Architect",
       "Cloud Architect"
     ],
-    "lastDiscoveryAt": "2026-08-16T08:56:49.367902+00:00"
+    "lastDiscoveryAt": "2026-08-16T16:24:17.075096+00:00",
+    "discoveryMode": "campus_catalog+web_directories+seeds+linkedin_optional+board_hints"
   },
   "campuses": [
     {
@@ -106,7 +107,8 @@
     {
       "name": "AMD",
       "campuses": [
-        "sattva-knowledge-city"
+        "sattva-knowledge-city",
+        "mindspace-madhapur"
       ],
       "linkedinSlug": "amd",
       "careersUrls": [
@@ -327,6 +329,17 @@
       "priority": 1
     },
     {
+      "name": "Vanguard",
+      "campuses": [
+        "sattva-knowledge-park"
+      ],
+      "linkedinSlug": "vanguard",
+      "careersUrls": [],
+      "priority": 1,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
       "name": "Accenture",
       "campuses": [
         "mindspace-madhapur"
@@ -347,6 +360,39 @@
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "BA Continuum",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "bank-of-america",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
+      "name": "Bayer",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "bayer",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
+      "name": "BluJay Solutions",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "blujay-solutions",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
     },
     {
       "name": "Broadridge",
@@ -383,37 +429,15 @@
       "discoveredAt": "2026-08-14"
     },
     {
-      "name": "City Tech Consultants",
+      "name": "Chubb",
       "campuses": [
         "sattva-knowledge-city"
       ],
-      "linkedinSlug": "city-tech-consultants",
+      "linkedinSlug": "chubb",
       "careersUrls": [],
       "priority": 2,
-      "source": "linkedin_search",
-      "discoveredAt": "2026-08-14"
-    },
-    {
-      "name": "CityScanner",
-      "campuses": [
-        "sattva-knowledge-city"
-      ],
-      "linkedinSlug": "city-scanner",
-      "careersUrls": [],
-      "priority": 2,
-      "source": "linkedin_search",
-      "discoveredAt": "2026-08-14"
-    },
-    {
-      "name": "CoEnterprise",
-      "campuses": [
-        "sattva-knowledge-city"
-      ],
-      "linkedinSlug": "coenterprise",
-      "careersUrls": [],
-      "priority": 2,
-      "source": "linkedin_search",
-      "discoveredAt": "2026-08-14"
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
     },
     {
       "name": "Cognizant",
@@ -540,15 +564,15 @@
       "discoveredAt": "2026-08-13"
     },
     {
-      "name": "Knowledge Bridge Solutions",
+      "name": "InvoiceCloud",
       "campuses": [
-        "sattva-knowledge-city"
+        "sattva-knowledge-park"
       ],
-      "linkedinSlug": "knowledgebridgesolutions",
+      "linkedinSlug": "invoicecloud",
       "careersUrls": [],
       "priority": 2,
-      "source": "linkedin_search",
-      "discoveredAt": "2026-08-14"
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
     },
     {
       "name": "LTIMindtree",
@@ -559,6 +583,17 @@
       "careersUrls": [],
       "priority": 2,
       "source": "seed",
+      "discoveredAt": "2026-08-16"
+    },
+    {
+      "name": "Macquarie",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "macquarie",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
       "discoveredAt": "2026-08-16"
     },
     {
@@ -606,6 +641,17 @@
       "discoveredAt": "2026-08-16"
     },
     {
+      "name": "MTX Group",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "mtx",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
       "name": "NCR Voyix",
       "campuses": [
         "mindspace-madhapur"
@@ -619,13 +665,25 @@
     {
       "name": "Novartis",
       "campuses": [
-        "mindspace-madhapur"
+        "mindspace-madhapur",
+        "sattva-knowledge-city"
       ],
       "linkedinSlug": "novartis",
       "careersUrls": [],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "NTT DATA",
+      "campuses": [
+        "cyber-pearl"
+      ],
+      "linkedinSlug": "ntt-data",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
     },
     {
       "name": "OpenText",
@@ -639,6 +697,17 @@
       "discoveredAt": "2026-08-13"
     },
     {
+      "name": "Parexel",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "parexel",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
       "name": "PayPal",
       "campuses": [
         "mindspace-madhapur"
@@ -650,6 +719,17 @@
       "discoveredAt": "2026-08-13"
     },
     {
+      "name": "Pegasystems",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "pegasystems",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
       "name": "Persistent Systems",
       "campuses": [
         "mindspace-madhapur"
@@ -658,6 +738,17 @@
       "careersUrls": [],
       "priority": 2,
       "source": "seed",
+      "discoveredAt": "2026-08-16"
+    },
+    {
+      "name": "Postman",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "postman",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
       "discoveredAt": "2026-08-16"
     },
     {
@@ -694,6 +785,17 @@
       "priority": 2
     },
     {
+      "name": "Rackspace",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "rackspace",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
       "name": "RealPage",
       "campuses": [
         "sattva-knowledge-city"
@@ -718,7 +820,8 @@
     {
       "name": "Salesforce",
       "campuses": [
-        "mindspace-madhapur"
+        "mindspace-madhapur",
+        "cyber-pearl"
       ],
       "linkedinSlug": "salesforce",
       "careersUrls": [
@@ -739,26 +842,15 @@
       "discoveredAt": "2026-08-13"
     },
     {
-      "name": "Softeq",
+      "name": "Silicon Labs",
       "campuses": [
         "sattva-knowledge-city"
       ],
-      "linkedinSlug": "softeq",
+      "linkedinSlug": "silicon-laboratories",
       "careersUrls": [],
       "priority": 2,
-      "source": "linkedin_search",
-      "discoveredAt": "2026-08-14"
-    },
-    {
-      "name": "Software Development Aegona Ltd",
-      "campuses": [
-        "sattva-knowledge-city"
-      ],
-      "linkedinSlug": "aegona",
-      "careersUrls": [],
-      "priority": 2,
-      "source": "linkedin_search",
-      "discoveredAt": "2026-08-14"
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
     },
     {
       "name": "Storable",
@@ -775,7 +867,8 @@
       "name": "Tech Mahindra",
       "campuses": [
         "sattva-knowledge-park",
-        "mindspace-madhapur"
+        "mindspace-madhapur",
+        "cyber-pearl"
       ],
       "linkedinSlug": "tech-mahindra",
       "careersUrls": [],
@@ -820,7 +913,8 @@
       "name": "UnitedHealth Group",
       "campuses": [
         "dlf-cyber-city",
-        "divyasree-orion"
+        "divyasree-orion",
+        "mindspace-madhapur"
       ],
       "linkedinSlug": "unitedhealth-group",
       "careersUrls": [],
@@ -910,6 +1004,17 @@
       "discoveredAt": "2026-08-13"
     },
     {
+      "name": "JLL",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "jll",
+      "careersUrls": [],
+      "priority": 3,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
       "name": "Kony / Temenos",
       "campuses": [
         "mindspace-madhapur"
@@ -932,6 +1037,39 @@
       "priority": 3
     },
     {
+      "name": "Redbrick Offices",
+      "campuses": [
+        "sattva-knowledge-city"
+      ],
+      "linkedinSlug": "redbrick-offices",
+      "careersUrls": [],
+      "priority": 3,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
+      "name": "Smartworks",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "smartworks",
+      "careersUrls": [],
+      "priority": 3,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
+      "name": "Tablespace",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "tablespace",
+      "careersUrls": [],
+      "priority": 3,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
       "name": "TCS",
       "campuses": [
         "the-v"
@@ -943,6 +1081,39 @@
       "priority": 3
     },
     {
+      "name": "UTC",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "rtx",
+      "careersUrls": [],
+      "priority": 3,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
+      "name": "WeWork",
+      "campuses": [
+        "mindspace-madhapur"
+      ],
+      "linkedinSlug": "wework",
+      "careersUrls": [],
+      "priority": 3,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
+      "name": "Winshuttle",
+      "campuses": [
+        "cyber-pearl"
+      ],
+      "linkedinSlug": "winshuttle",
+      "careersUrls": [],
+      "priority": 3,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
+    },
+    {
       "name": "Wipro",
       "campuses": [
         "mindspace-madhapur"
@@ -952,6 +1123,17 @@
       "priority": 3,
       "source": "seed",
       "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "ZenQ",
+      "campuses": [
+        "cyber-pearl"
+      ],
+      "linkedinSlug": "zenq",
+      "careersUrls": [],
+      "priority": 3,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-16"
     }
   ]
 }
