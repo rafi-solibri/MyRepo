@@ -38,16 +38,28 @@ MAX_REFERRALS = int(os.environ.get("HITECHCITY_MAX_REFERRALS", "12"))
 MAX_SCAN = int(os.environ.get("HITECHCITY_MAX_SCAN", "40"))
 TPR = os.environ.get("HITECHCITY_TPR", "r1209600")  # 14 days
 
-TITLES = [
+# Company-jobs keyword searches — lead/staff/manager first (not architect-only).
+# LinkedIn company /jobs/?keywords= is a free-text field; keep phrases short.
+SEARCH_KEYWORDS = [
+    "Engineering Manager",
+    "Technical Lead",
+    "Tech Lead",
+    "Staff Software Engineer",
+    "Staff Engineer",
+    "Principal Software Engineer",
+    "Lead Software Engineer",
+    "Software Development Manager",
     "Solution Architect",
     "Technical Architect",
-    "Software Architect",
-    "Technical Lead",
-    "Engineering Manager",
     "Principal .NET",
-    ".NET Architect",
-    "Azure Architect",
+    ".NET",
+    "Azure",
 ]
+# Back-compat alias used by referral copy / tests.
+TITLES = SEARCH_KEYWORDS
+
+# Cap per-company LinkedIn keyword searches (breadth over architect-only).
+MAX_TITLE_SEARCHES = int(os.environ.get("HITECHCITY_LI_TITLE_SEARCHES", "10"))
 
 # Title matches TITLE_OK via architect/principal/staff but are wrong for this .NET campus run.
 LI_TITLE_SKIP = re.compile(
@@ -559,7 +571,9 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
             ext_attempts = 0
 
             job_ids: list[str] = []
-            for title in TITLES[:5]:
+            # Search lead/staff/manager/.NET keywords on the *company* jobs page —
+            # never campus strings like "Knowledge City" / "Raheja" (those return nothing useful).
+            for title in SEARCH_KEYWORDS[:MAX_TITLE_SEARCHES]:
                 if len(job_ids) >= MAX_SCAN:
                     break
                 url = company_jobs_url(slug, title)

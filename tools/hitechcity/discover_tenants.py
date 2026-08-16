@@ -34,6 +34,8 @@ REPORT = Path(
 CDP = os.environ.get("HITECHCITY_CDP") or os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222")
 
 # Known / commonly cited tenants to merge when missing (priority 2 unless noted).
+# These are real employers at Madhapur / HITEC Grade-A campuses — NOT campus strings
+# to paste into LinkedIn search ( "Knowledge City" / "Raheja" return nothing useful ).
 DISCOVERY_SEEDS: list[dict[str, Any]] = [
     # Knowledge City / Octave
     {"name": "ServiceNow", "campuses": ["sattva-knowledge-city"], "linkedinSlug": "servicenow", "priority": 2},
@@ -42,6 +44,8 @@ DISCOVERY_SEEDS: list[dict[str, Any]] = [
     {"name": "ValueLabs", "campuses": ["sattva-knowledge-city"], "linkedinSlug": "valuelabs", "priority": 2},
     {"name": "Micron Technology", "campuses": ["sattva-knowledge-city"], "linkedinSlug": "micron-technology", "priority": 2},
     {"name": "RealPage", "campuses": ["sattva-knowledge-city"], "linkedinSlug": "realpage", "priority": 2},
+    {"name": "Homes.com", "campuses": ["sattva-knowledge-city"], "linkedinSlug": "homes-com", "priority": 2},
+    {"name": "Darwinbox", "campuses": ["sattva-knowledge-city"], "linkedinSlug": "darwinbox", "priority": 2},
     # Knowledge Park
     {"name": "Virtusa", "campuses": ["sattva-knowledge-park", "mindspace-madhapur"], "linkedinSlug": "virtusa", "priority": 2},
     {"name": "Hexaware", "campuses": ["sattva-knowledge-park"], "linkedinSlug": "hexaware-technologies", "priority": 2},
@@ -63,17 +67,38 @@ DISCOVERY_SEEDS: list[dict[str, Any]] = [
     {"name": "Infosys", "campuses": ["mindspace-madhapur"], "linkedinSlug": "infosys", "priority": 3},
     {"name": "Wipro", "campuses": ["mindspace-madhapur"], "linkedinSlug": "wipro", "priority": 3},
     {"name": "HCLTech", "campuses": ["mindspace-madhapur"], "linkedinSlug": "hcltech", "priority": 3},
+    {"name": "Deloitte", "campuses": ["mindspace-madhapur", "the-v"], "linkedinSlug": "deloitte", "priority": 2},
+    {"name": "Accenture", "campuses": ["mindspace-madhapur"], "linkedinSlug": "accenture", "priority": 2},
+    {"name": "Cognizant", "campuses": ["mindspace-madhapur"], "linkedinSlug": "cognizant", "priority": 2},
+    {"name": "IBM", "campuses": ["mindspace-madhapur"], "linkedinSlug": "ibm", "priority": 2},
+    {"name": "LTIMindtree", "campuses": ["mindspace-madhapur"], "linkedinSlug": "ltimindtree", "priority": 2},
+    {"name": "Mphasis", "campuses": ["mindspace-madhapur"], "linkedinSlug": "mphasis", "priority": 2},
+    {"name": "Persistent Systems", "campuses": ["mindspace-madhapur"], "linkedinSlug": "persistent-systems", "priority": 2},
+    {"name": "Cyient", "campuses": ["mindspace-madhapur"], "linkedinSlug": "cyient", "priority": 2},
     # The V / Cyber Pearl / peer
     {"name": "UnitedHealth Group", "campuses": ["dlf-cyber-city", "divyasree-orion"], "linkedinSlug": "unitedhealth-group", "priority": 2},
     {"name": "Novartis", "campuses": ["mindspace-madhapur"], "linkedinSlug": "novartis", "priority": 2},
+    {"name": "Verizon", "campuses": ["the-v", "cyber-pearl"], "linkedinSlug": "verizon", "priority": 2},
+    {"name": "Computer Sciences Corporation / DXC", "campuses": ["cyber-pearl"], "linkedinSlug": "dxc-technology", "priority": 3},
 ]
 
-LI_SEARCHES = [
-    "Knowledge City Hyderabad software",
-    "Mindspace Madhapur IT company",
-    "Raheja Mindspace Hyderabad",
-    "Knowledge Park HITEC City",
-    "Sattva Knowledge City Hyderabad",
+# LinkedIn company search by *employer name* (never campus / park / Raheja strings).
+# Used only to resolve/refresh linkedinSlug for known tenants.
+LI_COMPANY_NAME_QUERIES: list[str] = [
+    "HighRadius Hyderabad",
+    "ValueLabs Hyderabad",
+    "ServiceNow Hyderabad",
+    "Micron Technology Hyderabad",
+    "ADP Hyderabad",
+    "OpenText Hyderabad",
+    "Broadridge Hyderabad",
+    "Progress Software Hyderabad",
+    "Darwinbox Hyderabad",
+    "LTIMindtree Hyderabad",
+    "Persistent Systems Hyderabad",
+    "Cyient Hyderabad",
+    "Mphasis Hyderabad",
+    "RealPage Hyderabad",
 ]
 
 SOFTWAREISH = re.compile(
@@ -169,7 +194,11 @@ def discover_from_seeds(companies: list[dict]) -> dict[str, list[str]]:
 
 
 def discover_from_linkedin(companies: list[dict]) -> dict[str, Any]:
-    """Scrape LinkedIn company search results when session is live."""
+    """Resolve tenants via LinkedIn *company-name* search when session is live.
+
+    Never search campus strings (Knowledge City / Raheja / Mindspace park names) —
+    those queries do not return employer pages. Seeds + employer-name queries only.
+    """
     out: dict[str, Any] = {"added": [], "updated": [], "searches": 0, "error": None}
     if os.environ.get("HITECHCITY_DISCOVERY_LINKEDIN", "1") != "1":
         out["error"] = "disabled"
@@ -179,6 +208,28 @@ def discover_from_linkedin(companies: list[dict]) -> dict[str, Any]:
     except Exception as e:
         out["error"] = f"playwright:{e}"
         return out
+
+    # Prefer exact employer names from seeds (slug refresh) + curated name queries.
+    queries: list[tuple[str, list[str]]] = []
+    for seed in DISCOVERY_SEEDS:
+        name = (seed.get("name") or "").strip()
+        if not name:
+            continue
+        # Drop slash aliases for search ("Kony / Temenos" → "Temenos")
+        q = re.split(r"\s*/\s*", name)[-1].strip()
+        queries.append((q, list(seed.get("campuses") or ["mindspace-madhapur"])))
+    for q in LI_COMPANY_NAME_QUERIES:
+        queries.append((q, ["mindspace-madhapur"]))
+
+    # Dedupe queries (keep first campus tagging).
+    seen_q: set[str] = set()
+    uniq: list[tuple[str, list[str]]] = []
+    for q, campuses in queries:
+        key = q.lower()
+        if key in seen_q:
+            continue
+        seen_q.add(key)
+        uniq.append((q, campuses))
 
     try:
         with sync_playwright() as p:
@@ -193,7 +244,7 @@ def discover_from_linkedin(companies: list[dict]) -> dict[str, Any]:
                 page.close()
                 return out
 
-            for q in LI_SEARCHES:
+            for q, campuses in uniq[:24]:
                 out["searches"] += 1
                 url = (
                     "https://www.linkedin.com/search/results/companies/"
@@ -220,37 +271,40 @@ def discover_from_linkedin(companies: list[dict]) -> dict[str, Any]:
                             if (!name || name.length < 2) name = slug.replace(/-/g, ' ');
                             seen.add(slug);
                             out.push({ name, slug });
-                            if (out.length >= 25) break;
+                            if (out.length >= 8) break;
                           }
                           return out;
                         }"""
                     )
                 except Exception:
                     rows = []
+                # Prefer the first hit that name-matches the query (not random geo noise).
+                q_core = re.sub(r"\bhyderabad\b", "", q, flags=re.I).strip()
+                picked = []
                 for r in rows or []:
                     name = (r.get("name") or "").strip()
                     slug = (r.get("slug") or "").strip()
-                    if not SOFTWAREISH.search(f"{name} {slug}") and not any(
-                        x in slug for x in ("tech", "soft", "cloud", "data", "sys", "lab")
-                    ):
-                        # Keep well-known non-matching brand names from search context
-                        if len(name) < 3:
-                            continue
-                    campus = ["mindspace-madhapur"]
-                    ql = q.lower()
-                    if "knowledge city" in ql or "sattva" in ql:
-                        campus = ["sattva-knowledge-city"]
-                    elif "knowledge park" in ql:
-                        campus = ["sattva-knowledge-park"]
+                    if _is_junk_tenant(name, slug):
+                        continue
+                    if company_name_match(q_core, name) or company_name_match(q_core, slug.replace("-", " ")):
+                        picked.append(r)
+                if not picked and rows:
+                    # Fall back to top hit only when query already looks like a brand.
+                    top = rows[0]
+                    if not _is_junk_tenant(top.get("name") or "", top.get("slug") or ""):
+                        picked = [top]
+                for r in picked[:2]:
+                    name = (r.get("name") or "").strip()
+                    slug = (r.get("slug") or "").strip()
                     status = _merge_candidate(
                         companies,
                         {
                             "name": name,
                             "linkedinSlug": slug,
-                            "campuses": campus,
+                            "campuses": campuses,
                             "priority": 2,
                         },
-                        "linkedin_search",
+                        "linkedin_company_name",
                     )
                     if status == "added":
                         out["added"].append(name)
@@ -295,8 +349,8 @@ def prune_junk_tenants(companies: list[dict]) -> list[str]:
         if priority <= 1:
             keep.append(c)
             continue
-        # Auto-prune discovery noise (linkedin_search / board_hint), not hand-curated seeds.
-        if source in ("linkedin_search", "board_hint") and _is_junk_tenant(name, slug):
+        # Auto-prune discovery noise (linkedin company-name / board_hint), not hand-curated seeds.
+        if source in ("linkedin_search", "linkedin_company_name", "board_hint") and _is_junk_tenant(name, slug):
             removed.append(name)
             continue
         keep.append(c)
