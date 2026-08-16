@@ -22,6 +22,7 @@ from tools.hitechcity.filters import (
     skip_reason,
     title_matches_senior_stack,
 )
+from tools.hitechcity.apply_notify import notify_application_result
 
 try:
     from tools.linkedin.filters import location_allowed
@@ -1005,6 +1006,14 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                         "reason": why,
                         "campusCompany": name,
                     }
+                    notify_application_result(
+                        status=status,
+                        company=str(row["company"]),
+                        role=str(role),
+                        reason=str(why),
+                        path="linkedin-easy-apply",
+                        url=view,
+                    )
                     if status == "applied":
                         report.applied.append(row)
                         applied += 1
@@ -1047,6 +1056,14 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                 ext = follow_external(page, meta)
                 ext["campusCompany"] = name
                 ext["location"] = loc
+                notify_application_result(
+                    status=str(ext.get("status") or ""),
+                    company=str(ext.get("company") or company_found or name),
+                    role=str(ext.get("role") or role),
+                    reason=str(ext.get("reason") or ""),
+                    path="linkedin-external-ats",
+                    url=str(ext.get("url") or view),
+                )
                 if ext["status"] == "applied":
                     report.external.append(ext)
                     report.applied.append(ext)

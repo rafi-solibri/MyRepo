@@ -30,6 +30,7 @@ from tools.hitechcity.filters import (
     skip_reason,
     title_matches_senior_stack,
 )
+from tools.hitechcity.apply_notify import notify_application_result
 
 
 def _safe_print(msg: str) -> None:
@@ -1094,6 +1095,14 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                     _safe_print(
                         f"CAREERS {result.get('status', '?').upper()} {name} | "
                         f"{(result.get('reason') or '')[:60]}"
+                    )
+                    notify_application_result(
+                        status=str(result.get("status") or ""),
+                        company=str(result.get("company") or name),
+                        role=str(result.get("role") or job.get("role") or ""),
+                        reason=str(result.get("reason") or ""),
+                        path=str(result.get("path") or "company-careers"),
+                        url=str(result.get("url") or job.get("url") or ""),
                     )
                     if result["status"] == "applied":
                         report.applied.append(result)
