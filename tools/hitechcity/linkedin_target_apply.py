@@ -65,10 +65,10 @@ REFERRAL_NOTE = (
     "If you're open to it, I'd appreciate a referral or a brief 15–20 min screen. Thanks!"
 )
 # After this many CAPTCHA/login walls on company-website ATS, skip further EXT for that company.
-MAX_EXT_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "4"))
+MAX_EXT_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "1"))
 # Hard cap on external ATS attempts per company (incomplete forms must not starve the run).
-MAX_EXT_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "10"))
-EXT_ATS_TIME_CAP_S = int(os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S", "390"))
+MAX_EXT_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "2"))
+EXT_ATS_TIME_CAP_S = int(os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S", "90"))
 
 
 @dataclass

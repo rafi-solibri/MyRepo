@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-16 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Gartner Workday Sign In on applyManually + Remote Canada/US burned 390s×N without walling; bare Remote rescued foreign workplaces | Fail-fast workday_stuck_on_sign_in; reject Remote+foreign in card_location_ok/location_allowed; tighten HITECHCITY_MAX_EXT_WALLS=1 MAX_EXT_ATTEMPTS=2 ATS_TIME_CAP=90 |
+
+
 ## 2026-08-15 (home)
 
 | Issue | Fix |

@@ -45,10 +45,10 @@ REPORT = Path(os.environ.get("HITECHCITY_CAREERS_REPORT", "/opt/cursor/artifacts
 MAX_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_PER_COMPANY", "4"))
 # Raised for discovery-expanded campus tenant list (still priority-sorted).
 MAX_COMPANIES = int(os.environ.get("HITECHCITY_MAX_COMPANIES", "40"))
-# Tight default: SSO walls must fail fast; guest ATS rarely needs 3+ minutes.
-TIME_CAP_S = int(os.environ.get("HITECHCITY_ATS_TIME_CAP_S", "390"))
-MAX_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "4"))
-MAX_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "10"))
+# Tight default: SSO / Sign-In walls must fail fast so more campus tenants are tried.
+TIME_CAP_S = int(os.environ.get("HITECHCITY_ATS_TIME_CAP_S", os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S", "90")))
+MAX_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "1"))
+MAX_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "2"))
 
 TITLE_HINT = re.compile(
     r"architect|technical lead|tech lead|engineering manager|principal|staff|"
@@ -67,6 +67,7 @@ BAD_LOC_HINT = re.compile(
     r"united\s*states|united\s*kingdom|\busa\b|\buk\b|berkshire|reading|"
     r"romania|bucharest|poland|warsaw|germany|berlin|munich|amsterdam|netherlands|"
     r"washington,\s*redmond|multiple\s*locations|"
+    r"canada|nova\s*scotia|maryland|ontario|british\s*columbia|quebec|"
     r"bengaluru|bangalore|pune|chennai|mumbai|noida|gurgaon|gurugram|"
     r"brazil|s[aã]o\s*carlos|malaysia|cyberjaya|costa\s*rica|heredia|nottingham|"
     r"kuala\s*lumpur|mexico|colombia|chile|argentina|"
@@ -475,16 +476,14 @@ def card_location_ok(role_text: str, top_card: str = "") -> bool:
     if not blob:
         # Unknown location on card: allow open; apply_job re-checks top card.
         return True
-    # Explicit non-Hyd city on the card/title wins over bare "India" / footer noise.
-    # (Oracle HCM: "System Architect BENGALURU, KARNATAKA, India and 2 more")
-    if BAD_LOC_HINT.search(blob):
-        hydish = re.compile(
-            r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|gachibowli|raidurg|"
-            r"\bremote\b|\bwfh\b|work from home|india remote|fully remote",
-            re.I,
-        )
-        if not hydish.search(blob):
-            return False
+    # Explicit non-Hyd city/country wins — including Remote Canada / Remote US / Remote UK.
+    # Bare "Remote" / footer "India" must NOT rescue Bengaluru or foreign workplaces.
+    hyd_city = re.compile(
+        r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|gachibowli|raidurg",
+        re.I,
+    )
+    if BAD_LOC_HINT.search(blob) and not hyd_city.search(blob):
+        return False
     if LOC_HINT.search(blob) or location_or_campus_ok(blob, "", ""):
         return True
     return True
