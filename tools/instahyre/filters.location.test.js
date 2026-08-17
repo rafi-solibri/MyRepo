@@ -24,6 +24,20 @@ assert.strictEqual(
   null
 );
 assert.strictEqual(
+  skipReason("Solution Architect .NET", { location: "Pan India", skills: ".NET Azure" }),
+  null,
+  "pan-India senior .NET must apply — do not early-skip on location-only"
+);
+assert.strictEqual(
+  skipReason("Engineering Manager", { location: "Multiple locations across India", skills: "Azure" }),
+  null
+);
+assert.strictEqual(
+  locationOk("Pan India"),
+  false,
+  "location-only check is stricter; enqueue must use skipReason / title+skills"
+);
+assert.strictEqual(
   skipReason("Backend Developer", { location: "Bengaluru" }),
   "location_not_hyd_remote"
 );

@@ -1,5 +1,12 @@
 # Instahyre — issues & fixes
 
+## 2026-08-17 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| enqueueJob locationOk(location) dropped pan-India/anywhere senior .NET/cloud before skipReason | remove early location-only gate; skipReason(location,title,skills) decides |
+
+
 ## 2026-08-15 (home)
 
 | Issue | Fix |

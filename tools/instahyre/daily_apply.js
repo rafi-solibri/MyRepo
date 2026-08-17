@@ -18,7 +18,7 @@
 const fs = require("fs");
 const path = require("path");
 const { chromium } = require("playwright-core");
-const { skipReason, locationOk, hasDotNet } = require("./filters");
+const { skipReason, hasDotNet } = require("./filters");
 const { findResume } = require("./resume");
 const { completeExternalPage } = require("../ats/complete_page");
 const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
@@ -274,18 +274,9 @@ function enqueueJob(job, seen, candidates, report) {
     return;
   }
 
-  if (!locationOk(location)) {
-    report.skipped.push({
-      id,
-      title,
-      company,
-      location,
-      reason: "location_not_hyd_remote",
-      source: job._source || "job_search",
-    });
-    return;
-  }
-
+  // Do not early-gate on locationOk(location) alone — that drops pan-India /
+  // anywhere / multi-city senior .NET/cloud roles that locationOk(loc, title, skills)
+  // and skipReason already allow.
   const hard = shouldHardSkipTitle(title);
   if (hard) {
     report.skipped.push({
