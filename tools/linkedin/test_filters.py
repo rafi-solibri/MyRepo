@@ -126,4 +126,19 @@ assert_true(
     "India primary + remote_search must allow even if workplace has other cities",
 )
 
+# Regression: `except Exception as re` in process_search shadows `import re`
+# and crashes on the first job card (UnboundLocalError).
+import ast
+from pathlib import Path as _Path
+
+_easy_files = list(_Path(__file__).parent.glob("*_easy_apply.py"))
+assert _easy_files, "missing *_easy_apply.py next to test_filters.py"
+_easy = _easy_files[0]
+_tree = ast.parse(_easy.read_text(encoding="utf-8"))
+for _node in ast.walk(_tree):
+    if isinstance(_node, ast.ExceptHandler) and _node.name == "re":
+        raise AssertionError(
+            f"except ... as re shadows the re module at {_easy.name}:{_node.lineno}"
+        )
+
 print("filters self-test OK")
