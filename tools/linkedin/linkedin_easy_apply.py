@@ -1895,8 +1895,16 @@ def process_search(
         results.append(job)
         print(f"  -> {job.status}: {job.reason}", flush=True)
         if job.reason == "easy_apply_daily_limit":
-            print("  STOP: LinkedIn Easy Apply daily limit reached", flush=True)
-            return
+            # Quota is per-day; abort only the f_AL pass. Company-site search
+            # (easy_apply=False) must keep scanning Apply/ATS jobs.
+            if easy_apply:
+                print("  STOP: Easy Apply daily limit reached", flush=True)
+                return
+            print(
+                "  NOTE: Easy Apply daily limit — continue collecting company-site Apply",
+                flush=True,
+            )
+            continue
         # easy_apply_flow often navigates to /jobs/view/{id}. Stale search-card
         # locators then hang (ep_poll) on the next iteration — restore the list.
         try:

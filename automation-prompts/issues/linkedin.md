@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Easy Apply daily limit abort also stopped non-EA company-site scan | process_search returns on quota only when easy_apply=True; non-EA pass keeps collecting ATS |
 | process_search UnboundLocalError: except Exception as re shadowed import re on first card | rename restore-nav handler to restore_err; AST regression in test_filters.py |
 | Primary location Bengaluru/Mumbai false-allowed when workplace scrape contained Hyderabad; SoC hardware titles applied; search nav abandoned after short 999 backoff | location_allowed uses primary location line only (chrome Hyd cannot override); blacklist SoC/ASIC/silicon; search goto 5 tries with longer HTTP_RESPONSE_CODE backoff |
 
