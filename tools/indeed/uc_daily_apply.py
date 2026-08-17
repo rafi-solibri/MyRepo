@@ -903,11 +903,23 @@ def fill_common_questions(sb) -> None:
                 if (want) { setNative(el, want); return true; }
               }
               // Custom listbox / button options (Indeed education / years are often comboboxes).
+              // Options render in a document portal — search globally after opening.
               if (want === 'B.Tech' || want === '14' || want === '10') {
                 for (const btn of root.querySelectorAll('button, [role=combobox], [aria-haspopup=listbox]')) {
                   const t = ((btn.innerText||'') + ' ' + (btn.getAttribute('aria-label')||'')).toLowerCase();
                   if (/select an option|choose an option|^select$/.test(t) || btn.getAttribute('aria-expanded') === 'false') {
                     try { btn.click(); } catch (e) {}
+                  }
+                }
+                if (want === 'B.Tech') {
+                  const portal = [...document.querySelectorAll('[role=option], li, button, div, span')];
+                  for (const el of portal) {
+                    const t = ((el.innerText||'') + ' ' + (el.getAttribute('aria-label')||'')).trim().toLowerCase();
+                    if (!t || t.length > 80) continue;
+                    if (/select an option|choose an option|highest degree/.test(t)) continue;
+                    if (/b\\.?\\s*tech|bachelor|b\\.e\\b|undergraduate|master'?s?|m\\.?\\s*tech/.test(t)) {
+                      try { el.click(); return true; } catch (e) {}
+                    }
                   }
                 }
               }
@@ -945,7 +957,7 @@ def fill_common_questions(sb) -> None:
             }
             for (const lab of document.querySelectorAll('label, legend, h1, h2, h3, p, span')) {
               const t = (lab.innerText||'').trim();
-              if (t.length > 6 && t.length < 220 && /\\?|ctc|salary|notice|experience|relocat|authori|location|package|lpa|gender|hybrid|bond|veteran|disability|ethnicity|race|hispanic|voluntary|self.?ident|birth|dob|title|salutation/.test(t.toLowerCase())) {
+              if (t.length > 6 && t.length < 220 && /\\?|ctc|salary|notice|experience|relocat|authori|location|package|lpa|gender|hybrid|bond|veteran|disability|ethnicity|race|hispanic|voluntary|self.?ident|birth|dob|title|salutation|education|degree|qualification/.test(t.toLowerCase())) {
                 const want = wantFromText(t);
                 if (want && clickMatching(lab.closest('div, fieldset, li, section, [class*="question"]') || lab.parentElement || lab, want)) {
                   answered += 1;
@@ -1069,6 +1081,50 @@ def fill_common_questions(sb) -> None:
               if (trigger) { try { trigger.click(); } catch (e) {} }
               if (pickIndiaOption()) { answered += 1; break; }
             }
+            // SmartApply education comboboxes (ValGenesis "highest degree of education").
+            const pickEducationOption = () => {
+              const opts = [...document.querySelectorAll('[role=option], li, button, div, span, a')];
+              const scored = [];
+              for (const el of opts) {
+                const t = ((el.innerText || '') + ' ' + (el.getAttribute('aria-label') || '')).trim();
+                if (!t || t.length > 80) continue;
+                const tl = t.toLowerCase();
+                if (/select an option|choose an option|highest degree|degree of education/.test(tl)) continue;
+                let s = 0;
+                if (/b\\.?\\s*tech|b\\.e\\b|bachelor/.test(tl)) s = 3;
+                else if (/master'?s?|m\\.?\\s*tech|post.?grad/.test(tl)) s = 2;
+                else if (/undergraduate/.test(tl)) s = 1;
+                if (s) scored.push({el, s});
+              }
+              scored.sort((a,b) => b.s - a.s);
+              if (scored[0]) {
+                try { scored[0].el.click(); return true; } catch (e) {}
+              }
+              return false;
+            };
+            const educationTriggers = [...document.querySelectorAll(
+              'button, [role=combobox], [aria-haspopup=listbox], select, [class*="dropdown"]'
+            )];
+            for (const el of educationTriggers) {
+              const wrap = el.closest('fieldset, [class*="question"], [class*="Question"], li, section, label, div') || el.parentElement || el;
+              const ctx = ((wrap.innerText || '') + ' ' + (el.getAttribute('aria-label') || '') + ' ' + (el.innerText || '')).toLowerCase().slice(0, 280);
+              const looksEdu = /highest (degree|education|qualification)|degree of education|education level|degree obtained/.test(ctx);
+              const needsPick = /select an option|^select$|choose an option/.test((el.innerText || '') + ' ' + (el.getAttribute('aria-label') || ''))
+                || (el.tagName === 'SELECT' && (el.selectedIndex <= 0));
+              if (!looksEdu || !needsPick) continue;
+              try { el.click(); } catch (e) {}
+              if (pickEducationOption()) { answered += 1; }
+            }
+            for (const err of document.querySelectorAll('[class*="error"], [role=alert], span, p, div')) {
+              const et = (err.innerText || '').trim();
+              if (!/choose an option to continue/i.test(et)) continue;
+              const root = err.closest('fieldset, [class*="question"], [class*="Question"], li, section, form, div') || document.body;
+              const ctx = (root.innerText || '').toLowerCase().slice(0, 400);
+              if (!/highest (degree|education)|degree of education|education level|qualification/.test(ctx)) continue;
+              const trigger = root.querySelector('button, [role=combobox], [aria-haspopup=listbox], select');
+              if (trigger) { try { trigger.click(); } catch (e) {} }
+              if (pickEducationOption()) { answered += 1; break; }
+            }
             // Required acknowledgment / privacy checkboxes (Mattel / Nagarro etc.).
             // Click the input ONCE — also clicking the wrapping label unchecks it.
             for (const c of document.querySelectorAll('input[type=checkbox], [role=checkbox]')) {
@@ -1179,6 +1235,25 @@ def tick_required_agreements(sb) -> dict:
                   });
                 if (india) {
                   try { india.click(); clicked.push('validation-country-india'); } catch (e) {}
+                }
+              } else if (/highest (degree|education)|degree of education|education level|qualification/.test(ctx)) {
+                const trigger = root.querySelector('button, [role=combobox], [aria-haspopup=listbox], select');
+                if (trigger) { try { trigger.click(); } catch (e) {} }
+                const edu = [...document.querySelectorAll('[role=option], li, button, div, span, a')]
+                  .filter(e => {
+                    const t = ((e.innerText || '') + ' ' + (e.getAttribute('aria-label') || '')).trim().toLowerCase();
+                    return t && t.length <= 80 && !/select an option|choose an option|highest degree/.test(t)
+                      && /b\.?\s*tech|bachelor|b\.e\b|undergraduate|master'?s?|m\.?\s*tech/.test(t);
+                  })
+                  .sort((a,b) => {
+                    const ta = ((a.innerText||'') + (a.getAttribute('aria-label')||'')).toLowerCase();
+                    const tb = ((b.innerText||'') + (b.getAttribute('aria-label')||'')).toLowerCase();
+                    const sa = /bachelor|b\.?\s*tech|b\.e\b/.test(ta) ? 2 : 1;
+                    const sb = /bachelor|b\.?\s*tech|b\.e\b/.test(tb) ? 2 : 1;
+                    return sb - sa;
+                  })[0];
+                if (edu) {
+                  try { edu.click(); clicked.push('validation-education'); } catch (e) {}
                 }
               } else {
                 const opt = [...root.querySelectorAll('label, button, [role=option], [role=radio], [role=checkbox], input')]

@@ -177,6 +177,15 @@ def test_job_dedupe_key_from_jk():
     assert job_dedupe_key("https://in.indeed.com/rc/clk?from=serp", "deadbeef") == "deadbeef"
 
 
+def test_education_combobox_fill_present():
+    # Regression 2026-08-17: ValGenesis "highest degree of education" stayed
+    # on Select an option (portal listbox, not native <select>).
+    src = (ROOT / "tools/indeed/uc_daily_apply.py").read_text(encoding="utf-8")
+    assert "pickEducationOption" in src
+    assert "validation-education" in src
+    assert "degree of education" in src
+
+
 if __name__ == "__main__":
     test_skip_hyd_remote_ok()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
@@ -189,4 +198,5 @@ if __name__ == "__main__":
     test_india_home_get_started_is_not_login_proof()
     test_account_settings_and_serp_are_signed_in()
     test_job_dedupe_key_from_jk()
+    test_education_combobox_fill_present()
     print("ok")

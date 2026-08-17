@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| SmartApply highest degree of education combobox left on Select an option (ValGenesis) → easy_apply_incomplete | fill_common_questions + tick_required_agreements: open education combobox, pick Bachelor/B.Tech from document portal, recover Choose an option |
 | SmartApply Notice Period (in days) filled as Immediate; Country phone dial combobox left on Select an option → easy_apply_incomplete | fill_common_questions: numeric notice→0; Country/+91 combobox + validation recovery for Choose an option on Country |
 
 
