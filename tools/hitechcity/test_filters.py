@@ -15,6 +15,7 @@ from tools.hitechcity.careers_apply import (
     JOB_ID_HREF_RE,
     NAV_CHROME_RE,
     _browser_session_dead,
+    _owner_captcha_wait_sec,
     card_location_ok,
     company_skip_reason,
     is_hang_scan_url,
@@ -393,6 +394,25 @@ def test_hyland_icims_url():
     )
 
 
+def test_owner_captcha_wait_honors_explicit_budget():
+    import os
+
+    prev = {k: os.environ.get(k) for k in ("ATS_CAPTCHA_WAIT_SEC", "HOME_LOCAL", "CHROME_HEADLESS")}
+    try:
+        os.environ["ATS_CAPTCHA_WAIT_SEC"] = "300"
+        os.environ.pop("HOME_LOCAL", None)
+        os.environ["CHROME_HEADLESS"] = "1"
+        assert _owner_captcha_wait_sec() == 300
+        os.environ["ATS_CAPTCHA_WAIT_SEC"] = "0"
+        assert _owner_captcha_wait_sec() == 0
+    finally:
+        for k, v in prev.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+
+
 def test_attempt_ats_apply_persist_env_no_nameerror():
     """#206 persist-retry env read must not raise NameError for missing os."""
     from unittest.mock import MagicMock, patch
@@ -458,6 +478,7 @@ if __name__ == "__main__":
     test_workday_create_account_is_completable()
     test_indeed_oauth_url_is_login_wall()
     test_hyland_icims_url()
+    test_owner_captcha_wait_honors_explicit_budget()
     test_attempt_ats_apply_persist_env_no_nameerror()
     test_skip_uhg_default()
     print("ok")

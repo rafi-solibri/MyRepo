@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-17 (home)
+
+| Issue | Fix |
+| --- | --- |
+| Headed careers fail-fasted CAPTCHA/bot wall before ASK_OWNER wait so owner never got 300s to click | When owner captcha wait > 0, park on focused tab via wait_for_owner_hcaptcha instead of immediate block |
+
+
 ## 2026-08-17 (cloud)
 
 | Issue | Fix |

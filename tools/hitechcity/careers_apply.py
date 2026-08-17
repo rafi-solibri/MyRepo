@@ -846,6 +846,28 @@ def dismiss_cookie_banners(page: Page) -> None:
 
 
 
+def _owner_captcha_wait_sec() -> int:
+    """Seconds the owner can spend on a visible captcha (0 = unattended fail-fast)."""
+    try:
+        from tools.ats.captcha_solve import owner_captcha_wait_sec
+
+        return int(owner_captcha_wait_sec() or 0)
+    except Exception:
+        return 0
+
+
+def _wait_owner_captcha(page: Page) -> bool:
+    """Focus the captcha tab and wait; True if the owner cleared it."""
+    if _owner_captcha_wait_sec() <= 0:
+        return False
+    try:
+        from tools.ats.captcha_solve import wait_for_owner_hcaptcha
+    except Exception:
+        return False
+    print("ASK_OWNER captcha — solve the focused Chrome tab (workers keep applying)", flush=True)
+    return bool(wait_for_owner_hcaptcha(page))
+
+
 def _browser_session_dead(err: BaseException | str) -> bool:
     s = str(err).lower()
     return any(
@@ -996,11 +1018,19 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
     # JD chrome ("Sign in" / "Create an account") is not a wall. Only CAPTCHA /
     # closed reqs fail here — Workday Create Account must reach complete_ats.
     wall = blocked_wall(page)
-    if wall in ("CAPTCHA/bot wall", "job_closed") and not looks_workday_page(page):
+    if wall == "job_closed" and not looks_workday_page(page):
         row["reason"] = wall
-        row["status"] = "skipped" if wall == "job_closed" else "blocked"
+        row["status"] = "skipped"
         row["finalUrl"] = page.url
         return row
+    if wall == "CAPTCHA/bot wall" and not looks_workday_page(page):
+        if _owner_captcha_wait_sec() > 0:
+            _wait_owner_captcha(page)
+        else:
+            row["reason"] = wall
+            row["status"] = "blocked"
+            row["finalUrl"] = page.url
+            return row
 
     # Location from TOP CARD / workplace pills only — not full page body (footers say India).
     try:
@@ -1127,11 +1157,14 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         and not looks_workday_page(page)
         and not icims_job
     ):
-        row["reason"] = wall
-        row["status"] = "blocked"
-        row["finalUrl"] = page.url
-        _close_auth_popups(page)
-        return row
+        if _owner_captcha_wait_sec() > 0:
+            _wait_owner_captcha(page)
+        else:
+            row["reason"] = wall
+            row["status"] = "blocked"
+            row["finalUrl"] = page.url
+            _close_auth_popups(page)
+            return row
     status, reason = attempt_ats_apply(page, time_cap_s=TIME_CAP_S)
     if auth_wall_url(page.url or "") or "passport.amazon.jobs" in (page.url or ""):
         row["status"] = "blocked"
