@@ -234,6 +234,36 @@ assert.strictEqual(
   "non-Pega employer must not company-skip"
 );
 assert.strictEqual(
+  shouldSkipTitle("QA Automation Lead AEM Digital Technical Specialist"),
+  true,
+  "QA Automation lead must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Qe Technical Lead"),
+  true,
+  "QE Technical Lead must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Technical Lead- Power Apps Development"),
+  true,
+  "Power Apps lead must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("MuleSoft Integration Architect"),
+  true,
+  "MuleSoft-primary must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Workday HCM Integration Architect"),
+  true,
+  "Workday HCM architect must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Cloud Security Architect"),
+  true,
+  "Cloud Security Architect must skip"
+);
+assert.strictEqual(
   shouldSkipTitle("Lead AI Solutions Architect"),
   true,
   "AI Solutions Architect (plural) without .NET must skip"
