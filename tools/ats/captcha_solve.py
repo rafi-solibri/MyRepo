@@ -312,6 +312,7 @@ def owner_captcha_wait_sec() -> int:
 
     Free path: no CapSolver key. Cloud headless defaults to 0. Home / headed
     Chrome defaults to 180 unless ATS_CAPTCHA_WAIT_SEC is set.
+    Owner-asleep / overnight defaults to a short park (~12s).
     """
     raw = (os.environ.get("ATS_CAPTCHA_WAIT_SEC") or "").strip()
     if raw:
@@ -319,6 +320,18 @@ def owner_captcha_wait_sec() -> int:
             return max(0, int(raw))
         except ValueError:
             return 0
+    try:
+        from tools.ats.complete import owner_asleep
+
+        if owner_asleep():
+            return 12
+    except Exception:
+        if (os.environ.get("HITECHCITY_OWNER_ASLEEP") or "").strip().lower() in (
+            "1",
+            "true",
+            "yes",
+        ):
+            return 12
     if (os.environ.get("HOME_LOCAL") or "").strip().lower() in ("1", "true", "yes"):
         return 180
     if (os.environ.get("CHROME_HEADLESS") or "1").strip() in ("0", "false", "no"):

@@ -49,21 +49,38 @@ os.environ["CAPSOLVER_API_KEY"] = "test-key"
 assert_true(captcha_solver_configured(), "capsolver key")
 os.environ.pop("CAPSOLVER_API_KEY", None)
 
-_saved = {k: os.environ.get(k) for k in ("ATS_CAPTCHA_WAIT_SEC", "HOME_LOCAL", "CHROME_HEADLESS")}
-for k in ("ATS_CAPTCHA_WAIT_SEC", "HOME_LOCAL", "CHROME_HEADLESS"):
+_saved = {
+    k: os.environ.get(k)
+    for k in ("ATS_CAPTCHA_WAIT_SEC", "HOME_LOCAL", "CHROME_HEADLESS", "HITECHCITY_OWNER_ASLEEP")
+}
+for k in ("ATS_CAPTCHA_WAIT_SEC", "HOME_LOCAL", "CHROME_HEADLESS", "HITECHCITY_OWNER_ASLEEP"):
     os.environ.pop(k, None)
-os.environ["CHROME_HEADLESS"] = "1"
-assert_true(owner_captcha_wait_sec() == 0, "cloud headless waits 0")
-os.environ["HOME_LOCAL"] = "1"
-assert_true(owner_captcha_wait_sec() == 180, "home local default wait")
-os.environ["ATS_CAPTCHA_WAIT_SEC"] = "300"
-assert_true(owner_captcha_wait_sec() == 300, "explicit wait wins")
-os.environ["ATS_CAPTCHA_WAIT_SEC"] = "0"
-assert_true(owner_captcha_wait_sec() == 0, "explicit 0 disables wait")
-os.environ.pop("ATS_CAPTCHA_WAIT_SEC", None)
-os.environ.pop("HOME_LOCAL", None)
-os.environ["CHROME_HEADLESS"] = "0"
-assert_true(owner_captcha_wait_sec() == 180, "headed chrome default wait")
+_asleep_flags = []
+for _p in ("/tmp/hitechcity-owner-asleep", "/tmp/ats-owner-asleep"):
+    _path = Path(_p)
+    if _path.exists():
+        _bak = Path(_p + ".testbak")
+        _path.rename(_bak)
+        _asleep_flags.append((_path, _bak))
+try:
+    os.environ["CHROME_HEADLESS"] = "1"
+    assert_true(owner_captcha_wait_sec() == 0, "cloud headless waits 0")
+    os.environ["HOME_LOCAL"] = "1"
+    assert_true(owner_captcha_wait_sec() == 180, "home local default wait")
+    os.environ["ATS_CAPTCHA_WAIT_SEC"] = "300"
+    assert_true(owner_captcha_wait_sec() == 300, "explicit wait wins")
+    os.environ["ATS_CAPTCHA_WAIT_SEC"] = "0"
+    assert_true(owner_captcha_wait_sec() == 0, "explicit 0 disables wait")
+    os.environ.pop("ATS_CAPTCHA_WAIT_SEC", None)
+    os.environ.pop("HOME_LOCAL", None)
+    os.environ["CHROME_HEADLESS"] = "0"
+    assert_true(owner_captcha_wait_sec() == 180, "headed chrome default wait")
+    os.environ["HITECHCITY_OWNER_ASLEEP"] = "1"
+    assert_true(owner_captcha_wait_sec() == 12, "owner-asleep short park")
+finally:
+    for _path, _bak in _asleep_flags:
+        if _bak.exists():
+            _bak.rename(_path)
 for k, v in _saved.items():
     if v is None:
         os.environ.pop(k, None)
@@ -72,6 +89,7 @@ for k, v in _saved.items():
 
 assert_true(not inject_hcaptcha_token(object(), ""), "short token rejected")
 assert_true(not inject_hcaptcha_token(object(), "short"), "short token rejected 2")
+
 
 
 class _FakeFrame:

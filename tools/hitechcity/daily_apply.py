@@ -24,6 +24,16 @@ _root = Path(__file__).resolve().parents[2]
 if str(_root) not in sys.path:
     sys.path.insert(0, str(_root))
 
+
+def _owner_asleep_bootstrap() -> bool:
+    """Detect overnight / unattended cron before importing apply modules."""
+    if (os.environ.get("HITECHCITY_OWNER_ASLEEP") or "").strip().lower() in ("1", "true", "yes"):
+        return True
+    if Path("/tmp/hitechcity-owner-asleep").exists():
+        return True
+    return False
+
+
 # ---- Every-run defaults (cron + headed + home) — set before importing apply modules ----
 os.environ.setdefault("HITECHCITY_PARALLEL_TABS", "10")
 os.environ.setdefault("HITECHCITY_MAX_PER_COMPANY", "6")
@@ -36,6 +46,23 @@ os.environ.setdefault("HITECHCITY_DISCOVERY_LINKEDIN", "0")
 os.environ.setdefault("HITECHCITY_DISCOVERY_WEB", "1")
 os.environ.setdefault("ATS_CAPTCHA_POLL_SEC", "0.4")
 os.environ.setdefault("ATS_OWNER_FOCUS_EVERY_SEC", "2")
+
+# Overnight / owner-asleep: short park on captcha/forms, skip long persist retries,
+# and cap soft incompletes per company so LinkedIn volume reaches Easy Apply + boards.
+if _owner_asleep_bootstrap():
+    os.environ["HITECHCITY_OWNER_ASLEEP"] = "1"
+    os.environ.setdefault("ATS_OWNER_FORM_WAIT_SEC", "12")
+    os.environ.setdefault("ATS_CAPTCHA_WAIT_SEC", "12")
+    os.environ.setdefault("HITECHCITY_EXT_ATS_TIME_CAP_S", "45")
+    os.environ.setdefault("HITECHCITY_ATS_TIME_CAP_S", "45")
+    os.environ.setdefault("HITECHCITY_ATS_PERSIST_RETRY", "0")
+    os.environ.setdefault("HITECHCITY_MAX_SOFT_INCOMPLETE", "2")
+    print(
+        "OWNER_ASLEEP=1 — short ATS waits (45s), ASK_OWNER 12s, no persist_retry, "
+        "soft-incomplete cap=2/company",
+        flush=True,
+    )
+
 
 from tools.hitechcity.board_campus_apply import run as run_boards
 from tools.hitechcity.careers_apply import load_companies, run as run_careers
