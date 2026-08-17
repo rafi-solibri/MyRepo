@@ -271,6 +271,42 @@ def workday_compliant_password(raw: str) -> str:
     return pw
 
 
+def owner_asleep() -> bool:
+    """True when the owner cannot solve captchas / finish forms right now.
+
+    Cloud overnight / cron runs set ``HITECHCITY_OWNER_ASLEEP=1`` or touch
+    ``/tmp/hitechcity-owner-asleep``. Short waits + no long persist retries so
+    volume moves to the next campus company / Easy Apply / boards.
+    """
+    for key in ("HITECHCITY_OWNER_ASLEEP", "ATS_OWNER_ASLEEP"):
+        if (os.environ.get(key) or "").strip().lower() in ("1", "true", "yes"):
+            return True
+    for path in ("/tmp/hitechcity-owner-asleep", "/tmp/ats-owner-asleep"):
+        try:
+            if Path(path).exists():
+                return True
+        except Exception:
+            continue
+    return False
+
+
+def persist_retry_burst_sec() -> int:
+    """Seconds for post-ASK_OWNER fill bursts. Owner-asleep → brief park only."""
+    raw = (os.environ.get("ATS_PERSIST_RETRY_SEC") or "").strip()
+    if raw:
+        try:
+            return max(0, int(raw))
+        except ValueError:
+            return 0
+    if owner_asleep() or (os.environ.get("HITECHCITY_ATS_PERSIST_RETRY") or "1").strip() in (
+        "0",
+        "false",
+        "no",
+    ):
+        return 12
+    return 45
+
+
 def is_hard_ats_wall(reason: str | None) -> bool:
     """True only for walls that will repeat for the same company this run.
 
@@ -2003,12 +2039,15 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
     if owner:
         return owner
     if apply_form_still_open(page):
+        burst = persist_retry_burst_sec()
+        if burst <= 0:
+            return "blocked", "external_incomplete_or_timeout"
         print(
-            "workday=persist_retry — form still open after owner wait; continuing",
+            f"workday=persist_retry — form still open after owner wait; continuing ({burst}s)",
             flush=True,
         )
         burst_start = time.time()
-        while time.time() - burst_start < 45:
+        while time.time() - burst_start < burst:
             if looks_submitted(page):
                 return "applied", "confirmation"
             try:
@@ -2030,6 +2069,7 @@ def owner_form_wait_sec() -> int:
 
     Headed / HOME_LOCAL defaults to the same budget as captcha waits so we never
     abandon a criteria-matching apply without asking the owner first.
+    Owner-asleep / overnight: short park (~12s) then continue elsewhere.
     """
     raw = (os.environ.get("ATS_OWNER_FORM_WAIT_SEC") or "").strip()
     if raw:
@@ -2037,6 +2077,8 @@ def owner_form_wait_sec() -> int:
             return max(0, int(raw))
         except ValueError:
             return 0
+    if owner_asleep():
+        return 12
     # Reuse captcha wait budget when set; else headed defaults.
     try:
         from tools.ats.captcha_solve import owner_captcha_wait_sec
@@ -2094,6 +2136,10 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
     wait = owner_form_wait_sec()
     if wait <= 0:
         return None
+    # Overnight / owner-asleep: brief park only — do not extend or burn inventory.
+    asleep = owner_asleep()
+    if asleep:
+        wait = min(wait, 12)
     msg = hint or "required fields (e.g. Source / How did you hear), login, or Submit"
     try:
         from tools.ats.captcha_solve import focus_page_for_owner, owner_focus_interval_sec
@@ -2104,7 +2150,7 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
         focus_page_for_owner = None  # type: ignore
         focus_every = 2.0
     print(
-        f"ASK_OWNER wait={wait}s — finish {msg} in the focused Chrome tab, then Submit. "
+        f"ASK_OWNER wait={wait}s{' (owner_asleep)' if asleep else ''} — finish {msg} in the focused Chrome tab, then Submit. "
         f"Helper keeps filling Source/required blanks and resumes on confirmation.",
         flush=True,
     )
@@ -2112,7 +2158,7 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
     last_beat = 0.0
     last_focus = 0.0
     last_fp = page_fingerprint(page)
-    extended = False
+    extended = asleep  # skip extend loop when owner cannot respond
     poll = float(os.environ.get("ATS_CAPTCHA_POLL_SEC", "0.4") or "0.4")
     poll = min(1.0, max(0.25, poll))
     while True:
@@ -2315,13 +2361,16 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
     if owner:
         return owner
     if apply_form_still_open(page):
+        burst = persist_retry_burst_sec()
+        if burst <= 0:
+            return "blocked", "external_incomplete_or_timeout"
         print(
-            "generic=persist_retry — ASK_OWNER timed out but form still open; fill again",
+            f"generic=persist_retry — ASK_OWNER timed out but form still open; fill again ({burst}s)",
             flush=True,
         )
         # Short aggressive burst — do not nest another full owner wait.
         burst_start = time.time()
-        while time.time() - burst_start < 45:
+        while time.time() - burst_start < burst:
             if looks_submitted(page):
                 return "applied", "confirmation"
             if looks_already_applied(page):

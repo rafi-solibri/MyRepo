@@ -85,14 +85,36 @@ assert_true(is_hard_ats_wall("CAPTCHA/bot wall"), "captcha is hard")
 assert_true(is_hard_ats_wall("ats_login_wall"), "login is hard")
 assert_true(not is_hard_ats_wall("external_incomplete_or_timeout"), "timeout is not a company wall")
 assert_true(not is_hard_ats_wall("easy_apply_incomplete"), "easy incomplete is not a company wall")
-from tools.ats.complete import owner_form_wait_sec
-_saved_form = {k: os.environ.get(k) for k in ("ATS_OWNER_FORM_WAIT_SEC", "ATS_CAPTCHA_WAIT_SEC", "HOME_LOCAL", "CHROME_HEADLESS")}
-for k in ("ATS_OWNER_FORM_WAIT_SEC", "ATS_CAPTCHA_WAIT_SEC", "HOME_LOCAL", "CHROME_HEADLESS"):
+from tools.ats.complete import owner_form_wait_sec, owner_asleep, persist_retry_burst_sec
+_saved_form = {k: os.environ.get(k) for k in ("ATS_OWNER_FORM_WAIT_SEC", "ATS_CAPTCHA_WAIT_SEC", "HOME_LOCAL", "CHROME_HEADLESS", "HITECHCITY_OWNER_ASLEEP", "ATS_PERSIST_RETRY_SEC", "HITECHCITY_ATS_PERSIST_RETRY")}
+for k in ("ATS_OWNER_FORM_WAIT_SEC", "ATS_CAPTCHA_WAIT_SEC", "HOME_LOCAL", "CHROME_HEADLESS", "HITECHCITY_OWNER_ASLEEP", "ATS_PERSIST_RETRY_SEC", "HITECHCITY_ATS_PERSIST_RETRY"):
     os.environ.pop(k, None)
-os.environ["HOME_LOCAL"] = "1"
-assert_true(owner_form_wait_sec() >= 180, "headed owner form wait defaults on")
-os.environ["ATS_OWNER_FORM_WAIT_SEC"] = "0"
-assert_true(owner_form_wait_sec() == 0, "explicit 0 disables owner form wait")
+# Isolate from live overnight flag files left by the daily cron.
+_asleep_flags = []
+for _p in ("/tmp/hitechcity-owner-asleep", "/tmp/ats-owner-asleep"):
+    _path = Path(_p)
+    if _path.exists():
+        _bak = Path(_p + ".testbak")
+        _path.rename(_bak)
+        _asleep_flags.append((_path, _bak))
+try:
+    os.environ["HOME_LOCAL"] = "1"
+    assert_true(owner_form_wait_sec() >= 180, "headed owner form wait defaults on")
+    os.environ["ATS_OWNER_FORM_WAIT_SEC"] = "0"
+    assert_true(owner_form_wait_sec() == 0, "explicit 0 disables owner form wait")
+    os.environ.pop("ATS_OWNER_FORM_WAIT_SEC", None)
+    os.environ["HITECHCITY_OWNER_ASLEEP"] = "1"
+    assert_true(owner_asleep(), "OWNER_ASLEEP env detected")
+    assert_true(owner_form_wait_sec() == 12, "owner-asleep form wait is short park")
+    assert_true(persist_retry_burst_sec() == 12, "owner-asleep persist burst is short")
+    os.environ["HITECHCITY_ATS_PERSIST_RETRY"] = "0"
+    assert_true(persist_retry_burst_sec() == 12, "persist_retry=0 still parks briefly")
+    os.environ["ATS_PERSIST_RETRY_SEC"] = "0"
+    assert_true(persist_retry_burst_sec() == 0, "explicit persist retry 0 disables burst")
+finally:
+    for _path, _bak in _asleep_flags:
+        if _bak.exists():
+            _bak.rename(_path)
 for k, v in _saved_form.items():
     if v is None:
         os.environ.pop(k, None)

@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-17 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Overnight OWNER_ASLEEP ignored: LinkedIn EXT burned 45+ min on Oracle soft incompletes + double persist_retry with 0 submits | Honor HITECHCITY_OWNER_ASLEEP /tmp flag: 45s ATS cap, 12s ASK_OWNER/captcha park, skip outer persist_retry, soft-incomplete cap 2/company |
+
+
 ## 2026-08-16 (home)
 
 | Issue | Fix |

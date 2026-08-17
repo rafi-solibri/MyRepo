@@ -91,11 +91,16 @@ REFERRAL_NOTE = (
 MAX_EXT_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "1"))
 # Soft incompletes must not starve remaining matching LinkedIn externals.
 MAX_EXT_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "8"))
+# Overnight / owner-asleep: after N soft incompletes, move to next company (0 = unlimited).
+MAX_SOFT_INCOMPLETE_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_SOFT_INCOMPLETE", "0"))
 EXT_ATS_TIME_CAP_S = int(os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S", "90"))
 if (os.environ.get("HOME_LOCAL") or "").strip().lower() in ("1", "true", "yes") or (
     os.environ.get("CHROME_HEADLESS") or "1"
 ).strip() in ("0", "false", "no"):
-    if not os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S"):
+    # Owner-asleep keeps the short cron cap even on headed CDP.
+    if not os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S") and (
+        os.environ.get("HITECHCITY_OWNER_ASLEEP") or ""
+    ).strip().lower() not in ("1", "true", "yes"):
         EXT_ATS_TIME_CAP_S = max(EXT_ATS_TIME_CAP_S, 180)
 
 
@@ -837,6 +842,7 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                 continue
             ext_walls = 0
             ext_attempts = 0
+            soft_incompletes = 0
 
             # Resolve numeric company id once — /jobs/search/?f_C= has clickable cards.
             company_f_c = (company.get("linkedinCompanyId") or "").strip()
@@ -1056,6 +1062,24 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                         }
                     )
                     continue
+                if (
+                    MAX_SOFT_INCOMPLETE_PER_COMPANY > 0
+                    and soft_incompletes >= MAX_SOFT_INCOMPLETE_PER_COMPANY
+                ):
+                    print(
+                        f"LI SKIP soft_incomplete_cap | {company_found} | {role[:50]} | {jid}",
+                        flush=True,
+                    )
+                    report.skipped.append(
+                        {
+                            "company": company_found,
+                            "role": role,
+                            "job_id": jid,
+                            "reason": "soft_incomplete_cap",
+                            "location": loc,
+                        }
+                    )
+                    continue
 
                 print(f"LI EXT {company_found} | {role} | {jid}", flush=True)
                 ext = follow_external(page, meta)
@@ -1096,7 +1120,14 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                             f"attempts={ext_attempts}/{MAX_EXT_ATTEMPTS_PER_COMPANY} | {why}",
                             flush=True,
                         )
-                    elif "incomplete" not in why.lower():
+                    elif "incomplete" in why.lower():
+                        soft_incompletes += 1
+                        print(
+                            f"LI EXT SOFT {company_found} soft={soft_incompletes}/"
+                            f"{MAX_SOFT_INCOMPLETE_PER_COMPANY or '∞'} | {why}",
+                            flush=True,
+                        )
+                    else:
                         ext_attempts += 1
 
         # Extra referral sweep for priority-1 companies even if thin inventory

@@ -52,9 +52,14 @@ MAX_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "3"))
 # Soft incompletes must not starve remaining matching roles at the same company.
 MAX_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "16"))
 # Headed/owner-available runs get a longer ATS budget so forms can be finished.
-if (os.environ.get("HOME_LOCAL") or "").strip().lower() in ("1", "true", "yes") or (
-    os.environ.get("CHROME_HEADLESS") or "1"
-).strip() in ("0", "false", "no"):
+# Owner-asleep keeps the short cron cap even on headed CDP.
+if (
+    (os.environ.get("HITECHCITY_OWNER_ASLEEP") or "").strip().lower()
+    not in ("1", "true", "yes")
+) and (
+    (os.environ.get("HOME_LOCAL") or "").strip().lower() in ("1", "true", "yes")
+    or (os.environ.get("CHROME_HEADLESS") or "1").strip() in ("0", "false", "no")
+):
     if not (os.environ.get("HITECHCITY_ATS_TIME_CAP_S") or os.environ.get("HITECHCITY_EXT_ATS_TIME_CAP_S")):
         TIME_CAP_S = max(TIME_CAP_S, 120)
 

@@ -382,13 +382,21 @@ def attempt_ats_apply(page: Page, time_cap_s: int = 390) -> tuple[str, str]:
     """Fill + submit current ATS page. Returns (status, reason).
 
     Soft incompletes get one persist retry so we do not leave a form after the
-    owner solved captcha / helped with fields.
+    owner solved captcha / helped with fields. Owner-asleep skips the second
+    full pass so overnight runs keep moving across campus companies.
     """
     try:
-        from tools.ats.complete import apply_form_still_open, complete_ats
+        from tools.ats.complete import apply_form_still_open, complete_ats, owner_asleep
     except Exception:
-        from ats.complete import apply_form_still_open, complete_ats  # type: ignore
+        from ats.complete import apply_form_still_open, complete_ats, owner_asleep  # type: ignore
     status, reason = complete_ats(page, time_cap_s=time_cap_s)
+    persist_on = (os.environ.get("HITECHCITY_ATS_PERSIST_RETRY") or "1").strip().lower() not in (
+        "0",
+        "false",
+        "no",
+    )
+    if owner_asleep() or not persist_on:
+        return status, reason
     if status == "blocked" and "incomplete" in (reason or "").lower():
         try:
             still = apply_form_still_open(page)
