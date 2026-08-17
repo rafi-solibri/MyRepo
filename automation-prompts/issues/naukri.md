@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| CTC<35 skipped Valuelabs .NET Architect, Incedo .Net Lead, Sonata Azure SA, Highradius SA, .NET Technical Lead (under-listed 15-31L) | Do not CTC-skip Architect/Lead/EM/.NET titles; still skip junior/IC max<35; AI Solutions plural title-skip |
 | Pega LSA / AI Engineering Manager / Data Architect / GCP Infra attempted; 3 apply_unconfirmed (no_chat) + Principal Financial chat_steps_exhausted; thin Hyd/.NET inventory | resume_and_filters: skip Lead System Architect + AI EM + Data/GCP Infra Architect; shouldSkipCompany for Pega/Coupa/Salesforce/SAP; daily_apply Escape+re-read Applied after no_chat |
 
 

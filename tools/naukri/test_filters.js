@@ -4,6 +4,7 @@ const assert = require("assert");
 const {
   shouldSkipTitle,
   shouldSkipCompany,
+  shouldSkipListedCtc,
   hasDotNet,
   isArchLeadTitle,
   parseNaukriCardLines,
@@ -231,6 +232,41 @@ assert.strictEqual(
   shouldSkipCompany("Redwood Software India"),
   false,
   "non-Pega employer must not company-skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Lead AI Solutions Architect"),
+  true,
+  "AI Solutions Architect (plural) without .NET must skip"
+);
+assert.strictEqual(
+  isArchLeadTitle("Integration architech"),
+  true,
+  "architech typo still counts as architect-band"
+);
+assert.strictEqual(
+  shouldSkipListedCtc(".NET Architect", "₹15L - ₹30L/year Architecture, .NET", 30, 35),
+  false,
+  "under-listed .NET Architect must still apply (state 65)"
+);
+assert.strictEqual(
+  shouldSkipListedCtc(".Net Lead", "₹15L - ₹30L/year .Net, Microservices, AWS", 30, 35),
+  false,
+  "under-listed Incedo-style .Net Lead must still apply"
+);
+assert.strictEqual(
+  shouldSkipListedCtc("Azure Solution Architect", "₹16L - ₹31L/year Azure", 31, 35),
+  false,
+  "under-listed Azure SA must still apply"
+);
+assert.strictEqual(
+  shouldSkipListedCtc(
+    "Senior Software Engineer",
+    "₹12L - ₹20L/year Java",
+    20,
+    35
+  ),
+  true,
+  "junior/IC listed max under 35 still CTC-skips"
 );
 assert.strictEqual(shouldSkipTitle("Senior .NET Architect"), false);
 assert.strictEqual(isArchLeadTitle("Dot Net Fullstack Developer"), false);

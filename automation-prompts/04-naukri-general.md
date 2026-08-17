@@ -40,7 +40,7 @@ Solutions Architect & Technical Lead - 15+ Yrs - .NET Core, Microservices, AWS&A
 ## Apply bias (CRITICAL — volume)
 - Default to APPLY for Hyd/remote Architect / Tech Lead / EM / Principal / Staff / Director roles.
 - Architect/Lead/EM titles may proceed even if the card snippet does not show “.NET” (JD often buries it). Still skip Coupa/Pega/Salesforce/SAP-primary titles via `shouldSkipTitle`.
-- Skip listed max CTC only if clearly under **35 LPA** (Incedo/Capgemini 30–40 bands that were wrongly hard-skipped should now apply when ≥35; always state 65 expected).
+- Skip listed max CTC only if clearly under **35 LPA** *and* the title is not Architect/Lead/EM/.NET (Incedo/Valuelabs/Sonata 15–31 L under-listed senior bands still apply; always state 65 expected).
 - Prefer `node tools/naukri/daily_apply.js` (MAX_APPLIES default 60). Auto early-expand: after freshest age, if applied &lt; `NAUKRI_EARLY_EXPAND_BELOW` (default 3) continue remaining primary ages immediately; if still &lt; `NAUKRI_EXPAND_BELOW` (default 8) expand ages 15/30/60 and run extra .NET/Azure queries. Keep cyber/QA/Salesforce title skips.
 - When uncertain → APPLY. Do not invent applies.
 

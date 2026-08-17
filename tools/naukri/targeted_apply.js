@@ -5,7 +5,14 @@
 "use strict";
 
 const fs = require("fs");
-const { findResume, hasDotNet, shouldSkipTitle, EXPECTED_CTC_LPA, CURRENT_CTC_LPA } = require("./resume_and_filters");
+const {
+  findResume,
+  hasDotNet,
+  shouldSkipTitle,
+  shouldSkipListedCtc,
+  EXPECTED_CTC_LPA,
+  CURRENT_CTC_LPA,
+} = require("./resume_and_filters");
 
 const CDP = process.env.NAUKRI_CDP || "http://127.0.0.1:9222";
 const RESUME = findResume();
@@ -113,7 +120,7 @@ async function main() {
           continue;
         }
         const maxCtc = parseMaxCtcLpa(card.text);
-        if (maxCtc !== null && maxCtc < 35) {
+        if (shouldSkipListedCtc(card.role, card.text, maxCtc, 35)) {
           report.skipped.push({ ...card, reason: `skip_ctc_${maxCtc}` });
           continue;
         }

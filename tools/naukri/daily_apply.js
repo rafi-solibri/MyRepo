@@ -12,6 +12,7 @@ const {
   hasDotNet,
   shouldSkipTitleFromCard,
   shouldSkipCompany,
+  shouldSkipListedCtc,
   parseNaukriCardLines,
   isArchLeadTitle,
   EXPECTED_CTC_LPA,
@@ -1746,7 +1747,7 @@ function decideSkip(card, { detailMode = false } = {}) {
   if (!hasDotNet(role, blob) && !isArchLeadTitle(role)) return "skip_no_dotnet";
   if (locationShouldSkip(loc, blob)) return "skip_location";
   const maxCtc = parseMaxCtcLpa(blob);
-  if (maxCtc !== null && maxCtc < MIN_LISTED_MAX_CTC_LPA)
+  if (shouldSkipListedCtc(role, blob, maxCtc, MIN_LISTED_MAX_CTC_LPA))
     return `skip_ctc_max_${maxCtc}`;
   return null;
 }

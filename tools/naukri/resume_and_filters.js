@@ -44,7 +44,7 @@ const SKIP_COMPANY_RE =
 
 /** Pure AI/data titles need .NET|C# on the TITLE (skills laundry lists are noisy). */
 const PURE_AI_DATA_RE =
-  /\b(ai\s+architect|artificial\s+intelligence\s+architect|ai\s+agent|ai\s+engineer(?:ing)?(?:\s+manager|\s+lead)?|ai\s+engineering\s+manager|ai\s+solution\s+architect|architect[^.\n]{0,48}\b(ai|ml)\b|data\s*&\s*ai|ml\s+engineer|gen\s*-?\s*ai|genai|agentic\s+ai|\bgemini\b|\bllm\b|enterprise\s+platform\s+architect[^.\n]{0,24}\b(ai|ml|gemini|llm)\b|data\s+scientist|data\s+engineer|data\s+engineering|data\s+architect|gcp\s+infra(?:structure)?(?:\s+architect)?)\b/i;
+  /\b(ai\s+architect|artificial\s+intelligence\s+architect|ai\s+agent|ai\s+engineer(?:ing)?(?:\s+manager|\s+lead)?|ai\s+engineering\s+manager|ai\s+solutions?\s+architect|architect[^.\n]{0,48}\b(ai|ml)\b|data\s*&\s*ai|ml\s+engineer|gen\s*-?\s*ai|genai|agentic\s+ai|\bgemini\b|\bllm\b|enterprise\s+platform\s+architect[^.\n]{0,24}\b(ai|ml|gemini|llm)\b|data\s+scientist|data\s+engineer|data\s+engineering|data\s+architect|gcp\s+infra(?:structure)?(?:\s+architect)?)\b/i;
 
 /**
  * Primary non-.NET stacks in the TITLE — skip to avoid Java/MEAN ATS dead-ends.
@@ -64,7 +64,7 @@ const DOTNET_RE = /(\.net|dotnet|asp\.?\s*net|c#|csharp)/i;
 
 /** Architect / Lead / EM / Principal / Staff / Director — apply even if card omits .NET. */
 const ARCH_LEAD_RE =
-  /\b(architect(?:ure)?|technical lead|tech lead|technology lead|engineering manager|engineering lead|engineer manager|software engineer manager|principal|staff|director|avp|head of|chief technology|solution architect(?:ure)?|cloud architect(?:ure)?|azure architect(?:ure)?|\.net lead|dotnet lead|lead (software|development|engineer)|software (engineering )?manager|senior manager|manager\b[^.\n]{0,32}\b(sw|software|engineering|technology|platform)|senior engineering)\b/i;
+  /\b(architect(?:ure)?|architech|technical lead|tech lead|technology lead|engineering manager|engineering lead|engineer manager|software engineer manager|principal|staff|director|avp|head of|chief technology|solution architect(?:ure)?|cloud architect(?:ure)?|azure architect(?:ure)?|\.net lead|dotnet lead|lead (software|development|engineer)|software (engineering )?manager|senior manager|manager\b[^.\n]{0,32}\b(sw|software|engineering|technology|platform)|senior engineering)\b/i;
 
 /** TopTier search cards: CTA then role. Homepage cards: role then location then CTA last. */
 const CARD_CTA_RE =
@@ -175,6 +175,18 @@ function shouldSkipCompany(company) {
   return SKIP_COMPANY_RE.test(c);
 }
 
+/**
+ * Listed max CTC skip — junior/IC bands only.
+ * Architect / Lead / EM / .NET cards often under-list (₹15L–₹30L for a 15y SA).
+ * Those still apply; forms always state 65 expected.
+ */
+function shouldSkipListedCtc(role, blob, maxCtc, minListed = 35) {
+  if (maxCtc == null || !Number.isFinite(Number(maxCtc))) return false;
+  if (Number(maxCtc) >= Number(minListed)) return false;
+  if (isArchLeadTitle(role) || hasDotNet(role, blob)) return false;
+  return true;
+}
+
 module.exports = {
   findResume,
   hasDotNet,
@@ -182,6 +194,7 @@ module.exports = {
   shouldSkipTitleFromDetail,
   shouldSkipTitleFromCard,
   shouldSkipCompany,
+  shouldSkipListedCtc,
   parseNaukriCardLines,
   isArchLeadTitle,
   normalizeAspNet,
