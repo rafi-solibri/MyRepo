@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Software Engineering, Manager (Newfold 62218729) missed isArchLeadTitle because of comma | titleForMatch normalizes commas/whitespace so software engineering manager matches |
 | Arch/Lead/EM and Senior titles false-skipped: Java in skills laundry treated as Java-primary; isArchLeadTitle missed Lead Software Engineer / Senior Manager; empty Raven skills never JD-enriched | Naukri-parity isArchLeadTitle; Java-primary/Java-only on TITLE only; needs JD skills enrich for senior titles with empty Raven skills |
 
 
