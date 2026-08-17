@@ -738,6 +738,7 @@ def fill_common_questions(sb) -> None:
               current: '52',
               expected: '65',
               notice: 'Immediate',
+              noticeDays: '0',
               experience: '14'
             };
             const setNative = (el, value) => {
@@ -807,7 +808,13 @@ def fill_common_questions(sb) -> None:
                 return '15/08/2026';
               }
               if (/notice|joining|how soon|availability|immediate|serve notice/.test(t)
-                  && !/start date|available from/.test(t)) return 'Immediate';
+                  && !/start date|available from/.test(t)) {
+                // "Notice Period (in days)" / numeric fields reject the word Immediate.
+                if (/\\bin\\s*days\\b|number of days|notice period.*day|day\\(s\\)|valid number|decimals allowed/.test(t)) {
+                  return '0';
+                }
+                return 'Immediate';
+              }
               if (/certify that|i certify|details mentioned in your resume|accurate and truthful/.test(t)) {
                 return 'yes';
               }
@@ -849,6 +856,7 @@ def fill_common_questions(sb) -> None:
                   (want === 'male' && /\\bmale\\b/.test(lab) && !/female/.test(lab)) ||
                   (want === 'Mr.' && /\\bmr\\.?\\b/.test(lab) && !/mrs|miss/.test(lab)) ||
                   (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than|currently serving|serving notice/.test(lab)) ||
+                  (want === '0' && /\\b0\\b|immediate|0\\s*day|0-15|less than|currently serving|serving notice/.test(lab)) ||
                   (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not|do not want/.test(lab));
                 if (hit) {
                   try { r.click(); } catch (e) {}
@@ -863,6 +871,7 @@ def fill_common_questions(sb) -> None:
                     (want === 'yes' && /\\byes\\b/.test(t)) ||
                     (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs/.test(t)) ||
                     (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than/.test(t)) ||
+                    (want === '0' && /\\b0\\b|immediate|0\\s*day|0-15|less than/.test(t)) ||
                     (want === 'Hyderabad' && /hyderabad/.test(t)) ||
                     (want === '52' && /\\b52\\b|50-55|45-55/.test(t)) ||
                     (want === '65' && /\\b65\\b|60-70|60-65/.test(t)) ||
@@ -881,6 +890,16 @@ def fill_common_questions(sb) -> None:
               for (const el of root.querySelectorAll('input:not([type=radio]):not([type=checkbox]):not([type=file]):not([type=hidden]), textarea')) {
                 if (el.disabled || el.readOnly) continue;
                 if (want === 'decline') continue;
+                if (want === 'Immediate') {
+                  const type = (el.getAttribute('type') || '').toLowerCase();
+                  const mode = (el.getAttribute('inputmode') || '').toLowerCase();
+                  const lab = labelFor(el);
+                  if (type === 'number' || /numeric|decimal/.test(mode)
+                      || /\\bin\\s*days\\b|number of days|notice period.*day|day\\(s\\)/.test(lab)) {
+                    setNative(el, '0');
+                    return true;
+                  }
+                }
                 if (want) { setNative(el, want); return true; }
               }
               // Custom listbox / button options (Indeed education / years are often comboboxes).
@@ -898,6 +917,7 @@ def fill_common_questions(sb) -> None:
                 if (want === 'yes' && /\\byes\\b|i certify|yes, i certify/.test(t) && !/don'?t certify|\\bno,/.test(t)) { el.click(); return true; }
                 if (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs/.test(t)) { el.click(); return true; }
                 if (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15/.test(t)) { el.click(); return true; }
+                if (want === '0' && /\\b0\\b|immediate|0\\s*day|0-15/.test(t) && !/select an option|notice period/.test(t)) { el.click(); return true; }
                 if (want === 'B.Tech' && /b\\.?\\s*tech|bachelor|b\\.e\\b|undergraduate|master'?s?|m\\.?\\s*tech/.test(t)
                     && !/select an option|highest degree/.test(t)) {
                   el.click(); return true;
@@ -954,7 +974,13 @@ def fill_common_questions(sb) -> None:
               else if (/current.*(ctc|salary|compensation|package)|ctc.*current|current salary/.test(lab)) val = vals.current;
               else if (/expected.*(ctc|salary|compensation|package)|ctc.*expected/.test(lab)) val = vals.expected;
               else if (/earliest start|start date|available from|joining date/.test(lab) || (type === 'date' && /start|join|avail/.test(lab))) val = '15/08/2026';
-              else if (/notice|joining|availability/.test(lab) && !/start date|available from/.test(lab)) val = vals.notice;
+              else if (/notice|joining|availability/.test(lab) && !/start date|available from/.test(lab)) {
+                const mode = (el.getAttribute('inputmode') || '').toLowerCase();
+                const numericNotice = type === 'number' || /numeric|decimal/.test(mode)
+                  || /\\bin\\s*days\\b|number of days|notice period.*day|day\\(s\\)/.test(lab)
+                  || /^immediate$/i.test((el.value || '').trim());
+                val = numericNotice ? vals.noticeDays : vals.notice;
+              }
               else if (/city|location|current\\s*location/.test(lab)) val = vals.city;
               else if (/experience|years/.test(lab)) val = vals.experience;
               else if (!(el.value || '').trim()) {
@@ -987,7 +1013,7 @@ def fill_common_questions(sb) -> None:
             for (const sel of document.querySelectorAll('select')) {
               if (sel.disabled || (sel.value && sel.selectedIndex > 0)) continue;
               const lab = labelFor(sel);
-              if (/country|dial|phone/.test(lab)) {
+              if (/country|dial|phone|phone.?code|calling.?code/.test(lab)) {
                 for (const opt of sel.options) {
                   if (/india|\\+91|^in$/i.test(opt.text + ' ' + opt.value)) {
                     sel.value = opt.value;
@@ -1006,6 +1032,42 @@ def fill_common_questions(sb) -> None:
                   break;
                 }
               }
+            }
+            // SmartApply Country / dial-code comboboxes (often not native <select>).
+            const pickIndiaOption = () => {
+              const opts = [...document.querySelectorAll('[role=option], li, button, div, span, a')];
+              for (const el of opts) {
+                const t = ((el.innerText || '') + ' ' + (el.getAttribute('aria-label') || '')).trim();
+                if (!t || t.length > 80) continue;
+                if (/india|\\+\\s*91|\\+91/.test(t) && !/indiana|indianapol/i.test(t)) {
+                  try { el.click(); return true; } catch (e) {}
+                }
+              }
+              return false;
+            };
+            const countryTriggers = [...document.querySelectorAll(
+              'button, [role=combobox], [aria-haspopup=listbox], select, [class*="dropdown"], [data-testid*="country"]'
+            )];
+            for (const el of countryTriggers) {
+              const wrap = el.closest('fieldset, [class*="question"], [class*="Question"], li, section, label, div') || el.parentElement || el;
+              const ctx = ((wrap.innerText || '') + ' ' + (el.getAttribute('aria-label') || '') + ' ' + (el.innerText || '')).toLowerCase().slice(0, 280);
+              const looksCountry = /\\bcountry\\b|dial.?code|calling.?code|phone.?code|country code/.test(ctx);
+              const needsPick = /select an option|^select$|choose an option|select country/.test((el.innerText || '') + ' ' + (el.getAttribute('aria-label') || ''))
+                || (el.tagName === 'SELECT' && (el.selectedIndex <= 0));
+              if (!looksCountry || !needsPick) continue;
+              try { el.click(); } catch (e) {}
+              if (pickIndiaOption()) { answered += 1; }
+            }
+            // If validation already shows "Choose an option" under Country, open + India.
+            for (const err of document.querySelectorAll('[class*="error"], [role=alert], span, p, div')) {
+              const et = (err.innerText || '').trim();
+              if (!/choose an option to continue/i.test(et)) continue;
+              const root = err.closest('fieldset, [class*="question"], [class*="Question"], li, section, form, div') || document.body;
+              const ctx = (root.innerText || '').toLowerCase().slice(0, 400);
+              if (!/\\bcountry\\b|dial|phone/.test(ctx)) continue;
+              const trigger = root.querySelector('button, [role=combobox], [aria-haspopup=listbox], select');
+              if (trigger) { try { trigger.click(); } catch (e) {} }
+              if (pickIndiaOption()) { answered += 1; break; }
             }
             // Required acknowledgment / privacy checkboxes (Mattel / Nagarro etc.).
             // Click the input ONCE — also clicking the wrapping label unchecks it.
@@ -1106,11 +1168,25 @@ def tick_required_agreements(sb) -> dict:
               .find(e => /choose an option to continue/i.test(e.innerText || ''));
             if (err) {
               const root = err.closest('fieldset, [class*="question"], [class*="Question"], li, section, form, div') || document.body;
-              const opt = [...root.querySelectorAll('label, button, [role=option], [role=radio], [role=checkbox], input')]
-                .find(e => /^agree\b|^yes\b/i.test(((e.innerText || '') + ' ' + (e.getAttribute('aria-label') || '') + ' ' + (e.value || '')).trim()));
-              if (opt) {
-                const box = associatedBox(opt) || opt;
-                if (!isOn(box)) tick(box, 'validation-agree');
+              const ctx = (root.innerText || '').toLowerCase().slice(0, 400);
+              if (/\bcountry\b|dial.?code|calling.?code|phone.?code/.test(ctx)) {
+                const trigger = root.querySelector('button, [role=combobox], [aria-haspopup=listbox], select');
+                if (trigger) { try { trigger.click(); } catch (e) {} }
+                const india = [...document.querySelectorAll('[role=option], li, button, div, span, a')]
+                  .find(e => {
+                    const t = ((e.innerText || '') + ' ' + (e.getAttribute('aria-label') || '')).trim();
+                    return t && t.length <= 80 && /india|\+\s*91|\+91/.test(t) && !/indiana|indianapol/i.test(t);
+                  });
+                if (india) {
+                  try { india.click(); clicked.push('validation-country-india'); } catch (e) {}
+                }
+              } else {
+                const opt = [...root.querySelectorAll('label, button, [role=option], [role=radio], [role=checkbox], input')]
+                  .find(e => /^agree\b|^yes\b/i.test(((e.innerText || '') + ' ' + (e.getAttribute('aria-label') || '') + ' ' + (e.value || '')).trim()));
+                if (opt) {
+                  const box = associatedBox(opt) || opt;
+                  if (!isOn(box)) tick(box, 'validation-agree');
+                }
               }
             }
             return {clicked, url: location.href};
