@@ -91,9 +91,12 @@ function experienceBounds(job, title) {
   return { min, max, undisclosed: false };
 }
 
-/** Underscore / pipe titles ("Technical Architect_.NET", "IN_Senior_…") need word breaks. */
+/** Underscore / pipe / comma titles ("Technical Architect_.NET", "Software Engineering, Manager") need word breaks. */
 function titleForMatch(title) {
-  return String(title || "").replace(/[_|/]+/g, " ");
+  return String(title || "")
+    .replace(/[_|/,]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function hasDotNetProof(text) {

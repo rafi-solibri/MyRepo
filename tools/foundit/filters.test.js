@@ -604,6 +604,24 @@ assert.strictEqual(
 );
 
 assert.strictEqual(
+  isArchLeadTitle("Software Engineering, Manager"),
+  true,
+  "comma before Manager must still count as software engineering manager"
+);
+assert.strictEqual(
+  classifyJob({
+    jobId: 40,
+    title: "Software Engineering, Manager",
+    companyName: "Newfold Digital",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: "Azure" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  true,
+  "Hyd Software Engineering, Manager without .NET skills laundry may pass"
+);
+assert.strictEqual(
   isArchLeadTitle("Lead Software Engineer"),
   true,
   "Lead Software Engineer is Naukri-parity arch/lead"
