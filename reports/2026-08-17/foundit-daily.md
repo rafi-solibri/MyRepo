@@ -6,6 +6,7 @@
 - First pass (morning cron): Applied tab **460 → 464** (+4)
 - Post-fix re-run on #206 (no filter change): **464 → 464** (+0) — false-skipped Arch/Lead
 - After filter fix (this session): **464 → 478** (+14). Intentional logged: **14**
+- Comma-title confirmation pass: **478 → 478** (+0) — Newfold `Software Engineering, Manager` is Mumbai (correct skip)
 - **Today total: 18** Foundit applies (4 morning + 14 this session)
 - Filter-fix run: Skipped 1182 · Duplicates 71 · Blocked 0 · age → **3650d**
 - Artifact: `/opt/cursor/artifacts/foundit-apply-report.json`
