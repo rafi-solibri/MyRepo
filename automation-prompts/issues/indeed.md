@@ -1,5 +1,12 @@
 # Indeed — issues & fixes
 
+## 2026-08-17 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| SmartApply Notice Period (in days) filled as Immediate; Country phone dial combobox left on Select an option → easy_apply_incomplete | fill_common_questions: numeric notice→0; Country/+91 combobox + validation recovery for Choose an option on Country |
+
+
 ## 2026-08-16 (cloud)
 
 | Issue | Fix |
