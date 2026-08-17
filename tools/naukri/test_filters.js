@@ -3,6 +3,7 @@
 const assert = require("assert");
 const {
   shouldSkipTitle,
+  shouldSkipCompany,
   hasDotNet,
   isArchLeadTitle,
   parseNaukriCardLines,
@@ -195,6 +196,41 @@ assert.strictEqual(
   shouldSkipTitle("Manager Cyber Architecture, OT & Engineering"),
   true,
   "Cyber Architecture must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Lead System Architect"),
+  true,
+  "Pega LSA title must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("AI Engineering Manager"),
+  true,
+  "AI Engineering Manager without .NET must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Data Architect"),
+  true,
+  "Data Architect without .NET must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("GCP Infra Architect - S"),
+  true,
+  "GCP Infra Architect without .NET must skip"
+);
+assert.strictEqual(
+  shouldSkipCompany("Pega"),
+  true,
+  "Pega employer must skip even if title omits Pega"
+);
+assert.strictEqual(
+  shouldSkipCompany("Pegasystems Worldwide India Pvt Ltd"),
+  true,
+  "Pegasystems employer must skip"
+);
+assert.strictEqual(
+  shouldSkipCompany("Redwood Software India"),
+  false,
+  "non-Pega employer must not company-skip"
 );
 assert.strictEqual(shouldSkipTitle("Senior .NET Architect"), false);
 assert.strictEqual(isArchLeadTitle("Dot Net Fullstack Developer"), false);
