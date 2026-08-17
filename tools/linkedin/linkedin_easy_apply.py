@@ -1637,7 +1637,8 @@ def _ids_from_report_obj(data: Any) -> set[str]:
         return out
     if not isinstance(data, dict):
         return out
-    for key in ("submitted", "applied", "all", "blocked", "skipped", "external_candidates"):
+    # Never ingest skipped/all — a false-skip run must not hide unapplied jobs.
+    for key in ("submitted", "applied", "blocked"):
         rows = data.get(key)
         if not isinstance(rows, list):
             continue
@@ -1646,9 +1647,6 @@ def _ids_from_report_obj(data: Any) -> set[str]:
                 continue
             jid = str(row.get("job_id") or row.get("jobId") or "").strip()
             if jid.isdigit():
-                out.add(jid)
-            # Only treat submitted/applied as hard-seen when scanning "all"
-            if key in ("submitted", "applied") and jid.isdigit():
                 out.add(jid)
     for jid in data.get("ids") or data.get("jobIds") or []:
         s = str(jid).strip()
@@ -1688,20 +1686,27 @@ def load_prior_seen_ids(seed: set[str] | None = None) -> set[str]:
     return seen
 
 
-def persist_seen_ids(seen: set[str], results: list[JobResult]) -> None:
-    """Rolling artifact so tomorrow's run does not rely on hardcoded IDs alone."""
+def persist_seen_ids(seen: set[str], results: list[JobResult], seed: set[str] | None = None) -> None:
+    """Persist seed + submitted/applied/blocked only — never title-skip scans."""
+    durable = set(seed or ())
     for r in results:
-        if r.status in ("submitted", "blocked") and (r.job_id or "").isdigit():
-            seen.add(r.job_id)
+        jid = (r.job_id or "").strip()
+        if not jid.isdigit():
+            continue
+        if r.status in ("submitted", "blocked"):
+            durable.add(jid)
+        if r.status == "skipped" and (r.reason or "") == "already applied":
+            durable.add(jid)
+        seen.add(jid)
     try:
         SEEN_IDS_PATH.parent.mkdir(parents=True, exist_ok=True)
         payload = {
             "updatedAt": datetime.now(timezone.utc).isoformat(),
-            "ids": sorted(seen),
-            "count": len(seen),
+            "ids": sorted(durable),
+            "count": len(durable),
         }
         SEEN_IDS_PATH.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-        print(f"DEDUP wrote {len(seen)} ids → {SEEN_IDS_PATH}", flush=True)
+        print(f"DEDUP wrote {len(durable)} durable ids → {SEEN_IDS_PATH}", flush=True)
     except Exception as e:
         print(f"DEDUP persist failed: {e}", flush=True)
 
@@ -2227,7 +2232,25 @@ def main() -> None:
         # Auth check (retry once — first paint can look like a login wall)
         signed_in = False
         for auth_try in range(2):
-            page.goto("https://www.linkedin.com/feed/", wait_until="domcontentloaded", timeout=60000)
+            feed_ok = False
+            last_feed_err = ""
+            for nav_try in range(3):
+                try:
+                    page.goto(
+                        search_url("x", "y").split("/jobs/search")[0] + "/feed/",
+                        wait_until="domcontentloaded",
+                        timeout=60000,
+                    )
+                    feed_ok = True
+                    break
+                except Exception as e:
+                    last_feed_err = str(e)[:180]
+                    print(f"  WARN: feed goto failed (try {nav_try + 1}/3): {last_feed_err}", flush=True)
+                    time.sleep(6 + nav_try * 8)
+            if not feed_ok:
+                print(f"  WARN: feed still failing: {last_feed_err}", flush=True)
+                time.sleep(2)
+                continue
             time.sleep(2 + auth_try)
             url_l = (page.url or "").lower()
             if re.search(r"/login|authwall|/checkpoint|uas/login", url_l):
@@ -2300,7 +2323,7 @@ def main() -> None:
                 "all": [asdict(r) for r in results],
             }
             OUT.write_text(json.dumps(report, indent=2))
-            persist_seen_ids(seen, results)
+            persist_seen_ids(seen, results, seed_seen)
             print("=== SUMMARY ===")
             print("submitted", len(report["submitted"]))
             print("skipped", len(report["skipped"]))

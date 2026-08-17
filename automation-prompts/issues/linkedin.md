@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| killed first pass persisted false-skip job IDs; next start hid Impetus/Kandou and feed 999 crashed auth | persist seed+submitted/applied only; do not load skipped IDs from reports; retry feed goto on HTTP 999 |
 | search cards union + page-wide first /jobs/view/ link false-skipped every later job as first-card title (Java/Data Engineer) | unique li[data-occludable-job-id]; parse title from list card; scope parse_card_meta to detail pane; goto /jobs/view/{id} when click does not select |
 
 
