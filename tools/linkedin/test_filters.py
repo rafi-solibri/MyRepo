@@ -2,7 +2,7 @@
 """Unit checks for LinkedIn title/JD skip logic (no browser)."""
 from __future__ import annotations
 
-from filters import TITLE_OK, skip_reason
+from filters import TITLE_OK, location_allowed, skip_reason
 
 
 def assert_true(cond, msg):
@@ -67,6 +67,10 @@ assert_true(
     skip_reason("AI/ML Architect", "ToggleNow", "") is not None,
     "AI/ML Architect title must skip",
 )
+assert_true(
+    skip_reason("Senior SoC Director", "Acme", "") is not None,
+    "SoC / silicon hardware director must skip",
+)
 
 for title in [
     "Director, Senior Engineering (.Net FullStack + AI/ML)",
@@ -77,5 +81,49 @@ for title in [
     "Application Architect",
 ]:
     assert_true(TITLE_OK.search(title), f"TITLE_OK should match: {title}")
+
+# Location: primary line wins — chrome Hyd must not false-allow Bengaluru/Mumbai
+assert_true(
+    location_allowed("Hyderabad, Telangana, India · 2 days ago", "On-site"),
+    "Hyderabad primary must allow",
+)
+assert_true(
+    location_allowed("Bengaluru & Hyderabad · 1 day ago", "Hybrid"),
+    "dual-city with Hyderabad must allow",
+)
+assert_true(
+    not location_allowed(
+        "Greater Bengaluru Area · 2 days ago · 42 applicants",
+        "Remote Hyderabad profile chrome leak",
+    ),
+    "Bengaluru primary must reject even if workplace mentions Hyderabad",
+)
+assert_true(
+    not location_allowed(
+        "Mumbai, Maharashtra, India · 6 days ago",
+        "Hyderabad, Telangana · Easy Apply",
+    ),
+    "Mumbai primary must reject despite Hyd in workplace scrape",
+)
+assert_true(
+    not location_allowed("Panchgani, Maharashtra, India · 3 days ago", "Remote"),
+    "Panchgani/Maharashtra must reject",
+)
+assert_true(
+    location_allowed("India · 7 minutes ago · 0 applicants", "Remote", remote_search=True),
+    "India + remote_search must allow",
+)
+assert_true(
+    not location_allowed("", "Remote Hyderabad", remote_search=True),
+    "empty primary location must reject",
+)
+assert_true(
+    location_allowed(
+        "India · 4 minutes ago",
+        "Bengaluru people-you-can-reach chrome",
+        remote_search=True,
+    ),
+    "India primary + remote_search must allow even if workplace has other cities",
+)
 
 print("filters self-test OK")
