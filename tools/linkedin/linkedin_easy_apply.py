@@ -28,6 +28,7 @@ try:
         location_allowed,
         jd_blacklist,
         skip_reason,
+        parse_list_card_text,
     )
 except Exception:
     from filters import (  # type: ignore
@@ -42,6 +43,7 @@ except Exception:
         location_allowed,
         jd_blacklist,
         skip_reason,
+        parse_list_card_text,
     )
 
 CDP = os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222")
@@ -331,28 +333,41 @@ def ai_job_card_buttons(page: Page):
     )
 
 
+DETAIL_PANE_SEL = (
+    ".scaffold-layout__detail, .jobs-details, .job-view-layout, "
+    ".job-details-jobs-unified-top-card__container, .jobs-unified-top-card"
+)
+# Unique search-list cards only. Do NOT union nested div.job-card-container —
+# that double-counts the first visible jobs (25 lis + 8 nested divs = 33).
+JOB_CARD_SEL = "li[data-occludable-job-id]"
+JOB_CARD_FALLBACK_SEL = "div.job-card-container[data-job-id], li.jobs-search-results__list-item"
+
+
 def detail_panel_text(page: Page) -> str:
     """Top-card / detail pane text only — never full page chrome (filters say Remote)."""
+    # Scope to the detail column first. Bare a[href*="/jobs/view/"] matches the
+    # first *list* card and false-skips every later job as that title.
     try:
-        title_a = page.locator('a[href*="/jobs/view/"]').first
-        if title_a.count():
-            # Climb to a bounded detail root around the selected job title.
-            txt = title_a.evaluate(
-                """(a) => {
-                  let el = a;
-                  for (let i = 0; i < 10 && el; i++) {
-                    const t = (el.innerText || '').trim();
-                    if (t.length > 80 && t.length < 4000 &&
-                        /Easy Apply|Apply|About the job|Hybrid|Remote|On-site/i.test(t)) {
-                      return t.slice(0, 3500);
-                    }
-                    el = el.parentElement;
-                  }
-                  return (a.innerText || '').slice(0, 500);
-                }"""
-            )
-            if txt:
-                return txt
+        pane = page.locator(DETAIL_PANE_SEL).first
+        if pane.count():
+            title_a = pane.locator('a[href*="/jobs/view/"]').first
+            if title_a.count():
+                txt = title_a.evaluate(
+                    """(a) => {
+                      let el = a;
+                      for (let i = 0; i < 10 && el; i++) {
+                        const t = (el.innerText || '').trim();
+                        if (t.length > 80 && t.length < 4000 &&
+                            /Easy Apply|Apply|About the job|Hybrid|Remote|On-site/i.test(t)) {
+                          return t.slice(0, 3500);
+                        }
+                        el = el.parentElement;
+                      }
+                      return (a.innerText || '').slice(0, 500);
+                    }"""
+                )
+                if txt:
+                    return txt
     except Exception:
         pass
     # Classic fallbacks
@@ -1542,26 +1557,31 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
 
 def parse_card_meta(page: Page) -> tuple[str, str, str]:
     role = company = location = ""
+    # Detail column only — a page-wide first job-view link is the first list card.
     try:
-        role = page.locator(
+        pane = page.locator(DETAIL_PANE_SEL).first
+        scope = pane if pane.count() else page
+    except Exception:
+        scope = page
+    try:
+        role = scope.locator(
             ".job-details-jobs-unified-top-card__job-title, h1.t-24, "
-            ".jobs-unified-top-card__job-title, a[href*='/jobs/view/']"
+            "h1.job-title, .jobs-unified-top-card__job-title"
         ).first.inner_text(timeout=3000).strip()
         role = re.sub(r"\s+", " ", role).strip()
     except Exception:
         pass
     try:
-        company = page.locator(
+        company = scope.locator(
             ".job-details-jobs-unified-top-card__company-name a, "
             ".job-details-jobs-unified-top-card__company-name, "
-            ".jobs-unified-top-card__company-name a, "
-            "a[href*='/company/']"
+            ".jobs-unified-top-card__company-name a"
         ).first.inner_text(timeout=3000).strip()
         company = re.sub(r"\s+", " ", company).strip()
     except Exception:
         pass
     try:
-        location = page.locator(
+        location = scope.locator(
             ".job-details-jobs-unified-top-card__tertiary-description-container, "
             ".jobs-unified-top-card__bullet, "
             ".job-details-jobs-unified-top-card__primary-description-container"
@@ -1686,6 +1706,76 @@ def persist_seen_ids(seen: set[str], results: list[JobResult]) -> None:
         print(f"DEDUP persist failed: {e}", flush=True)
 
 
+def collect_search_cards(page: Page) -> list[dict[str, str]]:
+    """Unique job cards from the search list (id + title + company + location)."""
+    try:
+        raw = page.evaluate(
+            """() => {
+              const out = [];
+              const seen = new Set();
+              const pushEl = (el) => {
+                const id = el.getAttribute('data-occludable-job-id')
+                  || (el.querySelector('[data-job-id]')
+                      && el.querySelector('[data-job-id]').getAttribute('data-job-id'))
+                  || '';
+                if (!id || seen.has(id)) return;
+                seen.add(id);
+                const titleEl = el.querySelector(
+                  'a.job-card-list__title--link, a.job-card-container__link, '
+                  + 'a[href*="/jobs/view/"], strong, h3'
+                );
+                const companyEl = el.querySelector(
+                  '.artdeco-entity-lockup__subtitle, .job-card-container__primary-description, '
+                  + 'a[href*="/company/"]'
+                );
+                const locEl = el.querySelector(
+                  '.job-card-container__metadata-wrapper, .artdeco-entity-lockup__caption'
+                );
+                const text = (el.innerText || '').trim();
+                const title = (titleEl ? (titleEl.innerText || '') : (text.split('\\n')[0] || ''))
+                  .replace(/\\s+/g, ' ').replace(/\\s+with verification$/i, '').trim().slice(0, 180);
+                out.push({
+                  id: String(id),
+                  title,
+                  company: (companyEl ? companyEl.innerText : '').replace(/\\s+/g, ' ').trim().slice(0, 120),
+                  location: (locEl ? locEl.innerText : '').replace(/\\s+/g, ' ').trim().slice(0, 160),
+                  text: text.slice(0, 500),
+                });
+              };
+              document.querySelectorAll('li[data-occludable-job-id]').forEach(pushEl);
+              if (!out.length) {
+                document.querySelectorAll(
+                  'div.job-card-container[data-job-id], li.jobs-search-results__list-item'
+                ).forEach(pushEl);
+              }
+              return out;
+            }"""
+        )
+        return [c for c in (raw or []) if c.get("id")]
+    except Exception as e:
+        print(f"  WARN: collect_search_cards: {e}", flush=True)
+        return []
+
+
+def scroll_job_list(page: Page) -> None:
+    """Load occluded cards in the left-hand results scroller."""
+    for _ in range(6):
+        try:
+            page.evaluate(
+                """() => {
+                  const list = document.querySelector(
+                    '.scaffold-layout__list, .jobs-search-results-list, '
+                    + 'div.scaffold-layout__list > div'
+                  );
+                  if (list) list.scrollTop = list.scrollHeight;
+                  else window.scrollBy(0, 900);
+                }"""
+            )
+            time.sleep(0.45)
+        except Exception:
+            break
+
+
 def process_search(
     page: Page,
     keywords: str,
@@ -1725,87 +1815,173 @@ def process_search(
     close_overlays(page)
     shot(page, f"search-{keywords.replace(' ','_')[:30]}-{('remote' if remote else 'hyd')}-{tpr}.png")
 
-    # Classic list items OR LinkedIn AI job-search cards (hashed classes / search-results)
-    list_items = page.locator(
-        "li.scaffold-layout__list-item, li.jobs-search-results__list-item, div.job-card-container"
-    )
-    ai_cards = ai_job_card_buttons(page)
+    scroll_job_list(page)
+    cards = collect_search_cards(page)
     use_ai = False
-    n = min(list_items.count(), MAX_SCAN_PER_SEARCH)
-    if n == 0:
-        n = min(ai_cards.count(), MAX_SCAN_PER_SEARCH)
-        use_ai = n > 0
-    print(f"  cards={n} ai={use_ai or _is_ai_job_search(page)}", flush=True)
-    if n == 0:
-        # wait/reload once
-        time.sleep(3)
-        page.reload(wait_until="domcontentloaded")
-        time.sleep(4)
-        list_items = page.locator(
-            "li.scaffold-layout__list-item, li.jobs-search-results__list-item, div.job-card-container"
-        )
+    if not cards:
         ai_cards = ai_job_card_buttons(page)
-        n = min(list_items.count(), MAX_SCAN_PER_SEARCH)
-        use_ai = False
-        if n == 0:
-            n = min(ai_cards.count(), MAX_SCAN_PER_SEARCH)
-            use_ai = n > 0
-        print(f"  cards after reload={n} ai={use_ai}", flush=True)
+        n_ai = min(ai_cards.count(), MAX_SCAN_PER_SEARCH)
+        use_ai = n_ai > 0
+        if not use_ai:
+            time.sleep(3)
+            page.reload(wait_until="domcontentloaded")
+            time.sleep(4)
+            scroll_job_list(page)
+            cards = collect_search_cards(page)
+            if not cards:
+                ai_cards = ai_job_card_buttons(page)
+                n_ai = min(ai_cards.count(), MAX_SCAN_PER_SEARCH)
+                use_ai = n_ai > 0
+        print(f"  cards={len(cards) or n_ai} ai={use_ai or _is_ai_job_search(page)}", flush=True)
+    else:
+        print(f"  cards={len(cards)} unique ai={_is_ai_job_search(page)}", flush=True)
 
-    for i in range(n):
+    # Fallback: AI cards without occludable ids (rare).
+    if use_ai and not cards:
+        list_items = ai_job_card_buttons(page)
+        n = min(list_items.count(), MAX_SCAN_PER_SEARCH)
+        card_iter = [{"id": "", "title": "", "company": "", "location": "", "text": "", "_idx": i} for i in range(n)]
+    else:
+        card_iter = cards[:MAX_SCAN_PER_SEARCH]
+        list_items = page.locator(JOB_CARD_SEL)
+        if list_items.count() == 0:
+            list_items = page.locator(JOB_CARD_FALLBACK_SEL)
+
+    for i, card in enumerate(card_iter):
         if len([r for r in results if r.status == "submitted"]) >= MAX_APPLY:
             break
-        item = ai_cards.nth(i) if use_ai else list_items.nth(i)
-        card_text = ""
-        try:
-            card_text = (item.inner_text(timeout=2000) or "")[:500]
-        except Exception:
-            card_text = ""
+        card_text = card.get("text") or ""
+        if not card_text and use_ai:
+            try:
+                card_text = (list_items.nth(int(card.get("_idx", i))).inner_text(timeout=2000) or "")[:500]
+            except Exception:
+                card_text = ""
+        card_role, card_company, card_loc = parse_list_card_text(card_text)
+        if card.get("title") and not card_role:
+            card_role = card["title"]
+        if card.get("company") and not card_company:
+            card_company = card["company"]
+        if card.get("location") and not card_loc:
+            card_loc = card["location"]
 
         # Skip already-applied from list card text (AI UI shows Applied on the card)
         if re.search(r"(?:^|\n)\s*Applied\s*(?:\n|$)", card_text, re.I):
             results.append(
                 JobResult(
                     status="skipped",
-                    role=card_text.split("\n")[0][:120],
+                    role=(card_role or card_text.split("\n")[0][:120]),
+                    company=card_company,
+                    job_id=str(card.get("id") or ""),
+                    location=card_loc,
                     reason="already applied",
                 )
             )
-            print(f"  SKIP applied (card) {card_text.splitlines()[0][:80]}", flush=True)
+            print(f"  SKIP applied (card) {(card_role or card_text.splitlines()[0])[:80]}", flush=True)
             continue
 
+        jid = str(card.get("id") or "")
+        if jid and jid in seen:
+            continue
+
+        # Title-first skip from the *card* so a stale detail pane cannot
+        # false-skip Impetus/Kandou as the first result's Data Engineer/Java title.
+        if card_role:
+            bl_card = skip_reason(card_role, card_company, "")
+            if bl_card:
+                if jid:
+                    seen.add(jid)
+                results.append(
+                    JobResult(
+                        status="skipped",
+                        company=card_company,
+                        role=card_role,
+                        job_id=jid,
+                        location=card_loc,
+                        reason=f"blacklist: {bl_card}",
+                    )
+                )
+                print(f"  SKIP blacklist {bl_card} | {card_company} | {card_role}", flush=True)
+                continue
+            if not TITLE_OK.search(card_role):
+                if jid:
+                    seen.add(jid)
+                results.append(
+                    JobResult(
+                        status="skipped",
+                        company=card_company,
+                        role=card_role,
+                        job_id=jid,
+                        location=card_loc,
+                        reason=f"title mismatch: {card_role}",
+                    )
+                )
+                print(f"  SKIP title {card_role}", flush=True)
+                continue
+
         clicked = False
+        item = None
+        if jid:
+            item = page.locator(f'li[data-occludable-job-id="{jid}"]').first
+            if not item.count():
+                item = page.locator(f'div.job-card-container[data-job-id="{jid}"]').first
+        elif use_ai:
+            item = list_items.nth(int(card.get("_idx", i)))
         for attempt in range(3):
             try:
-                item.scroll_into_view_if_needed(timeout=2000)
-                item.click(timeout=3000)
-                time.sleep(1.5)
-                clicked = True
-                break
+                if item and item.count():
+                    item.scroll_into_view_if_needed(timeout=2000)
+                    link = item.locator(
+                        'a.job-card-list__title--link, a.job-card-container__link, a[href*="/jobs/view/"]'
+                    ).first
+                    if link.count():
+                        link.click(timeout=3000)
+                    else:
+                        item.click(timeout=3000)
+                    time.sleep(1.2)
+                    clicked = True
+                    break
             except Exception as e:
                 if attempt == 2:
-                    results.append(JobResult(status="skipped", reason=f"card click failed: {e}"))
+                    print(f"  WARN: card click failed id={jid}: {e}", flush=True)
                 else:
                     time.sleep(0.6)
+        if jid and (not clicked or extract_job_id(page.url) != jid):
+            try:
+                page.goto(
+                    f"https://www.[REDACTED].com/jobs/view/{jid}/",
+                    wait_until="domcontentloaded",
+                    timeout=60000,
+                )
+                time.sleep(1.8)
+                clicked = True
+            except Exception as e:
+                results.append(JobResult(status="skipped", job_id=jid, reason=f"card click failed: {e}"))
+                continue
         if not clicked:
             continue
 
         close_overlays(page)
         job_url = page.url
-        jid = extract_job_id(job_url)
+        jid = jid or extract_job_id(job_url)
         if jid and jid in seen:
             continue
         if jid:
             seen.add(jid)
 
         role, company, loc = parse_card_meta(page)
+        if card_role and (not role or role.lower() != card_role.lower()):
+            # Prefer the list-card title when detail parse still looks like another job.
+            if not role or skip_reason(role, company, "") or not TITLE_OK.search(role):
+                role, company, loc = card_role, card_company or company, card_loc or loc
         # Prefer location from selected card text when detail loc is empty/noisy
         if card_text and (not loc or len(loc) < 4):
-            for ln in card_text.splitlines():
-                ln = ln.strip()
-                if re.search(r"hyderabad|telangana|remote|hybrid|on-site|\bindia\b", ln, re.I):
-                    loc = ln[:200]
-                    break
+            loc = card_loc or loc
+            if not loc:
+                for ln in card_text.splitlines():
+                    ln = ln.strip()
+                    if re.search(r"hyderabad|telangana|remote|hybrid|on-site|\bindia\b", ln, re.I):
+                        loc = ln[:200]
+                        break
 
         # Workplace type ONLY from job top-card (never full page / filter chips /
         # People-you-can-reach chrome — those false-pass Remote or false-skip Hyd).
@@ -1904,10 +2080,9 @@ def process_search(
                 page.goto(url, wait_until="domcontentloaded", timeout=60000)
                 time.sleep(2.2)
                 close_overlays(page)
-                list_items = page.locator(
-                    "li.scaffold-layout__list-item, li.jobs-search-results__list-item, "
-                    "div.job-card-container"
-                )
+                list_items = page.locator(JOB_CARD_SEL)
+                if list_items.count() == 0:
+                    list_items = page.locator(JOB_CARD_FALLBACK_SEL)
                 ai_cards = ai_job_card_buttons(page)
                 if use_ai or list_items.count() == 0:
                     use_ai = ai_cards.count() > 0

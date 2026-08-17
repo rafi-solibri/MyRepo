@@ -118,6 +118,39 @@ def jd_blacklist(text: str) -> str | None:
     return m.group(0) if m else None
 
 
+def parse_list_card_text(card_text: str) -> tuple[str, str, str]:
+    """Title / company / location from a search-list card — never the detail pane.
+
+    Search-list cards repeat the title ('Foo\\nFoo with verification') and then
+    company + 'Hyderabad (On-site)'. Using the first `a[href*="/jobs/view/"]` on
+    the page falsely binds every card to the first result.
+    """
+    lines = [re.sub(r"\s+", " ", ln).strip() for ln in (card_text or "").splitlines()]
+    lines = [ln for ln in lines if ln]
+    role = company = location = ""
+    skip_re = re.compile(
+        r"^with verification$|^viewed$|^applied$|^easy apply$|^promoted$|"
+        r"^\d+\s+(school|connection)|alumni|work here|in easy apply",
+        re.I,
+    )
+    for ln in lines:
+        bare = re.sub(r"\s+with verification$", "", ln, flags=re.I).strip()
+        if skip_re.search(ln) or skip_re.search(bare):
+            continue
+        if re.search(r"hyderabad|telangana|remote|hybrid|on-site|\bindia\b", ln, re.I):
+            if not location:
+                location = ln[:200]
+            continue
+        if not role:
+            role = bare
+            continue
+        if bare.lower() == role.lower():
+            continue
+        if not company:
+            company = bare[:120]
+    return role, company, location
+
+
 def skip_reason(role: str, company: str = "", jd: str = "") -> str | None:
     """Return skip reason or None. Title blacklist first; JD only for hard mandatory stacks."""
     title = role or ""

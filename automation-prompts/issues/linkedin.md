@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-08-17 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| search cards union + page-wide first /jobs/view/ link false-skipped every later job as first-card title (Java/Data Engineer) | unique li[data-occludable-job-id]; parse title from list card; scope parse_card_meta to detail pane; goto /jobs/view/{id} when click does not select |
+
+
 ## 2026-08-15 (cloud)
 
 | Issue | Fix |
