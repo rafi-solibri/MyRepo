@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| PR #206 persist_retry used os.environ in ats_fill.attempt_ats_apply without importing os — parallel workers crashed after ATS submit (NameError) | Add module-level import os in ats_fill.py + unit test that persist_retry env read does not NameError |
 | Overnight OWNER_ASLEEP ignored: LinkedIn EXT burned 45+ min on Oracle soft incompletes + double persist_retry with 0 submits | Honor HITECHCITY_OWNER_ASLEEP /tmp flag: 45s ATS cap, 12s ASK_OWNER/captcha park, skip outer persist_retry, soft-incomplete cap 2/company |
 
 
