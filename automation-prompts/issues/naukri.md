@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-08-17 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Pega LSA / AI Engineering Manager / Data Architect / GCP Infra attempted; 3 apply_unconfirmed (no_chat) + Principal Financial chat_steps_exhausted; thin Hyd/.NET inventory | resume_and_filters: skip Lead System Architect + AI EM + Data/GCP Infra Architect; shouldSkipCompany for Pega/Coupa/Salesforce/SAP; daily_apply Escape+re-read Applied after no_chat |
+
+
 ## 2026-08-16 (cloud)
 
 | Issue | Fix |

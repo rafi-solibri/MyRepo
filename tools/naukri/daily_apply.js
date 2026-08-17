@@ -11,6 +11,7 @@ const {
   findResume,
   hasDotNet,
   shouldSkipTitleFromCard,
+  shouldSkipCompany,
   parseNaukriCardLines,
   isArchLeadTitle,
   EXPECTED_CTC_LPA,
@@ -1398,15 +1399,37 @@ async function confirmApplied(page, chatHint = null) {
     )
     .catch(() => false);
   if (viewApplied) return { ok: true, cta: "view_applied_jobs" };
-  // Close stuck chatbot drawer and re-read CTA once (Principal Financial pattern).
-  if (chatHint?.reason === "chat_steps_exhausted") {
+  // Close stuck chatbot drawer / empty-CTA overlay and re-read Applied once.
+  if (
+    chatHint?.reason === "chat_steps_exhausted" ||
+    chatHint?.reason === "no_chat"
+  ) {
     await page.keyboard.press("Escape").catch(() => {});
     await dismiss(page);
     await sleep(1200);
-    const again = await waitForAppliedCta(page, { timeoutMs: 6000 });
+    const again = await waitForAppliedCta(page, { timeoutMs: 8000 });
     if (again?.state === "applied") {
       return { ok: true, cta: again.label || "Applied" };
     }
+    const disabledAgain = await page
+      .evaluate(() => {
+        const buttons = [
+          ...document.querySelectorAll("button, a, [role='button']"),
+        ];
+        for (const btn of buttons) {
+          const raw = (btn.innerText || btn.getAttribute("aria-label") || "")
+            .replace(/\s+/g, " ")
+            .trim();
+          if (!/Quick apply|Applied/i.test(raw)) continue;
+          if (/company site|hirist|view applied/i.test(raw)) continue;
+          if (btn.disabled || btn.getAttribute("aria-disabled") === "true") {
+            return raw || "disabled_cta";
+          }
+        }
+        return "";
+      })
+      .catch(() => "");
+    if (disabledAgain) return { ok: true, cta: `disabled:${disabledAgain}` };
   }
   const detail = await readDetail(page);
   return { ok: false, cta: detail.cta || visible?.label || "" };
@@ -1704,9 +1727,12 @@ function decideSkip(card, { detailMode = false } = {}) {
     ? parseNaukriCardLines(String(blob).split("\n"))
     : null;
   const role = card.role || parsed?.role || "";
+  const company = card.company || parsed?.company || "";
   const loc = card.location || parsed?.location || "";
 
   if (card.already) return "already_applied";
+  // Coupa/Pega/Salesforce/SAP employers — title often omits the stack keyword.
+  if (shouldSkipCompany(company)) return "skip_company";
   // Title/role keyword skips only — never scan full page chrome (false "QA" hits).
   if (shouldSkipTitleFromCard(role, blob)) return "skip_title_keyword";
   const seniorTitle =
