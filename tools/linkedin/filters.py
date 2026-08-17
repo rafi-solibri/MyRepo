@@ -29,7 +29,10 @@ TITLE_BLACKLIST = re.compile(
     r"ai compiler|gen[- ]?ai architect|ai/?\s*ml architect|ai architect(?!.*\.net)|"
     r"ai technical (lead|architect)|"
     r"quality engineering|quality assurance|qa engineer|\bsdet\b|"
-    r"netsuite|nice cxone",
+    r"netsuite|nice cxone|"
+    # Hardware / chip (not software architect/director)
+    r"\bsoc\b|system[- ]?on[- ]?chip|\basic\b|rtl design|physical design|"
+    r"silicon|semiconductor|fpga|verilog|vhdl",
     re.I,
 )
 
@@ -79,7 +82,9 @@ INDIA_ONLY = re.compile(r"^(greater\s+)?india\b|^الهند\b", re.I)
 BAD_CITY = re.compile(
     r"bengaluru|bangalore|pune|chennai|mumbai|delhi|noida|gurgaon|gurugram|"
     r"ahmedabad|kolkata|jaipur|kochi|trivandrum|thiruvananthapuram|coimbatore|"
-    r"indore|nagpur|united states|\busa\b|\buk\b|london|singapore|dubai|"
+    r"indore|nagpur|panchgani|"
+    r"\bmaharashtra\b|\bkarnataka\b|\btamil nadu\b|\bharyana\b|"
+    r"united states|\busa\b|\buk\b|london|singapore|dubai|"
     r"toronto|canada|australia|germany|netherlands|"
     r"بنغالور|بنجالور|بانجلور|بوني|بونة|تشيناي|مومباي|دلهي|نويدا|جورجاون|"
     r"أحمد آباد|كولكاتا|جايبور|كوتشي|كوتشي|إندور|اندور|ناجبور|"
@@ -88,27 +93,61 @@ BAD_CITY = re.compile(
 )
 
 
+def _primary_location_line(loc: str) -> str:
+    """First location segment before ·/| and applicants noise — never full page chrome."""
+    loc_s = (loc or "").strip()
+    if not loc_s:
+        return ""
+    primary = re.split(r"\s*[·|]\s*", loc_s, maxsplit=1)[0].strip()
+    primary = primary.splitlines()[0].strip() if primary else ""
+    return primary[:160]
+
+
 def location_allowed(loc: str, workplace: str = "", *, remote_search: bool = False) -> bool:
-    """HARD filter: only job location/workplace strings — never page chrome/profile text."""
-    text = f"{loc} {workplace}".strip()
-    if not text:
+    """HARD filter: primary job location line + short workplace pills.
+
+    Never let profile chrome 'Hyderabad' in a long workplace scrape false-allow
+    Bengaluru/Mumbai. Empty primary location → reject.
+    """
+    loc_s = (loc or "").strip()
+    work_s = (workplace or "").strip()
+    if not loc_s and not work_s:
         return False
-    remoteish = bool(REMOTE_OK.search(text)) or remote_search
-    # Hyderabad (even dual-city "Delhi & Hyderabad") is allowed.
-    if HYD_OK.search(text):
+
+    loc_primary = _primary_location_line(loc_s)
+    # Workplace pills only — truncate so People/JD chrome cannot inject cities.
+    work_pills = "\n".join(work_s.splitlines()[:8])[:220]
+    remoteish = bool(REMOTE_OK.search(f"{loc_primary} {work_pills}")) or remote_search
+
+    # Hyderabad / Telangana on the primary location line (dual-city Hyd+BLR OK).
+    if loc_primary and HYD_OK.search(loc_primary):
         return True
-    # India-remote / bare Remote / WFH is OK — but Remote Canada/US/UK is not.
-    if REMOTE_OK.search(text):
-        if BAD_CITY.search(text) and not HYD_OK.search(text):
-            return False
-        return True
-    # Non-Hyd bad cities without Remote → reject
-    if BAD_CITY.search(text) and not REMOTE_OK.search(text):
+
+    # Non-Hyd city on the primary line → reject even if chrome mentions Hyd/Remote.
+    if loc_primary and BAD_CITY.search(loc_primary) and not HYD_OK.search(loc_primary):
         return False
-    if remoteish and INDIA_ONLY.search((loc or "").strip()):
-        return True
-    if remoteish and re.search(r"\bالهند\b", text) and not BAD_CITY.search(text):
-        return True
+
+    # India-remote / bare Remote / WFH (primary loc must not be a bad city — checked above).
+    if remoteish:
+        if loc_primary and (
+            INDIA_ONLY.search(loc_primary)
+            or REMOTE_OK.search(loc_primary)
+            or re.search(r"\bindia\b", loc_primary, re.I)
+        ):
+            return True
+        if REMOTE_OK.search(work_pills) and (
+            not loc_primary
+            or INDIA_ONLY.search(loc_primary)
+            or re.search(r"\bindia\b", loc_primary, re.I)
+        ):
+            # Empty primary with Remote pill alone is ambiguous — reject (prompt: empty → no).
+            if not loc_primary:
+                return False
+            return True
+        if remote_search and loc_primary and re.search(r"\bindia\b", loc_primary, re.I):
+            return True
+        return False
+
     return False
 
 

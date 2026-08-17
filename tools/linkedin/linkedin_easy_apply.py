@@ -1703,7 +1703,9 @@ def process_search(
     print(f"SEARCH [{ea}] {keywords!r} loc={location!r} remote={remote} tpr={tpr} -> {url}")
     navigated = False
     last_nav_err = ""
-    for nav_try in range(3):
+    # LinkedIn 999/429: longer backoff + more tries so thin windows are not abandoned.
+    nav_attempts = int(os.environ.get("LINKEDIN_SEARCH_NAV_TRIES", "5"))
+    for nav_try in range(nav_attempts):
         try:
             page.goto(url, wait_until="domcontentloaded", timeout=60000)
             navigated = True
@@ -1711,11 +1713,15 @@ def process_search(
         except Exception as e:
             last_nav_err = str(e)[:200]
             # LinkedIn rate-limit / transient HTTP failures (e.g. 429/999)
-            print(f"  WARN: search goto failed (try {nav_try + 1}/3): {last_nav_err}", flush=True)
-            time.sleep(4 + nav_try * 6)
+            print(
+                f"  WARN: search goto failed (try {nav_try + 1}/{nav_attempts}): {last_nav_err}",
+                flush=True,
+            )
+            # 12s, 28s, 50s, 80s, 120s — recover after burst 999s
+            time.sleep(12 + nav_try * 16 + (8 if "HTTP_RESPONSE_CODE" in last_nav_err else 0))
             try:
                 page.goto("https://www.linkedin.com/feed/", wait_until="domcontentloaded", timeout=45000)
-                time.sleep(2)
+                time.sleep(3 + nav_try)
             except Exception:
                 pass
     if not navigated:
@@ -1901,7 +1907,29 @@ def process_search(
             except Exception:
                 list_alive = False
             if on_view or not list_alive:
-                page.goto(url, wait_until="domcontentloaded", timeout=60000)
+                restored = False
+                for restore_try in range(3):
+                    try:
+                        page.goto(url, wait_until="domcontentloaded", timeout=60000)
+                        restored = True
+                        break
+                    except Exception as re:
+                        print(
+                            f"  WARN: restore search retry {restore_try + 1}/3: {str(re)[:120]}",
+                            flush=True,
+                        )
+                        time.sleep(8 + restore_try * 12)
+                        try:
+                            page.goto(
+                                "https://www.linkedin.com/feed/",
+                                wait_until="domcontentloaded",
+                                timeout=45000,
+                            )
+                            time.sleep(2)
+                        except Exception:
+                            pass
+                if not restored:
+                    raise RuntimeError("restore search navigation failed")
                 time.sleep(2.2)
                 close_overlays(page)
                 list_items = page.locator(
