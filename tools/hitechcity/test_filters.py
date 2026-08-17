@@ -4,6 +4,7 @@
 import re
 
 from tools.hitechcity.ats_fill import (
+    attempt_ats_apply,
     auth_wall_url,
     blocked_wall,
     frame_url_is_captcha_challenge,
@@ -392,6 +393,20 @@ def test_hyland_icims_url():
     )
 
 
+def test_attempt_ats_apply_persist_env_no_nameerror():
+    """#206 persist-retry env read must not raise NameError for missing os."""
+    from unittest.mock import MagicMock, patch
+
+    page = MagicMock()
+    with (
+        patch("tools.ats.complete.complete_ats", return_value=("applied", "ok")),
+        patch("tools.ats.complete.owner_asleep", return_value=True),
+    ):
+        status, reason = attempt_ats_apply(page, time_cap_s=5)
+    assert status == "applied"
+    assert reason == "ok"
+
+
 def test_skip_uhg_default():
     import os
 
@@ -443,5 +458,6 @@ if __name__ == "__main__":
     test_workday_create_account_is_completable()
     test_indeed_oauth_url_is_login_wall()
     test_hyland_icims_url()
+    test_attempt_ats_apply_persist_env_no_nameerror()
     test_skip_uhg_default()
     print("ok")
