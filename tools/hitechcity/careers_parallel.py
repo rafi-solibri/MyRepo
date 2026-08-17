@@ -32,8 +32,8 @@ def _worker(payload: tuple[int, list[dict[str, Any]]]) -> dict[str, Any]:
     """Process one company chunk in an isolated process + dedicated Chrome tab."""
     worker_id, companies = payload
     os.environ["HITECHCITY_PARALLEL_WORKER"] = str(worker_id)
-    # Avoid nested parallel fan-out inside the worker.
-    os.environ["HITECHCITY_PARALLEL_TABS"] = "1"
+    # Keep the 10-tab budget so prune/claim cannot close sibling worker tabs.
+    # Nested fan-out is blocked by the worker env flag, not by dropping the cap.
     started = datetime.now(timezone.utc).isoformat()
     out: dict[str, Any] = {
         "workerId": worker_id,
@@ -77,13 +77,18 @@ def run_parallel(companies: list[dict[str, Any]]) -> Any:
     """Fan out companies across PARALLEL_TABS Chrome tabs (separate processes)."""
     from tools.hitechcity.careers_apply import CareersReport
 
-    n = max(1, int(os.environ.get("HITECHCITY_PARALLEL_TABS", str(PARALLEL_TABS))))
-    # Cap workers to company count and a hard ceiling (Chrome stability).
-    n = max(1, min(n, len(companies), 12))
+    from tools.ats.tab_budget import HARD_CEILING, max_parallel_tabs, prepare_parallel_tabs
+
+    n = max_parallel_tabs()
+    n = max(1, min(n, len(companies), HARD_CEILING))
     chunks = _chunk(companies, n)
+    try:
+        prepare_parallel_tabs(len(chunks))
+    except Exception as e:
+        print(f"CAREERS TAB_POOL prepare_failed {e} — workers will claim tabs under cap=10", flush=True)
     print(
         f"CAREERS PARALLEL start tabs={len(chunks)} companies={len(companies)} "
-        f"target≈50 submits/day — solve captchas in any waiting tab",
+        f"target≈50 submits/day — 10 tabs max; captcha tab focused once when needed",
         flush=True,
     )
     report = CareersReport(startedAt=datetime.now(timezone.utc).isoformat())

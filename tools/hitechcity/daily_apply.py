@@ -45,7 +45,12 @@ os.environ.setdefault("HITECHCITY_DISCOVERY", "1")
 os.environ.setdefault("HITECHCITY_DISCOVERY_LINKEDIN", "0")
 os.environ.setdefault("HITECHCITY_DISCOVERY_WEB", "1")
 os.environ.setdefault("ATS_CAPTCHA_POLL_SEC", "0.4")
-os.environ.setdefault("ATS_OWNER_FOCUS_EVERY_SEC", "2")
+os.environ.setdefault("ATS_OWNER_FOCUS_EVERY_SEC", "0")
+# Visible desktop (cloud DISPLAY or home) → headed so owner can click captcha.
+if (os.environ.get("DISPLAY") or "").strip() and not _owner_asleep_bootstrap():
+    os.environ.setdefault("CHROME_HEADLESS", "0")
+    os.environ.setdefault("ATS_CAPTCHA_WAIT_SEC", "180")
+    os.environ.setdefault("ATS_OWNER_FORM_WAIT_SEC", "180")
 
 # Overnight / owner-asleep: short park on captcha/forms, skip long persist retries,
 # and cap soft incompletes per company so LinkedIn volume reaches Easy Apply + boards.

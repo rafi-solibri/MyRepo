@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| re-focus every 2s yanked the front tab so owner could not move between the 10 parallel tabs; workers also set PARALLEL_TABS=1 and pruned sibling tabs | hard-cap 10 tagged tabs; workers keep the 10-tab budget; captcha/ASK_OWNER focus once (ATS_OWNER_FOCUS_EVERY_SEC=0) so owner can switch freely while other tabs keep applying |
 | Headed careers fail-fasted CAPTCHA/bot wall before ASK_OWNER wait so owner never got 300s to click | When owner captcha wait > 0, park on focused tab via wait_for_owner_hcaptcha instead of immediate block |
 
 

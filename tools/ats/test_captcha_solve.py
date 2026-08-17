@@ -53,8 +53,10 @@ _saved = {
     k: os.environ.get(k)
     for k in ("ATS_CAPTCHA_WAIT_SEC", "HOME_LOCAL", "CHROME_HEADLESS", "HITECHCITY_OWNER_ASLEEP")
 }
+_saved_display = os.environ.get("DISPLAY")
 for k in ("ATS_CAPTCHA_WAIT_SEC", "HOME_LOCAL", "CHROME_HEADLESS", "HITECHCITY_OWNER_ASLEEP"):
     os.environ.pop(k, None)
+os.environ.pop("DISPLAY", None)
 _asleep_flags = []
 for _p in ("/tmp/hitechcity-owner-asleep", "/tmp/ats-owner-asleep"):
     _path = Path(_p)
@@ -86,6 +88,10 @@ for k, v in _saved.items():
         os.environ.pop(k, None)
     else:
         os.environ[k] = v
+if _saved_display is None:
+    os.environ.pop("DISPLAY", None)
+else:
+    os.environ["DISPLAY"] = _saved_display
 
 assert_true(not inject_hcaptcha_token(object(), ""), "short token rejected")
 assert_true(not inject_hcaptcha_token(object(), "short"), "short token rejected 2")
@@ -189,11 +195,13 @@ assert_true(owner_hcaptcha_cleared(_wall, start_url=_wall.url) is None, "login w
 
 _focus_saved = os.environ.get("ATS_OWNER_FOCUS_EVERY_SEC")
 os.environ.pop("ATS_OWNER_FOCUS_EVERY_SEC", None)
-assert_true(owner_focus_interval_sec() == 2.0, "default focus every 2s")
+assert_true(owner_focus_interval_sec() == 0.0, "default focus once")
 os.environ["ATS_OWNER_FOCUS_EVERY_SEC"] = "1.5"
 assert_true(owner_focus_interval_sec() == 1.5, "explicit focus interval")
 os.environ["ATS_OWNER_FOCUS_EVERY_SEC"] = "99"
-assert_true(owner_focus_interval_sec() == 10.0, "focus interval capped")
+assert_true(owner_focus_interval_sec() == 30.0, "focus interval capped")
+os.environ["ATS_OWNER_FOCUS_EVERY_SEC"] = "once"
+assert_true(owner_focus_interval_sec() == 0.0, "once disables hold-loop")
 if _focus_saved is None:
     os.environ.pop("ATS_OWNER_FOCUS_EVERY_SEC", None)
 else:

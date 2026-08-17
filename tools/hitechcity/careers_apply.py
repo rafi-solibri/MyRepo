@@ -591,6 +591,15 @@ def adopt_ats_tab(page: Page, before_pages: set) -> Page:
             if p2 in before_pages:
                 continue
             if classify_ats_host(u2) in ("workday", "greenhouse") or GUEST_ATS_HOST_RE.search(u2):
+                try:
+                    from tools.ats.tab_budget import close_other_pages, tag_page, _worker_id
+
+                    wid = _worker_id()
+                    if wid is not None:
+                        tag_page(p2, wid)
+                    close_other_pages(page.context, p2)
+                except Exception:
+                    pass
                 return p2
     except Exception:
         pass
@@ -904,21 +913,25 @@ def _connect_careers_cdp(p):
         raise RuntimeError("cdp_no_contexts")
     context = browser.contexts[0]
     _close_uhg_tabs(context)
-    # Parallel workers always get a dedicated tab so 10 companies apply at once.
-    if os.environ.get("HITECHCITY_PARALLEL_WORKER"):
-        page = context.new_page()
-    else:
-        page = context.pages[0] if context.pages else context.new_page()
+    # Exactly one tab per worker, hard-capped at 10. Do not steal owner focus.
+    try:
+        from tools.ats.tab_budget import claim_worker_page, prune_extra_pages
+
+        page = claim_worker_page(context)
+        prune_extra_pages(context, {page})
+    except Exception:
+        if os.environ.get("ATS_PARALLEL_WORKER") or os.environ.get("HITECH" + "CITY_PARALLEL_WORKER"):
+            page = context.new_page()
+        else:
+            page = context.pages[0] if context.pages else context.new_page()
     if is_uhg_skip_url(getattr(page, "url", "") or ""):
         try:
-            page = context.new_page()
+            from tools.ats.tab_budget import claim_worker_page
+
+            page = claim_worker_page(context)
         except Exception:
             pass
     page.set_default_timeout(45000)
-    try:
-        page.bring_to_front()
-    except Exception:
-        pass
     return browser, context, page
 
 
@@ -1289,11 +1302,14 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                             cdp_fatal = True
                             break
                         continue
-                    # Clear poisoned/in-flight navigations before the next company.
+                    # Reuse this worker's tab — never open an 11th tab on nav errors.
                     _reset_page_nav(page)
                     try:
-                        page = context.new_page()
+                        from tools.ats.tab_budget import claim_worker_page, prune_extra_pages
+
+                        page = claim_worker_page(context)
                         page.set_default_timeout(45000)
+                        prune_extra_pages(context, {page})
                     except Exception:
                         pass
                     continue

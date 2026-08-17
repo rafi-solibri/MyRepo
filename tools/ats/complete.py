@@ -2141,14 +2141,18 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
     if asleep:
         wait = min(wait, 12)
     msg = hint or "required fields (e.g. Source / How did you hear), login, or Submit"
+    release_owner_attention = None
     try:
         from tools.ats.captcha_solve import focus_page_for_owner, owner_focus_interval_sec
+        from tools.ats.owner_focus import acquire_owner_attention, release_owner_attention
 
-        focus_page_for_owner(page, reason="ask_owner_start")
+        acquire_owner_attention("ask_owner", blocking=True, timeout_s=min(30.0, float(wait)))
+        focus_page_for_owner(page, reason="ask_owner_start", exclusive=False)
         focus_every = owner_focus_interval_sec()
     except Exception:
         focus_page_for_owner = None  # type: ignore
-        focus_every = 2.0
+        release_owner_attention = None  # type: ignore
+        focus_every = 0.0
     print(
         f"ASK_OWNER wait={wait}s{' (owner_asleep)' if asleep else ''} — finish {msg} in the focused Chrome tab, then Submit. "
         f"Helper keeps filling Source/required blanks and resumes on confirmation.",
@@ -2161,86 +2165,93 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
     extended = asleep  # skip extend loop when owner cannot respond
     poll = float(os.environ.get("ATS_CAPTCHA_POLL_SEC", "0.4") or "0.4")
     poll = min(1.0, max(0.25, poll))
-    while True:
-        while time.time() < deadline:
-            if looks_submitted(page):
-                print("ASK_OWNER resolved=submitted", flush=True)
-                return "applied", "confirmation"
-            if looks_already_applied(page):
-                print("ASK_OWNER resolved=already_applied", flush=True)
-                return "skipped", "already_applied"
-            now = time.time()
-            if focus_page_for_owner and now - last_focus >= focus_every:
-                try:
-                    focus_page_for_owner(page, reason="ask_owner_hold")
-                except Exception:
-                    pass
-                last_focus = now
-            try:
-                # Prefer the iCIMS nested form document when present.
-                target = page
-                if re.search(r"icims\.com", getattr(page, "url", "") or "", re.I):
-                    target = icims_active_frame(page)
-                    icims_fill_gdpr_gate(page)
-                    fill_icims_candidate_profile(page)
-                try:
-                    upload_resume(target)
-                except Exception:
+    try:
+        while True:
+            while time.time() < deadline:
+                if looks_submitted(page):
+                    print("ASK_OWNER resolved=submitted", flush=True)
+                    return "applied", "confirmation"
+                if looks_already_applied(page):
+                    print("ASK_OWNER resolved=already_applied", flush=True)
+                    return "skipped", "already_applied"
+                now = time.time()
+                if focus_page_for_owner and focus_every > 0 and now - last_focus >= focus_every:
                     try:
-                        upload_resume(page)
+                        focus_page_for_owner(page, reason="ask_owner_hold", exclusive=False)
                     except Exception:
                         pass
-                fill_source_fields(target)
-                fill_validation_gaps(target)
-                # Skip slow label crawl on iCIMS — fast name fill already ran.
-                if not re.search(r"icims\.com", getattr(page, "url", "") or "", re.I):
-                    fill_labeled_fields(target)
-                    fill_yes_no(target)
-                tick_consents(target)
+                    last_focus = now
                 try:
-                    fill_icims_questions(page)
+                    # Prefer the iCIMS nested form document when present.
+                    target = page
+                    if re.search(r"icims\.com", getattr(page, "url", "") or "", re.I):
+                        target = icims_active_frame(page)
+                        icims_fill_gdpr_gate(page)
+                        fill_icims_candidate_profile(page)
+                    try:
+                        upload_resume(target)
+                    except Exception:
+                        try:
+                            upload_resume(page)
+                        except Exception:
+                            pass
+                    fill_source_fields(target)
+                    fill_validation_gaps(target)
+                    # Skip slow label crawl on iCIMS — fast name fill already ran.
+                    if not re.search(r"icims\.com", getattr(page, "url", "") or "", re.I):
+                        fill_labeled_fields(target)
+                        fill_yes_no(target)
+                    tick_consents(target)
+                    try:
+                        fill_icims_questions(page)
+                    except Exception:
+                        pass
+                    click_advance(target)
+                    click_advance(page)
                 except Exception:
                     pass
-                click_advance(target)
-                click_advance(page)
+                fp = page_fingerprint(page)
+                if fp != last_fp:
+                    # Owner or helper progressed — keep working; nudge deadline forward once.
+                    last_fp = fp
+                    if not extended and time.time() + 90 > deadline:
+                        deadline = max(deadline, time.time() + 120)
+                        print("ASK_OWNER progress — extending while form still open", flush=True)
+                now = time.time()
+                if now - last_beat >= 8.0:
+                    left = max(0, int(deadline - now))
+                    print(f"ASK_OWNER waiting {left}s left — switch to this tab if you need to finish", flush=True)
+                    last_beat = now
+                _sleep(poll)
+            if looks_submitted(page):
+                return "applied", "confirmation"
+            if looks_already_applied(page):
+                return "skipped", "already_applied"
+            if not extended and apply_form_still_open(page):
+                extended = True
+                extra = max(120, min(wait, 360))
+                deadline = time.time() + extra
+                print(
+                    f"ASK_OWNER extend={extra}s — form still open after owner action; "
+                    f"continuing fill/submit (will not abandon)",
+                    flush=True,
+                )
+                last_beat = 0.0
+                last_focus = 0.0
+                if focus_page_for_owner:
+                    try:
+                        focus_page_for_owner(page, reason="ask_owner_extend", exclusive=False)
+                    except Exception:
+                        pass
+                continue
+            print("ASK_OWNER timeout — form still incomplete", flush=True)
+            return None
+    finally:
+        if release_owner_attention:
+            try:
+                release_owner_attention()
             except Exception:
                 pass
-            fp = page_fingerprint(page)
-            if fp != last_fp:
-                # Owner or helper progressed — keep working; nudge deadline forward once.
-                last_fp = fp
-                if not extended and time.time() + 90 > deadline:
-                    deadline = max(deadline, time.time() + 120)
-                    print("ASK_OWNER progress — extending while form still open", flush=True)
-            now = time.time()
-            if now - last_beat >= 8.0:
-                left = max(0, int(deadline - now))
-                print(f"ASK_OWNER waiting {left}s left — tab kept focused for you", flush=True)
-                last_beat = now
-            _sleep(poll)
-        if looks_submitted(page):
-            return "applied", "confirmation"
-        if looks_already_applied(page):
-            return "skipped", "already_applied"
-        if not extended and apply_form_still_open(page):
-            extended = True
-            extra = max(120, min(wait, 360))
-            deadline = time.time() + extra
-            print(
-                f"ASK_OWNER extend={extra}s — form still open after owner action; "
-                f"continuing fill/submit (will not abandon)",
-                flush=True,
-            )
-            last_beat = 0.0
-            last_focus = 0.0
-            if focus_page_for_owner:
-                try:
-                    focus_page_for_owner(page, reason="ask_owner_extend")
-                except Exception:
-                    pass
-            continue
-        print("ASK_OWNER timeout — form still incomplete", flush=True)
-        return None
 
 
 def fill_greenhouse_combos(page) -> None:

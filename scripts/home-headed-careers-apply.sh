@@ -29,7 +29,7 @@ export HITECHCITY_MAX_COMPANIES="${HITECHCITY_MAX_COMPANIES:-60}"
 export HITECHCITY_MAX_EXT_WALLS="${HITECHCITY_MAX_EXT_WALLS:-3}"
 export HITECHCITY_MAX_EXT_ATTEMPTS="${HITECHCITY_MAX_EXT_ATTEMPTS:-12}"
 export ATS_CAPTCHA_POLL_SEC="${ATS_CAPTCHA_POLL_SEC:-0.4}"
-export ATS_OWNER_FOCUS_EVERY_SEC="${ATS_OWNER_FOCUS_EVERY_SEC:-2}"
+export ATS_OWNER_FOCUS_EVERY_SEC="${ATS_OWNER_FOCUS_EVERY_SEC:-0}"
 
 if [[ -z "${DISPLAY:-}" && "${OS:-}" != "Windows_NT" && -z "${MSYSTEM:-}" && "$(uname -s 2>/dev/null)" != MINGW* ]]; then
   echo "WARNING: no DISPLAY — headed Chrome may not be visible." >&2
@@ -38,7 +38,11 @@ fi
 
 echo "Headed career-portal apply (free captcha path)."
 echo "Parallel tabs: ${HITECHCITY_PARALLEL_TABS} (owner clicks captcha; other tabs keep applying)."
-echo "Captcha/ASK_OWNER tab is re-focused every ${ATS_OWNER_FOCUS_EVERY_SEC}s until you finish."
+if [[ "${ATS_OWNER_FOCUS_EVERY_SEC}" == "0" || "${ATS_OWNER_FOCUS_EVERY_SEC}" == "once" ]]; then
+  echo "Captcha/ASK_OWNER tab is focused once when needed; you can switch tabs freely."
+else
+  echo "Captcha/ASK_OWNER tab is re-focused every ${ATS_OWNER_FOCUS_EVERY_SEC}s until you finish."
+fi
 echo "When Hyland/iCIMS shows hCaptcha, click it in the Chrome window."
 echo "Wait budget: ${ATS_CAPTCHA_WAIT_SEC}s per captcha."
 echo

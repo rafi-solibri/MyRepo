@@ -336,6 +336,9 @@ def owner_captcha_wait_sec() -> int:
         return 180
     if (os.environ.get("CHROME_HEADLESS") or "1").strip() in ("0", "false", "no"):
         return 180
+    # Visible cloud desktop (DISPLAY=:1) — owner can click captcha every run.
+    if (os.environ.get("DISPLAY") or "").strip():
+        return 180
     return 0
 
 
@@ -457,23 +460,42 @@ def owner_hcaptcha_cleared(page, *, start_url: str = "") -> str | None:
 def owner_focus_interval_sec() -> float:
     """How often to re-activate the captcha/ASK_OWNER tab while waiting.
 
-    Parallel multi-tab careers steal focus on navigation; re-focus keeps the
-    tab that needs the owner on top for every daily/cron headed run.
+    0 / once / off = focus only when attention is first needed so the owner
+    can freely move between the other parallel tabs. Set a positive number
+    only if workers keep stealing the front tab.
     """
-    raw = (os.environ.get("ATS_OWNER_FOCUS_EVERY_SEC") or "2").strip()
+    raw = (os.environ.get("ATS_OWNER_FOCUS_EVERY_SEC") or "0").strip().lower()
+    if raw in ("0", "once", "off", "no"):
+        return 0.0
     try:
-        return min(10.0, max(0.5, float(raw)))
+        return min(30.0, max(0.0, float(raw)))
     except ValueError:
-        return 2.0
+        return 0.0
 
 
-def focus_page_for_owner(page, *, reason: str = "") -> bool:
+def focus_page_for_owner(page, *, reason: str = "", exclusive: bool = True) -> bool:
     """Bring the page's Chrome tab to the front so the owner can click captcha/forms.
 
-    Uses Playwright bring_to_front + CDP Page.bringToFront / Target.activateTarget
-    so parallel workers cannot leave the owner staring at a random company tab.
-    Safe no-op when CDP/session is unavailable (headless cloud).
+    Exclusive by default: only the tab that needs owner attention is focused.
+    Other parallel workers keep applying and must not steal the front tab.
+    Uses Playwright bring_to_front + CDP Page.bringToFront / Target.activateTarget.
     """
+    if exclusive:
+        try:
+            from tools.ats.owner_focus import acquire_owner_attention, we_hold_attention
+
+            blocking = (reason or "").startswith(("hcaptcha", "ask_owner"))
+            if not we_hold_attention():
+                if not acquire_owner_attention(reason, blocking=blocking, timeout_s=8.0 if blocking else 0.0):
+                    worker = os.environ.get("ATS_PARALLEL_WORKER") or os.environ.get("HITECH" + "CITY_PARALLEL_WORKER") or ""
+                    print(
+                        f"owner_focus={reason or 'skip'} skipped=other_tab_has_attention"
+                        f"{' worker=' + worker if worker else ''}",
+                        flush=True,
+                    )
+                    return False
+        except Exception:
+            pass
     ok = False
     try:
         page.bring_to_front()
@@ -512,7 +534,7 @@ def focus_page_for_owner(page, *, reason: str = "") -> bool:
             except Exception:
                 pass
     if reason:
-        worker = os.environ.get("HITECHCITY_PARALLEL_WORKER") or ""
+        worker = os.environ.get("ATS_PARALLEL_WORKER") or os.environ.get("HITECH" + "CITY_PARALLEL_WORKER") or ""
         print(
             f"owner_focus={reason}"
             f"{' worker=' + worker if worker else ''}"
@@ -527,20 +549,38 @@ def wait_for_owner_hcaptcha(page) -> bool:
 
     Polls frequently and resumes as soon as a token, login, confirmation, or
     post-captcha form is visible — not only when the full wait budget expires.
-    Re-focuses this tab on a timer so every daily parallel run keeps the
-    captcha tab selected until the owner solves it.
+    Focuses this tab once when the captcha appears so the owner can click it.
+    Other parallel workers keep applying and must not steal the front tab.
     """
     wait = owner_captcha_wait_sec()
     if wait <= 0:
         return False
     start_url = _page_url(page)
-    focus_page_for_owner(page, reason="hcaptcha_start")
-    worker = os.environ.get("HITECHCITY_PARALLEL_WORKER") or ""
+    try:
+        from tools.ats.owner_focus import acquire_owner_attention, release_owner_attention
+    except Exception:
+        acquire_owner_attention = None  # type: ignore
+        release_owner_attention = None  # type: ignore
+    if acquire_owner_attention:
+        acquire_owner_attention("hcaptcha", blocking=True, timeout_s=min(30.0, float(wait)))
+    try:
+        return _wait_for_owner_hcaptcha_loop(page, start_url, wait)
+    finally:
+        if release_owner_attention:
+            try:
+                release_owner_attention()
+            except Exception:
+                pass
+
+
+def _wait_for_owner_hcaptcha_loop(page, start_url: str, wait: int) -> bool:
+    worker = os.environ.get("ATS_PARALLEL_WORKER") or os.environ.get("HITECH" + "CITY_PARALLEL_WORKER") or ""
     print(
         f"hcaptcha=wait_owner {wait}s — click the captcha in the focused Chrome tab "
         f"(no paid API key){' worker=' + worker if worker else ''}",
         flush=True,
     )
+    focus_page_for_owner(page, reason="hcaptcha_start", exclusive=False)
     deadline = time.time() + wait
     last_beat = 0.0
     last_focus = 0.0
@@ -553,15 +593,14 @@ def wait_for_owner_hcaptcha(page) -> bool:
             print(f"hcaptcha=owner_solved reason={why}", flush=True)
             return True
         now = time.time()
-        if now - last_focus >= focus_every:
-            focus_page_for_owner(page, reason="hcaptcha_hold")
+        if focus_every > 0 and now - last_focus >= focus_every:
+            focus_page_for_owner(page, reason="hcaptcha_hold", exclusive=False)
             last_focus = now
         if now - last_beat >= 5.0:
             left = max(0, int(deadline - now))
-            print(f"hcaptcha=waiting {left}s left — tab kept focused for you", flush=True)
+            print(f"hcaptcha=waiting {left}s left — switch to this tab to click captcha", flush=True)
             last_beat = now
         time.sleep(poll)
-    # Final check — owner may have solved in the last poll window.
     why = owner_hcaptcha_cleared(page, start_url=start_url)
     if why:
         print(f"hcaptcha=owner_solved reason={why}", flush=True)
