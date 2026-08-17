@@ -1,5 +1,12 @@
 # Foundit — issues & fixes
 
+## 2026-08-17 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Arch/Lead/EM and Senior titles false-skipped: Java in skills laundry treated as Java-primary; isArchLeadTitle missed Lead Software Engineer / Senior Manager; empty Raven skills never JD-enriched | Naukri-parity isArchLeadTitle; Java-primary/Java-only on TITLE only; needs JD skills enrich for senior titles with empty Raven skills |
+
+
 ## 2026-08-16 (cloud)
 
 | Issue | Fix |

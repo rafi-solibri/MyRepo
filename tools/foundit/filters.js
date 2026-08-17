@@ -115,20 +115,26 @@ function hasSeniority(title) {
   );
 }
 
-/** Architect / Tech Lead / EM band — Naukri parity: may apply without .NET on skills laundry list. */
+/** Architect / Tech Lead / EM band — Naukri ARCH_LEAD_RE parity: may apply without .NET on skills. */
 function isArchLeadTitle(title) {
-  return /\b(architect(?:ure)?|principal|staff\s+(software|engineer)|engineering\s+manager|\bem\b|tech(?:nology)?\s+lead|technical\s+lead|solution\s+architect(?:ure)?|software\s+architect(?:ure)?)\b/i.test(
-    titleForMatch(title)
-  );
+  const t = titleForMatch(title);
+  if (
+    /\b(architect(?:ure)?|technical lead|tech lead|technology lead|engineering manager|engineering lead|engineer manager|software engineer manager|principal|\bstaff\b|director|avp|head of|chief technology|solution architect(?:ure)?|cloud architect(?:ure)?|azure architect(?:ure)?|\.net lead|dotnet lead|lead (software|development|engineer)|software (engineering )?manager|senior manager|manager\b[^.\n]{0,32}\b(sw|software|engineering|technology|platform)|senior engineering)\b/i.test(
+      t
+    )
+  ) {
+    return true;
+  }
+  return /^cto\b/i.test(t);
 }
 
 function isJavaOrSalesforcePrimary(title, skills) {
   const t = titleForMatch(title);
-  const blob = `${t} ${skills || ""}`;
   if (/\b(salesforce|agentforce|sfdc)\b/i.test(t)) return true;
   // Skills-only Salesforce without .NET on TITLE (Hitachi CPQ / Agentforce-adjacent).
   if (/\b(salesforce|agentforce|sfdc)\b/i.test(skills || "") && !hasDotNetProof(t)) return true;
-  if (/\bjava\b(?!\s*script)/i.test(blob) && !hasDotNet(title, skills)) return true;
+  // Java-primary = TITLE only (Naukri NON_DOTNET_PRIMARY; skills laundry lists are noisy).
+  if (/\bjava\b(?!\s*script)/i.test(t) && !hasDotNetProof(t)) return true;
   return false;
 }
 
@@ -235,13 +241,28 @@ function classifyJob(job) {
   // Naukri parity: Arch/Lead/EM Hyd/remote may pass without .NET on skills when not Java/SF-primary.
   if (!hasDotNet(title, skills)) {
     if (!(archLead && !isJavaOrSalesforcePrimary(title, skills))) {
+      // Raven often omits itSkills — fetch JD before hard-skipping senior titles.
+      const skipEarly = skipTitleReason(title);
+      if (
+        !skipEarly &&
+        hasSeniority(title) &&
+        !String(skills || "").trim() &&
+        !isJavaOrSalesforcePrimary(title, "")
+      ) {
+        return {
+          pass: false,
+          reason: "needs JD skills enrich",
+          needsEnrich: true,
+        };
+      }
       return { pass: false, reason: "no .NET on title+skills" };
     }
   }
   const norm = `${titleForMatch(title)} ${skills}`.replace(/asp\.?\s*net/gi, "DOTNET");
   if (/\bsap\b/i.test(norm) && !hasDotNetProof(norm))
     return { pass: false, reason: "SAP without .NET" };
-  if (/\bjava\b(?!\s*script)/i.test(norm) && !hasDotNetProof(norm))
+  // Prompt: Java-only TITLE (not noisy skills laundry lists).
+  if (/\bjava\b(?!\s*script)/i.test(titleForMatch(title)) && !hasDotNetProof(titleForMatch(title)))
     return { pass: false, reason: "Java-only" };
   const skip = skipTitleReason(title);
   if (skip) return { pass: false, reason: skip };

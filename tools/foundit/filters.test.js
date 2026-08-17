@@ -284,8 +284,21 @@ assert.strictEqual(
     minimumExperience: { years: 10 },
     maximumExperience: { years: 15 },
   }).pass,
+  true,
+  "EM with Java only in skills laundry (not title) may pass — Naukri title-primary"
+);
+assert.strictEqual(
+  classifyJob({
+    jobId: 17.1,
+    title: "Engineering Manager - Java",
+    companyName: "Example Corp",
+    locations: [{ text: "Remote" }],
+    skills: [{ text: "Azure" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
   false,
-  "EM with Java-only skills must still fail"
+  "EM with Java on TITLE must still fail"
 );
 
 assert.strictEqual(
@@ -589,5 +602,70 @@ assert.strictEqual(
   false,
   "country-only Singapore must not inherit JD remote-first"
 );
+
+assert.strictEqual(
+  isArchLeadTitle("Lead Software Engineer"),
+  true,
+  "Lead Software Engineer is Naukri-parity arch/lead"
+);
+assert.strictEqual(
+  isArchLeadTitle("Senior Manager Software Engineering"),
+  true,
+  "Senior Manager Software Engineering is Naukri-parity arch/lead"
+);
+assert.strictEqual(
+  classifyJob({
+    jobId: 36,
+    title: "Lead Software Engineer",
+    companyName: "Example",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: "Azure" }, { text: "Microservices" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  true,
+  "Hyd Lead Software Engineer without .NET skills laundry may pass"
+);
+assert.strictEqual(
+  classifyJob({
+    jobId: 37,
+    title: "Software Architect",
+    companyName: "Example",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: "Java" }, { text: "Azure" }, { text: "Microservices" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  true,
+  "Hyd Software Architect must not fail on Java in skills laundry"
+);
+assert.strictEqual(
+  classifyJob({
+    jobId: 38,
+    title: "Java Technical Lead",
+    companyName: "Example",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: "Azure" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  false,
+  "Java on TITLE Technical Lead must skip"
+);
+const seniorEmptySkills = classifyJob({
+  jobId: 39,
+  title: "Senior Software Engineer",
+  companyName: "Example",
+  locations: [{ text: "Hyderabad" }],
+  skills: [],
+  minimumExperience: { years: 8 },
+  maximumExperience: { years: 12 },
+});
+assert.strictEqual(
+  seniorEmptySkills.needsEnrich,
+  true,
+  "Senior title with empty Raven skills must request JD enrich"
+);
+assert.strictEqual(seniorEmptySkills.pass, false);
 
 console.log("filters.test.js OK");
