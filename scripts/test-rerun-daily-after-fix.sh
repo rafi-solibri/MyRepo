@@ -58,6 +58,22 @@ else
   fail=1
 fi
 
+# Explicit --portal must not also pick up tip-of-main portals (e.g. fix(linkedin) HEAD).
+got="$(bash "$SCRIPT" --dry-run --portal foundit)"
+if echo "$got" | grep -q "portals=foundit " || echo "$got" | grep -q "portals=foundit$"; then
+  if echo "$got" | grep -qE "portals=.*linkedin|-------- linkedin --------"; then
+    echo "FAIL dry-run foundit must be exclusive (got linkedin too)"
+    echo "$got"
+    fail=1
+  else
+    echo "OK   dry-run foundit exclusive"
+  fi
+else
+  echo "FAIL dry-run foundit portal line"
+  echo "$got"
+  fail=1
+fi
+
 if [[ "$fail" -ne 0 ]]; then
   echo "test-rerun-daily-after-fix: FAILED"
   exit 1

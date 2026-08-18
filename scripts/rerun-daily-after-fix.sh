@@ -559,9 +559,14 @@ collect_portals() {
     return
   fi
 
+  # Explicit --portal is authoritative (ensure-missing / targeted re-runs).
+  # Do NOT also merge git title/files/branch detection — that re-launched
+  # unrelated portals whenever main's tip was e.g. fix(linkedin).
   if [[ -n "$PORTAL_ARG" ]]; then
     # `read` returns 1 at EOF even on success — must not trip `set -e`.
     IFS=',' read -r -a found <<<"$PORTAL_ARG" || true
+    uniq_portals "${found[@]}"
+    return
   fi
   if [[ -n "${PORTAL:-}" ]]; then
     found+=("$PORTAL")
