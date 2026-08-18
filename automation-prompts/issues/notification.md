@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Ensure Missing Cursor Automation cannot be created via API; 9 AM cron misses had no mid-morning recovery | Added GitHub Actions workflow Ensure Missing Daily Runs (cron 0 5 * * * = 10:30 IST) calling ensure-missing-daily-runs.sh; docs updated; owner still pastes Cursor Automation once |
 | 9 AM apply crons enabled but fired zero agents 2026-08-18; Ensure Missing automation absent; Notification only reported 0 applies | Notification prompt now runs ensure-missing-daily-runs.sh on cron miss; rerun-daily-after-fix --portal is exclusive (no longer also re-launches tip-of-main portal e.g. linkedin) |
 
 
