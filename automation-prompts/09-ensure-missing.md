@@ -20,3 +20,7 @@ Create a Cursor Automation named **Ensure Missing Daily Runs** scheduled **~10:3
 Paste the fenced `text` block above as the Agent instruction (or use the short loader in `ONE_TIME_LOADERS.md`).
 
 Requires environment secret **`CURSOR_API_KEY`** so missing portals can launch as fresh cloud jobs on `main`.
+
+### Durable backup (no Automations UI required)
+
+GitHub Actions workflow **Ensure Missing Daily Runs** (`.github/workflows/ensure-missing-daily.yml`) runs `bash scripts/ensure-missing-daily-runs.sh` on cron `0 5 * * *` (10:30 AM IST) and via `workflow_dispatch`. Needs repo secret `CURSOR_API_KEY`. Agents cannot create Cursor Automations via API — prefer the UI automation above; keep this workflow enabled as backup.

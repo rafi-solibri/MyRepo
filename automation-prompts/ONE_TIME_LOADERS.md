@@ -87,6 +87,8 @@ Schedule a new automation after the 9 AM portal wave (before Notification 11 AM)
 Read and OBEY automation-prompts/09-ensure-missing.md (the fenced text block). Run `bash scripts/ensure-missing-daily-runs.sh` to launch any apply portals that have no usable same-day coverage (cron miss / login-wall reports do not count as done). Needs CURSOR_API_KEY for fresh cloud launches. Do not invent applies. Do not FORCE_RESTORE_SESSIONS.
 ```
 
+**Already in repo as backup:** GitHub Actions workflow `Ensure Missing Daily Runs` (cron 05:00 UTC / 10:30 IST + manual dispatch) runs the same script when `CURSOR_API_KEY` is set as a repo secret. Still create the Cursor Automation above — agents cannot create Automations via API.
+
 Owner checklist for logins/secrets: [MAX_APPLY_OWNER_CHECKLIST.md](MAX_APPLY_OWNER_CHECKLIST.md).
 
 ## Optional: General Daily 9 AM — DISABLE THIS
