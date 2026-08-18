@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-18 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Oracle Hyd titles skipped as location_non_hyd_city (US chrome); apply/email timed out; first-4 keyword searches omitted Architect so Hyland/iCIMS jobCount=0 | Title-Hyd wins over page-chrome United States; do not use body/title for location; Solution Architect in first 4 scans; Oracle /apply/email gate + 180s ATS cap; alias APPLY_EMAIL/WORKDAY_PASSWORD for workers |
+
+
 ## 2026-08-17 (cloud)
 
 | Issue | Fix |

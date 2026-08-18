@@ -224,6 +224,57 @@ def ats_email() -> str:
     return (PROFILE.get("email") or "").strip()
 
 
+ORACLE_HCM_APPLY_RE = re.compile(
+    r"(?:oraclecloud\.com|careers\.oracle\.com).*/apply",
+    re.I,
+)
+
+
+def is_oracle_hcm_apply(url: str | None) -> bool:
+    return bool(ORACLE_HCM_APPLY_RE.search(url or ""))
+
+
+def oracle_fill_email_gate(page) -> bool:
+    """Fill Oracle Cloud / careers.oracle.com /apply/email then Continue.
+
+    Guest Oracle HCM starts on an email gate. Leaving it blank burns the ATS
+    time cap as external_incomplete_or_timeout on matching Hyderabad roles.
+    """
+    try:
+        url = getattr(page, "url", "") or ""
+    except Exception:
+        url = ""
+    if not (
+        is_oracle_hcm_apply(url)
+        or re.search(r"oraclecloud\.com|careers\.oracle\.com", url, re.I)
+    ):
+        return False
+    email = ats_email()
+    if not email or "@" not in email:
+        return False
+    filled = False
+    for sel in (
+        "input[type='email']",
+        "input[id*='email' i]",
+        "input[name*='email' i]",
+        "[data-automation-id='email']",
+        "input[placeholder*='email' i]",
+    ):
+        try:
+            el = page.locator(sel).first
+            if el.count() and el.is_visible():
+                el.fill(email, timeout=2500)
+                filled = True
+                break
+        except Exception:
+            continue
+    if not filled:
+        return False
+    _click_text(page, ("Continue", "Next", "Submit", "Apply", "Send"))
+    _sleep(1.0)
+    return True
+
+
 def ats_password() -> str:
     _alias_owner_secrets()
     for key in (
@@ -2300,6 +2351,10 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
     while time.time() - start < time_cap_s and stuck < 8:
         if looks_submitted(page):
             return "applied", "confirmation"
+        try:
+            oracle_fill_email_gate(page)
+        except Exception:
+            pass
         if is_unavailable_text(f"{getattr(page, 'url', '')}\n{_body(page, 1200)}"):
             return "skipped", "job_unavailable"
         wall = blocked_wall(page)
@@ -2782,6 +2837,13 @@ def complete_ats(page, time_cap_s: int | None = None) -> tuple[str, str]:
         return "skipped", wall
     if wall and host != "workday" and not flags["has_wd"]:
         return "blocked", wall
+    if is_oracle_hcm_apply(flags["url"]) or re.search(
+        r"careers\.oracle\.com|oraclecloud\.com", flags["url"] or "", re.I
+    ):
+        try:
+            oracle_fill_email_gate(page)
+        except Exception:
+            pass
     if host == "workday" or flags["has_wd"]:
         return complete_workday(page, cap)
     if is_brochure_or_dead_end(

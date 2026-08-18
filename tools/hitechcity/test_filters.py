@@ -117,6 +117,8 @@ def test_title_ok():
     assert CAREERS_SEARCH_KEYWORDS.index("Engineering Manager") < CAREERS_SEARCH_KEYWORDS.index(
         "Solution Architect"
     )
+    # First 4 keyword searches must include Architect (Hyland/iCIMS inventory is architect-heavy).
+    assert "Solution Architect" in CAREERS_SEARCH_KEYWORDS[:4]
     by = "https://careers.blueyonder.com/us/en/search-results?keywords=architect&location=Bengaluru"
     assert "Engineering%20Manager" in rewrite_careers_search_keyword(by, "Engineering Manager") or (
         "Engineering+Manager" in rewrite_careers_search_keyword(by, "Engineering Manager")
@@ -194,6 +196,15 @@ def test_oraclecloud_parent_card_location():
     )
     assert card_location_ok(
         "Senior Lead Architect - Solution Architect Hyderabad, Telangana, India TechnologyArchitecture"
+    )
+    # Oracle/JPMC page chrome "United States" must not reject a Hyd-only title.
+    assert card_location_ok(
+        "Senior Principal Forward Deployed Engineer HYDERABAD",
+        "United States | Oracle Careers language picker",
+    )
+    assert card_location_ok(
+        "Principal Core Infrastructure Engineer HYDERABAD",
+        "Skip to main content United States",
     )
     # SmartRecruiters location-group annotation must keep Hyd and drop Brazil/Malaysia.
     assert card_location_ok(

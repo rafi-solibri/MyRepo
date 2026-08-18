@@ -15,6 +15,7 @@ from tools.ats.complete import (
     ats_password,
     auth_wall_reason,
     classify_ats_host,
+    is_oracle_hcm_apply,
     extract_hop_destination_from_url,
     extract_offsite_from_text,
     frame_url_is_captcha_challenge,
@@ -46,6 +47,25 @@ def assert_true(cond, msg):
     if not cond:
         raise AssertionError(msg)
 
+
+assert_true(
+    is_oracle_hcm_apply(
+        "https://careers.oracle.com/en/sites/jobsearch/job/336980/apply/email?keyword=Engineering+Manager"
+    ),
+    "Oracle careers apply/email is an HCM email gate",
+)
+assert_true(
+    is_oracle_hcm_apply(
+        "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/job/210765008/apply/email"
+    ),
+    "JPMC Oracle Cloud apply/email is an HCM email gate",
+)
+assert_true(
+    not is_oracle_hcm_apply(
+        "https://careers.oracle.com/en/sites/jobsearch/job/336980/?keyword=Engineering+Manager"
+    ),
+    "Oracle JD without /apply is not the email gate",
+)
 
 assert_true(is_submitted_text("Thank you for applying to Acme"), "thank-you must count")
 assert_true(is_submitted_text("Your application was sent"), "sent must count")

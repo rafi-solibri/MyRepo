@@ -46,6 +46,20 @@ os.environ.setdefault("HITECHCITY_DISCOVERY_LINKEDIN", "0")
 os.environ.setdefault("HITECHCITY_DISCOVERY_WEB", "1")
 os.environ.setdefault("ATS_CAPTCHA_POLL_SEC", "0.4")
 os.environ.setdefault("ATS_OWNER_FOCUS_EVERY_SEC", "2")
+# Alias owner secrets so ProcessPool careers workers can fill Oracle/Workday email gates.
+if not (os.environ.get("APPLY_EMAIL") or "").strip():
+    for _k in ("NAUKRI_APPLY_EMAIL", "LINKEDIN_EMAIL"):
+        _v = (os.environ.get(_k) or "").strip()
+        if _v and "@" in _v:
+            os.environ["APPLY_EMAIL"] = _v
+            break
+if not (os.environ.get("WORKDAY_PASSWORD") or "").strip():
+    for _k in ("NAUKRI_WORKDAY_PASSWORD", "ATS_PASSWORD", "LINKEDIN_PASSWORD"):
+        _v = (os.environ.get(_k) or "").strip()
+        if _v:
+            os.environ["WORKDAY_PASSWORD"] = _v
+            os.environ.setdefault("ATS_PASSWORD", _v)
+            break
 
 # Overnight / owner-asleep: short park on captcha/forms, skip long persist retries,
 # and cap soft incompletes per company so LinkedIn volume reaches Easy Apply + boards.
