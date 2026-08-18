@@ -179,6 +179,16 @@ def test_job_dedupe_key_from_jk():
     assert job_dedupe_key("https://in.indeed.com/rc/clk?from=serp", "deadbeef") == "deadbeef"
 
 
+def test_login_wall_is_not_title_not_target():
+    assert skip_reason("Sign In | Indeed Accounts", "", "", "Continue with Apple") == "login_wall"
+    wall = (
+        "Sign In | Indeed Accounts\nReady to take the next step?\n"
+        "Create an account or sign in.\nContinue with Apple\nEmail address *"
+    )
+    assert looks_login_wall(wall, "https://secure.indeed.com/auth?continue=https://in.indeed.com/")
+    assert skip_reason("Sign In | Indeed Accounts", "Indeed", "", wall) == "login_wall"
+
+
 def test_education_question_and_option_score():
     # ValGenesis SmartApply: colon, no question mark — still an education field.
     assert is_education_question("What is your highest degree of education: *")
@@ -203,5 +213,6 @@ if __name__ == "__main__":
     test_india_home_get_started_is_not_login_proof()
     test_account_settings_and_serp_are_signed_in()
     test_job_dedupe_key_from_jk()
+    test_login_wall_is_not_title_not_target()
     test_education_question_and_option_score()
     print("ok")

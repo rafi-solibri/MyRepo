@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Mid-run secure.indeed.com/auth Sign In cards counted as title_not_target and burned seen | Classify login_wall; restore_signed_in mid-inventory; stop with indeed_login_required if Passport session is gone |
 | SmartApply highest degree of education combobox left on Select an option → easy_apply_incomplete (ValGenesis) | fill education listbox Bachelor's/B.Tech after click wait; label scan includes education/degree; validation recovery for Choose an option on education |
 
 

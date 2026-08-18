@@ -409,6 +409,14 @@ def _campus_allowlist_blocks(company: str) -> bool:
 
 def skip_reason(title: str, company: str, location: str, snippet: str) -> str | None:
     t = title or ""
+    blob = f"{t}\n{snippet or ''}"
+    if re.search(
+        r"sign in \| indeed accounts|ready to take the next step|"
+        r"continue with apple|enter your email address",
+        blob,
+        re.I,
+    ):
+        return "login_wall"
     if _campus_allowlist_blocks(company):
         return "hitechcity_campus_allowlist"
     if TITLE_SKIP.search(t):
@@ -491,6 +499,51 @@ def looks_login_wall(body: str, url: str = "") -> bool:
             re.I,
         )
     ) and not looks_signed_in(body, url)
+
+
+def midrun_recover_login(sb, report: dict) -> bool:
+    """Re-attach Passport after a mid-inventory Sign-in wall.
+
+    Returns True if signed-in (or not a wall). False = hard login_required.
+    """
+    try:
+        body = (sb.get_text("body") or "")[:2500]
+        url = sb.get_current_url() or ""
+        title = sb.get_title() or ""
+    except Exception:
+        body, url, title = "", "", ""
+    if looks_signed_in(body, url):
+        return True
+    if not looks_login_wall(body, url) and not re.search(
+        r"sign in \| indeed accounts", title, re.I
+    ):
+        return True
+    print("LOGIN_WALL mid-run — restore_signed_in", flush=True)
+    warmed = restore_signed_in(sb)
+    report["sessionRestoreMid"] = warmed
+    try:
+        body = (sb.get_text("body") or "")[:2500]
+        url = sb.get_current_url() or ""
+        title = sb.get_title() or ""
+    except Exception:
+        pass
+    if warmed.get("ok") or looks_signed_in(body, url):
+        print("LOGIN_WALL recovered", flush=True)
+        return True
+    report["blocked"].append(
+        {
+            "reason": "indeed_login_required",
+            "title": (title or "")[:120],
+            "bodySample": (body or "")[:400],
+            "hint": "Mid-run Sign-in wall — refresh Indeed cookies via headed login / snapshot",
+        }
+    )
+    report["counts"]["blocked"] = int(report.get("counts", {}).get("blocked") or 0) + 1
+    report["blockerSummary"] = "indeed_login_required"
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    OUT.write_text(json.dumps(report, indent=2))
+    print("BLOCKED indeed_login_required mid-run", flush=True)
+    return False
 
 
 def looks_anonymous_marketing_home(body: str) -> bool:
@@ -2845,6 +2898,24 @@ def main() -> int:
                 )
                 report["counts"]["blocked"] += 1
                 continue
+            try:
+                search_body = (sb.get_text("body") or "")[:2500]
+                search_url = sb.get_current_url() or ""
+                search_title = sb.get_title() or ""
+            except Exception:
+                search_body, search_url, search_title = "", "", ""
+            if looks_login_wall(search_body, search_url) or re.search(
+                r"sign in \| indeed accounts", search_title, re.I
+            ):
+                if not midrun_recover_login(sb, report):
+                    _emit(report)
+                    return 5
+                if not run_homepage_search(sb, query, location):
+                    report["blocked"].append(
+                        {"reason": "search_blocked_after_login_restore", "query": query}
+                    )
+                    report["counts"]["blocked"] += 1
+                    continue
 
             # Collect job cards
             cards = []
@@ -2937,6 +3008,15 @@ def main() -> int:
                     continue
 
                 reason = skip_reason(page_title, company, location, body[:1500])
+                if reason == "login_wall" or looks_login_wall(body, item.get("url") or ""):
+                    item["reason"] = "login_wall"
+                    report["skipped"].append(item)
+                    report["counts"]["skipped"] += 1
+                    print("SKIP login_wall", page_title[:80], flush=True)
+                    if not midrun_recover_login(sb, report):
+                        _emit(report)
+                        return 5
+                    continue
                 if reason:
                     item["reason"] = reason
                     report["skipped"].append(item)
@@ -3114,6 +3194,9 @@ def main() -> int:
                     report["blocked"].append(item)
                     report["counts"]["blocked"] += 1
                     print("BLOCKED login_required", page_title[:80], flush=True)
+                    if not midrun_recover_login(sb, report):
+                        _emit(report)
+                        return 5
                 elif result == "recaptcha":
                     item["reason"] = "easy_apply_recaptcha"
                     report["blocked"].append(item)
