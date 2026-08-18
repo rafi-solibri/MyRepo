@@ -188,6 +188,14 @@ function skipTitleReason(title) {
   // Data-platform primary titles (Snowflake/Databricks) — Arch/Lead exception must not apply.
   if (/\b(snowflake|databricks)\b/i.test(t) && !hasDotNet(t, ""))
     return "Snowflake/Databricks without .NET on title";
+  // Chip / silicon hardware (LinkedIn TITLE_BLACKLIST parity) — Principal/Arch must not apply.
+  if (
+    /\b(soc|system[- ]?on[- ]?chip|asic|rtl\s+design|physical\s+design|silicon|semiconductor|fpga|verilog|vhdl)\b/i.test(
+      t
+    ) &&
+    !hasDotNet(t, "")
+  )
+    return "SoC/RTL/silicon hardware without .NET on title";
   if (/\bwpf\b/i.test(t) && !/\basp\.?\s*net|web\s*api|azure|\.net\s*core\b/i.test(t))
     return "WPF/hardware desktop";
   return null;

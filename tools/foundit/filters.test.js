@@ -447,6 +447,34 @@ assert.strictEqual(
 
 assert.strictEqual(
   classifyJob({
+    jobId: 26.3,
+    title: "Principal Engineer - SoC RTL Design",
+    companyName: "tylsemi",
+    locations: [{ text: "India" }, { text: "Remote" }],
+    skills: [{ text: "RTL" }, { text: "Verilog" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "SoC/RTL/silicon hardware without .NET on title",
+  "SoC RTL Principal must hard-skip even via Arch/Lead without .NET"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 26.4,
+    title: "Senior FPGA Engineer",
+    companyName: "Example",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: ".NET" }, { text: "FPGA" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "SoC/RTL/silicon hardware without .NET on title",
+  "FPGA title must skip even with .NET in skills laundry"
+);
+
+assert.strictEqual(
+  classifyJob({
     jobId: 27,
     title: "AI Solution Architect",
     companyName: "hire feed",

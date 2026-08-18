@@ -1,5 +1,12 @@
 # Foundit — issues & fixes
 
+## 2026-08-18 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Principal Engineer SoC RTL (tylsemi 63126832) passed via Arch/Lead; monsterindia/foundit event/triumph burned ATS cap and spawned Access Denied tabs | filters.js skip SoC/RTL/silicon hardware without .NET on title (LinkedIn parity); daily_apply skip foundit/monster event URLs and prune Access Denied tabs |
+
+
 ## 2026-08-16 (cloud)
 
 | Issue | Fix |

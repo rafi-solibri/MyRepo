@@ -328,14 +328,40 @@ async function tryDismissScreening(page) {
   }
 }
 
+function isFounditEventUrl(url) {
+  return /(?:foundit\.in|monsterindia\.com|monster\.com)\/event\b/i.test(String(url || ""));
+}
+
+async function pruneDeniedPages(context, keepPage) {
+  for (const p of context.pages()) {
+    if (keepPage && p === keepPage) continue;
+    const title = await p.title().catch(() => "");
+    const u = p.url() || "";
+    if (/access denied/i.test(title) || isFounditEventUrl(u)) {
+      await p.close().catch(() => {});
+    }
+  }
+}
+
 async function handleExternalAts(context, resumePath, job, report) {
   const url = job.redirectUrl;
   if (!url) return { status: "no_redirect" };
+  if (isFounditEventUrl(url)) {
+    return { status: "foundit_event_not_ats", url };
+  }
   const page = await context.newPage();
   const started = Date.now();
   try {
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
     await sleep(2000);
+    const landed = page.url() || "";
+    const title = await page.title().catch(() => "");
+    if (isFounditEventUrl(landed)) {
+      return { status: "foundit_event_not_ats", url: landed };
+    }
+    if (/access denied/i.test(title)) {
+      return { status: "ats_access_denied", url: landed };
+    }
 
     // LinkedIn Easy Apply
     if (/linkedin\.com/i.test(url)) {
@@ -469,6 +495,7 @@ async function handleExternalAts(context, resumePath, job, report) {
     return { status: "ats_error", url, error: String(e).slice(0, 200) };
   } finally {
     await page.close().catch(() => {});
+    await pruneDeniedPages(context, null);
   }
 }
 
@@ -713,7 +740,7 @@ async function main() {
         let pathLabel = "Foundit Falcon";
         let ats = null;
         const redirectUrl = job.redirectUrl || verdict.redirectUrl;
-        if (redirectUrl && !/foundit\.in/i.test(redirectUrl)) {
+        if (redirectUrl && !/foundit\.in/i.test(redirectUrl) && !isFounditEventUrl(redirectUrl)) {
           try {
             ats = await handleExternalAts(
               context,
