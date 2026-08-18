@@ -524,7 +524,10 @@ def main() -> int:
                 return 0
             if rc == 6:
                 captcha_seen = True
-                # Do not hard-stop — try the other method (password after SSO CAPTCHA).
+                # Password after a GSI checkpoint burns the session further
+                # (restriction / CAPTCHA). Stop when Google SSO already challenged.
+                if step == "google_sso":
+                    break
                 continue
 
         page = _pick_linkedin_page(ctx)

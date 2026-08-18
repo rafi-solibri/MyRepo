@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-08-18 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| password fallback after GSI checkpoint escalated to account restriction | stop auto_login after google_sso captcha; do not try password |
+
+
 ## 2026-08-17 (cloud)
 
 | Issue | Fix |
