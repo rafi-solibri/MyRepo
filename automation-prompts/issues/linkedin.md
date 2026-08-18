@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-08-18 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| account restriction page treated as CAPTCHA then password-after-GSI | detect temporarily-restricted + lift time; Google-session login is GSI-only |
+
+
 ## 2026-08-17 (cloud)
 
 | Issue | Fix |

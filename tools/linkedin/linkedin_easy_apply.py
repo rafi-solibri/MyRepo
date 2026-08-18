@@ -16,6 +16,15 @@ from urllib.parse import quote
 from playwright.sync_api import sync_playwright, Page, TimeoutError as PWTimeout
 
 try:
+    from tools.linkedin.login_state import account_restricted_text
+except Exception:
+    try:
+        from login_state import account_restricted_text  # type: ignore
+    except Exception:
+        def account_restricted_text(body, url=""):  # type: ignore
+            return None
+
+try:
     from tools.linkedin.filters import (
         TITLE_BLACKLIST,
         JD_HARD_BLACKLIST,
@@ -2086,7 +2095,18 @@ def main() -> None:
             if re.search(r"/login|authwall|/checkpoint|uas/login", url_l):
                 time.sleep(2)
                 continue
-            body = page.locator("body").inner_text()[:2000]
+            body = page.locator("body").inner_text()[:2500]
+            until = account_restricted_text(body, page.url or "")
+            if until:
+                results.append(
+                    JobResult(
+                        status="blocked",
+                        reason=f"account_restricted until {until}",
+                    )
+                )
+                OUT.write_text(json.dumps([asdict(r) for r in results], indent=2))
+                print(f"BLOCKED: LinkedIn account restricted until {until}")
+                raise SystemExit(6)
             has_feed = bool(
                 re.search(
                     r"Start a post|Me\n|My Network|Notifications|linkedin\.com/in/",

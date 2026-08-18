@@ -25,6 +25,11 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
+try:
+    from tools.linkedin.login_state import account_restricted_text, login_method_order
+except Exception:
+    from login_state import account_restricted_text, login_method_order  # type: ignore
+
 CDP = os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222")
 EMAIL = (
     os.environ.get("LINKEDIN_EMAIL")
@@ -95,14 +100,24 @@ def _is_signed_in(ctx, page) -> bool:
     return "/feed" in url.lower() or "/jobs" in url.lower()
 
 
+def _page_body(page, limit: int = 2500) -> str:
+    try:
+        return page.locator("body").inner_text()[:limit]
+    except Exception:
+        return ""
+
+
+def _restriction_until(page) -> str | None:
+    return account_restricted_text(_page_body(page), page.url or "")
+
+
 def _on_captcha(page) -> bool:
+    if _restriction_until(page):
+        return True
     url = (page.url or "").lower()
     if "/checkpoint" in url or "challenge" in url:
         return True
-    try:
-        body = page.locator("body").inner_text()[:1500]
-    except Exception:
-        body = ""
+    body = _page_body(page, 1500)
     if re.search(r"quick security check|not a robot|captcha|security verification", body, re.I):
         return True
     try:
@@ -425,14 +440,30 @@ def _wait_signed_in(ctx, page, deadline: float, via: str, out: dict) -> int | No
             out.update(ok=True, reason=via, url=page.url)
             print(json.dumps(out))
             return 0
-        if _on_captcha(page) and not _cookies_has_li_at(ctx):
+        until = _restriction_until(page)
+        if until:
+            out.update(
+                ok=False,
+                reason="account_restricted",
+                until=until,
+                url=page.url,
+                via=via,
+                hint=f"LinkedIn account restricted until {until} — do not retry password/CAPTCHA",
+            )
+            try:
+                page.screenshot(path=str(_art() / "linkedin-auto-login-restricted.png"), timeout=8000)
+            except Exception:
+                pass
+            print(json.dumps(out))
+            return 6
+        if _on_captcha(page) and (
+            not _cookies_has_li_at(ctx) or _url_loginish(page.url or "")
+        ):
             out.update(ok=False, reason="captcha_checkpoint", url=page.url, via=via)
             try:
                 page.screenshot(path=str(_art() / "linkedin-auto-login-captcha.png"), timeout=8000)
             except Exception:
                 pass
-            # Caller may still try another method — signal with return 6 only
-            # when no further fallback exists.
             return 6
         time.sleep(2)
     out["attempts"].append({"step": via, "timed_out": True})
@@ -469,12 +500,44 @@ def main() -> int:
         except Exception as e:
             out["attempts"].append({"step": "goto_feed", "error": str(e)[:120]})
 
+        until0 = _restriction_until(page)
+        if until0:
+            out.update(
+                ok=False,
+                reason="account_restricted",
+                until=until0,
+                url=page.url,
+                hint=f"LinkedIn account restricted until {until0} — owner wall, no applies today",
+            )
+            try:
+                page.screenshot(path=str(_art() / "[REDACTED]-auto-login-restricted.png"), timeout=8000)
+            except Exception:
+                pass
+            print(json.dumps(out))
+            return 6
+
         if _is_signed_in(ctx, page):
             out.update(ok=True, reason="already_signed_in", url=page.url)
             print(json.dumps(out))
             return 0
 
         page = _goto_login_clean(ctx, page)
+        until = _restriction_until(page)
+        if until:
+            out.update(
+                ok=False,
+                reason="account_restricted",
+                until=until,
+                url=page.url,
+                hint=f"LinkedIn account restricted until {until} — owner wall, no applies today",
+            )
+            try:
+                page.screenshot(path=str(_art() / "[REDACTED]-auto-login-restricted.png"), timeout=8000)
+            except Exception:
+                pass
+            print(json.dumps(out))
+            return 6
+
         google_session = _has_google_session(ctx)
         out["google_session"] = google_session
 
@@ -505,33 +568,33 @@ def main() -> int:
             return _wait_signed_in(ctx, nonlocal_page, deadline, "google_sso", out)
 
         # Prefer Google SSO when the CDP profile already has Google cookies.
-        # Password-first often burns a checkpoint before GSI gets a clean shot;
-        # welcome-back UI also hid the GSI button until "another account".
-        prefer_google = google_session and os.environ.get(
-            "LINKEDIN_PREFER_GOOGLE_IF_SESSION", "1"
-        ).strip() not in ("0", "false", "no")
-        if prefer_google:
-            order = ("google_sso", "password")
-        elif prefer_password:
-            order = ("password", "google_sso")
-        else:
-            order = ("google_sso", "password")
+        # Never follow GSI with password — that submits on a checkpoint/restriction
+        # and hardens the wall (2026-08-18 account restriction).
+        order = login_method_order(
+            google_session=google_session, has_password=bool(PASSWORD) and prefer_password
+        )
         out["order"] = list(order)
         captcha_seen = False
+        restricted = False
         for step in order:
             rc = try_password() if step == "password" else try_google()
             if rc == 0:
                 return 0
             if rc == 6:
                 captcha_seen = True
-                # Do not hard-stop — try the other method (password after SSO CAPTCHA).
-                continue
+                if (out.get("reason") or "") == "account_restricted":
+                    restricted = True
+                    break
+                # Do not fall through to password after GSI checkpoint.
+                break
 
         page = _pick_linkedin_page(ctx)
         if _cookies_has_li_at(ctx) and _is_signed_in(ctx, page):
             out.update(ok=True, reason="recovered", url=page.url)
             print(json.dumps(out))
             return 0
+        if restricted or (out.get("reason") or "") == "account_restricted":
+            return 6
         if captcha_seen or (_on_captcha(page) and not _cookies_has_li_at(ctx)):
             out.update(
                 ok=False,

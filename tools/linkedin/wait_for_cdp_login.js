@@ -119,11 +119,23 @@ async function main() {
       url = page.url() || "";
     }
     const loginish = /\/login|authwall|checkpoint|challenge/i.test(url);
+    let body = "";
+    try {
+      body = (await page.locator("body").innerText()).slice(0, 2500);
+    } catch {
+      body = "";
+    }
+    const restricted = /temporarily restricted|restriction will be lifted|unusually high volume of .+ profile data/i.test(
+      `${url}\n${body}`,
+    );
+    const lift = (body.match(/lifted on ([A-Za-z]+ \d{1,2}, \d{4}(?:\s+\d{1,2}:\d{2}\s*[AP]M\s*[A-Z]{2,4})?)/i) || [])[1];
     return {
-      ok: has_li_at && !loginish,
+      ok: has_li_at && !loginish && !restricted,
       has_li_at,
       url,
       onChallenge: /checkpoint|challenge/i.test(url),
+      restricted,
+      until: lift || (restricted ? "temporarily restricted" : undefined),
     };
   }
 
@@ -171,12 +183,19 @@ async function main() {
 
   const challenge =
     last.onChallenge || /checkpoint|challenge|security.?verif/i.test(last.url || "");
+  const restricted = !!last.restricted;
   console.log(
     JSON.stringify({
       ok: false,
-      reason: challenge ? "linkedin_security_challenge" : "linkedin_login_required",
+      reason: restricted
+        ? "linkedin_account_restricted"
+        : challenge
+          ? "linkedin_security_challenge"
+          : "linkedin_login_required",
       has_li_at: last.has_li_at,
       onChallenge: !!challenge,
+      restricted,
+      until: last.until,
       url: last.url,
       hint: "bash scripts/home-headed-login.sh linkedin",
       note: "Windows ABE: Desktop Chrome cookies cannot be copied into CDP profiles. SQLite li_at name alone is not proof of a live session.",
