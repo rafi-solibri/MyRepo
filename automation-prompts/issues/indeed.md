@@ -1,5 +1,12 @@
 # Indeed — issues & fixes
 
+## 2026-08-18 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| SmartApply highest degree of education combobox left on Select an option → easy_apply_incomplete (ValGenesis) | fill education listbox Bachelor's/B.Tech after click wait; label scan includes education/degree; validation recovery for Choose an option on education |
+
+
 ## 2026-08-17 (cloud)
 
 | Issue | Fix |

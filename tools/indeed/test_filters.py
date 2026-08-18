@@ -12,6 +12,8 @@ if str(ROOT) not in sys.path:
 from tools.indeed.prepare_uc_profile import COPY_PATHS  # noqa: E402
 from tools.indeed.uc_daily_apply import (  # noqa: E402
     already_applied,
+    education_option_score,
+    is_education_question,
     looks_anonymous_marketing_home,
     looks_login_wall,
     job_dedupe_key,
@@ -177,6 +179,18 @@ def test_job_dedupe_key_from_jk():
     assert job_dedupe_key("https://in.indeed.com/rc/clk?from=serp", "deadbeef") == "deadbeef"
 
 
+def test_education_question_and_option_score():
+    # ValGenesis SmartApply: colon, no question mark — still an education field.
+    assert is_education_question("What is your highest degree of education: *")
+    assert is_education_question("Highest degree of education")
+    assert not is_education_question("What is your desired Compensation (in LPA)")
+    assert education_option_score("Select an option") == 0
+    assert education_option_score("Bachelor's Degree") == 2
+    assert education_option_score("B.Tech") == 3
+    assert education_option_score("Master's") == 1
+    assert education_option_score("B.Tech") > education_option_score("Master's")
+
+
 if __name__ == "__main__":
     test_skip_hyd_remote_ok()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
@@ -189,4 +203,5 @@ if __name__ == "__main__":
     test_india_home_get_started_is_not_login_proof()
     test_account_settings_and_serp_are_signed_in()
     test_job_dedupe_key_from_jk()
+    test_education_question_and_option_score()
     print("ok")
