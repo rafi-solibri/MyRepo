@@ -1,5 +1,12 @@
 # Notification — issues & fixes
 
+## 2026-08-18 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| 9 AM apply crons enabled but fired zero agents 2026-08-18; Ensure Missing automation absent; Notification only reported 0 applies | Notification prompt now runs ensure-missing-daily-runs.sh on cron miss; rerun-daily-after-fix --portal is exclusive (no longer also re-launches tip-of-main portal e.g. linkedin) |
+
+
 ## 2026-08-15 (home)
 
 | Issue | Fix |
