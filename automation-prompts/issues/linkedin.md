@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-08-18 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| stale li_at hid checkpoint so Google SSO then password burned CAPTCHA; PREFER_PASSWORD=0 ignored | detect checkpoint despite stale li_at; honor PREFER_PASSWORD=0; stop after challenge; clear session restore |
+
+
 ## 2026-08-17 (cloud)
 
 | Issue | Fix |

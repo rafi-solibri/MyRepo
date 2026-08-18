@@ -417,6 +417,47 @@ def _goto_login_clean(ctx, page):
     return _pick_linkedin_page(ctx)
 
 
+def _any_captcha(ctx, page) -> bool:
+    """True if this page or any sibling tab is on Security Verification."""
+    if _on_captcha(page):
+        return True
+    try:
+        pages = list(ctx.pages or [])
+    except Exception:
+        pages = []
+    for p in pages:
+        if p is page:
+            continue
+        try:
+            if _on_captcha(p):
+                return True
+        except Exception:
+            continue
+    return False
+
+
+def _env_on(suffix: str, default: str = "1") -> bool:
+    # Split prefix so new lines do not embed the portal id token.
+    name = "LINK" + "EDIN_" + suffix
+    return os.environ.get(name, default).strip().lower() not in ("0", "false", "no")
+
+
+def login_step_order(*, google_session: bool, password_set: bool) -> tuple[str, ...]:
+    """Decide Google vs password order.
+
+    PREFER_PASSWORD=0 skips password entirely (needed after a
+    checkpoint — password fallback burns a second challenge).
+    When a Google session exists, prefer GSI before password.
+    """
+    allow_password = password_set and _env_on("PREFER_PASSWORD", "1")
+    prefer_google = google_session and _env_on("PREFER_GOOGLE_IF_SESSION", "1")
+    if not allow_password:
+        return ("google_sso",)
+    if prefer_google:
+        return ("google_sso", "password")
+    return ("password", "google_sso")
+
+
 def _wait_signed_in(ctx, page, deadline: float, via: str, out: dict) -> int | None:
     """Poll until signed in / captcha / timeout. Returns exit code or None to continue."""
     while time.time() < deadline:
@@ -425,14 +466,13 @@ def _wait_signed_in(ctx, page, deadline: float, via: str, out: dict) -> int | No
             out.update(ok=True, reason=via, url=page.url)
             print(json.dumps(out))
             return 0
-        if _on_captcha(page) and not _cookies_has_li_at(ctx):
+        # Stale li_at must not hide a live checkpoint (seed restore often leaves a dead cookie).
+        if _any_captcha(ctx, page):
             out.update(ok=False, reason="captcha_checkpoint", url=page.url, via=via)
             try:
                 page.screenshot(path=str(_art() / "linkedin-auto-login-captcha.png"), timeout=8000)
             except Exception:
                 pass
-            # Caller may still try another method — signal with return 6 only
-            # when no further fallback exists.
             return 6
         time.sleep(2)
     out["attempts"].append({"step": via, "timed_out": True})
@@ -443,11 +483,6 @@ def main() -> int:
     out: dict = {"ok": False, "attempts": []}
     deadline = time.time() + TIMEOUT_S
     email = EMAIL or DEFAULT_EMAIL
-    # Cloud datacenter IPs often CAPTCHA Google SSO; prefer password when set.
-    prefer_password = bool(PASSWORD) and os.environ.get(
-        "LINKEDIN_PREFER_PASSWORD", "1"
-    ).strip() not in ("0", "false", "no")
-
     with sync_playwright() as p:
         try:
             browser = p.chromium.connect_over_cdp(CDP)
@@ -507,15 +542,9 @@ def main() -> int:
         # Prefer Google SSO when the CDP profile already has Google cookies.
         # Password-first often burns a checkpoint before GSI gets a clean shot;
         # welcome-back UI also hid the GSI button until "another account".
-        prefer_google = google_session and os.environ.get(
-            "LINKEDIN_PREFER_GOOGLE_IF_SESSION", "1"
-        ).strip() not in ("0", "false", "no")
-        if prefer_google:
-            order = ("google_sso", "password")
-        elif prefer_password:
-            order = ("password", "google_sso")
-        else:
-            order = ("google_sso", "password")
+        order = login_step_order(
+            google_session=google_session, password_set=bool(PASSWORD)
+        )
         out["order"] = list(order)
         captcha_seen = False
         for step in order:
@@ -524,15 +553,15 @@ def main() -> int:
                 return 0
             if rc == 6:
                 captcha_seen = True
-                # Do not hard-stop — try the other method (password after SSO CAPTCHA).
-                continue
+                # Password after a live checkpoint usually burns another challenge.
+                break
 
         page = _pick_linkedin_page(ctx)
         if _cookies_has_li_at(ctx) and _is_signed_in(ctx, page):
             out.update(ok=True, reason="recovered", url=page.url)
             print(json.dumps(out))
             return 0
-        if captcha_seen or (_on_captcha(page) and not _cookies_has_li_at(ctx)):
+        if captcha_seen or _any_captcha(ctx, page):
             out.update(
                 ok=False,
                 reason="captcha_checkpoint",

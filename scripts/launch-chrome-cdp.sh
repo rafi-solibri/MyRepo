@@ -245,6 +245,21 @@ if [[ "$portal" == "indeed" && "${CHROME_HEADLESS:-auto}" == "auto" && -n "${DIS
   headless=()
 fi
 
+# Drop leftover checkpoint/login tabs from the last failed attempt so the live
+# probe does not immediately treat a restored Security Verification page as the
+# current session. Cookies stay; only Chrome session-restore files are removed.
+if [[ "$cdp_ready" -eq 0 && "${CDP_CLEAR_SESSION_RESTORE:-1}" == "1" ]]; then
+  def_dir="$profile/Default"
+  if [[ -d "$def_dir" ]]; then
+    rm -f "$def_dir/Current Session" "$def_dir/Last Session" \
+      "$def_dir/Current Tabs" "$def_dir/Last Tabs" 2>/dev/null || true
+    if [[ -d "$def_dir/Sessions" ]]; then
+      rm -rf "$def_dir/Sessions" 2>/dev/null || true
+    fi
+    echo "NOTE: cleared Chrome session restore under $def_dir (avoid leftover checkpoint tabs)"
+  fi
+fi
+
 log="/tmp/cursor/chrome-cdp-${portal}.log"
 if [[ "$cdp_ready" -eq 0 ]]; then
   if [[ "$is_win" -eq 1 ]] && command -v powershell.exe >/dev/null 2>&1; then
