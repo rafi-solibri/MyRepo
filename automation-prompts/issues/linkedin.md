@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-08-18 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| GSI clicked then password fallback burned a second /checkpoint/challenge (via=password) | Skip password after google_sso clicked+captcha; keep password only if GSI never clicked |
+
+
 ## 2026-08-17 (cloud)
 
 | Issue | Fix |

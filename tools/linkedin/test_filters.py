@@ -126,4 +126,31 @@ assert_true(
     "India primary + remote_search must allow even if workplace has other cities",
 )
 
+from auto_login import should_skip_password_after_gsi
+
+assert_true(
+    should_skip_password_after_gsi(
+        [{"step": "google_sso", "started": True}, {"step": "google_sso", "clicked": True}],
+        "google_sso",
+        6,
+    ),
+    "clicked GSI + checkpoint must skip password",
+)
+assert_true(
+    not should_skip_password_after_gsi(
+        [{"step": "google_sso", "clicked": False}],
+        "google_sso",
+        6,
+    ),
+    "GSI not clicked — password fallback still allowed",
+)
+assert_true(
+    not should_skip_password_after_gsi(
+        [{"step": "password", "email": "raf***"}],
+        "password",
+        6,
+    ),
+    "password-first checkpoint does not use this skip",
+)
+
 print("filters self-test OK")

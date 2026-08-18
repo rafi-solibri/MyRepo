@@ -417,6 +417,13 @@ def _goto_login_clean(ctx, page):
     return _pick_linkedin_page(ctx)
 
 
+def should_skip_password_after_gsi(attempts: list, last_step: str, last_rc: int | None) -> bool:
+    """Password after a clicked GSI checkpoint burns a second challenge."""
+    if last_step != "google_sso" or last_rc != 6:
+        return False
+    return any(a.get("step") == "google_sso" and a.get("clicked") for a in attempts or [])
+
+
 def _wait_signed_in(ctx, page, deadline: float, via: str, out: dict) -> int | None:
     """Poll until signed in / captcha / timeout. Returns exit code or None to continue."""
     while time.time() < deadline:
@@ -524,7 +531,10 @@ def main() -> int:
                 return 0
             if rc == 6:
                 captcha_seen = True
-                # Do not hard-stop — try the other method (password after SSO CAPTCHA).
+                # Password after a clicked GSI checkpoint burns a second challenge
+                # (2026-08-18: launch path reported via=password after google_sso clicked).
+                if should_skip_password_after_gsi(out.get("attempts", []), step, rc):
+                    break
                 continue
 
         page = _pick_linkedin_page(ctx)
