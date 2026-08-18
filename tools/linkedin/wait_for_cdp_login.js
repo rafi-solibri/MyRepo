@@ -119,11 +119,23 @@ async function main() {
       url = page.url() || "";
     }
     const loginish = /\/login|authwall|checkpoint|challenge/i.test(url);
+    let body = "";
+    try {
+      body = await page.locator("body").innerText({ timeout: 4000 });
+    } catch {
+      body = "";
+    }
+    const restricted = /account has been temporarily restricted/i.test(body);
+    let until = "";
+    const um = body.match(/restriction will be lifted on\s+([^\.\n]+)/i);
+    if (um) until = um[1].trim();
     return {
-      ok: has_li_at && !loginish,
+      ok: has_li_at && !loginish && !restricted,
       has_li_at,
       url,
       onChallenge: /checkpoint|challenge/i.test(url),
+      restricted,
+      until,
     };
   }
 
@@ -171,10 +183,16 @@ async function main() {
 
   const challenge =
     last.onChallenge || /checkpoint|challenge|security.?verif/i.test(last.url || "");
+  const restricted = !!last.restricted;
   console.log(
     JSON.stringify({
       ok: false,
-      reason: challenge ? "linkedin_security_challenge" : "linkedin_login_required",
+      reason: restricted
+        ? "account_temporarily_restricted" // pragma: allowlist secret
+        : challenge
+          ? "linkedin_security_challenge" // pragma: allowlist secret
+          : "linkedin_login_required", // pragma: allowlist secret
+      until: last.until || "",
       has_li_at: last.has_li_at,
       onChallenge: !!challenge,
       url: last.url,

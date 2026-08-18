@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-08-18 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| auto-login labeled account restriction as captcha_checkpoint and retried SSO/password | classify temporarily-restricted page + lift time; skip further login retries; live CDP probe reports account_temporarily_restricted |
+
+
 ## 2026-08-17 (cloud)
 
 | Issue | Fix |

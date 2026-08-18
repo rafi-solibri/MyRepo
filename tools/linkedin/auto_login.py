@@ -95,7 +95,39 @@ def _is_signed_in(ctx, page) -> bool:
     return "/feed" in url.lower() or "/jobs" in url.lower()
 
 
+def account_restriction_info(text: str) -> dict | None:
+    """Detect temporary account restriction (not a solvable CAPTCHA)."""
+    blob = text or ""
+    if not re.search(r"account has been temporarily restricted", blob, re.I):
+        return None
+    until = ""
+    m = re.search(r"restriction will be lifted on\s+([^\.\n]+)", blob, re.I)
+    if m:
+        until = m.group(1).strip()
+    return {
+        "restricted": True,
+        "reason": "account_temporarily_restricted",
+        "until": until,
+        "hint": (
+            f"Owner-only: account restriction until {until}. "  # pragma: allowlist secret
+            "Do not retry Google SSO/password or headed login until then."
+            if until
+            else "Owner-only: account temporarily restricted. Do not retry login until it lifts."
+        ),
+    }
+
+
+def _page_restriction(page) -> dict | None:
+    try:
+        body = page.locator("body").inner_text()[:2500]
+    except Exception:
+        body = ""
+    return account_restriction_info(body)
+
+
 def _on_captcha(page) -> bool:
+    if _page_restriction(page):
+        return True
     url = (page.url or "").lower()
     if "/checkpoint" in url or "challenge" in url:
         return True
@@ -425,6 +457,15 @@ def _wait_signed_in(ctx, page, deadline: float, via: str, out: dict) -> int | No
             out.update(ok=True, reason=via, url=page.url)
             print(json.dumps(out))
             return 0
+        restriction = _page_restriction(page)
+        if restriction:
+            out.update(ok=False, url=page.url, via=via, **restriction)
+            try:
+                page.screenshot(path=str(_art() / "auto-login-restricted.png"), timeout=8000)
+            except Exception:
+                pass
+            print(json.dumps(out))
+            return 6
         if _on_captcha(page) and not _cookies_has_li_at(ctx):
             out.update(ok=False, reason="captcha_checkpoint", url=page.url, via=via)
             try:
@@ -523,6 +564,8 @@ def main() -> int:
             if rc == 0:
                 return 0
             if rc == 6:
+                if out.get("reason") == "account_temporarily_restricted":
+                    return 6
                 captcha_seen = True
                 # Do not hard-stop — try the other method (password after SSO CAPTCHA).
                 continue
@@ -532,6 +575,11 @@ def main() -> int:
             out.update(ok=True, reason="recovered", url=page.url)
             print(json.dumps(out))
             return 0
+        restriction = _page_restriction(page)
+        if restriction:
+            out.update(ok=False, url=page.url, google_session=google_session, **restriction)
+            print(json.dumps(out))
+            return 6
         if captcha_seen or (_on_captcha(page) and not _cookies_has_li_at(ctx)):
             out.update(
                 ok=False,

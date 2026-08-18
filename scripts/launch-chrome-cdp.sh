@@ -380,7 +380,10 @@ if [[ "$portal" == "linkedin" || "$portal" == "hitechcity" ]]; then
             bash "$ROOT/scripts/refresh-portal-session-seed.sh" linkedin || true
           fi
         else
-          echo "NOTE: auto-login exit $auto_rc (5=login required, 6=CAPTCHA/checkpoint)." >&2
+          echo "NOTE: auto-login exit $auto_rc (5=login required, 6=CAPTCHA/checkpoint or account restriction)." >&2
+          if grep -q account_temporarily_restricted /tmp/cursor/chrome-cdp-${portal}.log /opt/cursor/artifacts/*auto-login*.json 2>/dev/null; then
+            echo "NOTE: LinkedIn account temporarily restricted — do not retry headed login until the lift time on the checkpoint page." >&2  # pragma: allowlist secret
+          fi
         fi
       fi
     fi
