@@ -218,6 +218,41 @@ assert.strictEqual(
   "GCP Infra Architect without .NET must skip"
 );
 assert.strictEqual(
+  shouldSkipTitle("Copilot Studio Architect"),
+  true,
+  "Copilot Studio / Power Platform must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Copilot Architect"),
+  true,
+  "Copilot Architect must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Technical Lead / Sr Technical Lead - Power BI, SQL"),
+  true,
+  "Power BI lead must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Senior Manager -Techops"),
+  true,
+  "Techops manager must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("SPFx Architect"),
+  true,
+  "SharePoint SPFx architect must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Senior Staff Engineer ( AI )"),
+  true,
+  "Staff Engineer (AI) without .NET must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Lead Technical Architect Modern C Plus and Enterprise Systems"),
+  true,
+  "C++ / C Plus primary architect must skip"
+);
+assert.strictEqual(
   shouldSkipCompany("Pega"),
   true,
   "Pega employer must skip even if title omits Pega"

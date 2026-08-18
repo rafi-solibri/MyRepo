@@ -21,7 +21,7 @@ const { completeWorkdayApply, isSubmittedText } = require("./workday_apply");
 const { preferChatbotCheckboxValues } = require("./chatbot_answers");
 const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
 const { artifactPaths, writeArtifactJson } = require("../artifact_path");
-const { completeExternalPage } = require("../ats/complete_page");
+const { completeExternalPage, preferGuestApply } = require("../ats/complete_page");
 const { isFalseApplyCta, isBrochureOrDeadEnd } = require("../ats/apply_cta");
 
 const CDP = process.env.NAUKRI_CDP || "http://127.0.0.1:9222";
@@ -131,6 +131,29 @@ function isExternalAtsUrl(url) {
   return /myworkdayjobs|myworkdaysite|greenhouse|lever\.co|smartrecruiters|successfactors|icims|taleo|ashby|phenom|oraclecloud|hirist|careers\.|jobs\.|workdayjobs/i.test(
     u
   );
+}
+
+/** SSO / employee-only hosts — fail fast; do not burn the 6.5m ATS budget. */
+function isLoginWallUrl(url) {
+  return /b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|auth0\.com|candidate\.accenture\.com|secure\.indeed\.com\/(?:auth|oauth)|oneclick\.smartrecruiters|login\.cognizant|talent\.cognizant\.com\/\S*login|eightfold\.ai\/(?:login|signin|auth)/i.test(
+    String(url || "")
+  );
+}
+
+function findLoginWallUrl(context) {
+  for (const p of context.pages()) {
+    const u = p.url() || "";
+    if (isLoginWallUrl(u)) return u;
+  }
+  return null;
+}
+
+function closeNewPages(context, beforePages, keep) {
+  for (const p of context.pages()) {
+    if (keep && p === keep) continue;
+    if (beforePages && beforePages.has(p)) continue;
+    safeClose(p);
+  }
 }
 
 /** STEP 0 — always refresh Naukri profile resume before applies. */
@@ -1386,19 +1409,8 @@ async function confirmApplied(page, chatHint = null) {
     })
     .catch(() => "");
   if (lateChat) return { ok: true, cta: `chatbot:${lateChat}` };
-  const viewApplied = await page
-    .evaluate(() =>
-      [...document.querySelectorAll("button, a, [role='button']")].some((e) => {
-        const t = (e.innerText || e.getAttribute("aria-label") || "")
-          .replace(/\s+/g, " ")
-          .trim();
-        if (!/view applied jobs/i.test(t)) return false;
-        const st = window.getComputedStyle(e);
-        return st.display !== "none" && st.visibility !== "hidden" && Number(st.opacity) > 0.2;
-      })
-    )
-    .catch(() => false);
-  if (viewApplied) return { ok: true, cta: "view_applied_jobs" };
+  // "View applied jobs" is a nav / filter chip on many TopTier pages — never
+  // per-job confirmation (2026-08-18: 3 false applies counted this way).
   // Close stuck chatbot drawer / empty-CTA overlay and re-read Applied once.
   if (
     chatHint?.reason === "chat_steps_exhausted" ||
@@ -1596,6 +1608,18 @@ async function handleExternal(context, page, detail, jobMeta, report) {
 
   atsUrl = newPage.url();
 
+  if (isLoginWallUrl(atsUrl) || findLoginWallUrl(context)) {
+    const wall = findLoginWallUrl(context) || atsUrl;
+    report.blocked.push({
+      ...jobMeta,
+      reason: "ats_login_wall",
+      url: wall,
+      path: "company_ATS",
+    });
+    closeNewPages(context, beforePages, page);
+    return;
+  }
+
   // Hirist is a secondary board — skip login walls instead of hard-blocking the day.
   if (/hirist\.tech|hirist\.com|\/hirist/i.test(atsUrl)) {
     const hText = await newPage
@@ -1651,7 +1675,7 @@ async function handleExternal(context, page, detail, jobMeta, report) {
         path: "company_ATS",
       });
     }
-    if (newPage !== page) safeClose(newPage);
+    closeNewPages(context, beforePages, page);
     return;
   }
 
@@ -1682,13 +1706,49 @@ async function handleExternal(context, page, detail, jobMeta, report) {
       url: newPage.url(),
       path: "company_ATS",
     });
-    if (newPage !== page) safeClose(newPage);
+    closeNewPages(context, beforePages, page);
+    return;
+  }
+
+  if (/unknownerror/i.test(newPage.url() || "")) {
+    report.skipped.push({
+      ...jobMeta,
+      reason: "job_unavailable",
+      url: newPage.url(),
+      path: "company_ATS",
+    });
+    closeNewPages(context, beforePages, page);
+    return;
+  }
+
+  // Guest Apply often opens SSO in a *new* tab (Accenture B2C). Detect that
+  // before burning the 6.5m completeExternalPage budget.
+  await preferGuestApply(newPage);
+  await sleep(2000);
+  if (isLoginWallUrl(newPage.url()) || findLoginWallUrl(context)) {
+    report.blocked.push({
+      ...jobMeta,
+      reason: "ats_login_wall",
+      url: findLoginWallUrl(context) || newPage.url(),
+      path: "company_ATS",
+    });
+    closeNewPages(context, beforePages, page);
     return;
   }
 
   const done = await completeExternalPage(newPage, RESUME, {
     maxMs: Math.max(60_000, MAX_EXTERNAL_MS - (Date.now() - start)),
   });
+  if (!done.ok && findLoginWallUrl(context)) {
+    report.blocked.push({
+      ...jobMeta,
+      reason: "ats_login_wall",
+      url: findLoginWallUrl(context) || done.url || newPage.url(),
+      path: "company_ATS",
+    });
+    closeNewPages(context, beforePages, page);
+    return;
+  }
   if (done.ok) {
     report.external.push({
       ...jobMeta,
@@ -1718,7 +1778,7 @@ async function handleExternal(context, page, detail, jobMeta, report) {
       path: "company_ATS",
     });
   }
-  if (newPage !== page) safeClose(newPage);
+  closeNewPages(context, beforePages, page);
 }
 
 function decideSkip(card, { detailMode = false } = {}) {

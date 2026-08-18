@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-08-18 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| 3 false applies via view_applied_jobs CTA; Copilot/PowerBI/C++/AI/Techops/SPFx attempted; Accenture B2C + RippleHire unknownerror burned 6.5m as timeout (14 SSO tabs leaked) | confirmApplied ignores View applied jobs; skip Copilot/Power BI/C++/paren-AI/Techops/SPFx; fail-fast b2clogin/candidate.accenture + ripplehire unknownerror and close extra SSO tabs |
+
+
 ## 2026-08-17 (cloud)
 
 | Issue | Fix |

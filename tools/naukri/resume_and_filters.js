@@ -33,7 +33,7 @@ function findResume() {
  * Only skip when title itself is a QA/SDET role.
  */
 const SKIP_TITLE_RE =
-  /\b(qa engineer|quality assurance|quality engineer|quality engineering|quality architect|quality solution architect|\bqe architect\b|sdet|tosca|test automation architect|embedded\b|firmware|intern(?!et)|fresher|salesforce|agentforce|servicenow|coupa|pega|lead system architect|\blsa\b|appian|anaplan|celonis|power platform|guidewire|sap\b|dynamics|\bd365\b|workday hms|revit|\bbarch\b|hubspot|\bsre\b|site reliability|devops engineer|devops lead|platform sre|network operations|network ops|network support|civil\b|structural|substation|attack surface|cyber\s*security|cybersecurity|cyber architecture|infosec|penetration|red team|soc analyst|security operations|threat hunter|\bmdr\b|\bedr\b)\b/i;
+  /\b(qa engineer|quality assurance|quality engineer|quality engineering|quality architect|quality solution architect|\bqe architect\b|sdet|tosca|test automation architect|embedded\b|firmware|intern(?!et)|fresher|salesforce|agentforce|servicenow|coupa|pega|lead system architect|\blsa\b|appian|anaplan|celonis|power platform|power\s*bi|copilot studio|copilot architect|\bspfx\b|tech\s*-?\s*ops|guidewire|sap\b|dynamics|\bd365\b|workday hms|revit|\bbarch\b|hubspot|\bsre\b|site reliability|devops engineer|devops lead|platform sre|network operations|network ops|network support|civil\b|structural|substation|attack surface|cyber\s*security|cybersecurity|cyber architecture|infosec|penetration|red team|soc analyst|security operations|threat hunter|\bmdr\b|\bedr\b)\b/i;
 
 /**
  * Employer names that are Coupa/Pega/Salesforce/SAP-primary even when the
@@ -46,12 +46,15 @@ const SKIP_COMPANY_RE =
 const PURE_AI_DATA_RE =
   /\b(ai\s+architect|artificial\s+intelligence\s+architect|ai\s+agent|ai\s+engineer(?:ing)?(?:\s+manager|\s+lead)?|ai\s+engineering\s+manager|ai\s+solution\s+architect|architect[^.\n]{0,48}\b(ai|ml)\b|data\s*&\s*ai|ml\s+engineer|gen\s*-?\s*ai|genai|agentic\s+ai|\bgemini\b|\bllm\b|enterprise\s+platform\s+architect[^.\n]{0,24}\b(ai|ml|gemini|llm)\b|data\s+scientist|data\s+engineer|data\s+engineering|data\s+architect|gcp\s+infra(?:structure)?(?:\s+architect)?)\b/i;
 
+/** "Senior Staff Engineer ( AI )" — paren AI does not sit on a word boundary. */
+const PAREN_AI_TITLE_RE = /\bengineer\s*\(\s*ai\s*\)/i;
+
 /**
  * Primary non-.NET stacks in the TITLE — skip to avoid Java/MEAN ATS dead-ends.
  * Do not use on full JD blobs (skills lists are noisy).
  */
 const NON_DOTNET_PRIMARY_RE =
-  /\b(java|j2ee|spring boot|golang|go lang|python|mean\b|mern\b|ruby on rails|php|oracle apps|oracle fusion|oracle\s+dba|oracle cloud|abap)\b/i;
+  /\b(java|j2ee|spring boot|golang|go lang|python|mean\b|mern\b|ruby on rails|php|oracle apps|oracle fusion|oracle\s+dba|oracle cloud|abap|c\+\+|cplusplus|c plus)\b/i;
 
 /** When scanning detail pages, use job panel text only — never document.body. */
 function shouldSkipTitleFromDetail(detailText) {
@@ -163,6 +166,7 @@ function shouldSkipTitle(title) {
   if (SKIP_TITLE_RE.test(t)) return true;
   // AI Architect without .NET on the title itself (Instahyre/Foundit parity)
   if (PURE_AI_DATA_RE.test(t) && !hasDotNet(t, "")) return true;
+  if (PAREN_AI_TITLE_RE.test(t) && !hasDotNet(t, "")) return true;
   // Java/MEAN/Python-primary titles without .NET|C# — do not burn ATS time
   if (NON_DOTNET_PRIMARY_RE.test(t) && !hasDotNet(t, "")) return true;
   return false;
