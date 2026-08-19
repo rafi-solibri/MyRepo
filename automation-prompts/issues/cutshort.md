@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| 3189 scanned / 0 qualifying after cloud/SWE classify: remaining Hyd Architect/Lead/.NET titles listed under 35L or Workday/data/Salesforce-primary | no further classify loosening — honor 35L + title-first skips; 5 no_tier leftovers are IT-ops/PLM/HFT/low-YOE backend |
 | 2026-08-19 post-fix re-run: leftover 7f43f20 filter fix never reached main so Cloud Engineer/SWE+stack still dropped as no_tier_match (Aug 16: 3202/0) | cherry-pick cloud/SWE classify + foreign-remote skip onto main so today's applies can run |
 
 
