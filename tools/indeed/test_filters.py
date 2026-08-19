@@ -171,6 +171,20 @@ def test_account_settings_and_serp_are_signed_in():
     assert not looks_signed_in(wall)
 
 
+def test_skip_login_wall_not_title_not_target():
+    # Regression 2026-08-19: SERP after ATS hop scraped Sign In | Indeed Accounts
+    # as job cards and skipped them as title_not_target, burning seen.
+    assert (
+        skip_reason(
+            "Sign In | Indeed Accounts",
+            "",
+            "",
+            "Ready to take the next step?\nContinue with Apple\nEmail address *",
+        )
+        == "login_wall"
+    )
+
+
 def test_education_option_match():
     # Regression 2026-08-19: ValGenesis "highest degree of education" combobox
     # stayed on Select an option → Choose an option to continue.
@@ -201,6 +215,7 @@ if __name__ == "__main__":
     test_hybrid_profile_copies_local_state()
     test_india_home_get_started_is_not_login_proof()
     test_account_settings_and_serp_are_signed_in()
+    test_skip_login_wall_not_title_not_target()
     test_education_option_match()
     test_job_dedupe_key_from_jk()
     print("ok")

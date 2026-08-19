@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| SERP after ATS hop scraped Sign In \| Indeed Accounts as job cards → title_not_target, burning seen | skip_reason=login_wall; midrun_recover_login restores Passport and hard-stops only if restore fails |
 | SmartApply highest-degree education combobox left on Select an option → Choose an option to continue (ValGenesis) | Open education combobox, pick Bachelor/B.Tech from portaled listbox, recover Choose-an-option validation for education as well as Country |
 
 
