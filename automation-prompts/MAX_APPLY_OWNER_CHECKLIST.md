@@ -39,7 +39,7 @@ bash scripts/refresh-portal-session-seed.sh indeed
 
 | Secret | Why |
 | --- | --- |
-| `CURSOR_API_KEY` | Post-fix + ensure-missing can launch **fresh** same-day cloud jobs (max 5/portal/day). Without it, only in-session re-exec works. |
+| `CURSOR_API_KEY` | Daily Apply Portals GHA + post-fix re-runs launch **fresh** same-day cloud jobs. Set on the Cloud Agent environment **and** as a GitHub Actions repo secret. Without it, only in-session re-exec works and the 9 AM GHA launcher fails. |
 | `LINKEDIN_EMAIL` + `LINKEDIN_PASSWORD` | Auto-heal LinkedIn when CDP session expires (still may need CAPTCHA once). |
 | `INDEED_HTTP_PROXY` (optional) | True residential proxy for cloud Indeed when home Wi‑Fi is unavailable. |
 | `NAUKRI_WORKDAY_PASSWORD` (or `WORKDAY_PASSWORD` / `ATS_PASSWORD`) | One shared password for Workday Create Account / Sign In. Helpers alias whichever of these is set. 12+ chars with complexity. |
@@ -49,10 +49,9 @@ Dashboard → Cloud Agent environment → Secrets / API keys: https://cursor.com
 
 ## 3) Paste Automations loaders (once)
 
-See `automation-prompts/ONE_TIME_LOADERS.md`. Especially paste:
+See `automation-prompts/ONE_TIME_LOADERS.md`. Confirm LinkedIn / Cutshort / Instahyre / Indeed / Hitech loaders point at the current `automation-prompts/0x-*.md` files.
 
-- **Ensure Missing Daily Runs** (~10:30 AM IST) — recovers “cron did not fire”
-- Confirm LinkedIn / Cutshort / Instahyre / Indeed / Hitech loaders point at the current `automation-prompts/0x-*.md` files
+**Primary daily trigger:** GitHub Actions **Daily Apply Portals** (9:00 AM IST). Do **not** create an “Ensure Missing Daily Runs” automation — that path was removed. If one already exists in the Automations UI, disable/delete it.
 
 Cursor Automations API is **read-only** for agents — only you can create/edit schedules in the UI.
 
@@ -81,7 +80,7 @@ Never set `FORCE_RESTORE_SESSIONS=1` unless you intend to overwrite live CDP aut
 
 ```bash
 bash scripts/verify-portal-logins.sh --strict   # all OK
-bash scripts/ensure-missing-daily-runs.sh --dry-run  # only truly missing portals listed
+bash scripts/launch-daily-portals.sh --dry-run  # shows which portals would launch
 ```
 
-After the next morning cron + 10:30 ensure-missing, Notification (11 AM) should show applies across portals that have inventory.
+After the next 9 AM IST Daily Apply Portals run, Notification (11 AM) should show applies across portals that have inventory.

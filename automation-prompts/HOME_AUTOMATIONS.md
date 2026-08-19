@@ -24,7 +24,10 @@ Every run must **auto-fix → push a ready PR → merge → same-day re-run** (`
 | HomeDaily-HitechCity | 19:00 | `portal-home-daily.sh hitechcity` |
 | HomeDaily-Notification | 19:30 | `notification-home-daily.sh` |
 
-Cloud also needs a **~10:30 AM IST** “Ensure Missing Daily Runs” automation (`09-ensure-missing.md`) so morning cron misses are recovered. Owner steps: `MAX_APPLY_OWNER_CHECKLIST.md`.
+Cloud morning applies are launched by GitHub Actions **Daily Apply Portals**
+(`scripts/launch-daily-portals.sh`, 9:00 AM IST). Cursor Automations may stay
+enabled for manual runs; the launcher skips portals that already have a
+same-day agent. Owner steps: `MAX_APPLY_OWNER_CHECKLIST.md`.
 
 Stagger avoids fighting over Chrome. On Windows home, all portals share **system Chrome Default** (`CHROME_CDP_MODE=system`) so ABE cookies work — one Chrome with remote debugging.
 

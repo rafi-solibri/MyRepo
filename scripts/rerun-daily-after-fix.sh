@@ -127,7 +127,7 @@ portals_from_files() {
         seen[notification]=1
         ;;
       tools/hotels/*|automation-prompts/issues/hotels.md) seen[hotels]=1 ;;
-      scripts/ensure-missing-daily-runs.sh|scripts/run-portal-with-autofix.sh|scripts/append-issue-fix.sh|scripts/assert-no-conflict-markers.sh)
+      scripts/launch-daily-portals.sh|scripts/run-portal-with-autofix.sh|scripts/append-issue-fix.sh|scripts/assert-no-conflict-markers.sh)
         # Infra helpers — docs/merge safety only; do not fan out to every portal.
         ;;
       scripts/rerun-daily-after-fix.sh|scripts/auto-merge-fix-pr.sh|scripts/test-rerun-daily-after-fix.sh|automation-prompts/*|.github/workflows/*)
@@ -559,7 +559,7 @@ collect_portals() {
     return
   fi
 
-  # Explicit --portal is authoritative (ensure-missing / targeted re-runs).
+  # Explicit --portal is authoritative (daily launch / targeted re-runs).
   # Do NOT also merge git title/files/branch detection — that re-launched
   # unrelated portals whenever main's tip was e.g. fix(linkedin).
   if [[ -n "$PORTAL_ARG" ]]; then

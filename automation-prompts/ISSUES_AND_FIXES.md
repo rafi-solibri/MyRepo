@@ -9,7 +9,7 @@
 | Issue | Fix |
 | --- | --- |
 | Foundit + Naukri + Hitech City same-day PRs all edited `ISSUES_AND_FIXES.md` → nested `<<<<<<<` markers landed on `main` | Per-portal logs `automation-prompts/issues/<portal>.md`; `scripts/append-issue-fix.sh`; `scripts/assert-no-conflict-markers.sh` gates `auto-merge-fix-pr.sh` (rebase + refuse markers) |
-| LinkedIn / Cutshort / Instahyre / Indeed enabled but **did not fire** 2026-08-14 cloud cron (only Foundit/Naukri/Hitech/Notification ran) | `scripts/ensure-missing-daily-runs.sh` launches missing portals same day; owner: confirm Automations schedule/quota; set `CURSOR_API_KEY` for cloud re-launches |
+| LinkedIn / Cutshort / Instahyre / Indeed enabled but **did not fire** 2026-08-14 cloud cron (only Foundit/Naukri/Hitech/Notification ran) | **Superseded 2026-08-19:** removed ensure-missing recovery; primary trigger is GitHub Actions **Daily Apply Portals** (`scripts/launch-daily-portals.sh`, 9:00 AM IST). Set `CURSOR_API_KEY` as a repo secret. |
 | Auto-fix “max 5 re-runs” was prompt-only and easy to skip after merge | `scripts/run-portal-with-autofix.sh` mechanical loop; `rerun-daily-after-fix.sh` still caps at 5/portal/IST day |
 
 > Going forward: **do not** append same-day rows to this shared file. Use `bash scripts/append-issue-fix.sh <portal> …`.

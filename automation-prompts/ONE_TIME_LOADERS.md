@@ -7,13 +7,15 @@ Paste each block below into the matching automation **once**. After that, merge 
 
 **Auto-fix & push & merge:** every run must follow [AUTO_FIX.md](AUTO_FIX.md) — code-fixable blockers get durable helper patches, a feature-branch push, a **ready** PR, `bash scripts/auto-merge-fix-pr.sh` (not silent report-only / not draft-only), and a **same-day re-run** of that portal's job via `scripts/rerun-daily-after-fix.sh` so today's applies use the fix.
 
-## Same-day re-runs + missing cron recovery (owner secret)
+## Daily launches + same-day post-fix re-runs (owner secret)
 
-Set **`CURSOR_API_KEY`** on the Cloud Agent environment ([Dashboard → API Keys](https://cursor.com/dashboard/api)) so:
-1. `scripts/auto-merge-fix-pr.sh` → `scripts/rerun-daily-after-fix.sh` can launch a **fresh** cloud job on `main` after a fix (max 5/portal/IST day).
-2. `scripts/ensure-missing-daily-runs.sh` can recover when an enabled portal cron (LinkedIn/Cutshort/Instahyre/Indeed/…) never fired that morning.
+Set **`CURSOR_API_KEY`** on the Cloud Agent environment **and** as a GitHub Actions repo secret ([Dashboard → API Keys](https://cursor.com/dashboard/api)) so:
+1. GitHub Actions workflow **Daily Apply Portals** (cron `30 3 * * *` = 9:00 AM IST) runs `scripts/launch-daily-portals.sh` and reliably starts every apply portal.
+2. `scripts/auto-merge-fix-pr.sh` → `scripts/rerun-daily-after-fix.sh` can launch a **fresh** cloud job on `main` after a fix (max 5/portal/IST day).
 
-Without the key, helpers still re-exec durable apply scripts **in the current session**.
+Without the key, helpers still re-exec durable apply scripts **in the current session**, and the Daily Apply Portals workflow will fail until the secret is set.
+
+**Optional:** keep the Cursor Automations below enabled for manual/UI runs. `launch-daily-portals.sh` skips a portal when a same-day agent already exists, so overlapping schedules do not double-launch. There is **no** “Ensure Missing Daily Runs” recovery job anymore.
 
 
 
@@ -80,14 +82,11 @@ Rename this automation in the UI to **Hitech City / Knowledge City Daily** (it i
 Read and OBEY the full instructions in automation-prompts/08-hitech-city.md (the fenced text block). Run `bash scripts/preflight-portal-run.sh hitechcity` first, then `bash scripts/launch-chrome-cdp.sh hitechcity`. Use resumes/Rafi_Resume.docx. Execute the daily Hitech City / Knowledge City / Madhapur premium-campus career-portal + LinkedIn referral apply job now via `python3 tools/hitechcity/daily_apply.py` (every run uses parallel multi-tab careers, `HITECHCITY_PARALLEL_TABS=10` by default — do not set tabs=1).
 ```
 
-## Ensure Missing Daily Runs (~10:30 AM IST) — CREATE THIS
-Schedule a new automation after the 9 AM portal wave (before Notification 11 AM). Paste once:
+## Daily Apply Portals (GitHub Actions — primary 9 AM IST trigger)
 
-```text
-Read and OBEY automation-prompts/09-ensure-missing.md (the fenced text block). Run `bash scripts/ensure-missing-daily-runs.sh` to launch any apply portals that have no usable same-day coverage (cron miss / login-wall reports do not count as done). Needs CURSOR_API_KEY for fresh cloud launches. Do not invent applies. Do not FORCE_RESTORE_SESSIONS.
-```
+No Cursor Automation needed. Workflow `.github/workflows/daily-apply-portals.yml` runs `bash scripts/launch-daily-portals.sh` at **9:00 AM IST**. Requires repo secret `CURSOR_API_KEY`. Manual: Actions → Daily Apply Portals → Run workflow.
 
-**Already in repo as backup:** GitHub Actions workflow `Ensure Missing Daily Runs` (cron 05:00 UTC / 10:30 IST + manual dispatch) runs the same script when `CURSOR_API_KEY` is set as a repo secret. Still create the Cursor Automation above — agents cannot create Automations via API.
+If you previously created an **Ensure Missing Daily Runs** Cursor Automation (~10:30 AM IST), **disable or delete it** — that recovery path is removed.
 
 Owner checklist for logins/secrets: [MAX_APPLY_OWNER_CHECKLIST.md](MAX_APPLY_OWNER_CHECKLIST.md).
 

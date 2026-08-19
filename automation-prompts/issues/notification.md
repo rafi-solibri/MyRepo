@@ -1,5 +1,12 @@
 # Notification — issues & fixes
 
+## 2026-08-19 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Ensure Missing Daily Runs / Notification cron-miss recovery added complexity; Cursor Automations cron still misses | Removed ensure-missing script/prompt/GHA and Notification launch-on-miss. Primary trigger is GitHub Actions Daily Apply Portals (scripts/launch-daily-portals.sh, 9:00 AM IST). Notification only reports. |
+
+
 ## 2026-08-18 (cloud)
 
 | Issue | Fix |

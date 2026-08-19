@@ -1,0 +1,26 @@
+# Reliable 9:00 AM IST launcher for all daily apply portals.
+# Cursor Automations cron can miss even when enabled; this workflow is the
+# durable trigger. Skips portals that already have a same-day agent.
+name: Daily Apply Portals
+
+on:
+  schedule:
+    # 9:00 AM IST (Asia/Kolkata has no DST) = 03:30 UTC
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  launch-daily:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Launch daily portal cloud jobs
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: |
+          if [[ -z "${CURSOR_API_KEY}" ]]; then
+            echo "Set repository secret CURSOR_API_KEY (https://cursor.com/dashboard/api)."
+            exit 1
+          fi
+          chmod +x scripts/launch-daily-portals.sh
+          bash scripts/launch-daily-portals.sh

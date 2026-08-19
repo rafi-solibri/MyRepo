@@ -105,7 +105,7 @@ Each portal agent uses its **own** feature branch/PR. Do not force-push shared b
 
 Home evening sets `HOME_LOCAL=1` and skips jobs already submitted that morning — do **not** duplicate apply implementations “to avoid collision”.
 
-**Loop (max 5):** after merge, `scripts/rerun-daily-after-fix.sh` / `scripts/run-portal-with-autofix.sh` re-executes the same portal up to **5** times the same IST day. If a cron portal never fired, run `bash scripts/ensure-missing-daily-runs.sh` (needs `CURSOR_API_KEY` for fresh cloud jobs).
+**Loop (max 5):** after merge, `scripts/rerun-daily-after-fix.sh` / `scripts/run-portal-with-autofix.sh` re-executes the same portal up to **5** times the same IST day. Daily morning launches are owned by `scripts/launch-daily-portals.sh` (GitHub Actions **Daily Apply Portals** at 9:00 AM IST) — do not invent a separate “ensure missing” recovery job.
 
 `scripts/auto-merge-fix-pr.sh` rebases onto `main`, asserts **no conflict markers**, then squash-merges.
 
