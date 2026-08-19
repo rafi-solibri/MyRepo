@@ -55,6 +55,51 @@ function workdayCompliantPassword(raw) {
 }
 
 const CREATE_PASS = workdayCompliantPassword(PASS);
+const FIRST_NAME = "Mohammed Abdul Rafi";
+const LAST_NAME = "Ahmed";
+const INDIA_MOBILE = "8790251698";
+
+/** Title-case a person name so Workday stops flagging ALL-CAPS autofill. */
+function titleCasePersonName(raw) {
+  const s = String(raw || "")
+    .trim()
+    .replace(/\s+/g, " ");
+  if (!s) return "";
+  return s
+    .toLowerCase()
+    .split(" ")
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+/** 10-digit IN mobile. Strip +91 / leading 0 / punctuation from resume autofill. */
+function indiaMobileDigits(raw) {
+  let d = String(raw || "").replace(/\D/g, "");
+  if (d.startsWith("91") && d.length >= 12) d = d.slice(-10);
+  else if (d.startsWith("0") && d.length === 11) d = d.slice(1);
+  if (d.length > 10) d = d.slice(-10);
+  if (d.length === 10 && /^[6-9]/.test(d)) return d;
+  return INDIA_MOBILE;
+}
+
+function nameNeedsTitleCaseFix(value) {
+  const s = String(value || "").trim();
+  if (!s) return true;
+  return /[A-Z]{3,}/.test(s) || (s === s.toUpperCase() && /[A-Za-z]/.test(s));
+}
+
+function phoneNeedsIndiaFix(value) {
+  const want = indiaMobileDigits(value);
+  const d = String(value || "").replace(/\D/g, "");
+  if (!d) return true;
+  if (d === want) return false;
+  if (d.endsWith(want) && (d.length === 10 || d.length === 11 || d.length === 12)) {
+    // +91 / 0 prefix still selected separately — rewrite to 10 digits.
+    return d.length !== 10;
+  }
+  return true;
+}
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -543,10 +588,7 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
     }
   }
 
-  async function fillFieldInput(formFieldId, value) {
-    const el = page
-      .locator(`[data-automation-id='${formFieldId}'] input, [data-automation-id='${formFieldId}']`)
-      .first();
+  async function fillVisibleInput(el, value) {
     if (!(await el.isVisible().catch(() => false))) return false;
     await el.click({ force: true }).catch(() => {});
     await el.fill("").catch(() => {});
@@ -557,7 +599,23 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
     } else {
       await el.fill(String(value)).catch(() => {});
     }
+    await el.evaluate((node) => node.blur && node.blur()).catch(() => {});
     return true;
+  }
+
+  async function fillFieldInput(formFieldId, value) {
+    const el = page
+      .locator(`[data-automation-id='${formFieldId}'] input, [data-automation-id='${formFieldId}']`)
+      .first();
+    return fillVisibleInput(el, value);
+  }
+
+  async function fillFirstMatch(value, selectors) {
+    for (const sel of selectors) {
+      const el = page.locator(sel).first();
+      if (await fillVisibleInput(el, value)) return true;
+    }
+    return false;
   }
 
   async function pickPromptOption(formFieldId, optionPatterns) {
@@ -616,12 +674,28 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
   }
 
   async function fillMyInformation() {
-    // Previously worked here? → No
+    // Previously worked here? → No (Broadcom uses name=candidateIsPreviousWorker).
     const prev = page.locator(
       "[data-automation-id='formField-candidateIsPreviousWorker']"
     );
     if (await prev.isVisible().catch(() => false)) {
       await prev.getByText(/^No$/i).first().click({ force: true }).catch(() => {});
+    }
+    const prevNo = page
+      .locator(
+        "input[name='candidateIsPreviousWorker'][value='false'], input[name='candidateIsPreviousWorker'][id$='2']"
+      )
+      .first();
+    if (await prevNo.count()) {
+      const checked = await prevNo.isChecked().catch(() => false);
+      if (!checked) await prevNo.check({ force: true }).catch(() => {});
+    }
+    const prevBlock = page
+      .locator("fieldset, div, li")
+      .filter({ hasText: /ever been employed by|previously (worked|employed)|former employee/i })
+      .first();
+    if (await prevBlock.isVisible().catch(() => false)) {
+      await prevBlock.getByText(/^No$/i).first().click({ force: true }).catch(() => {});
     }
 
     // Prefer India when Country shows United States / Select One.
@@ -645,16 +719,37 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
       }
     }
 
-    await fillFieldInput("legalNameSection_firstName", "Mohammed Abdul Rafi");
-    await fillFieldInput("legalNameSection_lastName", "Ahmed");
-    await fillFieldInput("formField-legalName--firstName", "Mohammed Abdul Rafi");
-    await fillFieldInput("formField-legalName--lastName", "Ahmed");
+    const first = titleCasePersonName(FIRST_NAME);
+    const last = titleCasePersonName(LAST_NAME);
+    const mobile = indiaMobileDigits(INDIA_MOBILE);
+
+    await fillFieldInput("legalNameSection_firstName", first);
+    await fillFieldInput("legalNameSection_lastName", last);
+    await fillFieldInput("formField-legalName--firstName", first);
+    await fillFieldInput("formField-legalName--lastName", last);
+    // Broadcom / newer tenants use name--legalName--* and phoneNumber--phoneNumber.
+    await fillFirstMatch(first, [
+      "input[name='legalName--firstName']",
+      "input[id='name--legalName--firstName']",
+      "[data-automation-id='legalName--firstName']",
+    ]);
+    await fillFirstMatch(last, [
+      "input[name='legalName--lastName']",
+      "input[id='name--legalName--lastName']",
+      "[data-automation-id='legalName--lastName']",
+    ]);
     await fillFieldInput("addressSection_city", "Hyderabad");
     await fillFieldInput("formField-addressLine1", "Hyderabad, Telangana");
     await fillFieldInput("formField-city", "Hyderabad");
     await fillFieldInput("formField-postalCode", "500032");
-    await fillFieldInput("phone", "8790251698");
-    await fillFieldInput("formField-phoneNumber", "8790251698");
+    await fillFieldInput("phone", mobile);
+    await fillFieldInput("formField-phoneNumber", mobile);
+    await fillFirstMatch(mobile, [
+      "input[name='phoneNumber']",
+      "input[id='phoneNumber--phoneNumber']",
+      "[data-automation-id='phoneNumber'] input",
+      "[data-automation-id='phoneNumber']",
+    ]);
 
     await pickPromptOption("formField-phoneType", [/^Mobile$/i, /Cell/i, /Mobile/i]);
     await pickPromptOption("formField-source", [
@@ -666,20 +761,24 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
       /Company Websites/i,
     ]);
 
-    // Aria-label fallbacks.
-    for (const [re, val] of [
-      [/first name/i, "Mohammed Abdul Rafi"],
-      [/last name/i, "Ahmed"],
-      [/^city$/i, "Hyderabad"],
-      [/postal|zip/i, "500032"],
-      [/phone number|mobile/i, "8790251698"],
-      [/email/i, EMAIL],
+    // Aria-label fallbacks. Always overwrite ALL-CAPS / invalid-phone autofill
+    // (empty-only fill left Broadcom stuck on "valid format" + capitalization).
+    for (const [re, val, kind] of [
+      [/first name|given name/i, first, "name"],
+      [/last name|family name/i, last, "name"],
+      [/^city$/i, "Hyderabad", "other"],
+      [/postal|zip/i, "500032", "other"],
+      [/phone number|mobile/i, mobile, "phone"],
+      [/email/i, EMAIL, "other"],
     ]) {
       const el = page.getByLabel(re).first();
-      if (await el.isVisible().catch(() => false)) {
-        const cur = await el.inputValue().catch(() => "");
-        if (!cur) await el.fill(val).catch(() => {});
-      }
+      if (!(await el.isVisible().catch(() => false))) continue;
+      const cur = await el.inputValue().catch(() => "");
+      const overwrite =
+        !cur ||
+        (kind === "name" && nameNeedsTitleCaseFix(cur)) ||
+        (kind === "phone" && phoneNeedsIndiaFix(cur));
+      if (overwrite) await fillVisibleInput(el, val);
     }
   }
 
@@ -847,7 +946,11 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
       continue;
     }
     // Validation errors: keep filling within budget instead of bailing once.
-    if (/Errors Found|is required and must have a value/i.test(text2)) {
+    if (
+      /Errors Found|Errors and Alerts Found|is required and must have a value|Enter a valid format for Phone Number|correctly capitalized|more than 2 capital letters/i.test(
+        text2
+      )
+    ) {
       await sleep(800);
       continue;
     }
@@ -864,5 +967,9 @@ module.exports = {
   completeWorkdayApply,
   isSubmittedText,
   workdayCompliantPassword,
+  titleCasePersonName,
+  indiaMobileDigits,
+  nameNeedsTitleCaseFix,
+  phoneNeedsIndiaFix,
   EMAIL,
 };

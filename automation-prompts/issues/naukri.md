@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-08-19 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Broadcom Workday stuck: ALL-CAPS autofill names + invalid India phone (name--legalName / phoneNumber ids) | workday_apply: title-case names, 10-digit IN mobile, overwrite autofill, match name= legalName--* / phoneNumber--phoneNumber |
+
+
 ## 2026-08-17 (cloud)
 
 | Issue | Fix |
