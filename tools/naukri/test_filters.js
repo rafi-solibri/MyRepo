@@ -111,6 +111,21 @@ assert.strictEqual(
   "Power Platform must skip"
 );
 assert.strictEqual(
+  shouldSkipTitle("Power Bi Architect"),
+  true,
+  "Power BI Architect must skip (not a .NET role; Architect waiver must not apply)"
+);
+assert.strictEqual(
+  shouldSkipTitle("PowerBI Architect"),
+  true,
+  "PowerBI (no space) Architect must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("BI Architect"),
+  true,
+  "bare BI Architect must skip"
+);
+assert.strictEqual(
   shouldSkipTitle("Solution Architect - Gen AI - Life Sciences"),
   true,
   "Gen AI SA without .NET must skip"

@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-08-19 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| TCS Power Bi Architect attempted via Architect waiver (apply_unconfirmed/no_chat); power platform already skipped but power bi was not | resume_and_filters SKIP_TITLE_RE: power bi / powerbi / bi architect so Architect/Lead waiver does not burn Quick Apply on BI-only titles |
+
+
 ## 2026-08-17 (cloud)
 
 | Issue | Fix |
