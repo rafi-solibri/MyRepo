@@ -1,5 +1,13 @@
 # LinkedIn — issues & fixes
 
+## 2026-08-19 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Easy Apply crashed UnboundLocalError: re shadowed by except Exception as re in process_search restore loop | rename except binding to restore_err so module re stays usable |
+| auto_login treated temporary account restriction (/checkpoint) as CAPTCHA and aborted cron | detect temporarily restricted + parse lift time; wait within LINKEDIN_RESTRICTION_WAIT_MAX_S then retry; exit 7 if still blocked |
+
+
 ## 2026-08-17 (cloud)
 
 | Issue | Fix |
