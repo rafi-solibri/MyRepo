@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-19 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Hyland iCIMS jobCount=0: iframe element exists immediately but Playwright frames stay about:blank so extract runs on parent marketing chrome; keyword AND also hides Architect rows; title-only iCIMS slugs fail card_location_ok | wait_icims_listing_ready until in_iframe listing has job links; expand prepends unfiltered iCIMS ss=1 listing; listing_location_keep allows iCIMS job slugs without city for JD re-check |
+
+
 ## 2026-08-17 (cloud)
 
 | Issue | Fix |

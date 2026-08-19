@@ -494,6 +494,21 @@ def workday_card_location_blob(role: str, url: str) -> str:
     return f"{role or ''} {url_loc_hint(url or '')}".strip()
 
 
+def _icims_unfiltered_listing_url(url: str) -> str:
+    """iCIMS keyword search hides Architect/.NET rows — keep the full in_iframe list."""
+    parts = urlparse(url)
+    qs = parse_qs(parts.query, keep_blank_values=True)
+    for key in _SEARCH_PARAM_KEYS:
+        qs.pop(key, None)
+    qs["ss"] = qs.get("ss") or ["1"]
+    qs["in_iframe"] = ["1"]
+    flat: list[tuple[str, str]] = []
+    for k, vals in qs.items():
+        for v in vals:
+            flat.append((k, v))
+    return urlunparse(parts._replace(query=urlencode(flat, doseq=True)))
+
+
 def expand_careers_scan_urls(urls: list[str]) -> list[str]:
     """Emit role-diverse Hyd-scoped scan URLs (EM/Lead/Staff first) per careers link."""
     base = [u for u in (urls or []) if u]
@@ -502,6 +517,14 @@ def expand_careers_scan_urls(urls: list[str]) -> list[str]:
     keywords = CAREERS_SEARCH_KEYWORDS[:MAX_CAREERS_KEYWORD_SEARCHES]
     out: list[str] = []
     seen: set[str] = set()
+    # iCIMS: scan the unfiltered listing first so Architect titles are not
+    # emptied by Engineering Manager / Staff SWE keyword AND.
+    for url in base:
+        if re.search(r"icims\.com", url, re.I):
+            rewritten = pin_careers_hyderabad_location(_icims_unfiltered_listing_url(url))
+            if rewritten not in seen:
+                seen.add(rewritten)
+                out.append(rewritten)
     for kw in keywords:
         for url in base:
             rewritten = pin_careers_hyderabad_location(rewrite_careers_search_keyword(url, kw))
@@ -769,7 +792,7 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
         )
         if hint and BAD_LOC_HINT.search(hint) and not hydish.search(hint):
             continue
-        if not card_location_ok(text, hint):
+        if not listing_location_keep(text, href):
             continue
         jobs.append({"role": text, "url": href, "company": company})
     return jobs
@@ -787,6 +810,69 @@ def url_loc_hint(url: str) -> str:
         return re.sub(r"[+/]+", " ", raw)
     except Exception:
         return url
+
+
+def icims_frame_is_listing(url: str, name: str = "") -> bool:
+    """True when a Playwright frame is the loaded iCIMS job list (not about:blank)."""
+    u = url or ""
+    n = name or ""
+    if not u or "about:blank" in u:
+        return False
+    return "in_iframe=1" in u or n == "icims_content_iframe"
+
+
+def listing_location_keep(role: str, url: str) -> bool:
+    """Extract-time location gate. iCIMS slugs have no city — allow JD re-check."""
+    hint = url_loc_hint(url or "")
+    if card_location_ok(role or "", hint):
+        return True
+    if re.search(r"icims\.com/jobs/\d+", url or "", re.I) and not BAD_LOC_HINT.search(
+        f"{role or ''} {hint}"
+    ):
+        return True
+    return False
+
+
+def wait_icims_listing_ready(page: Page, timeout_s: float = 12.0) -> bool:
+    """Wait until #icims_content_iframe has a loaded document with job links.
+
+    The iframe *element* exists immediately (src already has in_iframe=1) but
+    Playwright frames stay about:blank until the listing document loads.
+    Extracting during that race yields jobCount=0 from parent marketing chrome.
+    """
+    try:
+        page_url = page.url or ""
+    except Exception:
+        page_url = ""
+    looks_icims = bool(re.search(r"icims\.com", page_url, re.I))
+    try:
+        if page.query_selector("iframe#icims_content_iframe, iframe[src*='in_iframe=1']"):
+            looks_icims = True
+    except Exception:
+        pass
+    if not looks_icims:
+        return False
+    deadline = time.time() + max(2.0, float(timeout_s))
+    while time.time() < deadline:
+        try:
+            frames = list(page.frames)
+        except Exception:
+            frames = []
+        for fr in frames:
+            fu = getattr(fr, "url", "") or ""
+            fn = getattr(fr, "name", "") or ""
+            if not icims_frame_is_listing(fu, fn):
+                continue
+            try:
+                fr.wait_for_selector(
+                    'a[href*="icims.com/jobs/"][href*="/job"], a[href*="/jobs/"][href*="/job"]',
+                    timeout=1500,
+                )
+                return True
+            except Exception:
+                continue
+        time.sleep(0.35)
+    return False
 
 
 def card_location_ok(role_text: str, top_card: str = "") -> bool:
@@ -1336,6 +1422,14 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                             break
                 except Exception:
                     pass
+                # iframe element exists immediately; wait for the listing document
+                # (otherwise extract runs on parent marketing chrome → jobCount=0).
+                try:
+                    ready = wait_icims_listing_ready(page)
+                    if re.search(r"icims\.com", url, re.I):
+                        _safe_print(f"CAREERS ICIMS_IFRAME {name} | ready={ready}")
+                except Exception as e:
+                    _safe_print(f"CAREERS ICIMS_IFRAME {name} | wait_error:{e}")
                 # Experian SmartRecruiters location groups collapse job links until expanded.
                 try:
                     hyd = page.get_by_text(re.compile(r"Hyderabad,\s*India", re.I))

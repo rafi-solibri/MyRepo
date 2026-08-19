@@ -15,11 +15,15 @@ from tools.hitechcity.careers_apply import (
     JOB_ID_HREF_RE,
     NAV_CHROME_RE,
     _browser_session_dead,
+    _icims_unfiltered_listing_url,
     card_location_ok,
     company_skip_reason,
+    expand_careers_scan_urls,
+    icims_frame_is_listing,
     is_hang_scan_url,
     is_sso_only_careers_url,
     is_uhg_skip_url,
+    listing_location_keep,
     role_has_foreign_location,
     url_loc_hint,
 )
@@ -393,6 +397,40 @@ def test_hyland_icims_url():
     )
 
 
+def test_icims_iframe_listing_keep():
+    assert icims_frame_is_listing(
+        "https://careers-hyland.icims.com/jobs/search?ss=1&in_iframe=1",
+        "icims_content_iframe",
+    )
+    assert icims_frame_is_listing("https://careers-hyland.icims.com/jobs/search?ss=1&in_iframe=1", "")
+    assert not icims_frame_is_listing("about:blank", "icims_content_iframe")
+    assert not icims_frame_is_listing("https://careers-hyland.icims.com/jobs/search?ss=1", "")
+    href = (
+        "https://careers-hyland.icims.com/jobs/14271/"
+        "platform-infrastructure-architect---core-apps/job?in_iframe=1"
+    )
+    # iCIMS slugs have no city token — keep for JD top-card re-check.
+    assert listing_location_keep("Platform Infrastructure Architect - Core Apps", href)
+    assert not listing_location_keep(
+        "Solutions Architect Full-time · São Carlos, Brazil", href
+    )
+    assert not listing_location_keep(
+        "Lead Architect Bengaluru",
+        "https://careers-hyland.icims.com/jobs/14200/lead-architect-bengaluru/job?in_iframe=1",
+    )
+    raw = (
+        "https://careers-hyland.icims.com/jobs/search?ss=1"
+        "&searchKeyword=Engineering+Manager&in_iframe=1"
+    )
+    unf = _icims_unfiltered_listing_url(raw)
+    assert "in_iframe=1" in unf
+    assert "searchKeyword" not in unf
+    expanded = expand_careers_scan_urls([raw])
+    assert any("in_iframe=1" in u and "searchKeyword" not in u for u in expanded)
+    assert any("searchKeyword=" in u for u in expanded)
+    assert all("Hyderabad" in u for u in expanded)
+
+
 def test_attempt_ats_apply_persist_env_no_nameerror():
     """#206 persist-retry env read must not raise NameError for missing os."""
     from unittest.mock import MagicMock, patch
@@ -458,6 +496,7 @@ if __name__ == "__main__":
     test_workday_create_account_is_completable()
     test_indeed_oauth_url_is_login_wall()
     test_hyland_icims_url()
+    test_icims_iframe_listing_keep()
     test_attempt_ats_apply_persist_env_no_nameerror()
     test_skip_uhg_default()
     print("ok")
