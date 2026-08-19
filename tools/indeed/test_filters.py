@@ -12,6 +12,7 @@ if str(ROOT) not in sys.path:
 from tools.indeed.prepare_uc_profile import COPY_PATHS  # noqa: E402
 from tools.indeed.uc_daily_apply import (  # noqa: E402
     already_applied,
+    education_option_match,
     looks_anonymous_marketing_home,
     looks_login_wall,
     job_dedupe_key,
@@ -170,6 +171,18 @@ def test_account_settings_and_serp_are_signed_in():
     assert not looks_signed_in(wall)
 
 
+def test_education_option_match():
+    # Regression 2026-08-19: ValGenesis "highest degree of education" combobox
+    # stayed on Select an option → Choose an option to continue.
+    assert education_option_match("Bachelor's Degree")
+    assert education_option_match("B.Tech")
+    assert education_option_match("B.E")
+    assert education_option_match("Master's")
+    assert not education_option_match("Select an option")
+    assert not education_option_match("What is your highest degree of education")
+    assert not education_option_match("")
+
+
 def test_job_dedupe_key_from_jk():
     assert job_dedupe_key("https://in.indeed.com/pagead/clk?jk=abc123def456&from=serp", "") == "abc123def456"
     assert job_dedupe_key("https://in.indeed.com/viewjob?jk=abc123def456", "other") == "abc123def456"
@@ -188,5 +201,6 @@ if __name__ == "__main__":
     test_hybrid_profile_copies_local_state()
     test_india_home_get_started_is_not_login_proof()
     test_account_settings_and_serp_are_signed_in()
+    test_education_option_match()
     test_job_dedupe_key_from_jk()
     print("ok")
