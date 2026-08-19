@@ -4,7 +4,7 @@
 
 **Recommended:** paste the short loaders in [ONE_TIME_LOADERS.md](ONE_TIME_LOADERS.md) once. After that, merge PRs and agents pull the latest full prompts from these files automatically.
 
-Owner max-apply checklist (logins, secrets, 10:30 ensure-missing automation): [MAX_APPLY_OWNER_CHECKLIST.md](MAX_APPLY_OWNER_CHECKLIST.md).
+Owner max-apply checklist (logins, secrets, Daily Apply Portals GHA): [MAX_APPLY_OWNER_CHECKLIST.md](MAX_APPLY_OWNER_CHECKLIST.md).
 
 Alternatively, paste each file’s full fenced `text` block into the matching automation, then Save.
 
@@ -73,6 +73,7 @@ See STEP 0 in [04-naukri-general.md](04-naukri-general.md). Indeed Cloudflare: [
 | Indeed Daily (home local) | [06-indeed.md](06-indeed.md) + [INDEED_HOME_AUTOMATION.md](INDEED_HOME_AUTOMATION.md) |
 | Notification Job 11 AM | [07-notification.md](07-notification.md) |
 | Hitech City / Knowledge City Daily | [08-hitech-city.md](08-hitech-city.md) |
+| **Daily Apply Portals** (GHA 9:00 AM IST) | [`.github/workflows/daily-apply-portals.yml`](../.github/workflows/daily-apply-portals.yml) + `scripts/launch-daily-portals.sh` |
 
 ### Home-local evening replicas (cloud can stay ON)
 

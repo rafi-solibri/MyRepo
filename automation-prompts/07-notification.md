@@ -50,12 +50,7 @@ Email delivery:
 - If Resend MCP unavailable but RESEND_API_KEY is set, use scripts/send-job-status-email.mjs as fallback
 - Always write the full report to automation memory
 - Do not invent findings; wait/poll still-running apply agents before sending when possible
-
-## Cron-miss recovery (MANDATORY before sending when applies are empty)
-If home-local same-day JSON is missing AND list-cloud-agents shows no same-day morning apply agents for LinkedIn/Foundit/Cutshort/Naukri/Instahyre/Indeed/Hitech City (automations enabled but did not fire):
-1. Run `bash scripts/ensure-missing-daily-runs.sh` (needs CURSOR_API_KEY) to launch fresh cloud apply jobs on main — do not wait for tomorrow.
-2. Note launched agent URLs in the email; combined applies may still be 0 at send if jobs just started.
-3. Owner must also create/enable the separate **Ensure Missing Daily Runs** automation (~10:30 AM IST) per automation-prompts/09-ensure-missing.md / ONE_TIME_LOADERS.md so mid-morning recovery happens without Notification.
+- Daily apply launches are owned by GitHub Actions **Daily Apply Portals** (`scripts/launch-daily-portals.sh`, 9:00 AM IST). Do NOT launch missing portals from Notification — only report status. If a portal has no same-day agent, say so and note that Daily Apply Portals should have covered it.
 
 ## Auto-fix & push (MANDATORY)
 If the mail pipeline itself has a code-fixable bug (fetch-indeed-home-result.sh, send-job-status-email.mjs, prompt formatting), fix under scripts/ or automation-prompts/, append via `bash scripts/append-issue-fix.sh <portal> "issue" "fix"`, commit + push a feature branch, open a ready PR to main and run `bash scripts/auto-merge-fix-pr.sh`. That merge helper then same-day re-runs this Notification Job with the fix (`scripts/rerun-daily-after-fix.sh`) — do not wait for tomorrow's cron. Follow automation-prompts/AUTO_FIX.md. Also list any open/merged portal fix PRs from today’s apply agents in the email. Owner-only: missing RESEND secrets / verified domain.
