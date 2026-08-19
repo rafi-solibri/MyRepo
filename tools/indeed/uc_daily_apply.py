@@ -588,6 +588,31 @@ def restore_signed_in(sb) -> dict:
     return info
 
 
+EDU_OPTION_RE = re.compile(
+    r"b\.?\s*tech|bachelor|b\.e\b|undergraduate|master'?s?|m\.?\s*tech|b\.?\s*sc",
+    re.I,
+)
+EDU_PLACEHOLDER_RE = re.compile(
+    r"select an option|choose an option|highest degree|education level",
+    re.I,
+)
+EDU_QUESTION_RE = re.compile(
+    r"highest (degree|education|qualification)|degree of education|"
+    r"education level|degree obtained|qualification",
+    re.I,
+)
+
+
+def education_option_match(text: str) -> bool:
+    """True for a SmartApply education list option (not the closed trigger)."""
+    t = (text or "").strip()
+    if not t or len(t) > 80:
+        return False
+    if EDU_PLACEHOLDER_RE.search(t):
+        return False
+    return bool(EDU_OPTION_RE.search(t))
+
+
 def already_applied(body: str, url: str = "") -> bool:
     """True when job-view or SmartApply shows this listing was already submitted.
 
@@ -717,6 +742,70 @@ def _switch_smartapply_frame(sb) -> None:
         sb.driver.switch_to.default_content()
     except Exception:
         pass
+
+
+def recover_education_combobox(sb) -> bool:
+    """Open a leftover education 'Select an option' combobox and pick Bachelor/B.Tech.
+
+    ValGenesis SmartApply (2026-08-19) left 'highest degree of education' on
+    Select an option with 'Choose an option to continue' — native <select>
+    fallback never fired because the control is a portaled listbox.
+    """
+    _switch_smartapply_frame(sb)
+    opened = False
+    try:
+        opened = bool(
+            sb.execute_script(
+                """
+                const looksEdu = (text) => /highest (degree|education|qualification)|degree of education|education level|degree obtained|qualification/.test((text || '').toLowerCase());
+                const errs = [...document.querySelectorAll('[class*="error"], [role=alert], span, p, div')]
+                  .filter(e => /choose an option to continue/i.test(e.innerText || ''));
+                const roots = [
+                  ...errs.map(e => e.closest('fieldset, [class*="question"], [class*="Question"], li, section, form, div') || document.body),
+                  ...document.querySelectorAll('fieldset, [class*="question"], [class*="Question"], li, section')
+                ];
+                for (const root of roots) {
+                  const ctx = (root.innerText || '').slice(0, 400);
+                  if (!looksEdu(ctx)) continue;
+                  const trigger = root.querySelector('button, [role=combobox], [aria-haspopup=listbox], select');
+                  if (!trigger) continue;
+                  const t = ((trigger.innerText || '') + ' ' + (trigger.getAttribute('aria-label') || ''));
+                  const needs = /select an option|choose an option|^select$/i.test(t)
+                    || (trigger.tagName === 'SELECT' && trigger.selectedIndex <= 0)
+                    || trigger.getAttribute('aria-expanded') === 'false';
+                  if (!needs) continue;
+                  try { trigger.click(); return true; } catch (e) {}
+                }
+                return false;
+                """
+            )
+        )
+    except Exception as exc:
+        print(f"  education_open_error={exc!s}"[:180], flush=True)
+        opened = False
+    if opened:
+        time.sleep(0.5)
+    try:
+        picked = sb.execute_script(
+            """
+            const opts = [...document.querySelectorAll('[role=option], li, button, div, span, a')];
+            for (const el of opts) {
+              const t = ((el.innerText || '') + ' ' + (el.getAttribute('aria-label') || '')).trim();
+              if (!t || t.length > 80) continue;
+              if (/select an option|choose an option|highest degree|education level/i.test(t)) continue;
+              if (/b\\.?\\s*tech|bachelor|b\\.e\\b|undergraduate|master'?s?|m\\.?\\s*tech|b\\.?\\s*sc/i.test(t)) {
+                try { el.click(); return t.slice(0, 80); } catch (e) {}
+              }
+            }
+            return null;
+            """
+        )
+        if picked:
+            print(f"  education_pick={picked!r}", flush=True)
+            return True
+    except Exception as exc:
+        print(f"  education_pick_error={exc!s}"[:180], flush=True)
+    return False
 
 
 def fill_common_questions(sb) -> None:
@@ -945,7 +1034,7 @@ def fill_common_questions(sb) -> None:
             }
             for (const lab of document.querySelectorAll('label, legend, h1, h2, h3, p, span')) {
               const t = (lab.innerText||'').trim();
-              if (t.length > 6 && t.length < 220 && /\\?|ctc|salary|notice|experience|relocat|authori|location|package|lpa|gender|hybrid|bond|veteran|disability|ethnicity|race|hispanic|voluntary|self.?ident|birth|dob|title|salutation/.test(t.toLowerCase())) {
+              if (t.length > 6 && t.length < 220 && /\\?|ctc|salary|notice|experience|relocat|authori|location|package|lpa|gender|hybrid|bond|veteran|disability|ethnicity|race|hispanic|voluntary|self.?ident|birth|dob|title|salutation|education|degree|qualification/.test(t.toLowerCase())) {
                 const want = wantFromText(t);
                 if (want && clickMatching(lab.closest('div, fieldset, li, section, [class*="question"]') || lab.parentElement || lab, want)) {
                   answered += 1;
@@ -1045,6 +1134,31 @@ def fill_common_questions(sb) -> None:
               }
               return false;
             };
+            const pickEducationOption = () => {
+              const opts = [...document.querySelectorAll('[role=option], li, button, div, span, a')];
+              for (const el of opts) {
+                const t = ((el.innerText || '') + ' ' + (el.getAttribute('aria-label') || '')).trim();
+                if (!t || t.length > 80) continue;
+                if (/select an option|choose an option|highest degree|education level/i.test(t)) continue;
+                if (/b\\.?\\s*tech|bachelor|b\\.e\\b|undergraduate|master'?s?|m\\.?\\s*tech|b\\.?\\s*sc/i.test(t)) {
+                  try { el.click(); return true; } catch (e) {}
+                }
+              }
+              return false;
+            };
+            const educationTriggers = [...document.querySelectorAll(
+              'button, [role=combobox], [aria-haspopup=listbox], select'
+            )];
+            for (const el of educationTriggers) {
+              const wrap = el.closest('fieldset, [class*="question"], [class*="Question"], li, section, label, div') || el.parentElement || el;
+              const ctx = ((wrap.innerText || '') + ' ' + (el.getAttribute('aria-label') || '') + ' ' + (el.innerText || '')).toLowerCase().slice(0, 280);
+              const looksEdu = /highest (degree|education|qualification)|degree of education|education level|degree obtained|qualification/.test(ctx);
+              const needsPick = /select an option|^select$|choose an option/.test((el.innerText || '') + ' ' + (el.getAttribute('aria-label') || ''))
+                || (el.tagName === 'SELECT' && (el.selectedIndex <= 0));
+              if (!looksEdu || !needsPick) continue;
+              try { el.click(); } catch (e) {}
+              if (pickEducationOption()) { answered += 1; }
+            }
             const countryTriggers = [...document.querySelectorAll(
               'button, [role=combobox], [aria-haspopup=listbox], select, [class*="dropdown"], [data-testid*="country"]'
             )];
@@ -1058,16 +1172,20 @@ def fill_common_questions(sb) -> None:
               try { el.click(); } catch (e) {}
               if (pickIndiaOption()) { answered += 1; }
             }
-            // If validation already shows "Choose an option" under Country, open + India.
+            // If validation already shows "Choose an option", open + pick Country/education.
             for (const err of document.querySelectorAll('[class*="error"], [role=alert], span, p, div')) {
               const et = (err.innerText || '').trim();
               if (!/choose an option to continue/i.test(et)) continue;
               const root = err.closest('fieldset, [class*="question"], [class*="Question"], li, section, form, div') || document.body;
               const ctx = (root.innerText || '').toLowerCase().slice(0, 400);
-              if (!/\\bcountry\\b|dial|phone/.test(ctx)) continue;
               const trigger = root.querySelector('button, [role=combobox], [aria-haspopup=listbox], select');
               if (trigger) { try { trigger.click(); } catch (e) {} }
-              if (pickIndiaOption()) { answered += 1; break; }
+              if (/\\bcountry\\b|dial|phone/.test(ctx)) {
+                if (pickIndiaOption()) { answered += 1; break; }
+              }
+              if (/highest (degree|education)|degree of education|education level|qualification|degree/.test(ctx)) {
+                if (pickEducationOption()) { answered += 1; break; }
+              }
             }
             // Required acknowledgment / privacy checkboxes (Mattel / Nagarro etc.).
             // Click the input ONCE — also clicking the wrapping label unchecks it.
@@ -1096,6 +1214,8 @@ def fill_common_questions(sb) -> None:
             print(f"  fill={filled}", flush=True)
     except Exception as e:
         print(f"  fill_error={e!s}"[:200], flush=True)
+
+    recover_education_combobox(sb)
 
     # Resume upload
     if RESUME.exists():
@@ -1179,6 +1299,19 @@ def tick_required_agreements(sb) -> dict:
                   });
                 if (india) {
                   try { india.click(); clicked.push('validation-country-india'); } catch (e) {}
+                }
+              } else if (/highest (degree|education)|degree of education|education level|qualification/.test(ctx)) {
+                const trigger = root.querySelector('button, [role=combobox], [aria-haspopup=listbox], select');
+                if (trigger) { try { trigger.click(); } catch (e) {} }
+                const edu = [...document.querySelectorAll('[role=option], li, button, div, span, a')]
+                  .find(e => {
+                    const t = ((e.innerText || '') + ' ' + (e.getAttribute('aria-label') || '')).trim();
+                    return t && t.length <= 80
+                      && !/select an option|choose an option|highest degree|education level/i.test(t)
+                      && /b\.?\s*tech|bachelor|b\.e\b|undergraduate|master'?s?|m\.?\s*tech|b\.?\s*sc/i.test(t);
+                  });
+                if (edu) {
+                  try { edu.click(); clicked.push('validation-education'); } catch (e) {}
                 }
               } else {
                 const opt = [...root.querySelectorAll('label, button, [role=option], [role=radio], [role=checkbox], input')]

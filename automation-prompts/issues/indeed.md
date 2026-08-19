@@ -1,5 +1,12 @@
 # Indeed — issues & fixes
 
+## 2026-08-19 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| SmartApply highest-degree education combobox left on Select an option → Choose an option to continue (ValGenesis) | Open education combobox, pick Bachelor/B.Tech from portaled listbox, recover Choose-an-option validation for education as well as Country |
+
+
 ## 2026-08-17 (cloud)
 
 | Issue | Fix |
