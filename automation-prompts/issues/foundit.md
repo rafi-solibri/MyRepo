@@ -1,5 +1,12 @@
 # Foundit — issues & fixes
 
+## 2026-08-19 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Applied Atlassian Solution Architect (Algoworks 63245315) and Oracle Subscription Management Application Architect (RealPage 63160201) via Arch/Lead without .NET on title | skipTitleReason: Atlassian without .NET; expand Oracle Fusion/ERP skip to oracle subscription (Fusion Cloud ERP product) |
+
+
 ## 2026-08-16 (cloud)
 
 | Issue | Fix |
