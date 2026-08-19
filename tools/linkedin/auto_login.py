@@ -8,6 +8,10 @@ Tries, in order:
 
 On success, exits 0. On CAPTCHA/checkpoint that needs a human, exits 6.
 On missing credentials / other failure, exits 5.
+On temporary account restriction whose lift time is beyond the wait budget, exits 7.
+
+Temporary restrictions (not interactive CAPTCHA) that lift within
+LINKEDIN_RESTRICTION_WAIT_MAX_S are waited out and then re-tried.
 
 Usage:
   python3 tools/linkedin/auto_login.py
@@ -21,7 +25,9 @@ import os
 import re
 import sys
 import time
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from playwright.sync_api import sync_playwright
 
@@ -35,6 +41,24 @@ EMAIL = (
 PASSWORD = (os.environ.get("LINKEDIN_PASSWORD") or "").strip()
 DEFAULT_EMAIL = "rafi.success@gmail.com"
 TIMEOUT_S = int(os.environ.get("LINKEDIN_AUTO_LOGIN_TIMEOUT_S", "120"))
+# Wait out short temporary restrictions (cron can land mid-ban).
+RESTRICTION_WAIT_MAX_S = int(os.environ.get("LINKEDIN_RESTRICTION_WAIT_MAX_S", "7200"))
+RESTRICTION_BUFFER_S = int(os.environ.get("LINKEDIN_RESTRICTION_BUFFER_S", "90"))
+
+_TZ_ALIASES = {
+    "PDT": "America/Los_Angeles",
+    "PST": "America/Los_Angeles",
+    "EDT": "America/New_York",
+    "EST": "America/New_York",
+    "CDT": "America/Chicago",
+    "CST": "America/Chicago",
+    "MDT": "America/Denver",
+    "MST": "America/Denver",
+    "UTC": "UTC",
+    "GMT": "UTC",
+    "IST": "Asia/Kolkata",
+}
+
 
 
 def _art() -> Path:
@@ -113,6 +137,96 @@ def _on_captcha(page) -> bool:
     except Exception:
         pass
     return False
+
+
+
+def parse_restriction_lift(text: str) -> datetime | None:
+    """Parse LinkedIn 'restriction will be lifted on …' into aware UTC datetime."""
+    if not text:
+        return None
+    m = re.search(
+        r"restriction will be lifted on\s+"
+        r"([A-Za-z]+\s+\d{1,2},\s+\d{4}\s+\d{1,2}:\d{2}\s*[AP]M)\s*([A-Z]{2,5})",
+        text,
+        re.I,
+    )
+    if not m:
+        return None
+    stamp, tz_raw = m.group(1), m.group(2).upper()
+    tz_name = _TZ_ALIASES.get(tz_raw)
+    if not tz_name:
+        # Fall back to fixed UTC offsets for common LinkedIn abbreviations.
+        fixed = {"PDT": -7, "PST": -8, "EDT": -4, "EST": -5, "IST": 5.5, "UTC": 0, "GMT": 0}
+        if tz_raw not in fixed:
+            return None
+        hours = fixed[tz_raw]
+        tz = timezone(timedelta(hours=hours))
+    else:
+        tz = ZoneInfo(tz_name)
+    try:
+        local = datetime.strptime(stamp.strip(), "%B %d, %Y %I:%M %p").replace(tzinfo=tz)
+    except ValueError:
+        try:
+            local = datetime.strptime(stamp.strip(), "%B %d, %Y %I:%M%p").replace(tzinfo=tz)
+        except ValueError:
+            return None
+    return local.astimezone(timezone.utc)
+
+
+def _page_body(page, limit: int = 4000) -> str:
+    try:
+        return page.locator("body").inner_text()[:limit]
+    except Exception:
+        return ""
+
+
+def _temp_restriction_info(page) -> dict | None:
+    """Detect LinkedIn temporary account restriction (distinct from CAPTCHA)."""
+    body = _page_body(page)
+    if not re.search(r"temporarily restricted|restriction will be lifted", body, re.I):
+        return None
+    lift = parse_restriction_lift(body)
+    info: dict = {
+        "kind": "account_temporarily_restricted",
+        "url": page.url,
+    }
+    if lift is not None:
+        now = datetime.now(timezone.utc)
+        info["lift_utc"] = lift.isoformat()
+        info["seconds_until_lift"] = max(0, int((lift - now).total_seconds()))
+    return info
+
+
+def _wait_out_restriction(info: dict) -> bool:
+    """Sleep until lift + buffer when within wait budget. Returns True if waited."""
+    secs = info.get("seconds_until_lift")
+    if secs is None:
+        return False
+    wait_for = int(secs) + RESTRICTION_BUFFER_S
+    if wait_for <= 0:
+        return False
+    if wait_for > RESTRICTION_WAIT_MAX_S:
+        return False
+    print(
+        json.dumps(
+            {
+                "ok": False,
+                "reason": "waiting_out_temporary_restriction",
+                "lift_utc": info.get("lift_utc"),
+                "sleep_s": wait_for,
+                "max_s": RESTRICTION_WAIT_MAX_S,
+            }
+        ),
+        flush=True,
+    )
+    # Chunked sleep so logs stay alive on long waits.
+    end = time.time() + wait_for
+    while time.time() < end:
+        chunk = min(30, end - time.time())
+        if chunk <= 0:
+            break
+        time.sleep(chunk)
+    return True
 
 
 def _pick_linkedin_page(ctx):
@@ -418,14 +532,29 @@ def _goto_login_clean(ctx, page):
 
 
 def _wait_signed_in(ctx, page, deadline: float, via: str, out: dict) -> int | None:
-    """Poll until signed in / captcha / timeout. Returns exit code or None to continue."""
+    """Poll until signed in / captcha / timeout. Returns exit code or None to continue.
+
+    Exit 7 = temporary account restriction (may be waitable).
+    Exit 6 = interactive CAPTCHA/checkpoint.
+    """
     while time.time() < deadline:
         page = _pick_linkedin_page(ctx)
         if _cookies_has_li_at(ctx) and _is_signed_in(ctx, page):
             out.update(ok=True, reason=via, url=page.url)
             print(json.dumps(out))
             return 0
+        info = _temp_restriction_info(page)
+        if info and not _cookies_has_li_at(ctx):
+            out.update(ok=False, reason="account_temporarily_restricted", via=via, **info)
+            try:
+                page.screenshot(path=str(_art() / "linkedin-auto-login-captcha.png"), timeout=8000)
+            except Exception:
+                pass
+            return 7
         if _on_captcha(page) and not _cookies_has_li_at(ctx):
+            # Avoid mislabeling temporary restriction pages as CAPTCHA.
+            if _temp_restriction_info(page):
+                continue
             out.update(ok=False, reason="captcha_checkpoint", url=page.url, via=via)
             try:
                 page.screenshot(path=str(_art() / "linkedin-auto-login-captcha.png"), timeout=8000)
@@ -518,14 +647,65 @@ def main() -> int:
             order = ("google_sso", "password")
         out["order"] = list(order)
         captcha_seen = False
+        restriction_info = None
         for step in order:
             rc = try_password() if step == "password" else try_google()
             if rc == 0:
                 return 0
+            if rc == 7:
+                page = _pick_linkedin_page(ctx)
+                restriction_info = _temp_restriction_info(page) or {
+                    "kind": "account_temporarily_restricted",
+                    "url": page.url,
+                }
+                # Restriction is account-level — other login methods will hit the same wall.
+                break
             if rc == 6:
                 captcha_seen = True
                 # Do not hard-stop — try the other method (password after SSO CAPTCHA).
                 continue
+
+        # Temporary restriction: wait until lift (within budget) then retry once.
+        if restriction_info is None:
+            page = _pick_linkedin_page(ctx)
+            restriction_info = _temp_restriction_info(page)
+        if restriction_info and not _cookies_has_li_at(ctx):
+            if _wait_out_restriction(restriction_info):
+                out["attempts"].append(
+                    {
+                        "step": "wait_temporary_restriction",
+                        "lift_utc": restriction_info.get("lift_utc"),
+                        "slept": True,
+                    }
+                )
+                # Fresh deadline for post-lift retry.
+                deadline = time.time() + TIMEOUT_S
+                page = _goto_login_clean(ctx, _pick_linkedin_page(ctx))
+                for step in order:
+                    rc = try_password() if step == "password" else try_google()
+                    if rc == 0:
+                        return 0
+                page = _pick_linkedin_page(ctx)
+                if _cookies_has_li_at(ctx) and _is_signed_in(ctx, page):
+                    out.update(ok=True, reason="recovered_after_restriction", url=page.url)
+                    print(json.dumps(out))
+                    return 0
+                # Re-check; may still be restricted or flipped to CAPTCHA.
+                restriction_info = _temp_restriction_info(page) or restriction_info
+            out.update(
+                ok=False,
+                reason="account_temporarily_restricted",
+                url=restriction_info.get("url") or page.url,
+                google_session=google_session,
+                lift_utc=restriction_info.get("lift_utc"),
+                seconds_until_lift=restriction_info.get("seconds_until_lift"),
+                hint=(
+                    "Temporary LinkedIn restriction; wait until lift_utc then re-run "
+                    "(or raise LINKEDIN_RESTRICTION_WAIT_MAX_S)"
+                ),
+            )
+            print(json.dumps(out))
+            return 7
 
         page = _pick_linkedin_page(ctx)
         if _cookies_has_li_at(ctx) and _is_signed_in(ctx, page):

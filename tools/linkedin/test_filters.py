@@ -71,6 +71,30 @@ assert_true(
     skip_reason("Senior SoC Director", "Acme", "") is not None,
     "SoC / silicon hardware director must skip",
 )
+assert_true(
+    skip_reason("Director, Data Engineering & Platforms", "Acme", "") is not None,
+    "Data Engineering director without .NET must skip",
+)
+assert_true(
+    skip_reason("Data Engineering Lead", "Acme", "") is not None,
+    "Data Engineering Lead without .NET must skip",
+)
+assert_true(
+    skip_reason("Oracle Cloud SCM Consultant / Architect", "Acme", "") is not None,
+    "Oracle Cloud SCM title must skip",
+)
+assert_true(
+    skip_reason("Finance Functional – Solution Architect", "Acme", "") is not None,
+    "Finance Functional solution architect must skip",
+)
+assert_true(
+    skip_reason("Tech Lead – Data Platform Cloud Engineer", "Acme", "") is not None,
+    "Data Platform tech lead without .NET must skip",
+)
+assert_true(
+    skip_reason("Data Engineering Architect .NET", "Acme", "") is None,
+    "Data Engineering + .NET on title must allow",
+)
 
 for title in [
     "Director, Senior Engineering (.Net FullStack + AI/ML)",

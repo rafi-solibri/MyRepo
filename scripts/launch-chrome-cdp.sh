@@ -380,7 +380,7 @@ if [[ "$portal" == "linkedin" || "$portal" == "hitechcity" ]]; then
             bash "$ROOT/scripts/refresh-portal-session-seed.sh" linkedin || true
           fi
         else
-          echo "NOTE: auto-login exit $auto_rc (5=login required, 6=CAPTCHA/checkpoint)." >&2
+          echo "NOTE: auto-login exit $auto_rc (5=login required, 6=CAPTCHA/checkpoint, 7=temporary restriction)." >&2
         fi
       fi
     fi

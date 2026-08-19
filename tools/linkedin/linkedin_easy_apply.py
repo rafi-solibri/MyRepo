@@ -1913,9 +1913,9 @@ def process_search(
                         page.goto(url, wait_until="domcontentloaded", timeout=60000)
                         restored = True
                         break
-                    except Exception as re:
+                    except Exception as restore_err:
                         print(
-                            f"  WARN: restore search retry {restore_try + 1}/3: {str(re)[:120]}",
+                            f"  WARN: restore search retry {restore_try + 1}/3: {str(restore_err)[:120]}",
                             flush=True,
                         )
                         time.sleep(8 + restore_try * 12)
