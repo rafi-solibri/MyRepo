@@ -747,14 +747,15 @@ def referral_people_search(page: Page, company: str, role: str) -> dict[str, Any
             # Try More → Connect on first result
             more = page.get_by_role("button", name=re.compile(r"More", re.I)).first
             if more.count() and more.is_visible():
-                more.click(timeout=1500)
+                # Overlay intercepts the visible More control (all 18 referral rows this run).
+                more.click(timeout=2500, force=True)
                 time.sleep(0.5)
             connect = page.get_by_role("button", name=re.compile(r"Connect", re.I)).first
         if not (connect.count() and connect.is_visible()):
             row["status"] = "skipped"
             row["reason"] = "no_connect_cta"
             return row
-        connect.click(timeout=2500)
+        connect.click(timeout=2500, force=True)
         time.sleep(1.0)
         add_note = page.get_by_role("button", name=re.compile(r"Add a note", re.I)).first
         if add_note.count() and add_note.is_visible():
