@@ -1,5 +1,12 @@
 # Cutshort — issues & fixes
 
+## 2026-08-19 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| 2026-08-19 post-fix re-run: leftover 7f43f20 filter fix never reached main so Cloud Engineer/SWE+stack still dropped as no_tier_match (Aug 16: 3202/0) | cherry-pick cloud/SWE classify + foreign-remote skip onto main so today's applies can run |
+
+
 ## 2026-08-16 (cloud)
 
 | Issue | Fix |
