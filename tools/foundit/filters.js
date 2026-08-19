@@ -183,8 +183,15 @@ function skipTitleReason(title) {
   if (/\boperations\s+engineering\s+manager\b/i.test(t) && !hasDotNet(t, ""))
     return "ops/manufacturing EM without .NET on title";
   // Naukri NON_DOTNET_PRIMARY_RE parity — Oracle Fusion/Apps/ERP is not .NET.
-  if (/\b(oracle\s+fusion|oracle\s+apps|oracle\s+erp)\b/i.test(t) && !hasDotNet(t, ""))
+  // Also "Oracle Subscription Management" (Fusion Cloud ERP product) — RealPage 63160201.
+  if (
+    /\b(oracle\s+fusion|oracle\s+apps|oracle\s+erp|oracle\s+subscription)\b/i.test(t) &&
+    !hasDotNet(t, "")
+  )
     return "Oracle Fusion/ERP without .NET on title";
+  // Product-platform SA (Atlassian/Jira) — same class as Salesforce/ServiceNow.
+  if (/\batlassian\b/i.test(t) && !hasDotNet(t, ""))
+    return "Atlassian without .NET on title";
   // Data-platform primary titles (Snowflake/Databricks) — Arch/Lead exception must not apply.
   if (/\b(snowflake|databricks)\b/i.test(t) && !hasDotNet(t, ""))
     return "Snowflake/Databricks without .NET on title";

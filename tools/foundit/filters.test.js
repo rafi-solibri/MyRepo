@@ -419,6 +419,34 @@ assert.strictEqual(
 
 assert.strictEqual(
   classifyJob({
+    jobId: 26.05,
+    title: "Application Architect (Oracle Subscription Management)",
+    companyName: "RealPage",
+    locations: [{ text: "Hyderabad / Secunderabad, Telangana | India" }],
+    skills: [{ text: "Oracle" }, { text: "Architecture" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "Oracle Fusion/ERP without .NET on title",
+  "Oracle Subscription Management is Fusion Cloud ERP — skip without .NET on title"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 26.06,
+    title: "Atlassian Solution Architect",
+    companyName: "Algoworks Solutions",
+    locations: [{ text: "India | Remote" }],
+    skills: [{ text: "Jira" }, { text: "Confluence" }, { text: "Azure" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "Atlassian without .NET on title",
+  "Atlassian product-platform SA must skip like Salesforce/ServiceNow"
+);
+
+assert.strictEqual(
+  classifyJob({
     jobId: 26.1,
     title: "Snowflake Solutions Architect",
     companyName: "INFOTRON",
