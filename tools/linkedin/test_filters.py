@@ -95,6 +95,19 @@ assert_true(
     skip_reason("Data Engineering Architect .NET", "Acme", "") is None,
     "Data Engineering + .NET on title must allow",
 )
+assert_true(
+    skip_reason(
+        "Principal Data and Agentic Architect , Professional Services",
+        "Acme",
+        "",
+    )
+    is not None,
+    "Data and Agentic Architect without .NET must skip",
+)
+assert_true(
+    skip_reason("Agentic Architect .NET", "Acme", "") is None,
+    "Agentic Architect + .NET on title must allow",
+)
 
 for title in [
     "Director, Senior Engineering (.Net FullStack + AI/ML)",

@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| False-allowed Principal Data and Agentic Architect (data/AI title, no .NET) | TITLE_BLACKLIST + skip_reason: data and agentic / agentic architect unless .NET/C# on title |
 | False-allowed Data Engineering / Oracle Cloud SCM / Finance Functional titles | TITLE_BLACKLIST + skip_reason: data engineering/platform, oracle cloud SCM/ERP, finance functional |
 | Easy Apply crashed UnboundLocalError: re shadowed by except Exception as re in process_search restore loop | rename except binding to restore_err so module re stays usable |
 | auto_login treated temporary account restriction (/checkpoint) as CAPTCHA and aborted cron | detect temporarily restricted + parse lift time; wait within LINKEDIN_RESTRICTION_WAIT_MAX_S then retry; exit 7 if still blocked |

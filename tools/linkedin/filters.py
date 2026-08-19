@@ -22,6 +22,7 @@ TITLE_BLACKLIST = re.compile(
     r"\bdata engineer(?:ing)?\b(?!.*(?:\.net|dotnet|c#))|"
     r"\bmachine learning engineer\b|"
     r"big data architect|\bdata architect\b|data warehouse architect|data platform|"
+    r"data and agentic(?!.*(?:\.net|dotnet|c#))|agentic architect(?!.*(?:\.net|dotnet|c#))|"
     r"implementation specialist|"
     r"\bphp\b|laravel|"
     r"interior designer|civil engineer|electrical engineering|electrical design|"
@@ -168,7 +169,8 @@ def skip_reason(role: str, company: str = "", jd: str = "") -> str | None:
     company = company or ""
     if re.search(
         r"\b(ai/?\s*ml architect|ai architect|ai engineer|ml engineer|genai|"
-        r"ai technical (lead|architect)|data scientist|data engineer(?:ing)?)\b",
+        r"ai technical (lead|architect)|data scientist|data engineer(?:ing)?|"
+        r"data and agentic|agentic architect)\b",
         title,
         re.I,
     ) and not re.search(r"\.net|dotnet|\bc#\b", title, re.I):
