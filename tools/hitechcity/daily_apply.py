@@ -35,12 +35,18 @@ def _owner_asleep_bootstrap() -> bool:
 
 
 def _cloud_headless_unattended() -> bool:
-    """Cloud CDP is headless; owner cannot solve captcha/forms on this Chrome."""
+    """True on cloud VMs — the owner is not sitting at this Chrome.
+
+    HOME_LOCAL and Windows system Chrome are headed. Cloud Xvfb often sets
+    DISPLAY=:1 which previously skipped the cap and burned Oracle persist_retry.
+    """
     if (os.environ.get("HOME_LOCAL") or "").strip().lower() in ("1", "true", "yes"):
         return False
-    if (os.environ.get("CHROME_HEADLESS") or "").strip().lower() in ("0", "false", "no"):
+    if (os.environ.get("CHROME_CDP_MODE") or "").strip().lower() == "system":
         return False
-    return not (os.environ.get("DISPLAY") or "").strip()
+    if os.name == "nt" or (os.environ.get("OS") or "") == "Windows_NT":
+        return False
+    return True
 
 
 # ---- Every-run defaults (cron + headed + home) — set before importing apply modules ----
