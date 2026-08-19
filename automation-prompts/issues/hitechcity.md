@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Hyland iCIMS jobs opened then skipped location_non_hyd_city before JD load — apply_job pre-nav used card_location_ok on title-only slugs | apply_job pre-nav uses listing_location_keep; wait iframe + read_top_card_location from icims_content_iframe not parent marketing chrome |
 | Hyland iCIMS jobCount=0: iframe element exists immediately but Playwright frames stay about:blank so extract runs on parent marketing chrome; keyword AND also hides Architect rows; title-only iCIMS slugs fail card_location_ok | wait_icims_listing_ready until in_iframe listing has job links; expand prepends unfiltered iCIMS ss=1 listing; listing_location_keep allows iCIMS job slugs without city for JD re-check |
 
 
