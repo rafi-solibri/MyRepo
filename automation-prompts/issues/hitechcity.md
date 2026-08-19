@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-19 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| LI skipped Hyland Platform Infrastructure Architect on top-card India; careers 4-keyword window never searched Architect and iCIMS searchLocation free-text returned 0 cards | Allow bare India in location_or_campus_ok; put Solution Architect in first 4 career keywords; drop invalid iCIMS searchLocation + retry without location; pin DXC native select Hyderabad |
+
+
 ## 2026-08-17 (cloud)
 
 | Issue | Fix |

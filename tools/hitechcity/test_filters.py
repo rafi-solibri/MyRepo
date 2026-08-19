@@ -108,7 +108,9 @@ def test_title_ok():
     # Careers portals: multi-role + Hyderabad location on every scan URL.
     from tools.hitechcity.careers_apply import (
         CAREERS_SEARCH_KEYWORDS,
+        MAX_CAREERS_KEYWORD_SEARCHES,
         expand_careers_scan_urls,
+        icims_url_without_location_params,
         pin_careers_hyderabad_location,
         rewrite_careers_search_keyword,
     )
@@ -117,6 +119,9 @@ def test_title_ok():
     assert CAREERS_SEARCH_KEYWORDS.index("Engineering Manager") < CAREERS_SEARCH_KEYWORDS.index(
         "Solution Architect"
     )
+    # Default 4-keyword window must include architect (Hyland iCIMS EM search is empty).
+    window = CAREERS_SEARCH_KEYWORDS[:MAX_CAREERS_KEYWORD_SEARCHES]
+    assert any(re.search(r"architect", k, re.I) for k in window)
     by = "https://careers.blueyonder.com/us/en/search-results?keywords=architect&location=Bengaluru"
     assert "Engineering%20Manager" in rewrite_careers_search_keyword(by, "Engineering Manager") or (
         "Engineering+Manager" in rewrite_careers_search_keyword(by, "Engineering Manager")
@@ -143,6 +148,13 @@ def test_title_ok():
         "https://careers-hyland.icims.com/jobs/search?ss=1&searchKeyword=Engineering+Manager&in_iframe=1"
     )
     assert "Hyderabad" in hyland
+    # Free-text searchLocation zeros iCIMS listings; location=Hyderabad is enough.
+    assert "searchLocation=" not in hyland
+    stripped = icims_url_without_location_params(
+        "https://careers-hyland.icims.com/jobs/search?ss=1&searchKeyword=Solution+Architect&in_iframe=1&location=Hyderabad"
+    )
+    assert "location=" not in stripped and "in_iframe=1" in stripped
+    assert "Solution" in stripped
     assert not card_location_ok(
         "Security Researcher Technical Lead · Israel, Haifa",
         url_loc_hint(
@@ -169,6 +181,9 @@ def test_campus_location():
     assert location_or_campus_ok("Madhapur, Hyderabad")
     assert location_or_campus_ok("Knowledge City, HITEC City")
     assert location_or_campus_ok("Remote, India", "WFH")
+    # LinkedIn top-card often says only "India" for India-remote campus roles.
+    assert location_or_campus_ok("India")
+    assert location_or_campus_ok("India · 7 minutes ago · 0 applicants")
     assert not location_or_campus_ok("Bengaluru, Karnataka")
     assert not location_or_campus_ok("Remote, Canada")
     assert not location_or_campus_ok("Remote - United States")

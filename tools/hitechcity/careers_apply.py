@@ -67,10 +67,12 @@ if (
 CAREERS_SEARCH_KEYWORDS = [
     "Engineering Manager",
     "Technical Lead",
-    "Staff Software Engineer",
-    "Principal Software Engineer",
-    "Software Development Manager",
+    # Architect must sit inside the default 4-keyword window. EM-first is required,
+    # but Hyland/iCIMS "Engineering Manager" search never surfaces Software Architect.
     "Solution Architect",
+    "Principal Software Engineer",
+    "Staff Software Engineer",
+    "Software Development Manager",
     ".NET Architect",
     "Lead Software Engineer",
 ]
@@ -326,7 +328,10 @@ def pin_careers_hyderabad_location(url: str) -> str:
         if not (re.search(r"hyderabad", cur, re.I) and "-" in cur and len(cur) > 12):
             _set("location", "hyderabad-HST430090")
     elif "icims.com" in host:
-        _set("searchLocation", target_full)
+        # iCIMS searchLocation is a numeric location id (e.g. 12780-Hyderabad).
+        # Free-text "Hyderabad, Telangana, India" zeros the listing (Hyland 0 cards).
+        # Keep location=Hyderabad for URL pin; on-page UI / extract filters Hyd/India.
+        qs.pop("searchLocation", None)
         _set("location", target_short)
     elif "oraclecloud.com" in host or "careers.oracle.com" in host:
         _set("location", target_full)
@@ -360,6 +365,21 @@ def pin_careers_hyderabad_location(url: str) -> str:
     return urlunparse(parts._replace(query=urlencode(flat, doseq=True)))
 
 
+def icims_url_without_location_params(url: str) -> str:
+    """Drop iCIMS location query keys so a zero-card Hyd pin can be retried."""
+    if not url or "icims.com" not in url.lower():
+        return url
+    parts = urlparse(url)
+    qs = parse_qs(parts.query, keep_blank_values=True)
+    for key in ("searchLocation", "location", "loc", "city"):
+        qs.pop(key, None)
+    flat: list[tuple[str, str]] = []
+    for k, vals in qs.items():
+        for v in vals:
+            flat.append((k, v))
+    return urlunparse(parts._replace(query=urlencode(flat, doseq=True)))
+
+
 def pin_portal_location_ui(page: Page) -> dict[str, Any]:
     """Best-effort: set Hyderabad in on-page location filters after navigation."""
     try:
@@ -370,6 +390,27 @@ def pin_portal_location_ui(page: Page) -> dict[str, Any]:
         return workday_pin_hyderabad_location_ui(page)
 
     out: dict[str, Any] = {"pinned": False, "available": False, "note": "generic_ui"}
+    # DXC / PeopleFluent: Hyderabad lives on a native <select>/<option>; clicking the
+    # option is intercepted by select2 overlays. Use select_option instead.
+    try:
+        native = page.locator("select").filter(
+            has=page.locator("option", has_text=re.compile(r"Hyderabad", re.I))
+        )
+        if native.count():
+            chosen = ""
+            opts = native.first.locator("option")
+            for i in range(min(opts.count(), 80)):
+                t = (opts.nth(i).inner_text() or "").strip()
+                if re.search(r"Hyderabad", t, re.I):
+                    chosen = t
+                    break
+            if chosen:
+                native.first.select_option(label=chosen)
+                out.update(pinned=True, available=True, note="native_select_hyderabad")
+                time.sleep(1.0)
+                return out
+    except Exception:
+        pass
     selectors = [
         'input[placeholder*="Location" i]',
         'input[aria-label*="Location" i]',
@@ -1345,6 +1386,35 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                 except Exception:
                     pass
                 jobs = extract_job_links(page, name)
+                # iCIMS: location=Hyderabad (or leftover searchLocation) can empty the
+                # iframe listing. Retry once without location params, then filter cards.
+                if (
+                    not jobs
+                    and re.search(r"icims\.com", url, re.I)
+                    and re.search(r"searchLocation=|location=", url, re.I)
+                ):
+                    retry_url = icims_url_without_location_params(url)
+                    if retry_url and retry_url != url:
+                        try:
+                            scan_goto(page, retry_url, timeout=45000)
+                            time.sleep(1.0)
+                            dismiss_cookie_banners(page)
+                            try:
+                                for fr in page.frames:
+                                    if "in_iframe=1" in (getattr(fr, "url", "") or ""):
+                                        fr.wait_for_selector(
+                                            'a[href*="icims.com/jobs/"][href*="/job"]',
+                                            timeout=8000,
+                                        )
+                                        break
+                            except Exception:
+                                pass
+                            jobs = extract_job_links(page, name)
+                            _safe_print(
+                                f"CAREERS ICIMS RETRY {name} | without_location jobCount={len(jobs)}"
+                            )
+                        except Exception as e:
+                            _safe_print(f"CAREERS ICIMS RETRY {name} | failed {e}")
                 # Workday with no Hyderabad in the location filter → drop foreign cards.
                 if (
                     re.search(r"myworkdayjobs\.com", url, re.I)

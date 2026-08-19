@@ -18,6 +18,7 @@ try:
         TITLE_OK,
         HYD_OK,
         REMOTE_OK,
+        INDIA_ONLY,
         BAD_CITY,
         location_allowed,
         jd_blacklist,
@@ -30,6 +31,7 @@ except Exception:
         TITLE_OK,
         HYD_OK,
         REMOTE_OK,
+        INDIA_ONLY,
         BAD_CITY,
         location_allowed,
         jd_blacklist,
@@ -78,6 +80,12 @@ def location_or_campus_ok(loc: str, workplace: str = "", jd_snip: str = "") -> b
         return True
     blob = f"{loc} {workplace} {jd_snip}"
     if CAMPUS_OK.search(blob) and not (BAD_CITY.search(blob) and not REMOTE_OK.search(blob)):
+        return True
+    # LinkedIn campus cards often show only "India" for India-wide / India-remote
+    # roles (Hyland Platform Infrastructure Architect). Prompt allows India Remote;
+    # apply-bias: uncertain skip vs apply → APPLY when no foreign city is named.
+    primary = (loc or "").strip().splitlines()[0][:120]
+    if INDIA_ONLY.search(primary) and not BAD_CITY.search(blob):
         return True
     return False
 
