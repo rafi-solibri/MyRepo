@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-19 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Hyland iCIMS jobCount 0: title-only cards skipped as non-Hyd; Architect keyword outside first-4 scans | card_location_ok allows iCIMS title-only / job-id paths; extract Job Locations header; put Solution Architect in first 4 CAREERS_SEARCH_KEYWORDS |
+
+
 ## 2026-08-17 (cloud)
 
 | Issue | Fix |

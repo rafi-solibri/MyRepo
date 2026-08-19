@@ -67,10 +67,10 @@ if (
 CAREERS_SEARCH_KEYWORDS = [
     "Engineering Manager",
     "Technical Lead",
-    "Staff Software Engineer",
+    "Solution Architect",
     "Principal Software Engineer",
     "Software Development Manager",
-    "Solution Architect",
+    "Staff Software Engineer",
     ".NET Architect",
     "Lead Software Engineer",
 ]
@@ -716,9 +716,26 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
                     text = first.slice(0, 160);
                   }
                 }
-                // Only SmartRecruiters location groups are reliable for nearestLoc
-                // (ModMed/global pages can mention Hyderabad in chrome and poison titles).
-                if (/smartrecruiters\\.com/i.test(href) || /smartrecruiters\\.com/i.test(location.hostname || '')) {
+                // iCIMS Job Locations header (titles omit city; /jobs/12345/job path is not a workplace).
+                if (/icims\\.com/i.test(href) || /icims\\.com/i.test(location.hostname || '')) {
+                  let loc = '';
+                  const card = a.closest('li') || a.closest('.iCIMS_JobCardItem');
+                  if (card) {
+                    for (const tag of [...card.querySelectorAll('.iCIMS_JobHeaderTag')]) {
+                      const field = (tag.querySelector('.iCIMS_JobHeaderField')?.innerText || '');
+                      if (/location/i.test(field)) {
+                        loc = (tag.querySelector('.iCIMS_JobHeaderData')?.innerText || '').trim();
+                        if (loc) break;
+                      }
+                    }
+                  }
+                  if (!loc) loc = nearestLoc(a);
+                  const locCity = (loc.split(',')[0] || loc.split('|')[0] || '').trim();
+                  if (loc && locCity && !text.toLowerCase().includes(locCity.toLowerCase().slice(0, 18))) {
+                    text = (text + ' · ' + loc).slice(0, 180);
+                  }
+                } else if (/smartrecruiters\\.com/i.test(href) || /smartrecruiters\\.com/i.test(location.hostname || '')) {
+                  // SmartRecruiters location groups only — global pages can mention Hyd in chrome.
                   const loc = nearestLoc(a);
                   const locCity = (loc.split(',')[0] || '').trim().toLowerCase();
                   if (loc && locCity && !text.toLowerCase().includes(locCity)) {
@@ -789,6 +806,31 @@ def url_loc_hint(url: str) -> str:
         return url
 
 
+def _has_explicit_workplace(blob: str) -> bool:
+    """True when card/title/URL names a city, country, or remote workplace."""
+    if not (blob or "").strip():
+        return False
+    if BAD_LOC_HINT.search(blob):
+        return True
+    if re.search(
+        r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|gachibowli|raidurg|"
+        r"\bremote\b|\bwfh\b|work from home|\bindia\b",
+        blob,
+        re.I,
+    ):
+        return True
+    # "City, Region" pills — not job-id paths like "jobs 13991 senior software architect job".
+    if re.search(
+        r"[A-Za-z][A-Za-z .'-]{2,},\s*(?:India|United States|USA|UK|United Kingdom|"
+        r"Canada|Telangana|Karnataka|Maharashtra|Tamil Nadu|Texas|Florida|California|"
+        r"Washington|Oregon|Ohio)",
+        blob,
+        re.I,
+    ):
+        return True
+    return False
+
+
 def card_location_ok(role_text: str, top_card: str = "") -> bool:
     """HARD: judge workplace from card/title/top pills/URL — never full page body/footer."""
     blob = f"{role_text or ''} {top_card or ''}".strip()
@@ -808,6 +850,10 @@ def card_location_ok(role_text: str, top_card: str = "") -> bool:
         return True
     # Vague India/Remote without a foreign city — allow; apply_job still re-checks.
     if re.search(r"\bremote\b|\bwfh\b|work from home|\bindia\b", blob, re.I):
+        return True
+    # iCIMS titles omit workplace and `/jobs/13991/job` paths are not cities.
+    # Allow open; apply_job re-checks the JD top card (campus apply-bias).
+    if not _has_explicit_workplace(blob):
         return True
     # Unknown city text (no Hyd, no known foreign) — do not assume Hyd.
     return False

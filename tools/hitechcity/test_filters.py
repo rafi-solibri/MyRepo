@@ -117,6 +117,8 @@ def test_title_ok():
     assert CAREERS_SEARCH_KEYWORDS.index("Engineering Manager") < CAREERS_SEARCH_KEYWORDS.index(
         "Solution Architect"
     )
+    # First 4 scans must include Architect — Hyland iCIMS EM/Staff keywords miss those titles.
+    assert "Solution Architect" in CAREERS_SEARCH_KEYWORDS[:4]
     by = "https://careers.blueyonder.com/us/en/search-results?keywords=architect&location=Bengaluru"
     assert "Engineering%20Manager" in rewrite_careers_search_keyword(by, "Engineering Manager") or (
         "Engineering+Manager" in rewrite_careers_search_keyword(by, "Engineering Manager")
@@ -243,6 +245,17 @@ def test_careers_card_location():
         "Senior Lead Engineer – AI Platform Architecture Hyderabad, Telangana, India"
     )
     assert card_location_ok("Solutions Architect", "Hyderabad, Telangana, India")
+    # iCIMS titles omit city; job-id path is not a workplace — allow open, JD re-check.
+    hyland_job = (
+        "https://careers-hyland.icims.com/jobs/13991/senior-software-architect/job?in_iframe=1"
+    )
+    assert "hyderabad" not in url_loc_hint(hyland_job).lower()
+    assert card_location_ok("Senior Software Architect", url_loc_hint(hyland_job))
+    assert card_location_ok(
+        "Senior Software Architect - .NET",
+        url_loc_hint("https://careers-hyland.icims.com/jobs/13991/job"),
+    )
+    assert card_location_ok("Senior Software Architect · Remote - India")
     # Remote Canada / Remote US / Remote UK are not India-remote (Gartner Workday path).
     assert not card_location_ok(
         "Sr. Director Analyst, Enterprise Architecture (Remote)",
