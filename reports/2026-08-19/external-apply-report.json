@@ -1,0 +1,810 @@
+{
+  "ts": "2026-08-19T07:32:27.676898+00:00",
+  "submitted": [],
+  "blocked": [
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4443293962",
+      "location": "",
+      "reason": "ats_login_wall",
+      "url": "https://www.linkedin.com/jobs/view/4443293962/",
+      "path": "https://paloaltonetworks.wd5.myworkdayjobs.com/panwexternalcareers/job/Office---India---CyberArk-Hyderabad/Principal-Software-Architect_JR-020017/apply?source=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4448608798",
+      "location": "",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/view/4448608798/",
+      "path": "https://careers.convatec.com/global/gb/job/JR00019826/Solution-Architect---TI-Tech?APPLICANT_SOURCE-3-4&source=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4400708113",
+      "location": "",
+      "reason": "ats_login_wall",
+      "url": "https://www.linkedin.com/jobs/view/4400708113/",
+      "path": "https://modmed.wd501.myworkdayjobs.com/ModMed12/job/Hyderabad-India/Senior-Software-Architect_R4230/apply?source=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4405159441",
+      "location": "",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/view/4405159441/",
+      "path": "https://careers.blackbaud.com/us/en/job/BLBBUSR0014040EXTERNALENUS/Laureate-Software-Engineer-NET-Architecture?utm_source=linkedin&utm_medium=phenom-feeds"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4415350173",
+      "location": "",
+      "reason": "captcha_needs_owner_or_solver",
+      "url": "https://www.linkedin.com/jobs/view/4415350173/",
+      "path": "https://careers-hyland.icims.com/jobs/13991/senior-software-architect---.net/job?mode=apply&iis=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4433879078",
+      "location": "",
+      "reason": "captcha_needs_owner_or_solver",
+      "url": "https://www.linkedin.com/jobs/view/4433879078/",
+      "path": "https://careers-hyland.icims.com/jobs/14169/senior-software-architect/job?mode=apply&iis=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4442700522",
+      "location": "",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/view/4442700522/",
+      "path": "https://careers.gevernova.com/lead-software-solution-architect/job/R5047701"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4438407299",
+      "location": "",
+      "reason": "ats_login_wall",
+      "url": "https://www.linkedin.com/jobs/view/4438407299/",
+      "path": "https://paloaltonetworks.wd5.myworkdayjobs.com/panwexternalcareers/job/Office---India---CyberArk-Hyderabad/Senior-Principal-Software-Architect_JR-018059-1/apply?source=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4446911955",
+      "location": "",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/view/4446911955/",
+      "path": "https://careers.cognizant.com/global-en/jobs/00069823894/technology-architect/?source=JB-11500"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4444948388",
+      "location": "",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/view/4444948388/",
+      "path": "chrome-error://chromewebdata/"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4398091856",
+      "location": "",
+      "reason": "did not leave LinkedIn",
+      "url": "https://www.linkedin.com/jobs/view/4398091856/",
+      "path": "https://www.linkedin.com/jobs/view/4398091856/"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "3963509343",
+      "location": "",
+      "reason": "CAPTCHA/bot wall",
+      "url": "https://www.linkedin.com/jobs/view/3963509343/",
+      "path": "https://www.paycomonline.net/v4/ats/web.php/portal/E3FE2C24DB32BA48A4642D16583504C1/jobs/121127"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4401736196",
+      "location": "",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/view/4401736196/",
+      "path": "https://job-boards.greenhouse.io/starrez/jobs/5181888008?gh_src=1wc18k7k8us"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4437577980",
+      "location": "",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/view/4437577980/",
+      "path": "https://jobs.rsmus.com/posting/solution-architect-manager-2/JR120078/?source=LinkedIn+-+Job+Feed"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4440227307",
+      "location": "",
+      "reason": "ats_login_wall",
+      "url": "https://www.linkedin.com/jobs/view/4440227307/",
+      "path": "https://solera.wd5.myworkdayjobs.com/Global_Career_Site/job/Hyderabad/Principal-Software-Engineer_JR-019000?source=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4404747227",
+      "location": "",
+      "reason": "CAPTCHA/bot wall",
+      "url": "https://www.linkedin.com/jobs/view/4404747227/",
+      "path": "https://bradyplc.bamboohr.com/careers/373?source=aWQ9NA%3D%3D"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4441511168",
+      "location": "",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/view/4441511168/",
+      "path": "https://mco.careers.hibob.com/jobs/0f1d0666-327a-4715-8adc-27d3a1820039"
+    },
+    {
+      "status": "blocked",
+      "company": "Senior Technical Architect \u2013 AWS / CloudFront",
+      "role": "Senior Technical Architect \u2013 AWS / CloudFront Senior Technical Architect \u2013 AWS / CloudFront with verification",
+      "job_id": "4438737073",
+      "location": "Hyderabad, Telangana, India \u00b7 Reposted 1 week ago \u00b7 Over 100 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "ats_login_wall",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4438737073&f_AL=true&f_TPR=r86400&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://paloaltonetworks.wd5.myworkdayjobs.com/panwexternalcareers/job/Office---India---CyberArk-Hyderabad/Senior-Staff-Software-Engineer_JR-018032/apply?source=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "Senior Technical Architect \u2013 AWS / CloudFront",
+      "role": "Senior Technical Architect \u2013 AWS / CloudFront Senior Technical Architect \u2013 AWS / CloudFront with verification",
+      "job_id": "4456135517",
+      "location": "India \u00b7 1 hour ago \u00b7 3 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4456135517&f_AL=true&f_TPR=r86400&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://jobs.micro1.ai/post/11bcf004-157a-4578-a7a2-5d303a6262c5?referralCode=e91c9585-63ad-45aa-9820-d63708190a83&utm_source=referral&utm_medium=share&utm_campaign=job_referral"
+    },
+    {
+      "status": "blocked",
+      "company": "Senior Technical Architect \u2013 AWS / CloudFront",
+      "role": "Senior Technical Architect \u2013 AWS / CloudFront Senior Technical Architect \u2013 AWS / CloudFront with verification",
+      "job_id": "4456112912",
+      "location": "India \u00b7 1 hour ago \u00b7 1 person clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4456112912&f_AL=true&f_TPR=r86400&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://jobs.micro1.ai/post/b933b3a2-2129-46c9-9294-c1b8160cc57c?referralCode=e91c9585-63ad-45aa-9820-d63708190a83&utm_source=referral&utm_medium=share&utm_campaign=job_referral"
+    },
+    {
+      "status": "blocked",
+      "company": "Technical Architect",
+      "role": "Technical Architect Technical Architect with verification",
+      "job_id": "4444372626",
+      "location": "Hyderabad, Telangana, India \u00b7 Reposted 4 days ago \u00b7 49 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4444372626&f_AL=true&f_TPR=r86400&keywords=.NET%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://aveva.wd3.myworkdayjobs.com/AVEVA_careers/job/Hyderabad-India/R-D-Senior-Member-of-Technical-Staff_R014459-1?source=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "Technical Architect",
+      "role": "Technical Architect Technical Architect with verification",
+      "job_id": "4449858246",
+      "location": "Hyderabad, Telangana, India \u00b7 1 week ago \u00b7 49 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4449858246&f_AL=true&f_TPR=r86400&keywords=.NET%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://usource.ripplehire.com/candidate/?token=8YxWjpwDhdL62DFYUIcQ&lang=en&source=USTLINKEDIN&ref=USTLINKEDIN#detail/job/63168"
+    },
+    {
+      "status": "blocked",
+      "company": "Technical Architect",
+      "role": "Technical Architect Technical Architect with verification",
+      "job_id": "4448210544",
+      "location": "Hyderabad, Telangana, India \u00b7 2 weeks ago \u00b7 Over 100 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4448210544&f_AL=true&f_TPR=r86400&keywords=.NET%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://myjobs.adp.com/apply?__tx_annotation=false&c=1046545&d=External&r=5001207924506&&sor=adprm"
+    },
+    {
+      "status": "blocked",
+      "company": "Director, Data Engineering & Platforms",
+      "role": "Director, Data Engineering & Platforms Director, Data Engineering & Platforms",
+      "job_id": "4454256653",
+      "location": "Hyderabad, Telangana, India \u00b7 1 day ago \u00b7 83 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4454256653&f_AL=true&f_TPR=r86400&f_WT=2&keywords=Engineering%20Manager&location=India&sortBy=DD",
+      "path": "https://minfy.keka.com/careers/jobdetails/156680?source=linkedin"
+    },
+    {
+      "status": "blocked",
+      "company": "Jobs Ai",
+      "role": "Technical Architect (Remote) Technical Architect (Remote)",
+      "job_id": "4455946234",
+      "location": "Hyderabad, Telangana, India \u00b7 8 hours ago \u00b7 Over 100 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4455946234&f_TPR=r86400&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://salesforce.wd12.myworkdayjobs.com/External_Career_Site/job/India---Hyderabad/Software-Engineering-AMTS_JR356580?source=LinkedIn_Jobs"
+    },
+    {
+      "status": "blocked",
+      "company": "Jobs Ai",
+      "role": "Technical Architect (Remote) Technical Architect (Remote)",
+      "job_id": "4455763635",
+      "location": "Hyderabad, Telangana, India \u00b7 13 hours ago \u00b7 36 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4455763635&f_TPR=r86400&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://jobs.msd.com/gb/en/job/MSD1GBR410390ENGB/Specialist-Software-Engineering?utm_source=linkedin&utm_medium=phenom-feeds"
+    },
+    {
+      "status": "blocked",
+      "company": "Jobs Ai",
+      "role": "Technical Architect (Remote) Technical Architect (Remote)",
+      "job_id": "4454749505",
+      "location": "India \u00b7 15 hours ago \u00b7 3 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "did not leave LinkedIn",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4454749505&f_TPR=r86400&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://www.linkedin.com/jobs/view/4454749505/"
+    },
+    {
+      "status": "blocked",
+      "company": "Jobs Ai",
+      "role": "Technical Architect (Remote) Technical Architect (Remote)",
+      "job_id": "4361275972",
+      "location": "Hyderabad, Telangana, India \u00b7 Reposted 19 hours ago \u00b7 Over 100 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4361275972&f_TPR=r86400&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://salesforce.wd12.myworkdayjobs.com/External_Career_Site/job/India---Bangalore/Software-Engineering-PMTS_JR323939-1?source=LinkedIn_Jobs"
+    }
+  ],
+  "skipped": [
+    {
+      "status": "skipped",
+      "company": "",
+      "role": "",
+      "job_id": "4451327394",
+      "location": "",
+      "reason": "became Easy Apply",
+      "url": "https://www.linkedin.com/jobs/view/4451327394/",
+      "path": ""
+    },
+    {
+      "status": "skipped",
+      "company": "",
+      "role": "",
+      "job_id": "4442580526",
+      "location": "",
+      "reason": "no_ats_form",
+      "url": "https://www.linkedin.com/jobs/view/4442580526/",
+      "path": "https://jobs.smartrecruiters.com/Experian/744000138563410-lead-software-engineer-net-aws-?trid=2d92f286-613b-4daf-9dfa-6340ffbecf73"
+    },
+    {
+      "status": "skipped",
+      "company": "",
+      "role": "",
+      "job_id": "4270943974",
+      "location": "",
+      "reason": "no_ats_form",
+      "url": "https://www.linkedin.com/jobs/view/4270943974/",
+      "path": "https://www.storable.com/about-us/culture/careers/?gh_jid=5564835004&gh_src=f3ue5c3c4us"
+    },
+    {
+      "status": "skipped",
+      "company": "",
+      "role": "",
+      "job_id": "4450205567",
+      "location": "",
+      "reason": "became Easy Apply",
+      "url": "https://www.linkedin.com/jobs/view/4450205567/",
+      "path": ""
+    },
+    {
+      "status": "skipped",
+      "company": "",
+      "role": "",
+      "job_id": "4450682491",
+      "location": "",
+      "reason": "became Easy Apply",
+      "url": "https://www.linkedin.com/jobs/view/4450682491/",
+      "path": ""
+    },
+    {
+      "status": "skipped",
+      "company": "",
+      "role": "",
+      "job_id": "4450035921",
+      "location": "",
+      "reason": "became Easy Apply",
+      "url": "https://www.linkedin.com/jobs/view/4450035921/",
+      "path": ""
+    },
+    {
+      "status": "skipped",
+      "company": "",
+      "role": "",
+      "job_id": "4447521118",
+      "location": "",
+      "reason": "no_ats_form",
+      "url": "https://www.linkedin.com/jobs/view/4447521118/",
+      "path": "https://apply.careers.microsoft.com/careers/job/1970393556938665?utm_source=linkedin&domain=microsoft.com&src=LinkedIn"
+    },
+    {
+      "status": "skipped",
+      "company": "",
+      "role": "",
+      "job_id": "4440898082",
+      "location": "",
+      "reason": "no_ats_form",
+      "url": "https://www.linkedin.com/jobs/view/4440898082/",
+      "path": "https://jobs.smartrecruiters.com/Experian/744000137769689-dot-net-net-community-hyderabad?trid=2d92f286-613b-4daf-9dfa-6340ffbecf73"
+    },
+    {
+      "status": "skipped",
+      "company": "",
+      "role": "",
+      "job_id": "4448938075",
+      "location": "",
+      "reason": "became Easy Apply",
+      "url": "https://www.linkedin.com/jobs/view/4448938075/",
+      "path": ""
+    },
+    {
+      "status": "skipped",
+      "company": "Jobs Ai",
+      "role": "Technical Architect (Remote) Technical Architect (Remote)",
+      "job_id": "4454599627",
+      "location": "Hyderabad, Telangana, India \u00b7 Reposted 5 hours ago \u00b7 88 people clicked apply Responses managed off LinkedIn",
+      "reason": "no_ats_form",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4454599627&f_TPR=r86400&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://www.vanguardjobs.com/job/23719078/?source=LinkedIn"
+    },
+    {
+      "status": "skipped",
+      "company": "Jobs Ai",
+      "role": "Technical Architect (Remote) Technical Architect (Remote)",
+      "job_id": "4445476667",
+      "location": "Hyderabad, Telangana, India \u00b7 Reposted 10 hours ago \u00b7 Over 100 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "no_ats_form",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4445476667&f_TPR=r86400&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://careers.cognizant.com/global-en/jobs/00066911813/principal-technical-architect/?source=JB-11500"
+    },
+    {
+      "status": "skipped",
+      "company": "Jobs Ai",
+      "role": "Technical Architect (Remote) Technical Architect (Remote)",
+      "job_id": "4443273671",
+      "location": "Hyderabad, Telangana, India \u00b7 Reposted 16 hours ago \u00b7 90 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "no_ats_form",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4443273671&f_TPR=r86400&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://www.schwabjobs.com/job/hyderabad/specialist-software-development-and-engineering/33995/98215904496?mode=apply&iis=LinkedIn"
+    }
+  ],
+  "all": [
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4443293962",
+      "location": "",
+      "reason": "ats_login_wall",
+      "url": "https://www.linkedin.com/jobs/view/4443293962/",
+      "path": "https://paloaltonetworks.wd5.myworkdayjobs.com/panwexternalcareers/job/Office---India---CyberArk-Hyderabad/Principal-Software-Architect_JR-020017/apply?source=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4448608798",
+      "location": "",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/view/4448608798/",
+      "path": "https://careers.convatec.com/global/gb/job/JR00019826/Solution-Architect---TI-Tech?APPLICANT_SOURCE-3-4&source=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4400708113",
+      "location": "",
+      "reason": "ats_login_wall",
+      "url": "https://www.linkedin.com/jobs/view/4400708113/",
+      "path": "https://modmed.wd501.myworkdayjobs.com/ModMed12/job/Hyderabad-India/Senior-Software-Architect_R4230/apply?source=LinkedIn"
+    },
+    {
+      "status": "skipped",
+      "company": "",
+      "role": "",
+      "job_id": "4451327394",
+      "location": "",
+      "reason": "became Easy Apply",
+      "url": "https://www.linkedin.com/jobs/view/4451327394/",
+      "path": ""
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4405159441",
+      "location": "",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/view/4405159441/",
+      "path": "https://careers.blackbaud.com/us/en/job/BLBBUSR0014040EXTERNALENUS/Laureate-Software-Engineer-NET-Architecture?utm_source=linkedin&utm_medium=phenom-feeds"
+    },
+    {
+      "status": "skipped",
+      "company": "",
+      "role": "",
+      "job_id": "4442580526",
+      "location": "",
+      "reason": "no_ats_form",
+      "url": "https://www.linkedin.com/jobs/view/4442580526/",
+      "path": "https://jobs.smartrecruiters.com/Experian/744000138563410-lead-software-engineer-net-aws-?trid=2d92f286-613b-4daf-9dfa-6340ffbecf73"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4415350173",
+      "location": "",
+      "reason": "captcha_needs_owner_or_solver",
+      "url": "https://www.linkedin.com/jobs/view/4415350173/",
+      "path": "https://careers-hyland.icims.com/jobs/13991/senior-software-architect---.net/job?mode=apply&iis=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4433879078",
+      "location": "",
+      "reason": "captcha_needs_owner_or_solver",
+      "url": "https://www.linkedin.com/jobs/view/4433879078/",
+      "path": "https://careers-hyland.icims.com/jobs/14169/senior-software-architect/job?mode=apply&iis=LinkedIn"
+    },
+    {
+      "status": "skipped",
+      "company": "",
+      "role": "",
+      "job_id": "4270943974",
+      "location": "",
+      "reason": "no_ats_form",
+      "url": "https://www.linkedin.com/jobs/view/4270943974/",
+      "path": "https://www.storable.com/about-us/culture/careers/?gh_jid=5564835004&gh_src=f3ue5c3c4us"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4442700522",
+      "location": "",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/view/4442700522/",
+      "path": "https://careers.gevernova.com/lead-software-solution-architect/job/R5047701"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4438407299",
+      "location": "",
+      "reason": "ats_login_wall",
+      "url": "https://www.linkedin.com/jobs/view/4438407299/",
+      "path": "https://paloaltonetworks.wd5.myworkdayjobs.com/panwexternalcareers/job/Office---India---CyberArk-Hyderabad/Senior-Principal-Software-Architect_JR-018059-1/apply?source=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4446911955",
+      "location": "",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/view/4446911955/",
+      "path": "https://careers.cognizant.com/global-en/jobs/00069823894/technology-architect/?source=JB-11500"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4444948388",
+      "location": "",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/view/4444948388/",
+      "path": "chrome-error://chromewebdata/"
+    },
+    {
+      "status": "skipped",
+      "company": "",
+      "role": "",
+      "job_id": "4450205567",
+      "location": "",
+      "reason": "became Easy Apply",
+      "url": "https://www.linkedin.com/jobs/view/4450205567/",
+      "path": ""
+    },
+    {
+      "status": "skipped",
+      "company": "",
+      "role": "",
+      "job_id": "4450682491",
+      "location": "",
+      "reason": "became Easy Apply",
+      "url": "https://www.linkedin.com/jobs/view/4450682491/",
+      "path": ""
+    },
+    {
+      "status": "skipped",
+      "company": "",
+      "role": "",
+      "job_id": "4450035921",
+      "location": "",
+      "reason": "became Easy Apply",
+      "url": "https://www.linkedin.com/jobs/view/4450035921/",
+      "path": ""
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4398091856",
+      "location": "",
+      "reason": "did not leave LinkedIn",
+      "url": "https://www.linkedin.com/jobs/view/4398091856/",
+      "path": "https://www.linkedin.com/jobs/view/4398091856/"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "3963509343",
+      "location": "",
+      "reason": "CAPTCHA/bot wall",
+      "url": "https://www.linkedin.com/jobs/view/3963509343/",
+      "path": "https://www.paycomonline.net/v4/ats/web.php/portal/E3FE2C24DB32BA48A4642D16583504C1/jobs/121127"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4401736196",
+      "location": "",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/view/4401736196/",
+      "path": "https://job-boards.greenhouse.io/starrez/jobs/5181888008?gh_src=1wc18k7k8us"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4437577980",
+      "location": "",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/view/4437577980/",
+      "path": "https://jobs.rsmus.com/posting/solution-architect-manager-2/JR120078/?source=LinkedIn+-+Job+Feed"
+    },
+    {
+      "status": "skipped",
+      "company": "",
+      "role": "",
+      "job_id": "4447521118",
+      "location": "",
+      "reason": "no_ats_form",
+      "url": "https://www.linkedin.com/jobs/view/4447521118/",
+      "path": "https://apply.careers.microsoft.com/careers/job/1970393556938665?utm_source=linkedin&domain=microsoft.com&src=LinkedIn"
+    },
+    {
+      "status": "skipped",
+      "company": "",
+      "role": "",
+      "job_id": "4440898082",
+      "location": "",
+      "reason": "no_ats_form",
+      "url": "https://www.linkedin.com/jobs/view/4440898082/",
+      "path": "https://jobs.smartrecruiters.com/Experian/744000137769689-dot-net-net-community-hyderabad?trid=2d92f286-613b-4daf-9dfa-6340ffbecf73"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4440227307",
+      "location": "",
+      "reason": "ats_login_wall",
+      "url": "https://www.linkedin.com/jobs/view/4440227307/",
+      "path": "https://solera.wd5.myworkdayjobs.com/Global_Career_Site/job/Hyderabad/Principal-Software-Engineer_JR-019000?source=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4404747227",
+      "location": "",
+      "reason": "CAPTCHA/bot wall",
+      "url": "https://www.linkedin.com/jobs/view/4404747227/",
+      "path": "https://bradyplc.bamboohr.com/careers/373?source=aWQ9NA%3D%3D"
+    },
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "4441511168",
+      "location": "",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/view/4441511168/",
+      "path": "https://mco.careers.hibob.com/jobs/0f1d0666-327a-4715-8adc-27d3a1820039"
+    },
+    {
+      "status": "skipped",
+      "company": "",
+      "role": "",
+      "job_id": "4448938075",
+      "location": "",
+      "reason": "became Easy Apply",
+      "url": "https://www.linkedin.com/jobs/view/4448938075/",
+      "path": ""
+    },
+    {
+      "status": "blocked",
+      "company": "Senior Technical Architect \u2013 AWS / CloudFront",
+      "role": "Senior Technical Architect \u2013 AWS / CloudFront Senior Technical Architect \u2013 AWS / CloudFront with verification",
+      "job_id": "4438737073",
+      "location": "Hyderabad, Telangana, India \u00b7 Reposted 1 week ago \u00b7 Over 100 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "ats_login_wall",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4438737073&f_AL=true&f_TPR=r86400&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://paloaltonetworks.wd5.myworkdayjobs.com/panwexternalcareers/job/Office---India---CyberArk-Hyderabad/Senior-Staff-Software-Engineer_JR-018032/apply?source=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "Senior Technical Architect \u2013 AWS / CloudFront",
+      "role": "Senior Technical Architect \u2013 AWS / CloudFront Senior Technical Architect \u2013 AWS / CloudFront with verification",
+      "job_id": "4456135517",
+      "location": "India \u00b7 1 hour ago \u00b7 3 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4456135517&f_AL=true&f_TPR=r86400&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://jobs.micro1.ai/post/11bcf004-157a-4578-a7a2-5d303a6262c5?referralCode=e91c9585-63ad-45aa-9820-d63708190a83&utm_source=referral&utm_medium=share&utm_campaign=job_referral"
+    },
+    {
+      "status": "blocked",
+      "company": "Senior Technical Architect \u2013 AWS / CloudFront",
+      "role": "Senior Technical Architect \u2013 AWS / CloudFront Senior Technical Architect \u2013 AWS / CloudFront with verification",
+      "job_id": "4456112912",
+      "location": "India \u00b7 1 hour ago \u00b7 1 person clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4456112912&f_AL=true&f_TPR=r86400&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://jobs.micro1.ai/post/b933b3a2-2129-46c9-9294-c1b8160cc57c?referralCode=e91c9585-63ad-45aa-9820-d63708190a83&utm_source=referral&utm_medium=share&utm_campaign=job_referral"
+    },
+    {
+      "status": "blocked",
+      "company": "Technical Architect",
+      "role": "Technical Architect Technical Architect with verification",
+      "job_id": "4444372626",
+      "location": "Hyderabad, Telangana, India \u00b7 Reposted 4 days ago \u00b7 49 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4444372626&f_AL=true&f_TPR=r86400&keywords=.NET%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://aveva.wd3.myworkdayjobs.com/AVEVA_careers/job/Hyderabad-India/R-D-Senior-Member-of-Technical-Staff_R014459-1?source=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "Technical Architect",
+      "role": "Technical Architect Technical Architect with verification",
+      "job_id": "4449858246",
+      "location": "Hyderabad, Telangana, India \u00b7 1 week ago \u00b7 49 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4449858246&f_AL=true&f_TPR=r86400&keywords=.NET%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://usource.ripplehire.com/candidate/?token=8YxWjpwDhdL62DFYUIcQ&lang=en&source=USTLINKEDIN&ref=USTLINKEDIN#detail/job/63168"
+    },
+    {
+      "status": "blocked",
+      "company": "Technical Architect",
+      "role": "Technical Architect Technical Architect with verification",
+      "job_id": "4448210544",
+      "location": "Hyderabad, Telangana, India \u00b7 2 weeks ago \u00b7 Over 100 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4448210544&f_AL=true&f_TPR=r86400&keywords=.NET%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://myjobs.adp.com/apply?__tx_annotation=false&c=1046545&d=External&r=5001207924506&&sor=adprm"
+    },
+    {
+      "status": "blocked",
+      "company": "Director, Data Engineering & Platforms",
+      "role": "Director, Data Engineering & Platforms Director, Data Engineering & Platforms",
+      "job_id": "4454256653",
+      "location": "Hyderabad, Telangana, India \u00b7 1 day ago \u00b7 83 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4454256653&f_AL=true&f_TPR=r86400&f_WT=2&keywords=Engineering%20Manager&location=India&sortBy=DD",
+      "path": "https://minfy.keka.com/careers/jobdetails/156680?source=linkedin"
+    },
+    {
+      "status": "skipped",
+      "company": "Jobs Ai",
+      "role": "Technical Architect (Remote) Technical Architect (Remote)",
+      "job_id": "4454599627",
+      "location": "Hyderabad, Telangana, India \u00b7 Reposted 5 hours ago \u00b7 88 people clicked apply Responses managed off LinkedIn",
+      "reason": "no_ats_form",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4454599627&f_TPR=r86400&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://www.vanguardjobs.com/job/23719078/?source=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "Jobs Ai",
+      "role": "Technical Architect (Remote) Technical Architect (Remote)",
+      "job_id": "4455946234",
+      "location": "Hyderabad, Telangana, India \u00b7 8 hours ago \u00b7 Over 100 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4455946234&f_TPR=r86400&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://salesforce.wd12.myworkdayjobs.com/External_Career_Site/job/India---Hyderabad/Software-Engineering-AMTS_JR356580?source=LinkedIn_Jobs"
+    },
+    {
+      "status": "skipped",
+      "company": "Jobs Ai",
+      "role": "Technical Architect (Remote) Technical Architect (Remote)",
+      "job_id": "4445476667",
+      "location": "Hyderabad, Telangana, India \u00b7 Reposted 10 hours ago \u00b7 Over 100 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "no_ats_form",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4445476667&f_TPR=r86400&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://careers.cognizant.com/global-en/jobs/00066911813/principal-technical-architect/?source=JB-11500"
+    },
+    {
+      "status": "blocked",
+      "company": "Jobs Ai",
+      "role": "Technical Architect (Remote) Technical Architect (Remote)",
+      "job_id": "4455763635",
+      "location": "Hyderabad, Telangana, India \u00b7 13 hours ago \u00b7 36 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4455763635&f_TPR=r86400&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://jobs.msd.com/gb/en/job/MSD1GBR410390ENGB/Specialist-Software-Engineering?utm_source=linkedin&utm_medium=phenom-feeds"
+    },
+    {
+      "status": "blocked",
+      "company": "Jobs Ai",
+      "role": "Technical Architect (Remote) Technical Architect (Remote)",
+      "job_id": "4454749505",
+      "location": "India \u00b7 15 hours ago \u00b7 3 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "did not leave LinkedIn",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4454749505&f_TPR=r86400&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://www.linkedin.com/jobs/view/4454749505/"
+    },
+    {
+      "status": "skipped",
+      "company": "Jobs Ai",
+      "role": "Technical Architect (Remote) Technical Architect (Remote)",
+      "job_id": "4443273671",
+      "location": "Hyderabad, Telangana, India \u00b7 Reposted 16 hours ago \u00b7 90 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "no_ats_form",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4443273671&f_TPR=r86400&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://www.schwabjobs.com/job/hyderabad/specialist-software-development-and-engineering/33995/98215904496?mode=apply&iis=LinkedIn"
+    },
+    {
+      "status": "blocked",
+      "company": "Jobs Ai",
+      "role": "Technical Architect (Remote) Technical Architect (Remote)",
+      "job_id": "4361275972",
+      "location": "Hyderabad, Telangana, India \u00b7 Reposted 19 hours ago \u00b7 Over 100 people clicked apply Promoted by hirer \u00b7 Responses managed off LinkedIn",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.linkedin.com/jobs/search/?currentJobId=4361275972&f_TPR=r86400&keywords=Technical%20Architect&location=Hyderabad%2C%20Telangana%2C%20India&sortBy=DD",
+      "path": "https://salesforce.wd12.myworkdayjobs.com/External_Career_Site/job/India---Bangalore/Software-Engineering-PMTS_JR323939-1?source=LinkedIn_Jobs"
+    }
+  ]
+}

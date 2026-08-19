@@ -9,6 +9,8 @@ import re
 # (e.g. "data engineer peers", "Salesforce integration") false-skip good roles.
 TITLE_BLACKLIST = re.compile(
     r"salesforce|servicenow|guidewire|splunk|\bpega\b|oracle\s*erp|sitecore|"
+    r"oracle\s*cloud\s*(scm|erp|hcm|financials|ebs)|oracle\s*scm|"
+    r"finance functional|functional\s*[-–—]?\s*solution architect|"
     r"\bmean\b|devops engineer|sre engineer|site reliability engineer|gcp.?presales|workato|mulesoft|"
     r"blockchain|mandarin|biztalk|firmware|\bmes\b|\bror\b|ruby on rails|"
     r"\bsap\b|dynamics\s*365|\bd365\b|esri|\bgis\b|"
@@ -16,8 +18,11 @@ TITLE_BLACKLIST = re.compile(
     r"\bjava\b(?!.*(?:\.net|dotnet|c#))|"  # Java primary titles (allow if .NET also on title)
     r"node\.?js[- ]?(mandatory|only)|"
     r"python[- ]?(mandatory|only)|principal engineer\s*\(\s*python|"
-    r"\bdata engineer\b|\bmachine learning engineer\b|"
-    r"big data architect|\bdata architect\b|data warehouse architect|implementation specialist|"
+    # Data Engineer / Data Engineering* without .NET on the same title
+    r"\bdata engineer(?:ing)?\b(?!.*(?:\.net|dotnet|c#))|"
+    r"\bmachine learning engineer\b|"
+    r"big data architect|\bdata architect\b|data warehouse architect|data platform|"
+    r"implementation specialist|"
     r"\bphp\b|laravel|"
     r"interior designer|civil engineer|electrical engineering|electrical design|"
     r"golang &|golang and|"
@@ -163,7 +168,7 @@ def skip_reason(role: str, company: str = "", jd: str = "") -> str | None:
     company = company or ""
     if re.search(
         r"\b(ai/?\s*ml architect|ai architect|ai engineer|ml engineer|genai|"
-        r"ai technical (lead|architect)|data scientist|data engineer)\b",
+        r"ai technical (lead|architect)|data scientist|data engineer(?:ing)?)\b",
         title,
         re.I,
     ) and not re.search(r"\.net|dotnet|\bc#\b", title, re.I):
