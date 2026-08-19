@@ -22,6 +22,8 @@ def test_daily_apply_setdefault_parallel_tabs():
     assert 'os.environ.setdefault("HITECHCITY_PARALLEL_TABS", "10")' in src
     assert 'os.environ.setdefault("ATS_OWNER_FOCUS_EVERY_SEC", "2")' in src
     assert "PARALLEL (PRIMARY)" in src or "parallel multi-tab" in src.lower()
+    assert "def _cloud_headless_unattended" in src
+    assert "MAX_SOFT_INCOMPLETE" in src and "CLOUD_HEADLESS" in src
 
 
 def test_daily_apply_import_sets_parallel_when_unset():

@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Cloud headless LinkedIn EXT burned many minutes on Oracle persist_retry + infinite soft incompletes (0 submits) | Treat cloud headless like unattended: no persist_retry, soft-incomplete cap 2/company, short ASK_OWNER so later Easy Apply and boards still run |
 | LinkedIn company ID miss fell back to /company/slug/jobs/ (no clickable cards; Solera n=0 every keyword) | Always use /jobs/search + geoId even without f_C; company_name_match still drops other employers |
 | LI skipped Hyland Platform Infrastructure Architect on top-card India; careers 4-keyword window never searched Architect and iCIMS searchLocation free-text returned 0 cards | Allow bare India in location_or_campus_ok; put Solution Architect in first 4 career keywords; drop invalid iCIMS searchLocation + retry without location; pin DXC native select Hyderabad |
 

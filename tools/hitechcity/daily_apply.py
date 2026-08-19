@@ -34,6 +34,15 @@ def _owner_asleep_bootstrap() -> bool:
     return False
 
 
+def _cloud_headless_unattended() -> bool:
+    """Cloud CDP is headless; owner cannot solve captcha/forms on this Chrome."""
+    if (os.environ.get("HOME_LOCAL") or "").strip().lower() in ("1", "true", "yes"):
+        return False
+    if (os.environ.get("CHROME_HEADLESS") or "").strip().lower() in ("0", "false", "no"):
+        return False
+    return not (os.environ.get("DISPLAY") or "").strip()
+
+
 # ---- Every-run defaults (cron + headed + home) — set before importing apply modules ----
 os.environ.setdefault("HITECHCITY_PARALLEL_TABS", "10")
 os.environ.setdefault("HITECHCITY_MAX_PER_COMPANY", "6")
@@ -60,6 +69,19 @@ if _owner_asleep_bootstrap():
     print(
         "OWNER_ASLEEP=1 — short ATS waits (45s), ASK_OWNER 12s, no persist_retry, "
         "soft-incomplete cap=2/company",
+        flush=True,
+    )
+elif _cloud_headless_unattended():
+    # Morning cloud cron is also unattended: Oracle persist_retry + infinite
+    # soft incompletes burned LinkedIn (4+ EXT timeouts, 0 submits) before
+    # later campus Easy Apply / boards ran.
+    os.environ.setdefault("HITECHCITY_ATS_PERSIST_RETRY", "0")  # pragma: allowlist secret
+    os.environ.setdefault("HITECHCITY_MAX_SOFT_INCOMPLETE", "2")  # pragma: allowlist secret
+    os.environ.setdefault("ATS_OWNER_FORM_WAIT_SEC", "12")
+    os.environ.setdefault("ATS_CAPTCHA_WAIT_SEC", "12")
+    print(
+        "CLOUD_HEADLESS — no persist_retry, soft-incomplete cap=2/company, "
+        "short ASK_OWNER (owner cannot see this Chrome)",
         flush=True,
     )
 
