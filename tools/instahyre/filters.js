@@ -33,7 +33,10 @@ function hasCloudPlatform(title, skills) {
 }
 
 function hasTargetSeniority(title) {
-  return /\b(architect|engineering manager|tech(?:nical)?\s+lead|staff|principal)\b/i.test(
+  // Include senior/sr. — Hyd/remote "Sr. Software Engineer" is apply-bias
+  // (uncertain → APPLY). Title-first hard skips (QA / Java-primary / AI-data)
+  // still run before generic_engineering uses this helper.
+  return /\b(architect|engineering manager|tech(?:nical)?\s+lead|staff|principal|sr\.?|senior)\b/i.test(
     title || ""
   );
 }

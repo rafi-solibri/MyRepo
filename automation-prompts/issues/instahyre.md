@@ -1,5 +1,12 @@
 # Instahyre — issues & fixes
 
+## 2026-08-19 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Sr. Software Engineer Hyd skipped as generic_engineering; enqueueJob locationOk ignored title/skills so pan-India senior never softened | hasTargetSeniority includes senior/sr.; locationOk(location, title, skills) in enqueueJob; tests for Hyd senior SWE apply-bias |
+
+
 ## 2026-08-15 (home)
 
 | Issue | Fix |

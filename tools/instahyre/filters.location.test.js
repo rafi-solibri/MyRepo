@@ -27,5 +27,23 @@ assert.strictEqual(
   skipReason("Backend Developer", { location: "Bengaluru" }),
   "location_not_hyd_remote"
 );
+assert.strictEqual(
+  skipReason("Sr. Software Engineer", { location: "Hyderabad" }),
+  null,
+  "Hyd senior SWE is apply-bias (uncertain → APPLY)"
+);
+assert.strictEqual(
+  skipReason("Senior Software Engineer", { location: "Work From Home" }),
+  null
+);
+assert.strictEqual(
+  skipReason("Software Engineer", { location: "Hyderabad" }),
+  "generic_engineering_without_dotnet_cloud",
+  "mid-level SWE without .NET/cloud still skips"
+);
+assert.strictEqual(
+  skipReason("Senior Java Full Stack Developer - Angular", { location: "Hyderabad" }),
+  "java_primary"
+);
 
 console.log("instahyre filters location soften OK");
