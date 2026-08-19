@@ -263,8 +263,8 @@ def resolve_company_f_c(page: Page, slug: str) -> str:
 def company_jobs_url(slug: str, title: str, *, company_f_c: str = "") -> str:
     """Hyderabad jobs search for one campus employer.
 
-    Prefer /jobs/search/?f_C=…&geoId=… (has /jobs/view/ cards). Fall back to
-    company /jobs/ page only when f_C is unknown (caller should resolve first).
+    Always use /jobs/search/?keywords=…&geoId=… (has /jobs/view/ cards).
+    Add f_C when resolved. Never use company /jobs/ — those pages lack cards.
     Always pin Hyderabad via location + geoId so results stay campus-relevant.
     """
     loc_q = (
@@ -272,17 +272,17 @@ def company_jobs_url(slug: str, title: str, *, company_f_c: str = "") -> str:
         f"&geoId={quote(LI_GEO_ID)}"
         f"&distance={quote(LI_DISTANCE)}"
     )
-    if company_f_c:
-        return (
-            "https://www.linkedin.com/jobs/search/"
-            f"?keywords={quote(title)}"
-            f"{loc_q}"
-            f"&f_C={company_f_c}"
-        )
-    return (
-        f"https://www.linkedin.com/company/{slug}/jobs/"
-        f"?keywords={quote(title)}{loc_q}"
+    # Always use /jobs/search — company /jobs/ pages have no clickable cards
+    # (Solera ID-miss returned n=0 on every keyword). Without f_C, Hyd+keyword
+    # cards still extract; company_name_match drops other employers.
+    url = (
+        "https://www.linkedin.com/jobs/search/"
+        f"?keywords={quote(title)}"
+        f"{loc_q}"
     )
+    if company_f_c:
+        url += f"&f_C={company_f_c}"
+    return url
 
 
 def extract_job_ids(page: Page) -> list[str]:
@@ -853,7 +853,7 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                     f_c_updates[slug] = company_f_c
                     print(f"LI COMPANY ID {name} | f_C={company_f_c}", flush=True)
                 else:
-                    print(f"LI COMPANY ID miss {name} | slug={slug} (fallback company/jobs)", flush=True)
+                    print(f"LI COMPANY ID miss {name} | slug={slug} (fallback jobs/search no f_C)", flush=True)
 
             job_ids: list[str] = []
             # Search lead/staff/manager/.NET keywords via jobs/search + company filter.

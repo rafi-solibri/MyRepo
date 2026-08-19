@@ -104,7 +104,8 @@ def test_title_ok():
     assert "jobs/search" in url_fc and "f_C=1068" in url_fc
     assert "Hyderabad" in url_fc and "geoId=105556991" in url_fc and "distance=25" in url_fc
     url_fb = company_jobs_url("jpmorganchase", "Engineering Manager")
-    assert "/company/jpmorganchase/jobs/" in url_fb and "geoId=105556991" in url_fb
+    assert "jobs/search" in url_fb and "geoId=105556991" in url_fb
+    assert "/company/" not in url_fb
     # Careers portals: multi-role + Hyderabad location on every scan URL.
     from tools.hitechcity.careers_apply import (
         CAREERS_SEARCH_KEYWORDS,
