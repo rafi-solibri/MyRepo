@@ -409,8 +409,12 @@ def test_icims_iframe_listing_keep():
         "https://careers-hyland.icims.com/jobs/14271/"
         "platform-infrastructure-architect---core-apps/job?in_iframe=1"
     )
-    # iCIMS slugs have no city token — keep for JD top-card re-check.
+    # iCIMS slugs have no city token — keep for JD top-card re-check
+    # (apply_job pre-nav must use listing_location_keep, not card_location_ok).
     assert listing_location_keep("Platform Infrastructure Architect - Core Apps", href)
+    assert not card_location_ok(
+        "Platform Infrastructure Architect - Core Apps", url_loc_hint(href)
+    )
     assert not listing_location_keep(
         "Solutions Architect Full-time · São Carlos, Brazil", href
     )

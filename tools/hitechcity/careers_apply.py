@@ -833,6 +833,50 @@ def listing_location_keep(role: str, url: str) -> bool:
     return False
 
 
+_TOP_CARD_JS = """() => {
+              const pick = (sel) => {
+                const el = document.querySelector(sel);
+                return el ? (el.innerText || '').trim() : '';
+              };
+              const chunks = [
+                pick('[data-automation-id="locations"]'),
+                pick('[class*="location"]'),
+                pick('[class*="Location"]'),
+                pick('h1'),
+                pick('[data-testid="job-location"]'),
+                pick('.job-location'),
+                pick('.iCIMS_JobHeaderGroup'),
+                pick('.iCIMS_JobHeaderData'),
+              ];
+              const body = (document.body && document.body.innerText) || '';
+              const lines = body.split('\\n').map(s => s.trim()).filter(Boolean).slice(0, 16);
+              return (chunks.filter(Boolean).join(' ') + ' ' + lines.join(' ')).slice(0, 700);
+            }"""
+
+
+def read_top_card_location(page: Page) -> str:
+    """Workplace pills / header only. Prefer loaded iCIMS iframe over parent chrome."""
+    try:
+        frames = list(page.frames)
+    except Exception:
+        frames = []
+    for fr in frames:
+        fu = getattr(fr, "url", "") or ""
+        fn = getattr(fr, "name", "") or ""
+        if not icims_frame_is_listing(fu, fn):
+            continue
+        try:
+            text = fr.evaluate(_TOP_CARD_JS)
+            if text and len(str(text).strip()) >= 8:
+                return str(text)
+        except Exception:
+            continue
+    try:
+        return str(page.evaluate(_TOP_CARD_JS) or "")
+    except Exception:
+        return ""
+
+
 def wait_icims_listing_ready(page: Page, timeout_s: float = 12.0) -> bool:
     """Wait until #icims_content_iframe has a loaded document with job links.
 
@@ -1060,7 +1104,8 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         row["reason"] = "skip_uhg"
         return row
     # Role/title + URL path location first (before navigation wastes ATS time on US cards).
-    if not card_location_ok(job.get("role") or "", url_loc_hint(job.get("url") or "")):
+    # iCIMS slugs have no city token — listing_location_keep defers to JD top-card.
+    if not listing_location_keep(job.get("role") or "", job.get("url") or ""):
         row["status"] = "skipped"
         row["reason"] = "location_non_hyd_city"
         return row
@@ -1075,6 +1120,11 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         row["reason"] = f"nav_error:{e}"
         return row
     time.sleep(2.0)
+    if re.search(r"icims\.com", job.get("url") or "", re.I):
+        try:
+            wait_icims_listing_ready(page, timeout_s=10.0)
+        except Exception:
+            pass
     if auth_wall_url(page.url or "") or AUTH_HOST.search(page.url or ""):
         row["reason"] = "login/account wall"
         row["finalUrl"] = page.url
@@ -1089,28 +1139,8 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         return row
 
     # Location from TOP CARD / workplace pills only — not full page body (footers say India).
-    try:
-        top = page.evaluate(
-            """() => {
-              const pick = (sel) => {
-                const el = document.querySelector(sel);
-                return el ? (el.innerText || '').trim() : '';
-              };
-              const chunks = [
-                pick('[data-automation-id="locations"]'),
-                pick('[class*="location"]'),
-                pick('[class*="Location"]'),
-                pick('h1'),
-                pick('[data-testid="job-location"]'),
-                pick('.job-location'),
-              ];
-              const body = (document.body && document.body.innerText) || '';
-              const lines = body.split('\\n').map(s => s.trim()).filter(Boolean).slice(0, 12);
-              return (chunks.filter(Boolean).join(' ') + ' ' + lines.join(' ')).slice(0, 700);
-            }"""
-        )
-    except Exception:
-        top = ""
+    # iCIMS JD workplace lives in #icims_content_iframe; parent chrome is marketing only.
+    top = read_top_card_location(page)
     role = job.get("role") or ""
     try:
         page_title = page.title() or ""
