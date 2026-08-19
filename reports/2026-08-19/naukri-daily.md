@@ -37,7 +37,9 @@ Candidate: Mohammed Abdul Rafi Ahmed | Resume: `Rafi_Resume.docx` | Expected 65 
 - Mancer Consulting Services — Engineering Manager - Platform
 
 ## Code fix this run
+- Branch: `cursor/naukri-daily-2026-08-19-fda2` (pushed)
 - `tools/naukri/resume_and_filters.js`: `SKIP_TITLE_RE` now matches `power bi` / `powerbi` / `bi architect` so the Architect/Lead waiver does not Quick-Apply BI-only titles.
+- PR create blocked (`gh` 403 Resource not accessible by integration; ManagePullRequest waiting on user approval) — branch ready for owner merge + `bash scripts/auto-merge-fix-pr.sh`
 
 ## Artifacts
 - `/opt/cursor/artifacts/naukri-profile-resume.json`
