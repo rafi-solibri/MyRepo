@@ -46,6 +46,10 @@ os.environ.setdefault("HITECHCITY_DISCOVERY_LINKEDIN", "0")
 os.environ.setdefault("HITECHCITY_DISCOVERY_WEB", "1")
 os.environ.setdefault("ATS_CAPTCHA_POLL_SEC", "0.4")
 os.environ.setdefault("ATS_OWNER_FOCUS_EVERY_SEC", "2")
+# Cloud VNC / headed display: owner clicks hCaptcha in the live Chrome tab (no paid key).
+# CHROME_HEADLESS defaults to 1 in captcha_solve even when DISPLAY is set.
+if (os.environ.get("DISPLAY") or "").strip() and not _owner_asleep_bootstrap():
+    os.environ.setdefault("ATS_CAPTCHA_WAIT_SEC", "180")
 
 # Overnight / owner-asleep: short park on captcha/forms, skip long persist retries,
 # and cap soft incompletes per company so LinkedIn volume reaches Easy Apply + boards.

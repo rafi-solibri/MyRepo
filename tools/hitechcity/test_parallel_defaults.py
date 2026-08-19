@@ -21,6 +21,7 @@ def test_daily_apply_setdefault_parallel_tabs():
     src = Path(__file__).with_name("daily_apply.py").read_text(encoding="utf-8")
     assert 'os.environ.setdefault("HITECHCITY_PARALLEL_TABS", "10")' in src
     assert 'os.environ.setdefault("ATS_OWNER_FOCUS_EVERY_SEC", "2")' in src
+    assert 'os.environ.setdefault("ATS_CAPTCHA_WAIT_SEC", "180")' in src
     assert "PARALLEL (PRIMARY)" in src or "parallel multi-tab" in src.lower()
 
 

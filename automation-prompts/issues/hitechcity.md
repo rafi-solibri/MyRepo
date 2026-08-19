@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Cloud VNC headed Chrome skipped Hyland hCaptcha wait (CHROME_HEADLESS default 1 → 0s) so matching iCIMS jobs walled immediately | daily_apply setdefault ATS_CAPTCHA_WAIT_SEC=180 when DISPLAY is set so owner can click captcha in the live tab |
 | Hyland iCIMS jobCount 0: title-only cards skipped as non-Hyd; Architect keyword outside first-4 scans | card_location_ok allows iCIMS title-only / job-id paths; extract Job Locations header; put Solution Architect in first 4 CAREERS_SEARCH_KEYWORDS |
 
 
