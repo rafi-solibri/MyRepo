@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| view_applied_jobs counted as apply; MuleSoft/EDI/Auth0/Database Architect submitted; UST RippleHire unknownerror burned budget | daily_apply: View applied jobs never confirms; skip MuleSoft/EDI/Auth0/database architect; fail-fast ripplehire unknownerror |
 | Broadcom Workday stuck: ALL-CAPS autofill names + invalid India phone (name--legalName / phoneNumber ids) | workday_apply: title-case names, 10-digit IN mobile, overwrite autofill, match name= legalName--* / phoneNumber--phoneNumber |
 
 

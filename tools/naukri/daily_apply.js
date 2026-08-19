@@ -91,7 +91,9 @@ function safeClose(page) {
 
 function isJunkAtsUrl(url) {
   const u = String(url || "");
-  return /careers\.infoedge\.com|infoedge\.in\/?$|infoedge\.com\/?$/i.test(u);
+  return /careers\.infoedge\.com|infoedge\.in\/?$|infoedge\.com\/?$|ripplehire\.com\/candidate\/unknownerror/i.test(
+    u
+  );
 }
 
 /** TopTier CTA copy varies: "On company site", "Go to company site", "Apply on company site". */
@@ -1398,7 +1400,7 @@ async function confirmApplied(page, chatHint = null) {
       })
     )
     .catch(() => false);
-  if (viewApplied) return { ok: true, cta: "view_applied_jobs" };
+  // "View applied jobs" is a nav/filter chip — never per-job Applied confirmation.
   // Close stuck chatbot drawer / empty-CTA overlay and re-read Applied once.
   if (
     chatHint?.reason === "chat_steps_exhausted" ||
@@ -1595,6 +1597,16 @@ async function handleExternal(context, page, detail, jobMeta, report) {
   }
 
   atsUrl = newPage.url();
+  if (/ripplehire\.com\/candidate\/unknownerror/i.test(atsUrl)) {
+    report.skipped.push({
+      ...jobMeta,
+      reason: "job_unavailable",
+      url: atsUrl,
+      path: "company_ATS",
+    });
+    if (newPage !== page) safeClose(newPage);
+    return;
+  }
 
   // Hirist is a secondary board — skip login walls instead of hard-blocking the day.
   if (/hirist\.tech|hirist\.com|\/hirist/i.test(atsUrl)) {

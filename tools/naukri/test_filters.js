@@ -213,6 +213,26 @@ assert.strictEqual(
   "Data Architect without .NET must skip"
 );
 assert.strictEqual(
+  shouldSkipTitle("Database Architect"),
+  true,
+  "Database Architect without .NET must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("MuleSoft Architect/Lead"),
+  true,
+  "MuleSoft-primary architect must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("EDI Integration Architect"),
+  true,
+  "EDI Integration Architect must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Auth0 Architect"),
+  true,
+  "Auth0 Architect must skip"
+);
+assert.strictEqual(
   shouldSkipTitle("GCP Infra Architect - S"),
   true,
   "GCP Infra Architect without .NET must skip"
