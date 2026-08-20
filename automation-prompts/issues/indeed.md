@@ -1,5 +1,12 @@
 # Indeed — issues & fixes
 
+## 2026-08-20 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| SmartApply incomplete: company ATS misclassified as indeed_login_required; bare Date→DOB poisoned UST; questions Continue stuck without reCAPTCHA attempt | looks_login_wall requires indeed host; off-Indeed EA→external; ISO date inputs; Available Date not DOB; questions CTA streak tries clear_recaptcha |
+
+
 ## 2026-08-17 (cloud)
 
 | Issue | Fix |

@@ -170,6 +170,19 @@ def test_account_settings_and_serp_are_signed_in():
     assert not looks_signed_in(wall)
 
 
+def test_company_ats_email_gate_is_not_indeed_login():
+    """SAP / HCLTech careers cookie+email copy must not become indeed_login_required."""
+    sap = (
+        "We use cookies for the best user experience on our website.\n"
+        "Accept All Cookies\nEnter your email address\nSign in to apply"
+    )
+    assert not looks_login_wall(sap, "https://career55.sapsf.eu/careers?company=HCLPRD")
+    assert not looks_login_wall(
+        "Continue with Apple\nEnter your email address",
+        "https://careers.hcltech.com/job/Senior-Technical-Specialist",
+    )
+
+
 def test_job_dedupe_key_from_jk():
     assert job_dedupe_key("https://in.indeed.com/pagead/clk?jk=abc123def456&from=serp", "") == "abc123def456"
     assert job_dedupe_key("https://in.indeed.com/viewjob?jk=abc123def456", "other") == "abc123def456"
