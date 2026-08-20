@@ -87,8 +87,8 @@ def clear_active_resume() -> None:
 def resume_upload_path() -> str:
     """Return the resume file to upload (active tailored copy, else canonical)."""
     env = (os.environ.get("RESUME_UPLOAD_PATH") or "").strip()
-    if env and Path(env).is_file():
-        return env
+    if env and Path(env).is_file() and Path(env).stat().st_size > 1000:
+        return str(Path(env).resolve())
     if _ACTIVE_RESUME is not None and _ACTIVE_RESUME.is_file():
         return str(_ACTIVE_RESUME)
     return str(ensure_resume_aliases())

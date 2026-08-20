@@ -66,6 +66,57 @@ PROXY = os.environ.get("INDEED_HTTP_PROXY", "socks5://127.0.0.1:40000")
 PROFILE = os.environ.get("INDEED_UC_PROFILE", "/tmp/cursor/indeed-uc-hybrid")
 
 
+def _job_id_from_url(url: str) -> str:
+    m = re.search(r"[?&]jk=([a-f0-9]+)", url or "", re.I)
+    return m.group(1) if m else ""
+
+
+def prepare_resume_for_job(item: dict, jd_text: str) -> Path:
+    """JD-tailor Rafi_Resume.docx and point Easy Apply / ATS uploads at it."""
+    title = str(item.get("title") or "")
+    company = str(item.get("company") or "")
+    url = str(item.get("url") or "")
+    jid = _job_id_from_url(url) or "indeed"
+    try:
+        from tools.resume_paths import clear_active_resume, set_active_resume
+        from tools.resume_tailor import tailor_resume_for_job
+
+        tailored = tailor_resume_for_job(
+            job_id=jid, title=title, company=company, jd=jd_text or ""
+        )
+        set_active_resume(tailored)
+        os.environ["RESUME_UPLOAD_PATH"] = str(tailored)
+        os.environ["RAFI_RESUME"] = str(tailored)
+        item["tailoredResume"] = str(tailored)
+        return Path(tailored)
+    except Exception as exc:
+        print(f"  resume_tailor_error={exc!s}"[:200], flush=True)
+        try:
+            from tools.resume_paths import clear_active_resume
+
+            clear_active_resume()
+        except Exception:
+            pass
+        return RESUME
+
+
+def clear_job_resume() -> None:
+    try:
+        from tools.resume_paths import clear_active_resume
+
+        clear_active_resume()
+    except Exception:
+        pass
+    for key in ("RESUME_UPLOAD_PATH",):
+        if key in os.environ and "/tailored-resumes/" in os.environ.get(key, ""):
+            os.environ.pop(key, None)
+    # Restore canonical RAFI_RESUME if we overwrote it with a tailored path.
+    if "/tailored-resumes/" in os.environ.get("RAFI_RESUME", ""):
+        canonical = ROOT / "resumes" / "Rafi_Resume.docx"
+        if canonical.is_file():
+            os.environ["RAFI_RESUME"] = str(canonical)
+
+
 def _default_seed_profile() -> str:
     env = os.environ.get("INDEED_SEED_PROFILE")
     if env:
@@ -1129,11 +1180,17 @@ def fill_common_questions(sb) -> None:
     except Exception as e:
         print(f"  fill_error={e!s}"[:200], flush=True)
 
-    # Resume upload
-    if RESUME.exists():
+    # Resume upload — JD-tailored copy when prepare_resume_for_job ran.
+    try:
+        from tools.resume_paths import resume_upload_path
+
+        resume_path = Path(resume_upload_path())
+    except Exception:
+        resume_path = RESUME
+    if resume_path.exists():
         try:
             for f in sb.find_elements("input[type='file']"):
-                f.send_keys(str(RESUME.resolve()))
+                f.send_keys(str(resume_path.resolve()))
                 time.sleep(1)
         except Exception:
             pass
@@ -2826,221 +2883,226 @@ def main() -> int:
                     f"JOB seen={report['counts']['seen']} title={page_title[:80]!r}",
                     flush=True,
                 )
+                prepare_resume_for_job(item, body)
                 job_deadline = time.time() + int(
                     os.environ.get("INDEED_JOB_TIMEOUT_SEC", "240")
                 )
 
-                # Prefer Easy Apply ("Apply with Indeed" is the current IN CTA).
-                applied = False
-                for sel in (
-                    "button.indeed-apply-button",
-                    "#indeedApplyButton",
-                    "[data-indeed-apply-button]",
-                    "button.ia-IndeedApplyButton",
-                    "button:contains('Apply with Indeed')",
-                    "button:contains('Indeed Apply')",
-                    "button:contains('Easily apply')",
-                    "button:contains('Easy apply')",
-                    "button:contains('Apply now')",
-                    "//button[contains(., 'Apply with Indeed') or contains(., 'Indeed Apply') or contains(., 'Easily apply') or contains(., 'Easy apply') or contains(., 'Apply now')]",
-                    "//a[contains(., 'Apply with Indeed') or contains(., 'Indeed Apply') or contains(., 'Easily apply') or contains(., 'Easy apply') or contains(., 'Apply now')]",
-                    "//button[contains(translate(@aria-label,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'), 'apply now') or contains(translate(@aria-label,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'), 'apply with indeed')]",
-                ):
-                    try:
-                        if sb.is_element_visible(sel, timeout=2):
-                            sb.click(sel)
-                            applied = True
-                            break
-                    except Exception:
-                        continue
-                if not applied:
-                    # JS fallback — SeleniumBase text selectors miss some CTA variants.
-                    try:
-                        clicked = sb.execute_script(
-                            """
-                            const cands=[...document.querySelectorAll(
-                              'button, a, [role=button], [data-indeed-apply-button], .indeed-apply-button, .ia-IndeedApplyButton'
-                            )];
-                            const textOf = (e) => ((e.innerText||'') + ' ' + (e.getAttribute('aria-label')||'') + ' ' + (e.getAttribute('data-tn-element')||'')).trim();
-                            const el=cands.find(e => {
-                              const s=textOf(e);
-                              if (/apply with indeed|indeed apply|easily apply|easy apply|^apply now$/i.test(s)) return true;
-                              if (e.id === 'indeedApplyButton' || e.classList?.contains('indeed-apply-button')) return true;
-                              if (e.hasAttribute('data-indeed-apply-button')) return true;
-                              return false;
-                            });
-                            if(!el) return null;
-                            el.click();
-                            return textOf(el).slice(0,80);
-                            """
-                        )
-                        if clicked:
-                            applied = True
-                            print("JS_APPLY_CLICK", clicked, flush=True)
-                    except Exception:
-                        pass
-
-                if not applied:
-                    # Applied badge replaces Easy Apply on already-submitted jobs.
-                    try:
-                        badge = sb.execute_script(
-                            """
-                            const els=[...document.querySelectorAll('button, a, [role=button], span')];
-                            const el=els.find(e => {
-                              const s=((e.innerText||'')+' '+(e.getAttribute('aria-label')||'')).trim();
-                              return /^applied$/i.test(s) || /^applied on /i.test(s);
-                            });
-                            return el ? ((el.innerText||el.getAttribute('aria-label')||'applied').slice(0,80)) : null;
-                            """
-                        )
-                        if badge:
-                            item["reason"] = "already_applied"
-                            report["skipped"].append(item)
-                            report["counts"]["skipped"] += 1
-                            print("SKIP already_applied", page_title[:80], flush=True)
-                            continue
-                    except Exception:
-                        pass
-                    # Company site — open, then COMPLETE the ATS (do not count a mere click).
-                    handles_before = []
-                    try:
-                        handles_before = list(sb.driver.window_handles)
-                    except Exception:
-                        handles_before = []
+                try:
+                    # Prefer Easy Apply ("Apply with Indeed" is the current IN CTA).
+                    applied = False
                     for sel in (
-                        "button:contains('Apply on company site')",
-                        "a:contains('Apply on company site')",
-                        "button:contains('Apply on company website')",
-                        "a:contains('Apply on company website')",
-                        "button:contains('Apply on the company site')",
-                        "a:contains('Apply on the company site')",
-                        "//a[contains(., 'Apply on company')]",
-                        "//button[contains(., 'Apply on company')]",
-                        "//a[contains(., 'Company site') or contains(., 'company website')]",
+                        "button.indeed-apply-button",
+                        "#indeedApplyButton",
+                        "[data-indeed-apply-button]",
+                        "button.ia-IndeedApplyButton",
+                        "button:contains('Apply with Indeed')",
+                        "button:contains('Indeed Apply')",
+                        "button:contains('Easily apply')",
+                        "button:contains('Easy apply')",
+                        "button:contains('Apply now')",
+                        "//button[contains(., 'Apply with Indeed') or contains(., 'Indeed Apply') or contains(., 'Easily apply') or contains(., 'Easy apply') or contains(., 'Apply now')]",
+                        "//a[contains(., 'Apply with Indeed') or contains(., 'Indeed Apply') or contains(., 'Easily apply') or contains(., 'Easy apply') or contains(., 'Apply now')]",
+                        "//button[contains(translate(@aria-label,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'), 'apply now') or contains(translate(@aria-label,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'), 'apply with indeed')]",
                     ):
                         try:
                             if sb.is_element_visible(sel, timeout=2):
                                 sb.click(sel)
                                 applied = True
-                                print("EXTERNAL click", page_title[:80], flush=True)
                                 break
                         except Exception:
                             continue
                     if not applied:
+                        # JS fallback — SeleniumBase text selectors miss some CTA variants.
                         try:
                             clicked = sb.execute_script(
                                 """
-                                const cands=[...document.querySelectorAll('button, a, [role=button]')];
-                                const el=cands.find(e => /apply on company|company website|company site/i.test(
-                                  ((e.innerText||'') + ' ' + (e.getAttribute('aria-label')||'')).trim()
-                                ));
+                                const cands=[...document.querySelectorAll(
+                                  'button, a, [role=button], [data-indeed-apply-button], .indeed-apply-button, .ia-IndeedApplyButton'
+                                )];
+                                const textOf = (e) => ((e.innerText||'') + ' ' + (e.getAttribute('aria-label')||'') + ' ' + (e.getAttribute('data-tn-element')||'')).trim();
+                                const el=cands.find(e => {
+                                  const s=textOf(e);
+                                  if (/apply with indeed|indeed apply|easily apply|easy apply|^apply now$/i.test(s)
+                                      && !/company site|company website/i.test(s)) return true;
+                                  if (e.id === 'indeedApplyButton' || e.classList?.contains('indeed-apply-button')) return true;
+                                  if (e.hasAttribute('data-indeed-apply-button')) return true;
+                                  return false;
+                                });
                                 if(!el) return null;
                                 el.click();
-                                return (el.innerText||el.getAttribute('aria-label')||'').slice(0,80);
+                                return textOf(el).slice(0,80);
                                 """
                             )
                             if clicked:
                                 applied = True
-                                print("EXTERNAL click", clicked, page_title[:80], flush=True)
+                                print("JS_APPLY_CLICK", clicked, flush=True)
                         except Exception:
                             pass
                     if not applied:
-                        item["reason"] = "no_apply_button"
-                        report["skipped"].append(item)
-                        report["counts"]["skipped"] += 1
+                        # Applied badge replaces Easy Apply on already-submitted jobs.
+                        try:
+                            badge = sb.execute_script(
+                                """
+                                const els=[...document.querySelectorAll('button, a, [role=button], span')];
+                                const el=els.find(e => {
+                                  const s=((e.innerText||'')+' '+(e.getAttribute('aria-label')||'')).trim();
+                                  return /^applied$/i.test(s) || /^applied on /i.test(s);
+                                });
+                                return el ? ((el.innerText||el.getAttribute('aria-label')||'applied').slice(0,80)) : null;
+                                """
+                            )
+                            if badge:
+                                item["reason"] = "already_applied"
+                                report["skipped"].append(item)
+                                report["counts"]["skipped"] += 1
+                                print("SKIP already_applied", page_title[:80], flush=True)
+                                continue
+                        except Exception:
+                            pass
+                        # Company site path — may still upload tailored resume via ATS helper.
+                        handles_before = []
+                        try:
+                            handles_before = list(sb.driver.window_handles)
+                        except Exception:
+                            handles_before = []
+                        for sel in (
+                            "button:contains('Apply on company site')",
+                            "a:contains('Apply on company site')",
+                            "button:contains('Apply on company website')",
+                            "a:contains('Apply on company website')",
+                            "button:contains('Apply on the company site')",
+                            "a:contains('Apply on the company site')",
+                            "//a[contains(., 'Apply on company')]",
+                            "//button[contains(., 'Apply on company')]",
+                            "//a[contains(., 'Company site') or contains(., 'company website')]",
+                        ):
+                            try:
+                                if sb.is_element_visible(sel, timeout=2):
+                                    sb.click(sel)
+                                    applied = True
+                                    print("EXTERNAL click", page_title[:80], flush=True)
+                                    break
+                            except Exception:
+                                continue
+                        if not applied:
+                            try:
+                                clicked = sb.execute_script(
+                                    """
+                                    const cands=[...document.querySelectorAll('button, a, [role=button]')];
+                                    const el=cands.find(e => /apply on company|company website|company site/i.test(
+                                      ((e.innerText||'') + ' ' + (e.getAttribute('aria-label')||'')).trim()
+                                    ));
+                                    if(!el) return null;
+                                    el.click();
+                                    return (el.innerText||el.getAttribute('aria-label')||'').slice(0,80);
+                                    """
+                                )
+                                if clicked:
+                                    applied = True
+                                    print("EXTERNAL click", clicked, page_title[:80], flush=True)
+                            except Exception:
+                                pass
+                        if not applied:
+                            item["reason"] = "no_apply_button"
+                            report["skipped"].append(item)
+                            report["counts"]["skipped"] += 1
+                            continue
+                        finish_company_site(sb, item, report, handles_before=handles_before)
+                        applied = True
                         continue
-                    finish_company_site(sb, item, report, handles_before=handles_before)
-                    applied = True
-                    continue
 
-                # Wait for SmartApply module navigation / modal hydration.
-                for _ in range(10):
-                    try:
-                        cur = sb.get_current_url() or ""
-                        txt = (sb.get_text("body") or "").lower()
-                    except Exception:
-                        cur, txt = "", ""
-                    if "smartapply.indeed.com" in cur or "indeedapply" in cur or "contact information" in txt or "continue" in txt:
-                        break
-                    time.sleep(0.5)
-                result = easy_apply_flow(sb, deadline=job_deadline)
-                item["path"] = "easy_apply"
-                item["result"] = result
-                if result == "submitted":
-                    report["applied"].append(item)
-                    report["counts"]["applied"] += 1
-                    print("APPLIED", page_title[:80], flush=True)
-                elif result == "external":
-                    # Easy Apply flipped to company-site — complete ATS, do not credit a click.
-                    handles_now = []
-                    try:
-                        handles_now = list(sb.driver.window_handles)
-                    except Exception:
+                    # Wait for SmartApply module navigation / modal hydration.
+                    for _ in range(10):
+                        try:
+                            cur = sb.get_current_url() or ""
+                            txt = (sb.get_text("body") or "").lower()
+                        except Exception:
+                            cur, txt = "", ""
+                        if "smartapply.indeed.com" in cur or "indeedapply" in cur or "contact information" in txt or "continue" in txt:
+                            break
+                        time.sleep(0.5)
+                    result = easy_apply_flow(sb, deadline=job_deadline)
+                    item["path"] = "easy_apply"
+                    item["result"] = result
+                    if result == "submitted":
+                        report["applied"].append(item)
+                        report["counts"]["applied"] += 1
+                        print("APPLIED", page_title[:80], flush=True)
+                    elif result == "external":
+                        # Easy Apply flipped to company-site — complete ATS, do not credit a click.
                         handles_now = []
-                    finish_company_site(sb, item, report, handles_before=handles_now[:-1] if handles_now else [])
-                elif result == "already_applied":
-                    item["reason"] = "already_applied"
-                    report["skipped"].append(item)
-                    report["counts"]["skipped"] += 1
-                    print("SKIP already_applied", page_title[:80], flush=True)
-                elif result == "login_required":
-                    item["reason"] = "indeed_login_required"
-                    try:
-                        item["lastUrl"] = (sb.get_current_url() or "")[:200]
-                        item["sample"] = (sb.get_text("body") or "")[:350].replace("\n", " | ")
-                    except Exception:
-                        pass
-                    report["blocked"].append(item)
-                    report["counts"]["blocked"] += 1
-                    print("BLOCKED login_required", page_title[:80], flush=True)
-                elif result == "recaptcha":
-                    item["reason"] = "easy_apply_recaptcha"
-                    report["blocked"].append(item)
-                    report["counts"]["blocked"] += 1
-                    print("RECAPTCHA", page_title[:80], flush=True)
-                else:
-                    item["reason"] = "easy_apply_incomplete"
-                    try:
-                        item["lastUrl"] = (sb.get_current_url() or "")[:200]
-                        item["sample"] = (sb.get_text("body") or "")[:350].replace("\n", " | ")
-                    except Exception:
-                        pass
-                    # Reclassify SmartApply duplicate / auth walls that slipped past early checks.
-                    sample_l = (item.get("sample") or "").lower()
-                    if already_applied(sample_l, item.get("lastUrl") or ""):
+                        try:
+                            handles_now = list(sb.driver.window_handles)
+                        except Exception:
+                            handles_now = []
+                        finish_company_site(sb, item, report, handles_before=handles_now[:-1] if handles_now else [])
+                    elif result == "already_applied":
                         item["reason"] = "already_applied"
                         report["skipped"].append(item)
                         report["counts"]["skipped"] += 1
                         print("SKIP already_applied", page_title[:80], flush=True)
-                    elif looks_login_wall(sample_l, item.get("lastUrl") or ""):
+                    elif result == "login_required":
                         item["reason"] = "indeed_login_required"
+                        try:
+                            item["lastUrl"] = (sb.get_current_url() or "")[:200]
+                            item["sample"] = (sb.get_text("body") or "")[:350].replace("\n", " | ")
+                        except Exception:
+                            pass
                         report["blocked"].append(item)
                         report["counts"]["blocked"] += 1
                         print("BLOCKED login_required", page_title[:80], flush=True)
+                    elif result == "recaptcha":
+                        item["reason"] = "easy_apply_recaptcha"
+                        report["blocked"].append(item)
+                        report["counts"]["blocked"] += 1
+                        print("RECAPTCHA", page_title[:80], flush=True)
                     else:
-                        report["rejected"].append(item)
-                        report["counts"]["rejected"] += 1
-                        print("INCOMPLETE", page_title[:80], flush=True)
-                        if item.get("lastUrl"):
-                            print(f"  incomplete_url={item['lastUrl']}", flush=True)
+                        item["reason"] = "easy_apply_incomplete"
+                        try:
+                            item["lastUrl"] = (sb.get_current_url() or "")[:200]
+                            item["sample"] = (sb.get_text("body") or "")[:350].replace("\n", " | ")
+                        except Exception:
+                            pass
+                        # Reclassify SmartApply duplicate / auth walls that slipped past early checks.
+                        sample_l = (item.get("sample") or "").lower()
+                        if already_applied(sample_l, item.get("lastUrl") or ""):
+                            item["reason"] = "already_applied"
+                            report["skipped"].append(item)
+                            report["counts"]["skipped"] += 1
+                            print("SKIP already_applied", page_title[:80], flush=True)
+                        elif looks_login_wall(sample_l, item.get("lastUrl") or ""):
+                            item["reason"] = "indeed_login_required"
+                            report["blocked"].append(item)
+                            report["counts"]["blocked"] += 1
+                            print("BLOCKED login_required", page_title[:80], flush=True)
+                        else:
+                            report["rejected"].append(item)
+                            report["counts"]["rejected"] += 1
+                            print("INCOMPLETE", page_title[:80], flush=True)
+                            if item.get("lastUrl"):
+                                print(f"  incomplete_url={item['lastUrl']}", flush=True)
 
-                # Close Easy Apply modal / extra windows so the next job is clean.
-                try:
-                    sb.press_keys("body", "\ue00c")  # ESC
-                except Exception:
-                    pass
-                try:
-                    handles = sb.driver.window_handles
-                    if len(handles) > 1:
-                        current = sb.driver.current_window_handle
-                        for h in handles:
-                            if h != current:
-                                sb.driver.switch_to.window(h)
-                                sb.driver.close()
-                        sb.driver.switch_to.window(sb.driver.window_handles[0])
-                except Exception:
-                    pass
-                time.sleep(1)
+                    # Close Easy Apply modal / extra windows so the next job is clean.
+                    try:
+                        sb.press_keys("body", "\ue00c")  # ESC
+                    except Exception:
+                        pass
+                    try:
+                        handles = sb.driver.window_handles
+                        if len(handles) > 1:
+                            current = sb.driver.current_window_handle
+                            for h in handles:
+                                if h != current:
+                                    sb.driver.switch_to.window(h)
+                                    sb.driver.close()
+                            sb.driver.switch_to.window(sb.driver.window_handles[0])
+                    except Exception:
+                        pass
+                    time.sleep(1)
+                finally:
+                    clear_job_resume()
+                continue
 
     report["finishedAt"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     applied_n = report["counts"]["applied"] + report["counts"]["external"]

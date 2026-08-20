@@ -5,7 +5,7 @@ skills + bullets so JD keywords score higher — without inventing employers,
 dates, titles, or metrics. Output keeps filename `Rafi_Resume.docx` for Easy
 Apply label matching.
 
-Disable with RESUME_TAILOR=0 / LINKEDIN_TAILOR_RESUME=0.
+Disable with RESUME_TAILOR=0 / LINKEDIN_TAILOR_RESUME=0 / FOUNDIT_TAILOR=0 / INDEED_TAILOR_RESUME=0.
 """
 
 from __future__ import annotations
@@ -143,7 +143,11 @@ STOP = {
 
 
 def tailor_enabled() -> bool:
+<<<<<<< HEAD
     for key in ("RESUME_TAILOR", "LINKEDIN_TAILOR_RESUME", "FOUNDIT_TAILOR"):
+=======
+    for key in ("RESUME_TAILOR", "LINKEDIN_TAILOR_RESUME", "INDEED_TAILOR_RESUME"):
+>>>>>>> f0a6874 (fix(indeed): tailor Rafi_Resume per JD before Easy Apply/ATS)
         v = os.environ.get(key, "").strip().lower()
         if v in ("0", "false", "no", "off"):
             return False

@@ -16,6 +16,7 @@ Daily Indeed (in.indeed.com) apply for Mohammed Abdul Rafi Ahmed.
 
 ## Resume (HARD)
 Upload **Rafi_Resume.docx** on Easy Apply and every company ATS. Bootstrap paths: /workspace/resumes/Rafi_Resume.docx, /home/ubuntu/Documents/Rafi_Resume.docx. Never invent stubs.
+Before each apply, `tools/resume_tailor.py` builds a **JD-tailored** `Rafi_Resume.docx` (headline/summary/skills reorder from the real profile only — never invent stack). Easy Apply + company ATS upload that file (`RESUME_UPLOAD_PATH` / active resume). Disable with `RESUME_TAILOR=0` or `INDEED_TAILOR_RESUME=0`.
 
 ## Profile
 SA / Technical Architect / Tech Lead / EM / Principal .NET | Hyd + Remote/WFH
