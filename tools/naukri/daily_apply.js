@@ -24,6 +24,7 @@ const {
 const { completeWorkdayApply, isSubmittedText } = require("./workday_apply");
 const { preferChatbotCheckboxValues } = require("./chatbot_answers");
 const { tailorResumeForJob } = require("./tailor_resume");
+const { ensureLoggedIn, runRefresh } = require("./update_profile_resume");
 const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
 const { artifactPaths, writeArtifactJson } = require("../artifact_path");
 const { completeExternalPage } = require("../ats/complete_page");
@@ -222,42 +223,68 @@ function prepareJobResume(jobMeta, detail) {
   }
 }
 
-/** Fast profile swap for Quick Apply — Naukri ships the profile CV with the application. */
-function syncTailoredProfileResume(resumePath) {
+/** Close Cutshort/LinkedIn/etc tabs restored into the Naukri CDP profile. */
+async function closeForeignPages(context, keepPages = []) {
+  const keep = new Set((keepPages || []).filter(Boolean));
+  for (const p of context.pages()) {
+    if (keep.has(p)) continue;
+    const u = String(p.url() || "");
+    if (/naukri\.com/i.test(u)) continue;
+    if (!u || /^about:blank$/i.test(u) || /^chrome:\/\//i.test(u)) continue;
+    await p.close().catch(() => {});
+  }
+}
+
+/**
+ * Fast profile swap for Quick Apply — Naukri ships the profile CV with the
+ * application. Must reuse the existing CDP context: a second Node/Playwright
+ * connectOverCDP races the apply worker and times out on /mnjuser/profile.
+ */
+async function syncTailoredProfileResume(resumePath, context, keepPages = []) {
   if (!TAILOR_PROFILE_UPLOAD || !resumePath) {
     return { ok: false, reason: "profile_upload_disabled" };
   }
-  const script = path.join(__dirname, "update_profile_resume.js");
-  const env = {
-    ...process.env,
-    NAUKRI_RESUME_FILE: path.resolve(resumePath),
-    NAUKRI_RESUME_SOFT: "1",
-    NAUKRI_RESUME_ATTEMPTS: process.env.NAUKRI_TAILOR_PROFILE_ATTEMPTS || "1",
-    NAUKRI_SKIP_HEADLINE: "1",
-    NAUKRI_RESUME_NO_ARTIFACT: "1",
-    NAUKRI_RESUME_REPORT: path.join(
-      "/tmp",
-      "naukri-tailored-profile-upload.json"
-    ),
-  };
-  const r = spawnSync(process.execPath, [script], {
-    env,
-    encoding: "utf8",
-    timeout: 120000,
-  });
-  let report = null;
-  try {
-    report = JSON.parse(
-      fs.readFileSync("/tmp/naukri-tailored-profile-upload.json", "utf8")
-    );
-  } catch (_) {
-    report = {
-      ok: r.status === 0,
-      exitCode: r.status,
-      stderr: (r.stderr || "").slice(0, 300),
-    };
+  if (!context) {
+    return { ok: false, reason: "no_browser_context" };
   }
-  return report;
+  await closeForeignPages(context, keepPages);
+  let page;
+  try {
+    page = await context.newPage();
+    page.setDefaultTimeout(45000);
+    const login = await ensureLoggedIn(page, {
+      gotoTimeout: 45000,
+      gotoRetries: 3,
+    });
+    if (!login.ok) return login;
+    const refresh = await runRefresh(page, path.resolve(resumePath), {
+      attempts: Number(process.env.NAUKRI_TAILOR_PROFILE_ATTEMPTS || 1),
+      skipHeadline: true,
+    });
+    const profileUpdated = Boolean(
+      refresh.lastVerify && refresh.lastVerify.todayHit
+    );
+    const uploadOk = Boolean(refresh.lastUpload && refresh.lastUpload.ok);
+    return {
+      ok: profileUpdated || uploadOk,
+      profileUpdated,
+      upload: refresh.lastUpload,
+      verify: refresh.lastVerify,
+      reason: uploadOk
+        ? profileUpdated
+          ? undefined
+          : "updated_today_unconfirmed"
+        : (refresh.lastUpload && refresh.lastUpload.reason) || "upload_failed",
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      reason: "exception",
+      error: String(e).slice(0, 300),
+    };
+  } finally {
+    if (page) await page.close().catch(() => {});
+  }
 }
 
 /** Listed max CTC below this → skip. Postings often under-list; do not use 50. */
@@ -1917,11 +1944,15 @@ async function processCard(context, page, card, i, jobMeta, report) {
 
   // Naukri Quick Apply attaches the *profile* CV — sync tailored file first.
   if (prepared.tailored && !goingExternal && TAILOR_PROFILE_UPLOAD) {
-    const synced = syncTailoredProfileResume(prepared.path);
+    const synced = await syncTailoredProfileResume(prepared.path, context, [
+      page,
+      detailPage,
+    ]);
     jobMeta.profileTailorUpload = {
       ok: Boolean(synced?.ok || synced?.profileUpdated || synced?.upload?.ok),
       profileUpdated: Boolean(synced?.profileUpdated),
       reason: synced?.reason,
+      error: synced?.error,
     };
   }
 
@@ -2046,6 +2077,7 @@ async function main() {
   const context = browser.contexts()[0];
   const page = await context.newPage();
   page.setDefaultTimeout(45000);
+  await closeForeignPages(context, [page]);
 
   const seen = new Set();
 
@@ -2270,10 +2302,11 @@ async function main() {
     // Restore canonical CV on Naukri profile so recruiters don't keep the last JD variant.
     if (TAILOR_RESUME && TAILOR_PROFILE_UPLOAD && RESUME) {
       try {
-        const restored = syncTailoredProfileResume(RESUME);
+        const restored = await syncTailoredProfileResume(RESUME, context, [page]);
         report.profileResumeRestored = {
           ok: Boolean(restored?.ok || restored?.profileUpdated || restored?.upload?.ok),
           resume: RESUME,
+          reason: restored?.reason,
         };
       } catch (e) {
         report.profileResumeRestored = {

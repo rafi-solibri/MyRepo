@@ -120,8 +120,27 @@ async function dismissPopups(page) {
   }
 }
 
-async function ensureLoggedIn(page) {
-  await page.goto(PROFILE_URL, { waitUntil: "domcontentloaded", timeout: 60000 });
+async function ensureLoggedIn(page, opts = {}) {
+  const timeout = Number(opts.gotoTimeout || 45000);
+  const retries = Math.max(1, Number(opts.gotoRetries || 3));
+  const alreadyOnProfile = /naukri\.com\/mnjuser\/profile/i.test(page.url() || "");
+  if (!alreadyOnProfile) {
+    let lastErr = null;
+    for (let i = 0; i < retries; i++) {
+      try {
+        await page.goto(PROFILE_URL, {
+          waitUntil: "domcontentloaded",
+          timeout,
+        });
+        lastErr = null;
+        break;
+      } catch (e) {
+        lastErr = e;
+        await page.waitForTimeout(1200).catch(() => {});
+      }
+    }
+    if (lastErr) throw lastErr;
+  }
   await page.waitForTimeout(2500);
   await dismissPopups(page);
   const url = page.url();
@@ -445,20 +464,27 @@ async function verifyUpdated(page) {
   };
 }
 
-async function runRefresh(page, resumePath) {
+async function runRefresh(page, resumePath, opts = {}) {
+  const maxAttempts = Number(
+    opts.attempts != null ? opts.attempts : process.env.NAUKRI_RESUME_ATTEMPTS || 3
+  );
+  const skipHeadline =
+    opts.skipHeadline != null
+      ? Boolean(opts.skipHeadline)
+      : process.env.NAUKRI_SKIP_HEADLINE === "1";
   const attempts = [];
   let lastVerify = null;
   let lastUpload = null;
   let lastHeadline = null;
 
-  for (let i = 1; i <= MAX_ATTEMPTS; i++) {
+  for (let i = 1; i <= maxAttempts; i++) {
     const up = await uploadResume(page, resumePath);
     lastUpload = up;
     if (!up.ok) {
       attempts.push({ attempt: i, upload: up });
       continue;
     }
-    lastHeadline = SKIP_HEADLINE
+    lastHeadline = skipHeadline
       ? { touched: false, reason: "skipped_for_per_job_tailor" }
       : await touchHeadline(page);
     // Give Naukri a moment to persist

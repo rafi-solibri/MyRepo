@@ -225,6 +225,36 @@ assert.strictEqual(
   "Mainframe Architect without .NET must skip (false-apply 2026-08-20)"
 );
 assert.strictEqual(
+  shouldSkipTitle("Hiring For Geberative AI Lead/Architect"),
+  true,
+  "Naukri typo Geberative AI Lead/Architect without .NET must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Hiring For Generative AI Lead/Architect"),
+  true,
+  "Generative AI Lead/Architect without .NET must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Full Stack AI Manager (10-13 yrs)"),
+  true,
+  "Full Stack AI Manager without .NET must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Cloud Network Architect"),
+  true,
+  "Cloud Network Architect must skip (not .NET software architecture)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Azure Senior DevOps Architect"),
+  true,
+  "DevOps Architect must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("AI Lead/Architect .NET"),
+  false,
+  "AI Lead/Architect with .NET on title may proceed"
+);
+assert.strictEqual(
   shouldSkipTitle("COBOL Technical Lead"),
   true,
   "COBOL-primary lead without .NET must skip"
