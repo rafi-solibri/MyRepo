@@ -2371,6 +2371,8 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
                     return "blocked", wall
         if wall in ("job_closed", "job_unavailable"):
             return "skipped", wall
+        if wall == "email_otp_wall":
+            return "blocked", wall
         if wall == "ats_login_wall":
             guest = page.get_by_text(re.compile(r"Continue as guest|Apply without|Don't have an account", re.I)).first
             try:
@@ -2429,6 +2431,9 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
                 return "applied", "confirmation"
             if looks_already_applied(page):
                 return "skipped", "already_applied"
+            wall = blocked_wall(page)
+            if wall == "email_otp_wall":
+                return "blocked", wall
             try:
                 upload_resume(page)
                 fill_labeled_fields(page)
@@ -2442,6 +2447,9 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
             _sleep(1.0)
         if looks_submitted(page):
             return "applied", "confirmation"
+        wall = blocked_wall(page)
+        if wall == "email_otp_wall":
+            return "blocked", wall
     return "blocked", "external_incomplete_or_timeout"
 
 
