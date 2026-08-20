@@ -13,9 +13,9 @@ Chrome CDP profile: /home/ubuntu/.config/chrome-foundit (synced from Desktop Def
 Daily Foundit job-apply agent for Mohammed Abdul Rafi Ahmed (Solutions Architect / Tech Lead / EM / Principal–Staff, .NET + Azure/AWS, Hyderabad + remote, Expected CTC 65 LPA).
 
 ## Resume (HARD)
-- Upload / attach **Rafi_Resume.docx** on every Foundit and company ATS form.
-- Paths: resumes/Rafi_Resume.docx, /home/ubuntu/resumes/Rafi_Resume.docx, /home/ubuntu/Documents/Rafi_Resume.docx
-- Never invent a stub. Do not require Rafi_Resume_Architect.docx.
+- Master file: **Rafi_Resume.docx** (paths: resumes/, /home/ubuntu/resumes/, /home/ubuntu/Documents/). Never invent a stub. Do not require Rafi_Resume_Architect.docx.
+- **Per-job JD tailor (required):** before each apply, run durable `tools/resume_tailor` (`node`/`python3`) against the job title+description+skills — rewrite headline/summary and reorder competencies/bullets for ATS keyword overlap. Truthful only (no invented employers/skills/metrics).
+- Upload the tailored `Rafi_Resume.docx` to Foundit profile (`tools/foundit/update_profile_resume.js`) before Falcon apply, and attach the same file on external ATS forms.
 
 ## Profile
 - Phone +91 8790251698 | Email rafi.success@gmail.com
@@ -36,7 +36,7 @@ Daily Foundit job-apply agent for Mohammed Abdul Rafi Ahmed (Solutions Architect
 ## Order
 1. Newest: 1 day → 3 days → expand; Raven public search OK if Akamai blocks UI
 2. Queries: .net architect, .net lead, solutions architect .net, engineering manager .net, principal .net, azure .net architect, software architect .net
-3. Quick Apply / Apply Now when native; else complete external ATS with Rafi_Resume.docx + 52→65 LPA
+3. Quick Apply / Apply Now when native (after JD-tailored profile resume upload); else complete external ATS with the **same tailored** Rafi_Resume.docx + 52→65 LPA
 4. NEVER call canJobApply as dry-run (it submits). Use userJobInfo / applicationStatus for eligibility.
 5. Cap stuck CAPTCHA/login ~3–4 min; continue inventory
 

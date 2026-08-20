@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Applies used one generic resume — ATS/AI screening rejected despite volume | Add tools/resume_tailor (+ Foundit update_profile_resume); daily_apply JD-tailors and uploads profile resume before Falcon/ATS |
 | False apply: Socnet Senior Technical Lead - Agentic AI / Generative AI passed Arch/Lead without .NET on title | Expand pure AI/data title skip in tools/foundit/filters.js for agentic/generative AI (+ test); Arch/Lead exception no longer applies |
 
 

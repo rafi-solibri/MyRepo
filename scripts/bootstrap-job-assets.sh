@@ -35,3 +35,8 @@ done
 
 echo "Resume ready:"
 ls -la "$SRC" /home/ubuntu/resumes/Rafi_Resume.docx /home/ubuntu/Documents/Rafi_Resume.docx 2>/dev/null || true
+
+# JD tailor dependency (best-effort; tailor also self-installs if missing)
+if command -v python3 >/dev/null 2>&1; then
+  python3 -c "import docx" 2>/dev/null || python3 -m pip install -q -r "$ROOT/tools/requirements-resume.txt" >/dev/null 2>&1 || true
+fi
