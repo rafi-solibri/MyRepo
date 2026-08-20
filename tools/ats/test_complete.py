@@ -32,6 +32,7 @@ from tools.ats.complete import (
     is_unavailable_text,
     looks_like_apply_cta,
     page_fingerprint,
+    skip_advance_label,
     ALREADY_APPLIED_RE,
     SUBMITTED_RE,
     workday_compliant_password,
@@ -609,5 +610,37 @@ class _CandPage:
                 return 0
         return _Empty()
 assert_true(apply_form_still_open(_CandPage()), "candidate profile must count as open form")
+
+assert_true(skip_advance_label("Close"), "Oracle overlay Close is not Next")
+assert_true(skip_advance_label("close"), "Close aria-label skipped")
+assert_true(skip_advance_label("Back to Job Details"), "Back to job is not Next")
+assert_true(skip_advance_label("Cancel"), "Cancel is not Next")
+assert_true(not skip_advance_label("AGREE"), "AGREE must be clickable")
+assert_true(not skip_advance_label("Next"), "Next must be clickable")
+assert_true(
+    auth_wall_reason(
+        "https://careers.oracle.com/en/sites/jobsearch/job/335139/apply/email",
+        "Confirm Your Identity\nThe verification code was sent to this email address.\n"
+        "When you get the code, type the code into the field to confirm your identity.\n"
+        "The Verification Code field is required.\nVERIFY\nSend New Code",
+        has_password=False,
+        has_file=False,
+        has_email_field=False,
+    )
+    == "email_otp_wall",
+    "Oracle email OTP is a hard wall",
+)
+assert_true(is_hard_ats_wall("email_otp_wall"), "email OTP trips company wall cap")
+assert_true(
+    auth_wall_reason(
+        "https://careers.oracle.com/en/sites/jobsearch/job/335139/apply/email",
+        "Terms and Conditions\nAGREE\nEmail Address\nNEXT",
+        has_password=False,
+        has_file=False,
+        has_email_field=True,
+    )
+    is None,
+    "Oracle email gate before OTP is guest-fillable",
+)
 
 print("tools/ats/test_complete.py OK")

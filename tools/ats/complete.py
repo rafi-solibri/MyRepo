@@ -343,6 +343,8 @@ def is_hard_ats_wall(reason: str | None) -> bool:
             "ats_password_missing",
             "ats_email_missing",
             "sso",
+            "email_otp",
+            "otp_wall",
         )
     )
 
@@ -577,6 +579,19 @@ def auth_wall_reason(
         return None
     if has_file:
         return None
+    # Oracle Careers /apply/email → Confirm Your Identity sends an email OTP.
+    # Unattended cloud cannot read inbox; fail-fast instead of persist_retry.
+    if re.search(
+        r"confirm your identity|"
+        r"verification code was sent|"
+        r"the verification code field is required|"
+        r"when you get the code, type the code|"
+        r"type the code into the field to confirm your identity|"
+        r"enter (the )?(one[- ]time|otp|verification) code",
+        text or "",
+        re.I,
+    ):
+        return "email_otp_wall"
     # Email-only Eightfold/Phenom SSO (Qualcomm careers/apply) has an email
     # box + "Sign in using Google" and no resume upload — not guest-applyable.
     if re.search(
@@ -1157,7 +1172,11 @@ def fill_labeled_fields(page) -> None:
             continue
         if not text or len(text) > 90:
             continue
-        if re.search(r"robots only|beecatcher|do not enter if you.re human", text, re.I):
+        if re.search(
+            r"robots only|beecatcher|honey.?pot|do not enter if you.re human",
+            text,
+            re.I,
+        ):
             continue
         for pat, val in pairs:
             if not re.search(pat, text, re.I):
@@ -1233,6 +1252,32 @@ def tick_consents(page) -> None:
             label.click(force=True)
     except Exception:
         pass
+    # Oracle Careers terms overlay is a submit button labeled AGREE (not a checkbox).
+    try:
+        agree = page.get_by_role("button", name=re.compile(r"^(agree|i agree)$", re.I))
+        if agree.count() and agree.first.is_visible():
+            agree.first.click(timeout=2500, force=True)
+            _sleep(0.8)
+    except Exception:
+        pass
+
+
+def skip_advance_label(label: str | None) -> bool:
+    """True when a submit/next control is dismiss/back chrome, not Apply/Next.
+
+    Oracle Careers /apply/email puts Close + AGREE + Back as type=submit *before*
+    NEXT (type=button). Clicking .first() Close left the form stuck in persist_retry.
+    """
+    lab = (label or "").strip().lower()
+    if not lab:
+        return False
+    if re.search(r"sign in with (google|microsoft|linkedin|apple)", lab):
+        return True
+    if re.search(r"^(close|cancel|back|go back)$", lab):
+        return True
+    if re.search(r"\bback to\b|\bgo back\b", lab):
+        return True
+    return False
 
 
 def click_advance(page) -> bool:
@@ -1245,10 +1290,17 @@ def click_advance(page) -> bool:
         "input[type='submit']",
     ):
         try:
-            el = page.locator(sel).first
-            if el.count() and el.is_visible() and el.is_enabled():
+            loc = page.locator(sel)
+            n = min(loc.count(), 8)
+        except Exception:
+            continue
+        for i in range(n):
+            el = loc.nth(i)
+            try:
+                if not (el.is_visible() and el.is_enabled()):
+                    continue
                 label = ((el.inner_text() or "") + " " + (el.get_attribute("aria-label") or "")).lower()
-                if re.search(r"sign in with (google|microsoft|linkedin|apple)", label):
+                if skip_advance_label(label):
                     continue
                 # Password-rule reject: do not keep submitting Create Account.
                 if "createAccountSubmit" in sel and workday_password_alert(page):
@@ -1256,8 +1308,8 @@ def click_advance(page) -> bool:
                 el.click(timeout=3000, force=True)
                 _sleep(1.6)
                 return True
-        except Exception:
-            continue
+            except Exception:
+                continue
     return _click_text(
         page,
         (
