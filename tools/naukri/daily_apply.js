@@ -1,6 +1,10 @@
 /**
  * Daily Naukri TopTier apply worker for Mohammed Abdul Rafi Ahmed.
  * Connects to Chrome CDP on 9222. Confirms applies only via Applied CTA / ATS thank-you.
+ *
+ * Per-job resume: tailor_resume.py rewrites headline/summary from the JD (truthful
+ * emphasis only), syncs to Naukri profile before Quick Apply, and uploads the same
+ * file on company ATS / Workday. Disable with NAUKRI_TAILOR_RESUME=0.
  */
 "use strict";
 
@@ -19,6 +23,7 @@ const {
 } = require("./resume_and_filters");
 const { completeWorkdayApply, isSubmittedText } = require("./workday_apply");
 const { preferChatbotCheckboxValues } = require("./chatbot_answers");
+const { tailorResumeForJob } = require("./tailor_resume");
 const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
 const { artifactPaths, writeArtifactJson } = require("../artifact_path");
 const { completeExternalPage } = require("../ats/complete_page");
@@ -29,6 +34,10 @@ const REPORT =
   process.env.NAUKRI_APPLY_REPORT ||
   artifactPaths("naukri-daily-apply.json")[0];
 const RESUME = findResume();
+/** Per-job JD tailor (headline/summary emphasis). Set NAUKRI_TAILOR_RESUME=0 to disable. */
+const TAILOR_RESUME = process.env.NAUKRI_TAILOR_RESUME !== "0";
+/** Sync tailored file to Naukri profile before Quick Apply (ATS reads profile CV). */
+const TAILOR_PROFILE_UPLOAD = process.env.NAUKRI_TAILOR_PROFILE_UPLOAD !== "0";
 
 const QUERIES = [
   "solution architect .net",
@@ -134,13 +143,16 @@ function isExternalAtsUrl(url) {
 }
 
 /** STEP 0 — always refresh Naukri profile resume before applies. */
-function runProfileResumeRefresh() {
+function runProfileResumeRefresh(resumePath) {
   const script = path.join(__dirname, "update_profile_resume.js");
   const env = {
     ...process.env,
     // Soft: do not abort daily applies if UI scrape misses "Updated today"
     NAUKRI_RESUME_SOFT: process.env.NAUKRI_RESUME_SOFT || "1",
   };
+  if (resumePath) {
+    env.NAUKRI_RESUME_FILE = path.resolve(resumePath);
+  }
   const r = spawnSync(process.execPath, [script], {
     env,
     encoding: "utf8",
@@ -166,6 +178,83 @@ function runProfileResumeRefresh() {
       exitCode: r.status,
       stderr: (r.stderr || "").slice(0, 500),
       stdout: (r.stdout || "").slice(0, 500),
+    };
+  }
+  return report;
+}
+
+/**
+ * Build a JD-tailored Rafi_Resume.docx (truthful emphasis only).
+ * Falls back to canonical resume on failure.
+ */
+function prepareJobResume(jobMeta, detail) {
+  if (!TAILOR_RESUME) {
+    return { path: RESUME, tailored: false, reason: "disabled" };
+  }
+  try {
+    const t = tailorResumeForJob({
+      role: jobMeta.role || "",
+      company: jobMeta.company || "",
+      jdText: String(detail?.blob || jobMeta.role || ""),
+      base: RESUME,
+    });
+    if (t.ok && t.out && fs.existsSync(t.out)) {
+      return {
+        path: t.out,
+        tailored: true,
+        cached: Boolean(t.cached),
+        skills: t.skills || [],
+        headline: t.headline || "",
+      };
+    }
+    return {
+      path: RESUME,
+      tailored: false,
+      reason: t.reason || "tailor_failed",
+    };
+  } catch (e) {
+    return {
+      path: RESUME,
+      tailored: false,
+      reason: "tailor_exception",
+      error: String(e).slice(0, 200),
+    };
+  }
+}
+
+/** Fast profile swap for Quick Apply — Naukri ships the profile CV with the application. */
+function syncTailoredProfileResume(resumePath) {
+  if (!TAILOR_PROFILE_UPLOAD || !resumePath) {
+    return { ok: false, reason: "profile_upload_disabled" };
+  }
+  const script = path.join(__dirname, "update_profile_resume.js");
+  const env = {
+    ...process.env,
+    NAUKRI_RESUME_FILE: path.resolve(resumePath),
+    NAUKRI_RESUME_SOFT: "1",
+    NAUKRI_RESUME_ATTEMPTS: process.env.NAUKRI_TAILOR_PROFILE_ATTEMPTS || "1",
+    NAUKRI_SKIP_HEADLINE: "1",
+    NAUKRI_RESUME_NO_ARTIFACT: "1",
+    NAUKRI_RESUME_REPORT: path.join(
+      "/tmp",
+      "naukri-tailored-profile-upload.json"
+    ),
+  };
+  const r = spawnSync(process.execPath, [script], {
+    env,
+    encoding: "utf8",
+    timeout: 120000,
+  });
+  let report = null;
+  try {
+    report = JSON.parse(
+      fs.readFileSync("/tmp/naukri-tailored-profile-upload.json", "utf8")
+    );
+  } catch (_) {
+    report = {
+      ok: r.status === 0,
+      exitCode: r.status,
+      stderr: (r.stderr || "").slice(0, 300),
     };
   }
   return report;
@@ -1626,7 +1715,8 @@ async function handleExternal(context, page, detail, jobMeta, report) {
     )
     .catch(() => false);
   if (looksWorkdayUrl || looksWorkdayUi) {
-    const wd = await completeWorkdayApply(newPage, RESUME, {
+    const resumePath = jobMeta.resume || RESUME;
+    const wd = await completeWorkdayApply(newPage, resumePath, {
       maxMs: Math.max(60_000, MAX_WORKDAY_MS - (Date.now() - start)),
     });
     if (wd.ok) {
@@ -1634,14 +1724,14 @@ async function handleExternal(context, page, detail, jobMeta, report) {
         ...jobMeta,
         path: "company_ATS",
         atsUrl: wd.url || newPage.url(),
-        resume: RESUME,
+        resume: resumePath,
         confirmed: true,
       });
       report.applied.push({
         ...jobMeta,
         path: "company_ATS",
         atsUrl: wd.url || newPage.url(),
-        resume: RESUME,
+        resume: resumePath,
       });
     } else {
       report.blocked.push({
@@ -1686,7 +1776,8 @@ async function handleExternal(context, page, detail, jobMeta, report) {
     return;
   }
 
-  const done = await completeExternalPage(newPage, RESUME, {
+  const resumePath = jobMeta.resume || RESUME;
+  const done = await completeExternalPage(newPage, resumePath, {
     maxMs: Math.max(60_000, MAX_EXTERNAL_MS - (Date.now() - start)),
   });
   if (done.ok) {
@@ -1694,14 +1785,14 @@ async function handleExternal(context, page, detail, jobMeta, report) {
       ...jobMeta,
       path: "company_ATS",
       atsUrl: done.url || newPage.url(),
-      resume: RESUME,
+      resume: resumePath,
       confirmed: true,
     });
     report.applied.push({
       ...jobMeta,
       path: "company_ATS",
       atsUrl: done.url || newPage.url(),
-      resume: RESUME,
+      resume: resumePath,
     });
   } else if (done.reason === "job_unavailable" || done.reason === "no_ats_form") {
     report.skipped.push({
@@ -1813,7 +1904,28 @@ async function processCard(context, page, card, i, jobMeta, report) {
     return;
   }
 
-  if (card.companySite || isCompanySiteCta(detail.cta)) {
+  // Per-job JD tailor (truthful emphasis) before Quick Apply or company ATS.
+  const prepared = prepareJobResume(jobMeta, detail);
+  jobMeta.resume = prepared.path || RESUME;
+  jobMeta.tailored = Boolean(prepared.tailored);
+  if (prepared.skills) jobMeta.tailorSkills = prepared.skills;
+  if (prepared.headline) jobMeta.tailorHeadline = prepared.headline;
+  if (prepared.reason && !prepared.tailored) jobMeta.tailorReason = prepared.reason;
+
+  const goingExternal =
+    card.companySite || isCompanySiteCta(detail.cta);
+
+  // Naukri Quick Apply attaches the *profile* CV — sync tailored file first.
+  if (prepared.tailored && !goingExternal && TAILOR_PROFILE_UPLOAD) {
+    const synced = syncTailoredProfileResume(prepared.path);
+    jobMeta.profileTailorUpload = {
+      ok: Boolean(synced?.ok || synced?.profileUpdated || synced?.upload?.ok),
+      profileUpdated: Boolean(synced?.profileUpdated),
+      reason: synced?.reason,
+    };
+  }
+
+  if (goingExternal) {
     await handleExternal(context, detailPage, detail, jobMeta, report);
     await page.bringToFront().catch(() => {});
     await closeDetail();
@@ -2155,6 +2267,21 @@ async function main() {
       }
     }
   } finally {
+    // Restore canonical CV on Naukri profile so recruiters don't keep the last JD variant.
+    if (TAILOR_RESUME && TAILOR_PROFILE_UPLOAD && RESUME) {
+      try {
+        const restored = syncTailoredProfileResume(RESUME);
+        report.profileResumeRestored = {
+          ok: Boolean(restored?.ok || restored?.profileUpdated || restored?.upload?.ok),
+          resume: RESUME,
+        };
+      } catch (e) {
+        report.profileResumeRestored = {
+          ok: false,
+          error: String(e).slice(0, 200),
+        };
+      }
+    }
     report.finishedAt = new Date().toISOString();
     report.counts = {
       profileUpdated: Boolean(report.profileResumeRefresh?.profileUpdated),
@@ -2163,6 +2290,7 @@ async function main() {
       blocked: report.blocked.length,
       skipped: report.skipped.length,
       seen: report.seen.length,
+      tailoredApplies: report.applied.filter((j) => j.tailored).length,
     };
     const written = writeArtifactJson("naukri-daily-apply.json", report);
     if (process.env.NAUKRI_APPLY_REPORT) {

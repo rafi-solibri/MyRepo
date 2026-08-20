@@ -40,6 +40,17 @@ const REPORT =
   require("../artifact_path").artifactPaths("naukri-profile-resume.json")[0];
 const SOFT = process.env.NAUKRI_RESUME_SOFT === "1";
 const MAX_ATTEMPTS = Number(process.env.NAUKRI_RESUME_ATTEMPTS || 3);
+const SKIP_HEADLINE = process.env.NAUKRI_SKIP_HEADLINE === "1";
+
+/** Prefer explicit per-job tailored path, else canonical Rafi_Resume.docx. */
+function resolveResumePath() {
+  const envPath =
+    process.env.NAUKRI_RESUME_FILE || process.env.NAUKRI_RESUME_PATH || "";
+  if (envPath && fs.existsSync(envPath) && fs.statSync(envPath).size > 1000) {
+    return path.resolve(envPath);
+  }
+  return findResume();
+}
 
 /** Prefer resume-specific inputs — never random page file inputs (photo/etc). */
 const RESUME_FILE_SELECTORS = [
@@ -447,7 +458,9 @@ async function runRefresh(page, resumePath) {
       attempts.push({ attempt: i, upload: up });
       continue;
     }
-    lastHeadline = await touchHeadline(page);
+    lastHeadline = SKIP_HEADLINE
+      ? { touched: false, reason: "skipped_for_per_job_tailor" }
+      : await touchHeadline(page);
     // Give Naukri a moment to persist
     await page.waitForTimeout(2500);
     lastVerify = await verifyUpdated(page);
@@ -472,7 +485,7 @@ async function runRefresh(page, resumePath) {
 }
 
 async function main() {
-  const resume = findResume();
+  const resume = resolveResumePath();
   const result = {
     startedAt: new Date().toISOString(),
     resume,
@@ -574,7 +587,9 @@ async function main() {
 
 function writeReport(obj) {
   try {
-    writeArtifactJson("naukri-profile-resume.json", obj);
+    if (process.env.NAUKRI_RESUME_NO_ARTIFACT !== "1") {
+      writeArtifactJson("naukri-profile-resume.json", obj);
+    }
     if (process.env.NAUKRI_RESUME_REPORT) {
       fs.mkdirSync(path.dirname(REPORT), { recursive: true });
       fs.writeFileSync(REPORT, JSON.stringify(obj, null, 2));
@@ -594,5 +609,6 @@ module.exports = {
   touchHeadline,
   verifyUpdated,
   runRefresh,
+  resolveResumePath,
   PROFILE_URL,
 };

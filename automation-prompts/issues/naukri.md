@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Applications rejected by AI/manual screening despite applies | Per-job truthful JD tailor (headline/summary) + profile sync before Quick Apply + ATS upload of tailored Rafi_Resume.docx |
 | Mainframe Architect band titles false-applied (no .NET stack) | NON_DOTNET_PRIMARY_RE: skip mainframe/cobol/as400/ibm i without .NET on title |
 
 
