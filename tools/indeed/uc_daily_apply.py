@@ -460,6 +460,10 @@ def _campus_allowlist_blocks(company: str) -> bool:
 
 def skip_reason(title: str, company: str, location: str, snippet: str) -> str | None:
     t = title or ""
+    if re.search(r"^not found(\s*\|\s*indeed)?\s*$", t.strip(), re.I):
+        return "dead_listing"
+    if re.search(r"^sign in(\s*\|\s*indeed)", t.strip(), re.I):
+        return "login_wall"
     if _campus_allowlist_blocks(company):
         return "hitechcity_campus_allowlist"
     if TITLE_SKIP.search(t):
@@ -511,6 +515,24 @@ def job_dedupe_key(href: str, jk: str = "") -> str:
     if jk:
         return jk.strip()
     return (href or "").split("?")[0]
+
+
+def is_placeholder_jk(jk: str) -> bool:
+    """SERP/404 chrome sometimes exposes fake jk= rotations of 0123456789abcdef.
+
+    2026-08-20: collector opened viewjob?jk=abcdef0123456789 (and rotations /
+    reverse / a1b2c3…) → Indeed 404 "Not Found" burned seen budget.
+    """
+    s = (jk or "").lower()
+    if not re.fullmatch(r"[0-9a-f]{16}", s):
+        return False
+    hex_digits = "0123456789abcdef"
+    hex_letters = "abcdef0123456789"
+    for alphabet in (hex_digits, hex_letters):
+        doubled = alphabet + alphabet
+        if s in doubled or s[::-1] in doubled:
+            return True
+    return s in {"a1b2c3d4e5f67890", "0a1b2c3d4e5f6789", "1a2b3c4d5e6f7890"}
 
 
 def looks_signed_in(body: str, url: str = "") -> bool:
@@ -921,11 +943,23 @@ def fill_common_questions(sb) -> None:
             const clickMatching = (root, want) => {
               const radios = [...root.querySelectorAll('input[type=radio], input[type=checkbox], [role=radio], [role=checkbox]')];
               for (const r of radios) {
-                const lab = ((r.getAttribute('aria-label')||'') + ' ' + (r.parentElement?.innerText||'') + ' ' + (r.value||'')).toLowerCase().slice(0,160);
+                // Own label only — parent fieldset "Title * Mr. Ms." used to
+                // poison Mr. matching because sibling "Ms." is in innerText.
+                let lab = ((r.getAttribute('aria-label')||'') + ' ' + (r.value||'')).toLowerCase();
+                try {
+                  const id = r.getAttribute('id');
+                  if (id) {
+                    const labEl = document.querySelector('label[for="' + CSS.escape(id) + '"]');
+                    if (labEl) lab += ' ' + (labEl.innerText||'');
+                  }
+                } catch (e) {}
+                const ownWrap = r.closest('label');
+                if (ownWrap) lab += ' ' + (ownWrap.innerText||'').slice(0, 80);
+                lab = lab.slice(0, 160);
                 const hit =
                   (want === 'yes' && /\\byes\\b|yep|true|agree|available/.test(lab) && !/\\bno\\b/.test(lab)) ||
                   (want === 'male' && /\\bmale\\b/.test(lab) && !/female/.test(lab)) ||
-                  (want === 'Mr.' && (/^mr\\.?$|\\bmr\\.?\\b/.test(lab.trim()) || /\\bmr\\.?\\b/.test(lab)) && !/mrs|miss|ms\\.?/.test(lab)) ||
+                  (want === 'Mr.' && (/^mr\\.?$|\\bmr\\.?\\b/.test(lab.trim()) || /\\bmr\\.?\\b/.test(lab)) && !/mrs/.test(lab) && !/\\bms\\.?\\b/.test(lab)) ||
                   (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than|currently serving|serving notice/.test(lab)) ||
                   (want === '0' && /\\b0\\b|immediate|0\\s*day|0-15|less than|currently serving|serving notice/.test(lab)) ||
                   (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not|do not want/.test(lab));
@@ -2442,6 +2476,7 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
     review_submit_attempts = 0
     same_cta_streak = 0
     last_cta_key = ""
+    questions_recaptcha_tried = False
     for step in range(max_steps):
         if deadline and time.time() > deadline:
             return "failed"
@@ -2522,6 +2557,20 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
         except Exception:
             pass
         fill_common_questions(sb)
+        # Invisible reCAPTCHA on questions Continue (ValGenesis) — try once
+        # before the CTA streak burns the module.
+        if (
+            "question" in url.lower()
+            and not questions_recaptcha_tried
+            and _page_has_recaptcha(sb)
+            and not _recaptcha_cleared(sb)
+        ):
+            questions_recaptcha_tried = True
+            try:
+                print("  questions_recaptcha_pre_cta", flush=True)
+                clear_recaptcha(sb, attempts=1)
+            except Exception as exc:
+                print(f"  questions_recaptcha_err={exc!s}"[:160], flush=True)
         # Resume card: prefer an existing Rafi resume if shown.
         if "resume-selection" in url or "resume" in url.lower():
             try:
@@ -2814,6 +2863,8 @@ def main() -> int:
                 if report["counts"]["seen"] >= MAX_SEEN:
                     break
                 key = job_dedupe_key(href, jk)
+                if is_placeholder_jk(key):
+                    continue
                 if key in seen_keys:
                     continue
                 seen_keys.add(key)
@@ -2839,6 +2890,35 @@ def main() -> int:
                     body = sb.get_text("body") or ""
                 except Exception:
                     body = ""
+                cur = ""
+                try:
+                    cur = sb.get_current_url() or ""
+                except Exception:
+                    cur = ""
+                if looks_login_wall(body, cur):
+                    warmed = restore_signed_in(sb)
+                    report.setdefault("sessionRestores", []).append(warmed)
+                    if warmed.get("ok"):
+                        try:
+                            sb.uc_open_with_reconnect(href, 4)
+                            time.sleep(2)
+                            clear_cf(sb, attempts=2)
+                            page_title = sb.get_title() or title_t
+                            body = sb.get_text("body") or ""
+                            cur = sb.get_current_url() or cur
+                        except Exception:
+                            pass
+                    if looks_login_wall(body, cur):
+                        report["blocked"].append(
+                            {
+                                "title": page_title[:160],
+                                "url": cur or href,
+                                "reason": "login_required",
+                            }
+                        )
+                        report["counts"]["blocked"] += 1
+                        print("BLOCKED login_required", page_title[:80], flush=True)
+                        continue
                 if blocked(page_title, body):
                     report["blocked"].append({"reason": "job_page_blocked", "title": title_t})
                     report["counts"]["blocked"] += 1

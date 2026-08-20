@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| SERP fake jk=abcdef0123456789 404s + Title Mr/Ms sibling poison + bot-detect Sign-In counted as skip; questions Continue no-op under invisible reCAPTCHA | Skip hex-alphabet placeholder jks; own-label Title Mr.; restore session on login wall; recaptcha once before questions Continue |
 | Indeed still uploaded static resume; ATS/AI screening rejected keyword-mismatched applies | Wire tools/resume_tailor.tailor_resume_for_job into uc_daily_apply before Easy Apply/ATS; upload via RESUME_UPLOAD_PATH |
 | SmartApply incomplete: company ATS misclassified as indeed_login_required; bare Date→DOB poisoned UST; questions Continue stuck without reCAPTCHA attempt | looks_login_wall requires indeed host; off-Indeed EA→external; ISO date inputs; Available Date not DOB; questions CTA streak tries clear_recaptcha |
 

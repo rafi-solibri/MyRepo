@@ -12,6 +12,7 @@ if str(ROOT) not in sys.path:
 from tools.indeed.prepare_uc_profile import COPY_PATHS  # noqa: E402
 from tools.indeed.uc_daily_apply import (  # noqa: E402
     already_applied,
+    is_placeholder_jk,
     looks_anonymous_marketing_home,
     looks_login_wall,
     job_dedupe_key,
@@ -190,6 +191,34 @@ def test_job_dedupe_key_from_jk():
     assert job_dedupe_key("https://in.indeed.com/rc/clk?from=serp", "deadbeef") == "deadbeef"
 
 
+def test_placeholder_jk_rotations():
+    # 2026-08-20 SERP/404 chrome burned seen on these fake keys.
+    for jk in (
+        "abcdef0123456789",
+        "789abcdef0123456",
+        "cdef0123456789ab",
+        "456789abcdef0123",
+        "fedcba9876543210",
+        "a1b2c3d4e5f67890",
+    ):
+        assert is_placeholder_jk(jk), jk
+        assert is_placeholder_jk(
+            job_dedupe_key(f"https://in.indeed.com/viewjob?jk={jk}", "")
+        )
+    assert not is_placeholder_jk("7879aafc21203c63")
+    assert not is_placeholder_jk("754ca1fc57c3da61")
+    assert not is_placeholder_jk("")
+
+
+def test_skip_dead_listing_and_signin_title():
+    assert (
+        skip_reason("Not Found | Indeed", "", "", "") == "dead_listing"
+    )
+    assert (
+        skip_reason("Sign In | Indeed Accounts", "", "", "") == "login_wall"
+    )
+
+
 if __name__ == "__main__":
     test_skip_hyd_remote_ok()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
@@ -202,4 +231,7 @@ if __name__ == "__main__":
     test_india_home_get_started_is_not_login_proof()
     test_account_settings_and_serp_are_signed_in()
     test_job_dedupe_key_from_jk()
+    test_placeholder_jk_rotations()
+    test_skip_dead_listing_and_signin_title()
+    test_company_ats_email_gate_is_not_indeed_login()
     print("ok")
