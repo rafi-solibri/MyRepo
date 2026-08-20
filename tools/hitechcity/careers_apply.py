@@ -1151,7 +1151,12 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         row["finalUrl"] = page.url
         _close_auth_popups(page)
         return row
-    status, reason = attempt_ats_apply(page, time_cap_s=TIME_CAP_S)
+    status, reason = attempt_ats_apply(
+        page,
+        time_cap_s=TIME_CAP_S,
+        role=job.get("role") or "",
+        company=job.get("company") or "",
+    )
     if auth_wall_url(page.url or "") or "passport.amazon.jobs" in (page.url or ""):
         row["status"] = "blocked"
         row["reason"] = "login/account wall"

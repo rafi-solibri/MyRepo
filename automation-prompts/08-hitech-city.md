@@ -24,7 +24,7 @@ Owner only solves captchas: every daily run **re-focuses the captcha / ASK_OWNER
 - Notice: Immediate (0 days)
 - Current CTC: 5200000 (52 LPA) | Expected CTC: 6500000 (65 LPA) — use these numbers on ALL forms
 - Experience: ~15 years; .NET Core, microservices, AWS/Azure, Kafka/RabbitMQ, K8s, Angular/React
-- Resume: Rafi_Resume.docx only
+- Resume: Rafi_Resume.docx only — **per-JD tailored** before each ATS/Easy Apply upload (`RESUME_TAILOR=1` default via `tools/resume_tailor.py`). Filename stays `Rafi_Resume.docx`; never invent skills/employers.
 - Education: Acharya Nagarjuna University, B.Tech IT — July 2006 to May 2010
 - Employer: Nemetschek / Solibri / Spacewell (Principal Analyst)
 
@@ -32,7 +32,7 @@ Owner only solves captchas: every daily run **re-focuses the captcha / ASK_OWNER
 - Canonical: `resumes/Rafi_Resume.docx` → also `/home/ubuntu/resumes/Rafi_Resume.docx` and `/home/ubuntu/Documents/Rafi_Resume.docx` after bootstrap.
 - Easy Apply label text: **Rafi_Resume** (upload the docx if LinkedIn has no saved copy).
 - Do NOT require Rafi_Resume_Architect.docx. Never invent a stub resume.
-- External ATS / career portals: always `set_input_files` with the canonical docx path.
+- External ATS / career portals: always `set_input_files` with a **JD-tailored** `Rafi_Resume.docx` (truthful rewrite of headline/summary/skill order from the canonical file via `tools/resume_tailor.py`). Disable with `RESUME_TAILOR=0`.
 
 ## Campus / company scope (HARD)
 ONLY target companies listed in `tools/hitechcity/companies.json` after the discovery step (or clear tenants of the campuses named there).

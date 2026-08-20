@@ -44,6 +44,7 @@ def profile_email() -> str:
 
 
 def resume_path() -> str:
+    """Prefer per-JD tailored Rafi_Resume.docx when set_active_resume() was called."""
     try:
         from tools.resume_paths import resume_upload_path
 
@@ -62,6 +63,64 @@ def resume_path() -> str:
         if Path(c).is_file():
             return c
     raise FileNotFoundError("Rafi_Resume.docx missing")
+
+
+def _scrape_jd_text(page: Page, limit: int = 6000) -> str:
+    """Best-effort JD text from an open job/ATS page (for resume tailoring)."""
+    try:
+        text = page.evaluate(
+            """(lim) => {
+              const sels = [
+                '[data-automation-id="jobPostingDescription"]',
+                '[data-automation-id="jobPostingPage"]',
+                '.job-description', '#job-description', '[class*="jobDescription"]',
+                '[class*="JobDescription"]', 'article', '[data-testid="job-description"]',
+                '.description', '#content'
+              ];
+              for (const sel of sels) {
+                const el = document.querySelector(sel);
+                const t = el && (el.innerText || '').trim();
+                if (t && t.length > 80) return t.slice(0, lim);
+              }
+              const body = (document.body && document.body.innerText) || '';
+              return body.slice(0, lim);
+            }""",
+            limit,
+        )
+        return (text or "")[:limit]
+    except Exception:
+        return ""
+
+
+def _activate_tailored_resume(*, role: str, company: str, jd: str, job_id: str = "") -> None:
+    try:
+        from tools.resume_paths import clear_active_resume, set_active_resume
+        from tools.resume_tailor import tailor_resume_for_job
+
+        path = tailor_resume_for_job(
+            job_id=job_id or company or "careers",
+            title=role,
+            company=company,
+            jd=jd,
+        )
+        set_active_resume(path)
+    except Exception as e:
+        print(f"RESUME_TAILOR fallback to canonical: {e}", flush=True)
+        try:
+            from tools.resume_paths import clear_active_resume
+
+            clear_active_resume()
+        except Exception:
+            pass
+
+
+def _clear_tailored_resume() -> None:
+    try:
+        from tools.resume_paths import clear_active_resume
+
+        clear_active_resume()
+    except Exception:
+        pass
 
 
 # SmartRecruiters OneClick / Indeed OAuth / Google GSI — not guest-applyable.
@@ -254,8 +313,8 @@ def blocked_wall(page: Page) -> str | None:
     return None
 
 
-def upload_resume(page: Page) -> bool:
-    path = resume_path()
+def upload_resume(page: Page, path: str | None = None) -> bool:
+    path = path or resume_path()
     uploaded = False
     for sel in ("input[type='file']", "input[accept*='pdf']", "input[accept*='doc']"):
         try:
@@ -388,34 +447,54 @@ def try_submit(page: Page) -> bool:
     )
 
 
-def attempt_ats_apply(page: Page, time_cap_s: int = 390) -> tuple[str, str]:
+def attempt_ats_apply(
+    page: Page,
+    time_cap_s: int = 390,
+    *,
+    role: str = "",
+    company: str = "",
+    jd: str = "",
+    job_id: str = "",
+) -> tuple[str, str]:
     """Fill + submit current ATS page. Returns (status, reason).
 
     Soft incompletes get one persist retry so we do not leave a form after the
     owner solved captcha / helped with fields. Owner-asleep skips the second
     full pass so overnight runs keep moving across campus companies.
+
+    When role/company/jd are provided, uploads a truthful per-JD tailored
+    Rafi_Resume.docx (same filename) instead of the generic canonical file.
     """
     try:
         from tools.ats.complete import apply_form_still_open, complete_ats, owner_asleep
     except Exception:
         from ats.complete import apply_form_still_open, complete_ats, owner_asleep  # type: ignore
-    status, reason = complete_ats(page, time_cap_s=time_cap_s)
-    persist_on = (os.environ.get("HITECHCITY_ATS_PERSIST_RETRY") or "1").strip().lower() not in (
-        "0",
-        "false",
-        "no",
-    )
-    if owner_asleep() or not persist_on:
+
+    if role or company or jd:
+        jd_text = jd or _scrape_jd_text(page)
+        _activate_tailored_resume(role=role, company=company, jd=jd_text, job_id=job_id)
+
+    try:
+        status, reason = complete_ats(page, time_cap_s=time_cap_s)
+        persist_on = (os.environ.get("HITECHCITY_ATS_PERSIST_RETRY") or "1").strip().lower() not in (
+            "0",
+            "false",
+            "no",
+        )
+        if owner_asleep() or not persist_on:
+            return status, reason
+        if status == "blocked" and "incomplete" in (reason or "").lower():
+            try:
+                still = apply_form_still_open(page)
+            except Exception:
+                still = True
+            if still:
+                print(
+                    "ATS persist_retry — form still open after incomplete; continuing to submit",
+                    flush=True,
+                )
+                status, reason = complete_ats(page, time_cap_s=max(120, int(time_cap_s)))
         return status, reason
-    if status == "blocked" and "incomplete" in (reason or "").lower():
-        try:
-            still = apply_form_still_open(page)
-        except Exception:
-            still = True
-        if still:
-            print(
-                "ATS persist_retry — form still open after incomplete; continuing to submit",
-                flush=True,
-            )
-            status, reason = complete_ats(page, time_cap_s=max(120, int(time_cap_s)))
-    return status, reason
+    finally:
+        if role or company or jd:
+            _clear_tailored_resume()
