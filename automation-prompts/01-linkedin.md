@@ -26,10 +26,12 @@ Apply to LinkedIn jobs for Mohammed Abdul Rafi Ahmed (Rafi Ahmed) until a solid 
 - Employer: Nemetschek / Solibri / Spacewell (Principal Analyst)
 
 ## Resume (HARD)
-- Canonical: `resumes/Rafi_Resume.docx` → also `/home/ubuntu/resumes/Rafi_Resume.docx` and `/home/ubuntu/Documents/Rafi_Resume.docx` after bootstrap.
-- Easy Apply label text: **Rafi_Resume** (upload the docx if LinkedIn has no saved copy).
+- Canonical base: `resumes/Rafi_Resume.docx` → also `/home/ubuntu/resumes/Rafi_Resume.docx` and `/home/ubuntu/Documents/Rafi_Resume.docx` after bootstrap.
+- **Per-job tailor (MANDATORY):** before each Easy Apply / external ATS upload, run `tools/resume_tailor.py` (helpers call it automatically) so headline, summary, skills order, and bullets are JD-keyword aligned. Never invent employers, dates, titles, or metrics — only emphasize owned .NET/cloud/leadership experience that matches the JD.
+- Upload the tailored copy (still named **Rafi_Resume.docx** / label **Rafi_Resume**). Prefer file-input upload over a stale LinkedIn-saved resume.
 - Do NOT require Rafi_Resume_Architect.docx. Never invent a stub resume.
-- External ATS: always `set_input_files` with the canonical docx path.
+- External ATS: always `set_input_files` with the active tailored path from `tools.resume_paths.resume_upload_path()` (falls back to canonical).
+- Disable only for debug: `RESUME_TAILOR=0` / `LINKEDIN_TAILOR_RESUME=0`.
 
 ## Location filter (HARD)
 ONLY apply if Hyderabad / Greater Hyderabad / Telangana OR Fully Remote / WFH / India Remote.

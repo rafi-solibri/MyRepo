@@ -493,7 +493,48 @@ def process_external(page: Page, job: dict) -> ExtResult:
             res.reason = "did not leave LinkedIn"
             return res
 
-    status, reason = _complete_ats(ats, ATS_TIME_CAP_S)
+    # JD-tailor resume before ATS upload (tools.ats.complete uses resume_upload_path)
+    try:
+        from tools.resume_paths import clear_active_resume, set_active_resume
+        from tools.resume_tailor import tailor_resume_for_job
+
+        jd = ""
+        try:
+            jd = page.locator(
+                "#job-details, .jobs-description__content, .jobs-box__html-content, "
+                ".jobs-description-content__text"
+            ).first.inner_text(timeout=2500)
+        except Exception:
+            jd = ""
+        if not res.role:
+            try:
+                res.role = (
+                    page.locator("h1, .job-details-jobs-unified-top-card__job-title").first.inner_text(
+                        timeout=1500
+                    )
+                    or ""
+                ).strip()[:160]
+            except Exception:
+                pass
+        tailored = tailor_resume_for_job(
+            job_id=jid,
+            title=res.role or job.get("role", ""),
+            company=res.company or job.get("company", ""),
+            jd=jd,
+        )
+        set_active_resume(tailored)
+    except Exception as tailor_err:
+        print(f"  WARN: resume tailor skipped: {str(tailor_err)[:120]}", flush=True)
+
+    try:
+        status, reason = _complete_ats(ats, ATS_TIME_CAP_S)
+    finally:
+        try:
+            from tools.resume_paths import clear_active_resume
+
+            clear_active_resume()
+        except Exception:
+            pass
     if status == "applied":
         res.status = "submitted"
         res.reason = reason or "ATS confirmation"

@@ -989,14 +989,59 @@ def fill_inputs(page: Page) -> None:
 
 
 def select_resume(page: Page) -> None:
+    """Prefer uploading the active (JD-tailored) Rafi_Resume.docx; else pick saved label."""
+    try:
+        from tools.resume_paths import resume_upload_path
+
+        path = resume_upload_path()
+    except Exception:
+        path = ""
+
+    # Upload tailored/canonical file when a file input is present (beats stale saved copy).
+    if path and Path(path).is_file():
+        try:
+            for label in (
+                r"Upload\s*(resume|CV|file)?",
+                r"Update\s*resume",
+                r"Choose\s*file",
+                r"Replace",
+            ):
+                try:
+                    btn = page.get_by_role("button", name=re.compile(label, re.I))
+                    if btn.count() and btn.first.is_visible():
+                        btn.first.click(timeout=1500)
+                        time.sleep(0.3)
+                        break
+                except Exception:
+                    continue
+            inputs = page.locator(
+                "input[type='file'], input[accept*='pdf'], input[accept*='doc']"
+            )
+            for i in range(min(inputs.count(), 4)):
+                try:
+                    inputs.nth(i).set_input_files(path, timeout=8000)
+                    time.sleep(0.6)
+                    return
+                except Exception:
+                    continue
+        except Exception:
+            pass
+
     try:
         # Click card/label containing resume name
-        cand = page.get_by_text(re.compile(r"Rafi_Resume(?:_Architect)?|Rafi_Resume\.docx|Architect\.docx|Rafi.*Architect", re.I))
+        cand = page.get_by_text(
+            re.compile(
+                r"Rafi_Resume(?:_Architect)?|Rafi_Resume\.docx|Architect\.docx|Rafi.*Architect",
+                re.I,
+            )
+        )
         if cand.count():
             cand.first.click(timeout=2000)
             return
         # radio near Documents
-        radios = page.locator("input[type='radio'][name*='resume'], input[type='radio'][name*='document']")
+        radios = page.locator(
+            "input[type='radio'][name*='resume'], input[type='radio'][name*='document']"
+        )
         if radios.count():
             radios.first.check(force=True)
     except Exception:
@@ -1891,7 +1936,32 @@ def process_search(
             continue
 
         print(f"  APPLY? {company} | {role} | {loc[:60]} | id={jid}", flush=True)
-        job = easy_apply_flow(page, job)
+        # Per-JD tailored resume → upload path for Easy Apply / ATS screening
+        try:
+            from tools.resume_paths import clear_active_resume, set_active_resume
+            from tools.resume_tailor import tailor_resume_for_job
+
+            tailored = tailor_resume_for_job(
+                job_id=jid, title=role, company=company, jd=jd
+            )
+            set_active_resume(tailored)
+        except Exception as tailor_err:
+            print(f"  WARN: resume tailor skipped: {str(tailor_err)[:120]}", flush=True)
+            try:
+                from tools.resume_paths import clear_active_resume
+
+                clear_active_resume()
+            except Exception:
+                pass
+        try:
+            job = easy_apply_flow(page, job)
+        finally:
+            try:
+                from tools.resume_paths import clear_active_resume
+
+                clear_active_resume()
+            except Exception:
+                pass
         results.append(job)
         print(f"  -> {job.status}: {job.reason}", flush=True)
         if job.reason == "easy_apply_daily_limit":
