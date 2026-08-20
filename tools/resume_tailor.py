@@ -143,11 +143,12 @@ STOP = {
 
 
 def tailor_enabled() -> bool:
-<<<<<<< HEAD
-    for key in ("RESUME_TAILOR", "LINKEDIN_TAILOR_RESUME", "FOUNDIT_TAILOR"):
-=======
-    for key in ("RESUME_TAILOR", "LINKEDIN_TAILOR_RESUME", "INDEED_TAILOR_RESUME"):
->>>>>>> f0a6874 (fix(indeed): tailor Rafi_Resume per JD before Easy Apply/ATS)
+    for key in (
+        "RESUME_TAILOR",
+        "LINKEDIN_TAILOR_RESUME",
+        "FOUNDIT_TAILOR",
+        "INDEED_TAILOR_RESUME",
+    ):
         v = os.environ.get(key, "").strip().lower()
         if v in ("0", "false", "no", "off"):
             return False
