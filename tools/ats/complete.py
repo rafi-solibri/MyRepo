@@ -342,6 +342,7 @@ def is_hard_ats_wall(reason: str | None) -> bool:
             "ats_login_wall",
             "ats_password_missing",
             "ats_email_missing",
+            "ats_email_otp",
             "sso",
         )
     )
@@ -1157,7 +1158,7 @@ def fill_labeled_fields(page) -> None:
             continue
         if not text or len(text) > 90:
             continue
-        if re.search(r"robots only|beecatcher|do not enter if you.re human", text, re.I):
+        if re.search(r"robots only|beecatcher|honey[-_]?pot|do not enter if you.re human", text, re.I):
             continue
         for pat, val in pairs:
             if not re.search(pat, text, re.I):
@@ -1173,6 +1174,18 @@ def fill_labeled_fields(page) -> None:
                 )
                 if not ctrl.count():
                     continue
+                try:
+                    ident = " ".join(
+                        [
+                            ctrl.get_attribute("name") or "",
+                            ctrl.get_attribute("id") or "",
+                            ctrl.get_attribute("aria-label") or "",
+                        ]
+                    )
+                    if re.search(r"honey[-_]?pot|beecatcher", ident, re.I):
+                        continue
+                except Exception:
+                    pass
                 tag = ctrl.evaluate("e => e.tagName.toLowerCase()")
                 if tag == "select":
                     try:
@@ -2741,6 +2754,129 @@ def complete_icims(page, time_cap_s: int) -> tuple[str, str]:
     return status, reason
 
 
+ORACLE_EMAIL_GATE_RE = re.compile(
+    r"(?:careers\.oracle\.com|oraclecloud\.com)/.*/apply/email",
+    re.I,
+)
+ORACLE_OTP_RE = re.compile(
+    r"confirm your identity|verification code was sent|send new code|"
+    r"type the code into the field to confirm",
+    re.I,
+)
+
+
+def is_oracle_email_gate(url: str | None) -> bool:
+    """Oracle Recruiting Cloud guest start: /job/N/apply/email."""
+    return bool(ORACLE_EMAIL_GATE_RE.search(url or ""))
+
+
+def is_oracle_identity_otp(text: str | None) -> bool:
+    """True when Oracle emailed a one-time verification code (owner-only)."""
+    return bool(ORACLE_OTP_RE.search(text or ""))
+
+
+def oracle_recruiting_email_gate(page) -> bool:
+    """Fill Email + terms AGREE + NEXT on Oracle /apply/email. Never fill honey-pot.
+
+    The legal checkbox is a hidden control; clicking the label opens a Terms
+    modal whose AGREE button actually checks it and enables NEXT.
+    """
+    try:
+        url = getattr(page, "url", "") or ""
+    except Exception:
+        url = ""
+    if not is_oracle_email_gate(url):
+        return False
+    email = ats_email()
+    if not email or "@" not in email:
+        print("oracle_email_gate skipped — no APPLY_EMAIL", flush=True)
+        return False
+    progressed = False
+    try:
+        box = page.locator("input[name='primary-email'], input[type='email']").first
+        if box.count() and box.is_visible():
+            box.click(timeout=2500)
+            box.fill(email, timeout=4000)
+            progressed = True
+            _sleep(0.3)
+    except Exception as exc:
+        print(f"oracle_email_gate email_err {exc!s}"[:160], flush=True)
+    # Never type into the visible honey-pot trap.
+    try:
+        hp = page.locator("input[name='honey-pot'], input[id*='honey-pot' i], input[aria-label='honeypot']")
+        for i in range(min(hp.count(), 3)):
+            el = hp.nth(i)
+            try:
+                if (el.input_value() or "").strip():
+                    el.fill("")
+            except Exception:
+                pass
+    except Exception:
+        pass
+    try:
+        lab = page.locator(
+            "#legal-disclaimer-checkbox-label, label[for='legal-disclaimer-checkbox']"
+        ).first
+        if lab.count() and lab.is_visible():
+            lab.click(timeout=2500)
+            progressed = True
+            _sleep(0.8)
+    except Exception:
+        pass
+    try:
+        agree = page.get_by_role("button", name=re.compile(r"^Agree$", re.I)).first
+        if agree.count() and agree.is_visible():
+            agree.click(timeout=3500)
+            progressed = True
+            _sleep(0.8)
+    except Exception:
+        pass
+    try:
+        cb = page.locator("#legal-disclaimer-checkbox").first
+        if cb.count() and not cb.is_checked():
+            cb.evaluate(
+                "el => { el.checked = true; el.dispatchEvent(new Event('click', {bubbles:true})); "
+                "el.dispatchEvent(new Event('change', {bubbles:true})); }"
+            )
+    except Exception:
+        pass
+    try:
+        nxt = page.locator("button[aria-label='Next']").first
+        if not (nxt.count() and nxt.is_visible()):
+            nxt = page.get_by_role("button", name=re.compile(r"^Next$", re.I)).first
+        if nxt.count() and nxt.is_visible():
+            nxt.click(timeout=4000, force=True)
+            progressed = True
+            _sleep(2.0)
+    except Exception as exc:
+        print(f"oracle_email_gate next_err {exc!s}"[:160], flush=True)
+    print(
+        f"oracle_email_gate progressed={progressed} url={(getattr(page, 'url', '') or '')[:120]}",
+        flush=True,
+    )
+    return progressed
+
+
+def complete_oracle_recruiting(page, time_cap_s: int) -> tuple[str, str]:
+    """Oracle careers.oracle.com apply: email gate → OTP (owner) or remaining form."""
+    start = time.time()
+    if looks_submitted(page):
+        return "applied", "confirmation"
+    if looks_already_applied(page):
+        return "skipped", "already_applied"
+    if is_oracle_email_gate(getattr(page, "url", "") or ""):
+        oracle_recruiting_email_gate(page)
+    text = _body(page, 2500)
+    if is_oracle_identity_otp(text):
+        owner = wait_owner_finish_apply(page, hint="Oracle email verification code")
+        if owner:
+            return owner
+        print("oracle_email_otp — verification code sent; owner must enter it", flush=True)
+        return "blocked", "ats_email_otp"
+    remaining = max(20, int(time_cap_s) - int(time.time() - start))
+    return complete_generic(page, remaining)
+
+
 def complete_ats(page, time_cap_s: int | None = None) -> tuple[str, str]:
     """Fill + submit the current ATS page. Returns (status, reason)."""
     cap = int(time_cap_s or DEFAULT_TIME_CAP_S)
@@ -2785,6 +2921,8 @@ def complete_ats(page, time_cap_s: int | None = None) -> tuple[str, str]:
         return "blocked", wall
     if host == "workday" or flags["has_wd"]:
         return complete_workday(page, cap)
+    if is_oracle_email_gate(flags["url"]):
+        return complete_oracle_recruiting(page, cap)
     if is_brochure_or_dead_end(
         flags["url"],
         flags["text"],

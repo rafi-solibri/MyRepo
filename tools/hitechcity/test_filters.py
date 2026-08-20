@@ -267,6 +267,13 @@ def test_careers_card_location():
         "Sr. Director Analyst, Enterprise Architecture (Remote US)",
         "Remote - United States",
     )
+    # Title-only Remote-US (no top-card United States) must still skip.
+    assert not card_location_ok(
+        "Sr Director Analyst, AI and Software Engineering (Remote- US)"
+    )
+    assert not card_location_ok(
+        "Senior Director Analyst - Software Engineering for AI and Agentic Applications (Remote - U.S.)"
+    )
     assert card_location_ok("Solution Architect", "Fully Remote")
     assert card_location_ok("Solution Architect", "Remote, India")
     # Workday URL encodes workplace when card title omits city.
