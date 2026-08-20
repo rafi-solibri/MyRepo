@@ -1042,6 +1042,7 @@ def blocked_wall(page) -> str | None:
 
 def upload_resume(page) -> bool:
     path = resume_upload_path()
+    print(f"  ats_resume={path}", flush=True)
     uploaded = False
     for sel in ("input[type='file']", "input[accept*='pdf']", "input[accept*='doc']"):
         try:

@@ -44,6 +44,15 @@ def profile_email() -> str:
 
 
 def resume_path() -> str:
+    try:
+        from tools.resume_paths import resume_upload_path
+
+        return resume_upload_path()
+    except Exception:
+        pass
+    env = (os.environ.get("RAFI_RESUME") or os.environ.get("RESUME_UPLOAD_PATH") or "").strip()
+    if env and Path(env).is_file():
+        return env
     for c in [
         "/workspace/resumes/Rafi_Resume.docx",
         "/home/ubuntu/resumes/Rafi_Resume.docx",
