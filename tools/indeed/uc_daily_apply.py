@@ -482,6 +482,14 @@ def looks_signed_in(body: str, url: str = "") -> bool:
 
 
 def looks_login_wall(body: str, url: str = "") -> bool:
+    """Indeed auth interstitial only — never company ATS cookie/email gates.
+
+    HCLTech/SAP SuccessFactors careers pages often say "enter your email" /
+    cookie consent; those must stay company_ATS (external), not indeed_login_required.
+    """
+    u = (url or "").lower()
+    if u.startswith("http") and "indeed.com" not in u and "indeedapply" not in u:
+        return False
     blob = f"{url}\n{body}"
     return bool(
         re.search(
@@ -743,13 +751,25 @@ def fill_common_questions(sb) -> None:
             };
             const setNative = (el, value) => {
               if (!el) return false;
+              let v = String(value);
+              const type = (el.getAttribute('type') || '').toLowerCase();
+              // HTML date inputs reject dd/mm/yyyy — SmartApply UST "Date" fields.
+              if (type === 'date' || el.getAttribute('data-testid') === 'date-input') {
+                const m = v.match(/^(\\d{1,2})[\\/\\-](\\d{1,2})[\\/\\-](\\d{4})$/);
+                if (m) {
+                  const dd = m[1].padStart(2, '0');
+                  const mm = m[2].padStart(2, '0');
+                  const yyyy = m[3];
+                  v = `${yyyy}-${mm}-${dd}`;
+                }
+              }
               el.focus();
               const proto = el.tagName === 'TEXTAREA'
                 ? window.HTMLTextAreaElement.prototype
                 : window.HTMLInputElement.prototype;
               const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
-              if (setter) setter.call(el, value); else el.value = value;
-              el.dispatchEvent(new InputEvent('input', {bubbles:true, cancelable:true, inputType:'insertText', data:String(value)}));
+              if (setter) setter.call(el, v); else el.value = v;
+              el.dispatchEvent(new InputEvent('input', {bubbles:true, cancelable:true, inputType:'insertText', data:String(v)}));
               el.dispatchEvent(new Event('change', {bubbles:true}));
               el.blur();
               return true;
@@ -854,7 +874,7 @@ def fill_common_questions(sb) -> None:
                 const hit =
                   (want === 'yes' && /\\byes\\b|yep|true|agree|available/.test(lab) && !/\\bno\\b/.test(lab)) ||
                   (want === 'male' && /\\bmale\\b/.test(lab) && !/female/.test(lab)) ||
-                  (want === 'Mr.' && /\\bmr\\.?\\b/.test(lab) && !/mrs|miss/.test(lab)) ||
+                  (want === 'Mr.' && (/^mr\\.?$|\\bmr\\.?\\b/.test(lab.trim()) || /\\bmr\\.?\\b/.test(lab)) && !/mrs|miss|ms\\.?/.test(lab)) ||
                   (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than|currently serving|serving notice/.test(lab)) ||
                   (want === '0' && /\\b0\\b|immediate|0\\s*day|0-15|less than|currently serving|serving notice/.test(lab)) ||
                   (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not|do not want/.test(lab));
@@ -943,9 +963,10 @@ def fill_common_questions(sb) -> None:
               const want = wantFromText(text);
               if (want && clickMatching(root, want)) answered += 1;
             }
-            for (const lab of document.querySelectorAll('label, legend, h1, h2, h3, p, span')) {
+            for (const lab of document.querySelectorAll('label, legend, h1, h2, h3, p, span, div')) {
               const t = (lab.innerText||'').trim();
-              if (t.length > 6 && t.length < 220 && /\\?|ctc|salary|notice|experience|relocat|authori|location|package|lpa|gender|hybrid|bond|veteran|disability|ethnicity|race|hispanic|voluntary|self.?ident|birth|dob|title|salutation/.test(t.toLowerCase())) {
+              // Allow short "Title *" / "Mr." labels (was >6 and missed Title alone).
+              if (t.length > 2 && t.length < 220 && /\\?|ctc|salary|notice|experience|relocat|authori|location|package|lpa|gender|hybrid|bond|veteran|disability|ethnicity|race|hispanic|voluntary|self.?ident|birth|dob|title|salutation|phone|available date|^mr\\.?$|^ms\\.?$/.test(t.toLowerCase())) {
                 const want = wantFromText(t);
                 if (want && clickMatching(lab.closest('div, fieldset, li, section, [class*="question"]') || lab.parentElement || lab, want)) {
                   answered += 1;
@@ -965,7 +986,7 @@ def fill_common_questions(sb) -> None:
               else if (/last\\s*name|surname|family\\s*name|lname/.test(lab)) val = vals.last;
               else if (/(date of birth|\\bdob\\b|birth date|birthday)/.test(lab)) val = vals.dob;
               else if (/\\bpan\\b|aadhaar|aadhar|passport number|national id/.test(lab)) val = null;
-              else if (/\\bphone\\b|\\bmobile\\b|telephone/.test(lab) || type === 'tel') val = vals.phone;
+              else if (/\\bphone\\b|\\bmobile\\b|telephone|phone\\s*no/.test(lab) || type === 'tel') val = vals.phone;
               else if (/e-?mail/.test(lab) || type === 'email') val = vals.email;
               else if (/current.*(position|role|title|designation)|job title/.test(lab) && !/salary|ctc/.test(lab)) val = 'Solutions Architect';
               else if (/current.*(employer|company|organization)|present.*(employer|company)/.test(lab) && !/salary|ctc/.test(lab)) val = 'Nemetschek / Solibri';
@@ -973,8 +994,10 @@ def fill_common_questions(sb) -> None:
               else if (/highest (degree|education|qualification)|education|university|college|degree/.test(lab)) val = 'B.Tech';
               else if (/current.*(ctc|salary|compensation|package)|ctc.*current|current salary/.test(lab)) val = vals.current;
               else if (/expected.*(ctc|salary|compensation|package)|ctc.*expected/.test(lab)) val = vals.expected;
-              else if (/earliest start|start date|available from|joining date/.test(lab) || (type === 'date' && /start|join|avail/.test(lab))) val = '15/08/2026';
-              else if (/notice|joining|availability/.test(lab) && !/start date|available from/.test(lab)) {
+              else if (/earliest start|start date|available from|joining date|available date|date available/.test(lab)
+                  || (type === 'date' && /start|join|avail/.test(lab))) val = '15/08/2026';
+              else if (type === 'date' && !/birth|\\bdob\\b/.test(lab)) val = '15/08/2026';
+              else if (/notice|joining|availability/.test(lab) && !/start date|available from|available date/.test(lab)) {
                 const mode = (el.getAttribute('inputmode') || '').toLowerCase();
                 const numericNotice = type === 'number' || /numeric|decimal/.test(mode)
                   || /\\bin\\s*days\\b|number of days|notice period.*day|day\\(s\\)/.test(lab)
@@ -987,7 +1010,7 @@ def fill_common_questions(sb) -> None:
                 const w = wantFromText(lab);
                 if (w) val = w;
               }
-              if (val != null && (!(el.value || '').trim() || /\\bphone\\b|\\bmobile\\b|telephone|first|last|full\\s*name|ctc|salary|notice|city|experience|package|linkedin|employer|company|education|degree|birth|dob|start date/.test(lab) || /^(yes|no)$/i.test(el.value || ''))) {
+              if (val != null && (!(el.value || '').trim() || /\\bphone\\b|\\bmobile\\b|telephone|phone\\s*no|first|last|full\\s*name|ctc|salary|notice|city|experience|package|linkedin|employer|company|education|degree|birth|dob|start date|available date/.test(lab) || /^(yes|no)$/i.test(el.value || ''))) {
                 if (setNative(el, val)) answered += 1;
               }
             }
@@ -1083,10 +1106,19 @@ def fill_common_questions(sb) -> None:
             for (const el of document.querySelectorAll('input:not([type=hidden]):not([type=file]):not([type=radio]):not([type=checkbox]), textarea')) {
               if (el.disabled || el.readOnly || (el.value || '').trim()) continue;
               const lab = labelFor(el);
+              const itype = (el.getAttribute('type') || '').toLowerCase();
               const req = el.required || el.getAttribute('aria-required') === 'true' || /required|\\*/.test(lab);
-              if (!req && !/question|ctc|salary|notice|experience/.test(lab)) continue;
+              if (!req && !/question|ctc|salary|notice|experience|phone|date/.test(lab) && itype !== 'date' && itype !== 'tel') continue;
               if (/\\bpan\\b|aadhaar|aadhar|passport number|national id/.test(lab)) continue;
-              const w = wantFromText(lab) || (/how many|years|experience/.test(lab) ? '14' : (/salary|ctc|lpa|package/.test(lab) ? '65' : (/birth|\\bdob\\b|date/.test(lab) ? vals.dob : null)));
+              // Do NOT map bare "Date" → DOB (UST Available Date was poisoned by that).
+              let w = wantFromText(lab);
+              if (!w) {
+                if (/how many|years|experience/.test(lab)) w = '14';
+                else if (/salary|ctc|lpa|package/.test(lab)) w = '65';
+                else if (/birth|\\bdob\\b|birth date|birthday/.test(lab)) w = vals.dob;
+                else if (/start|join|avail|available date|date available/.test(lab) || itype === 'date') w = '15/08/2026';
+                else if (/\\bphone\\b|\\bmobile\\b|phone\\s*no|telephone/.test(lab) || itype === 'tel') w = vals.phone;
+              }
               if (w && setNative(el, w)) answered += 1;
             }
             return {answered, url: location.href};
@@ -2371,6 +2403,10 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
             pass
         if already_applied(body, url):
             return "already_applied"
+        # Left Indeed for employer ATS mid-flow — complete externally, not login_required.
+        url_l = (url or "").lower()
+        if url_l.startswith("http") and "indeed.com" not in url_l and "indeedapply" not in url_l:
+            return "external"
         if looks_login_wall(body, url):
             return "login_required"
         if _is_submitted(body, url):
@@ -2452,6 +2488,13 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
             last_cta_key = cta_key if clicked else ""
         if same_cta_streak >= 2:
             tick_required_agreements(sb)
+            # Questions Continue often no-ops under invisible reCAPTCHA (ValGenesis).
+            try:
+                if _page_has_recaptcha(sb) and not _recaptcha_cleared(sb):
+                    print("  questions_recaptcha_attempt", flush=True)
+                    clear_recaptcha(sb, attempts=1)
+            except Exception as exc:
+                print(f"  questions_recaptcha_err={exc!s}"[:160], flush=True)
         if same_cta_streak >= 3:
             try:
                 sample = (sb.get_text("body") or "")[:400].replace("\n", " | ")
