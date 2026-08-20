@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Small unit tests for Hitech City filters."""
 
+import json
 import re
 
 from tools.hitechcity.ats_fill import (
@@ -194,6 +195,11 @@ def test_oraclecloud_parent_card_location():
     )
     assert card_location_ok(
         "Senior Lead Architect - Solution Architect Hyderabad, Telangana, India TechnologyArchitecture"
+    )
+    # Hyd-only title must not false-skip when ATS chrome lists other offices.
+    assert card_location_ok(
+        "Senior Principal Forward Deployed Engineer HYDERABAD",
+        "Bengaluru Dubai United States office directory",
     )
     # SmartRecruiters location-group annotation must keep Hyd and drop Brazil/Malaysia.
     assert card_location_ok(
@@ -423,6 +429,29 @@ def test_skip_uhg_default():
         assert company_skip_reason({"name": "Hyland", "careersUrls": [
             "https://careers-hyland.icims.com/jobs/search"
         ]}) is None
+        # Board allowlist must drop Optum/UHG by default (careers already skip them).
+        from tools.hitechcity.campus_allowlist import write_allowlist_artifact
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as td:
+            dest = Path(td) / "allow.json"
+            write_allowlist_artifact(
+                [
+                    {"name": "Hyland"},
+                    {"name": "Optum"},
+                    {"name": "UnitedHealth Group"},
+                    {"name": "Oracle"},
+                ],
+                dest=dest,
+            )
+            names = set(json.loads(dest.read_text())["names"])
+            assert "Hyland" in names and "Oracle" in names
+            assert "Optum" not in names and "UnitedHealth Group" not in names
+            os.environ["HITECHCITY_SKIP_UHG"] = "0"
+            write_allowlist_artifact([{"name": "Optum"}, {"name": "Hyland"}], dest=dest)
+            names2 = set(json.loads(dest.read_text())["names"])
+            assert "Optum" in names2 and "Hyland" in names2
         os.environ["HITECHCITY_SKIP_UHG"] = "0"
         assert company_skip_reason({"name": "Optum", "careersUrls": [
             "https://careers.unitedhealthgroup.com/search-jobs/Hyderabad/"

@@ -791,7 +791,9 @@ def url_loc_hint(url: str) -> str:
 
 def card_location_ok(role_text: str, top_card: str = "") -> bool:
     """HARD: judge workplace from card/title/top pills/URL — never full page body/footer."""
-    blob = f"{role_text or ''} {top_card or ''}".strip()
+    role = role_text or ""
+    top = top_card or ""
+    blob = f"{role} {top}".strip()
     if not blob:
         # Unknown location on card: allow open; apply_job re-checks top card.
         return True
@@ -802,6 +804,11 @@ def card_location_ok(role_text: str, top_card: str = "") -> bool:
         r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|gachibowli|raidurg",
         re.I,
     )
+    # Title/role names Hyd with no foreign city in the title itself → allow.
+    # Noisy ATS chrome / office directories (Bengaluru footer next to a HYDERABAD title)
+    # must not false-skip after navigation.
+    if hyd_city.search(role) and not BAD_LOC_HINT.search(role):
+        return True
     if BAD_LOC_HINT.search(blob):
         return False
     if hyd_city.search(blob) or location_or_campus_ok(blob, "", ""):
@@ -1002,7 +1009,7 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         row["finalUrl"] = page.url
         return row
 
-    # Location from TOP CARD / workplace pills only — not full page body (footers say India).
+    # Location from TOP CARD / workplace pills only — never full page body/footers.
     try:
         top = page.evaluate(
             """() => {
@@ -1012,33 +1019,45 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
               };
               const chunks = [
                 pick('[data-automation-id="locations"]'),
-                pick('[class*="location"]'),
-                pick('[class*="Location"]'),
-                pick('h1'),
+                pick('[data-automation-id="location"]'),
+                pick('[class*="job-location"]'),
+                pick('[class*="JobLocation"]'),
                 pick('[data-testid="job-location"]'),
                 pick('.job-location'),
+                pick('[itemprop="jobLocation"]'),
+                pick('h1'),
               ];
-              const body = (document.body && document.body.innerText) || '';
-              const lines = body.split('\\n').map(s => s.trim()).filter(Boolean).slice(0, 12);
-              return (chunks.filter(Boolean).join(' ') + ' ' + lines.join(' ')).slice(0, 700);
+              // Do NOT scrape document.body lines — office directories / related jobs
+              // (Bengaluru, Dubai) false-skip true Hyderabad titles (Oracle etc.).
+              return chunks.filter(Boolean).join(' ').slice(0, 700);
             }"""
         )
     except Exception:
         top = ""
     role = job.get("role") or ""
-    try:
-        page_title = page.title() or ""
-    except Exception:
-        page_title = ""
-    if not card_location_ok(role, f"{top or ''} {page_title}"):
+    # Prefer role + location selectors only — page <title> often lists every office.
+    if not card_location_ok(role, top or ""):
         row["status"] = "skipped"
         row["reason"] = "location_non_hyd_city"
         row["finalUrl"] = page.url
         return row
     # Require Hyd/campus/remote/India — never apply-bias past Dubai/UAE/Bengaluru/etc.
     # (search listings are often Hyd-scoped but Oracle multi-loc cards still name foreign cities).
-    loc_blob = f"{role} {top or ''} {page_title}"
-    if BAD_LOC_HINT.search(loc_blob) or role_has_foreign_location(role):
+    loc_blob = f"{role} {top or ''}"
+    if role_has_foreign_location(role):
+        row["status"] = "skipped"
+        row["reason"] = "location_not_hyd_or_campus"
+        row["finalUrl"] = page.url
+        return row
+    # Clean Hyd title already passed card_location_ok — do not re-fail on noisy pills.
+    hyd_in_role = bool(
+        re.search(
+            r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|gachibowli|raidurg",
+            role,
+            re.I,
+        )
+    )
+    if (not hyd_in_role) and BAD_LOC_HINT.search(loc_blob):
         row["status"] = "skipped"
         row["reason"] = "location_not_hyd_or_campus"
         row["finalUrl"] = page.url

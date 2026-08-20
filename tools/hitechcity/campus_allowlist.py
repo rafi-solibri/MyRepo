@@ -59,8 +59,26 @@ def company_allowed(company_name: str) -> bool:
     return False
 
 
+def _skip_uhg_enabled() -> bool:
+    raw = (os.environ.get("HITECHCITY_SKIP_UHG") or "1").strip().lower()
+    return raw not in ("0", "false", "no", "off")
+
+
+_UHG_ALLOWLIST_SKIP = {
+    "optum",
+    "unitedhealth group",
+    "united health",
+    "unitedhealth",
+    "uhg",
+}
+
+
 def write_allowlist_artifact(companies: list[dict], dest: Path | None = None) -> Path:
-    """Write name-only allowlist JSON for board subprocesses."""
+    """Write name-only allowlist JSON for board subprocesses.
+
+    When HITECHCITY_SKIP_UHG is on (default), drop Optum / UnitedHealth Group so
+    Naukri/Foundit/etc. do not burn the board cap on Taleo login walls.
+    """
     out = dest or Path(
         os.environ.get(
             "HITECHCITY_ALLOWLIST_OUT",
@@ -69,9 +87,16 @@ def write_allowlist_artifact(companies: list[dict], dest: Path | None = None) ->
     )
     if not out.parent.is_dir():
         out = Path(__file__).resolve().parents[2] / "artifacts" / "hitechcity-company-allowlist.json"
-    names = sorted({c.get("name") for c in companies if c.get("name")})
+    names: set[str] = set()
+    for c in companies:
+        name = (c.get("name") or "").strip()
+        if not name:
+            continue
+        if _skip_uhg_enabled() and name.lower() in _UHG_ALLOWLIST_SKIP:
+            continue
+        names.add(name)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps({"names": names}, indent=2), encoding="utf-8")
+    out.write_text(json.dumps({"names": sorted(names)}, indent=2), encoding="utf-8")
     return out
 
 

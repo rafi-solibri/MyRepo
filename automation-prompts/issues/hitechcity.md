@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-20 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Oracle HYDERABAD careers false-skipped via body-line Bengaluru pollution; boards allowlist included Optum/UHG and burned Naukri on Taleo | card_location_ok: Hyd-clean title wins over noisy chrome; drop body-line scrape; exclude Optum/UHG from board allowlist when HITECHCITY_SKIP_UHG=1 |
+
+
 ## 2026-08-17 (cloud)
 
 | Issue | Fix |
