@@ -255,6 +255,16 @@ assert.strictEqual(
   "Platform EM remains eligible"
 );
 assert.strictEqual(
+  shouldSkipTitle("Azure Senior DevOps Architect"),
+  true,
+  "DevOps Architect is SRE/devops-primary not .NET SA"
+);
+assert.strictEqual(
+  shouldSkipTitle("Cloud Network Architect"),
+  true,
+  "Network Architect is not .NET SA"
+);
+assert.strictEqual(
   shouldSkipCompany("Pega"),
   true,
   "Pega employer must skip even if title omits Pega"

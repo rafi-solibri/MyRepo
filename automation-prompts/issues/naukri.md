@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Azure Senior DevOps Architect applied (devops engineer skip missed Architect suffix); TCS Cloud Network Architect attempted | SKIP_TITLE_RE: devops architect + network architect |
 | Staff PM / Delivery Partnerships / SAP OTC-BRIM attempted; 4x external_link_not_opened empty CTA | SKIP_TITLE_RE: product manager, delivery partnerships, brim, OTC data migration; waitForVisibleApplyCta+handleExternal retry company-site CTA |
 | Mainframe Architect band titles false-applied (no .NET stack) | NON_DOTNET_PRIMARY_RE: skip mainframe/cobol/as400/ibm i without .NET on title |
 
