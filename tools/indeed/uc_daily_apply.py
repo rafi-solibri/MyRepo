@@ -763,7 +763,8 @@ def fill_unselected_comboboxes(sb) -> dict:
     """Open leftover 'Select an option' SmartApply comboboxes and pick a value.
 
     Education/country listboxes portal to document.body, so the in-question-root
-    JS pass misses [role=option]. Sleep once so the list hydrates.
+    JS pass misses [role=option]. Indeed often ignores JS .click() on the
+    closed combobox — follow with SeleniumBase click + a longer hydrate wait.
     """
     _switch_smartapply_frame(sb)
     opened: dict = {"opened": [], "url": ""}
@@ -771,36 +772,62 @@ def fill_unselected_comboboxes(sb) -> dict:
         opened = sb.execute_script(
             r"""
             const opened = [];
-            const triggers = [...document.querySelectorAll(
-              'button, [role=combobox], [aria-haspopup=listbox]'
+            const fire = (el) => {
+              try { el.scrollIntoView({block:'center'}); } catch (e) {}
+              try { el.focus(); } catch (e) {}
+              for (const type of ['pointerdown','mousedown','pointerup','mouseup','click']) {
+                try { el.dispatchEvent(new MouseEvent(type, {bubbles:true, cancelable:true, view:window})); } catch (e) {}
+              }
+              try { el.click(); } catch (e) {}
+            };
+            const nodes = [...document.querySelectorAll(
+              'button, [role=combobox], [aria-haspopup=listbox], [aria-expanded], [class*="select"], [class*="Select"], [class*="dropdown"]'
             )];
-            for (const el of triggers) {
+            for (const el of nodes) {
               const t = ((el.innerText||'') + ' ' + (el.getAttribute('aria-label')||'')).toLowerCase();
               const wrap = el.closest('fieldset, [class*="question"], [class*="Question"], li, section, label, div')
                 || el.parentElement || el;
-              const ctx = ((wrap.innerText||'') + ' ' + t).toLowerCase().slice(0, 400);
+              const ctx = ((wrap.innerText||'') + ' ' + t).toLowerCase().slice(0, 500);
               const placeholder = /select an option|choose an option|^select$/.test(t);
               const relevant = /education|degree|qualification|country|dial.?code|phone.?code/.test(ctx);
-              if (!placeholder && !(el.getAttribute('aria-expanded') === 'false' && relevant)) continue;
-              if (!relevant && !placeholder) continue;
-              try { el.scrollIntoView({block:'center'}); } catch (e) {}
-              try { el.click(); opened.push(ctx.slice(0, 90)); } catch (e) {}
+              if (!placeholder && !relevant) continue;
+              if (!placeholder && el.getAttribute('aria-expanded') !== 'false' && !relevant) continue;
+              fire(el);
+              opened.push((relevant ? 'edu:' : 'ph:') + t.slice(0, 60));
             }
             return {opened, url: location.href};
             """
         ) or opened
     except Exception as exc:
         print(f"  combobox_open_err={exc!s}"[:160], flush=True)
-        return {"opened": [], "picked": [], "error": str(exc)[:120]}
-    if opened.get("opened"):
-        time.sleep(0.5)
+        opened = {"opened": [], "error": str(exc)[:120]}
+    # SeleniumBase click — JS click often leaves ValGenesis education closed.
+    sb_opened = []
+    for sel in (
+        "button:contains('Select an option')",
+        "[role=combobox]:contains('Select an option')",
+        "//*[contains(normalize-space(.), 'Select an option')]",
+        "//*[contains(., 'highest degree of education')]/following::*[contains(., 'Select an option')][1]",
+    ):
+        try:
+            if sb.is_element_visible(sel, timeout=1):
+                try:
+                    sb.scroll_to(sel)
+                except Exception:
+                    pass
+                sb.click(sel)
+                sb_opened.append(sel[:80])
+                break
+        except Exception:
+            continue
+    time.sleep(0.85)
     picked: dict = {"picked": [], "optionCount": 0}
     try:
         picked = sb.execute_script(
             r"""
             const picked = [];
             const opts = [...document.querySelectorAll(
-              '[role=option], li[role=option], div[role=option], [role=listbox] [role=option]'
+              '[role=option], li[role=option], div[role=option], [role=listbox] [role=option], [role=listbox] li, ul[role=listbox] > *, [class*="option"]'
             )];
             const clickFirst = (pred, why) => {
               for (const el of opts) {
@@ -822,12 +849,31 @@ def fill_unselected_comboboxes(sb) -> dict:
     except Exception as exc:
         print(f"  combobox_pick_err={exc!s}"[:160], flush=True)
         picked = {"picked": [], "error": str(exc)[:120]}
+    sb_picked = []
+    if not (picked or {}).get("picked"):
+        for sel in (
+            "[role=option]:contains('Bachelor')",
+            "li:contains(\"Bachelor's Degree\")",
+            "div:contains(\"Bachelor's Degree\")",
+            "//*[@role='option' and contains(., 'Bachelor')]",
+            "//li[contains(., \"Bachelor's\")]",
+            "//*[contains(normalize-space(.), \"Bachelor's Degree\")]",
+        ):
+            try:
+                if sb.is_element_visible(sel, timeout=1):
+                    sb.click(sel)
+                    sb_picked.append(sel[:80])
+                    break
+            except Exception:
+                continue
     out = {
         "opened": (opened or {}).get("opened") or [],
+        "sbOpened": sb_opened,
         "picked": (picked or {}).get("picked") or [],
+        "sbPicked": sb_picked,
         "optionCount": (picked or {}).get("optionCount") or 0,
     }
-    if out["opened"] or out["picked"]:
+    if any(out[k] for k in ("opened", "sbOpened", "picked", "sbPicked")):
         print(f"  combobox={out}", flush=True)
     return out
 
