@@ -490,6 +490,10 @@ def looks_login_wall(body: str, url: str = "") -> bool:
     u = (url or "").lower()
     if u.startswith("http") and "indeed.com" not in u and "indeedapply" not in u:
         return False
+    # Title is not always in body; bot-detection hops land on /auth with an empty-ish DOM.
+    if re.search(r"secure\.indeed\.com/auth|from=bot-detection-anonymous", u):
+        if not looks_signed_in(body, url):
+            return True
     blob = f"{url}\n{body}"
     return bool(
         re.search(
@@ -3001,7 +3005,10 @@ def main() -> int:
 
                 # Auth interstitial titles ("Sign In | Indeed Accounts") fail TITLE_OK
                 # and would be skipped as title_not_target if skip_reason runs first.
-                if looks_login_wall(body, item.get("url") or ""):
+                # Include page_title — body text is often empty on /auth hops.
+                if looks_login_wall(
+                    f"{page_title}\n{body}", item.get("url") or ""
+                ):
                     warmed = restore_signed_in(sb)
                     item["sessionRestore"] = warmed
                     try:
@@ -3010,7 +3017,9 @@ def main() -> int:
                         item["url"] = sb.get_current_url() or item.get("url")
                     except Exception:
                         pass
-                    if looks_login_wall(body, item.get("url") or ""):
+                    if looks_login_wall(
+                        f"{page_title}\n{body}", item.get("url") or ""
+                    ):
                         item["reason"] = "indeed_login_required"
                         item["title"] = (page_title or "")[:160]
                         report["blocked"].append(item)

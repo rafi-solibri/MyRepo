@@ -173,6 +173,7 @@ def test_account_settings_and_serp_are_signed_in():
     # Mid-run bot-detection Sign-in must be a login wall, not title_not_target.
     bot = "https://secure.indeed.com/auth?hl=en_US&from=bot-detection-anonymous"
     assert looks_login_wall("Sign In | Indeed Accounts", bot)
+    assert looks_login_wall("", bot)
     assert skip_reason("Sign In | Indeed Accounts", "", "", "") == "title_not_target"
 
 
