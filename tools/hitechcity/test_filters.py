@@ -267,6 +267,19 @@ def test_careers_card_location():
         "Sr. Director Analyst, Enterprise Architecture (Remote US)",
         "Remote - United States",
     )
+    # Title "Remote- US" must not be treated as vague India-remote.
+    assert not card_location_ok(
+        "Sr Director Analyst, AI and Software Engineering (Remote- US)"
+    )
+    gartner_us = (
+        "https://gartner.wd5.myworkdayjobs.com/en-US/EXT/job/Remote---United-States/"
+        "Sr-Director-Analyst--AI-and-Software-Engineering--Remote--US-_107111"
+    )
+    assert "united states" in url_loc_hint(gartner_us).lower()
+    assert not card_location_ok(
+        "Sr Director Analyst, AI and Software Engineering (Remote- US)",
+        url_loc_hint(gartner_us),
+    )
     assert card_location_ok("Solution Architect", "Fully Remote")
     assert card_location_ok("Solution Architect", "Remote, India")
     # Workday URL encodes workplace when card title omits city.

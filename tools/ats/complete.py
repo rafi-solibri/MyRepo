@@ -307,6 +307,46 @@ def persist_retry_burst_sec() -> int:
     return 45
 
 
+EMAIL_OTP_RE = re.compile(
+    r"confirm your identity|"
+    r"verification code was sent|"
+    r"the verification code field is required|"
+    r"type the code into the field to confirm|"
+    r"\bsend new code\b",
+    re.I,
+)
+
+ADVANCE_SKIP_RE = re.compile(
+    r"^(close|cancel|end session|discard|continue working|back(?: to.*)?)$",
+    re.I,
+)
+
+RESUME_INPUT_SKIP_RE = re.compile(
+    r"honey[-_]?pot|oda-chat|chat-share|chat-webview",
+    re.I,
+)
+
+
+def is_email_otp_wall(text: str | None) -> bool:
+    """True when the ATS is waiting on an emailed one-time code (owner-only)."""
+    return bool(EMAIL_OTP_RE.search(text or ""))
+
+
+def advance_label_skipped(label: str | None) -> bool:
+    """Skip overlay Close/Cancel/Back so Next/Agree/Submit can run."""
+    t = re.sub(r"\s+", " ", label or "").strip()
+    if re.search(r"sign in with (google|microsoft|linkedin|apple)", t, re.I):
+        return True
+    if not t:
+        return True
+    return bool(ADVANCE_SKIP_RE.search(t))
+
+
+def resume_input_skipped(ident: str | None) -> bool:
+    """Skip chat widgets and honeypots — they are not the resume upload."""
+    return bool(RESUME_INPUT_SKIP_RE.search(ident or ""))
+
+
 def is_hard_ats_wall(reason: str | None) -> bool:
     """True only for walls that will repeat for the same company this run.
 
@@ -563,6 +603,10 @@ def auth_wall_reason(
     """Return a wall reason, or None when guest/Workday apply can continue."""
     host = classify_ats_host(url)
     if host == "sso":
+        return "ats_login_wall"
+    # Oracle Recruiting /apply/email sends a verification code after Next.
+    # Detect before has_file — chat widgets inject a hidden <input type=file>.
+    if is_email_otp_wall(text):
         return "ats_login_wall"
     blob = f"{url or ''}\n{text or ''}"
     if host == "unavailable" or is_unavailable_text(blob):
@@ -998,7 +1042,27 @@ def page_flags(page) -> dict:
     has_wd = False
     try:
         has_password = page.locator("input[type='password']").count() > 0
-        has_file = page.locator("input[type='file']").count() > 0
+        has_file = False
+        try:
+            files = page.locator("input[type='file']")
+            for i in range(min(files.count(), 6)):
+                el = files.nth(i)
+                ident = " ".join(
+                    filter(
+                        None,
+                        [
+                            el.get_attribute("id") or "",
+                            el.get_attribute("name") or "",
+                            el.get_attribute("aria-label") or "",
+                            el.get_attribute("class") or "",
+                        ],
+                    )
+                )
+                if not resume_input_skipped(ident):
+                    has_file = True
+                    break
+        except Exception:
+            has_file = page.locator("input[type='file']").count() > 0
         has_email = (
             page.locator("[data-automation-id='email'], input[type='email']").count() > 0
         )
@@ -1047,8 +1111,22 @@ def upload_resume(page) -> bool:
         try:
             inputs = page.locator(sel)
             for i in range(min(inputs.count(), 4)):
+                inp = inputs.nth(i)
                 try:
-                    inputs.nth(i).set_input_files(path, timeout=8000)
+                    ident = " ".join(
+                        filter(
+                            None,
+                            [
+                                inp.get_attribute("id") or "",
+                                inp.get_attribute("name") or "",
+                                inp.get_attribute("aria-label") or "",
+                                inp.get_attribute("class") or "",
+                            ],
+                        )
+                    )
+                    if resume_input_skipped(ident):
+                        continue
+                    inp.set_input_files(path, timeout=8000)
                     uploaded = True
                     _sleep(0.6)
                 except Exception:
@@ -1156,7 +1234,11 @@ def fill_labeled_fields(page) -> None:
             continue
         if not text or len(text) > 90:
             continue
-        if re.search(r"robots only|beecatcher|do not enter if you.re human", text, re.I):
+        if re.search(
+            r"robots only|beecatcher|honey[-_]?pot|do not enter if you.re human",
+            text,
+            re.I,
+        ):
             continue
         for pat, val in pairs:
             if not re.search(pat, text, re.I):
@@ -1244,10 +1326,13 @@ def click_advance(page) -> bool:
         "input[type='submit']",
     ):
         try:
-            el = page.locator(sel).first
-            if el.count() and el.is_visible() and el.is_enabled():
-                label = ((el.inner_text() or "") + " " + (el.get_attribute("aria-label") or "")).lower()
-                if re.search(r"sign in with (google|microsoft|linkedin|apple)", label):
+            loc = page.locator(sel)
+            for i in range(min(loc.count(), 8)):
+                el = loc.nth(i)
+                if not (el.count() and el.is_visible() and el.is_enabled()):
+                    continue
+                label = ((el.inner_text() or "") + " " + (el.get_attribute("aria-label") or "")).strip()
+                if advance_label_skipped(label):
                     continue
                 # Password-rule reject: do not keep submitting Create Account.
                 if "createAccountSubmit" in sel and workday_password_alert(page):
@@ -1267,6 +1352,8 @@ def click_advance(page) -> bool:
             "Save and Continue",
             "Create Account",
             "I'm interested",
+            "AGREE",
+            "Agree",
             "Submit",
             "Continue",
             "Next",

@@ -12,9 +12,12 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.ats.complete import (
+    advance_label_skipped,
     ats_password,
     auth_wall_reason,
     classify_ats_host,
+    is_email_otp_wall,
+    resume_input_skipped,
     extract_hop_destination_from_url,
     extract_offsite_from_text,
     frame_url_is_captcha_challenge,
@@ -609,5 +612,37 @@ class _CandPage:
                 return 0
         return _Empty()
 assert_true(apply_form_still_open(_CandPage()), "candidate profile must count as open form")
+
+assert_true(
+    is_email_otp_wall(
+        "Confirm Your Identity\nThe verification code was sent to this email address"
+    ),
+    "Oracle Recruiting email OTP is a wall",
+)
+assert_true(
+    not is_email_otp_wall("Email Address\nI agree with the terms and conditions\nNEXT"),
+    "email gate before code is not OTP yet",
+)
+assert_true(
+    auth_wall_reason(
+        "https://careers.oracle.com/en/sites/jobsearch/job/335139/apply/email",
+        "Confirm Your Identity\nThe verification code was sent to this email address.\n"
+        "The Verification Code field is required.\nVERIFY\nSend New Code",
+        has_password=False,
+        has_file=True,
+        has_email_field=True,
+    )
+    == "ats_login_wall",
+    "Oracle email OTP is a hard wall even with a hidden chat file input",
+)
+assert_true(advance_label_skipped("Close"), "Close overlay must not steal Next")
+assert_true(advance_label_skipped(" close"), "aria Close icon must skip")
+assert_true(advance_label_skipped(""), "icon-only submit must skip")
+assert_true(advance_label_skipped("Back to Job Details"), "Back must skip")
+assert_true(not advance_label_skipped("NEXT"), "NEXT must advance")
+assert_true(not advance_label_skipped("AGREE"), "AGREE must dismiss terms")
+assert_true(resume_input_skipped("oda-chat-share-button"), "chat file input skipped")
+assert_true(resume_input_skipped("honey-pot-0"), "honeypot skipped")
+assert_true(not resume_input_skipped("resume-upload"), "real resume input kept")
 
 print("tools/ats/test_complete.py OK")
