@@ -218,6 +218,18 @@ assert.strictEqual(
   "GCP Infra Architect without .NET must skip"
 );
 assert.strictEqual(
+  shouldSkipTitle(
+    "Mainframe Developer | Senior Mainframe Developer | Mainframe Architect"
+  ),
+  true,
+  "Mainframe Architect without .NET must skip (false-apply 2026-08-20)"
+);
+assert.strictEqual(
+  shouldSkipTitle("COBOL Technical Lead"),
+  true,
+  "COBOL-primary lead without .NET must skip"
+);
+assert.strictEqual(
   shouldSkipCompany("Pega"),
   true,
   "Pega employer must skip even if title omits Pega"
