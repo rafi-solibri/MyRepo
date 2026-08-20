@@ -727,6 +727,111 @@ def _switch_smartapply_frame(sb) -> None:
         pass
 
 
+EDU_OPTION_RE = re.compile(
+    r"b\.?\s*tech|bachelor|b\.e\b|undergraduate|master'?s?|m\.?\s*tech|\bmba\b|\bbsc\b|\bmca\b",
+    re.I,
+)
+
+
+def education_option_match(text: str) -> bool:
+    """True when a listbox option is a usable degree (not the closed combobox label)."""
+    t = (text or "").strip().lower()
+    if not t or len(t) > 80:
+        return False
+    if re.search(r"select an option|highest degree|choose an option|what is your", t):
+        return False
+    return bool(EDU_OPTION_RE.search(t))
+
+
+def choose_an_option_kind(ctx: str) -> str:
+    """Classify a 'Choose an option to continue' validation wall."""
+    t = (ctx or "").lower()
+    if re.search(r"\bcountry\b|dial.?code|calling.?code|phone.?code", t):
+        return "country"
+    if re.search(
+        r"highest (degree|education|qualification)|degree of education|"
+        r"education level|degree obtained|\beducation\b|\bdegree\b|\bqualification\b",
+        t,
+    ):
+        return "education"
+    if re.search(r"\bagree\b|privacy notice|terms and conditions", t):
+        return "agree"
+    return "generic"
+
+
+def fill_unselected_comboboxes(sb) -> dict:
+    """Open leftover 'Select an option' SmartApply comboboxes and pick a value.
+
+    Education/country listboxes portal to document.body, so the in-question-root
+    JS pass misses [role=option]. Sleep once so the list hydrates.
+    """
+    _switch_smartapply_frame(sb)
+    opened: dict = {"opened": [], "url": ""}
+    try:
+        opened = sb.execute_script(
+            r"""
+            const opened = [];
+            const triggers = [...document.querySelectorAll(
+              'button, [role=combobox], [aria-haspopup=listbox]'
+            )];
+            for (const el of triggers) {
+              const t = ((el.innerText||'') + ' ' + (el.getAttribute('aria-label')||'')).toLowerCase();
+              const wrap = el.closest('fieldset, [class*="question"], [class*="Question"], li, section, label, div')
+                || el.parentElement || el;
+              const ctx = ((wrap.innerText||'') + ' ' + t).toLowerCase().slice(0, 400);
+              const placeholder = /select an option|choose an option|^select$/.test(t);
+              const relevant = /education|degree|qualification|country|dial.?code|phone.?code/.test(ctx);
+              if (!placeholder && !(el.getAttribute('aria-expanded') === 'false' && relevant)) continue;
+              if (!relevant && !placeholder) continue;
+              try { el.scrollIntoView({block:'center'}); } catch (e) {}
+              try { el.click(); opened.push(ctx.slice(0, 90)); } catch (e) {}
+            }
+            return {opened, url: location.href};
+            """
+        ) or opened
+    except Exception as exc:
+        print(f"  combobox_open_err={exc!s}"[:160], flush=True)
+        return {"opened": [], "picked": [], "error": str(exc)[:120]}
+    if opened.get("opened"):
+        time.sleep(0.5)
+    picked: dict = {"picked": [], "optionCount": 0}
+    try:
+        picked = sb.execute_script(
+            r"""
+            const picked = [];
+            const opts = [...document.querySelectorAll(
+              '[role=option], li[role=option], div[role=option], [role=listbox] [role=option]'
+            )];
+            const clickFirst = (pred, why) => {
+              for (const el of opts) {
+                const t = ((el.innerText||'') + ' ' + (el.getAttribute('aria-label')||'')).trim();
+                const tl = t.toLowerCase();
+                if (!t || t.length > 80) continue;
+                if (pred(tl)) {
+                  try { el.click(); picked.push(why + ':' + t.slice(0, 40)); return true; } catch (e) {}
+                }
+              }
+              return false;
+            };
+            clickFirst(tl => /b\.?\s*tech|bachelor|b\.e\b|undergraduate|master'?s?|m\.?\s*tech|\bmba\b|\bbsc\b|\bmca\b/.test(tl)
+              && !/select an option|highest degree|choose an option|what is your/.test(tl), 'edu');
+            clickFirst(tl => /india|\+\s*91|\+91/.test(tl) && !/indiana|indianapol/i.test(tl), 'country');
+            return {picked, optionCount: opts.length, url: location.href};
+            """
+        ) or picked
+    except Exception as exc:
+        print(f"  combobox_pick_err={exc!s}"[:160], flush=True)
+        picked = {"picked": [], "error": str(exc)[:120]}
+    out = {
+        "opened": (opened or {}).get("opened") or [],
+        "picked": (picked or {}).get("picked") or [],
+        "optionCount": (picked or {}).get("optionCount") or 0,
+    }
+    if out["opened"] or out["picked"]:
+        print(f"  combobox={out}", flush=True)
+    return out
+
+
 def fill_common_questions(sb) -> None:
     """Best-effort form fill for smartapply.indeed.com / Easy Apply steps."""
     _switch_smartapply_frame(sb)
@@ -931,6 +1036,22 @@ def fill_common_questions(sb) -> None:
                   }
                 }
               }
+              // Listboxes portal to document.body — do not search only `root`.
+              if (want === 'B.Tech' || want === '14' || want === '10') {
+                const opts = [...document.querySelectorAll('[role=option], [role=listbox] [role=option], li[role=option]')];
+                for (const el of opts) {
+                  const t = ((el.innerText||'') + ' ' + (el.getAttribute('aria-label')||'')).trim().toLowerCase();
+                  if (!t || t.length > 80) continue;
+                  if (want === 'B.Tech' && /b\\.?\\s*tech|bachelor|b\\.e\\b|undergraduate|master'?s?|m\\.?\\s*tech|\\bmba\\b|\\bbsc\\b|\\bmca\\b/.test(t)
+                      && !/select an option|highest degree|choose an option|what is your/.test(t)) {
+                    el.click(); return true;
+                  }
+                  if ((want === '14' || want === '10') && /\\b(14|12|10|8)\\+?\\b|12-15|10\\+|8-10/.test(t)
+                      && !/select an option|how many years/.test(t)) {
+                    el.click(); return true;
+                  }
+                }
+              }
               for (const el of root.querySelectorAll('button, [role=option], li, label, span')) {
                 const t = ((el.innerText||'') + ' ' + (el.getAttribute('aria-label')||'')).trim().toLowerCase();
                 if (!t || t.length > 80) continue;
@@ -966,7 +1087,7 @@ def fill_common_questions(sb) -> None:
             for (const lab of document.querySelectorAll('label, legend, h1, h2, h3, p, span, div')) {
               const t = (lab.innerText||'').trim();
               // Allow short "Title *" / "Mr." labels (was >6 and missed Title alone).
-              if (t.length > 2 && t.length < 220 && /\\?|ctc|salary|notice|experience|relocat|authori|location|package|lpa|gender|hybrid|bond|veteran|disability|ethnicity|race|hispanic|voluntary|self.?ident|birth|dob|title|salutation|phone|available date|^mr\\.?$|^ms\\.?$/.test(t.toLowerCase())) {
+              if (t.length > 2 && t.length < 220 && /\\?|ctc|salary|notice|experience|relocat|authori|location|package|lpa|gender|hybrid|bond|veteran|disability|ethnicity|race|hispanic|voluntary|self.?ident|birth|dob|title|salutation|phone|available date|^mr\\.?$|^ms\\.?$|education|degree|qualification/.test(t.toLowerCase())) {
                 const want = wantFromText(t);
                 if (want && clickMatching(lab.closest('div, fieldset, li, section, [class*="question"]') || lab.parentElement || lab, want)) {
                   answered += 1;
@@ -1129,6 +1250,9 @@ def fill_common_questions(sb) -> None:
     except Exception as e:
         print(f"  fill_error={e!s}"[:200], flush=True)
 
+    # Education/country comboboxes often still show Select an option after JS fill.
+    fill_unselected_comboboxes(sb)
+
     # Resume upload
     if RESUME.exists():
         try:
@@ -1211,6 +1335,19 @@ def tick_required_agreements(sb) -> dict:
                   });
                 if (india) {
                   try { india.click(); clicked.push('validation-country-india'); } catch (e) {}
+                }
+              } else if (/highest (degree|education|qualification)|degree of education|education level|degree obtained|\beducation\b|\bdegree\b|\bqualification\b/.test(ctx)) {
+                const trigger = root.querySelector('button, [role=combobox], [aria-haspopup=listbox], select');
+                if (trigger) { try { trigger.click(); } catch (e) {} }
+                const edu = [...document.querySelectorAll('[role=option], li[role=option], div[role=option]')]
+                  .find(e => {
+                    const t = ((e.innerText || '') + ' ' + (e.getAttribute('aria-label') || '')).trim().toLowerCase();
+                    return t && t.length <= 80
+                      && /b\.?\s*tech|bachelor|b\.e\b|undergraduate|master'?s?|m\.?\s*tech|\bmba\b/.test(t)
+                      && !/select an option|highest degree|choose an option|what is your/.test(t);
+                  });
+                if (edu) {
+                  try { edu.click(); clicked.push('validation-education'); } catch (e) {}
                 }
               } else {
                 const opt = [...root.querySelectorAll('label, button, [role=option], [role=radio], [role=checkbox], input')]
@@ -2488,6 +2625,7 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
             last_cta_key = cta_key if clicked else ""
         if same_cta_streak >= 2:
             tick_required_agreements(sb)
+            fill_unselected_comboboxes(sb)
             # Questions Continue often no-ops under invisible reCAPTCHA (ValGenesis).
             try:
                 if _page_has_recaptcha(sb) and not _recaptcha_cleared(sb):

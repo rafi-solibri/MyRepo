@@ -12,6 +12,8 @@ if str(ROOT) not in sys.path:
 from tools.indeed.prepare_uc_profile import COPY_PATHS  # noqa: E402
 from tools.indeed.uc_daily_apply import (  # noqa: E402
     already_applied,
+    choose_an_option_kind,
+    education_option_match,
     looks_anonymous_marketing_home,
     looks_login_wall,
     job_dedupe_key,
@@ -190,6 +192,20 @@ def test_job_dedupe_key_from_jk():
     assert job_dedupe_key("https://in.indeed.com/rc/clk?from=serp", "deadbeef") == "deadbeef"
 
 
+def test_education_combobox_option_and_validation_kind():
+    # ValGenesis SmartApply: "What is your highest degree of education: *"
+    # (colon, no '?') left Select an option → Choose an option to continue.
+    assert choose_an_option_kind(
+        "What is your highest degree of education: *\nSelect an option\nChoose an option to continue."
+    ) == "education"
+    assert choose_an_option_kind("Country\nSelect an option\nChoose an option to continue.") == "country"
+    assert education_option_match("Bachelor's Degree")
+    assert education_option_match("B.Tech")
+    assert education_option_match("Master's")
+    assert not education_option_match("Select an option")
+    assert not education_option_match("What is your highest degree of education")
+
+
 if __name__ == "__main__":
     test_skip_hyd_remote_ok()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
@@ -201,5 +217,7 @@ if __name__ == "__main__":
     test_hybrid_profile_copies_local_state()
     test_india_home_get_started_is_not_login_proof()
     test_account_settings_and_serp_are_signed_in()
+    test_company_ats_email_gate_is_not_indeed_login()
     test_job_dedupe_key_from_jk()
+    test_education_combobox_option_and_validation_kind()
     print("ok")
