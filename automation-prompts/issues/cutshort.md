@@ -4,6 +4,8 @@
 
 | Issue | Fix |
 | --- | --- |
+| per-apply + final Q audit walked 47 awaiting pages (~10 min) after each apply | cap answerPendingQuestionnaires to 3 pages per-apply and 8 on final audit (historical locked-empty cannot be unlocked) |
+| hideSalary maxVanity still counted as listed CTC so Hyd Engineering Leader / hidden-band Architect-EM were hard-skipped (0 qualifying after 3214 scan) | maxCtcLpa returns null when hideSalary; listed 18L still skips; skip staffing/sales/automation-engineer |
 | Applies rejected by AI/manual — same generic Rafi_Resume.docx + generic note for every JD | Reuse shared tools/resume_tailor.js; daily_apply uploads tailored docx via Update resume before each apply + external ATS; JD-keyword notes |
 
 

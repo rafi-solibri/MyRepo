@@ -148,7 +148,7 @@ function isLoggedOut(url, bodyText) {
 }
 
 const SKIP_RE =
-  /\b(qa engineer|quality assurance|quality engineer|sdet|test engineer|intern|trainee|associate(?!\s+(director|technical|architect|principal|lead|vice))|junior|workday|dynamics|\bsap\b|shoppay|shopify|business development|\bbdm\b|recruiter|data architect|data engineer|analytics engineer|penetration|product manager|ios developer|android developer|flutter|php developer|wordpress|game developer|mobile engineer)\b/i;
+  /\b(qa engineer|quality assurance|quality engineer|sdet|test engineer|automation engineer|intern|trainee|associate(?!\s+(director|technical|architect|principal|lead|vice))|junior|workday|dynamics|\bsap\b|shoppay|shopify|business development|\bbdm\b|recruiter|staffing|sales manager|sales executive|data architect|data engineer|analytics engineer|penetration|product manager|ios developer|android developer|flutter|php developer|wordpress|game developer|mobile engineer|housekeeping)\b/i;
 
 /** C# / .NET need non-\b patterns: `\bc#\b` never matches "C#" (# is non-word). */
 const NET_STACK_RE = /(\.net|\bdotnet\b|asp\.?\s*net|c#|\bcsharp\b|\bazure\b)/i;
@@ -167,6 +167,9 @@ function titleOf(job) {
 
 function maxCtcLpa(job) {
   const r = job?.salaryRange || {};
+  // Hidden bands are not "listed max clearly under 35L" — treat as unknown so
+  // Hyd/remote Architect/EM/Lead still apply (uncertain → APPLY).
+  if (r.hideSalary) return null;
   const max = r.maxVanity ?? r.max ?? null;
   if (max == null || max === 0) return null;
   return max > 1000 ? max / 1e5 : max;
@@ -567,8 +570,10 @@ function freeText(q) {
   return `Hyderabad-based Solutions Architect / Technical Lead, immediate joinee. Current ${CURRENT_CTC_LPA} LPA, expected ${EXPECTED_CTC_LPA} LPA.`;
 }
 
-async function answerPendingQuestionnaires(page, stats) {
-  for (let p = 1; p <= 50; p++) {
+async function answerPendingQuestionnaires(page, stats, { maxPages = 8 } = {}) {
+  // Historical locked-empty threads cannot be unlocked. Cap pages so per-apply
+  // and final audit do not walk 40+ awaiting pages (~10 min) after each apply.
+  for (let p = 1; p <= maxPages; p++) {
     const qs = new URLSearchParams({
       page: String(p),
       user_role: "candidate",
@@ -890,6 +895,23 @@ async function main() {
   stats.qualifying = qual.map((q) => q.row);
   stats.skipReasons = skipReasons;
   console.log(`[filter] scanned=${jobs.length} qualifying=${qual.length} skips=${JSON.stringify(skipReasons)}`);
+  const hydTier1Skipped = [];
+  for (const job of jobs) {
+    const title = titleOf(job);
+    if (!TIER1_TITLE_RE.test(title) || !isHydOrRemote(job) || classify(job)) continue;
+    hydTier1Skipped.push({
+      title,
+      ctc: maxCtcLpa(job),
+      hide: !!job.salaryRange?.hideSalary,
+      expMax: job.expRange?.max,
+    });
+  }
+  if (hydTier1Skipped.length) {
+    console.log(
+      `[filter] hydTier1Skipped=${hydTier1Skipped.length}`,
+      JSON.stringify(hydTier1Skipped.slice(0, 12))
+    );
+  }
 
   for (const { job, row } of qual) {
     if (stats.applied.length >= MAX_APPLIES) {
@@ -939,7 +961,7 @@ async function main() {
         skipNotQuestionnaire: 0,
       };
       try {
-        await answerPendingQuestionnaires(await session.ensurePage(), { q: perApplyQ });
+        await answerPendingQuestionnaires(await session.ensurePage(), { q: perApplyQ }, { maxPages: 3 });
         stats.q.answered += perApplyQ.answered;
         stats.q.saveFailed += perApplyQ.saveFailed;
         stats.q.submitFailed += perApplyQ.submitFailed;
@@ -1020,7 +1042,7 @@ async function main() {
     skipNotQuestionnaire: 0,
   };
   try {
-    await answerPendingQuestionnaires(await session.ensurePage(), { q: auditQ });
+    await answerPendingQuestionnaires(await session.ensurePage(), { q: auditQ }, { maxPages: 8 });
     stats.q.answered += auditQ.answered;
     stats.q.awaitingListed = auditQ.awaitingListed;
     stats.q.alreadySubmitted = auditQ.alreadySubmitted;

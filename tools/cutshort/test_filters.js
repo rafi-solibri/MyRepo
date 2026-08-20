@@ -159,4 +159,51 @@ function job(partial) {
   assert.ok(classify(j)?.tier === 1);
 }
 
+{
+  const j = job({
+    title: "Engineering Leader",
+    skills: ["Java", "TypeScript", "NodeJS (Node.js)"],
+    salaryRange: {
+      min: 1000000,
+      max: 2500000,
+      maxVanity: 2500000,
+      hideSalary: true,
+    },
+    expRange: { min: 5, max: 8 },
+  });
+  assert.strictEqual(maxCtcLpa(j), null, "hidden salary must not count as listed CTC");
+  assert.ok(
+    classify(j)?.tier === 1,
+    `Hyd Engineering Leader with hideSalary should qualify, got ${JSON.stringify(classify(j))}`
+  );
+}
+
+{
+  const j = job({
+    title: "Tech Lead",
+    skills: ["Java", "React.js"],
+    salaryRange: { max: 1800000, maxVanity: 1800000, hideSalary: false },
+  });
+  assert.strictEqual(maxCtcLpa(j), 18);
+  assert.strictEqual(classify(j), null, "listed max 18L must still skip");
+}
+
+{
+  const j = job({
+    title: "Principal Automation Engineer (AI)",
+    skills: ["Playwright", "TypeScript"],
+    salaryRange: { max: 5000000, maxVanity: 5000000, hideSalary: true },
+  });
+  assert.strictEqual(classify(j), null, "automation engineer is QA/SDET skip");
+}
+
+{
+  const j = job({
+    title: "International Staffing Sales Manager",
+    skills: ["Sales"],
+    salaryRange: { max: 4000000, maxVanity: 4000000 },
+  });
+  assert.strictEqual(classify(j), null, "staffing/sales manager must skip");
+}
+
 console.log("cutshort test_filters: ok");
