@@ -78,6 +78,7 @@ LI_TITLE_SKIP = re.compile(
     r"\bdeep\s*learning\b|\bgen(?:erative)?\s*ai\b|\bllm\b|"
     r"\bai\s*engineer\b|\bml\s*engineer\b|\bai\s*architect\b|\bml\s*architect\b|"
     r"\bartificial\s*intelligence\b|\bcuda\b|\brocm\b|"
+    r"\bagentic\b|\bfor\s+ai\b|\bai\s+and\s+(software|data|ml|machine)\b|"
     r"\bdata\s*scientist\b|\bcomputer\s*vision\b",
     re.I,
 )

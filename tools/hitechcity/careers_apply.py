@@ -131,6 +131,7 @@ BAD_LOC_HINT = re.compile(
     r"us[- ](?:texas|oregon|california|washington|arizona|colorado|massachusetts|"
     r"florida|georgia|illinois|new[- ]york)|india[- ](?:bangalore|bengaluru)|"
     r"hillsboro|santa[- ]clara|folsom|"
+    r"remote[\s\-–—]*u[\s\.\-]*s(?:a)?\b|\bu\.s\.a?\b|"
     r"tx|wa|ca|fl|ny|il|ga|nc|ma)\b",
     re.I,
 )
@@ -154,6 +155,7 @@ CAREERS_TITLE_SKIP = re.compile(
     r"\bdeep\s*learning\b|\bgen(?:erative)?\s*ai\b|\bllm\b|"
     r"\bai\s*engineer\b|\bml\s*engineer\b|\bai\s*architect\b|\bml\s*architect\b|"
     r"\bartificial\s*intelligence\b|\bcuda\b|\brocm\b|"
+    r"\bagentic\b|\bfor\s+ai\b|\bai\s+and\s+(software|data|ml|machine)\b|"
     r"engineer in test|\bsdet\b|cyber\s*security|cybersecurity|"
     r"database engineer",
     re.I,
@@ -205,13 +207,40 @@ UHG_HOST_RE = re.compile(r"unitedhealthgroup\.com|uhg\.taleo\.net", re.I)
 UHG_NAME_RE = re.compile(r"^(optum|unitedhealth\s*group|uhg|united\s*health)$", re.I)
 
 
+def page_opener(candidate: Page):
+    """Playwright Python uses `.opener`; JS uses `.opener()`."""
+    try:
+        opener = getattr(candidate, "opener", None)
+        if callable(opener):
+            opener = opener()
+        return opener
+    except Exception:
+        return None
+
+
+def page_opened_by(origin: Page, candidate: Page) -> bool:
+    """True when candidate is a popup/tab this origin page opened.
+
+    Parallel careers workers share one CDP browser context. Adopting *any*
+    new Workday tab steals a sibling worker's apply (Oracle → Gartner).
+    """
+    if candidate is origin:
+        return False
+    return page_opener(candidate) is origin
+
+
 def _close_auth_popups(page: Page) -> None:
-    """Close Indeed/Google SSO tabs spawned by SmartRecruiters OneClick Apply."""
+    """Close Indeed/Google SSO tabs spawned by THIS page's OneClick Apply.
+
+    Never close sibling parallel-worker tabs in the shared CDP context.
+    """
     try:
         ctx = page.context
         keep = page
         for p in list(ctx.pages):
             if p is keep:
+                continue
+            if not page_opened_by(keep, p):
                 continue
             try:
                 if auth_wall_url(p.url or ""):
@@ -227,7 +256,9 @@ def _context_hit_auth_wall(page: Page) -> bool:
         if auth_wall_url(page.url or ""):
             return True
         for p in page.context.pages:
-            if auth_wall_url(p.url or ""):
+            if p is page:
+                continue
+            if page_opened_by(page, p) and auth_wall_url(p.url or ""):
                 return True
     except Exception:
         return False
@@ -576,17 +607,23 @@ def company_skip_reason(company: dict[str, Any]) -> str | None:
 def adopt_ats_tab(page: Page, before_pages: set) -> Page:
     """If Apply opened Workday/Greenhouse/iCIMS in a new tab, switch to it.
 
-    SSO/OAuth popups are closed so we can still guest-apply on the JD tab.
+    Only adopt tabs THIS page opened — parallel workers share one CDP context,
+    so a sibling Gartner Workday tab must not become Oracle's apply target.
+    SSO/OAuth popups opened by this page are closed so we can still guest-apply
+    on the JD tab.
     """
     try:
         for p2 in list(page.context.pages):
+            if p2 is page:
+                continue
+            if not page_opened_by(page, p2):
+                continue
             u2 = p2.url or ""
             if classify_ats_host(u2) == "sso" or auth_wall_url(u2):
-                if p2 is not page:
-                    try:
-                        p2.close()
-                    except Exception:
-                        pass
+                try:
+                    p2.close()
+                except Exception:
+                    pass
                 continue
             if p2 in before_pages:
                 continue
@@ -979,6 +1016,11 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
     if is_uhg_skip_url(job.get("url") or ""):
         row["status"] = "skipped"
         row["reason"] = "skip_uhg"
+        return row
+    title_skip = skip_reason(job.get("role") or "", job.get("company") or "")
+    if title_skip or CAREERS_TITLE_SKIP.search(job.get("role") or ""):
+        row["status"] = "skipped"
+        row["reason"] = title_skip or "wrong_title_stack"
         return row
     # Role/title + URL path location first (before navigation wastes ATS time on US cards).
     if not card_location_ok(job.get("role") or "", url_loc_hint(job.get("url") or "")):

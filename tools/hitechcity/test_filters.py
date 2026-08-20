@@ -16,8 +16,10 @@ from tools.hitechcity.careers_apply import (
     JOB_ID_HREF_RE,
     NAV_CHROME_RE,
     _browser_session_dead,
+    adopt_ats_tab,
     card_location_ok,
     company_skip_reason,
+    page_opened_by,
     is_hang_scan_url,
     is_sso_only_careers_url,
     is_uhg_skip_url,
@@ -59,6 +61,16 @@ def test_title_ok():
     assert skip_reason("Staff/Principal Engineer - AI/ML & System-Level Validation") == "title: AI/ML excluded"
     assert skip_reason("Machine Learning Engineer") == "title: AI/ML excluded"
     assert skip_reason("GenAI Architect") == "title: AI/ML excluded"
+    gartner_ai_us = (
+        "Senior Director Analyst - Software Engineering for AI and Agentic Applications (Remote - U.S.)"
+    )
+    gartner_ai_us2 = "Sr Director Analyst, AI and Software Engineering (Remote- US)"
+    assert skip_reason(gartner_ai_us) == "title: AI/ML excluded"
+    assert skip_reason(gartner_ai_us2) == "title: AI/ML excluded"
+    assert not title_matches_senior_stack(gartner_ai_us)
+    assert CAREERS_TITLE_SKIP.search(gartner_ai_us)
+    assert CAREERS_TITLE_SKIP.search(gartner_ai_us2)
+    assert LI_TITLE_SKIP.search(gartner_ai_us)
     assert CAREERS_TITLE_SKIP.search("Staff/Principal Engineer - AI/ML & System-Level Validation")
     assert LI_TITLE_SKIP.search("Staff/Principal Engineer - AI/ML & System-Level Validation")
     assert skip_reason("Salesforce Developer") is not None
@@ -267,12 +279,71 @@ def test_careers_card_location():
         "Sr. Director Analyst, Enterprise Architecture (Remote US)",
         "Remote - United States",
     )
+    gartner_us_title = (
+        "Senior Director Analyst - Software Engineering for AI and Agentic Applications (Remote - U.S.)"
+    )
+    assert not card_location_ok(gartner_us_title)
+    assert role_has_foreign_location(gartner_us_title)
+    assert not card_location_ok("Sr Director Analyst, AI and Software Engineering (Remote- US)")
+    gartner_slug = (
+        "https://jobs.gartner.com/jobs/job/112559-senior-director-analyst-"
+        "software-engineering-for-ai-and-agentic-applications-remote-u-s/"
+    )
+    assert not card_location_ok(
+        "Senior Director Analyst - Software Engineering for AI",
+        url_loc_hint(gartner_slug),
+    )
+    gartner_remote_us_path = (
+        "https://jobs.gartner.com/jobs/job/104591-sr-director-analyst-ai-and-software-engineering-remote-us/"
+    )
+    assert not card_location_ok(
+        "Sr Director Analyst, AI and Software Engineering",
+        url_loc_hint(gartner_remote_us_path),
+    )
     assert card_location_ok("Solution Architect", "Fully Remote")
     assert card_location_ok("Solution Architect", "Remote, India")
     # Workday URL encodes workplace when card title omits city.
     modmed = "https://modmed.wd501.myworkdayjobs.com/en-US/ModMed12/job/Boca-Raton-FL/Cloud-Engineering-Manager_R4806"
     assert "boca" in url_loc_hint(modmed).lower()
     assert not card_location_ok("Cloud Engineering Manager", url_loc_hint(modmed))
+
+
+class _DummyCtx:
+    def __init__(self, pages):
+        self.pages = pages
+
+
+class _DummyPage:
+    def __init__(self, url="", opener=None):
+        self.url = url
+        self.opener = opener
+        self.context = None
+        self.closed = False
+
+    def close(self):
+        self.closed = True
+
+
+def test_adopt_ats_tab_ignores_sibling_worker_popups():
+    oracle = _DummyPage("https://careers.oracle.com/en/sites/jobsearch/job/340319/")
+    gartner_wd = _DummyPage(
+        "https://gartner.wd5.myworkdayjobs.com/en-US/EXT/job/Remote---United-States/"
+        "Senior-Director-Analyst_112559/apply/applyManually",
+        opener=object(),
+    )
+    oracle_wd = _DummyPage(
+        "https://oracle.wd3.myworkdayjobs.com/en-US/job/Hyderabad/Principal_R1/apply",
+        opener=oracle,
+    )
+    ctx = _DummyCtx([oracle, gartner_wd, oracle_wd])
+    oracle.context = ctx
+    gartner_wd.context = ctx
+    oracle_wd.context = ctx
+    assert not page_opened_by(oracle, gartner_wd)
+    assert page_opened_by(oracle, oracle_wd)
+    adopted = adopt_ats_tab(oracle, {oracle})
+    assert adopted is oracle_wd
+    assert not gartner_wd.closed
 
 
 def test_company_match():
@@ -482,6 +553,7 @@ if __name__ == "__main__":
     test_campus_location()
     test_oraclecloud_parent_card_location()
     test_careers_card_location()
+    test_adopt_ats_tab_ignores_sibling_worker_popups()
     test_company_match()
     test_captcha_frame_ignores_hidden_badge()
     test_workday_create_account_is_completable()

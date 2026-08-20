@@ -55,7 +55,8 @@ AIML_TITLE_SKIP = re.compile(
     r"\bai\s*architect\b|\bml\s*architect\b|\bai\s*technical\b|"
     r"\bartificial\s*intelligence\b|"
     r"\brocm\b|\bcuda\b|gpu\s*/\s*cpu|kernel\s*optimization|"
-    r"\bai\s*native\b|\bdata\s*&\s*ai\b|\(\s*ai\b|\bai\s*\)",
+    r"\bai\s*native\b|\bdata\s*&\s*ai\b|\(\s*ai\b|\bai\s*\)|"
+    r"\bagentic\b|\bfor\s+ai\b|\bai\s+and\s+(software|data|ml|machine)\b",
     re.I,
 )
 
