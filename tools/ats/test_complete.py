@@ -634,6 +634,19 @@ assert_true(is_hard_ats_wall("email_otp_wall"), "email OTP trips company wall ca
 assert_true(
     auth_wall_reason(
         "https://careers.oracle.com/en/sites/jobsearch/job/335139/apply/email",
+        "Confirm Your Identity\nThe verification code was sent to this email address.\n"
+        "When you get the code, type the code into the field to confirm your identity.\n"
+        "The Verification Code field is required.\nVERIFY\nSend New Code",
+        has_password=False,
+        has_file=True,
+        has_email_field=False,
+    )
+    == "email_otp_wall",
+    "Oracle OTP wins over leftover file input",
+)
+assert_true(
+    auth_wall_reason(
+        "https://careers.oracle.com/en/sites/jobsearch/job/335139/apply/email",
         "Terms and Conditions\nAGREE\nEmail Address\nNEXT",
         has_password=False,
         has_file=False,

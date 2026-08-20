@@ -569,18 +569,9 @@ def auth_wall_reason(
     blob = f"{url or ''}\n{text or ''}"
     if host == "unavailable" or is_unavailable_text(blob):
         return "job_unavailable"
-    if host == "workday" or has_workday_apply:
-        # Workday Create Account / Sign In is completable when we have a password
-        # and an email field — do NOT treat it as a hard wall.
-        if has_workday_apply or has_file or (has_email_field and ats_password()):
-            return None
-        if has_password and not has_file and not has_email_field:
-            return "ats_login_wall"
-        return None
-    if has_file:
-        return None
-    # Oracle Careers /apply/email → Confirm Your Identity sends an email OTP.
-    # Unattended cloud cannot read inbox; fail-fast instead of persist_retry.
+    # Oracle Careers email OTP — check BEFORE has_file. The verification page still
+    # exposes a hidden file input, which previously short-circuited this to None
+    # and left persist_retry looping on "Confirm Your Identity".
     if re.search(
         r"confirm your identity|"
         r"verification code was sent|"
@@ -592,6 +583,16 @@ def auth_wall_reason(
         re.I,
     ):
         return "email_otp_wall"
+    if host == "workday" or has_workday_apply:
+        # Workday Create Account / Sign In is completable when we have a password
+        # and an email field — do NOT treat it as a hard wall.
+        if has_workday_apply or has_file or (has_email_field and ats_password()):
+            return None
+        if has_password and not has_file and not has_email_field:
+            return "ats_login_wall"
+        return None
+    if has_file:
+        return None
     # Email-only Eightfold/Phenom SSO (Qualcomm careers/apply) has an email
     # box + "Sign in using Google" and no resume upload — not guest-applyable.
     if re.search(
