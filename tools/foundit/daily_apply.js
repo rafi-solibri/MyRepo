@@ -26,6 +26,8 @@ const {
 const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
 const { completeWorkdayApply } = require("../naukri/workday_apply");
 const { completeExternalPage } = require("../ats/complete_page");
+const { tailorResumeForJob } = require("../resume_tailor");
+const { updateFounditProfileResume } = require("./update_profile_resume");
 
 const CDP = process.env.FOUNDIT_CDP || "http://127.0.0.1:9222";
 const OUT =
@@ -33,6 +35,12 @@ const OUT =
   "/opt/cursor/artifacts/foundit-apply-report.json";
 const MAX_APPLIES = Number(process.env.FOUNDIT_MAX_APPLIES || 50);
 const ATS_CAP_MS = Number(process.env.FOUNDIT_ATS_CAP_MS || 6.5 * 60 * 1000);
+const TAILOR_OUT_DIR =
+  process.env.FOUNDIT_TAILOR_DIR || "/tmp/cursor/tailored-resumes/foundit";
+/** Upload JD-tailored resume to Foundit profile before Falcon apply (default on). */
+const UPLOAD_PROFILE_RESUME = !/^(0|false|no)$/i.test(
+  process.env.FOUNDIT_UPLOAD_TAILORED_PROFILE || "1"
+);
 
 const QUERIES = [
   ".net architect",
@@ -681,6 +689,38 @@ async function main() {
           continue;
         }
 
+        // JD-tailor resume (truthful keyword alignment) before Falcon + ATS upload.
+        let resumeForJob = resume;
+        let tailorMeta = null;
+        try {
+          const desc = job.description || job.jobDescription || job.jd || "";
+          tailorMeta = tailorResumeForJob({
+            master: resume,
+            outDir: TAILOR_OUT_DIR,
+            jobId,
+            title: verdict.title || job.title || "",
+            company: verdict.company || companyName,
+            description: String(desc).slice(0, 20000),
+            skills: job.skills || job.itSkills || verdict.skills || "",
+          });
+          if (tailorMeta?.ok && tailorMeta.out) {
+            resumeForJob = tailorMeta.out;
+            if (UPLOAD_PROFILE_RESUME) {
+              const up = await updateFounditProfileResume(context, resumeForJob);
+              tailorMeta.profileUpload = up;
+              await ensureFoundit(page).catch(() => {});
+            }
+          } else {
+            console.error(
+              "[foundit] resume tailor skipped:",
+              (tailorMeta && tailorMeta.error) || "unknown"
+            );
+          }
+        } catch (e) {
+          tailorMeta = { ok: false, error: String(e).slice(0, 200) };
+          console.error("[foundit] resume tailor error:", tailorMeta.error);
+        }
+
         // Prefer Foundit native apply first (registers on Foundit even for some externals)
         const applyRes = await falconApply(context, jwt, jobId);
         const bodyStr = JSON.stringify(applyRes.json || {});
@@ -717,7 +757,7 @@ async function main() {
           try {
             ats = await handleExternalAts(
               context,
-              resume,
+              resumeForJob,
               { ...verdict, jobId, redirectUrl },
               report
             );
@@ -741,6 +781,16 @@ async function main() {
             falconNext: applyRes.json?.next || applyRes.json?.responseType || null,
             ats,
             ageDays: jobAgeDays(job),
+            tailoredResume: tailorMeta?.ok
+              ? {
+                  path: tailorMeta.out,
+                  headline: tailorMeta.headline,
+                  matchedSkills: tailorMeta.matchedSkills,
+                  profileUploadOk: !!(
+                    tailorMeta.profileUpload && tailorMeta.profileUpload.ok
+                  ),
+                }
+              : { ok: false, error: tailorMeta?.error || "not_run" },
           };
           // Count intentional applies only when Falcon accepted or ATS progressed
           if (

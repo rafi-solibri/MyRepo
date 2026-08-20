@@ -143,7 +143,7 @@ STOP = {
 
 
 def tailor_enabled() -> bool:
-    for key in ("RESUME_TAILOR", "LINKEDIN_TAILOR_RESUME"):
+    for key in ("RESUME_TAILOR", "LINKEDIN_TAILOR_RESUME", "FOUNDIT_TAILOR"):
         v = os.environ.get(key, "").strip().lower()
         if v in ("0", "false", "no", "off"):
             return False
