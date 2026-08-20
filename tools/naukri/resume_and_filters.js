@@ -51,7 +51,7 @@ const PURE_AI_DATA_RE =
  * Do not use on full JD blobs (skills lists are noisy).
  */
 const NON_DOTNET_PRIMARY_RE =
-  /\b(java|j2ee|spring boot|golang|go lang|python|mean\b|mern\b|ruby on rails|php|oracle apps|oracle fusion|oracle\s+dba|oracle cloud|abap)\b/i;
+  /\b(java|j2ee|spring boot|golang|go lang|python|mean\b|mern\b|ruby on rails|php|oracle apps|oracle fusion|oracle\s+dba|oracle cloud|abap|mainframe|cobol|\bas400\b|ibm\s*i)\b/i;
 
 /** When scanning detail pages, use job panel text only — never document.body. */
 function shouldSkipTitleFromDetail(detailText) {

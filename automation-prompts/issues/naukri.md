@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-08-20 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Mainframe Architect band titles false-applied (no .NET stack) | NON_DOTNET_PRIMARY_RE: skip mainframe/cobol/as400/ibm i without .NET on title |
+
+
 ## 2026-08-17 (cloud)
 
 | Issue | Fix |
