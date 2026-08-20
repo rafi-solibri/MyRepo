@@ -1,5 +1,12 @@
 # Cutshort — issues & fixes
 
+## 2026-08-20 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Applies rejected by AI/manual — same generic Rafi_Resume.docx + generic note for every JD | Reuse shared tools/resume_tailor.js; daily_apply uploads tailored docx via Update resume before each apply + external ATS; JD-keyword notes |
+
+
 ## 2026-08-16 (cloud)
 
 | Issue | Fix |

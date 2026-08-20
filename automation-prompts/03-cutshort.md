@@ -50,7 +50,10 @@ Use only Rafi_Resume.docx from /workspace/resumes or /home/ubuntu/resumes. Never
 Hi {first name}; JD fit + proof + Hyd/immediate/52→65; ask 15–20 min screen or HM referral.
 
 ## External ATS
-If Cutshort opens company careers, complete with Rafi_Resume.docx then continue.
+If Cutshort opens company careers, complete with a **JD-tailored** Rafi_Resume.docx (built by shared `tools/resume_tailor.js` from the canonical resume — never invent skills/employers) then continue.
+
+## Resume tailoring (per apply)
+Before each apply: build JD-tailored docx via `tools/resume_tailor.js` → upload via Cutshort dashboard **Update resume** (`upload_profile_resume.js`) → apply with JD-keyword note. External ATS uploads the same tailored file. Truthful overlap only.
 
 ## Hard constraints
 - One job URL at a time; stop if Candidate login missing

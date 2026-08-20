@@ -22,6 +22,17 @@ const {
 } = require("./questionnaire.js");
 const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
 const { completeExternalPage } = require("../ats/complete_page");
+const { tailorResumeForJob } = require("../resume_tailor");
+const { uploadCutshortProfileResume } = require("./upload_profile_resume");
+
+function proofLineForNote(matched, title) {
+  const top = (matched || []).slice(0, 6);
+  if (!top.length) {
+    return "Strong overlap with Solutions Architect / Technical Lead work on .NET/React/cloud platforms.";
+  }
+  const reactBit = /react/i.test(`${title || ""} ${top.join(" ")}`) ? ", React" : "";
+  return `Strong JD overlap on: ${top.join(", ")} — proven across Nemetschek/Solibri, UHG, NCR, EPAM (.NET/C#, cloud, microservices${reactBit}).`;
+}
 
 const SEEKER_ID = "6a3e4526cc1fad8f39dccc0f";
 const CDP = process.env.CUTSHORT_CDP || "http://127.0.0.1:9222";
@@ -111,6 +122,8 @@ function writeHomeReport(partial) {
       `q_answered=${q.answered || 0}`,
       `q_locked_empty=${q.lockedEmpty || 0}`,
       `q_already_submitted=${q.alreadySubmitted || 0}`,
+      `tailored_built=${partial.tailored?.built || 0}`,
+      `tailored_uploaded=${partial.tailored?.uploaded || 0}`,
     ],
   };
   fs.mkdirSync(path.dirname(HOME_REPORT), { recursive: true });
@@ -264,7 +277,17 @@ function classify(job) {
   return null;
 }
 
-function noteFor(job, firstName) {
+function jdBlob(job) {
+  return [
+    titleOf(job),
+    skillsText(job),
+    job?.aiGeneratedData?.jobDescription || "",
+    job?.description || "",
+    job?.aiGeneratedData?.jobSummary || "",
+  ].join(" ");
+}
+
+function noteFor(job, firstName, matchedSkills, { profileUploaded } = {}) {
   const role = titleOf(job) || "this";
   const company =
     (typeof job.company === "string" && job.company) ||
@@ -272,11 +295,16 @@ function noteFor(job, firstName) {
     job.companyId?.name ||
     "the company";
   const hi = firstName ? `Hi ${firstName},` : "Hi,";
+  const matched = matchedSkills || [];
+  const proof = proofLineForNote(matched, role);
+  const resumeLine = profileUploaded
+    ? "I refreshed my Cutshort resume with a JD-tailored Rafi_Resume.docx (truthful keyword overlap only)."
+    : "Happy to share a JD-tailored Rafi_Resume.docx highlighting the same stack.";
   return `${hi}
 
-I'm applying for the ${role} role at ${company} — strong overlap with my Solutions Architect / Technical Lead background leading .NET/React/cloud platforms.
+I'm applying for the ${role} role at ${company}. ${proof}
 
-15+ years across Nemetschek/Solibri, Infosys, and EPAM: architecture + delivery for large product platforms (.NET/C#, React, AWS/Azure, microservices).
+${resumeLine} 15+ years architecture + delivery across Nemetschek/Solibri, UHG, NCR, EPAM (.NET/C#, React, AWS/Azure, microservices).
 
 Hyderabad-based (remote/WFH preferred), immediate joinee. Current CTC 52 LPA → expected 65 LPA.
 
@@ -284,6 +312,57 @@ Could we do a 15–20 min screening call this week, or please refer me to the hi
 
 Thanks,
 Rafi Ahmed`;
+}
+
+/**
+ * Build a JD-tailored resume and push it to the Cutshort talent-card
+ * so AI/manual screening sees role-aligned keywords for this apply.
+ */
+async function prepareTailoredResume(page, job, stats) {
+  const title = titleOf(job);
+  const company =
+    (typeof job.company === "string" && job.company) ||
+    job.companyDetails?.name ||
+    job.companyId?.name ||
+    "";
+  const jobId = String(job._id || "job");
+  const tailored = tailorResumeForJob({
+    master: findResume(),
+    jobId: `cutshort-${jobId}`,
+    title,
+    company,
+    description: jdBlob(job),
+    skills: skillsText(job),
+  });
+  stats.tailored = stats.tailored || { built: 0, uploaded: 0, uploadFailed: 0 };
+  if (!tailored?.ok || !tailored.out) {
+    stats.tailored.uploadFailed++;
+    console.log(`[tailor] build failed: ${tailored?.error || "unknown"}`);
+    return {
+      path: findResume(),
+      matched: [],
+      upload: { ok: false, reason: tailored?.error || "tailor_failed" },
+    };
+  }
+  stats.tailored.built++;
+  const matched = tailored.matchedSkills || [];
+  let upload = { ok: false, reason: "skipped" };
+  try {
+    upload = await uploadCutshortProfileResume(page, tailored.out);
+    if (upload.ok) stats.tailored.uploaded++;
+    else {
+      stats.tailored.uploadFailed++;
+      console.log(`[tailor] profile upload failed: ${upload.reason}`);
+    }
+  } catch (e) {
+    stats.tailored.uploadFailed++;
+    upload = { ok: false, reason: String(e?.message || e).slice(0, 160) };
+    console.log(`[tailor] profile upload error: ${upload.reason}`);
+  }
+  console.log(
+    `[tailor] ${path.basename(tailored.out)} matched=${matched.slice(0, 8).join("|")} upload=${upload.ok ? upload.via : upload.reason}`
+  );
+  return { path: tailored.out, matched, headline: tailored.headline, upload };
 }
 
 function isBrowserClosedError(e) {
@@ -594,7 +673,7 @@ async function answerPendingQuestionnaires(page, stats) {
   }
 }
 
-async function applyOne(page, job) {
+async function applyOne(page, job, { tailored } = {}) {
   const jobId = job._id;
   await page.goto(`https://cutshort.io/profile/view/j/${jobId}`, {
     waitUntil: "domcontentloaded",
@@ -612,7 +691,9 @@ async function applyOne(page, job) {
     )
   );
   const firstName = (job.createdBy?.name || "").split(/\s+/)[0] || null;
-  const note = noteFor(job, firstName);
+  const note = noteFor(job, firstName, tailored?.matched, {
+    profileUploaded: !!(tailored && tailored.upload && tailored.upload.ok),
+  });
 
   async function applyViaApi(via) {
     const apiRes = await api(page, "POST", "/sendreply/jobsignal", {
@@ -753,6 +834,7 @@ async function main() {
     failed: [],
     external: [],
     qualifying: [],
+    tailored: { built: 0, uploaded: 0, uploadFailed: 0 },
     q: {
       awaitingListed: 0,
       answered: 0,
@@ -816,9 +898,11 @@ async function main() {
     }
     console.log(`\n[apply] T${row.tier} ${row.title} @ ${row.company} ctc=${row.ctc}`);
     let result;
+    let tailored = null;
     try {
       const p = await session.ensurePage();
-      result = await applyOne(p, job);
+      tailored = await prepareTailoredResume(p, job, stats);
+      result = await applyOne(await session.ensurePage(), job, { tailored });
     } catch (e) {
       if (isBrowserClosedError(e)) {
         console.error("[apply] CDP closed:", String(e.message || e).slice(0, 160));
@@ -879,16 +963,24 @@ async function main() {
         })
         .catch(() => "");
       if (href) {
+        const resumeForAts =
+          (tailored && tailored.path && fs.existsSync(tailored.path) && tailored.path) ||
+          findResume();
         const ats = await (await session.ensurePage()).context().newPage();
         try {
           await ats.goto(href, { waitUntil: "domcontentloaded", timeout: 60000 });
-          const done = await completeExternalPage(ats, findResume());
+          const done = await completeExternalPage(ats, resumeForAts);
           if (done.ok) {
             stats.applied.push({
               ...row,
-              result: { status: "applied", path: "company_ATS", atsUrl: done.url || href },
+              result: {
+                status: "applied",
+                path: "company_ATS",
+                atsUrl: done.url || href,
+                tailoredResume: path.basename(resumeForAts),
+              },
             });
-            console.log(`[EXT] submitted ${href.slice(0, 80)}`);
+            console.log(`[EXT] submitted ${href.slice(0, 80)} resume=${path.basename(resumeForAts)}`);
           } else {
             stats.external.push({
               ...row,
@@ -962,9 +1054,10 @@ async function main() {
 - Q answered: **${stats.q.answered}** | already-submitted: ${stats.q.alreadySubmitted} | locked-empty: **${stats.q.lockedEmpty}** | verify-empty: ${stats.q.verifyEmpty}
 - Awaiting listed: ${stats.q.awaitingListed}
 - Failures (apply + locked-empty + verify-empty): **${failedTotal}**
+- Tailored resumes: built **${stats.tailored?.built || 0}** | profile uploaded **${stats.tailored?.uploaded || 0}** | upload failed ${stats.tailored?.uploadFailed || 0}
 ${stats.q.error ? `- Q audit note: ${stats.q.error}\n` : ""}
 ## Applied
-${stats.applied.map((a) => `- T${a.tier} ${a.title} @ ${a.company} (${a.ctc}L) \`${a.id}\` via=${a.result?.via || "?"}`).join("\n") || "_None_"}
+${stats.applied.map((a) => `- T${a.tier} ${a.title} @ ${a.company} (${a.ctc}L) \`${a.id}\` via=${a.result?.via || a.result?.path || "?"}`).join("\n") || "_None_"}
 
 ## Failed applies
 ${stats.failed.map((a) => `- T${a.tier} ${a.title} @ ${a.company} — ${a.result?.status}`).join("\n") || "_None_"}
