@@ -1,5 +1,12 @@
 # Instahyre — issues & fixes
 
+## 2026-08-20 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Instahyre interest-only apply attached no JD-tailored resume; recruiters/ATS saw generic profile CV and AI screens rejected | Add tools/resume_tailor.js + update_profile_resume.js; daily_apply uploads JD-tailored headline/summary/skills to #resume-input before each interest and uses same file on company ATS |
+
+
 ## 2026-08-15 (home)
 
 | Issue | Fix |
