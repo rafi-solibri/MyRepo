@@ -12,12 +12,25 @@
 1. Socnet Technologies Private Limited — Senior Technical Lead - Agentic AI / Generative AI — Foundit Falcon (`NORMAL`) — **false apply** → fixed+merged https://github.com/rafi-solibri/MyRepo/pull/215
 2. Zensar Technologies — Talkdesk Technical Lead/SME — Foundit + ATS https://www.linkedin.com/jobs/view/4452818405/ (`linkedin_no_easy_apply`)
 
-## Post-fix re-run (same day)
+## Post-fix re-run (same day) — AI title filter
 
 - Applied tab: **507 → 507** (+0)
 - Socnet `63331139` now skipped: `pure AI/data without .NET on title`
 - Capgemini / Adobe Agentic AI titles also skipped by expanded filter
 - Intentional applies: 0
+
+## Post-fix re-run (same day) — JD-tailored resume on merged main (`POST_FIX_RERUN=1`)
+
+- Head: `242000e` includes Foundit tailor https://github.com/rafi-solibri/MyRepo/pull/221 and Indeed tailor https://github.com/rafi-solibri/MyRepo/pull/223
+- Preflight: `Rafi_Resume.docx` + Foundit `MSSOAT` cookies OK; Chrome CDP `/home/ubuntu/.config/chrome-foundit`
+- Login: OK (`jwtOk=true`, `loggedIn=true`, live `wait_for_cdp_login` Hi Rafi)
+- Applied tab: **507 → 507** (delta +0) — no invented applies
+- Age window used: `3650`
+- Duplicates: 72 (already applied; includes Zensar Talkdesk `63362118`) | Skips: 1205 | Blocked: 0
+- Intentional applies this re-run: **0** (eligible Hyd/remote .NET Arch/Lead inventory already submitted today)
+- JD-tailor + profile upload ran for 0 jobs because Falcon apply is gated behind `userJobInfo` / `applicationStatus` skip-already-applied
+- No `canJobApply` dry-run
+- Artifact: `/opt/cursor/artifacts/foundit-apply-report.json`
 
 ## Top skip reasons (first pass)
 
