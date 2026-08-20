@@ -20,6 +20,8 @@ const path = require("path");
 const { chromium } = require("playwright-core");
 const { skipReason, locationOk, hasDotNet } = require("./filters");
 const { findResume } = require("./resume");
+const { uploadProfileResume } = require("./update_profile_resume");
+const { tailorResumeForJob } = require("../resume_tailor");
 const { completeExternalPage } = require("../ats/complete_page");
 const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
 
@@ -29,6 +31,10 @@ const OUT =
   "/opt/cursor/artifacts/instahyre-apply-report.json";
 const MAX_APPLIES = Number(process.env.INSTAHYRE_MAX_APPLIES || 50);
 const DRY_RUN = process.env.INSTAHYRE_DRY_RUN === "1";
+/** Per-job JD-tailored resume → Instahyre profile upload + ATS file. Default ON. */
+const TAILOR = process.env.INSTAHYRE_TAILOR !== "0";
+/** After the run, optionally re-upload canonical resume (off by default so last tailored stays). */
+const RESTORE_CANONICAL = process.env.INSTAHYRE_RESTORE_RESUME === "1";
 
 /** Instahyre public job pages are /job-{id}/, not /jobs/{id}/. */
 function jobPublicUrl(job) {
@@ -367,6 +373,84 @@ async function applyJob(page, jobId) {
   );
 }
 
+/** Scrape public job page for JD text (API job_search detail has no description). */
+async function fetchJdText(page, job) {
+  const raw = jobPublicUrl(job);
+  const url = /^https?:\/\//i.test(raw)
+    ? raw
+    : new URL(raw || `/job-${job.id || job.job_id}/`, "https://www.instahyre.com").href;
+  try {
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
+    await sleep(1200);
+    return await page.evaluate(() => {
+      const text = document.body?.innerText || "";
+      const start = text.search(/job description|responsibilities|requirements|about the (role|job)/i);
+      const slice = (start >= 0 ? text.slice(start) : text).slice(0, 6000);
+      return slice;
+    });
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Build JD-tailored docx and push it to the Instahyre profile so recruiters
+ * reviewing this interest see a keyword-aligned resume (native apply has no file attach).
+ * Uses shared tools/resume_tailor.py via tailorResumeForJob (same as Foundit/LinkedIn).
+ */
+async function prepareTailoredResume(page, c, report) {
+  const base = findResume();
+  const jdText = await fetchJdText(page, c.job || { id: c.id, public_url: c.publicUrl });
+  const tailored = tailorResumeForJob({
+    master: base,
+    title: c.title,
+    company: c.company,
+    description: jdText,
+    skills: c.skills || c.job?.keywords || [],
+    jobId: c.id,
+  });
+  if (!tailored.ok || !tailored.out) {
+    report.tailorErrors = report.tailorErrors || [];
+    report.tailorErrors.push({
+      id: c.id,
+      title: c.title,
+      error: tailored.error || "tailor_failed",
+    });
+    return { resumePath: base, tailored: null, upload: null };
+  }
+
+  let upload = null;
+  try {
+    const profilePage = await page.context().newPage();
+    try {
+      upload = await uploadProfileResume(profilePage, tailored.out);
+    } finally {
+      await profilePage.close().catch(() => {});
+    }
+  } catch (e) {
+    upload = { ok: false, reason: "upload_exception", error: String(e).slice(0, 200) };
+  }
+  if (!upload?.ok) {
+    report.blocked.push({
+      reason: "profile_resume_upload_failed",
+      id: c.id,
+      title: c.title,
+      company: c.company,
+      detail: upload?.reason || upload?.error || "unknown",
+    });
+  }
+  return {
+    resumePath: tailored.out,
+    tailored: {
+      path: tailored.out,
+      headline: tailored.headline,
+      skills: tailored.matchedSkills,
+      bytes: tailored.bytes,
+    },
+    upload,
+  };
+}
+
 async function spotCheckExternal(page, job, report) {
   const raw = jobPublicUrl(job);
   const url = /^https?:\/\//i.test(raw) ? raw : new URL(raw || `/job-${job.id}/`, page.url()).href;
@@ -415,10 +499,12 @@ async function main() {
     resume,
     maxApplies: MAX_APPLIES,
     dryRun: DRY_RUN,
+    tailor: TAILOR,
     applied: [],
     skipped: [],
     blocked: [],
     searchErrors: [],
+    tailorErrors: [],
     filterSelfCheck: {
       qe: skipReason("Quality Engineering Lead", { location: "Hyderabad" }),
       net: skipReason("Staff Software Engineer .NET", { location: "Hyderabad" }),
@@ -529,8 +615,8 @@ async function main() {
         }
 
         // Follow company-site ATS links (do not stop at "detected").
-        const toCheck = report.applied.slice(0, 12);
-        const resume = findResume();
+        const toCheck = report.applied.filter((a) => a.path === "Instahyre").slice(0, 12);
+        const fallbackResume = findResume();
         for (const a of toCheck) {
           const info = await spotCheckExternal(page, { id: a.id, public_url: a.publicUrl }, report);
           if (!info) continue;
@@ -542,16 +628,20 @@ async function main() {
           if (info.external?.length) {
             a.externalLinks = info.external;
             const href = info.external[0].href;
+            const atsResume =
+              (a.tailoredResume && fs.existsSync(a.tailoredResume) && a.tailoredResume) ||
+              fallbackResume;
             const atsPage = await page.context().newPage();
             try {
               await atsPage.goto(href, { waitUntil: "domcontentloaded", timeout: 60000 });
-              const done = await completeExternalPage(atsPage, resume);
+              const done = await completeExternalPage(atsPage, atsResume);
               if (done.ok) {
                 report.applied.push({
                   ...a,
                   path: "company_ATS",
                   atsUrl: done.url || href,
                   confirmed: true,
+                  resumeUsed: atsResume,
                 });
               } else {
                 report.blocked.push({
@@ -572,6 +662,24 @@ async function main() {
             } finally {
               await atsPage.close().catch(() => {});
             }
+          }
+        }
+
+        // Restore canonical resume on profile so the account is not left on a stretch title.
+        if (TAILOR && RESTORE_CANONICAL && report.applied.some((a) => a.tailoredResume)) {
+          try {
+            const canon = findResume();
+            const restorePage = await page.context().newPage();
+            try {
+              report.canonicalResumeRestored = await uploadProfileResume(restorePage, canon);
+            } finally {
+              await restorePage.close().catch(() => {});
+            }
+          } catch (e) {
+            report.canonicalResumeRestored = {
+              ok: false,
+              error: String(e).slice(0, 200),
+            };
           }
         }
 
@@ -619,6 +727,22 @@ async function maybeApply(page, c, report) {
     });
     return;
   }
+
+  let tailoredResume = null;
+  let tailorMeta = null;
+  let profileUpload = null;
+  if (TAILOR) {
+    console.error(`[instahyre] tailor+upload resume for ${c.company} — ${c.title}`);
+    const prep = await prepareTailoredResume(page, c, report);
+    tailoredResume = prep.resumePath;
+    tailorMeta = prep.tailored
+      ? { headline: prep.tailored.headline, skills: prep.tailored.skills, path: prep.tailored.path }
+      : null;
+    profileUpload = prep.upload
+      ? { ok: !!prep.upload.ok, reason: prep.upload.reason || null }
+      : null;
+  }
+
   await sleep(800);
   console.error(`[instahyre] apply ${c.company} — ${c.title}`);
   const res = await applyJob(page, c.id);
@@ -636,6 +760,9 @@ async function maybeApply(page, c, report) {
       publicUrl: c.job.public_url || null,
       oppId: res.json?.opp_id || null,
       appliedOn: res.json?.applied_on || null,
+      tailoredResume: tailoredResume || null,
+      tailor: tailorMeta,
+      profileResumeUpload: profileUpload,
     });
     // Persist incrementally so a late hang still leaves a usable report
     try {

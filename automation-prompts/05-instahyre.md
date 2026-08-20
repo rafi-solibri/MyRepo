@@ -7,13 +7,14 @@ Copy everything inside the block below:
 ```text
 FIRST: run `bash scripts/preflight-portal-run.sh instahyre`. Verify `node tools/instahyre/resume.js`.
 Then run `bash scripts/launch-chrome-cdp.sh instahyre`.
-Prefer durable helper: `node tools/instahyre/daily_apply.js` + `node tools/instahyre/filters.js` (`skipReason`).
+Prefer durable helper: `node tools/instahyre/daily_apply.js` + `node tools/instahyre/filters.js` (`skipReason`) + shared `tools/resume_tailor.py` (via `tailorResumeForJob`) + `tools/instahyre/update_profile_resume.js`.
 Chrome CDP profile: /home/ubuntu/chrome-instahyre-profile (synced from Desktop Default; do not CDP-attach Default).
 
 Daily Instahyre apply for Mohammed Abdul Rafi Ahmed. Maximize applies + interview callbacks.
 
 ## Resume (HARD)
 Upload **Rafi_Resume.docx** on Instahyre and every company ATS. Paths after bootstrap: /workspace/resumes/Rafi_Resume.docx, /home/ubuntu/resumes/Rafi_Resume.docx, /home/ubuntu/Documents/Rafi_Resume.docx. Never invent stubs.
+**Per-job JD tailor (default ON):** shared `tools/resume_tailor.py` rewrites headline/summary/skills from the JD (only owned skills). Before each Instahyre interest, upload the tailored docx to the profile via `#resume-input` (`tools/instahyre/update_profile_resume.js`). Company ATS uploads use the same tailored file. Disable with `INSTAHYRE_TAILOR=0`.
 
 ## Profile
 SA / Tech Lead / EM / Principal–Staff | .NET + Azure/AWS | Hyd + Remote/WFH
