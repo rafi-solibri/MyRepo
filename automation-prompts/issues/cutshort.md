@@ -5,7 +5,6 @@
 | Issue | Fix |
 | --- | --- |
 | Applies rejected by AI/manual — same generic Rafi_Resume.docx + generic note for every JD | Reuse shared tools/resume_tailor.js; daily_apply uploads tailored docx via Update resume before each apply + external ATS; JD-keyword notes |
-| Applies rejected by AI/manual — same generic Rafi_Resume.docx + generic note for every JD | tools/resume/tailor_docx.js builds truthful JD-tailored docx; daily_apply uploads via Update resume before each apply + uses tailored file on external ATS; JD-keyword apply notes |
 
 
 ## 2026-08-16 (cloud)
