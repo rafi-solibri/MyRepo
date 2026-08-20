@@ -244,6 +244,21 @@ assert.strictEqual(
   false,
   "non-Pega employer must not company-skip"
 );
+assert.strictEqual(
+  shouldSkipTitle("Sr. Staff Analog Engineer"),
+  true,
+  "Analog/hardware Staff titles must skip (false-apply Semtech 2026-08-20)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Staff Analog Design Engineer"),
+  true,
+  "Analog design hardware titles must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Staff Software Engineer"),
+  false,
+  "Staff software titles must not analog-skip"
+);
 assert.strictEqual(shouldSkipTitle("Senior .NET Architect"), false);
 assert.strictEqual(isArchLeadTitle("Dot Net Fullstack Developer"), false);
 assert.strictEqual(

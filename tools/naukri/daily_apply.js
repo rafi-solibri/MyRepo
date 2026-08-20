@@ -98,6 +98,26 @@ function safeClose(page) {
   page.close().catch(() => {});
 }
 
+/** Default session restore can reopen Cutshort/LinkedIn tabs inside the Naukri profile. */
+const FOREIGN_TAB_RE =
+  /cutshort\.io|foundit\.in|linkedin\.com|instahyre\.com|indeed\.com|hirist\.(?:com|tech)/i;
+
+function pruneForeignAndExtraTabs(context, keepPages = []) {
+  const keep = new Set((keepPages || []).filter(Boolean));
+  const pages = context.pages() || [];
+  const profilePages = [];
+  for (const p of pages) {
+    if (keep.has(p)) continue;
+    const u = p.url() || "";
+    if (FOREIGN_TAB_RE.test(u) && !/naukri\.com/i.test(u)) {
+      safeClose(p);
+      continue;
+    }
+    if (/naukri\.com\/mnjuser\/profile/i.test(u)) profilePages.push(p);
+  }
+  for (const extra of profilePages.slice(1)) safeClose(extra);
+}
+
 function isJunkAtsUrl(url) {
   const u = String(url || "");
   return /careers\.infoedge\.com|infoedge\.in\/?$|infoedge\.com\/?$/i.test(u);
@@ -1917,6 +1937,7 @@ async function processCard(context, page, card, i, jobMeta, report) {
 
   // Naukri Quick Apply attaches the *profile* CV — sync tailored file first.
   if (prepared.tailored && !goingExternal && TAILOR_PROFILE_UPLOAD) {
+    pruneForeignAndExtraTabs(context, [page, detailPage]);
     const synced = syncTailoredProfileResume(prepared.path);
     jobMeta.profileTailorUpload = {
       ok: Boolean(synced?.ok || synced?.profileUpdated || synced?.upload?.ok),
@@ -2044,6 +2065,7 @@ async function main() {
   const { chromium } = require("playwright-core");
   const browser = await chromium.connectOverCDP(CDP);
   const context = browser.contexts()[0];
+  pruneForeignAndExtraTabs(context);
   const page = await context.newPage();
   page.setDefaultTimeout(45000);
 
@@ -2270,6 +2292,7 @@ async function main() {
     // Restore canonical CV on Naukri profile so recruiters don't keep the last JD variant.
     if (TAILOR_RESUME && TAILOR_PROFILE_UPLOAD && RESUME) {
       try {
+        pruneForeignAndExtraTabs(context, [page]);
         const restored = syncTailoredProfileResume(RESUME);
         report.profileResumeRestored = {
           ok: Boolean(restored?.ok || restored?.profileUpdated || restored?.upload?.ok),

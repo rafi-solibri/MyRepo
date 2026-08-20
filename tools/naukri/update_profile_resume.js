@@ -120,8 +120,38 @@ async function dismissPopups(page) {
   }
 }
 
+/**
+ * Navigate to the Naukri profile. Prefer an already-open profile tab
+ * (daily_apply + per-job tailor spawnSync otherwise stack 60s gotos).
+ * Use commit first so a busy CDP session does not fail the whole upload.
+ */
+async function gotoProfile(page) {
+  const timeouts = [20000, 35000, 55000];
+  const already = /naukri\.com\/mnjuser\/profile/i.test(page.url() || "");
+  let lastErr = null;
+  for (let i = 0; i < timeouts.length; i++) {
+    try {
+      if (already && i === 0) {
+        await page.bringToFront().catch(() => {});
+        await page.waitForLoadState("domcontentloaded", { timeout: 12000 }).catch(() => {});
+        return true;
+      }
+      await page.goto(PROFILE_URL, {
+        waitUntil: "commit",
+        timeout: timeouts[i],
+      });
+      await page.waitForLoadState("domcontentloaded", { timeout: 15000 }).catch(() => {});
+      return true;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  if (lastErr) throw lastErr;
+  return false;
+}
+
 async function ensureLoggedIn(page) {
-  await page.goto(PROFILE_URL, { waitUntil: "domcontentloaded", timeout: 60000 });
+  await gotoProfile(page);
   await page.waitForTimeout(2500);
   await dismissPopups(page);
   const url = page.url();
@@ -521,10 +551,25 @@ async function main() {
   }
 
   let page;
+  let reusedPage = false;
   try {
     const browser = await chromium.connectOverCDP(CDP);
     const context = browser.contexts()[0] || (await browser.newContext());
-    page = await context.newPage();
+    const pages = context.pages() || [];
+    const profilePages = pages.filter((p) =>
+      /naukri\.com\/mnjuser\/profile/i.test(p.url() || "")
+    );
+    // Drop duplicate leftover profile tabs from prior spawnSync timeouts.
+    for (const extra of profilePages.slice(1)) {
+      await extra.close().catch(() => {});
+    }
+    if (profilePages[0]) {
+      page = profilePages[0];
+      reusedPage = true;
+      await page.bringToFront().catch(() => {});
+    } else {
+      page = await context.newPage();
+    }
     page.setDefaultTimeout(45000);
   } catch (e) {
     result.reason = "cdp_unreachable";
@@ -581,7 +626,7 @@ async function main() {
     console.error(JSON.stringify(result, null, 2));
     process.exit(1);
   } finally {
-    if (page) await page.close().catch(() => {});
+    if (page && !reusedPage) await page.close().catch(() => {});
   }
 }
 
@@ -606,6 +651,7 @@ if (require.main === module) {
 module.exports = {
   uploadResume,
   ensureLoggedIn,
+  gotoProfile,
   touchHeadline,
   verifyUpdated,
   runRefresh,
