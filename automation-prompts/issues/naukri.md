@@ -4,6 +4,9 @@
 
 | Issue | Fix |
 | --- | --- |
+| C++ Media Lead false-applied via arch-lead waiver (GlobalLogic) | NON_DOTNET_PRIMARY_RE: skip c++/c/c++/cpp/cplusplus without .NET on title |
+| Azure Senior DevOps Architect applied (devops engineer skip missed Architect suffix); TCS Cloud Network Architect attempted | SKIP_TITLE_RE: devops architect + network architect |
+| Staff PM / Delivery Partnerships / SAP OTC-BRIM attempted; 4x external_link_not_opened empty CTA | SKIP_TITLE_RE: product manager, delivery partnerships, brim, OTC data migration; waitForVisibleApplyCta+handleExternal retry company-site CTA |
 | Applications rejected by AI/manual screening despite applies | Per-job truthful JD tailor (headline/summary) + profile sync before Quick Apply + ATS upload of tailored Rafi_Resume.docx |
 | Mainframe Architect band titles false-applied (no .NET stack) | NON_DOTNET_PRIMARY_RE: skip mainframe/cobol/as400/ibm i without .NET on title |
 

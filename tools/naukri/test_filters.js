@@ -230,6 +230,56 @@ assert.strictEqual(
   "COBOL-primary lead without .NET must skip"
 );
 assert.strictEqual(
+  shouldSkipTitle("Staff Product Manager - Agency Revenue Growth"),
+  true,
+  "Staff Product Manager must skip even though Staff matches arch-lead"
+);
+assert.strictEqual(
+  shouldSkipTitle("Senior Manager, Delivery Partnerships"),
+  true,
+  "Delivery Partnerships is not an engineering apply"
+);
+assert.strictEqual(
+  shouldSkipTitle("OTC Brim Lead Architect"),
+  true,
+  "SAP BRIM/OTC architect must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("OTC Data Migration Architect"),
+  true,
+  "SAP OTC Data Migration architect must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Engineering Manager - Platform (10-15 yrs)"),
+  false,
+  "Platform EM remains eligible"
+);
+assert.strictEqual(
+  shouldSkipTitle("Azure Senior DevOps Architect"),
+  true,
+  "DevOps Architect is SRE/devops-primary not .NET SA"
+);
+assert.strictEqual(
+  shouldSkipTitle("Cloud Network Architect"),
+  true,
+  "Network Architect is not .NET SA"
+);
+assert.strictEqual(
+  shouldSkipTitle("C++ Media Lead Engineer I"),
+  true,
+  "C++-primary lead without .NET must skip (false-apply 2026-08-20)"
+);
+assert.strictEqual(
+  shouldSkipTitle("C/C++ Technical Lead"),
+  true,
+  "C/C++-primary lead without .NET must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle(".NET C++ Interop Architect"),
+  false,
+  "C++ in title still eligible when .NET is present"
+);
+assert.strictEqual(
   shouldSkipCompany("Pega"),
   true,
   "Pega employer must skip even if title omits Pega"

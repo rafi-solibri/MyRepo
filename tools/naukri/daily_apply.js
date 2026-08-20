@@ -696,6 +696,24 @@ async function waitForVisibleApplyCta(page, { timeoutMs = 10000 } = {}) {
   while (Date.now() - start < timeoutMs) {
     last = await readVisibleApplyCta(page).catch(() => null);
     if (last && (last.state === "quick" || last.state === "applied")) return last;
+    // Company-site CTAs are not dual-layer Quick/Applied — still treat as ready.
+    const siteLabel = await page
+      .evaluate(() => {
+        const hit = [...document.querySelectorAll("button, a, [role='button']")]
+          .map((e) =>
+            (e.innerText || e.getAttribute("aria-label") || "")
+              .replace(/\s+/g, " ")
+              .trim()
+          )
+          .find((t) =>
+            /Go to company site|On company site|Apply on company(?:\s+site)?|On hirist|company website/i.test(
+              t
+            )
+          );
+        return hit || "";
+      })
+      .catch(() => "");
+    if (siteLabel) return last || { state: "company_site", label: siteLabel };
     await sleep(400);
   }
   return last;
@@ -1582,6 +1600,10 @@ async function handleExternal(context, page, detail, jobMeta, report) {
     "button:has-text('Apply on company'):not([disabled])",
     "a:has-text('Apply on company site')",
     "a:has-text('Apply on company')",
+    "button:has-text('company site'):not([disabled])",
+    "a:has-text('company site')",
+    "button:has-text('company website'):not([disabled])",
+    "a:has-text('company website')",
   ];
 
   let newPage = null;
@@ -1623,6 +1645,59 @@ async function handleExternal(context, page, detail, jobMeta, report) {
         opened[opened.length - 1] ||
         atsUrl;
       break;
+    }
+  }
+
+  if (!newPage) {
+    // Detail panel sometimes mounts the company-site CTA after the first pass.
+    await waitForVisibleApplyCta(page, { timeoutMs: 8000 });
+    const clicked = await page
+      .evaluate(() => {
+        const el = [
+          ...document.querySelectorAll("button, a, [role='button']"),
+        ].find((e) =>
+          /Go to company site|On company site|Apply on company(?:\s+site)?|company website/i.test(
+            (e.innerText || e.getAttribute("aria-label") || "").replace(
+              /\s+/g,
+              " "
+            )
+          )
+        );
+        if (!el || el.disabled) return false;
+        el.click();
+        return true;
+      })
+      .catch(() => false);
+    if (clicked) {
+      const popupPromise = context
+        .waitForEvent("page", { timeout: 12000 })
+        .catch(() => null);
+      newPage = await popupPromise;
+      await sleep(2500);
+      if (!newPage) {
+        newPage =
+          context.pages().find((p) => !beforePages.has(p)) ||
+          context.pages().find((p) => {
+            const u = p.url();
+            return !beforeUrls.has(u) && isExternalAtsUrl(u);
+          }) ||
+          null;
+      }
+      const opened = await page
+        .evaluate(() => window.__naukriOpenedUrls || [])
+        .catch(() => []);
+      if (!newPage && opened && opened.length) {
+        atsUrl =
+          preferAtsLinks(opened)[0] ||
+          opened.find((u) => isExternalAtsUrl(u)) ||
+          opened[opened.length - 1] ||
+          atsUrl;
+      }
+    }
+    const again = await readDetail(page).catch(() => null);
+    if (again) {
+      atsUrl = preferAtsLinks(again.links)[0] || atsUrl;
+      if (!detail.cta && again.cta) detail.cta = again.cta;
     }
   }
 
