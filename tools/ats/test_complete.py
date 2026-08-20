@@ -17,6 +17,7 @@ from tools.ats.complete import (
     auth_wall_reason,
     classify_ats_host,
     is_email_otp_wall,
+    is_oracle_recruiting_apply,
     resume_input_skipped,
     extract_hop_destination_from_url,
     extract_offsite_from_text,
@@ -614,10 +615,14 @@ class _CandPage:
 assert_true(apply_form_still_open(_CandPage()), "candidate profile must count as open form")
 
 assert_true(
-    is_email_otp_wall(
-        "Confirm Your Identity\nThe verification code was sent to this email address"
+    is_oracle_recruiting_apply(
+        "https://careers.oracle.com/en/sites/jobsearch/job/335139/apply/email"
     ),
-    "Oracle Recruiting email OTP is a wall",
+    "Oracle recruiting apply/email is detected",
+)
+assert_true(
+    not is_oracle_recruiting_apply("https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/job/1"),
+    "Oracle Cloud HCM is not careers.oracle.com recruiting",
 )
 assert_true(
     not is_email_otp_wall("Email Address\nI agree with the terms and conditions\nNEXT"),

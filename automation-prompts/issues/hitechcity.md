@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Oracle Jet AGREE overlay ignored Playwright force-click so OTP fail-fast never fired | DOM-click AGREE then NEXT on careers.oracle.com apply/email then wall on verification code |
 | Oracle /apply/email: Close overlay stole Next; email OTP burned 4min/job; Gartner Remote- US false-opened | Fail-fast email OTP; skip Close/honeypot/chat file inputs; skip Remote- US titles |
 | Oracle HYDERABAD careers false-skipped via body-line Bengaluru pollution; boards allowlist included Optum/UHG and burned Naukri on Taleo | card_location_ok: Hyd-clean title wins over noisy chrome; drop body-line scrape; exclude Optum/UHG from board allowlist when HITECHCITY_SKIP_UHG=1 |
 

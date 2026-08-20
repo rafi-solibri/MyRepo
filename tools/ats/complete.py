@@ -332,6 +332,64 @@ def is_email_otp_wall(text: str | None) -> bool:
     return bool(EMAIL_OTP_RE.search(text or ""))
 
 
+def is_oracle_recruiting_apply(url: str | None) -> bool:
+    return bool(re.search(r"careers\.oracle\.com/.*/apply", url or "", re.I))
+
+
+def oracle_native_agree_next(page) -> bool:
+    """Dismiss Oracle Jet terms via DOM click (Playwright force-click leaves the overlay)."""
+    clicked = False
+    try:
+        clicked = bool(
+            page.evaluate(
+                """() => {
+                  const vis = (e) => !!(e && (e.offsetWidth || e.offsetHeight || e.getClientRects().length));
+                  const dlg = [...document.querySelectorAll('oj-dialog, [role=dialog]')].find(
+                    (d) => vis(d) && /Terms and Conditions/i.test(d.innerText || '')
+                  );
+                  if (!dlg) return false;
+                  const btn = [...dlg.querySelectorAll('button')].find(
+                    (b) => /^\\s*AGREE\\s*$/i.test(b.innerText || '')
+                  );
+                  if (!btn) return false;
+                  btn.click();
+                  return true;
+                }"""
+            )
+        )
+    except Exception:
+        clicked = False
+    if clicked:
+        _sleep(1.0)
+    try:
+        box = page.locator("#legal-disclaimer-checkbox")
+        if box.count() and box.first.is_visible() and not box.first.is_checked():
+            box.first.check(force=True)
+    except Exception:
+        pass
+    email = ats_email()
+    if email:
+        try:
+            el = page.locator("input[name='primary-email'], input[type='email']").first
+            if el.count() and el.is_visible():
+                el.fill(email, timeout=3000)
+        except Exception:
+            pass
+    try:
+        page.evaluate(
+            """() => {
+              const btn = document.querySelector('button[aria-label="Next"]');
+              if (!btn) return false;
+              btn.click();
+              return true;
+            }"""
+        )
+        _sleep(2.0)
+    except Exception:
+        pass
+    return clicked
+
+
 def advance_label_skipped(label: str | None) -> bool:
     """Skip overlay Close/Cancel/Back so Next/Agree/Submit can run."""
     t = re.sub(r"\s+", " ", label or "").strip()
@@ -2853,6 +2911,16 @@ def complete_ats(page, time_cap_s: int | None = None) -> tuple[str, str]:
         return "skipped", "job_unavailable"
     if host == "sso":
         return "blocked", "ats_login_wall"
+    if is_email_otp_wall(flags["text"]):
+        return "blocked", "ats_login_wall"
+    if is_oracle_recruiting_apply(flags["url"]):
+        oracle_native_agree_next(page)
+        if looks_submitted(page):
+            return "applied", "confirmation"
+        if looks_already_applied(page):
+            return "skipped", "already_applied"
+        if is_email_otp_wall(_body(page, 2500)):
+            return "blocked", "ats_login_wall"
     if host == "linkedin":
         return "blocked", "did_not_leave_linkedin"
     if host == "indeed" and is_board_tracking_url(flags["url"]):
