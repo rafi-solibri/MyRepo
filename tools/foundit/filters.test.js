@@ -516,6 +516,20 @@ assert.strictEqual(
 );
 
 assert.strictEqual(
+  classifyJob({
+    jobId: 63331139,
+    title: "Senior Technical Lead - Agentic AI / Generative AI",
+    companyName: "Socnet Technologies Private Limited",
+    locations: [{ text: "Remote" }],
+    skills: [{ text: "AI" }, { text: "Generative AI" }, { text: ".NET" }],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 12 },
+  }).reason,
+  "pure AI/data without .NET on title",
+  "Agentic/Generative AI Technical Lead must skip even with Arch/Lead + .NET in skills"
+);
+
+assert.strictEqual(
   hasSeniority("Technical Architect_.NET Core"),
   true,
   "underscore before .NET must not hide Architect seniority"
