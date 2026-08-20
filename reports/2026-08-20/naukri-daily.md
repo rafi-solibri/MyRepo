@@ -1,8 +1,10 @@
 # Naukri daily — 2026-08-20 IST (post-fix re-run after #220)
 
-`POST_FIX_RERUN=1`. Pulled merged `main` (PR [#220](https://github.com/rafi-solibri/MyRepo/pull/220) resume tailor / `resume_paths`, PR [#217](https://github.com/rafi-solibri/MyRepo/pull/217) Mainframe/COBOL skip). Resume: `resumes/Rafi_Resume.docx`.
+`POST_FIX_RERUN=1`. Started on merged `main` at PR [#220](https://github.com/rafi-solibri/MyRepo/pull/220) (shared `resume_paths`) + [#217](https://github.com/rafi-solibri/MyRepo/pull/217) (Mainframe/COBOL skip). Resume: `resumes/Rafi_Resume.docx`.
 
-This is Naukri post-fix re-run **#2** today (cap 5). Earlier post-fix agent `bc-1fd3faaa` already applied after #217; this run executed the durable helper again on merged #220 and skipped jobs already submitted today.
+This is Naukri post-fix re-run **#2** today (cap 5). Earlier post-fix agent `bc-1fd3faaa` already applied after #217; this run executed the durable helper again and skipped jobs already submitted today.
+
+PR [#222](https://github.com/rafi-solibri/MyRepo/pull/222) (per-job JD-tailored resume) merged while this worker was applying. This session’s 4 applies used the pre-#222 helper. Filter/CTA fixes below are rebased onto current `main` (includes #222). Sibling post-fix agents launched after #222 will apply with the tailor.
 
 ## STEP 0 — profile resume refresh
 
