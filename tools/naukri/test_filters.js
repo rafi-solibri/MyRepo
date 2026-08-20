@@ -230,6 +230,31 @@ assert.strictEqual(
   "COBOL-primary lead without .NET must skip"
 );
 assert.strictEqual(
+  shouldSkipTitle("Staff Product Manager - Agency Revenue Growth"),
+  true,
+  "Staff Product Manager must skip even though Staff matches arch-lead"
+);
+assert.strictEqual(
+  shouldSkipTitle("Senior Manager, Delivery Partnerships"),
+  true,
+  "Delivery Partnerships is not an engineering apply"
+);
+assert.strictEqual(
+  shouldSkipTitle("OTC Brim Lead Architect"),
+  true,
+  "SAP BRIM/OTC architect must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("OTC Data Migration Architect"),
+  true,
+  "SAP OTC Data Migration architect must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Engineering Manager - Platform (10-15 yrs)"),
+  false,
+  "Platform EM remains eligible"
+);
+assert.strictEqual(
   shouldSkipCompany("Pega"),
   true,
   "Pega employer must skip even if title omits Pega"
