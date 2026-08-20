@@ -2953,6 +2953,25 @@ def main() -> int:
                     print("SKIP already_applied", page_title[:80], flush=True)
                     continue
 
+                # Auth interstitial titles ("Sign In | Indeed Accounts") fail TITLE_OK
+                # and would be skipped as title_not_target if skip_reason runs first.
+                if looks_login_wall(body, item.get("url") or ""):
+                    warmed = restore_signed_in(sb)
+                    item["sessionRestore"] = warmed
+                    try:
+                        body = sb.get_text("body") or body
+                        page_title = sb.get_title() or page_title
+                        item["url"] = sb.get_current_url() or item.get("url")
+                    except Exception:
+                        pass
+                    if looks_login_wall(body, item.get("url") or ""):
+                        item["reason"] = "indeed_login_required"
+                        item["title"] = (page_title or "")[:160]
+                        report["blocked"].append(item)
+                        report["counts"]["blocked"] += 1
+                        print("BLOCKED login_required", page_title[:80], flush=True)
+                        continue
+
                 reason = skip_reason(page_title, company, location, body[:1500])
                 if reason:
                     item["reason"] = reason

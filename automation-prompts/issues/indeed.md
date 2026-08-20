@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Mid-run Sign In \| Indeed Accounts skipped as title_not_target | Check looks_login_wall before skip_reason; restore session or block login_required |
 | SmartApply highest degree of education combobox left Select an option (colon label, portaled listbox) → questions Continue stuck | Label scan includes education; pick [role=option] on document.body; fill_unselected_comboboxes + Choose-an-option education recovery |
 | SmartApply incomplete: company ATS misclassified as indeed_login_required; bare Date→DOB poisoned UST; questions Continue stuck without reCAPTCHA attempt | looks_login_wall requires indeed host; off-Indeed EA→external; ISO date inputs; Available Date not DOB; questions CTA streak tries clear_recaptcha |
 

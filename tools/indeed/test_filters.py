@@ -170,6 +170,10 @@ def test_account_settings_and_serp_are_signed_in():
     )
     assert looks_login_wall(wall, "https://secure.indeed.com/auth?continue=https://myjobs.indeed.com/")
     assert not looks_signed_in(wall)
+    # Mid-run bot-detection Sign-in must be a login wall, not title_not_target.
+    bot = "https://secure.indeed.com/auth?hl=en_US&from=bot-detection-anonymous"
+    assert looks_login_wall("Sign In | Indeed Accounts", bot)
+    assert skip_reason("Sign In | Indeed Accounts", "", "", "") == "title_not_target"
 
 
 def test_company_ats_email_gate_is_not_indeed_login():
