@@ -158,9 +158,11 @@ function skipTitleReason(title) {
   if (/\bpower\s*platform\b/i.test(t)) return "Power Platform";
   if (/\bduck\s*creek\b/i.test(t)) return "Duck Creek";
   // Pure AI / data titles need .NET|C#|dotnet on the TITLE (skills laundry lists are noisy).
-  // Naukri parity: AI Solution Architect + Data Engineering Manager (not only "data engineer").
+  // Naukri parity: AI Solution Architect, Agentic/Generative AI Lead, Data Engineering Manager.
+  // Arch/Lead exception must NOT apply — Socnet "Technical Lead - Agentic AI / Generative AI".
+  // Do NOT match bare "Architecture … AI" (Microsoft "Solution Architecture Apps & AI" may still pass).
   if (
-    /\b(ai\s+(?:specialist\s+)?(?:solution\s+)?architect|ai\s+engineer|ml\s+engineer|genai|data\s+scientist|data\s+engineer(?:ing)?)\b/i.test(
+    /\b(ai\s+(?:specialist\s+)?(?:solution\s+)?architect|ai\s+engineer(?:ing)?(?:\s+manager|\s+lead)?|ai\s+agent|ml\s+engineer|gen\s*-?\s*ai|genai|generative\s+ai|agentic\s+ai|\bgemini\b|\bllm\b|data\s+scientist|data\s+engineer(?:ing)?|data\s+architect)\b/i.test(
       t
     ) &&
     !hasDotNet(t, "")

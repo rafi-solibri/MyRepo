@@ -1,5 +1,12 @@
 # Foundit — issues & fixes
 
+## 2026-08-20 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| False apply: Socnet Senior Technical Lead - Agentic AI / Generative AI passed Arch/Lead without .NET on title | Expand pure AI/data title skip in tools/foundit/filters.js for agentic/generative AI (+ test); Arch/Lead exception no longer applies |
+
+
 ## 2026-08-16 (cloud)
 
 | Issue | Fix |
