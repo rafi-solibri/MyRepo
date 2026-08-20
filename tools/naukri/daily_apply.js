@@ -368,14 +368,11 @@ function isAlreadyAppliedCta(text) {
   // Callers must use readVisibleApplyCta(page) for live buttons.
   if (/Quick apply/i.test(t) && /Applied/i.test(t)) return false;
   if (/^Applied$/i.test(t)) return true;
-  // Post-apply widget after instant Quick Apply (Meltwater 2026-08-15).
-  if (/view applied jobs/i.test(t)) return true;
   if (
     t.length < 48 &&
     /\bApplied\b/i.test(t) &&
     !/^Quick apply$/i.test(t) &&
-    !/^Applied\s*\(/i.test(t) &&
-    !/view applied jobs/i.test(t)
+    !/^Applied\s*\(/i.test(t)
   ) {
     return true;
   }
@@ -1502,19 +1499,8 @@ async function confirmApplied(page, chatHint = null) {
     })
     .catch(() => "");
   if (lateChat) return { ok: true, cta: `chatbot:${lateChat}` };
-  const viewApplied = await page
-    .evaluate(() =>
-      [...document.querySelectorAll("button, a, [role='button']")].some((e) => {
-        const t = (e.innerText || e.getAttribute("aria-label") || "")
-          .replace(/\s+/g, " ")
-          .trim();
-        if (!/view applied jobs/i.test(t)) return false;
-        const st = window.getComputedStyle(e);
-        return st.display !== "none" && st.visibility !== "hidden" && Number(st.opacity) > 0.2;
-      })
-    )
-    .catch(() => false);
-  if (viewApplied) return { ok: true, cta: "view_applied_jobs" };
+  // "View applied jobs" is a filter-chip / nav link — never per-job Applied.
+  // Treating it as success false-confirmed TCS Data SA + Tech Mahindra TL (2026-08-20).
   // Close stuck chatbot drawer / empty-CTA overlay and re-read Applied once.
   if (
     chatHint?.reason === "chat_steps_exhausted" ||

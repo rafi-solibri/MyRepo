@@ -255,6 +255,24 @@ assert.strictEqual(
   "AI Lead/Architect with .NET on title may proceed"
 );
 assert.strictEqual(
+  shouldSkipTitle(
+    "Data Solution Architect + AWS | Snowflake | Databricks | 10+ Yrs"
+  ),
+  true,
+  "Data Solution Architect without .NET must skip"
+);
+const { isAlreadyAppliedCta } = require("./daily_apply");
+assert.strictEqual(
+  isAlreadyAppliedCta("View applied jobs"),
+  false,
+  "View applied jobs nav/chip is not per-job Applied"
+);
+assert.strictEqual(
+  isAlreadyAppliedCta("Applied"),
+  true,
+  "bare Applied CTA is already-applied"
+);
+assert.strictEqual(
   shouldSkipTitle("COBOL Technical Lead"),
   true,
   "COBOL-primary lead without .NET must skip"
