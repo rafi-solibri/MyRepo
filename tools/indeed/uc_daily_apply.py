@@ -458,6 +458,24 @@ def _campus_allowlist_blocks(company: str) -> bool:
         return False
 
 
+def is_mr_option_text(text: str) -> bool:
+    """True for a Title radio's *own* label (Mr.), not a wrap that also lists Ms."""
+    t = " ".join((text or "").lower().split())
+    if not t or len(t) > 24:
+        return False
+    if re.search(r"\b(mrs|miss|ms)\.?\b", t) and not re.fullmatch(r"mr\.?", t):
+        return False
+    return bool(re.fullmatch(r"mr\.?", t) or re.match(r"mr\.?\b", t))
+
+
+def is_bare_available_date_label(text: str) -> bool:
+    """UST SmartApply 'Date *' is Available Date, never DOB."""
+    t = " ".join((text or "").lower().split())
+    if re.search(r"birth|\bdob\b|issued|expir|passport", t):
+        return False
+    return bool(re.search(r"(^|\n|\s)date(\s*\*|\s*$)", t))
+
+
 def skip_reason(title: str, company: str, location: str, snippet: str) -> str | None:
     t = title or ""
     if _campus_allowlist_blocks(company):
@@ -842,6 +860,47 @@ def fill_common_questions(sb) -> None:
               t += ' ' + (el.getAttribute('autocomplete') || '');
               return t.toLowerCase();
             };
+            // Own control text only — wrapping question nodes often contain
+            // every option ("Title * Mr. Ms.") which poisoned Mr. matching.
+            const optionOwnText = (el) => {
+              if (!el) return '';
+              const id = el.getAttribute('id');
+              let t = (el.getAttribute('aria-label') || '') + ' ' + (el.value || '');
+              if (id) {
+                try {
+                  const lab = document.querySelector(`label[for="${CSS.escape(id)}"]`);
+                  if (lab) t += ' ' + (lab.innerText || '');
+                } catch (e) {}
+              }
+              const closestLab = el.closest('label');
+              if (closestLab) t += ' ' + (closestLab.innerText || '');
+              const sib = el.nextElementSibling;
+              if (sib && /^(SPAN|LABEL|DIV|P)$/.test(sib.tagName || '')) {
+                t += ' ' + (sib.innerText || '').slice(0, 40);
+              }
+              return t.toLowerCase().replace(/\\s+/g, ' ').trim();
+            };
+            const isMrOption = (text) => {
+              const t = (text || '').trim();
+              if (!t || t.length > 24) return false;
+              if (/\\b(mrs|miss|ms)\\.?\\b/.test(t) && !/^mr\\.?$/.test(t)) return false;
+              return /^mr\\.?$/.test(t) || /^mr\\.?\\b/.test(t);
+            };
+            const ownFieldLabel = (el) => {
+              const id = el.getAttribute('id');
+              let t = '';
+              if (id) {
+                try {
+                  const lab = document.querySelector(`label[for="${CSS.escape(id)}"]`);
+                  if (lab) t += ' ' + lab.innerText;
+                } catch (e) {}
+              }
+              t += ' ' + (el.getAttribute('aria-label') || '');
+              t += ' ' + (el.getAttribute('name') || '');
+              t += ' ' + (el.getAttribute('placeholder') || '');
+              t += ' ' + (el.getAttribute('autocomplete') || '');
+              return t.toLowerCase();
+            };
             const wantFromText = (text) => {
               const t = (text || '').toLowerCase();
               if (/current.*(position|role|title|designation)|present.*(position|role|title)|job title/.test(t)
@@ -864,6 +923,12 @@ def fill_common_questions(sb) -> None:
               }
               if (/(date of birth|\\bdob\\b|birth date|birthday)/.test(t) && !/place of birth/.test(t)) {
                 return '16/01/1989';
+              }
+              // Bare "Date" / "Date *" is Available Date, never DOB (UST questions-1).
+              // Skip mixed wraps that also contain Phone — fill those per-control.
+              if (/(^|\\n|\\s)date(\\s*\\*|\\s*$)/.test(t) && !/birth|dob|issued|expir|passport/.test(t)
+                  && !/\\bphone\\b|\\bmobile\\b/.test(t)) {
+                return '15/08/2026';
               }
               if (/(^|\\s)(title|salutation|honorific)\\b/.test(t) && !/job title|current position|position\\?/.test(t)) {
                 return 'Mr.';
@@ -925,7 +990,7 @@ def fill_common_questions(sb) -> None:
                 const hit =
                   (want === 'yes' && /\\byes\\b|yep|true|agree|available/.test(lab) && !/\\bno\\b/.test(lab)) ||
                   (want === 'male' && /\\bmale\\b/.test(lab) && !/female/.test(lab)) ||
-                  (want === 'Mr.' && (/^mr\\.?$|\\bmr\\.?\\b/.test(lab.trim()) || /\\bmr\\.?\\b/.test(lab)) && !/mrs|miss|ms\\.?/.test(lab)) ||
+                  (want === 'Mr.' && isMrOption(optionOwnText(r) || lab)) ||
                   (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than|currently serving|serving notice/.test(lab)) ||
                   (want === '0' && /\\b0\\b|immediate|0\\s*day|0-15|less than|currently serving|serving notice/.test(lab)) ||
                   (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not|do not want/.test(lab));
@@ -940,7 +1005,7 @@ def fill_common_questions(sb) -> None:
                   const t = (opt.text||'').toLowerCase();
                   if (
                     (want === 'yes' && /\\byes\\b/.test(t)) ||
-                    (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs/.test(t)) ||
+                    (want === 'Mr.' && isMrOption(t)) ||
                     (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than/.test(t)) ||
                     (want === '0' && /\\b0\\b|immediate|0\\s*day|0-15|less than/.test(t)) ||
                     (want === 'Hyderabad' && /hyderabad/.test(t)) ||
@@ -986,7 +1051,7 @@ def fill_common_questions(sb) -> None:
                 const t = ((el.innerText||'') + ' ' + (el.getAttribute('aria-label')||'')).trim().toLowerCase();
                 if (!t || t.length > 80) continue;
                 if (want === 'yes' && /\\byes\\b|i certify|yes, i certify/.test(t) && !/don'?t certify|\\bno,/.test(t)) { el.click(); return true; }
-                if (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs/.test(t)) { el.click(); return true; }
+                if (want === 'Mr.' && isMrOption(t)) { el.click(); return true; }
                 if (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15/.test(t)) { el.click(); return true; }
                 if (want === '0' && /\\b0\\b|immediate|0\\s*day|0-15/.test(t) && !/select an option|notice period/.test(t)) { el.click(); return true; }
                 if (want === 'B.Tech' && /b\\.?\\s*tech|bachelor|b\\.e\\b|undergraduate|master'?s?|m\\.?\\s*tech/.test(t)
@@ -1037,7 +1102,11 @@ def fill_common_questions(sb) -> None:
               else if (/last\\s*name|surname|family\\s*name|lname/.test(lab)) val = vals.last;
               else if (/(date of birth|\\bdob\\b|birth date|birthday)/.test(lab)) val = vals.dob;
               else if (/\\bpan\\b|aadhaar|aadhar|passport number|national id/.test(lab)) val = null;
-              else if (/\\bphone\\b|\\bmobile\\b|telephone|phone\\s*no/.test(lab) || type === 'tel') val = vals.phone;
+              else if (
+                type === 'tel' || (el.getAttribute('inputmode') || '') === 'tel'
+                || /tel|phone/.test(el.getAttribute('autocomplete') || '')
+                || /\\bphone\\b|\\bmobile\\b|telephone|phone\\s*no|ph\\.?\\s*no|contact\\s*(no|number)/.test(ownFieldLabel(el) || lab)
+              ) val = vals.phone;
               else if (/e-?mail/.test(lab) || type === 'email') val = vals.email;
               else if (/current.*(position|role|title|designation)|job title/.test(lab) && !/salary|ctc/.test(lab)) val = 'Solutions Architect';
               else if (/current.*(employer|company|organization)|present.*(employer|company)/.test(lab) && !/salary|ctc/.test(lab)) val = 'Nemetschek / Solibri';
@@ -1045,9 +1114,13 @@ def fill_common_questions(sb) -> None:
               else if (/highest (degree|education|qualification)|education|university|college|degree/.test(lab)) val = 'B.Tech';
               else if (/current.*(ctc|salary|compensation|package)|ctc.*current|current salary/.test(lab)) val = vals.current;
               else if (/expected.*(ctc|salary|compensation|package)|ctc.*expected/.test(lab)) val = vals.expected;
-              else if (/earliest start|start date|available from|joining date|available date|date available/.test(lab)
-                  || (type === 'date' && /start|join|avail/.test(lab))) val = '15/08/2026';
-              else if (type === 'date' && !/birth|\\bdob\\b/.test(lab)) val = '15/08/2026';
+              else if (/earliest start|start date|available from|joining date|available date|date available/.test(ownFieldLabel(el) || lab)
+                  || (type === 'date' && /start|join|avail|date/.test(ownFieldLabel(el) || lab))) val = '15/08/2026';
+              else if (type === 'date' && !/birth|\\bdob\\b/.test(ownFieldLabel(el) || lab)) val = '15/08/2026';
+              else if (
+                /\\bdate\\b/.test(ownFieldLabel(el) || lab)
+                && !/birth|dob|issued|expir/.test(ownFieldLabel(el) || lab)
+              ) val = '15/08/2026';
               else if (/notice|joining|availability/.test(lab) && !/start date|available from|available date/.test(lab)) {
                 const mode = (el.getAttribute('inputmode') || '').toLowerCase();
                 const numericNotice = type === 'number' || /numeric|decimal/.test(mode)
@@ -1073,15 +1146,28 @@ def fill_common_questions(sb) -> None:
               const group = [...document.querySelectorAll(`input[type=radio][name="${CSS.escape(name)}"]`)];
               if (!group.length || group.some(r => r.checked)) continue;
               const scored = group.map(r => {
-                const lab = ((r.getAttribute('aria-label')||'') + ' ' + (r.parentElement?.innerText||'') + ' ' + (r.value||'')).toLowerCase();
+                const own = optionOwnText(r);
+                const lab = own || ((r.getAttribute('aria-label')||'') + ' ' + (r.value||'')).toLowerCase();
                 let s = 0;
                 if (/decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not/.test(lab)) s += 4;
-                if (/\\byes\\b|immediate|agree|available|hyderabad|male\\b|\\bmr\\.?\\b/.test(lab)) s += 3;
-                if (/\\bno\\b|female|not available|never/.test(lab)) s -= 2;
+                if (isMrOption(own) || /\\byes\\b|immediate|agree|available|hyderabad|\\bmale\\b/.test(lab)) s += 3;
+                if (/\\bno\\b|female|not available|never/.test(lab) && !isMrOption(own)) s -= 2;
                 return {r, s, lab};
               }).sort((a,b) => b.s - a.s);
               try { scored[0].r.click(); answered += 1; } catch (e) {}
               try { (scored[0].r.closest('label') || scored[0].r).click(); } catch (e) {}
+            }
+            // Title *: click own-label Mr. even when the wrap lists both Mr. and Ms.
+            for (const root of document.querySelectorAll('[class*="question"], fieldset, [data-testid*="question"], .ia-Questions-item, li, section')) {
+              const text = (root.innerText || '').toLowerCase();
+              if (text.length > 400) continue;
+              if (!/(^|\\s)(title|salutation|honorific)\\b/.test(text) || /job title|current position/.test(text)) continue;
+              for (const el of root.querySelectorAll('input[type=radio], [role=radio], label, button, span')) {
+                const own = optionOwnText(el) || ((el.innerText || '') + ' ' + (el.getAttribute('aria-label') || '')).toLowerCase().trim();
+                if (!isMrOption(own)) continue;
+                try { el.click(); answered += 1; } catch (e) {}
+                break;
+              }
             }
             // Required empty selects → first non-placeholder option.
             for (const sel of document.querySelectorAll('select')) {
@@ -1161,14 +1247,18 @@ def fill_common_questions(sb) -> None:
               const req = el.required || el.getAttribute('aria-required') === 'true' || /required|\\*/.test(lab);
               if (!req && !/question|ctc|salary|notice|experience|phone|date/.test(lab) && itype !== 'date' && itype !== 'tel') continue;
               if (/\\bpan\\b|aadhaar|aadhar|passport number|national id/.test(lab)) continue;
+              // Prefer the control's own label so "Phone No * | Date" wrap
+              // does not put the phone number into the Date field.
+              const own = ownFieldLabel(el).trim();
+              const use = own || lab;
               // Do NOT map bare "Date" → DOB (UST Available Date was poisoned by that).
-              let w = wantFromText(lab);
+              let w = wantFromText(use);
               if (!w) {
-                if (/how many|years|experience/.test(lab)) w = '14';
-                else if (/salary|ctc|lpa|package/.test(lab)) w = '65';
-                else if (/birth|\\bdob\\b|birth date|birthday/.test(lab)) w = vals.dob;
-                else if (/start|join|avail|available date|date available/.test(lab) || itype === 'date') w = '15/08/2026';
-                else if (/\\bphone\\b|\\bmobile\\b|phone\\s*no|telephone/.test(lab) || itype === 'tel') w = vals.phone;
+                if (/how many|years|experience/.test(use)) w = '14';
+                else if (/salary|ctc|lpa|package/.test(use)) w = '65';
+                else if (/birth|\\bdob\\b|birth date|birthday/.test(use)) w = vals.dob;
+                else if (/start|join|avail|available date|date available/.test(use) || itype === 'date' || (/\\bdate\\b/.test(use) && !/birth|dob/.test(use))) w = '15/08/2026';
+                else if (/\\bphone\\b|\\bmobile\\b|phone\\s*no|telephone|ph\\.?\\s*no/.test(use) || itype === 'tel') w = vals.phone;
               }
               if (w && setNative(el, w)) answered += 1;
             }
