@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| ATS/AI screening rejects same generic Rafi_Resume.docx on every campus apply | Per-JD truthful tailor (tools/resume_tailor.py): rewrite headline/summary/skill order from owned stack; upload via thread-local path in ATS + LinkedIn Easy Apply; RESUME_TAILOR=1 default |
 | Oracle HYDERABAD careers false-skipped via body-line Bengaluru pollution; boards allowlist included Optum/UHG and burned Naukri on Taleo | card_location_ok: Hyd-clean title wins over noisy chrome; drop body-line scrape; exclude Optum/UHG from board allowlist when HITECHCITY_SKIP_UHG=1 |
 
 

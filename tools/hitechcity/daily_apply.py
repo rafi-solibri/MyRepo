@@ -46,6 +46,8 @@ os.environ.setdefault("HITECHCITY_DISCOVERY_LINKEDIN", "0")
 os.environ.setdefault("HITECHCITY_DISCOVERY_WEB", "1")
 os.environ.setdefault("ATS_CAPTCHA_POLL_SEC", "0.4")
 os.environ.setdefault("ATS_OWNER_FOCUS_EVERY_SEC", "2")
+# Per-JD truthful resume rewrite (headline/summary/skill order) before ATS upload.
+os.environ.setdefault("RESUME_TAILOR", "1")
 
 # Overnight / owner-asleep: short park on captcha/forms, skip long persist retries,
 # and cap soft incompletes per company so LinkedIn volume reaches Easy Apply + boards.

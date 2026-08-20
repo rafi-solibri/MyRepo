@@ -502,7 +502,12 @@ def card_meta(page: Page) -> dict[str, str]:
         return {}
 
 
-def fill_easy_apply(page: Page) -> tuple[str, str]:
+def fill_easy_apply(
+    page: Page,
+    *,
+    role: str = "",
+    company: str = "",
+) -> tuple[str, str]:
     """Minimal Easy Apply walker — confirm submitted only."""
     # Prefer existing durable helper if importable as subprocess would be heavy; keep local.
     try:
@@ -512,6 +517,25 @@ def fill_easy_apply(page: Page) -> tuple[str, str]:
     except Exception:
         pass
 
+    try:
+        from tools.hitechcity.ats_fill import _activate_tailored_resume, _clear_tailored_resume, _scrape_jd_text
+
+        jd_text = _scrape_jd_text(page)
+        _activate_tailored_resume(role=role, company=company, jd=jd_text, job_id="linkedin-easy")
+    except Exception as e:
+        print(f"RESUME_TAILOR easy_apply fallback: {e}", flush=True)
+
+    try:
+        return _fill_easy_apply_body(page)
+    finally:
+        try:
+            from tools.hitechcity.ats_fill import _clear_tailored_resume
+
+            _clear_tailored_resume()
+        except Exception:
+            pass
+
+def _fill_easy_apply_body(page: Page) -> tuple[str, str]:
     start = time.time()
     time_cap = int(os.environ.get("HITECHCITY_EASY_TIME_CAP_S", "120"))
     for _ in range(8):
@@ -534,15 +558,15 @@ def fill_easy_apply(page: Page) -> tuple[str, str]:
         if re.search(r"application (sent|submitted)|applied to ", body, re.I):
             return "applied", "easy_apply_submitted"
 
-        # Resume choose / upload
-        try:
-            if page.get_by_text(re.compile(r"Rafi_Resume", re.I)).count():
-                page.get_by_text(re.compile(r"Rafi_Resume", re.I)).first.click(timeout=1000)
-        except Exception:
-            pass
+        # Prefer uploading the tailored Rafi_Resume.docx; also click saved label.
         try:
             for inp in page.locator("input[type='file']").all()[:2]:
                 inp.set_input_files(resume_path())
+        except Exception:
+            pass
+        try:
+            if page.get_by_text(re.compile(r"Rafi_Resume", re.I)).count():
+                page.get_by_text(re.compile(r"Rafi_Resume", re.I)).first.click(timeout=1000)
         except Exception:
             pass
 
@@ -674,7 +698,12 @@ def follow_external(page: Page, meta: dict[str, str]) -> dict[str, Any]:
     except Exception:
         pass
     time.sleep(1.5)
-    status, reason = attempt_ats_apply(ats, time_cap_s=EXT_ATS_TIME_CAP_S)
+    status, reason = attempt_ats_apply(
+        ats,
+        time_cap_s=EXT_ATS_TIME_CAP_S,
+        role=meta.get("role") or "",
+        company=meta.get("company") or "",
+    )
     row["status"] = status
     row["reason"] = reason
     row["atsUrl"] = ats.url
@@ -1005,7 +1034,11 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                         )
                         continue
                     time.sleep(1.2)
-                    status, why = fill_easy_apply(page)
+                    status, why = fill_easy_apply(
+                        page,
+                        role=role,
+                        company=company_found or name,
+                    )
                     row = {
                         "company": company_found or name,
                         "role": role,
