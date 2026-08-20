@@ -66,7 +66,31 @@ def ensure_resume_aliases() -> Path:
     return src
 
 
+# Per-job tailored resume (set by LinkedIn/ATS helpers before upload).
+_ACTIVE_RESUME: Path | None = None
+
+
+def set_active_resume(path: str | Path | None) -> None:
+    """Prefer this path for the next ATS/Easy Apply upload (JD-tailored copy)."""
+    global _ACTIVE_RESUME
+    if path is None:
+        _ACTIVE_RESUME = None
+        return
+    p = Path(path)
+    _ACTIVE_RESUME = p if p.is_file() and p.stat().st_size > 1000 else None
+
+
+def clear_active_resume() -> None:
+    set_active_resume(None)
+
+
 def resume_upload_path() -> str:
+    """Return the resume file to upload (active tailored copy, else canonical)."""
+    env = (os.environ.get("RESUME_UPLOAD_PATH") or "").strip()
+    if env and Path(env).is_file():
+        return env
+    if _ACTIVE_RESUME is not None and _ACTIVE_RESUME.is_file():
+        return str(_ACTIVE_RESUME)
     return str(ensure_resume_aliases())
 
 

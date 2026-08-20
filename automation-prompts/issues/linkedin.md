@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-08-20 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Applications rejected by ATS/AI despite volume — static resume not JD-aligned | Per-job tailor via tools/resume_tailor.py; Easy Apply upload + ATS resume_upload_path active override; python-docx in cloud-agent-install |
+
+
 ## 2026-08-19 (cloud)
 
 | Issue | Fix |
