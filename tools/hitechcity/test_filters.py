@@ -66,6 +66,9 @@ def test_title_ok():
     assert CAREERS_TITLE_SKIP.search("Staff Project Analyst")
     assert CAREERS_TITLE_SKIP.search("Principal Project Manager India, Telangana, Hyderabad")
     assert CAREERS_TITLE_SKIP.search("Principal Software Development Engineer in Test")
+    assert CAREERS_TITLE_SKIP.search(
+        "Principal Performance Test Engineer (Fusion Load Testing) HYDERABAD"
+    )
     assert CAREERS_TITLE_SKIP.search("CyberSecurity Architect - CNI")
     assert CAREERS_TITLE_SKIP.search("Principal Database Engineer- Architecture/Engineering")
     assert CAREERS_TITLE_SKIP.search("Embedded Software - System Test Architect")
@@ -266,6 +269,23 @@ def test_careers_card_location():
     assert not card_location_ok(
         "Sr. Director Analyst, Enterprise Architecture (Remote US)",
         "Remote - United States",
+    )
+    # Gartner title punctuation: Remote- US / Remote - U.S. (must not pass as India-remote).
+    assert not card_location_ok(
+        "Sr Director Analyst, AI and Software Engineering (Remote- US)"
+    )
+    assert not card_location_ok(
+        "Senior Director Analyst - Software Engineering for AI and Agentic Applications "
+        "(Remote - U.S.)"
+    )
+    gartner_tx = (
+        "https://gartner.wd5.myworkdayjobs.com/en-US/EXT/job/Remote---Texas/"
+        "Sr-Director-Analyst--AI-and-Software-Engineering--Remote--US-_104591-1/"
+        "apply/applyManually"
+    )
+    assert not card_location_ok(
+        "Sr Director Analyst, AI and Software Engineering (Remote- US)",
+        url_loc_hint(gartner_tx),
     )
     assert card_location_ok("Solution Architect", "Fully Remote")
     assert card_location_ok("Solution Architect", "Remote, India")
