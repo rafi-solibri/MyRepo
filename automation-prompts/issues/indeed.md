@@ -1,5 +1,12 @@
 # Indeed — issues & fixes
 
+## 2026-08-21 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| SmartApply education combobox + Title Mr/Ms left on Select an option (ValGenesis/LTIMindtree easy_apply_incomplete) | Label scan includes education/degree; recover_required_selects open→wait→pick for education/Title/Country; validation recovery for Choose an option |
+
+
 ## 2026-08-20 (cloud)
 
 | Issue | Fix |
