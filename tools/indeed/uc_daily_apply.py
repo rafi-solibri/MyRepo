@@ -873,7 +873,7 @@ def fill_common_questions(sb) -> None:
                 return null;
               }
               if (/current.*(ctc|salary|compensation|pay)|ctc.*current|present.*ctc|current.*package|current salary/.test(t)) return '52';
-              if (/expected.*(ctc|salary|compensation|pay)|ctc.*expected|desired.*salary|expected.*package/.test(t)) return '65';
+              if (/expected.*(ctc|salary|compensation|pay)|ctc.*expected|desired.*(salary|compensation|ctc|pay)|expected.*package/.test(t)) return '65';
               if (/earliest start|start date|available from|joining date|when can you (start|join)/.test(t)
                   && !/salary|ctc/.test(t)) {
                 return '15/08/2026';
@@ -925,7 +925,7 @@ def fill_common_questions(sb) -> None:
                 const hit =
                   (want === 'yes' && /\\byes\\b|yep|true|agree|available/.test(lab) && !/\\bno\\b/.test(lab)) ||
                   (want === 'male' && /\\bmale\\b/.test(lab) && !/female/.test(lab)) ||
-                  (want === 'Mr.' && (/^mr\\.?$|\\bmr\\.?\\b/.test(lab.trim()) || /\\bmr\\.?\\b/.test(lab)) && !/mrs|miss|ms\\.?/.test(lab)) ||
+                  (want === 'Mr.' && (/^mr\\.?$/.test(lab.trim()) || (/\\bmr\\.?\\b/.test(lab) && !/mrs|miss|\\bms\\.?\\b/.test(lab)))) ||
                   (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than|currently serving|serving notice/.test(lab)) ||
                   (want === '0' && /\\b0\\b|immediate|0\\s*day|0-15|less than|currently serving|serving notice/.test(lab)) ||
                   (want === 'decline' && /decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not|do not want/.test(lab));
@@ -986,11 +986,13 @@ def fill_common_questions(sb) -> None:
                 const t = ((el.innerText||'') + ' ' + (el.getAttribute('aria-label')||'')).trim().toLowerCase();
                 if (!t || t.length > 80) continue;
                 if (want === 'yes' && /\\byes\\b|i certify|yes, i certify/.test(t) && !/don'?t certify|\\bno,/.test(t)) { el.click(); return true; }
-                if (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs/.test(t)) { el.click(); return true; }
+                // Prefer exact "Mr." / "Mr" nodes — avoid clicking a parent that contains both Mr. and Ms.
+                if (want === 'Mr.' && /^mr\\.?$/.test(t.trim())) { el.click(); return true; }
+                if (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs|miss|\\bms\\.?\\b/.test(t) && t.length <= 12) { el.click(); return true; }
                 if (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15/.test(t)) { el.click(); return true; }
                 if (want === '0' && /\\b0\\b|immediate|0\\s*day|0-15/.test(t) && !/select an option|notice period/.test(t)) { el.click(); return true; }
-                if (want === 'B.Tech' && /b\\.?\\s*tech|bachelor|b\\.e\\b|undergraduate|master'?s?|m\\.?\\s*tech/.test(t)
-                    && !/select an option|highest degree/.test(t)) {
+                if (want === 'B.Tech' && /b\\.?\\s*tech|bachelor|b\\.e\\.?(\\b|,)|undergraduate|master'?s?|m\\.?\\s*tech|graduate degree|post\\s*graduate/.test(t)
+                    && !/select an option|highest degree|what is your/.test(t)) {
                   el.click(); return true;
                 }
                 if ((want === '14' || want === '10') && /\\b(14|12|10|8)\\+?\\b|12-15|10\\+|8-10/.test(t)
@@ -1017,7 +1019,8 @@ def fill_common_questions(sb) -> None:
             for (const lab of document.querySelectorAll('label, legend, h1, h2, h3, p, span, div')) {
               const t = (lab.innerText||'').trim();
               // Allow short "Title *" / "Mr." labels (was >6 and missed Title alone).
-              if (t.length > 2 && t.length < 220 && /\\?|ctc|salary|notice|experience|relocat|authori|location|package|lpa|gender|hybrid|bond|veteran|disability|ethnicity|race|hispanic|voluntary|self.?ident|birth|dob|title|salutation|phone|available date|^mr\\.?$|^ms\\.?$/.test(t.toLowerCase())) {
+              // Include education/degree — ValGenesis "highest degree of education" was skipped.
+              if (t.length > 2 && t.length < 220 && /\\?|ctc|salary|notice|experience|relocat|authori|location|package|lpa|gender|hybrid|bond|veteran|disability|ethnicity|race|hispanic|voluntary|self.?ident|birth|dob|title|salutation|phone|available date|education|degree|qualification|university|college|^mr\\.?$|^ms\\.?$/.test(t.toLowerCase())) {
                 const want = wantFromText(t);
                 if (want && clickMatching(lab.closest('div, fieldset, li, section, [class*="question"]') || lab.parentElement || lab, want)) {
                   answered += 1;
@@ -1180,6 +1183,9 @@ def fill_common_questions(sb) -> None:
     except Exception as e:
         print(f"  fill_error={e!s}"[:200], flush=True)
 
+    # Comboboxes (education / Title / Country) often render options only after open.
+    recover_required_selects(sb)
+
     # Resume upload — JD-tailored copy when prepare_resume_for_job ran.
     try:
         from tools.resume_paths import resume_upload_path
@@ -1195,6 +1201,131 @@ def fill_common_questions(sb) -> None:
         except Exception:
             pass
     tick_required_agreements(sb)
+    recover_required_selects(sb)
+
+
+def recover_required_selects(sb) -> dict:
+    """Open unresolved SmartApply comboboxes and pick education / Title / Country.
+
+    ValGenesis leaves "Select an option" on highest-degree with
+    "Choose an option to continue". LTIMindtree Title Mr/Ms radios need an
+    exact Mr. click. Country dial was already handled; this covers the rest
+    with an open → brief wait → pick pass (listbox options hydrate async).
+    """
+    _switch_smartapply_frame(sb)
+    opened = []
+    try:
+        opened = sb.execute_script(
+            r"""
+            const opened = [];
+            const triggers = [...document.querySelectorAll(
+              'button, [role=combobox], [aria-haspopup=listbox], select'
+            )];
+            for (const el of triggers) {
+              const wrap = el.closest('fieldset, [class*="question"], [class*="Question"], li, section, label, div') || el.parentElement || el;
+              const ctx = ((wrap.innerText || '') + ' ' + (el.getAttribute('aria-label') || '') + ' ' + (el.innerText || '')).toLowerCase().slice(0, 420);
+              const shown = ((el.innerText || '') + ' ' + (el.getAttribute('aria-label') || '')).trim().toLowerCase();
+              const needs =
+                /select an option|^select$|choose an option/.test(shown)
+                || (el.tagName === 'SELECT' && (el.selectedIndex <= 0))
+                || (el.getAttribute('aria-expanded') === 'false' && /highest (degree|education)|degree of education|education level|\btitle\b|salutation|\bcountry\b|dial.?code/.test(ctx));
+              if (!needs) continue;
+              try { el.scrollIntoView({block:'center'}); } catch (e) {}
+              try { el.click(); opened.push(ctx.slice(0, 80)); } catch (e) {}
+            }
+            for (const err of document.querySelectorAll('[class*="error"], [role=alert], span, p, div')) {
+              const et = (err.innerText || '').trim();
+              if (!/choose an option to continue/i.test(et)) continue;
+              const root = err.closest('fieldset, [class*="question"], [class*="Question"], li, section, form, div') || document.body;
+              const trigger = root.querySelector('button, [role=combobox], [aria-haspopup=listbox], select');
+              if (trigger) {
+                try { trigger.click(); opened.push('validation:' + (root.innerText || '').slice(0, 60)); } catch (e) {}
+              }
+            }
+            return opened;
+            """
+        ) or []
+    except Exception as e:
+        print(f"  recover_selects_open_err={e!s}"[:200], flush=True)
+        opened = []
+    if opened:
+        time.sleep(0.55)
+    picked = {}
+    try:
+        picked = sb.execute_script(
+            r"""
+            const clicked = [];
+            const pick = (re, why) => {
+              const opts = [...document.querySelectorAll('[role=option], li, button, label, span, div, a')];
+              const scored = opts.map(el => {
+                const t = ((el.innerText || '') + ' ' + (el.getAttribute('aria-label') || '')).trim();
+                if (!t || t.length > 80) return null;
+                if (!re.test(t)) return null;
+                const r = el.getBoundingClientRect();
+                if (r.width < 2 || r.height < 2) return null;
+                let s = 0;
+                if (/^mr\.?$/i.test(t)) s += 10;
+                if (/bachelor|b\.?\s*tech|b\.e\b/i.test(t)) s += 8;
+                if (/india|\+91/i.test(t)) s += 8;
+                if (t.length < 24) s += 2;
+                return {el, t, s};
+              }).filter(Boolean).sort((a,b) => b.s - a.s);
+              if (!scored.length) return false;
+              try { scored[0].el.click(); clicked.push(why + ':' + scored[0].t.slice(0, 40)); return true; } catch (e) { return false; }
+            };
+            pick(/^mr\.?$/i, 'title-mr')
+              || pick(/\bmr\.?\b/i, 'title-mr-loose');
+            pick(/b\.?\s*tech|bachelor|b\.e\.?(\b|,)|undergraduate|graduate degree|master'?s?|m\.?\s*tech|post\s*graduate/i, 'education');
+            pick(/^(india|\+?\s*91)\b/i, 'country')
+              || pick(/india|\+\s*91|\+91/i, 'country-loose');
+            pick(/\b(14|12|10|8)\+?\b|10\+|12-15|8-10/i, 'years');
+            for (const sel of document.querySelectorAll('select')) {
+              if (sel.disabled || (sel.value && sel.selectedIndex > 0)) continue;
+              const lab = ((sel.getAttribute('aria-label')||'') + ' ' + (sel.closest('fieldset, [class*="question"], label, div')?.innerText||'')).toLowerCase().slice(0, 300);
+              let re = null;
+              let why = 'select';
+              if (/highest (degree|education)|degree of education|education level|university|college|qualification/.test(lab)) {
+                re = /b\.?\s*tech|bachelor|b\.e\b|undergraduate|master|m\.?\s*tech/i; why = 'select-education';
+              } else if (/(^|\s)(title|salutation|honorific)\b/.test(lab) && !/job title/.test(lab)) {
+                re = /^mr\.?$/i; why = 'select-title';
+              } else if (/\bcountry\b|dial.?code|phone.?code/.test(lab)) {
+                re = /india|\+91|^in$/i; why = 'select-country';
+              }
+              if (!re) continue;
+              for (const opt of sel.options) {
+                if (re.test(opt.text || '')) {
+                  sel.value = opt.value;
+                  sel.dispatchEvent(new Event('change', {bubbles:true}));
+                  clicked.push(why + ':' + (opt.text||'').slice(0,40));
+                  break;
+                }
+              }
+            }
+            const titleRoots = [...document.querySelectorAll('fieldset, [class*="question"], [class*="Question"], li, section, div')]
+              .filter(r => {
+                const t = (r.innerText || '').slice(0, 120).toLowerCase();
+                return t.length < 200 && /\btitle\b|\bsalutation\b/.test(t) && /\bmr\.?\b/.test(t) && /\bms\.?\b/.test(t);
+              });
+            for (const root of titleRoots) {
+              const radios = [...root.querySelectorAll('input[type=radio], [role=radio], label, button, span')];
+              const mr = radios.find(el => {
+                const t = ((el.getAttribute('aria-label')||'') + ' ' + (el.innerText||'') + ' ' + (el.value||'')).trim();
+                return /^mr\.?$/i.test(t);
+              });
+              if (mr) {
+                try { mr.click(); clicked.push('title-radio-mr'); } catch (e) {}
+                break;
+              }
+            }
+            return {clicked, url: location.href};
+            """
+        ) or {}
+    except Exception as e:
+        print(f"  recover_selects_pick_err={e!s}"[:200], flush=True)
+        picked = {}
+    if opened or (isinstance(picked, dict) and picked.get("clicked")):
+        print(f"  recover_selects opened={opened!r} picked={picked!r}", flush=True)
+    return {"opened": opened, "picked": picked if isinstance(picked, dict) else {}}
 
 
 def tick_required_agreements(sb) -> dict:
@@ -1268,6 +1399,25 @@ def tick_required_agreements(sb) -> dict:
                   });
                 if (india) {
                   try { india.click(); clicked.push('validation-country-india'); } catch (e) {}
+                }
+              } else if (/highest (degree|education)|degree of education|education level|qualification|university|college/.test(ctx)) {
+                const trigger = root.querySelector('button, [role=combobox], [aria-haspopup=listbox], select');
+                if (trigger) { try { trigger.click(); } catch (e) {} }
+                const edu = [...document.querySelectorAll('[role=option], li, button, div, span, a')]
+                  .find(e => {
+                    const t = ((e.innerText || '') + ' ' + (e.getAttribute('aria-label') || '')).trim();
+                    return t && t.length <= 80 && /b\.?\s*tech|bachelor|b\.e\b|undergraduate|master|m\.?\s*tech/i.test(t)
+                      && !/select an option|highest degree|what is your/i.test(t);
+                  });
+                if (edu) {
+                  try { edu.click(); clicked.push('validation-education'); } catch (e) {}
+                }
+              } else if (/\btitle\b|\bsalutation\b/.test(ctx) && /\bmr\.?\b/.test(ctx)) {
+                const mr = [...root.querySelectorAll('label, button, [role=radio], [role=option], input, span')]
+                  .find(e => /^mr\.?$/i.test(((e.innerText || '') + ' ' + (e.getAttribute('aria-label') || '') + ' ' + (e.value || '')).trim()));
+                if (mr) {
+                  const box = associatedBox(mr) || mr;
+                  if (!isOn(box)) tick(box, 'validation-title-mr');
                 }
               } else {
                 const opt = [...root.querySelectorAll('label, button, [role=option], [role=radio], [role=checkbox], input')]
@@ -2545,6 +2695,7 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
             last_cta_key = cta_key if clicked else ""
         if same_cta_streak >= 2:
             tick_required_agreements(sb)
+            recover_required_selects(sb)
             # Questions Continue often no-ops under invisible reCAPTCHA (ValGenesis).
             try:
                 if _page_has_recaptcha(sb) and not _recaptcha_cleared(sb):
