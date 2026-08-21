@@ -230,6 +230,36 @@ assert.strictEqual(
   "COBOL-primary lead without .NET must skip"
 );
 assert.strictEqual(
+  shouldSkipTitle("Observability Architect - Datadog"),
+  true,
+  "Datadog / Observability architect must skip (false-apply 2026-08-21)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Principal Infrastructure Engineer"),
+  true,
+  "Infrastructure Engineer must skip (false-apply 2026-08-21)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Sr Staff Engineer - Analog IC"),
+  true,
+  "Analog IC / hardware staff engineer must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Digital Verification Lead Engineer"),
+  true,
+  "Digital Verification / VLSI lead must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Data and AI Governance Architect / Lead"),
+  true,
+  "Data and AI title (and not just Data & AI) must skip without .NET"
+);
+assert.strictEqual(
+  shouldSkipTitle("Cloud Infrastructure Architect .NET"),
+  false,
+  "Cloud Infrastructure Architect with .NET must not title-skip"
+);
+assert.strictEqual(
   shouldSkipCompany("Pega"),
   true,
   "Pega employer must skip even if title omits Pega"
