@@ -131,6 +131,9 @@ BAD_LOC_HINT = re.compile(
     r"us[- ](?:texas|oregon|california|washington|arizona|colorado|massachusetts|"
     r"florida|georgia|illinois|new[- ]york)|india[- ](?:bangalore|bengaluru)|"
     r"hillsboro|santa[- ]clara|folsom|"
+    # Full US state names + Remote-US / Remote - U.S. (Gartner title + Workday path).
+    r"texas|oregon|arizona|colorado|massachusetts|florida|georgia|illinois|"
+    r"remote[\s\-–—]*u\.?s\.?|remote[\s\-–—]*united\s*states|"
     r"tx|wa|ca|fl|ny|il|ga|nc|ma)\b",
     re.I,
 )
@@ -155,6 +158,7 @@ CAREERS_TITLE_SKIP = re.compile(
     r"\bai\s*engineer\b|\bml\s*engineer\b|\bai\s*architect\b|\bml\s*architect\b|"
     r"\bartificial\s*intelligence\b|\bcuda\b|\brocm\b|"
     r"engineer in test|\bsdet\b|cyber\s*security|cybersecurity|"
+    r"performance\s*test|load\s*test|fusion\s*load\s*testing|"
     r"database engineer",
     re.I,
 )

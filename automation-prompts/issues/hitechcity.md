@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-21 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Gartner (Remote- US)/(Remote - U.S.) titles + Workday Remote---Texas paths false-passed location filter; Oracle Performance Test Engineer burned ASK_OWNER | BAD_LOC_HINT: Remote-US/U.S. + full US state names; CAREERS_TITLE_SKIP: performance/load test |
+
+
 ## 2026-08-20 (cloud)
 
 | Issue | Fix |
