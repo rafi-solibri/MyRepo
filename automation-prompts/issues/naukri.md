@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-08-21 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| False-applies Observability/Datadog + Infrastructure Engineer + Analog IC + Digital Verification; Data and AI not skipped; end-of-run profile restore timed out with 14 mnjuser/profile tabs | Skip observability/datadog/infrastructure engineer/analog IC/digital verification/VLSI/ASIC/FPGA titles; match data and AI; prune excess profile tabs in daily_apply + reuse profile tab + goto retries in update_profile_resume |
+
+
 ## 2026-08-20 (cloud)
 
 | Issue | Fix |

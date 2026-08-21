@@ -567,6 +567,7 @@ async function waitForDetailApplyReady(detailPage, { timeoutMs = 18000 } = {}) {
 
 function pruneStaleApplyTabs(context, keepPages = []) {
   const keep = new Set(keepPages.filter(Boolean));
+  const profileTabs = [];
   for (const p of context.pages()) {
     if (keep.has(p)) continue;
     const u = p.url() || "";
@@ -577,7 +578,16 @@ function pruneStaleApplyTabs(context, keepPages = []) {
       )
     ) {
       safeClose(p);
+      continue;
     }
+    // Mid-run tailored profile uploads open a new mnjuser/profile tab each time;
+    // 10+ profile tabs stall goto and leave restore at end of day failing.
+    if (/naukri\.com\/mnjuser\/profile/i.test(u)) {
+      profileTabs.push(p);
+    }
+  }
+  for (const p of profileTabs.slice(0, -1)) {
+    safeClose(p);
   }
 }
 
@@ -2270,6 +2280,7 @@ async function main() {
     // Restore canonical CV on Naukri profile so recruiters don't keep the last JD variant.
     if (TAILOR_RESUME && TAILOR_PROFILE_UPLOAD && RESUME) {
       try {
+        pruneStaleApplyTabs(context, [page]);
         const restored = syncTailoredProfileResume(RESUME);
         report.profileResumeRestored = {
           ok: Boolean(restored?.ok || restored?.profileUpdated || restored?.upload?.ok),

@@ -33,7 +33,7 @@ function findResume() {
  * Only skip when title itself is a QA/SDET role.
  */
 const SKIP_TITLE_RE =
-  /\b(qa engineer|quality assurance|quality engineer|quality engineering|quality architect|quality solution architect|\bqe architect\b|sdet|tosca|test automation architect|embedded\b|firmware|intern(?!et)|fresher|salesforce|agentforce|servicenow|coupa|pega|lead system architect|\blsa\b|appian|anaplan|celonis|power platform|guidewire|sap\b|dynamics|\bd365\b|workday hms|revit|\bbarch\b|hubspot|\bsre\b|site reliability|devops engineer|devops lead|platform sre|network operations|network ops|network support|civil\b|structural|substation|attack surface|cyber\s*security|cybersecurity|cyber architecture|infosec|penetration|red team|soc analyst|security operations|threat hunter|\bmdr\b|\bedr\b)\b/i;
+  /\b(qa engineer|quality assurance|quality engineer|quality engineering|quality architect|quality solution architect|\bqe architect\b|sdet|tosca|test automation architect|embedded\b|firmware|intern(?!et)|fresher|salesforce|agentforce|servicenow|coupa|pega|lead system architect|\blsa\b|appian|anaplan|celonis|power platform|guidewire|sap\b|dynamics|\bd365\b|workday hms|revit|\bbarch\b|hubspot|\bsre\b|site reliability|devops engineer|devops lead|platform sre|network operations|network ops|network support|civil\b|structural|substation|attack surface|cyber\s*security|cybersecurity|cyber architecture|infosec|penetration|red team|soc analyst|security operations|threat hunter|\bmdr\b|\bedr\b|observability|\bdatadog\b|infrastructure engineer|analog\s*ic|\bvlsi\b|digital verification|\basic\b|\bfpga\b)\b/i;
 
 /**
  * Employer names that are Coupa/Pega/Salesforce/SAP-primary even when the
@@ -44,7 +44,7 @@ const SKIP_COMPANY_RE =
 
 /** Pure AI/data titles need .NET|C# on the TITLE (skills laundry lists are noisy). */
 const PURE_AI_DATA_RE =
-  /\b(ai\s+architect|artificial\s+intelligence\s+architect|ai\s+agent|ai\s+engineer(?:ing)?(?:\s+manager|\s+lead)?|ai\s+engineering\s+manager|ai\s+solution\s+architect|architect[^.\n]{0,48}\b(ai|ml)\b|data\s*&\s*ai|ml\s+engineer|gen\s*-?\s*ai|genai|agentic\s+ai|\bgemini\b|\bllm\b|enterprise\s+platform\s+architect[^.\n]{0,24}\b(ai|ml|gemini|llm)\b|data\s+scientist|data\s+engineer|data\s+engineering|data\s+architect|gcp\s+infra(?:structure)?(?:\s+architect)?)\b/i;
+  /\b(ai\s+architect|artificial\s+intelligence\s+architect|ai\s+agent|ai\s+engineer(?:ing)?(?:\s+manager|\s+lead)?|ai\s+engineering\s+manager|ai\s+solution\s+architect|architect[^.\n]{0,48}\b(ai|ml)\b|data\s*(?:&|and)\s*ai|ml\s+engineer|gen\s*-?\s*ai|genai|agentic\s+ai|\bgemini\b|\bllm\b|enterprise\s+platform\s+architect[^.\n]{0,24}\b(ai|ml|gemini|llm)\b|data\s+scientist|data\s+engineer|data\s+engineering|data\s+architect|gcp\s+infra(?:structure)?(?:\s+architect)?)\b/i;
 
 /**
  * Primary non-.NET stacks in the TITLE — skip to avoid Java/MEAN ATS dead-ends.

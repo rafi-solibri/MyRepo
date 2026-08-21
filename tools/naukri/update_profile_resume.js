@@ -121,7 +121,21 @@ async function dismissPopups(page) {
 }
 
 async function ensureLoggedIn(page) {
-  await page.goto(PROFILE_URL, { waitUntil: "domcontentloaded", timeout: 60000 });
+  let lastErr = null;
+  for (let i = 0; i < 3; i++) {
+    try {
+      await page.goto(PROFILE_URL, {
+        waitUntil: "domcontentloaded",
+        timeout: 60000,
+      });
+      lastErr = null;
+      break;
+    } catch (e) {
+      lastErr = e;
+      await page.waitForTimeout(1500).catch(() => {});
+    }
+  }
+  if (lastErr) throw lastErr;
   await page.waitForTimeout(2500);
   await dismissPopups(page);
   const url = page.url();
@@ -524,7 +538,15 @@ async function main() {
   try {
     const browser = await chromium.connectOverCDP(CDP);
     const context = browser.contexts()[0] || (await browser.newContext());
-    page = await context.newPage();
+    // Reuse one profile tab and close extras — daily_apply mid-run uploads
+    // otherwise leave 10+ mnjuser/profile tabs and page.goto times out.
+    const existing = context
+      .pages()
+      .filter((p) => /naukri\.com\/mnjuser\/profile/i.test(p.url() || ""));
+    for (const p of existing.slice(0, -1)) {
+      p.close().catch(() => {});
+    }
+    page = existing[existing.length - 1] || (await context.newPage());
     page.setDefaultTimeout(45000);
   } catch (e) {
     result.reason = "cdp_unreachable";
