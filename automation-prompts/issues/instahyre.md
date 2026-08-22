@@ -1,5 +1,12 @@
 # Instahyre — issues & fixes
 
+## 2026-08-22 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Data Architect titles (e.g. Data Architect - AWS) passed skipReason and got applied | Add data architect to pure_ai_data_without_dotnet hard-skip in filters.js (+ test) |
+
+
 ## 2026-08-20 (cloud)
 
 | Issue | Fix |

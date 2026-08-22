@@ -73,9 +73,9 @@ function skipReason(title, { company = "", location = "", skills = "", salary = 
     return "wrong_stack_title";
   }
 
-  // Pure AI/data titles — include "Solution/Technical Architect - AI" forms
+  // Pure AI/data titles — include "Solution/Technical Architect - AI" and "Data Architect" forms
   if (
-    /\b(ai architect|ai engineer|ai scientist|ai developer|ml engineer|ml scientist|machine learning|data scientist|data science|data engineer|data analyst|data specialist|genai|architect\s*[-–:]?\s*ai|ai\s*[-–:]?\s*architect)\b/i.test(
+    /\b(ai architect|ai engineer|ai scientist|ai developer|ml engineer|ml scientist|machine learning|data scientist|data science|data engineer|data analyst|data specialist|data architect|genai|architect\s*[-–:]?\s*ai|ai\s*[-–:]?\s*architect)\b/i.test(
       t
     ) &&
     !hasDotNet(t, "") // title-only .NET proof for pure AI/data (skills laundry lists are noisy)
@@ -155,6 +155,7 @@ if (require.main === module) {
     "Solution Architect - AI",
     "Lead Anaplan Solution Architect",
     "Senior Data Analyst",
+    "Data Architect - AWS",
     "AI Scientist",
     "Frontend Engineer",
     "Fullstack Engineer",
