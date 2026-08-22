@@ -1,0 +1,40 @@
+{
+  "portal": "linkedin",
+  "source": "cloud-post-fix-rerun",
+  "date": "2026-08-22",
+  "ok": false,
+  "postFixRerun": true,
+  "mainSha": "0cfa95467e03870d1bd1034422db6ca42b3db3a1",
+  "mergedPr": "https://github.com/rafi-solibri/MyRepo/pull/234",
+  "counts": {
+    "applied": 0,
+    "submitted": 0,
+    "external": 0,
+    "rejected": 0,
+    "blocked": 1,
+    "skipped": 0,
+    "seen": 0
+  },
+  "applied": [],
+  "submitted": [],
+  "external": [],
+  "rejected": [],
+  "blocked": [
+    {
+      "reason": "account_temporarily_restricted",
+      "kind": "account_temporarily_restricted",
+      "lift_utc": "2026-08-23T03:30:00+00:00",
+      "seconds_until_lift": 82867,
+      "via": "google_sso"
+    }
+  ],
+  "skipped": [],
+  "seen": [],
+  "blockerSummary": "LinkedIn temporary account restriction until 2026-08-23T03:30:00+00:00; live login failed; Easy Apply 0 / External 0; no applies invented",
+  "notes": [
+    "POST_FIX_RERUN=1 on merged main 0cfa954 / PR 234",
+    "Morning run bc-8c503787 also 0 applies — same restriction",
+    "CDP_REQUIRE_LIVE_LOGIN=1 blocked helpers",
+    "Owner-only; not code-fixable; re-run cap 1/5"
+  ]
+}
