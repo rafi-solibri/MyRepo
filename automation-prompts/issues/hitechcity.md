@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-22 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Oracle careers apply/email soft-incomplete under OWNER_ASLEEP; Salesforce LOC_UI filled Agentforce chat | otp_wall_reason ats_otp_wall fail-fast + Oracle apply-flow checkbox button; location_ui_input_meta_ok skips Agentforce |
+
+
 ## 2026-08-21 (cloud)
 
 | Issue | Fix |

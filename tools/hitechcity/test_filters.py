@@ -21,6 +21,7 @@ from tools.hitechcity.careers_apply import (
     is_hang_scan_url,
     is_sso_only_careers_url,
     is_uhg_skip_url,
+    location_ui_input_meta_ok,
     role_has_foreign_location,
     url_loc_hint,
 )
@@ -497,6 +498,13 @@ def test_skip_uhg_default():
             os.environ["HITECHCITY_SKIP_COMPANIES"] = prev_names
 
 
+def test_location_ui_skips_agentforce():
+    assert not location_ui_input_meta_ok("Ask Agentforce anything search-field")
+    assert not location_ui_input_meta_ok("oda-chat-input")
+    assert location_ui_input_meta_ok("Location City or metro area")
+    assert location_ui_input_meta_ok("Search jobs by city")
+
+
 if __name__ == "__main__":
     test_title_ok()
     test_campus_location()
@@ -509,4 +517,5 @@ if __name__ == "__main__":
     test_hyland_icims_url()
     test_attempt_ats_apply_persist_env_no_nameerror()
     test_skip_uhg_default()
+    test_location_ui_skips_agentforce()
     print("ok")

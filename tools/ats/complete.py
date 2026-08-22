@@ -340,9 +340,12 @@ def is_hard_ats_wall(reason: str | None) -> bool:
             "login",
             "account wall",
             "ats_login_wall",
+            "ats_otp_wall",
             "ats_password_missing",
             "ats_email_missing",
             "sso",
+            "otp",
+            "verification code",
         )
     )
 
@@ -551,6 +554,23 @@ def iframe_box_is_onscreen(box: dict | None) -> bool:
     return float(box.get("width") or 0) >= 20 and float(box.get("height") or 0) >= 20
 
 
+def otp_wall_reason(text: str | None) -> str | None:
+    """Owner-only email/SMS OTP / magic-code gates (e.g. Oracle careers apply/email)."""
+    if re.search(
+        r"confirm your identity|"
+        r"verification code was sent|"
+        r"enter (the|your) (verification |one[- ]time )?code|"
+        r"type the code into the field|"
+        r"one[- ]time (pass(code|word)|code)|"
+        r"we (just )?sent (you )?(a |an )?(code|otp)|"
+        r"check your (email|inbox).{0,40}(code|otp)",
+        text or "",
+        re.I,
+    ):
+        return "ats_otp_wall"
+    return None
+
+
 def auth_wall_reason(
     url: str | None,
     text: str | None,
@@ -567,6 +587,9 @@ def auth_wall_reason(
     blob = f"{url or ''}\n{text or ''}"
     if host == "unavailable" or is_unavailable_text(blob):
         return "job_unavailable"
+    otp = otp_wall_reason(text)
+    if otp:
+        return otp
     if host == "workday" or has_workday_apply:
         # Workday Create Account / Sign In is completable when we have a password
         # and an email field — do NOT treat it as a hard wall.
@@ -1030,6 +1053,9 @@ def blocked_wall(page) -> str | None:
     if visible_captcha_challenge(page):
         return "CAPTCHA/bot wall"
     flags = page_flags(page)
+    otp = otp_wall_reason(flags.get("text") or "")
+    if otp:
+        return otp
     return auth_wall_reason(
         flags["url"],
         flags["text"],
@@ -1211,18 +1237,46 @@ def fill_yes_no(page) -> None:
 
 
 def tick_consents(page) -> None:
+    # Oracle Recruiting (careers.oracle.com): hidden KO checkbox — click the
+    # custom button, never the "terms and conditions" link (opens a modal).
+    try:
+        btn = page.locator(".apply-flow-input-checkbox__button").first
+        if btn.count() and btn.is_visible():
+            already = False
+            try:
+                already = "apply-flow-input-checkbox__button--checked" in (
+                    btn.get_attribute("class") or ""
+                )
+            except Exception:
+                already = False
+            if not already:
+                btn.click(force=True)
+                _sleep(0.25)
+    except Exception:
+        pass
     for sel in (
         "input[type='checkbox'][name*='consent' i]",
         "input[type='checkbox'][id*='consent' i]",
         "input[type='checkbox'][name*='terms' i]",
+        "input[type='checkbox'][id*='disclaimer' i]",
+        "input[type='checkbox'][id*='legal' i]",
         "[data-automation-id='createAccountCheckbox']",
     ):
         try:
             boxes = page.locator(sel)
             for i in range(min(boxes.count(), 4)):
                 b = boxes.nth(i)
-                if b.is_visible() and not b.is_checked():
+                try:
+                    if b.is_checked():
+                        continue
+                except Exception:
+                    pass
+                try:
+                    # Hidden Oracle/legal boxes still need a KO-friendly toggle;
+                    # force-check when the custom button path did not stick.
                     b.check(force=True)
+                except Exception:
+                    continue
         except Exception:
             continue
     try:
@@ -1230,7 +1284,19 @@ def tick_consents(page) -> None:
             has_text=re.compile(r"I have (reviewed|read).{0,40}consent|I agree|I acknowledge", re.I)
         ).first
         if label.count() and label.is_visible():
-            label.click(force=True)
+            # Prefer the checkbox control / custom button inside the label so we
+            # do not click nested "terms and conditions" dialog links.
+            inner_btn = label.locator(".apply-flow-input-checkbox__button").first
+            if inner_btn.count() and inner_btn.is_visible():
+                try:
+                    if "apply-flow-input-checkbox__button--checked" not in (
+                        inner_btn.get_attribute("class") or ""
+                    ):
+                        inner_btn.click(force=True)
+                except Exception:
+                    pass
+            else:
+                label.click(force=True)
     except Exception:
         pass
 
