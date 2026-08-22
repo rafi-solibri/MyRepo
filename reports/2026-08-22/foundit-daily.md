@@ -46,4 +46,24 @@
 - **Numerator / Senior Full Stack Developer:** Hi — I'm applying for Senior Full Stack Developer at Numerator. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)
 - **Infosys Limited / .Net angular Lead:** Hi — I'm applying for .Net angular Lead at Infosys Limited. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)
 
-Artifact: `/opt/cursor/artifacts/foundit-apply-report.json`
+Artifact (morning): `/opt/cursor/artifacts/foundit-apply-report.json`
+
+## Post-fix re-run (cloud, POST_FIX_RERUN=1, merged main)
+
+Re-executed `node tools/foundit/daily_apply.js` on `origin/main` at `0cfa954` (includes Foundit filter [#233](https://github.com/rafi-solibri/MyRepo/pull/233) and later [#234](https://github.com/rafi-solibri/MyRepo/pull/234)). Resume: `resumes/Rafi_Resume.docx`. Login OK (MSSOAT + jwtOk). No `canJobApply` dry-run. No invented applies.
+
+- Applied tab: **456 → 456** (+0). Intentional logged: **0**. Age → **3650d**.
+- Skips: 1185 | duplicates: 76 (all `userJobInfo`) | blocked: 0.
+- New LinkedIn referral drafts this re-run: none (no new applies).
+
+Morning applies skipped as already submitted (sample): Numerator 63554913/63554914, Infosys .NET leads 63645819/63646669/63628577/63634239, Hitachi 63572353, Microsoft 63639577, Ksquare 63640361, Aveva 40462478.
+
+[#233](https://github.com/rafi-solibri/MyRepo/pull/233) filter confirmation (not re-applied):
+- Infosys 63631709 Lead Technical Architect Modern C Plus → skip `no .NET on title+skills`
+- Capgemini 63613636 Principal Software Engineer (SAPBTP URL) → skip `SAP without .NET`
+- S&P 39914436 Software Engineering Manager, Backend Development (Python) → skip `no .NET on title+skills`
+- Also skipped Mainframe titles via new `non-.NET primary stack on title`
+
+No new code-fixable blocker. Did not launch another post-fix re-run.
+
+Artifact (this re-run): `/opt/cursor/artifacts/foundit-apply-report.json`
