@@ -827,19 +827,27 @@ def fill_common_questions(sb) -> None:
             };
             const labelFor = (el) => {
               const id = el.getAttribute('id');
-              let t = '';
+              let dedicated = '';
               if (id) {
                 try {
                   const lab = document.querySelector(`label[for="${CSS.escape(id)}"]`);
-                  if (lab) t += ' ' + lab.innerText;
+                  if (lab) dedicated += ' ' + lab.innerText;
                 } catch (e) {}
               }
+              dedicated += ' ' + (el.getAttribute('aria-label') || '');
+              dedicated += ' ' + (el.getAttribute('placeholder') || '');
+              dedicated += ' ' + (el.getAttribute('name') || '');
+              dedicated += ' ' + (el.getAttribute('autocomplete') || '');
+              const own = dedicated.toLowerCase().trim();
+              // UST Phone No * + Date share one wrap — sibling text must not
+              // poison Date with a phone number (2026-08-22 post-#236 residual).
+              if (/^date(\\s*\\*)?$/.test(own) || /phone\\s*no/.test(own)
+                  || /^(phone|mobile|telephone|tel)\\b/.test(own)) {
+                return own;
+              }
               const wrap = el.closest('label, fieldset, [class*="question"], [data-testid*="question"], .ia-Questions-item, .ia-FormField, li, section, div');
+              let t = dedicated;
               if (wrap) t += ' ' + (wrap.innerText || '').slice(0, 220);
-              t += ' ' + (el.getAttribute('aria-label') || '');
-              t += ' ' + (el.getAttribute('name') || '');
-              t += ' ' + (el.getAttribute('placeholder') || '');
-              t += ' ' + (el.getAttribute('autocomplete') || '');
               return t.toLowerCase();
             };
             const wantFromText = (text) => {
@@ -1051,6 +1059,16 @@ def fill_common_questions(sb) -> None:
               else if (/last\\s*name|surname|family\\s*name|lname/.test(lab)) val = vals.last;
               else if (/(date of birth|\\bdob\\b|birth date|birthday)/.test(lab)) val = vals.dob;
               else if (/\\bpan\\b|aadhaar|aadhar|passport number|national id/.test(lab)) val = null;
+              // Date before phone: shared wrap "Phone No * Date" used to fill
+              // the date control with 8790251698 and leave Continue stuck.
+              else if (type === 'date' || el.getAttribute('data-testid') === 'date-input') {
+                val = /birth|\\bdob\\b/.test(lab) ? vals.dob : '15/08/2026';
+              }
+              else if (/^date(\\s*\\*)?$/i.test(lab.trim())
+                  || (/\\bdate\\b/.test(lab) && !/birth|\\bdob\\b|today|update|phone|mobile/.test(lab)
+                      && lab.trim().length <= 12)) {
+                val = '15/08/2026';
+              }
               else if (/\\bphone\\b|\\bmobile\\b|telephone|phone\\s*no/.test(lab) || type === 'tel') val = vals.phone;
               else if (/e-?mail/.test(lab) || type === 'email') val = vals.email;
               else if (/current.*(position|role|title|designation)|job title/.test(lab) && !/salary|ctc/.test(lab)) val = 'Solutions Architect';
@@ -1321,8 +1339,8 @@ def recover_required_selects(sb) -> dict:
             }
             const titleRoots = [...document.querySelectorAll('fieldset, [class*="question"], [class*="Question"], li, section, div')]
               .filter(r => {
-                const t = (r.innerText || '').slice(0, 120).toLowerCase();
-                return t.length < 200 && /\btitle\b|\bsalutation\b/.test(t) && /\bmr\.?\b/.test(t) && /\bms\.?\b/.test(t);
+                const t = (r.innerText || '').slice(0, 400).toLowerCase();
+                return /\btitle\b|\bsalutation\b/.test(t) && /\bmr\.?\b/.test(t);
               });
             for (const root of titleRoots) {
               const radios = [...root.querySelectorAll('input[type=radio], [role=radio], label, button, span')];
@@ -1347,6 +1365,32 @@ def recover_required_selects(sb) -> dict:
                 const lab = mr.closest && mr.closest('label');
                 if (lab) {
                   try { lab.click(); clicked.push('title-label-mr'); } catch (e) {}
+                }
+                break;
+              }
+            }
+            // WSA "Are you based in …" is often a combobox/radio, not a yes/no
+            // text match on the first 80 chars of a loose option list.
+            const basedRoots = [...document.querySelectorAll('fieldset, [class*="question"], [class*="Question"], li, section, div')]
+              .filter(r => {
+                const t = (r.innerText || '').slice(0, 240).toLowerCase();
+                return /are you based|based in (india|hyderabad|telangana)|currently based/.test(t);
+              });
+            for (const root of basedRoots) {
+              const yes = [...root.querySelectorAll('input[type=radio], [role=radio], [role=option], label, button, span')]
+                .find(el => {
+                  const t = ((el.getAttribute('aria-label')||'') + ' ' + (el.innerText||'') + ' ' + (el.value||'')).trim();
+                  return /^yes\\b/i.test(t) && t.length < 28;
+                });
+              if (yes) {
+                try { yes.scrollIntoView({block:'center'}); } catch (e) {}
+                try { yes.click(); clicked.push('based-yes'); } catch (e) {}
+                const inp = (yes.matches && yes.matches('input[type=radio]'))
+                  ? yes
+                  : (yes.querySelector && yes.querySelector('input[type=radio]'));
+                if (inp && !inp.checked) {
+                  try { inp.click(); clicked.push('based-yes-input'); } catch (e) {}
+                  try { inp.checked = true; inp.dispatchEvent(new Event('change', {bubbles:true})); } catch (e) {}
                 }
                 break;
               }

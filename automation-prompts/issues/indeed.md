@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| UST Date still empty after #236: Phone No + Date share wrap so Date got phone digits | Prefer dedicated Date/Phone labels; fill type=date before phone; Title Mr scan 400ch; based-in Yes click |
 | UST/LTM SmartApply stuck: bare Date + Title Mr radios still incomplete | Map bare Date→available (ISO via setNative); harden Title Mr input/label click; based-in→yes |
 
 
