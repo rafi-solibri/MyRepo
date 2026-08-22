@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-08-22 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| False-applied Mulesoft Architect, MS Fabric/Synapse/Databricks, and DevOps Architect titles (2026-08-22 morning) | SKIP_TITLE_RE: mulesoft\|mule soft\|ms fabric\|microsoft fabric\|synapse\|databricks\|datalake\|data lake\|devops architect (+ tests) |
+
+
 ## 2026-08-21 (cloud)
 
 | Issue | Fix |
