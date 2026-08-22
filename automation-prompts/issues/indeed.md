@@ -1,5 +1,12 @@
 # Indeed — issues & fixes
 
+## 2026-08-22 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| UST/LTM SmartApply stuck: bare Date + Title Mr radios still incomplete | Map bare Date→available (ISO via setNative); harden Title Mr input/label click; based-in→yes |
+
+
 ## 2026-08-21 (cloud)
 
 | Issue | Fix |

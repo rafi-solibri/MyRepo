@@ -865,8 +865,19 @@ def fill_common_questions(sb) -> None:
               if (/(date of birth|\\bdob\\b|birth date|birthday)/.test(t) && !/place of birth/.test(t)) {
                 return '16/01/1989';
               }
+              // UST SmartApply labels bare "Date" / "Date *" for Available Date — not DOB.
+              if (/^date(\\s*\\*)?$/i.test(t.trim())
+                  || (/\\bdate\\b/.test(t) && !/birth|\\bdob\\b|today|update|issue/.test(t)
+                      && (/available|start|join|^date\\b/.test(t.trim()) || t.trim().length <= 12))) {
+                return '15/08/2026';
+              }
               if (/(^|\\s)(title|salutation|honorific)\\b/.test(t) && !/job title|current position|position\\?/.test(t)) {
                 return 'Mr.';
+              }
+              // "Are you based in …" / location confirmation radios.
+              if (/are you based|based in (india|hyderabad|telangana)|currently based/.test(t)
+                  && !/relocat|willing to move|prefer/.test(t)) {
+                return 'yes';
               }
               // Never invent government IDs.
               if (/\\bpan\\b|aadhaar|aadhar|passport number|national id/.test(t)) {
@@ -1020,7 +1031,7 @@ def fill_common_questions(sb) -> None:
               const t = (lab.innerText||'').trim();
               // Allow short "Title *" / "Mr." labels (was >6 and missed Title alone).
               // Include education/degree — ValGenesis "highest degree of education" was skipped.
-              if (t.length > 2 && t.length < 220 && /\\?|ctc|salary|notice|experience|relocat|authori|location|package|lpa|gender|hybrid|bond|veteran|disability|ethnicity|race|hispanic|voluntary|self.?ident|birth|dob|title|salutation|phone|available date|education|degree|qualification|university|college|^mr\\.?$|^ms\\.?$/.test(t.toLowerCase())) {
+              if (t.length > 2 && t.length < 220 && /\\?|ctc|salary|notice|experience|relocat|authori|location|package|lpa|gender|hybrid|bond|veteran|disability|ethnicity|race|hispanic|voluntary|self.?ident|birth|dob|title|salutation|phone|\\bdate\\b|available date|education|degree|qualification|university|college|based in|^mr\\.?$|^ms\\.?$/.test(t.toLowerCase())) {
                 const want = wantFromText(t);
                 if (want && clickMatching(lab.closest('div, fieldset, li, section, [class*="question"]') || lab.parentElement || lab, want)) {
                   answered += 1;
@@ -1049,8 +1060,10 @@ def fill_common_questions(sb) -> None:
               else if (/current.*(ctc|salary|compensation|package)|ctc.*current|current salary/.test(lab)) val = vals.current;
               else if (/expected.*(ctc|salary|compensation|package)|ctc.*expected/.test(lab)) val = vals.expected;
               else if (/earliest start|start date|available from|joining date|available date|date available/.test(lab)
-                  || (type === 'date' && /start|join|avail/.test(lab))) val = '15/08/2026';
+                  || /^date(\\s*\\*)?$/i.test(lab.trim())
+                  || (type === 'date' && /start|join|avail|\\bdate\\b/.test(lab))) val = '15/08/2026';
               else if (type === 'date' && !/birth|\\bdob\\b/.test(lab)) val = '15/08/2026';
+              else if (/\\bdate\\b/.test(lab) && !/birth|\\bdob\\b|today|update/.test(lab) && lab.trim().length <= 12) val = '15/08/2026';
               else if (/notice|joining|availability/.test(lab) && !/start date|available from|available date/.test(lab)) {
                 const mode = (el.getAttribute('inputmode') || '').toLowerCase();
                 const numericNotice = type === 'number' || /numeric|decimal/.test(mode)
@@ -1170,7 +1183,12 @@ def fill_common_questions(sb) -> None:
                 if (/how many|years|experience/.test(lab)) w = '14';
                 else if (/salary|ctc|lpa|package/.test(lab)) w = '65';
                 else if (/birth|\\bdob\\b|birth date|birthday/.test(lab)) w = vals.dob;
-                else if (/start|join|avail|available date|date available/.test(lab) || itype === 'date') w = '15/08/2026';
+                else if (/start|join|avail|available date|date available/.test(lab)
+                    || /^date(\\s*\\*)?$/i.test(lab.trim())
+                    || (itype === 'date' && !/birth|\\bdob\\b/.test(lab))
+                    || (/\\bdate\\b/.test(lab) && !/birth|\\bdob\\b|today|update/.test(lab) && lab.trim().length <= 12)) {
+                  w = '15/08/2026';
+                }
                 else if (/\\bphone\\b|\\bmobile\\b|phone\\s*no|telephone/.test(lab) || itype === 'tel') w = vals.phone;
               }
               if (w && setNative(el, w)) answered += 1;
@@ -1313,7 +1331,23 @@ def recover_required_selects(sb) -> dict:
                 return /^mr\.?$/i.test(t);
               });
               if (mr) {
+                try { mr.scrollIntoView({block:'center'}); } catch (e) {}
                 try { mr.click(); clicked.push('title-radio-mr'); } catch (e) {}
+                // LTIMindtree/LTM: clicking the text node alone may not check the input.
+                const inp = mr.matches && mr.matches('input[type=radio]')
+                  ? mr
+                  : (mr.querySelector && mr.querySelector('input[type=radio]'))
+                    || [...root.querySelectorAll('input[type=radio]')].find(r =>
+                         /mr\.?/i.test(((r.value||'') + ' ' + (r.getAttribute('aria-label')||'') + ' ' + (r.id||'')).trim())
+                       );
+                if (inp && !inp.checked) {
+                  try { inp.click(); clicked.push('title-radio-input-mr'); } catch (e) {}
+                  try { inp.checked = true; inp.dispatchEvent(new Event('change', {bubbles:true})); inp.dispatchEvent(new Event('input', {bubbles:true})); } catch (e) {}
+                }
+                const lab = mr.closest && mr.closest('label');
+                if (lab) {
+                  try { lab.click(); clicked.push('title-label-mr'); } catch (e) {}
+                }
                 break;
               }
             }
