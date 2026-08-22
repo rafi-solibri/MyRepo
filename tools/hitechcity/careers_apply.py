@@ -409,11 +409,41 @@ def pin_portal_location_ui(page: Page) -> dict[str, Any]:
         if btn.count() and btn.first.is_visible():
             btn.first.click(timeout=2000)
             time.sleep(0.6)
-            inp = page.locator(
+            # Prefer real location/city inputs — Salesforce careers exposes an
+            # Agentforce chat box ("Ask Agentforce anything") as the first
+            # type=text/search field and must not be treated as Location.
+            candidates = page.locator(
+                'input[placeholder*="Location" i], input[aria-label*="Location" i], '
+                'input[name*="location" i], input[id*="location" i], '
+                'input[placeholder*="City" i], input[aria-label*="City" i], '
                 'input[type="text"], input[type="search"], input[placeholder*="Search" i]'
             )
-            if inp.count():
-                inp.first.fill(CAREERS_LOCATION, timeout=2000)
+            picked = None
+            for i in range(min(candidates.count(), 12)):
+                el = candidates.nth(i)
+                try:
+                    if not el.is_visible():
+                        continue
+                    meta = " ".join(
+                        filter(
+                            None,
+                            [
+                                el.get_attribute("placeholder") or "",
+                                el.get_attribute("aria-label") or "",
+                                el.get_attribute("id") or "",
+                                el.get_attribute("name") or "",
+                                el.get_attribute("class") or "",
+                            ],
+                        )
+                    )
+                    if not location_ui_input_meta_ok(meta):
+                        continue
+                    picked = el
+                    break
+                except Exception:
+                    continue
+            if picked is not None:
+                picked.fill(CAREERS_LOCATION, timeout=2000)
                 time.sleep(0.8)
                 hyd = page.get_by_text(re.compile(r"Hyderabad", re.I))
                 if hyd.count():
@@ -422,9 +452,22 @@ def pin_portal_location_ui(page: Page) -> dict[str, Any]:
                     time.sleep(1.0)
                     return out
                 out.update(note="button_menu_no_hyd", available=False)
+            else:
+                out.update(note="button_menu_no_safe_input", available=False)
     except Exception as e:
         out["note"] = f"generic_failed:{e}"
     return out
+
+
+def location_ui_input_meta_ok(meta: str) -> bool:
+    """False for chatbots / honeypots mistaken for Location search boxes."""
+    return not bool(
+        re.search(
+            r"agentforce|ask agent|oda-chat|chatbot|assistant|honey.?pot",
+            meta or "",
+            re.I,
+        )
+    )
 
 
 def workday_pin_hyderabad_location_ui(page: Page) -> dict[str, Any]:

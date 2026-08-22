@@ -83,8 +83,32 @@ finally:
 
 assert_true(is_hard_ats_wall("CAPTCHA/bot wall"), "captcha is hard")
 assert_true(is_hard_ats_wall("ats_login_wall"), "login is hard")
+assert_true(is_hard_ats_wall("ats_otp_wall"), "oracle email OTP is hard wall")
+assert_true(is_hard_ats_wall("verification code was sent"), "otp phrase is hard wall")
 assert_true(not is_hard_ats_wall("external_incomplete_or_timeout"), "timeout is not a company wall")
 assert_true(not is_hard_ats_wall("easy_apply_incomplete"), "easy incomplete is not a company wall")
+from tools.ats.complete import otp_wall_reason
+assert_true(
+    otp_wall_reason(
+        "Confirm Your Identity\nThe verification code was sent to this email address: a@b.com"
+    )
+    == "ats_otp_wall",
+    "Oracle Confirm Your Identity is OTP wall",
+)
+assert_true(
+    otp_wall_reason("Email Address\nI agree with the terms and conditions\nNEXT") is None,
+    "Oracle email gate alone is not OTP wall",
+)
+assert_true(
+    auth_wall_reason(
+        "https://careers.oracle.com/en/sites/jobsearch/job/1/apply/email",
+        "Confirm Your Identity\nThe verification code was sent",
+        has_file=True,
+        has_email_field=True,
+    )
+    == "ats_otp_wall",
+    "OTP beats has_file guest continue",
+)
 from tools.ats.complete import owner_form_wait_sec, owner_asleep, persist_retry_burst_sec
 _saved_form = {k: os.environ.get(k) for k in ("ATS_OWNER_FORM_WAIT_SEC", "ATS_CAPTCHA_WAIT_SEC", "HOME_LOCAL", "CHROME_HEADLESS", "HITECHCITY_OWNER_ASLEEP", "ATS_PERSIST_RETRY_SEC", "HITECHCITY_ATS_PERSIST_RETRY")}
 for k in ("ATS_OWNER_FORM_WAIT_SEC", "ATS_CAPTCHA_WAIT_SEC", "HOME_LOCAL", "CHROME_HEADLESS", "HITECHCITY_OWNER_ASLEEP", "ATS_PERSIST_RETRY_SEC", "HITECHCITY_ATS_PERSIST_RETRY"):
