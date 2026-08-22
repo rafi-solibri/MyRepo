@@ -122,6 +122,18 @@ function isArchLeadTitle(title) {
   );
 }
 
+/**
+ * Naukri NON_DOTNET_PRIMARY_RE parity — title-only (skills laundry lists are noisy).
+ * Blocks Arch/Lead exception and forces skip when .NET|C# is absent from the title.
+ */
+const NON_DOTNET_PRIMARY_RE =
+  /\b(java|j2ee|spring\s*boot|golang|go\s*lang|python|mean\b|mern\b|ruby\s+on\s+rails|\bphp\b|oracle\s+apps|oracle\s+fusion|oracle\s+dba|oracle\s+cloud|abap|mainframe|cobol|\bas400\b|ibm\s*i|c\s*\+\+|c\s*plus(?:\s*plus)?)\b/i;
+
+function isNonDotNetPrimaryTitle(title) {
+  const t = titleForMatch(title);
+  return NON_DOTNET_PRIMARY_RE.test(t) && !hasDotNet(t, "");
+}
+
 function isJavaOrSalesforcePrimary(title, skills) {
   const t = titleForMatch(title);
   const blob = `${t} ${skills || ""}`;
@@ -129,6 +141,8 @@ function isJavaOrSalesforcePrimary(title, skills) {
   // Skills-only Salesforce without .NET on TITLE (Hitachi CPQ / Agentforce-adjacent).
   if (/\b(salesforce|agentforce|sfdc)\b/i.test(skills || "") && !hasDotNetProof(t)) return true;
   if (/\bjava\b(?!\s*script)/i.test(blob) && !hasDotNet(title, skills)) return true;
+  // Python/Go/MEAN/… on TITLE without .NET — same as Java for Arch/Lead exception.
+  if (isNonDotNetPrimaryTitle(title)) return true;
   return false;
 }
 
@@ -190,6 +204,9 @@ function skipTitleReason(title) {
   // Data-platform primary titles (Snowflake/Databricks) — Arch/Lead exception must not apply.
   if (/\b(snowflake|databricks)\b/i.test(t) && !hasDotNet(t, ""))
     return "Snowflake/Databricks without .NET on title";
+  // Java/Python/Go/MEAN/… primary titles without .NET on TITLE — Arch/Lead must not apply
+  // (S&P "Software Engineering Manager, Backend Development (Python)" false apply 2026-08-22).
+  if (isNonDotNetPrimaryTitle(t)) return "non-.NET primary stack on title";
   if (/\bwpf\b/i.test(t) && !/\basp\.?\s*net|web\s*api|azure|\.net\s*core\b/i.test(t))
     return "WPF/hardware desktop";
   return null;
@@ -242,6 +259,10 @@ function classifyJob(job) {
   }
   const norm = `${titleForMatch(title)} ${skills}`.replace(/asp\.?\s*net/gi, "DOTNET");
   if (/\bsap\b/i.test(norm) && !hasDotNetProof(norm))
+    return { pass: false, reason: "SAP without .NET" };
+  // Capgemini SAPBTP URLs omit "SAP" from the display title — treat redirect as SAP signal.
+  const redirect = String(job.redirectUrl || job.applyUrl || "");
+  if (/sapbtp|\bsap\b/i.test(redirect) && !hasDotNet(title, skills))
     return { pass: false, reason: "SAP without .NET" };
   if (/\bjava\b(?!\s*script)/i.test(norm) && !hasDotNetProof(norm))
     return { pass: false, reason: "Java-only" };
@@ -296,6 +317,8 @@ module.exports = {
   hasSeniority,
   isArchLeadTitle,
   isJavaOrSalesforcePrimary,
+  isNonDotNetPrimaryTitle,
+  NON_DOTNET_PRIMARY_RE,
   experienceOk,
   ctcOk,
   classifyJob,

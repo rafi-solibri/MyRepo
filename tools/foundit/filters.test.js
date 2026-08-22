@@ -604,4 +604,91 @@ assert.strictEqual(
   "country-only Singapore must not inherit JD remote-first"
 );
 
+assert.strictEqual(
+  classifyJob({
+    jobId: 36,
+    title: "Software Engineering Manager, Backend Development (Python)",
+    companyName: "S&P Global Market Intelligence",
+    locations: [{ text: "India | remote" }],
+    skills: [{ text: "Python" }, { text: "Backend" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  false,
+  "Python EM title must skip even with Arch/Lead exception"
+);
+assert.ok(
+  /non-\.NET primary|no \.NET on title/i.test(
+    classifyJob({
+      jobId: 36,
+      title: "Software Engineering Manager, Backend Development (Python)",
+      companyName: "S&P Global Market Intelligence",
+      locations: [{ text: "India | remote" }],
+      skills: [{ text: "Python" }, { text: "Backend" }],
+      minimumExperience: { years: 10 },
+      maximumExperience: { years: 15 },
+    }).reason
+  ),
+  "Python EM skip reason"
+);
+
+// .NET only in skills laundry — title still Python-primary → must skip.
+assert.strictEqual(
+  classifyJob({
+    jobId: 36.1,
+    title: "Software Engineering Manager, Backend Development (Python)",
+    companyName: "S&P Global Market Intelligence",
+    locations: [{ text: "India | remote" }],
+    skills: [{ text: ".NET" }, { text: "Python" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "non-.NET primary stack on title",
+  "Python on title must skip even when skills list .NET"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 37,
+    title: "Lead Technical Architect Modern C Plus and Enterprise Systems",
+    companyName: "Infosys Limited",
+    locations: [{ text: "Hyderabad / Secunderabad" }],
+    skills: [{ text: "C++" }, { text: ".NET" }],
+    minimumExperience: { years: 12 },
+    maximumExperience: { years: 16 },
+  }).reason,
+  "non-.NET primary stack on title",
+  "C Plus / C++ primary Arch title must skip without .NET on title"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 38,
+    title: "Principal Software Engineer",
+    companyName: "Capgemini",
+    locations: [{ text: "Hyderabad / Secunderabad" }],
+    skills: [{ text: "software architecture" }],
+    redirectUrl:
+      "https://www.capgemini.com/in-en/jobs/465333-en_GB_SAPBTP/Principal%20Software%20Engineer",
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "SAP without .NET",
+  "SAPBTP redirect URL must skip Principal without .NET"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 39,
+    title: "Solutions Architect .NET",
+    companyName: "Example",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: ".NET Core" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  true,
+  ".NET on title still passes Arch band"
+);
+
 console.log("filters.test.js OK");
