@@ -1,5 +1,12 @@
 # Foundit — issues & fixes
 
+## 2026-08-22 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Arch/Lead exception applied to Python EM / C Plus Arch / Capgemini SAPBTP Principal (false applies 2026-08-22) | Naukri NON_DOTNET_PRIMARY_RE parity on title + SAPBTP redirectUrl SAP signal in filters.js classifyJob |
+
+
 ## 2026-08-20 (cloud)
 
 | Issue | Fix |
