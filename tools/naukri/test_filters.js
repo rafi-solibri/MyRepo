@@ -250,6 +250,21 @@ assert.strictEqual(
   "Digital Verification / VLSI lead must skip"
 );
 assert.strictEqual(
+  shouldSkipTitle("Mulesoft Architect"),
+  true,
+  "Mulesoft Architect must skip (false-apply 2026-08-22)"
+);
+assert.strictEqual(
+  shouldSkipTitle("MS Fabric architect,synapse,databricks,datalake"),
+  true,
+  "MS Fabric / Synapse / Databricks architect must skip (false-apply 2026-08-22)"
+);
+assert.strictEqual(
+  shouldSkipTitle("DevOps Architect"),
+  true,
+  "DevOps Architect must skip (false-apply Sonata 2026-08-22)"
+);
+assert.strictEqual(
   shouldSkipTitle("Data and AI Governance Architect / Lead"),
   true,
   "Data and AI title (and not just Data & AI) must skip without .NET"
