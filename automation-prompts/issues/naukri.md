@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Profile resume Uploaded on 24/08/2026 IST not treated as Updated today (UTC tokens + resumeName omitted from verify blob) | todayTokens uses Asia/Kolkata+UTC including DD/MM/YYYY Uploaded on; verify blob includes resumeName/resumeBits |
 | Owner refreshed master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx (2026-08-23 late) | Replaced master + Rafi_Resume.docx alias (~3.9MB); JD tailor still on top; upload label stays Rafi_Resume |
 | Owner refreshed master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx (2026-08-23 evening) | Replaced resumes/Mohammed_Abdul_Rafi_Ahmed_Resume.docx + Rafi_Resume.docx alias; JD tailor still runs on top; upload filename stays Rafi_Resume |
 

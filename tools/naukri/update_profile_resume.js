@@ -65,40 +65,87 @@ const RESUME_FILE_SELECTORS = [
   "input[name*='cv' i][type='file']",
 ];
 
-function todayTokens() {
-  const d = new Date();
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-  const m = months[d.getMonth()];
-  const day = d.getDate();
-  const y = d.getFullYear();
+const MONTHS_SHORT = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+/** Calendar Y/M/D in a timezone (Naukri "Uploaded on" is IST). */
+function datePartsInZone(now, timeZone) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  }).formatToParts(now instanceof Date ? now : new Date(now));
+  const num = (type) => Number(parts.find((p) => p.type === type)?.value);
+  return { year: num("year"), month: num("month"), day: num("day") };
+}
+
+function tokensForParts({ year, month, day }) {
+  const m = MONTHS_SHORT[month - 1];
   const dd = String(day).padStart(2, "0");
+  const mm = String(month).padStart(2, "0");
   return [
-    "Updated today",
-    "updated today",
-    "Today",
-    "today",
-    `${m} ${day}, ${y}`,
-    `${m} ${dd}, ${y}`,
-    `${day} ${m} ${y}`,
-    `${dd} ${m} ${y}`,
+    `${m} ${day}, ${year}`,
+    `${m} ${dd}, ${year}`,
+    `${day} ${m} ${year}`,
+    `${dd} ${m} ${year}`,
     `${day} ${m}`,
     `${dd} ${m}`,
     `${m} ${day}`,
     `${m} ${dd}`,
+    `${dd}/${mm}/${year}`,
+    `${day}/${month}/${year}`,
+    `${dd}-${mm}-${year}`,
+    `${day}-${month}-${year}`,
+    `${mm}/${dd}/${year}`,
+    `Uploaded on ${dd}/${mm}/${year}`,
+    `Uploaded on ${day}/${month}/${year}`,
+    `uploaded on ${dd}/${mm}/${year}`,
   ];
+}
+
+/**
+ * Tokens that mean "updated today" on Naukri profile.
+ * Always include Asia/Kolkata (UI date) plus UTC so overnight IST/UTC
+ * rollover still matches "Uploaded on DD/MM/YYYY".
+ */
+function todayTokens(now = new Date()) {
+  const phrases = [
+    "Updated today",
+    "updated today",
+    "Uploaded today",
+    "uploaded today",
+    "Today",
+    "today",
+  ];
+  const seen = new Set(phrases);
+  const out = [...phrases];
+  for (const zone of ["Asia/Kolkata", "UTC"]) {
+    for (const t of tokensForParts(datePartsInZone(now, zone))) {
+      if (!seen.has(t)) {
+        seen.add(t);
+        out.push(t);
+      }
+    }
+  }
+  return out;
+}
+
+function blobLooksUpdatedToday(blob, now = new Date()) {
+  const text = String(blob || "");
+  return todayTokens(now).some((t) => text.includes(t));
 }
 
 async function dismissPopups(page) {
@@ -228,6 +275,7 @@ async function waitUploadSignals(page) {
         /resume (has been )?uploaded/i,
         /resume updated/i,
         /updated today/i,
+        /uploaded on\s+\d/i,
         /upload successful/i,
         /rafi_resume/i,
       ];
@@ -424,11 +472,16 @@ async function verifyUpdated(page) {
       .filter((t) => t && t.length < 100 && /Rafi_Resume|\.docx|\.pdf/i.test(t))
       .slice(0, 5);
 
-    // Collect nearby "Updated …" phrases
+    // Collect nearby "Updated …" / "Uploaded on DD/MM/YYYY" phrases
     const updatedLines = (document.body.innerText || "")
       .split("\n")
       .map((l) => l.trim())
-      .filter((l) => /^updated\b/i.test(l) || /\bupdated today\b/i.test(l))
+      .filter(
+        (l) =>
+          /^updated\b/i.test(l) ||
+          /\bupdated today\b/i.test(l) ||
+          /uploaded on\b/i.test(l)
+      )
       .slice(0, 10);
 
     return {
@@ -441,10 +494,16 @@ async function verifyUpdated(page) {
   });
 
   const tokens = todayTokens();
-  const blob = `${text.updateOn}\n${text.updatedLines.join("\n")}\n${text.bodySlice}`;
+  const blob = [
+    text.updateOn,
+    text.updatedLines.join("\n"),
+    text.resumeName,
+    (text.resumeBits || []).join("\n"),
+    text.bodySlice,
+  ].join("\n");
   const matchedToken = tokens.find((t) => blob.includes(t)) || null;
   const todayHit = Boolean(matchedToken);
-  const resumePresent = /Rafi_Resume|\.docx/i.test(
+  const resumePresent = /Rafi_Resume|Mohammed_Abdul_Rafi|\.docx/i.test(
     `${text.resumeName} ${text.resumeBits.join(" ")}`
   );
 
@@ -455,7 +514,7 @@ async function verifyUpdated(page) {
     updateOn: text.updateOn,
     updatedLines: text.updatedLines,
     resumeName: text.resumeName,
-    tokensTried: tokens.slice(0, 5),
+    tokensTried: tokens.filter((t) => /\d/.test(t) || /updated|uploaded/i.test(t)).slice(0, 24),
   };
 }
 
@@ -632,5 +691,8 @@ module.exports = {
   verifyUpdated,
   runRefresh,
   resolveResumePath,
+  todayTokens,
+  datePartsInZone,
+  blobLooksUpdatedToday,
   PROFILE_URL,
 };
