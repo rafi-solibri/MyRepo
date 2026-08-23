@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Hyland iCIMS hCaptcha wall cap burned on Performance/Account Executive before Senior Software Architect .NET | Skip performance-and-scalability and account-executive titles; sort prefer_dotnet jobs first |
 | ASK_OWNER progress-extend looped forever on Oracle OTP (fingerprint churn) so careers never reached Hyland .NET submit | Fail-fast ats_otp_wall inside ASK_OWNER; cap progress extends at 1 and hard-cap wait+one extend |
 | apply_job pre-nav card_location_ok ignored listingLoc so Hyland .NET / Blue Yonder Hyd-listing cards were false-skipped after extract | Carry listingLoc on the job dict and reuse it in apply_job pre-nav and top-card checks |
 | Hyland iCIMS / Blue Yonder title-only cards on Hyd-pinned listings extracted 0 jobs (frame.url dropped in_iframe=1; card_location_ok required city on title) | Rank icims_content_iframe by name; pass listing Hyd loc into extract so title-only cards apply unless foreign city |

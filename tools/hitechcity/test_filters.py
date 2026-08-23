@@ -72,6 +72,8 @@ def test_title_ok():
     assert CAREERS_TITLE_SKIP.search(
         "Principal Performance Test Engineer (Fusion Load Testing) HYDERABAD"
     )
+    assert CAREERS_TITLE_SKIP.search("Principal Performance and Scalability Engineer")
+    assert CAREERS_TITLE_SKIP.search("Principal Account Executive - Healthcare")
     assert CAREERS_TITLE_SKIP.search("CyberSecurity Architect - CNI")
     assert CAREERS_TITLE_SKIP.search("Principal Database Engineer- Architecture/Engineering")
     assert CAREERS_TITLE_SKIP.search("Embedded Software - System Test Architect")
