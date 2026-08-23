@@ -1,0 +1,422 @@
+{
+  "portal": "foundit",
+  "source": "cloud-post-fix-rerun",
+  "date": "2026-08-24",
+  "startedAt": "2026-08-23T18:46:42.660Z",
+  "finishedAt": "2026-08-23T18:54:01.824957+00:00",
+  "ok": true,
+  "counts": {
+    "applied": 2,
+    "external": 2,
+    "rejected": 0,
+    "blocked": 0,
+    "skipped": 1195,
+    "seen": 1268,
+    "duplicates": 71
+  },
+  "applied": [
+    {
+      "jobId": "63894198",
+      "title": "HSO Ind D365 F&O Technical Architect / Lead Developer",
+      "company": "HSO",
+      "loc": "India | Remote",
+      "path": "Foundit + ATS https://www.linkedin.com/jobs/view/4443746855/",
+      "falconStatus": 200,
+      "falconNext": "APPLY_REDIRECT_STAGE_ONE",
+      "ats": {
+        "status": "linkedin_no_easy_apply",
+        "url": "https://www.linkedin.com/jobs/view/4443746855/"
+      },
+      "ageDays": 0.014030798611111112,
+      "tailoredResume": {
+        "path": "/opt/cursor/artifacts/tailored-resumes/63894198-4522762fda/Rafi_Resume.docx",
+        "headline": "Technical Architect \u2014 Azure",
+        "matchedSkills": [
+          "CI/CD",
+          "Azure",
+          "Technical Leadership",
+          "REST API",
+          "Solution Architecture",
+          "API Design",
+          "Architecture Reviews",
+          "Cloud Architecture",
+          "Domain-Driven Design",
+          "Event-Driven Architecture",
+          "Software Architecture",
+          "SQL Server",
+          "System Design"
+        ],
+        "profileUploadOk": true
+      }
+    },
+    {
+      "jobId": "63894158",
+      "title": "Software Architect",
+      "company": "Solugenix",
+      "loc": "Hyderabad / Secunderabad, Telangana | India",
+      "path": "Foundit + ATS https://www.linkedin.com/jobs/view/4455723013/",
+      "falconStatus": 200,
+      "falconNext": "APPLY_REDIRECT_STAGE_ONE",
+      "ats": {
+        "status": "linkedin_no_easy_apply",
+        "url": "https://www.linkedin.com/jobs/view/4455723013/"
+      },
+      "ageDays": 0.0145515625,
+      "tailoredResume": {
+        "path": "/opt/cursor/artifacts/tailored-resumes/63894158-ac01a6276a/Rafi_Resume.docx",
+        "headline": "Software Architect \u2014 Azure, Microservices, Kubernetes",
+        "matchedSkills": [
+          "Software Architecture",
+          "CI/CD",
+          "Azure",
+          "Microservices",
+          "REST API",
+          "SQL Server",
+          "Docker",
+          "Kubernetes",
+          "PostgreSQL",
+          ".NET Core",
+          "API Design",
+          "Architecture Reviews",
+          "Cloud Architecture",
+          "Distributed Systems",
+          "Domain-Driven Design",
+          "Event-Driven Architecture",
+          "High Availability",
+          "Solution Architecture",
+          "System Design",
+          "Technical Leadership"
+        ],
+        "profileUploadOk": true
+      }
+    }
+  ],
+  "blocked": [],
+  "skipped": [
+    {
+      "jobId": "63893555",
+      "title": "TECHNICAL LEAD - .Net Core",
+      "company": "Happiest Minds Technologies",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+    },
+    {
+      "jobId": "63885400",
+      "title": "Senior Software Engineer/ Module Lead (.Net)",
+      "company": "BOLD",
+      "reason": "location not Hyd/remote: Noida | India"
+    },
+    {
+      "jobId": "63893997",
+      "title": "ServiceNow IRM Architect",
+      "company": "Tata Consultancy Services",
+      "reason": "ServiceNow"
+    },
+    {
+      "jobId": "63775175",
+      "title": "Critist Manager-Japanese/ Chinese",
+      "company": "sonata software north america inc.",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "63894061",
+      "title": "QA Manager",
+      "company": "Hdfc",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "63886989",
+      "title": "Full Stack Engineer",
+      "company": "Learner Mobile",
+      "reason": "no seniority keyword on title"
+    },
+    {
+      "jobId": "63775774",
+      "title": "Solutions Architect",
+      "company": "Hupo Zhongjian",
+      "reason": "location not Hyd/remote: Taiwan | Taipei City"
+    },
+    {
+      "jobId": "63758441",
+      "title": "SAP EWM or LE Lead Consultant or Solution Architect (India - Remote)",
+      "company": "cloudlabs inc",
+      "reason": "SAP without .NET"
+    },
+    {
+      "jobId": "63764439",
+      "title": "Senior Solutions Architect",
+      "company": "Jobgether",
+      "reason": "location not Hyd/remote: Saudi Arabia"
+    },
+    {
+      "jobId": "63891768",
+      "title": "Cloud solution architect",
+      "company": "Sonata Software",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+    },
+    {
+      "jobId": "63760136",
+      "title": "Solution Architect Lead - Network Airport",
+      "company": "DXC Technology",
+      "reason": "location not Hyd/remote: Saudi Arabia | Riyadh"
+    },
+    {
+      "jobId": "63893833",
+      "title": "Engineering Manager / Lead",
+      "company": "Nutanix",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+    },
+    {
+      "jobId": "63754549",
+      "title": "AI Software Architect",
+      "company": "delta technology hub",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "63763035",
+      "title": "Senior Software Architect",
+      "company": "Aspire Technology",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "63754940",
+      "title": "Guidewire Technical Lead",
+      "company": "ValueMomentum",
+      "reason": "Guidewire"
+    },
+    {
+      "jobId": "63640532",
+      "title": ".Net Architect",
+      "company": "Infosys Limited",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+    },
+    {
+      "jobId": "63484817",
+      "title": ".NET Architect",
+      "company": "Trantor",
+      "reason": "location not Hyd/remote: Noida | India"
+    },
+    {
+      "jobId": "63572295",
+      "title": "R&D Senior Software C# Engineer",
+      "company": "Hitachi Energy",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "63646691",
+      "title": ".NET Angular Developer",
+      "company": "Infosys Limited",
+      "reason": "no seniority keyword on title"
+    },
+    {
+      "jobId": "63646689",
+      "title": ".NET Angular Developer",
+      "company": "Infosys Limited",
+      "reason": "no seniority keyword on title"
+    },
+    {
+      "jobId": "63646693",
+      "title": ".NET React Developer",
+      "company": "Infosys Limited",
+      "reason": "no seniority keyword on title"
+    },
+    {
+      "jobId": "63646694",
+      "title": ".NET React Developer",
+      "company": "Infosys Limited",
+      "reason": "no seniority keyword on title"
+    },
+    {
+      "jobId": "63641167",
+      "title": ".Net core Developer",
+      "company": "Infosys Limited",
+      "reason": "no seniority keyword on title"
+    },
+    {
+      "jobId": "63641182",
+      "title": ".Net Core Lead",
+      "company": "Infosys Limited",
+      "reason": "maxExp 7<10 (junior/mid band)"
+    },
+    {
+      "jobId": "63641181",
+      "title": ".Net Core Senior Developer",
+      "company": "Infosys Limited",
+      "reason": "maxExp 5<10 (junior/mid band)"
+    },
+    {
+      "jobId": "63642371",
+      "title": "Dot Net with Angular Developer",
+      "company": "Tata Consultancy Services",
+      "reason": "no seniority keyword on title"
+    },
+    {
+      "jobId": "63634199",
+      "title": "Mainframe Developer",
+      "company": "Infosys Limited",
+      "reason": "non-.NET primary stack on title"
+    },
+    {
+      "jobId": "63634217",
+      "title": "Mainframe Senior Developer",
+      "company": "Infosys Limited",
+      "reason": "non-.NET primary stack on title"
+    },
+    {
+      "jobId": "63755812",
+      "title": "Sitecore Architect",
+      "company": "ntt data north america",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+    },
+    {
+      "jobId": "63521597",
+      "title": "Senior Dotnet Developer",
+      "company": "ETeam",
+      "reason": "location not Hyd/remote: Malaysia | Kuala Lumpur"
+    },
+    {
+      "jobId": "63744969",
+      "title": "Angular Developer (Remote, Full-Time)",
+      "company": "Smart Working",
+      "reason": "no seniority keyword on title"
+    },
+    {
+      "jobId": "63641435",
+      "title": "Lead Software Engineer",
+      "company": "Evolent Health Services",
+      "reason": "location not Hyd/remote: Pune | India"
+    },
+    {
+      "jobId": "63642143",
+      "title": ".Net Architect",
+      "company": "Infosys Limited",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+    },
+    {
+      "jobId": "63734376",
+      "title": "AI Architect GenAI & .NET & Azure",
+      "company": "cg-vak software & exports ltd.",
+      "reason": "location not Hyd/remote: Cochin / Kochi / Ernakulam | India"
+    },
+    {
+      "jobId": "63734375",
+      "title": "AI Architect GenAI & .NET & Azure",
+      "company": "cg-vak software & exports ltd.",
+      "reason": "location not Hyd/remote: Gurugram | Gurgaon / Gurugram | India"
+    },
+    {
+      "jobId": "63485932",
+      "title": "Solution Architect - .net",
+      "company": "NEC Technologies India",
+      "reason": "location not Hyd/remote: Mumbai | India"
+    },
+    {
+      "jobId": "63648800",
+      "title": ".Net Solution Architect",
+      "company": "el4 - software studio",
+      "reason": "location not Hyd/remote: Ho Chi Minh | Vietnam"
+    },
+    {
+      "jobId": "63621194",
+      "title": "C# Winform",
+      "company": "Capgemini",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "63640107",
+      "title": "Lead Software Engineer|6-9 Yrs|Bangalore,Chennai,Hyderabad,Pune",
+      "company": "Capgemini",
+      "reason": "maxExp 8<10 (junior/mid band)"
+    },
+    {
+      "jobId": "63667032",
+      "title": "Full Stack .NET Developer- IQ/0096",
+      "company": "iQuest Management Consultants Private Limited",
+      "reason": "no seniority keyword on title"
+    },
+    {
+      "jobId": "63520689",
+      "title": "Site Reliability Engineer",
+      "company": "Procter & Gamble",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "63572322",
+      "title": "Finance Controller",
+      "company": "Hitachi Energy",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "63572370",
+      "title": "PGTR - Sweden (PG 2408 support)",
+      "company": "Hitachi Energy",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "63521978",
+      "title": "Offshore Pipelay QC Coordinator",
+      "company": "Saipem",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "63648500",
+      "title": "Network Security Engineer",
+      "company": "Tata Consultancy Services",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "63744122",
+      "title": "Lead Engineer(Structural Analysis)",
+      "company": "Collins Aerospace",
+      "reason": "non-software engineering without .NET on title"
+    },
+    {
+      "jobId": "63613448",
+      "title": ".Net Lead",
+      "company": "Infosys Limited",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+    },
+    {
+      "jobId": "63643231",
+      "title": ".NET Core Team Lead",
+      "company": "Infosys Limited",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+    },
+    {
+      "jobId": "63643052",
+      "title": ".Net Azure Lead",
+      "company": "Infosys Limited",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+    },
+    {
+      "jobId": "63596661",
+      "title": ".Net - Lead",
+      "company": "IRIS software",
+      "reason": "location not Hyd/remote: Noida | India"
+    }
+  ],
+  "appliedBefore": 447,
+  "appliedAfter": 449,
+  "appliedDelta": 2,
+  "intentionalApplies": 2,
+  "ageWindowUsed": 3650,
+  "resume": "/workspace/resumes/Rafi_Resume.docx",
+  "referralDrafts": [
+    {
+      "company": "HSO",
+      "title": "HSO Ind D365 F&O Technical Architect / Lead Developer",
+      "draft": "Hi \u2014 I'm applying for HSO Ind D365 F&O Technical Architect / Lead Developer at HSO. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA \u2192 expected 65 LPA. Happy to share Rafi_Resume.docx \u2014 could you refer me to the hiring manager? Thanks, Rafi Ahmed ([REDACTED] / +91 8790251698)"
+    },
+    {
+      "company": "Solugenix",
+      "title": "Software Architect",
+      "draft": "Hi \u2014 I'm applying for Software Architect at Solugenix. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA \u2192 expected 65 LPA. Happy to share Rafi_Resume.docx \u2014 could you refer me to the hiring manager? Thanks, Rafi Ahmed ([REDACTED] / +91 8790251698)"
+    }
+  ],
+  "mergedPr": "https://github.com/rafi-solibri/MyRepo/pull/245",
+  "postFixRerun": true,
+  "notes": [
+    "POST_FIX_RERUN=1 after #245 resume refresh; ran on origin/main 8b29a84",
+    "Skipped jobs already Applied (userJobInfo); no invented applies",
+    "JD-tailored Rafi_Resume.docx + profile upload before each Falcon apply"
+  ]
+}

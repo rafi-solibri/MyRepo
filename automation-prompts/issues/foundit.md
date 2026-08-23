@@ -5,6 +5,7 @@
 | Issue | Fix |
 | --- | --- |
 | Owner refreshed master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx (2026-08-23 evening) | Replaced resumes/Mohammed_Abdul_Rafi_Ahmed_Resume.docx + Rafi_Resume.docx alias; JD tailor still runs on top; upload filename stays Rafi_Resume |
+| #245 merged after the earlier 2026-08-23 apply pass (that run did not use the new master) | Same-day POST_FIX_RERUN on main `8b29a84`: 447→449 (+2) with tailored Rafi_Resume; report `reports/2026-08-24/foundit-daily.md` |
 
 
 ## 2026-08-23 (cloud)
