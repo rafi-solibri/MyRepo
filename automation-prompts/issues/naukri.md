@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-08-23 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Globallogic Senior Architect AI/Java JD false-apply + apply_unconfirmed on disabled dual-layer CTA | shouldSkipNonDotNetPrimaryJd on detail + readVisibleApplyCta treats disabled Quick apply Applied as applied |
+
+
 ## 2026-08-22 (cloud)
 
 | Issue | Fix |

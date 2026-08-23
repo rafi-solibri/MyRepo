@@ -4,6 +4,7 @@ const assert = require("assert");
 const {
   shouldSkipTitle,
   shouldSkipCompany,
+  shouldSkipNonDotNetPrimaryJd,
   hasDotNet,
   isArchLeadTitle,
   parseNaukriCardLines,
@@ -330,6 +331,45 @@ assert.strictEqual(
   ]).role,
   "Solutions Architect .NET",
   "homepage card: role before location before CTA"
+);
+assert.strictEqual(
+  shouldSkipNonDotNetPrimaryJd(
+    "Senior Architect",
+    [
+      "Globallogic",
+      "Senior Architect",
+      "Hyderabad, Chenani",
+      "Algorithms, C++, Artificial Intelligence, Tensorflow, Java, Pytorch, ML,",
+      "Machine Learning, Node, Angular, Python, AWS",
+      "10-15 Yrs",
+      "Role Overview",
+      "Lead end-to-end architecture for enterprise-grade AI and web platforms,",
+      "driving agentic solution design with Tensorflow and Pytorch.",
+      "Design frameworks using Angular/Node/AWS. Java and Python required.",
+    ].join("\n")
+  ),
+  true,
+  "Globallogic-style Senior Architect AI/Java JD without .NET must skip"
+);
+assert.strictEqual(
+  shouldSkipNonDotNetPrimaryJd(
+    "Solutions Architect",
+    [
+      "Acme",
+      "Solutions Architect",
+      "Hyderabad",
+      "Microservices, Azure, .NET Core, C#, Kafka, React, AWS",
+      "Role Overview",
+      "Lead solution architecture for cloud-native .NET platforms on Azure.",
+    ].join("\n")
+  ),
+  false,
+  ".NET JD must not skip via non-dotnet primary JD filter"
+);
+assert.strictEqual(
+  shouldSkipNonDotNetPrimaryJd("Senior Architect", "short"),
+  false,
+  "short card snippets must not trip JD primary skip"
 );
 const { workdayCompliantPassword } = require("./workday_apply");
 assert.strictEqual(workdayCompliantPassword("GoodPass123!"), "GoodPass123!");

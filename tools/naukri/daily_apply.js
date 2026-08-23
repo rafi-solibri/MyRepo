@@ -15,6 +15,7 @@ const {
   findResume,
   hasDotNet,
   shouldSkipTitleFromCard,
+  shouldSkipNonDotNetPrimaryJd,
   shouldSkipCompany,
   parseNaukriCardLines,
   isArchLeadTitle,
@@ -430,6 +431,16 @@ async function readVisibleApplyCta(page) {
       // No layered spans — fall back to plain label.
       if (/^Applied$/i.test(raw)) return { state: "applied", label: raw, raw };
       if (/^Quick apply$/i.test(raw)) return { state: "quick", label: raw, raw };
+      // Disabled dual-layer ("Quick apply Applied") — submit landed; overlays often
+      // unreadable mid-animation (apply_unconfirmed Globallogic 2026-08-23).
+      if (
+        btn.disabled ||
+        btn.getAttribute("aria-disabled") === "true"
+      ) {
+        if (/Applied/i.test(raw)) {
+          return { state: "applied", label: "Applied", raw };
+        }
+      }
       // Dual-layer concatenates both words; if transforms were unreadable, try apply.
       if (/Quick apply/i.test(raw) && !btn.disabled) {
         return { state: "quick", label: "Quick apply", raw };
@@ -1845,6 +1856,10 @@ function decideSkip(card, { detailMode = false } = {}) {
   // Architect / Tech Lead / EM / Principal / Staff / Senior Manager: allow without
   // .NET on the card snippet (JD often buries it). Still require .NET for weaker titles.
   if (!hasDotNet(role, blob) && !isArchLeadTitle(role)) return "skip_no_dotnet";
+  // Detail panel: generic Senior Architect + AI/Java JD without .NET → skip.
+  if (detailMode && shouldSkipNonDotNetPrimaryJd(role, blob)) {
+    return "skip_jd_non_dotnet";
+  }
   if (locationShouldSkip(loc, blob)) return "skip_location";
   const maxCtc = parseMaxCtcLpa(blob);
   if (maxCtc !== null && maxCtc < MIN_LISTED_MAX_CTC_LPA)

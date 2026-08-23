@@ -60,6 +60,37 @@ function shouldSkipTitleFromDetail(detailText) {
   return shouldSkipTitle(t.slice(0, 400));
 }
 
+/**
+ * Generic Architect/Lead titles whose JD/skills panel is clearly AI/ML or
+ * Java/Python-primary (no .NET|C#) — e.g. Globallogic "Senior Architect"
+ * with Tensorflow/Pytorch/Java laundry list (false-apply 2026-08-23).
+ * Only for detail blobs; never run on short card snippets.
+ */
+function shouldSkipNonDotNetPrimaryJd(role, detailText) {
+  const title = String(role || "").trim();
+  const blob = String(detailText || "");
+  if (!title || blob.length < 280) return false;
+  if (hasDotNet(title, "")) return false;
+  if (!isArchLeadTitle(title)) return false;
+  // Title already caught by PURE_AI_DATA / NON_DOTNET_PRIMARY — no need.
+  if (shouldSkipTitle(title)) return false;
+  const head = blob.slice(0, 2200);
+  if (hasDotNet("", head)) return false;
+  const low = head.toLowerCase();
+  const aiHits = (
+    low.match(
+      /\b(tensorflow|pytorch|deep learning|machine learning|\bml\b|gen\s*-?\s*ai|genai|agentic|llm|artificial intelligence|large language)\b/g
+    ) || []
+  ).length;
+  const javaPyHits = (
+    low.match(/\b(java|spring boot|python|node\.?js|mean\b|mern\b)\b/g) || []
+  ).length;
+  // Multiple AI/ML signals in skills/overview → not a .NET arch role.
+  if (aiHits >= 2) return true;
+  if (aiHits >= 1 && javaPyHits >= 2) return true;
+  return false;
+}
+
 const DOTNET_RE = /(\.net|dotnet|asp\.?\s*net|c#|csharp)/i;
 
 /** Architect / Lead / EM / Principal / Staff / Director — apply even if card omits .NET. */
@@ -181,6 +212,7 @@ module.exports = {
   shouldSkipTitle,
   shouldSkipTitleFromDetail,
   shouldSkipTitleFromCard,
+  shouldSkipNonDotNetPrimaryJd,
   shouldSkipCompany,
   parseNaukriCardLines,
   isArchLeadTitle,
