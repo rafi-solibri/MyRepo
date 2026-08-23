@@ -1,0 +1,91 @@
+{
+  "portal": "foundit",
+  "source": "cloud-post-fix-rerun",
+  "date": "2026-08-24",
+  "startedAt": "2026-08-23T19:29:08.019Z",
+  "finishedAt": "2026-08-23T19:34:48Z",
+  "ok": true,
+  "counts": {
+    "applied": 1,
+    "external": 1,
+    "rejected": 0,
+    "blocked": 0,
+    "skipped": 1192,
+    "seen": 1269,
+    "duplicates": 76
+  },
+  "applied": [
+    {
+      "jobId": "63641755",
+      "title": "Senior .NET Full Stack Developer- India Remote",
+      "company": "relq technologies",
+      "loc": "India | Remote | remote",
+      "path": "Foundit + ATS https://www.linkedin.com/jobs/view/4456740134/",
+      "falconStatus": 200,
+      "falconNext": "APPLY_REDIRECT_STAGE_ONE",
+      "ats": {
+        "status": "linkedin_no_easy_apply",
+        "url": "https://www.linkedin.com/jobs/view/4456740134/"
+      },
+      "ageDays": 1.9404569675925927,
+      "tailoredResume": {
+        "path": "/opt/cursor/artifacts/tailored-resumes/63641755-a377768980/Rafi_Resume.docx",
+        "headline": "Technical Architect | Technical Lead \u2014 .NET Core",
+        "matchedSkills": [
+          ".NET Core",
+          "ASP.NET Core",
+          "CI/CD",
+          "REST API",
+          "Agile",
+          "Angular",
+          "API Design",
+          "Docker",
+          "Scrum",
+          "Software Architecture",
+          "SQL Server",
+          "Architecture Reviews",
+          "Cloud Architecture",
+          "Domain-Driven Design",
+          "Event-Driven Architecture",
+          "High Availability",
+          "Solution Architecture",
+          "System Design"
+        ],
+        "profileUploadOk": true
+      }
+    }
+  ],
+  "blocked": [],
+  "skipped": [],
+  "appliedBefore": 441,
+  "appliedAfter": 442,
+  "appliedDelta": 1,
+  "intentionalApplies": 1,
+  "ageWindowUsed": 3650,
+  "resume": "/workspace/resumes/Rafi_Resume.docx",
+  "resumeBytes": 3956863,
+  "referralDrafts": [
+    {
+      "company": "relq technologies",
+      "title": "Senior .NET Full Stack Developer- India Remote",
+      "draft": "Hi \u2014 I'm applying for Senior .NET Full Stack Developer- India Remote at relq technologies. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA \u2192 expected 65 LPA. Happy to share Rafi_Resume.docx \u2014 could you refer me to the hiring manager? Thanks, Rafi Ahmed ([REDACTED] / +91 8790251698)"
+    }
+  ],
+  "mergedPr": "https://github.com/rafi-solibri/MyRepo/pull/246",
+  "postFixRerun": true,
+  "notes": [
+    "POST_FIX_RERUN=1 after #246 resume refresh; ran on origin/main 8709c2c",
+    "Used 3.9MB Mohammed_Abdul_Rafi_Ahmed_Resume master aliased as Rafi_Resume.docx",
+    "Skipped jobs already Applied today (HSO 63894198, Solugenix 63894158) via userJobInfo; no invented applies",
+    "JD-tailored Rafi_Resume.docx + profile upload before Falcon apply",
+    "Earlier same-IST-day #245 re-run had already applied HSO + Solugenix; this run applied 1 new role"
+  ],
+  "skipReasonCounts": {
+    "no .NET on title+skills": 351,
+    "location not Hyd/remote: Bengaluru / Bangalore | India": 175,
+    "no seniority keyword on title": 121,
+    "SAP without .NET": 65,
+    "location not Hyd/remote: Pune | India": 52,
+    "other": 428
+  }
+}
