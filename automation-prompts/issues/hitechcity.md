@@ -5,6 +5,7 @@
 | Issue | Fix |
 | --- | --- |
 | Owner supplied new master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx | Synced into resumes/Rafi_Resume.docx (+ Architect alias); bootstrap prefers owner-named file; JD tailor still runs on top; upload filename/label stays Rafi_Resume |
+| apply_job pre-nav card_location_ok ignored listingLoc so Hyland .NET / Blue Yonder Hyd-listing cards were false-skipped after extract | Carry listingLoc on the job dict and reuse it in apply_job pre-nav and top-card checks |
 | Hyland iCIMS / Blue Yonder title-only cards on Hyd-pinned listings extracted 0 jobs (frame.url dropped in_iframe=1; card_location_ok required city on title) | Rank icims_content_iframe by name; pass listing Hyd loc into extract so title-only cards apply unless foreign city |
 | resolve_company_f_c hung overnight CDP for 5+ min on Palo Alto /jobs/ (500k innerHTML walk) | link-first f_C scrape + 180k HTML cap + shorter goto_retry; kill/resume path documented in daily report |
 | LinkedIn still searched Optum/UHG despite HITECHCITY_SKIP_UHG=1 (careers/boards already skipped) | linkedin_target_apply honors company_skip_reason/skip_uhg before f_C resolve; test covers Optum |
