@@ -574,6 +574,35 @@ def main() -> None:
     for jid in by_id:
         if jid not in ordered:
             ordered.append(jid)
+    already_applied: set[str] = set()
+    report_paths = [REPORT_IN]
+    day_dir = Path("/workspace/reports/2026-08-23")
+    if day_dir.is_dir():
+        report_paths.extend(sorted(day_dir.glob("*-daily.json")))
+    for path in report_paths:
+        try:
+            if not path.is_file():
+                continue
+            blob = json.loads(path.read_text(encoding="utf-8"))
+            if not isinstance(blob, dict):
+                continue
+            for key in ("submitted", "applied"):
+                for row in blob.get(key) or []:
+                    if not isinstance(row, dict):
+                        continue
+                    j = str(row.get("job_id") or row.get("id") or "")
+                    status = str(row.get("status") or row.get("path") or "submitted").lower()
+                    if j.isdigit() and status in {
+                        "submitted",
+                        "applied",
+                        "easy apply",
+                        "ats",
+                    }:
+                        already_applied.add(j)
+        except Exception as exc:
+            print(f"DEDUP skip {path}: {exc}", flush=True)
+    print(f"DEDUP already-applied ids={len(already_applied)}", flush=True)
+
     results: list[ExtResult] = []
     with sync_playwright() as p:
         try:
@@ -637,6 +666,12 @@ def main() -> None:
         for jid in ordered:
             if done >= MAX_EXTERNAL:
                 break
+            if str(jid) in already_applied:
+                print(f"SKIP already applied {jid}", flush=True)
+                results.append(
+                    ExtResult(status="skipped", job_id=str(jid), reason="already applied")
+                )
+                continue
             job = by_id.get(jid)
             if not job:
                 # Still try priority IDs even if not in today's scan
