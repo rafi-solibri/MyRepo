@@ -276,6 +276,21 @@ assert.strictEqual(
   "Cloud Infrastructure Architect with .NET must not title-skip"
 );
 assert.strictEqual(
+  shouldSkipTitle("Microfocus Rehost Technical Architect (7 locations)"),
+  true,
+  "Micro Focus rehost architect must skip (false-apply TCS 2026-08-23)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Technical Lead - Full Stack (React + Node JS + AWS)"),
+  true,
+  "React+Node JS Technical Lead without .NET must skip (false-apply Cotiviti 2026-08-23)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Technical Lead - Full Stack .NET / Node.js"),
+  false,
+  "Node.js title with .NET on the title must not skip"
+);
+assert.strictEqual(
   shouldSkipCompany("Pega"),
   true,
   "Pega employer must skip even if title omits Pega"

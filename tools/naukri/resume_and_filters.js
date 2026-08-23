@@ -33,7 +33,7 @@ function findResume() {
  * Only skip when title itself is a QA/SDET role.
  */
 const SKIP_TITLE_RE =
-  /\b(qa engineer|quality assurance|quality engineer|quality engineering|quality architect|quality solution architect|\bqe architect\b|sdet|tosca|test automation architect|embedded\b|firmware|intern(?!et)|fresher|salesforce|agentforce|servicenow|coupa|pega|lead system architect|\blsa\b|appian|anaplan|celonis|power platform|guidewire|sap\b|dynamics|\bd365\b|workday hms|revit|\bbarch\b|hubspot|\bsre\b|site reliability|devops engineer|devops lead|devops architect|platform sre|network operations|network ops|network support|civil\b|structural|substation|attack surface|cyber\s*security|cybersecurity|cyber architecture|infosec|penetration|red team|soc analyst|security operations|threat hunter|\bmdr\b|\bedr\b|observability|\bdatadog\b|infrastructure engineer|analog\s*ic|\bvlsi\b|digital verification|\basic\b|\bfpga\b|mulesoft|mule\s*soft|ms\s*fabric|microsoft\s*fabric|\bsynapse\b|\bdatabricks\b|datalake|data\s*lake)\b/i;
+  /\b(qa engineer|quality assurance|quality engineer|quality engineering|quality architect|quality solution architect|\bqe architect\b|sdet|tosca|test automation architect|embedded\b|firmware|intern(?!et)|fresher|salesforce|agentforce|servicenow|coupa|pega|lead system architect|\blsa\b|appian|anaplan|celonis|power platform|guidewire|sap\b|dynamics|\bd365\b|workday hms|revit|\bbarch\b|hubspot|\bsre\b|site reliability|devops engineer|devops lead|devops architect|platform sre|network operations|network ops|network support|civil\b|structural|substation|attack surface|cyber\s*security|cybersecurity|cyber architecture|infosec|penetration|red team|soc analyst|security operations|threat hunter|\bmdr\b|\bedr\b|observability|\bdatadog\b|infrastructure engineer|analog\s*ic|\bvlsi\b|digital verification|\basic\b|\bfpga\b|mulesoft|mule\s*soft|ms\s*fabric|microsoft\s*fabric|\bsynapse\b|\bdatabricks\b|datalake|data\s*lake|microfocus|micro\s*focus|\brehost\b)\b/i;
 
 /**
  * Employer names that are Coupa/Pega/Salesforce/SAP-primary even when the
@@ -51,7 +51,7 @@ const PURE_AI_DATA_RE =
  * Do not use on full JD blobs (skills lists are noisy).
  */
 const NON_DOTNET_PRIMARY_RE =
-  /\b(java|j2ee|spring boot|golang|go lang|python|mean\b|mern\b|ruby on rails|php|oracle apps|oracle fusion|oracle\s+dba|oracle cloud|abap|mainframe|cobol|\bas400\b|ibm\s*i)\b/i;
+  /\b(java|j2ee|spring boot|golang|go lang|python|mean\b|mern\b|node\.?js|node\s+js|ruby on rails|php|oracle apps|oracle fusion|oracle\s+dba|oracle cloud|abap|mainframe|cobol|\bas400\b|ibm\s*i)\b/i;
 
 /** When scanning detail pages, use job panel text only — never document.body. */
 function shouldSkipTitleFromDetail(detailText) {
