@@ -279,6 +279,29 @@ def test_careers_card_location():
         "Senior Director Analyst - Software Engineering for AI and Agentic Applications "
         "(Remote - U.S.)"
     )
+    # 2026-08-24: Gartner (Remote - N.A.) + Workday Remote---United-States / Remote---NA.
+    assert not card_location_ok(
+        "Sr Director Analyst - Software Engineering AI Strategy and Value (Remote - N.A.)"
+    )
+    gartner_na = (
+        "https://gartner.wd5.myworkdayjobs.com/en-US/EXT/job/Remote---United-States/"
+        "Sr-Director-Analyst----Software-Engineering-AI-Strategy-and-Value--Remote---NA-_111762/"
+        "apply/applyManually"
+    )
+    assert "united states" in url_loc_hint(gartner_na).lower() or "na" in url_loc_hint(gartner_na).lower()
+    assert not card_location_ok(
+        "Sr Director Analyst - Software Engineering AI Strategy and Value (Remote - N.A.)",
+        url_loc_hint(gartner_na),
+    )
+    assert CAREERS_TITLE_SKIP.search(
+        "Sr Director Analyst - Software Engineering AI Strategy and Value (Remote - N.A.)"
+    )
+    assert skip_reason(
+        "Sr Director Analyst - Software Engineering AI Strategy and Value (Remote - N.A.)"
+    ) == "title: AI/ML excluded"
+    assert LI_TITLE_SKIP.search(
+        "Sr Director Analyst - Software Engineering AI Strategy and Value (Remote - N.A.)"
+    )
     gartner_tx = (
         "https://gartner.wd5.myworkdayjobs.com/en-US/EXT/job/Remote---Texas/"
         "Sr-Director-Analyst--AI-and-Software-Engineering--Remote--US-_104591-1/"
