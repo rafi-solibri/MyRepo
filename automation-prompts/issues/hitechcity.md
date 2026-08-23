@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Gartner (Remote - N.A.) / Workday Remote---United-States + AI Strategy title opened as India-remote | BAD_LOC_HINT Remote-N.A./north America; AIML+CAREERS+LI title skip AI Strategy |
 | Owner refreshed master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx (2026-08-23 evening) | Replaced resumes/Mohammed_Abdul_Rafi_Ahmed_Resume.docx + Rafi_Resume.docx alias; JD tailor still runs on top; upload filename stays Rafi_Resume |
 
 
