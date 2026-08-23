@@ -150,7 +150,7 @@ CAREERS_TITLE_SKIP = re.compile(
     r"physical\s*design|silicon\s*design|silicon\s*engineer|product\s*design\s*manager|"
     r"chiplet|\basic\b|\bvlsi\b|rtl\s*design|dft\s*engineer|"
     r"analog\s*design|digital\s*design\s*engineer|verification\s*engineer|"
-    r"sales\s*specialist|especialista|"
+    r"sales\s*specialist|especialista|account\s*executive|sales\s*executive|"
     r"program\s*manager|technical\s*program\s*manager|\btpm\b|"
     r"\bai\s*native\b|\bdata\s*&\s*ai\b|staff\s*engineer\s*\(\s*ai|"
     r"\bai\s*/\s*ml\b|\bai\s*&\s*ml\b|\baiml\b|\bai-ml\b|"
@@ -159,6 +159,7 @@ CAREERS_TITLE_SKIP = re.compile(
     r"\bartificial\s*intelligence\b|\bcuda\b|\brocm\b|"
     r"engineer in test|\bsdet\b|cyber\s*security|cybersecurity|"
     r"performance\s*test|load\s*test|fusion\s*load\s*testing|"
+    r"performance\s+and\s+scalability|performance\s+&\s+scale|"
     r"database engineer",
     re.I,
 )
@@ -861,6 +862,14 @@ def extract_job_links(
                 "listingLoc": listing_loc,
             }
         )
+    # Attempt .NET / Azure titles before generic Principal/Staff cards so a
+    # captcha wall cap does not burn the best campus matches first.
+    jobs.sort(
+        key=lambda j: (
+            0 if prefer_dotnet(j.get("role") or "") else 1,
+            j.get("role") or "",
+        )
+    )
     return jobs
 
 
