@@ -1,5 +1,13 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-23 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| resolve_company_f_c hung overnight CDP for 5+ min on Palo Alto /jobs/ (500k innerHTML walk) | link-first f_C scrape + 180k HTML cap + shorter goto_retry; kill/resume path documented in daily report |
+| LinkedIn still searched Optum/UHG despite HITECHCITY_SKIP_UHG=1 (careers/boards already skipped) | linkedin_target_apply honors company_skip_reason/skip_uhg before f_C resolve; test covers Optum |
+
+
 ## 2026-08-22 (cloud)
 
 | Issue | Fix |

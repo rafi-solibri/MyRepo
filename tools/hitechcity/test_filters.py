@@ -487,6 +487,13 @@ def test_skip_uhg_default():
         assert JOB_ID_HREF_RE.search(
             "https://jobs.gartner.com/jobs/job/112613-executive-partner-enterprise-architecture-ea/"
         )
+        # LinkedIn must honor the same skip (careers already did; LI used to burn Optum inventory).
+        from tools.hitechcity.linkedin_target_apply import company_skip_reason as li_skip
+
+        os.environ.pop("HITECHCITY_SKIP_UHG", None)
+        assert li_skip({"name": "Optum", "careersUrls": []}) == "skip_uhg"
+        assert li_skip({"name": "UnitedHealth Group", "careersUrls": []}) == "skip_uhg"
+        assert li_skip({"name": "Oracle", "careersUrls": []}) is None
     finally:
         if prev_uhg is None:
             os.environ.pop("HITECHCITY_SKIP_UHG", None)
