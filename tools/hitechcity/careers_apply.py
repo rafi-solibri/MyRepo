@@ -244,9 +244,38 @@ NAV_CHROME_RE = re.compile(
 JOB_ID_HREF_RE = re.compile(
     r"/jobs?/\d|/job/\d|gh_jid=|[?&](jobId|pid|reqId)=\d|/jobs/\d{4,}|"
     r"smartrecruiters\.com/[^/]+/\d{6,}|myworkdayjobs\.com/.+/job/|"
-    r"icims\.com/jobs/\d+|jobdetails\?id=|/careers/jobdetails",
+    r"icims\.com/jobs/\d+|jobdetails\?id=|/careers/jobdetails|"
+    r"/en/sites/[^/]+/job/\d+",
     re.I,
 )
+
+
+def listing_is_hyderabad_scoped(url: str, loc_ui: dict[str, Any] | None = None) -> bool:
+    """True when the search listing is Hyd-scoped via URL query and/or on-page pin."""
+    blob = url or ""
+    if re.search(
+        r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|gachibowli|raidurg",
+        blob,
+        re.I,
+    ):
+        return True
+    loc_ui = loc_ui or {}
+    return bool(loc_ui.get("pinned"))
+
+
+def frame_scan_rank(url: str = "", name: str = "") -> int:
+    """Prefer the iCIMS listing iframe over parent marketing chrome.
+
+    iCIMS often strips ``in_iframe=1`` from ``frame.url`` while keeping it on
+    the iframe ``src`` and ``name=icims_content_iframe``.
+    """
+    u = url or ""
+    n = (name or "").lower()
+    if "in_iframe=1" in u or n == "icims_content_iframe" or "icims_content_iframe" in n:
+        return 0
+    if "about:blank" in u or not u:
+        return 3
+    return 1
 
 
 @dataclass
@@ -644,7 +673,9 @@ def adopt_ats_tab(page: Page, before_pages: set) -> Page:
     return page
 
 
-def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
+def extract_job_links(
+    page: Page, company: str, listing_loc: str = ""
+) -> list[dict[str, str]]:
     jobs: list[dict[str, str]] = []
     try:
         # Oracle Cloud HCM / JPMC / similar: job anchors often have empty innerText;
@@ -658,12 +689,10 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
         if not frames:
             frames = [page]
         def _frame_rank(fr) -> int:
-            u = getattr(fr, "url", "") or ""
-            if "in_iframe=1" in u:
-                return 0
-            if "about:blank" in u or not u:
-                return 3
-            return 1
+            return frame_scan_rank(
+                getattr(fr, "url", "") or "",
+                getattr(fr, "name", "") or "",
+            )
         try:
             frames = sorted(frames, key=_frame_rank)
         except Exception:
@@ -816,6 +845,12 @@ def extract_job_links(page: Page, company: str) -> list[dict[str, str]]:
         )
         if hint and BAD_LOC_HINT.search(hint) and not hydish.search(hint):
             continue
+        # Hyd-pinned listings (iCIMS/Phenom/Oracle) often omit the city on the
+        # title anchor. Apply-bias: treat title-only cards as Hyd unless the
+        # card/path names a foreign city.
+        if listing_loc and not hydish.search(f"{text} {hint}"):
+            if not BAD_LOC_HINT.search(f"{text} {hint}"):
+                hint = f"{hint} {listing_loc}".strip()
         if not card_location_ok(text, hint):
             continue
         jobs.append({"role": text, "url": href, "company": company})
@@ -1382,8 +1417,9 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                 # Do not treat iCIMS skip-to-iframe chrome (`#icims_content_iframe`) as a card.
                 try:
                     page.wait_for_selector(
-                        'iframe[src*="in_iframe=1"], iframe#icims_content_iframe',
-                        timeout=6000,
+                        'iframe[src*="in_iframe=1"], iframe#icims_content_iframe, '
+                        'iframe[name="icims_content_iframe"]',
+                        timeout=8000,
                     )
                 except Exception:
                     pass
@@ -1392,19 +1428,31 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                         '[data-automation-id="jobTitle"], a[data-automation-id="jobTitle"], '
                         'a[href*="icims.com/jobs/"][href*="/job"], '
                         'a[href*="jobdetails?id="], a[href*="/jobs/job/"], '
-                        "a.job-grid-item__link, [data-qa='jobRequisitionTitle']",
-                        timeout=10000,
+                        'a[href*="/job/"], a.job-grid-item__link, '
+                        "[data-qa='jobRequisitionTitle']",
+                        timeout=12000,
                     )
                 except Exception:
                     pass
                 try:
-                    for fr in page.frames:
-                        if "in_iframe=1" in (getattr(fr, "url", "") or ""):
-                            fr.wait_for_selector(
-                                'a[href*="icims.com/jobs/"][href*="/job"]',
-                                timeout=8000,
-                            )
-                            break
+                    listing_fr = None
+                    try:
+                        listing_fr = page.frame(name="icims_content_iframe")
+                    except Exception:
+                        listing_fr = None
+                    if listing_fr is None:
+                        for fr in page.frames:
+                            u = getattr(fr, "url", "") or ""
+                            n = getattr(fr, "name", "") or ""
+                            if frame_scan_rank(u, n) == 0:
+                                listing_fr = fr
+                                break
+                    if listing_fr is not None:
+                        listing_fr.wait_for_selector(
+                            'a[href*="icims.com/jobs/"][href*="/job"], '
+                            'a[href*="/jobs/"][href*="/job"]',
+                            timeout=10000,
+                        )
                 except Exception:
                     pass
                 # Experian SmartRecruiters location groups collapse job links until expanded.
@@ -1415,7 +1463,12 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                         time.sleep(1.2)
                 except Exception:
                     pass
-                jobs = extract_job_links(page, name)
+                listing_loc = (
+                    "Hyderabad"
+                    if listing_is_hyderabad_scoped(url, workday_loc)
+                    else ""
+                )
+                jobs = extract_job_links(page, name, listing_loc=listing_loc)
                 # Workday with no Hyderabad in the location filter → drop foreign cards.
                 if (
                     re.search(r"myworkdayjobs\.com", url, re.I)
