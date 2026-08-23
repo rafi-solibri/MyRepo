@@ -16,6 +16,8 @@ from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from playwright.sync_api import Page, sync_playwright
 
+from tools.ats.captcha_solve import _call_with_hang_timeout
+
 from tools.hitechcity.ats_fill import (
     attempt_ats_apply,
     auth_wall_url,
@@ -1451,25 +1453,33 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                     pass
                 # Wait for guest ATS cards (Workday / iCIMS / Oracle HCM) before extract.
                 # Do not treat iCIMS skip-to-iframe chrome (`#icims_content_iframe`) as a card.
-                try:
-                    page.wait_for_selector(
+                # Playwright wait_for_selector can ignore its timeout after a JS-dialog
+                # protocol wedge — SIGALRM so one listing cannot freeze a parallel worker.
+                def _wait_sel(sel: str, ms: int) -> None:
+                    try:
+                        page.wait_for_selector(sel, timeout=ms)
+                    except Exception:
+                        return
+
+                _call_with_hang_timeout(
+                    lambda: _wait_sel(
                         'iframe[src*="in_iframe=1"], iframe#icims_content_iframe, '
                         'iframe[name="icims_content_iframe"]',
-                        timeout=8000,
-                    )
-                except Exception:
-                    pass
-                try:
-                    page.wait_for_selector(
+                        4000,
+                    ),
+                    5.0,
+                )
+                _call_with_hang_timeout(
+                    lambda: _wait_sel(
                         '[data-automation-id="jobTitle"], a[data-automation-id="jobTitle"], '
                         'a[href*="icims.com/jobs/"][href*="/job"], '
                         'a[href*="jobdetails?id="], a[href*="/jobs/job/"], '
                         'a[href*="/job/"], a.job-grid-item__link, '
                         "[data-qa='jobRequisitionTitle']",
-                        timeout=12000,
-                    )
-                except Exception:
-                    pass
+                        5000,
+                    ),
+                    6.0,
+                )
                 try:
                     listing_fr = None
                     try:
