@@ -2222,10 +2222,12 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
         flush=True,
     )
     deadline = time.time() + wait
+    hard_cap = time.time() + wait + (0 if asleep else max(120, min(wait, 360)))
     last_beat = 0.0
     last_focus = 0.0
     last_fp = page_fingerprint(page)
     extended = asleep  # skip extend loop when owner cannot respond
+    progress_extends = 0
     poll = float(os.environ.get("ATS_CAPTCHA_POLL_SEC", "0.4") or "0.4")
     poll = min(1.0, max(0.25, poll))
     while True:
@@ -2236,6 +2238,13 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
             if looks_already_applied(page):
                 print("ASK_OWNER resolved=already_applied", flush=True)
                 return "skipped", "already_applied"
+            try:
+                otp = otp_wall_reason(_body(page, 2500))
+            except Exception:
+                otp = None
+            if otp:
+                print(f"ASK_OWNER resolved={otp} — owner-only code gate, not a fillable form", flush=True)
+                return "blocked", otp
             now = time.time()
             if focus_page_for_owner and now - last_focus >= focus_every:
                 try:
@@ -2276,8 +2285,14 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
             if fp != last_fp:
                 # Owner or helper progressed — keep working; nudge deadline forward once.
                 last_fp = fp
-                if not extended and time.time() + 90 > deadline:
-                    deadline = max(deadline, time.time() + 120)
+                if (
+                    not extended
+                    and progress_extends < 1
+                    and time.time() + 90 > deadline
+                    and time.time() < hard_cap
+                ):
+                    deadline = min(hard_cap, max(deadline, time.time() + 120))
+                    progress_extends += 1
                     print("ASK_OWNER progress — extending while form still open", flush=True)
             now = time.time()
             if now - last_beat >= 8.0:
@@ -2289,6 +2304,13 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
             return "applied", "confirmation"
         if looks_already_applied(page):
             return "skipped", "already_applied"
+        try:
+            otp = otp_wall_reason(_body(page, 2500))
+        except Exception:
+            otp = None
+        if otp:
+            print(f"ASK_OWNER timeout resolved={otp}", flush=True)
+            return "blocked", otp
         if not extended and apply_form_still_open(page):
             extended = True
             extra = max(120, min(wait, 360))
