@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -86,24 +87,61 @@ def extract_hcaptcha_sitekey(page) -> str:
     return ""
 
 
+# Ad / challenge iframes: evaluate/inner_text on these wedges Playwright after a
+# JS dialog protocol error and starves the 180s owner-captcha deadline.
+_SKIP_POLL_FRAME_RE = re.compile(
+    r"hcaptcha\.com|newassets\.hcaptcha|google\.com/recaptcha|"
+    r"doubleclick\.net|adsrvr\.org|casalemedia\.com|"
+    r"linkedin\.com/talentwidgets|linkedin\.com/pages-extensions|"
+    r"challenges\.cloudflare\.com|^blob:|^about:",
+    re.I,
+)
+_MAX_CAPTCHA_POLL_FRAMES = 5
+
+
 def _captcha_poll_frames(page) -> list:
-    """Parent page first; skip cross-origin hCaptcha/reCAPTCHA iframes (evaluate hangs)."""
+    """Parent page first; skip captcha/ad iframes (evaluate hangs). Cap count."""
     targets: list = [page]
     try:
         frames = list(getattr(page, "frames", []) or [])
     except Exception:
         frames = []
     for fr in frames:
-        if fr is page:
+        if fr is page or fr in targets:
             continue
         try:
             u = (getattr(fr, "url", None) or "").lower()
         except Exception:
             u = ""
-        if "hcaptcha.com" in u or "newassets.hcaptcha" in u or "google.com/recaptcha" in u:
+        if _SKIP_POLL_FRAME_RE.search(u):
             continue
         targets.append(fr)
+        if len(targets) >= _MAX_CAPTCHA_POLL_FRAMES:
+            break
     return targets
+
+
+def _call_with_hang_timeout(fn, timeout_s: float, default=None):
+    """Run fn in a daemon thread; return (value, hung).
+
+    Playwright inner_text/evaluate can ignore timeouts after
+    Page.handleJavaScriptDialog 'No dialog is showing' and block forever.
+    The owner-captcha loop must still honor ATS_CAPTCHA_WAIT_SEC.
+    """
+    box: dict = {"done": False, "val": default}
+    def _run() -> None:
+        try:
+            box["val"] = fn()
+        except Exception:
+            box["val"] = default
+        finally:
+            box["done"] = True
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
+    t.join(max(0.2, float(timeout_s)))
+    if not box["done"]:
+        return default, True
+    return box["val"], False
 
 
 def hcaptcha_token_present(page) -> bool:
@@ -547,14 +585,33 @@ def wait_for_owner_hcaptcha(page) -> bool:
     focus_every = owner_focus_interval_sec()
     poll = float(os.environ.get("ATS_CAPTCHA_POLL_SEC", "0.4") or "0.4")
     poll = min(1.0, max(0.2, poll))
+    hung_polls = 0
     while time.time() < deadline:
-        why = owner_hcaptcha_cleared(page, start_url=start_url)
-        if why:
+        why, hung = _call_with_hang_timeout(
+            lambda: owner_hcaptcha_cleared(page, start_url=start_url),
+            3.0,
+            default=None,
+        )
+        if hung:
+            hung_polls += 1
+            print(
+                f"hcaptcha=poll_hung n={hung_polls} — Playwright inner_text/evaluate "
+                f"exceeded 3s (dialog/CDP wedge)",
+                flush=True,
+            )
+            if hung_polls >= 2:
+                print("hcaptcha=owner_wait_abort_hung", flush=True)
+                return False
+        elif why:
             print(f"hcaptcha=owner_solved reason={why}", flush=True)
             return True
         now = time.time()
         if now - last_focus >= focus_every:
-            focus_page_for_owner(page, reason="hcaptcha_hold")
+            _call_with_hang_timeout(
+                lambda: focus_page_for_owner(page, reason="hcaptcha_hold"),
+                2.0,
+                default=False,
+            )
             last_focus = now
         if now - last_beat >= 5.0:
             left = max(0, int(deadline - now))

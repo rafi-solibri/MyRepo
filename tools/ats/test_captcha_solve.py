@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -11,6 +12,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.ats.captcha_solve import (
+    _MAX_CAPTCHA_POLL_FRAMES,
+    _call_with_hang_timeout,
     _captcha_poll_frames,
     captcha_solver_configured,
     extract_sitekey_from_text,
@@ -108,14 +111,30 @@ _page = _FakePage(
         _FakeFrame("https://newassets.hcaptcha.com/captcha/v1/x/static/hcaptcha.html"),
         _FakeFrame("https://www.google.com/recaptcha/api2/anchor"),
         _FakeFrame("https://hyland.icims.com/jobs/.../login"),
+        _FakeFrame("https://10351289.fls.doubleclick.net/activityi;src=1"),
+        _FakeFrame("https://insight.adsrvr.org/track/cei?advertiser_id=x"),
     ]
 )
-# page itself is first; hcaptcha/recaptcha iframes skipped
+# page itself is first; hcaptcha/recaptcha/ad iframes skipped
 _polled = _captcha_poll_frames(_page)
 assert_true(_polled[0] is _page, "page first")
-assert_true(len(_polled) == 3, f"skip captcha iframes got {len(_polled)}")
+assert_true(len(_polled) == 3, f"skip captcha/ad iframes got {len(_polled)}")
 assert_true(all("hcaptcha" not in getattr(f, "url", "") for f in _polled[1:]), "no hcaptcha frames")
 assert_true(all("recaptcha" not in getattr(f, "url", "") for f in _polled[1:]), "no recaptcha frames")
+assert_true(all("doubleclick" not in getattr(f, "url", "") for f in _polled[1:]), "no doubleclick frames")
+_many = _FakePage([_FakeFrame(f"https://careers.example.com/f{i}") for i in range(12)])
+assert_true(len(_captcha_poll_frames(_many)) == _MAX_CAPTCHA_POLL_FRAMES, "poll frame cap")
+
+
+def _hang_forever():
+    time.sleep(30)
+    return "never"
+
+
+_val, _hung = _call_with_hang_timeout(_hang_forever, 0.3, default=None)
+assert_true(_hung is True and _val is None, "hang timeout flags wedged Playwright poll")
+_val2, _hung2 = _call_with_hang_timeout(lambda: "ok", 1.0, default=None)
+assert_true(_hung2 is False and _val2 == "ok", "hang timeout passes through")
 
 
 class _BodyLoc:

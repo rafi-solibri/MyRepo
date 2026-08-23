@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Owner hCaptcha wait hung past 180s: Playwright inner_text/evaluate on ad iframes ignored timeout after JS dialog protocol error (8 workers 75% CPU, 0 submits) | Skip ad/tracker frames + cap poll frames; thread hang-timeout aborts wedged captcha polls so careers can fail-fast and continue |
 | Owner supplied new master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx | Synced into resumes/Rafi_Resume.docx (+ Architect alias); bootstrap prefers owner-named file; JD tailor still runs on top; upload filename/label stays Rafi_Resume |
 | Hyland iCIMS hCaptcha wall cap burned on Performance/Account Executive before Senior Software Architect .NET | Skip performance-and-scalability and account-executive titles; sort prefer_dotnet jobs first |
 | ASK_OWNER progress-extend looped forever on Oracle OTP (fingerprint churn) so careers never reached Hyland .NET submit | Fail-fast ats_otp_wall inside ASK_OWNER; cap progress extends at 1 and hard-cap wait+one extend |
