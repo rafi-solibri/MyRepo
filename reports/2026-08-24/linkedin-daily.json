@@ -1,0 +1,34 @@
+{
+  "ts": "2026-08-23T18:55:00+00:00",
+  "ok": false,
+  "counts": {
+    "applied": 0,
+    "submitted": 0,
+    "skipped": 0,
+    "blocked": 1,
+    "seen": 1
+  },
+  "applied": [],
+  "submitted": [],
+  "skipped": [],
+  "blocked": [
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "",
+      "location": "",
+      "reason": "wrong_password: stale li_at + LINKEDIN_PASSWORD and NAUKRI_WORKDAY_PASSWORD rejected; Google GSI required identifier re-login",
+      "url": "https://www.linkedin.com/login/",
+      "path": ""
+    }
+  ],
+  "external_candidates": [],
+  "all": [
+    {
+      "status": "blocked",
+      "reason": "wrong_password: stale li_at + LINKEDIN_PASSWORD and NAUKRI_WORKDAY_PASSWORD rejected; Google GSI required identifier re-login",
+      "url": "https://www.linkedin.com/login/"
+    }
+  ]
+}

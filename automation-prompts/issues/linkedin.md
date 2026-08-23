@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Auto-login timed out as login_required while Welcome-back/GSI showed wrong password; stale Google cookies opened identifier form unhandled | Detect wrong-password copy; try unique secret aliases; per-method wait; complete Google identifier/password; screenshot wrong-password |
 | Owner refreshed master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx (2026-08-23 evening) | Replaced resumes/Mohammed_Abdul_Rafi_Ahmed_Resume.docx + Rafi_Resume.docx alias; JD tailor still runs on top; upload filename stays Rafi_Resume |
 
 
