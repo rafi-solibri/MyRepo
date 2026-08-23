@@ -150,4 +150,14 @@ assert_true(
     "India primary + remote_search must allow even if workplace has other cities",
 )
 
+assert_true(
+    skip_reason(
+        "Azure Data Engineer (7+ years) | Chennai | Bengaluru | Hyderabad",
+        "Strive4X Infotech Private Limited",
+        "",
+    )
+    is not None,
+    "Azure Data Engineer title without .NET must skip (view bait-and-switch)",
+)
+
 print("filters self-test OK")
