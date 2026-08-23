@@ -18,9 +18,11 @@ from tools.hitechcity.careers_apply import (
     _browser_session_dead,
     card_location_ok,
     company_skip_reason,
+    frame_scan_rank,
     is_hang_scan_url,
     is_sso_only_careers_url,
     is_uhg_skip_url,
+    listing_is_hyderabad_scoped,
     location_ui_input_meta_ok,
     role_has_foreign_location,
     url_loc_hint,
@@ -148,6 +150,7 @@ def test_title_ok():
         "https://careers-hyland.icims.com/jobs/search?ss=1&searchKeyword=Engineering+Manager&in_iframe=1"
     )
     assert "Hyderabad" in hyland
+    assert "in_iframe=1" in hyland
     assert not card_location_ok(
         "Security Researcher Technical Lead · Israel, Haifa",
         url_loc_hint(
@@ -512,6 +515,37 @@ def test_location_ui_skips_agentforce():
     assert location_ui_input_meta_ok("Search jobs by city")
 
 
+def test_listing_hyd_apply_bias_and_icims_frame_rank():
+    """Hyd-pinned listings omit city on title anchors (Hyland iCIMS / Blue Yonder)."""
+    assert listing_is_hyderabad_scoped(
+        "https://careers-hyland.icims.com/jobs/search?ss=1&searchLocation=Hyderabad"
+    )
+    assert listing_is_hyderabad_scoped("https://example.com/jobs", {"pinned": True})
+    assert not listing_is_hyderabad_scoped("https://example.com/jobs", {"pinned": False})
+    # Title-only card on a Hyd listing must apply; foreign city still skips.
+    assert card_location_ok("Senior Software Architect - .NET", "Hyderabad")
+    assert card_location_ok("Technical Architect - Warehouse Management Systems", "Hyderabad")
+    assert not card_location_ok("Senior Software Architect - .NET", "")
+    assert not card_location_ok(
+        "System Architect BENGALURU, KARNATAKA, India and 2 more", "Hyderabad"
+    )
+    # iCIMS listing iframe: name wins even when frame.url dropped in_iframe=1.
+    assert frame_scan_rank(
+        "https://careers-hyland.icims.com/jobs/search?ss=1&location=Hyderabad&",
+        "icims_content_iframe",
+    ) == 0
+    assert frame_scan_rank(
+        "https://careers-hyland.icims.com/jobs/search?ss=1&in_iframe=1",
+        "",
+    ) == 0
+    assert frame_scan_rank(
+        "https://careers-hyland.icims.com/jobs/search?ss=1&location=Hyderabad",
+        "",
+    ) == 1
+    oracle = "https://careers.oracle.com/en/sites/jobsearch/job/340319/?keyword=Engineering+Manager"
+    assert JOB_ID_HREF_RE.search(oracle)
+
+
 if __name__ == "__main__":
     test_title_ok()
     test_campus_location()
@@ -525,4 +559,5 @@ if __name__ == "__main__":
     test_attempt_ats_apply_persist_env_no_nameerror()
     test_skip_uhg_default()
     test_location_ui_skips_agentforce()
+    test_listing_hyd_apply_bias_and_icims_frame_rank()
     print("ok")
