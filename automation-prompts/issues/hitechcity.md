@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Oracle careers ?location= ignored; NEAR LOCATION City/state box unfilled so extract saw only US cards (jobCount 0) | Pin City, state, country; skip Filter-by-Locations facet; prefer Hyderabad, Telangana option; retry pin per Oracle keyword URL |
 | Owner refreshed master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx (2026-08-23 late) | Replaced master + Rafi_Resume.docx alias (~3.9MB); JD tailor still on top; upload label stays Rafi_Resume |
 | Gartner (Remote - N.A.) / Workday Remote---United-States + AI Strategy title opened as India-remote | BAD_LOC_HINT Remote-N.A./north America; AIML+CAREERS+LI title skip AI Strategy |
 | Owner refreshed master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx (2026-08-23 evening) | Replaced resumes/Mohammed_Abdul_Rafi_Ahmed_Resume.docx + Rafi_Resume.docx alias; JD tailor still runs on top; upload filename stays Rafi_Resume |

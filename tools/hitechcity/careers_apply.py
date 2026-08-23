@@ -375,7 +375,19 @@ def pin_portal_location_ui(page: Page) -> dict[str, Any]:
         return workday_pin_hyderabad_location_ui(page)
 
     out: dict[str, Any] = {"pinned": False, "available": False, "note": "generic_ui"}
+    # Oracle NEAR LOCATION is "City, state, country". Prefer it over the
+    # "Filter by Locations" facet (that box never applies the search).
+    if re.search(r"careers\.oracle\.com", url, re.I):
+        try:
+            page.wait_for_selector(
+                'input[placeholder*="City, state" i], input[placeholder*="City" i]',
+                timeout=8000,
+            )
+        except Exception:
+            pass
     selectors = [
+        'input[placeholder*="City, state" i]',
+        'input[placeholder*="City, state, country" i]',
         'input[placeholder*="Location" i]',
         'input[aria-label*="Location" i]',
         'input[name*="location" i]',
@@ -389,15 +401,28 @@ def pin_portal_location_ui(page: Page) -> dict[str, Any]:
             loc = page.locator(sel)
             if not loc.count() or not loc.first.is_visible():
                 continue
+            meta = " ".join(
+                filter(
+                    None,
+                    [
+                        loc.first.get_attribute("placeholder") or "",
+                        loc.first.get_attribute("aria-label") or "",
+                        loc.first.get_attribute("id") or "",
+                        loc.first.get_attribute("name") or "",
+                    ],
+                )
+            )
+            if not location_ui_input_meta_ok(meta):
+                continue
             loc.first.click(timeout=1500)
             loc.first.fill("")
             loc.first.fill(CAREERS_LOCATION, timeout=2000)
             time.sleep(0.8)
-            opt = page.get_by_role("option", name=re.compile(r"Hyderabad", re.I))
-            if opt.count():
-                opt.first.click(timeout=2000)
+            opt = _hyderabad_location_option(page)
+            if opt is not None:
+                opt.click(timeout=2000)
                 out.update(pinned=True, available=True, note=f"selected_option:{sel}")
-                time.sleep(1.0)
+                time.sleep(1.5)
                 return out
             loc.first.press("Enter")
             out.update(pinned=True, available=True, note=f"typed_enter:{sel}")
@@ -461,14 +486,26 @@ def pin_portal_location_ui(page: Page) -> dict[str, Any]:
 
 
 def location_ui_input_meta_ok(meta: str) -> bool:
-    """False for chatbots / honeypots mistaken for Location search boxes."""
+    """False for chatbots / honeypots / facet filters mistaken for Location search boxes."""
     return not bool(
         re.search(
-            r"agentforce|ask agent|oda-chat|chatbot|assistant|honey.?pot",
+            r"agentforce|ask agent|oda-chat|chatbot|assistant|honey.?pot|"
+            r"filter by locations",
             meta or "",
             re.I,
         )
     )
+
+
+def _hyderabad_location_option(page: Page):
+    """Prefer Hyderabad, Telangana, India over Pakistan / Andhra suggestions."""
+    preferred = page.get_by_role("option", name=re.compile(r"Hyderabad,\s*Telangana", re.I))
+    if preferred.count():
+        return preferred.first
+    generic = page.get_by_role("option", name=re.compile(r"Hyderabad", re.I))
+    if generic.count():
+        return generic.first
+    return None
 
 
 def workday_pin_hyderabad_location_ui(page: Page) -> dict[str, Any]:
@@ -1343,7 +1380,12 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                 try:
                     if not loc_ui_done:
                         workday_loc = pin_portal_location_ui(page)
-                        loc_ui_done = True
+                        # Oracle URL ?location= is ignored until NEAR LOCATION is pinned.
+                        # Retry the pin on later keyword URLs instead of locking failure.
+                        if workday_loc.get("pinned") or not re.search(
+                            r"careers\.oracle\.com", url, re.I
+                        ):
+                            loc_ui_done = True
                         _safe_print(
                             f"CAREERS LOC_UI {name} | pinned={workday_loc.get('pinned')} "
                             f"available={workday_loc.get('available')} | {workday_loc.get('note')}"

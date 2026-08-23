@@ -531,8 +531,10 @@ def test_skip_uhg_default():
 def test_location_ui_skips_agentforce():
     assert not location_ui_input_meta_ok("Ask Agentforce anything search-field")
     assert not location_ui_input_meta_ok("oda-chat-input")
+    assert not location_ui_input_meta_ok("Filter by Locations")
     assert location_ui_input_meta_ok("Location City or metro area")
     assert location_ui_input_meta_ok("Search jobs by city")
+    assert location_ui_input_meta_ok("City, state, country")
 
 
 if __name__ == "__main__":
