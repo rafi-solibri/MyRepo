@@ -1,0 +1,37 @@
+{
+  "date": "2026-08-23",
+  "portal": "jobs",
+  "postFixRerun": true,
+  "mergedPr": "https://github.com/rafi-solibri/MyRepo/pull/238",
+  "counts": {
+    "easyApplySubmitted": 22,
+    "externalSubmitted": 1,
+    "skipped": 718,
+    "blocked": 9
+  },
+  "submitted": [
+    {"job_id": "4455650102", "company": "NCompas Technology Solutions Inc.", "role": "Senior Enterprise Solution Architect", "path": "Easy Apply"},
+    {"job_id": "4454970033", "company": "Ibexlabs", "role": "Senior Solutions Architect – AI Solutions", "path": "Easy Apply"},
+    {"job_id": "4454236005", "company": "Teradata", "role": "Staff Software Engineer", "path": "Easy Apply"},
+    {"job_id": "4455277149", "company": "Mulya Technologies", "role": "Senior Software Architect", "path": "Easy Apply"},
+    {"job_id": "4455049038", "company": "BlitzenX", "role": "Sr Software Engineer", "path": "Easy Apply"},
+    {"job_id": "4457591813", "company": "Chubb", "role": "Global Authentication Engineering Manager", "path": "Easy Apply"},
+    {"job_id": "4454600085", "company": "CareerXperts Consulting", "role": "Technical Lead, Payments — Full Stack Engineering (Enterprise SaaS)", "path": "Easy Apply"},
+    {"job_id": "4457097946", "company": "ShimentoX Technologies", "role": "Senior Solution Architect – Data & AI | Databricks", "path": "Easy Apply"},
+    {"job_id": "4455266108", "company": "Talent500", "role": "Senior Software Engineer [T500-28573]", "path": "Easy Apply"},
+    {"job_id": "4437991428", "company": "Teradata", "role": "Principal Architect", "path": "Easy Apply"},
+    {"job_id": "4457305150", "company": "Deutsche Börse Group", "role": "LAVP - IAM Engineering Manager [T500-28783]", "path": "Easy Apply"},
+    {"job_id": "4457087275", "company": "WillWare Technologies", "role": "Workday Extend Solution Lead / Architect", "path": "Easy Apply"},
+    {"job_id": "4456693953", "company": "Tata Consultancy Services", "role": "APex Architect", "path": "Easy Apply"},
+    {"job_id": "4451200625", "company": "ginfracon", "role": "Shop Floor Precision Engineering Manager", "path": "Easy Apply"},
+    {"job_id": "4453457452", "company": "Deutsche Börse Group", "role": "LAVP - Security Automation Engineering Manager [T500-28716]", "path": "Easy Apply"},
+    {"job_id": "4455257744", "company": "Talent500", "role": "Senior Manager, .Net Engineering [T500-28581]", "path": "Easy Apply"},
+    {"job_id": "4455279550", "company": "Mulya Technologies", "role": "STA Lead Engineer", "path": "Easy Apply"},
+    {"job_id": "4455234873", "company": "Tata Consultancy Services", "role": "Coveo Search Architect", "path": "Easy Apply"},
+    {"job_id": "4455577581", "company": "Chubb", "role": "SRE Lead Engineer", "path": "Easy Apply"},
+    {"job_id": "4443251675", "company": "Tech Mahindra", "role": "Senior Software Engineer", "path": "Easy Apply"},
+    {"job_id": "4454240217", "company": "Kanerika Inc", "role": "QE Architect", "path": "Easy Apply"},
+    {"job_id": "4456700256", "company": "Arcesium", "role": "Business Solutions Architect", "path": "Easy Apply"},
+    {"job_id": "4409294028", "company": "NTT DATA, Inc.", "role": "Senior Application Architect", "path": "ATS"}
+  ]
+}
