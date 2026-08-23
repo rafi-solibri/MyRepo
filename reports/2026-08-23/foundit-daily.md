@@ -22,7 +22,12 @@
 - None blocked. LinkedIn SCRAPPING jobs often `linkedin_no_easy_apply`; Accenture triumph + Photon Oracle CX timed out under ATS cap.
 
 ## False applies / code fix
-- ValueMomentum **Guidewire Technical Lead** passed via Arch/Lead exception (Duck Creek already skipped; Guidewire missing) → fixed in `tools/foundit/filters.js` (Naukri/LinkedIn/Instahyre parity).
+- ValueMomentum **Guidewire Technical Lead** passed via Arch/Lead exception (Duck Creek already skipped; Guidewire missing) → fixed+merged https://github.com/rafi-solibri/MyRepo/pull/240 (`tools/foundit/filters.js` Naukri/LinkedIn/Instahyre parity).
+
+## Post-fix re-run (#240)
+- Applied tab: **446 → 446** (+0). Intentional logged: **0** (inventory already Applied / filters skip).
+- Guidewire Technical Lead now correctly skipped (`reason: Guidewire`).
+- Skips: 1193 | duplicates: 76 | blocked: 0.
 
 ## Top 3 LinkedIn referral drafts
 - **Globallogic Ukraine / Product Security Architect IRC286354:** Hi — I'm applying for Product Security Architect IRC286354 at Globallogic Ukraine. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)
