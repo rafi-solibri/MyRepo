@@ -460,6 +460,10 @@ def _campus_allowlist_blocks(company: str) -> bool:
 
 def skip_reason(title: str, company: str, location: str, snippet: str) -> str | None:
     t = title or ""
+    # Bot-detection / Passport Sign In is not a title filter — caller restores
+    # session or marks indeed_login_required. Never burn these as title_not_target.
+    if re.search(r"sign in\s*\|\s*indeed accounts|^sign in$", t, re.I):
+        return None
     if _campus_allowlist_blocks(company):
         return "hitechcity_campus_allowlist"
     if TITLE_SKIP.search(t):
@@ -541,6 +545,8 @@ def looks_login_wall(body: str, url: str = "") -> bool:
     u = (url or "").lower()
     if u.startswith("http") and "indeed.com" not in u and "indeedapply" not in u:
         return False
+    if "bot-detection-anonymous" in u and not looks_signed_in(body, url):
+        return True
     blob = f"{url}\n{body}"
     return bool(
         re.search(
@@ -550,6 +556,31 @@ def looks_login_wall(body: str, url: str = "") -> bool:
             re.I,
         )
     ) and not looks_signed_in(body, url)
+
+
+def job_url_from_auth(url: str, fallback: str = "") -> str:
+    """Recover viewjob/clk target from a bot-detection Sign In URL."""
+    if not url:
+        return fallback
+    qs = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
+    for key in ("continue2", "continue"):
+        for dest in qs.get(key) or []:
+            dest = urllib.parse.unquote(dest)
+            if re.search(r"[?&]jk=|/viewjob|/rc/clk|/pagead/", dest, re.I):
+                return dest
+    return fallback
+
+
+def ist_report_date(ts: float | None = None) -> str:
+    """Notification Job keys Indeed reports by IST calendar date."""
+    try:
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+
+        dt = datetime.fromtimestamp(ts or time.time(), ZoneInfo("Asia/Kolkata"))
+        return dt.strftime("%Y-%m-%d")
+    except Exception:
+        return time.strftime("%Y-%m-%d", time.gmtime((ts or time.time()) + 19800))
 
 
 def looks_anonymous_marketing_home(body: str) -> bool:
@@ -3050,6 +3081,36 @@ def main() -> int:
                 }
                 report["seen"].append(item)
 
+                cur_url = item.get("url") or ""
+                if looks_login_wall(body, cur_url):
+                    dest = job_url_from_auth(cur_url, href)
+                    warmed = restore_signed_in(sb)
+                    item["sessionRestore"] = {
+                        "ok": bool(warmed.get("ok")),
+                        "via": warmed.get("via"),
+                    }
+                    retry = dest or href
+                    try:
+                        sb.uc_open_with_reconnect(retry, 4)
+                        time.sleep(2)
+                        clear_cf(sb, attempts=2)
+                    except Exception:
+                        pass
+                    page_title = sb.get_title() or title_t
+                    try:
+                        body = sb.get_text("body") or ""
+                    except Exception:
+                        body = ""
+                    item["title"] = page_title[:160]
+                    item["url"] = sb.get_current_url()
+                    cur_url = item.get("url") or ""
+                    if looks_login_wall(body, cur_url):
+                        item["reason"] = "indeed_login_required"
+                        report["blocked"].append(item)
+                        report["counts"]["blocked"] += 1
+                        print("BLOCKED login_required", page_title[:80], flush=True)
+                        continue
+
                 if already_applied(body, item.get("url") or ""):
                     item["reason"] = "already_applied"
                     report["skipped"].append(item)
@@ -3293,7 +3354,7 @@ def main() -> int:
     applied_n = report["counts"]["applied"] + report["counts"]["external"]
     # Success = at least one real apply; residual reCAPTCHA on later jobs is ok.
     report["ok"] = applied_n > 0
-    report["date"] = report["finishedAt"][:10]
+    report["date"] = ist_report_date()
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(report, indent=2))
     # Normalize for notification job

@@ -12,6 +12,8 @@ if str(ROOT) not in sys.path:
 from tools.indeed.prepare_uc_profile import COPY_PATHS  # noqa: E402
 from tools.indeed.uc_daily_apply import (  # noqa: E402
     already_applied,
+    ist_report_date,
+    job_url_from_auth,
     looks_anonymous_marketing_home,
     looks_login_wall,
     job_dedupe_key,
@@ -54,6 +56,20 @@ def test_skip_title_not_target():
         "Hyderabad, Telangana",
         "",
     ) == "title_not_target"
+
+
+def test_sign_in_title_is_not_title_not_target():
+    # Regression 2026-08-24: bot-detection Sign In was skipped as title_not_target
+    # instead of session restore / indeed_login_required.
+    assert (
+        skip_reason(
+            "Sign In | Indeed Accounts",
+            "",
+            "",
+            "Ready to take the next step?",
+        )
+        is None
+    )
 
 
 def test_enterprise_system_architect_ok():
@@ -168,6 +184,20 @@ def test_account_settings_and_serp_are_signed_in():
     )
     assert looks_login_wall(wall, "https://secure.indeed.com/auth?continue=https://myjobs.indeed.com/")
     assert not looks_signed_in(wall)
+    bot = (
+        "https://secure.indeed.com/auth?hl=en_US&from=bot-detection-anonymous"
+        "&continue2=https%3A%2F%2Fin.indeed.com%2Fviewjob%3Fjk%3D864accca51baf7dd"
+    )
+    assert looks_login_wall("Sign In | Indeed Accounts", bot)
+    assert (
+        job_url_from_auth(bot, "https://in.indeed.com/viewjob?jk=fallback")
+        == "https://in.indeed.com/viewjob?jk=864accca51baf7dd"
+    )
+
+
+def test_ist_report_date_after_utc_midnight():
+    # 2026-08-23 19:59 UTC == 2026-08-24 01:29 IST
+    assert ist_report_date(1787515166) == "2026-08-24"
 
 
 def test_company_ats_email_gate_is_not_indeed_login():
@@ -194,6 +224,7 @@ if __name__ == "__main__":
     test_skip_hyd_remote_ok()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
     test_skip_title_not_target()
+    test_sign_in_title_is_not_title_not_target()
     test_enterprise_system_architect_ok()
     test_skip_salesforce_service_cloud_title()
     test_skip_kochi_kerala_in_title()
@@ -201,5 +232,6 @@ if __name__ == "__main__":
     test_hybrid_profile_copies_local_state()
     test_india_home_get_started_is_not_login_proof()
     test_account_settings_and_serp_are_signed_in()
+    test_ist_report_date_after_utc_midnight()
     test_job_dedupe_key_from_jk()
     print("ok")
