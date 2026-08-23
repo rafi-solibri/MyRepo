@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Easy Apply rejected 3.6MB owner master docx (2MB cap); helper hung on Resume step | Strip embedded fonts into upload-2mb/Rafi_Resume.docx; retry on smaller-file error |
 | Restore skipped stale dest li_at; Default sync left dead session; GSI clicked Next on empty Google identifier | Restore when seed cookie newer than dest; GSI fills identifier+password; per-step SSO wait |
 | Owner supplied new master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx | Synced into resumes/Rafi_Resume.docx (+ Architect alias); bootstrap prefers owner-named file; JD tailor still runs on top; upload filename/label stays Rafi_Resume |
 | False-applied shop-floor EM, STA/DFT hardware, QE Architect, Data&AI/Databricks, Junior/BIM architect, SRE Lead | TITLE_BLACKLIST + skip_reason: shop floor/precision, STA/DFT, QE/quality architect, junior/BIM/architectural designer, SRE word, Data&AI/Databricks without .NET; tests added |

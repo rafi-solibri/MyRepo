@@ -8,6 +8,8 @@ hotel_prices*.csv
 .mcp_send_email_args*.json
 mcp_send_email_args*.json
 artifacts/
+# Generated Easy Apply 2MB-cap copies (embedded fonts stripped)
+**/upload-2mb/
 downloaded_files/
 # Local secrets for LinkedIn/Workday/Resend — never commit.
 .cursor/job-apply-secrets.env

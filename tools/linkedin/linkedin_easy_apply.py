@@ -1016,13 +1016,19 @@ def select_resume(page: Page) -> None:
         path = ""
 
     # Upload tailored/canonical file when a file input is present (beats stale saved copy).
+    # Easy Apply rejects >2MB — resume_upload_path already strips fonts.
     if path and Path(path).is_file():
         try:
+            print(
+                f"  resume upload {Path(path).name} size={Path(path).stat().st_size}",
+                flush=True,
+            )
             for label in (
                 r"Upload\s*(resume|CV|file)?",
                 r"Update\s*resume",
                 r"Choose\s*file",
                 r"Replace",
+                r"Change file",
             ):
                 try:
                     btn = page.get_by_role("button", name=re.compile(label, re.I))
@@ -1038,7 +1044,23 @@ def select_resume(page: Page) -> None:
             for i in range(min(inputs.count(), 4)):
                 try:
                     inputs.nth(i).set_input_files(path, timeout=8000)
-                    time.sleep(0.6)
+                    time.sleep(0.8)
+                    body = ""
+                    try:
+                        body = page.locator("body").inner_text()[:2000]
+                    except Exception:
+                        pass
+                    if re.search(r"smaller file|2\s*MB or less", body, re.I):
+                        from tools.resume_paths import ensure_upload_size_limit
+
+                        slim = ensure_upload_size_limit(path)
+                        print(
+                            f"  resume retry after 2MB reject -> {slim} "
+                            f"size={slim.stat().st_size}",
+                            flush=True,
+                        )
+                        inputs.nth(i).set_input_files(str(slim), timeout=8000)
+                        time.sleep(0.8)
                     return
                 except Exception:
                     continue
