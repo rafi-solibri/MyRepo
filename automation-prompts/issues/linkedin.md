@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Restore skipped stale dest li_at; Default sync left dead session; GSI clicked Next on empty Google identifier | Restore when seed cookie newer than dest; GSI fills identifier+password; per-step SSO wait |
 | Owner supplied new master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx | Synced into resumes/Rafi_Resume.docx (+ Architect alias); bootstrap prefers owner-named file; JD tailor still runs on top; upload filename/label stays Rafi_Resume |
 | False-applied shop-floor EM, STA/DFT hardware, QE Architect, Data&AI/Databricks, Junior/BIM architect, SRE Lead | TITLE_BLACKLIST + skip_reason: shop floor/precision, STA/DFT, QE/quality architect, junior/BIM/architectural designer, SRE word, Data&AI/Databricks without .NET; tests added |
 | Search-card / page-wide a[href*=/jobs/view] bait-and-switch: card said .NET Architect (Laureate) but /jobs/view was Azure Data Engineer (Strive4X); Easy Apply hung past time-cap; seed refresh raced before li_at flush | Scope detail_panel_text+parse_card_meta to top-card; re-validate skip_reason/TITLE_OK/location on /jobs/view before Easy Apply; fill_inputs deadline + body.inner_text timeout; seed cookie wait/retry |

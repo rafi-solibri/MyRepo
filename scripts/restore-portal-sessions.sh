@@ -74,6 +74,43 @@ raise SystemExit(0 if any(n in names for n in needed) else 1)
 PY
 }
 
+# Return 0 when seed's marker cookie expiry is strictly newer than dest's.
+# Stale dest li_at (name present) used to skip restore and leave a dead session.
+seed_cookie_newer_than_dest() {
+  local seed_root="$1" dest_root="$2" cookie_name="$3"
+  python3 - "$seed_root" "$dest_root" "$cookie_name" <<'PY'
+import os, shutil, sqlite3, sys, tempfile
+
+def expires(root, name):
+    for rel in ("Default/Network/Cookies", "Default/Cookies"):
+        db = os.path.join(root, rel)
+        if not os.path.exists(db):
+            continue
+        tmp = tempfile.mktemp(suffix=".db")
+        try:
+            shutil.copy2(db, tmp)
+            con = sqlite3.connect(tmp)
+            row = con.execute(
+                "SELECT expires_utc FROM cookies WHERE name=? ORDER BY expires_utc DESC LIMIT 1",
+                (name,),
+            ).fetchone()
+            con.close()
+            return int(row[0]) if row and row[0] else 0
+        except Exception:
+            return 0
+        finally:
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
+    return 0
+
+seed, dest, name = sys.argv[1], sys.argv[2], sys.argv[3]
+se, de = expires(seed, name), expires(dest, name)
+raise SystemExit(0 if se > de else 1)
+PY
+}
+
 restore_tree() {
   local src="$1" dest="$2"
   mkdir -p "$dest/Default"
@@ -112,7 +149,8 @@ REQUIRED_SOURCE_COOKIES=(
   CTK
 )
 
-if [[ "$FORCE" == "1" ]] || ! has_all_auth "$SRC_DEST" "${REQUIRED_SOURCE_COOKIES[@]}"; then
+if [[ "$FORCE" == "1" ]] || ! has_all_auth "$SRC_DEST" "${REQUIRED_SOURCE_COOKIES[@]}" \
+  || seed_cookie_newer_than_dest "$SEED/source" "$SRC_DEST" "li_at"; then
   echo "restore-portal-sessions: seeding Desktop Default -> $SRC_DEST"
   restore_tree "$SEED/source" "$SRC_DEST"
 else
@@ -144,7 +182,8 @@ for portal in linkedin naukri foundit cutshort instahyre indeed linkedin_alt; do
   seed_dir="$SEED/cdp/$portal"
   [[ -d "$seed_dir/Default" ]] || seed_dir="$SEED/source"
   read -r -a cookies <<< "${NEED[$portal]}"
-  if [[ "$FORCE" == "1" ]] || ! has_auth "$dest" "${cookies[@]}"; then
+  if [[ "$FORCE" == "1" ]] || ! has_auth "$dest" "${cookies[@]}" \
+    || seed_cookie_newer_than_dest "$seed_dir" "$dest" "${cookies[0]}"; then
     echo "restore-portal-sessions: seeding $portal -> $dest"
     restore_tree "$seed_dir" "$dest"
   else

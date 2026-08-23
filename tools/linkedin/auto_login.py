@@ -39,8 +39,10 @@ EMAIL = (
     or ""
 ).strip()
 PASSWORD = (os.environ.get("LINKEDIN_PASSWORD") or "").strip()
+GOOGLE_PASSWORD = (os.environ.get("GOOGLE_PASSWORD") or PASSWORD).strip()
 DEFAULT_EMAIL = "rafi.success@gmail.com"
 TIMEOUT_S = int(os.environ.get("LINKEDIN_AUTO_LOGIN_TIMEOUT_S", "120"))
+STEP_TIMEOUT_S = int(os.environ.get("JOBS_AUTO_LOGIN_STEP_TIMEOUT_S", "90"))
 # Wait out short temporary restrictions (cron can land mid-ban).
 RESTRICTION_WAIT_MAX_S = int(os.environ.get("LINKEDIN_RESTRICTION_WAIT_MAX_S", "7200"))
 RESTRICTION_BUFFER_S = int(os.environ.get("LINKEDIN_RESTRICTION_BUFFER_S", "90"))
@@ -375,50 +377,140 @@ def _click_continue_google(ctx, page) -> bool:
         return False
 
     if popup is not None:
-        try:
-            popup.wait_for_load_state("domcontentloaded", timeout=30000)
-        except Exception:
-            pass
-        time.sleep(1.5)
-        # Account chooser: remembered Gmail on GSI select card
-        chosen = False
-        for sel in ("div[role='link']", "div[data-identifier]", "div[data-email]"):
+        _complete_google_popup(popup, EMAIL or DEFAULT_EMAIL, GOOGLE_PASSWORD)
+    return True
+
+
+def classify_google_url(url: str) -> str:
+    """Classify a Google accounts URL: identifier | password | chooser | other."""
+    url = url or ""
+    if "/signin/identifier" in url:
+        return "identifier"
+    if "/challenge/pwd" in url or "/signin/challenge/pwd" in url:
+        return "password"
+    if "/gsi/select" in url or "/signin/accountchooser" in url:
+        return "chooser"
+    return ""
+
+
+def _google_popup_kind(popup) -> str:
+    """Classify a Google accounts tab: identifier | password | chooser | other."""
+    kind = classify_google_url(popup.url or "")
+    if kind:
+        return kind
+    try:
+        body = (popup.inner_text("body", timeout=4000) or "")[:800]
+    except Exception:
+        body = ""
+    if re.search(r"Enter an email or phone number|Email or phone", body, re.I):
+        return "identifier"
+    if re.search(r"Enter your password|Wrong password", body, re.I):
+        return "password"
+    if re.search(r"Choose an account", body, re.I):
+        return "chooser"
+    return "other"
+
+
+def _complete_google_popup(popup, email: str, password: str) -> None:
+    """Finish GSI when remembered session is stale (identifier + password).
+
+    Previous helper clicked Next on an empty identifier page, then timed out.
+    """
+    try:
+        popup.wait_for_load_state("domcontentloaded", timeout=30000)
+    except Exception:
+        pass
+    time.sleep(1.0)
+    deadline = time.time() + 45
+    while time.time() < deadline:
+        if popup.is_closed():
+            return
+        kind = _google_popup_kind(popup)
+        if kind == "identifier" and email:
             try:
-                locs = popup.locator(sel)
-                n = min(locs.count(), 8)
+                box = popup.locator("#identifierId")
+                if box.count() and box.first.is_visible():
+                    box.first.click(timeout=4000)
+                    box.first.fill("")
+                    box.first.fill(email)
+                    time.sleep(0.3)
+                    nxt = popup.get_by_role("button", name=re.compile(r"^Next$", re.I))
+                    if nxt.count():
+                        nxt.first.click(timeout=5000)
+                    time.sleep(2)
+                    continue
             except Exception:
-                continue
-            for i in range(n):
+                pass
+        if kind == "password" and password:
+            try:
+                box = None
+                for sel in ("input[name='Passwd']", "input[type='password']"):
+                    loc = popup.locator(sel)
+                    n = min(loc.count(), 6) if loc.count() else 0
+                    for i in range(n):
+                        el = loc.nth(i)
+                        if el.is_visible():
+                            box = el
+                            break
+                    if box is not None:
+                        break
+                if box is not None:
+                    box.click(timeout=4000)
+                    box.fill("")
+                    try:
+                        box.press_sequentially(password, delay=20)
+                    except Exception:
+                        box.fill(password)
+                    time.sleep(0.3)
+                    nxt = popup.get_by_role("button", name=re.compile(r"^Next$", re.I))
+                    if nxt.count():
+                        nxt.first.click(timeout=5000)
+                    time.sleep(2)
+                    continue
+            except Exception:
+                pass
+        if kind == "chooser":
+            chosen = False
+            for sel in ("div[role='link']", "div[data-identifier]", "div[data-email]"):
                 try:
-                    t = (locs.nth(i).inner_text() or "") + " " + (
-                        locs.nth(i).get_attribute("data-identifier") or ""
-                    )
+                    locs = popup.locator(sel)
+                    n = min(locs.count(), 8)
                 except Exception:
                     continue
-                if re.search(r"rafi\.success@gmail\.com|@gmail\.com|Rafi Ahmed", t, re.I):
+                for i in range(n):
                     try:
-                        locs.nth(i).click(timeout=8000)
-                        chosen = True
-                        time.sleep(2)
-                        break
+                        t = (locs.nth(i).inner_text() or "") + " " + (
+                            locs.nth(i).get_attribute("data-identifier") or ""
+                        )
                     except Exception:
-                        # Popup may auto-close after click
-                        chosen = True
-                        break
+                        continue
+                    if re.search(r"rafi\.success@gmail\.com|@gmail\.com|Rafi Ahmed", t, re.I):
+                        try:
+                            locs.nth(i).click(timeout=8000)
+                            chosen = True
+                            time.sleep(2)
+                            break
+                        except Exception:
+                            chosen = True
+                            break
+                if chosen:
+                    break
             if chosen:
-                break
-        if not chosen:
-            # Single-account auto-select may already proceed; wait.
-            time.sleep(2)
-        for name in ("Continue", "Allow", "Next", "Confirm"):
-            try:
-                b = popup.get_by_role("button", name=re.compile(rf"^{name}$", re.I))
-                if b.count():
-                    b.first.click(timeout=5000)
-                    time.sleep(1)
-            except Exception:
-                break
-    return True
+                time.sleep(1)
+                continue
+        if kind == "other":
+            # Consent / Continue only — never Next on an empty identifier.
+            for name in ("Continue", "Allow", "Confirm"):
+                try:
+                    b = popup.get_by_role("button", name=re.compile(rf"^{name}$", re.I))
+                    if b.count() and b.first.is_visible():
+                        b.first.click(timeout=5000)
+                        time.sleep(1)
+                        break
+                except Exception:
+                    break
+            return
+        time.sleep(1.2)
 
 def _visible_locator(page, selectors: str):
     """Return first visible locator for comma-separated CSS selectors.
@@ -622,7 +714,9 @@ def main() -> int:
             if not _password_login(nonlocal_page, email, PASSWORD):
                 out["attempts"].append({"step": "password", "submitted": False})
                 return None
-            return _wait_signed_in(ctx, nonlocal_page, deadline, "password", out)
+            return _wait_signed_in(
+                ctx, nonlocal_page, time.time() + STEP_TIMEOUT_S, "password", out
+            )
 
         def try_google() -> int | None:
             nonlocal_page = _goto_login_clean(ctx, _pick_linkedin_page(ctx))
@@ -631,7 +725,9 @@ def main() -> int:
                 out["attempts"].append({"step": "google_sso", "clicked": False})
                 return None
             out["attempts"].append({"step": "google_sso", "clicked": True})
-            return _wait_signed_in(ctx, nonlocal_page, deadline, "google_sso", out)
+            return _wait_signed_in(
+                ctx, nonlocal_page, time.time() + STEP_TIMEOUT_S, "google_sso", out
+            )
 
         # Prefer Google SSO when the CDP profile already has Google cookies.
         # Password-first often burns a checkpoint before GSI gets a clean shot;

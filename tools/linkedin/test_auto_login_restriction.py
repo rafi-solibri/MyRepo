@@ -35,3 +35,22 @@ def test_parse_pdt_lift_to_utc():
 
 def test_parse_missing_returns_none():
     assert parse_restriction_lift("Quick security check") is None
+
+
+def test_classify_google_identifier_and_password_urls():
+    classify = _mod.classify_google_url
+    assert classify(
+        "https://accounts.google.com/v3/signin/identifier?continue=https://accounts.google.com/gsi/select"
+    ) == "identifier"
+    assert classify(
+        "https://accounts.google.com/v3/signin/challenge/pwd?TL=abc"
+    ) == "password"
+    assert classify("https://accounts.google.com/gsi/select?client_id=x") == "chooser"
+    assert classify("https://example.com/login") == ""
+
+
+if __name__ == "__main__":
+    test_parse_pdt_lift_to_utc()
+    test_parse_missing_returns_none()
+    test_classify_google_identifier_and_password_urls()
+    print("auto_login self-test OK")
