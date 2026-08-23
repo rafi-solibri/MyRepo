@@ -544,6 +544,10 @@ def test_listing_hyd_apply_bias_and_icims_frame_rank():
     ) == 1
     oracle = "https://careers.oracle.com/en/sites/jobsearch/job/340319/?keyword=Engineering+Manager"
     assert JOB_ID_HREF_RE.search(oracle)
+    # apply_job pre-nav must honor listingLoc the same way extract does.
+    hyland_href = "https://careers-hyland.icims.com/jobs/13991/senior-software-architect---.net/job?in_iframe=1"
+    assert "hyderabad" not in url_loc_hint(hyland_href).lower()
+    assert card_location_ok("Senior Software Architect - .NET", "Hyderabad")
 
 
 if __name__ == "__main__":

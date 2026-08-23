@@ -853,7 +853,14 @@ def extract_job_links(
                 hint = f"{hint} {listing_loc}".strip()
         if not card_location_ok(text, hint):
             continue
-        jobs.append({"role": text, "url": href, "company": company})
+        jobs.append(
+            {
+                "role": text,
+                "url": href,
+                "company": company,
+                "listingLoc": listing_loc,
+            }
+        )
     return jobs
 
 
@@ -1063,7 +1070,19 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         row["reason"] = "skip_uhg"
         return row
     # Role/title + URL path location first (before navigation wastes ATS time on US cards).
-    if not card_location_ok(job.get("role") or "", url_loc_hint(job.get("url") or "")):
+    # Hyd-pinned listings often omit the city on the title/path — honor listingLoc.
+    role_pre = job.get("role") or ""
+    hint_pre = url_loc_hint(job.get("url") or "")
+    listing_loc = (job.get("listingLoc") or "").strip()
+    if listing_loc and not BAD_LOC_HINT.search(f"{role_pre} {hint_pre}"):
+        hydish_pre = re.compile(
+            r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|gachibowli|raidurg|"
+            r"\bremote\b|\bwfh\b",
+            re.I,
+        )
+        if not hydish_pre.search(f"{role_pre} {hint_pre}"):
+            hint_pre = f"{hint_pre} {listing_loc}".strip()
+    if not card_location_ok(role_pre, hint_pre):
         row["status"] = "skipped"
         row["reason"] = "location_non_hyd_city"
         return row
@@ -1118,7 +1137,15 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         top = ""
     role = job.get("role") or ""
     # Prefer role + location selectors only — page <title> often lists every office.
-    if not card_location_ok(role, top or ""):
+    top_hint = top or ""
+    if listing_loc and not BAD_LOC_HINT.search(f"{role} {top_hint}"):
+        if not re.search(
+            r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|gachibowli|raidurg",
+            f"{role} {top_hint}",
+            re.I,
+        ):
+            top_hint = f"{top_hint} {listing_loc}".strip()
+    if not card_location_ok(role, top_hint):
         row["status"] = "skipped"
         row["reason"] = "location_non_hyd_city"
         row["finalUrl"] = page.url
