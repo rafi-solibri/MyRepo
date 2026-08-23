@@ -11,7 +11,7 @@ TITLE_BLACKLIST = re.compile(
     r"salesforce|servicenow|guidewire|splunk|\bpega\b|oracle\s*erp|sitecore|"
     r"oracle\s*cloud\s*(scm|erp|hcm|financials|ebs)|oracle\s*scm|"
     r"finance functional|functional\s*[-–—]?\s*solution architect|"
-    r"\bmean\b|devops engineer|sre engineer|site reliability engineer|gcp.?presales|workato|mulesoft|"
+    r"\bmean\b|devops engineer|\bsre\b|sre engineer|site reliability engineer|gcp.?presales|workato|mulesoft|"
     r"blockchain|mandarin|biztalk|firmware|\bmes\b|\bror\b|ruby on rails|"
     r"\bsap\b|dynamics\s*365|\bd365\b|esri|\bgis\b|"
     r"java full[- ]?stack|java[- ]?(mandatory|only|required|backend)|"
@@ -24,16 +24,20 @@ TITLE_BLACKLIST = re.compile(
     r"big data architect|\bdata architect\b|data warehouse architect|data platform|"
     r"implementation specialist|"
     r"\bphp\b|laravel|"
-    r"interior designer|civil engineer|electrical engineering|electrical design|"
+    r"interior designer|architectural designer|bim architect|\bjunior\b|\bfresher\b|"
+    r"civil engineer|electrical engineering|electrical design|"
+    r"shop floor|precision engineering|"
     r"golang &|golang and|"
     r"bpo|call center|marketing cloud|success architect|"
     r"non-?it staffing|us non-?it|staffing recruiter|talent acquisition|"
     r"\brevit\b|\bbarch\b|hubspot|m365 architect|microsoft 365 architect|"
     r"solutions engineer|presales|pre-sales|"
-    r"\binfor\b|\berp\b.?primary|dft architect|\beda\b|"
+    r"\binfor\b|\berp\b.?primary|\bdft\b|dft architect|\beda\b|\bsta\b|"
+    r"static timing|"
     r"ai compiler|gen[- ]?ai architect|ai/?\s*ml architect|ai architect(?!.*\.net)|"
     r"ai technical (lead|architect)|"
-    r"quality engineering|quality assurance|qa engineer|\bsdet\b|"
+    r"quality engineering|quality assurance|qa engineer|\bqe architect\b|quality architect|"
+    r"\bsdet\b|software development engineer in test|"
     r"netsuite|nice cxone|"
     # Hardware / chip (not software architect/director)
     r"\bsoc\b|system[- ]?on[- ]?chip|\basic\b|rtl design|physical design|"
@@ -168,7 +172,8 @@ def skip_reason(role: str, company: str = "", jd: str = "") -> str | None:
     company = company or ""
     if re.search(
         r"\b(ai/?\s*ml architect|ai architect|ai engineer|ml engineer|genai|"
-        r"ai technical (lead|architect)|data scientist|data engineer(?:ing)?)\b",
+        r"ai technical (lead|architect)|data scientist|data engineer(?:ing)?|"
+        r"data\s*&\s*ai|data and ai|databricks)\b",
         title,
         re.I,
     ) and not re.search(r"\.net|dotnet|\bc#\b", title, re.I):

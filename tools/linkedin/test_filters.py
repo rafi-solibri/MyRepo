@@ -159,5 +159,58 @@ assert_true(
     is not None,
     "Azure Data Engineer title without .NET must skip (view bait-and-switch)",
 )
+assert_true(
+    skip_reason("Senior Solution Architect – Data & AI | Databricks", "ShimentoX", "")
+    is not None,
+    "Data & AI / Databricks architect without .NET must skip",
+)
+assert_true(
+    skip_reason("Shop Floor Precision Engineering Manager", "ginfracon", "") is not None,
+    "shop-floor / precision manufacturing EM must skip",
+)
+assert_true(
+    skip_reason("STA Lead Engineer", "Mulya Technologies", "") is not None,
+    "STA / static-timing hardware lead must skip",
+)
+assert_true(
+    skip_reason("QE Architect", "Kanerika Inc", "") is not None,
+    "QE Architect must skip",
+)
+assert_true(
+    skip_reason("Junior Architect", "Flow Interio", "") is not None,
+    "Junior Architect must skip",
+)
+assert_true(
+    skip_reason("Principal DFT Engineer", "Mulya Technologies", "") is not None,
+    "DFT engineer (not only DFT Architect) must skip",
+)
+assert_true(
+    skip_reason("BIM Architect - US Experience", "EnatiX", "") is not None,
+    "BIM / building architect must skip",
+)
+assert_true(
+    skip_reason("Architectural Designer", "Pobl", "") is not None,
+    "Architectural Designer must skip",
+)
+assert_true(
+    skip_reason("SRE Lead Engineer", "Chubb", "") is not None,
+    "SRE Lead Engineer must skip",
+)
+assert_true(
+    skip_reason("Lead Software Development Engineer in Test", "DTCC", "") is not None,
+    "SDET long-form title must skip",
+)
+assert_true(
+    skip_reason("Staff Software Engineer", "Teradata", "") is None,
+    "Staff Software Engineer must still allow",
+)
+assert_true(
+    skip_reason("Engineering Manager", "Chubb", "") is None,
+    "software Engineering Manager must still allow",
+)
+assert_true(
+    skip_reason("Senior Software Architect", "Mulya Technologies", "") is None,
+    "Senior Software Architect must still allow",
+)
 
 print("filters self-test OK")
