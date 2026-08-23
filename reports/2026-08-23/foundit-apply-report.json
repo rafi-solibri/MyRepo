@@ -1,0 +1,142 @@
+{
+  "ts": "2026-08-23T15:05:20.881Z",
+  "postFixRerun": true,
+  "mergedPr": "https://github.com/rafi-solibri/MyRepo/pull/244",
+  "resume": "/workspace/resumes/Rafi_Resume.docx",
+  "resumeBytes": 3689045,
+  "expectedCtcLpa": 65,
+  "currentCtcLpa": 52,
+  "forbiddenDryRun": "/home/api/canJobApply",
+  "loggedIn": true,
+  "jwtOk": true,
+  "appliedBefore": 451,
+  "appliedAfter": 452,
+  "appliedDelta": 1,
+  "intentionalApplies": 1,
+  "ageWindowUsed": 3650,
+  "candidates": {
+    "candidates_d1": 39,
+    "candidates_d3": 208,
+    "candidates_d7": 238,
+    "candidates_d14": 261,
+    "candidates_d30": 298,
+    "candidates_d90": 174,
+    "candidates_d3650": 36
+  },
+  "skipCount": 1180,
+  "duplicateCount": 73,
+  "blockedCount": 0,
+  "skipReasons": {
+    "location not Hyd/remote": 527,
+    "no .NET on title+skills": 348,
+    "no seniority keyword on title": 110,
+    "SAP without .NET": 65,
+    "pure AI/data without .NET on title": 20,
+    "non-software engineering without .NET on title": 17,
+    "infra/ops without .NET on title": 16,
+    "maxExp 7<10 (junior/mid band)": 15,
+    "ServiceNow": 8,
+    "maxExp 9<10 (junior/mid band)": 6,
+    "maxExp 8<10 (junior/mid band)": 5,
+    "QA/test": 4,
+    "PM/TPM/delivery": 4,
+    "maxExp 5<10 (junior/mid band)": 3,
+    "non-.NET primary stack on title": 3,
+    "Snowflake/Databricks without .NET on title": 3,
+    "Salesforce": 3,
+    "max CTC 15 LPA < 35": 3,
+    "WPF/hardware desktop": 3,
+    "max CTC 13 LPA < 35": 3,
+    "max CTC 30 LPA < 35": 2,
+    "maxExp 6<10 (junior/mid band)": 2,
+    "Guidewire": 1,
+    "max CTC 6 LPA < 35": 1,
+    "max CTC 5 LPA < 35": 1,
+    "max CTC 12 LPA < 35": 1,
+    "max CTC 8 LPA < 35": 1,
+    "presales": 1,
+    "max CTC 5.5 LPA < 35": 1,
+    "maxExp 4<10 (junior/mid band)": 1,
+    "max CTC 2 LPA < 35": 1,
+    "max CTC 10 LPA < 35": 1
+  },
+  "applied": [
+    {
+      "jobId": "63829634",
+      "title": "Solution Architect",
+      "company": "Hitachi Energy",
+      "loc": "Remote | India",
+      "path": "Foundit + ATS https://hitachi.wd1.myworkdayjobs.com/en-US/hitachi/job/Remote---Karnataka-India/Solution-Architect_R0130310",
+      "falconStatus": 200,
+      "falconNext": "APPLY_REDIRECT_STAGE_ONE",
+      "ats": {
+        "status": "external_incomplete_or_timeout",
+        "url": "https://hitachi.wd1.myworkdayjobs.com/en-US/hitachi/job/Remote---Karnataka%2C-India/Solution-Architect_R0130310/apply/autofillWithResume"
+      },
+      "ageDays": 0.19575570601851852,
+      "tailoredResume": {
+        "path": "/opt/cursor/artifacts/tailored-resumes/63829634-99e5ece2b0/Rafi_Resume.docx",
+        "headline": "Solution Architect \u2014 AWS, Azure, Kubernetes",
+        "matchedSkills": [
+          "Solution Architecture",
+          "API Design",
+          "Architecture Reviews",
+          "AWS",
+          "Azure",
+          "Cloud Architecture",
+          "REST API",
+          "Kubernetes",
+          ".NET Core",
+          "ASP.NET Core",
+          "Distributed Systems",
+          "Domain-Driven Design",
+          "Event-Driven Architecture",
+          "Software Architecture",
+          "System Design",
+          "Technical Leadership"
+        ],
+        "profileUploadOk": true
+      }
+    }
+  ],
+  "blocked": [],
+  "referralDrafts": [
+    {
+      "company": "Hitachi Energy",
+      "title": "Solution Architect",
+      "draft": "Hi \u2014 I'm applying for Solution Architect at Hitachi Energy. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA \u2192 expected 65 LPA. Happy to share Rafi_Resume.docx \u2014 could you refer me to the hiring manager? Thanks, Rafi Ahmed ([REDACTED] / +91 8790251698)"
+    }
+  ],
+  "alreadyAppliedToday": [
+    {
+      "jobId": "63754663",
+      "title": "Product Security Architect IRC286354",
+      "company": "Globallogic Ukraine",
+      "via": "userJobInfo"
+    },
+    {
+      "jobId": "63734221",
+      "title": "Endpoint Solution Architect",
+      "company": "Taskus",
+      "via": "userJobInfo"
+    },
+    {
+      "jobId": "63734707",
+      "title": "Solution Architect",
+      "company": "Accenture",
+      "via": "userJobInfo"
+    },
+    {
+      "jobId": "63678928",
+      "title": "Technical Architect_GNC_Offshore",
+      "company": "Photon Interactive Private limited",
+      "via": "userJobInfo"
+    },
+    {
+      "jobId": "52516206",
+      "title": "Solution Architect",
+      "company": "Byteridge",
+      "via": "userJobInfo"
+    }
+  ]
+}
