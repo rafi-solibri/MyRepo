@@ -4,7 +4,9 @@ Job-apply automation assets for Mohammed Abdul Rafi Ahmed.
 
 ## Resume
 
-Canonical file: [`resumes/Rafi_Resume.docx`](resumes/Rafi_Resume.docx)
+Owner source: [`resumes/Mohammed_Abdul_Rafi_Ahmed_Resume.docx`](resumes/Mohammed_Abdul_Rafi_Ahmed_Resume.docx)
+
+Canonical upload path for all daily apply automations (LinkedIn Easy Apply label, ATS `set_input_files`, profile refresh): [`resumes/Rafi_Resume.docx`](resumes/Rafi_Resume.docx) — same bytes as the owner source. JD tailor (`tools/resume_tailor.py` / `.js`) rewrites headline/summary/skill order on top of this file per job; output keeps the `Rafi_Resume.docx` filename.
 
 ```bash
 bash scripts/bootstrap-job-assets.sh
@@ -14,7 +16,7 @@ bash scripts/bootstrap-job-assets.sh
 
 See [`automation-prompts/README.md`](automation-prompts/README.md).
 
-Shared targets: **Expected CTC 65 LPA**, **Hyderabad + Remote/WFH**, **Rafi_Resume.docx**, company-website/ATS completion (not Easy Apply only).
+Shared targets: **Expected CTC 65 LPA**, **Hyderabad + Remote/WFH**, **Rafi_Resume.docx** (from Mohammed_Abdul_Rafi_Ahmed_Resume.docx), company-website/ATS completion (not Easy Apply only).
 
 Campus-focused daily: **Hitech City / Knowledge City** (`automation-prompts/08-hitech-city.md`, `tools/hitechcity/`) — Knowledge City, Knowledge Park, Mindspace Madhapur and peer Grade-A Madhapur tenants via career portals + LinkedIn referrals.
 

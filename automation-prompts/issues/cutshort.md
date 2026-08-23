@@ -1,5 +1,12 @@
 # Cutshort — issues & fixes
 
+## 2026-08-23 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Owner supplied new master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx | Synced into resumes/Rafi_Resume.docx (+ Architect alias); bootstrap prefers owner-named file; JD tailor still runs on top; upload filename/label stays Rafi_Resume |
+
+
 ## 2026-08-20 (cloud)
 
 | Issue | Fix |

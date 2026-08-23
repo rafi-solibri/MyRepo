@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Owner supplied new master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx | Synced into resumes/Rafi_Resume.docx (+ Architect alias); bootstrap prefers owner-named file; JD tailor still runs on top; upload filename/label stays Rafi_Resume |
 | Guidewire Technical Lead passed Arch/Lead (Duck Creek skipped; Guidewire missing) | skipTitleReason: Guidewire title parity with Naukri/LinkedIn/Instahyre |
 
 

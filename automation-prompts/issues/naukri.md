@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Owner supplied new master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx | Synced into resumes/Rafi_Resume.docx (+ Architect alias); bootstrap prefers owner-named file; JD tailor still runs on top; upload filename/label stays Rafi_Resume |
 | Globallogic Senior Architect AI/Java JD false-apply + apply_unconfirmed on disabled dual-layer CTA | shouldSkipNonDotNetPrimaryJd on detail + readVisibleApplyCta treats disabled Quick apply Applied as applied |
 
 

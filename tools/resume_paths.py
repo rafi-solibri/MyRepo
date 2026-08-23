@@ -1,7 +1,9 @@
 """Resolve the canonical Rafi resume path for job-apply automations.
 
-Prefer Rafi_Resume.docx. Keep Rafi_Resume_Architect.docx as a same-file alias
-for LinkedIn label matching and older prompts.
+Owner source of truth: resumes/Mohammed_Abdul_Rafi_Ahmed_Resume.docx (synced into
+Rafi_Resume.docx). Prefer Rafi_Resume.docx for uploads. Keep
+Rafi_Resume_Architect.docx as a same-file alias for LinkedIn label matching and
+older prompts. JD tailor starts from this file and keeps the upload filename.
 """
 
 from __future__ import annotations

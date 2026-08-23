@@ -1,12 +1,21 @@
 #!/usr/bin/env bash
 # Ensure Rafi_Resume.docx is available at every path job-apply agents historically search.
+# Owner source: resumes/Mohammed_Abdul_Rafi_Ahmed_Resume.docx (copied into Rafi_Resume.docx).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+OWNER_SRC="$ROOT/resumes/Mohammed_Abdul_Rafi_Ahmed_Resume.docx"
 SRC="$ROOT/resumes/Rafi_Resume.docx"
 
+# Prefer owner-named file when present so drops of a new master resume propagate.
+if [[ -f "$OWNER_SRC" ]]; then
+  if [[ ! -f "$SRC" ]] || ! cmp -s "$OWNER_SRC" "$SRC"; then
+    cp -f "$OWNER_SRC" "$SRC"
+  fi
+fi
+
 if [[ ! -f "$SRC" ]]; then
-  echo "ERROR: missing $SRC" >&2
+  echo "ERROR: missing $SRC (and no $OWNER_SRC)" >&2
   exit 1
 fi
 
