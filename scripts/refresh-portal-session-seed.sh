@@ -65,20 +65,35 @@ if [[ ! -f "$SRC_COOKIES" ]]; then
 fi
 
 # Verify required cookie name exists (SQLite name check).
+# After Google SSO, Chrome may not flush li_at to Cookies for a few seconds —
+# retry before failing so auto-login success is not lost.
 python3 - "$SRC_COOKIES" "$NEED" <<'PY'
-import shutil, sqlite3, sys, tempfile
+import os, shutil, sqlite3, sys, tempfile, time
 src, need = sys.argv[1], sys.argv[2]
-tmp = tempfile.mktemp(suffix=".db")
-shutil.copy2(src, tmp)
-con = sqlite3.connect(tmp)
-names = {r[0] for r in con.execute("SELECT name FROM cookies")}
-con.close()
-import os
-os.remove(tmp)
-if need not in names:
-    print(f"ERROR: {need} not in {src}", file=sys.stderr)
-    raise SystemExit(4)
-print(f"ok: {need} present in live profile Cookies")
+deadline = time.time() + float(os.environ.get("PORTAL_SEED_COOKIE_WAIT_S", "45"))
+last_names: set[str] = set()
+while True:
+    tmp = tempfile.mktemp(suffix=".db")
+    try:
+        shutil.copy2(src, tmp)
+        con = sqlite3.connect(tmp)
+        last_names = {r[0] for r in con.execute("SELECT name FROM cookies")}
+        con.close()
+    except Exception as e:
+        print(f"WARN: cookie DB read failed: {e}", file=sys.stderr)
+        last_names = set()
+    finally:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+    if need in last_names:
+        print(f"ok: {need} present in live profile Cookies")
+        break
+    if time.time() >= deadline:
+        print(f"ERROR: {need} not in {src} after wait (names={len(last_names)})", file=sys.stderr)
+        raise SystemExit(4)
+    time.sleep(2)
 PY
 
 mkdir -p "$SEED/cdp/$DEST_NAME/Default" "$SEED/source/Default"

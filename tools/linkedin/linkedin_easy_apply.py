@@ -332,11 +332,37 @@ def ai_job_card_buttons(page: Page):
 
 
 def detail_panel_text(page: Page) -> str:
-    """Top-card / detail pane text only — never full page chrome (filters say Remote)."""
+    """Top-card / detail pane text only — never full page chrome (filters say Remote).
+
+    Prefer classic top-card / detail roots first. Never start from page-wide
+    `a[href*='/jobs/view/'].first` — on search that matches the LEFT list card
+    and bait-and-switches title/company (e.g. card says .NET Architect while
+    the open detail is Azure Data Engineer).
+    """
+    for sel in [
+        ".job-details-jobs-unified-top-card__container",
+        ".jobs-unified-top-card",
+        ".job-details-jobs-unified-top-card",
+        ".jobs-details__main-content",
+        ".jobs-details",
+        ".scaffold-layout__detail",
+        "main .job-view-layout",
+    ]:
+        try:
+            loc = page.locator(sel).first
+            if loc.count():
+                t = (loc.inner_text(timeout=1500) or "")[:3500]
+                if t.strip():
+                    return t
+        except Exception:
+            continue
+    # Fallback: climb from a jobs/view link *inside* the detail pane only
     try:
-        title_a = page.locator('a[href*="/jobs/view/"]').first
+        detail_root = page.locator(
+            ".scaffold-layout__detail, .jobs-details, main .job-view-layout, main"
+        ).first
+        title_a = detail_root.locator('a[href*="/jobs/view/"]').first
         if title_a.count():
-            # Climb to a bounded detail root around the selected job title.
             txt = title_a.evaluate(
                 """(a) => {
                   let el = a;
@@ -355,22 +381,6 @@ def detail_panel_text(page: Page) -> str:
                 return txt
     except Exception:
         pass
-    # Classic fallbacks
-    for sel in [
-        ".job-details-jobs-unified-top-card__container",
-        ".jobs-unified-top-card",
-        ".job-details-jobs-unified-top-card",
-        ".jobs-details",
-        ".scaffold-layout__detail",
-    ]:
-        try:
-            loc = page.locator(sel).first
-            if loc.count():
-                t = (loc.inner_text(timeout=1500) or "")[:3500]
-                if t.strip():
-                    return t
-        except Exception:
-            continue
     return ""
 
 
@@ -548,10 +558,12 @@ def fill_apply_radios_and_selects(page: Page) -> None:
         pass
 
 
-def fill_inputs(page: Page) -> None:
+def fill_inputs(page: Page, deadline: float | None = None) -> None:
     """Best-effort fill of Easy Apply form fields."""
     # Radios/selects first — new Apply UI often has unlabeled radio groups
     fill_apply_radios_and_selects(page)
+    if deadline is not None and time.time() > deadline:
+        return
 
     # Text/select/textarea with labels (modal OR new full-page Apply UI)
     labels = page.locator(
@@ -571,6 +583,8 @@ def fill_inputs(page: Page) -> None:
     except Exception:
         count = 0
     for i in range(count):
+        if deadline is not None and time.time() > deadline:
+            return
         lab = labels.nth(i)
         try:
             text = (lab.inner_text(timeout=500) or "").strip().lower()
@@ -762,8 +776,12 @@ def fill_inputs(page: Page) -> None:
 
     # Artdeco / custom dropdowns showing "Select an option"
     try:
+        if deadline is not None and time.time() > deadline:
+            return
         triggers = page.locator("button:has-text('Select an option')")
         for i in range(min(triggers.count(), 6)):
+            if deadline is not None and time.time() > deadline:
+                return
             t = triggers.nth(i)
             if not t.is_visible():
                 continue
@@ -1082,7 +1100,7 @@ def _application_submitted(page: Page) -> bool:
     except Exception:
         detail = ""
     try:
-        body = page.locator("body").inner_text()[:6000]
+        body = page.locator("body").inner_text(timeout=3000)[:6000]
     except Exception:
         body = ""
     text = f"{detail}\n{body}"
@@ -1255,6 +1273,46 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
         except Exception:
             pass
 
+    # Re-parse top-card on the canonical view — search cards / left-list
+    # selectors often bait-and-switch title/company vs the open job.
+    try:
+        role2, company2, loc2 = parse_card_meta(page)
+        if role2:
+            job.role = role2
+        if company2:
+            job.company = company2
+        if loc2:
+            job.location = loc2
+        workplace2 = top_card_workplace_text(page, "")
+        if not location_allowed(job.location or "", workplace2[:800]):
+            job.status = "skipped"
+            job.reason = f"location filter (view): {(job.location or '')[:120]}"
+            return job
+        jd2 = ""
+        try:
+            jd2 = page.locator(
+                "#job-details, .jobs-description__content, .jobs-box__html-content, "
+                ".jobs-description-content__text"
+            ).first.inner_text(timeout=3000)
+        except Exception:
+            jd2 = detail_panel_text(page)[:8000]
+        bl2 = skip_reason(job.role or "", job.company or "", jd2)
+        if bl2:
+            job.status = "skipped"
+            job.reason = f"blacklist (view): {bl2}"
+            print(
+                f"  SKIP view-recheck {bl2} | {job.company} | {job.role}",
+                flush=True,
+            )
+            return job
+        if job.role and not TITLE_OK.search(job.role):
+            job.status = "skipped"
+            job.reason = f"title mismatch (view): {job.role}"
+            print(f"  SKIP view-title {job.role}", flush=True)
+            return job
+    except Exception as recheck_err:
+        print(f"  WARN: view recheck failed: {str(recheck_err)[:120]}", flush=True)
+
     if _easy_apply_daily_limit_hit(page):
         _dismiss_easy_apply_limit_toast(page)
         job.status = "blocked"
@@ -1408,7 +1466,7 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
 
         close_overlays(page)
         select_resume(page)
-        fill_inputs(page)
+        fill_inputs(page, deadline=flow_deadline)
 
         # Footer actions MUST be scoped to Apply form — page-level get_by_role('Next')
         # matches jobs-list pagination (aria-label=Next) and abandons the form.
@@ -1586,30 +1644,47 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
 
 
 def parse_card_meta(page: Page) -> tuple[str, str, str]:
+    """Parse role/company/location from the OPEN job top-card / detail only.
+
+    Do not use page-wide `a[href*='/jobs/view/']` or `a[href*='/company/']` —
+    those match the left search list and produce bait-and-switch titles.
+    """
     role = company = location = ""
+    root = page.locator(
+        ".job-details-jobs-unified-top-card__container, "
+        ".jobs-unified-top-card, "
+        ".job-details-jobs-unified-top-card, "
+        ".jobs-details, "
+        ".scaffold-layout__detail, "
+        "main .job-view-layout, "
+        "main"
+    ).first
     try:
-        role = page.locator(
-            ".job-details-jobs-unified-top-card__job-title, h1.t-24, "
-            ".jobs-unified-top-card__job-title, a[href*='/jobs/view/']"
+        role = root.locator(
+            ".job-details-jobs-unified-top-card__job-title, "
+            "h1.t-24, h1.t-24 a, "
+            ".jobs-unified-top-card__job-title, "
+            "h1 a[href*='/jobs/view/'], h1"
         ).first.inner_text(timeout=3000).strip()
         role = re.sub(r"\s+", " ", role).strip()
     except Exception:
         pass
     try:
-        company = page.locator(
+        company = root.locator(
             ".job-details-jobs-unified-top-card__company-name a, "
             ".job-details-jobs-unified-top-card__company-name, "
             ".jobs-unified-top-card__company-name a, "
-            "a[href*='/company/']"
+            ".jobs-unified-top-card__company-name"
         ).first.inner_text(timeout=3000).strip()
         company = re.sub(r"\s+", " ", company).strip()
     except Exception:
         pass
     try:
-        location = page.locator(
+        location = root.locator(
             ".job-details-jobs-unified-top-card__tertiary-description-container, "
+            ".job-details-jobs-unified-top-card__primary-description-container, "
             ".jobs-unified-top-card__bullet, "
-            ".job-details-jobs-unified-top-card__primary-description-container"
+            ".jobs-unified-top-card__primary-description"
         ).first.inner_text(timeout=3000).strip()
         location = re.sub(r"\s+", " ", location)[:200]
     except Exception:
@@ -1633,7 +1708,8 @@ def parse_card_meta(page: Page) -> tuple[str, str, str]:
                     if ln == role:
                         continue
                     if re.search(
-                        r"ago|applicant|promoted|hybrid|remote|on-site|easy apply|about the job|verified job",
+                        r"ago|applicant|promoted|hybrid|remote|on-site|easy apply|about the job|verified job|"
+                        r"we.?re hiring|hiring:",
                         ln,
                         re.I,
                     ):
