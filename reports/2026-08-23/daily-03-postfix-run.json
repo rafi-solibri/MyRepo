@@ -1,0 +1,34 @@
+{
+  "portal": "03",
+  "source": "post-fix-rerun",
+  "date": "2026-08-23",
+  "finishedAt": "2026-08-23T15:11:13.931Z",
+  "ok": true,
+  "counts": {
+    "applied": 0,
+    "external": 0,
+    "rejected": 0,
+    "blocked": 0,
+    "skipped": 0,
+    "seen": 3282,
+    "questionnairesAnswered": 0,
+    "questionnairesLockedEmpty": 0
+  },
+  "applied": [],
+  "external": [],
+  "rejected": [],
+  "blocked": [],
+  "skipped": [],
+  "seen": [],
+  "blockerSummary": null,
+  "notes": [
+    "qualifying=0",
+    "q_answered=0",
+    "q_locked_empty=0",
+    "q_already_submitted=0",
+    "tailored_built=0",
+    "tailored_uploaded=0",
+    "merged_pr=244",
+    "resume=Rafi_Resume.docx"
+  ]
+}
