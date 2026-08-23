@@ -11,9 +11,12 @@
 #
 # Cursor Cloud Automations should ALSO set the same keys as Environment Secrets
 # so cron pods get them without relying on a snapshot file:
-#   LINKEDIN_EMAIL, LINKEDIN_PASSWORD, NAUKRI_WORKDAY_PASSWORD, RESEND_*,
+#   LINKEDIN_EMAIL, LINKEDIN_PASSWORD, GOOGLE_EMAIL, GOOGLE_PASSWORD,
+#   NAUKRI_WORKDAY_PASSWORD, RESEND_*,
 #   CAPSOLVER_API_KEY or TWOCAPTCHA_API_KEY — optional paid solvers.
 #   Free path: bash scripts/home-headed-careers-apply.sh (you click hCaptcha).
+# GOOGLE_PASSWORD is the Gmail/Google account password used for SSO; when set it
+# also fills LINKEDIN_PASSWORD if that key is empty (same account for many owners).
 set -uo pipefail
 
 _ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -50,12 +53,29 @@ if [[ -z "${ATS_PASSWORD:-}" && -n "${WORKDAY_PASSWORD:-}" ]]; then
   export ATS_PASSWORD
 fi
 if [[ -z "${APPLY_EMAIL:-}" ]]; then
-  APPLY_EMAIL="${NAUKRI_APPLY_EMAIL:-${LINKEDIN_EMAIL:-}}"
+  APPLY_EMAIL="${NAUKRI_APPLY_EMAIL:-${LINKEDIN_EMAIL:-${GOOGLE_EMAIL:-}}}"
   export APPLY_EMAIL
 fi
 if [[ -z "${NAUKRI_APPLY_EMAIL:-}" && -n "${APPLY_EMAIL:-}" ]]; then
   NAUKRI_APPLY_EMAIL="$APPLY_EMAIL"
   export NAUKRI_APPLY_EMAIL
+fi
+# Google account password (Gmail SSO) — alias into LINKEDIN_PASSWORD when unset.
+if [[ -z "${LINKEDIN_PASSWORD:-}" && -n "${GOOGLE_PASSWORD:-}" ]]; then
+  LINKEDIN_PASSWORD="$GOOGLE_PASSWORD"
+  export LINKEDIN_PASSWORD
+fi
+if [[ -z "${GOOGLE_PASSWORD:-}" && -n "${LINKEDIN_PASSWORD:-}" ]]; then
+  GOOGLE_PASSWORD="$LINKEDIN_PASSWORD"
+  export GOOGLE_PASSWORD
+fi
+if [[ -z "${LINKEDIN_EMAIL:-}" && -n "${GOOGLE_EMAIL:-}" ]]; then
+  LINKEDIN_EMAIL="$GOOGLE_EMAIL"
+  export LINKEDIN_EMAIL
+fi
+if [[ -z "${GOOGLE_EMAIL:-}" && -n "${LINKEDIN_EMAIL:-}" ]]; then
+  GOOGLE_EMAIL="$LINKEDIN_EMAIL"
+  export GOOGLE_EMAIL
 fi
 
 unset _ROOT _candidates _f _loaded
