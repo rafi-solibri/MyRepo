@@ -35,3 +35,36 @@ def test_parse_pdt_lift_to_utc():
 
 def test_parse_missing_returns_none():
     assert parse_restriction_lift("Quick security check") is None
+
+
+def test_wrong_password_text_portal_and_google():
+    assert _mod.wrong_password_text("That’s not the right password.")
+    assert _mod.wrong_password_text("That's not the right password.")
+    assert _mod.wrong_password_text(
+        'Wrong password. Try again or click "Try another way" for more options.'
+    )
+    assert not _mod.wrong_password_text("Welcome back\nPassword\nSign in")
+
+
+def test_password_candidates_unique_and_ordered():
+    env = {
+        "LINKEDIN_PASSWORD": "short9xx",  # pragma: allowlist secret
+        "GOOGLE_PASSWORD": "short9xx",
+        "NAUKRI_WORKDAY_PASSWORD": "longer-workday-18",
+        "ATS_PASSWORD": "longer-workday-18",
+        "WORKDAY_PASSWORD": "",
+    }
+    got = _mod.password_candidates(env)
+    assert got == ["short9xx", "longer-workday-18"]
+    assert _mod.password_candidates({}) == []
+
+
+def test_is_google_identifier_url():
+    assert _mod.is_google_identifier_url(
+        "https://accounts.google.com/v3/signin/identifier?continue=https://accounts.google.com/gsi/select"
+    )
+    assert _mod.is_google_identifier_url(
+        "https://accounts.google.com/v3/signin/challenge/pwd?TL=abc"
+    )
+    assert not _mod.is_google_identifier_url("https://accounts.google.com/gsi/select")
+    assert not _mod.is_google_identifier_url("https://www.example.com/login")
