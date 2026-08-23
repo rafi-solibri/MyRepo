@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Profile resume upload showed Uploaded on 24/08/2026 but todayHit missed (UTC Date + no DD/MM/YYYY, resumeName not in verify blob) | todayTokens use Asia/Kolkata + DD/MM/YYYY; include resumeName/Uploaded on in verify blob |
 | Owner refreshed master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx (2026-08-23 evening) | Replaced resumes/Mohammed_Abdul_Rafi_Ahmed_Resume.docx + Rafi_Resume.docx alias; JD tailor still runs on top; upload filename stays Rafi_Resume |
 
 

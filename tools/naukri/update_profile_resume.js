@@ -65,26 +65,36 @@ const RESUME_FILE_SELECTORS = [
   "input[name*='cv' i][type='file']",
 ];
 
-function todayTokens() {
-  const d = new Date();
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-  const m = months[d.getMonth()];
-  const day = d.getDate();
-  const y = d.getFullYear();
+/** Naukri dates the profile in IST. Cloud VMs are UTC — local Date() is wrong near midnight IST. */
+const NAUKRI_TZ = "Asia/Kolkata";
+
+function todayPartsIst(now = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: NAUKRI_TZ,
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  }).formatToParts(now);
+  const get = (type) => parts.find((p) => p.type === type)?.value;
+  const monthNum = Number(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: NAUKRI_TZ,
+      month: "numeric",
+    }).format(now)
+  );
+  return {
+    y: Number(get("year")),
+    m: get("month"),
+    day: Number(get("day")),
+    monthNum,
+  };
+}
+
+function todayTokens(now = new Date()) {
+  const { y, m, day, monthNum } = todayPartsIst(now);
   const dd = String(day).padStart(2, "0");
+  const mm = String(monthNum).padStart(2, "0");
+  const yy = String(y).slice(-2);
   return [
     "Updated today",
     "updated today",
@@ -98,7 +108,20 @@ function todayTokens() {
     `${dd} ${m}`,
     `${m} ${day}`,
     `${m} ${dd}`,
+    // Naukri resume card: "Uploaded on 24/08/2026"
+    `${dd}/${mm}/${y}`,
+    `${day}/${monthNum}/${y}`,
+    `${dd}/${mm}/${yy}`,
+    `${dd}-${mm}-${y}`,
+    `${dd}.${mm}.${y}`,
+    `Uploaded on ${dd}/${mm}/${y}`,
+    `Uploaded on ${day}/${monthNum}/${y}`,
   ];
+}
+
+function blobHitsToday(blob, now = new Date()) {
+  const text = String(blob || "");
+  return todayTokens(now).find((t) => text.includes(t)) || null;
 }
 
 async function dismissPopups(page) {
@@ -424,11 +447,16 @@ async function verifyUpdated(page) {
       .filter((t) => t && t.length < 100 && /Rafi_Resume|\.docx|\.pdf/i.test(t))
       .slice(0, 5);
 
-    // Collect nearby "Updated …" phrases
+    // Collect nearby "Updated …" / "Uploaded on …" phrases (Naukri resume card)
     const updatedLines = (document.body.innerText || "")
       .split("\n")
       .map((l) => l.trim())
-      .filter((l) => /^updated\b/i.test(l) || /\bupdated today\b/i.test(l))
+      .filter(
+        (l) =>
+          /^updated\b/i.test(l) ||
+          /\bupdated today\b/i.test(l) ||
+          /\buploaded on\b/i.test(l)
+      )
       .slice(0, 10);
 
     return {
@@ -441,8 +469,14 @@ async function verifyUpdated(page) {
   });
 
   const tokens = todayTokens();
-  const blob = `${text.updateOn}\n${text.updatedLines.join("\n")}\n${text.bodySlice}`;
-  const matchedToken = tokens.find((t) => blob.includes(t)) || null;
+  const blob = [
+    text.updateOn,
+    text.updatedLines.join("\n"),
+    text.resumeName,
+    (text.resumeBits || []).join("\n"),
+    text.bodySlice,
+  ].join("\n");
+  const matchedToken = blobHitsToday(blob);
   const todayHit = Boolean(matchedToken);
   const resumePresent = /Rafi_Resume|\.docx/i.test(
     `${text.resumeName} ${text.resumeBits.join(" ")}`
@@ -455,7 +489,7 @@ async function verifyUpdated(page) {
     updateOn: text.updateOn,
     updatedLines: text.updatedLines,
     resumeName: text.resumeName,
-    tokensTried: tokens.slice(0, 5),
+    tokensTried: tokens.filter((t) => /[0-9]|Uploaded|Updated today/i.test(t)).slice(0, 12),
   };
 }
 
@@ -632,5 +666,9 @@ module.exports = {
   verifyUpdated,
   runRefresh,
   resolveResumePath,
+  todayTokens,
+  todayPartsIst,
+  blobHitsToday,
+  NAUKRI_TZ,
   PROFILE_URL,
 };
