@@ -1,0 +1,187 @@
+{
+  "date": "2026-08-23",
+  "source": "post-fix-rerun",
+  "mergedFix": "https://github.com/rafi-solibri/MyRepo/pull/241",
+  "codeSha": "696dc31a0cbd36d9298d435ec7dc8cf64224c1de",
+  "startedAt": "2026-08-23T04:02:24.377Z",
+  "finishedAt": "2026-08-23T04:17:29.832Z",
+  "resume": "/workspace/resumes/Rafi_Resume.docx",
+  "counts": {
+    "profileUpdated": true,
+    "applied": 0,
+    "externalCompleted": 0,
+    "blocked": 0,
+    "skipped": 2593,
+    "seen": 208,
+    "tailoredApplies": 0
+  },
+  "uniqueSkipReasons": {
+    "skip_title_keyword": 144,
+    "skip_no_dotnet": 34,
+    "skip_seniority": 28,
+    "skip_company": 4,
+    "skip_ctc_max_32.5": 1,
+    "skip_ctc_max_30": 4,
+    "hirist_login_required_skip": 3,
+    "already_applied_detail": 2,
+    "skip_location": 7
+  },
+  "profileResumeRefresh": {
+    "ok": true,
+    "profileUpdated": true,
+    "resumeName": "Resume\nUpdate\n\nRafi_Resume.docx\n\nUploaded today",
+    "matchedToken": "today"
+  },
+  "profileResumeRestored": {
+    "ok": true,
+    "resume": "/workspace/resumes/Rafi_Resume.docx"
+  },
+  "applied": [],
+  "external": [],
+  "blocked": [],
+  "alreadyApplied": [
+    {
+      "company": "Clean Harbors",
+      "role": ".Net Fullstack Tech Lead",
+      "location": "Hyderabad",
+      "naukriUrl": "https://www.naukri.com/net-lead-jobs-in-hyderabad-secunderabad?k=.net%20lead&l=hyderabad&experience=12&jobAge=30",
+      "query": ".net lead",
+      "age": 30,
+      "loc": "hyderabad",
+      "resume": "/workspace/resumes/Rafi_Resume.docx",
+      "reason": "already_applied_detail",
+      "naukriJobUrl": "https://www.naukri.com/job-listings-net-fullstack-tech-lead-clean-harbors-hyderabad-10-to-14-years-230226023126?src=directSearch",
+      "cta": "Applied",
+      "ctaState": "applied"
+    },
+    {
+      "company": "First American",
+      "role": "Staff Software Engineer",
+      "location": "Remote",
+      "naukriUrl": "https://www.naukri.com/mnjuser/homepage",
+      "query": "homepage",
+      "resume": "/workspace/resumes/Rafi_Resume.docx",
+      "reason": "already_applied_detail",
+      "naukriJobUrl": "https://www.naukri.com/job-listings-staff-software-engineer-first-american-bengaluru-10-to-15-years-041125029473?src=drecomm_dashboard_aurus",
+      "cta": "Applied",
+      "ctaState": "applied"
+    }
+  ],
+  "hiristSkipped": [
+    {
+      "company": "Epam Systems",
+      "role": "EPAM System - Full Stack Solution Architect - Node.js/AngularJS (10-20 yrs)",
+      "location": "Hyderabad",
+      "naukriUrl": "https://www.naukri.com/solution-architect-jobs-in-hyderabad-secunderabad?k=solution%20architect&l=hyderabad&experience=12&jobAge=7",
+      "query": "solution architect",
+      "age": 7,
+      "loc": "hyderabad",
+      "resume": "/tmp/naukri-tailored/d3bd612c2f31/Rafi_Resume.docx",
+      "tailored": true,
+      "tailorSkills": [
+        ".NET Core / C#",
+        "AWS",
+        "REST APIs",
+        "Angular",
+        "Cloud Architecture",
+        "Agile / Scrum"
+      ],
+      "tailorHeadline": "Solutions Architect | Technical Lead \u2014 .NET Core / C# \u00b7 AWS \u00b7 REST APIs \u00b7 Angular",
+      "reason": "hirist_login_required_skip",
+      "path": "hirist",
+      "cta": "Apply on hirist.com Apply attempted"
+    },
+    {
+      "company": "Anlage Infotech",
+      "role": "Full Stack AI Manager (10-13 yrs)",
+      "location": "Hyderabad, Bengaluru",
+      "naukriUrl": "https://www.naukri.com/net-lead-jobs-in-hyderabad-secunderabad?k=.net%20lead&l=hyderabad&experience=12&jobAge=30",
+      "query": ".net lead",
+      "age": 30,
+      "loc": "hyderabad",
+      "resume": "/tmp/naukri-tailored/6f81355032e2/Rafi_Resume.docx",
+      "tailored": true,
+      "tailorSkills": [
+        ".NET Core / C#",
+        "Azure",
+        "AWS",
+        "React",
+        "Angular",
+        "SQL Server / PostgreSQL",
+        "Cloud Architecture"
+      ],
+      "tailorHeadline": "Solutions Architect | Technical Lead \u2014 .NET Core / C# \u00b7 Azure \u00b7 AWS \u00b7 React",
+      "reason": "hirist_login_required_skip",
+      "path": "hirist",
+      "cta": "Apply on hirist.com Apply attempted"
+    },
+    {
+      "company": "Mancer Consulting Services",
+      "role": "Engineering Manager - Platform (10-15 yrs)",
+      "location": "Hyderabad",
+      "naukriUrl": "https://www.naukri.com/engineering-manager-jobs-in-hyderabad-secunderabad?k=engineering%20manager&l=hyderabad&experience=12&jobAge=60",
+      "query": "engineering manager",
+      "age": 60,
+      "loc": "hyderabad",
+      "resume": "/tmp/naukri-tailored/49e1f83d0d5e/Rafi_Resume.docx",
+      "tailored": true,
+      "tailorSkills": [
+        ".NET Core / C#",
+        "Kafka",
+        "Kubernetes",
+        "Docker",
+        "SQL Server / PostgreSQL",
+        "CI/CD / Jenkins",
+        "Distributed Systems",
+        "Cloud Architecture",
+        "Mentoring / Code Reviews"
+      ],
+      "tailorHeadline": "Engineering Manager | Technical Architect \u2014 .NET Core / C# \u00b7 Kafka \u00b7 Kubernetes \u00b7 Docker",
+      "reason": "hirist_login_required_skip",
+      "path": "hirist",
+      "cta": "Apply on hirist.com Apply attempted"
+    }
+  ],
+  "dotnetish": [
+    {
+      "company": "Ascentforce Services Private Limited",
+      "role": "Senior .NET Full Stack Engineer - AI & Azure",
+      "location": "Hybrid - Hyderabad, Chennai, Bengaluru",
+      "reason": "skip_seniority",
+      "query": "engineering manager",
+      "age": 3
+    },
+    {
+      "company": "Incedo",
+      "role": ".Net Lead role- Immediate joiner",
+      "location": "Hyderabad",
+      "reason": "skip_ctc_max_30",
+      "query": ".net technical lead",
+      "age": 7
+    },
+    {
+      "company": "Ciklum",
+      "role": "Expert .Net Engineer",
+      "location": "Remote",
+      "reason": "skip_seniority",
+      "query": "solution architect .net",
+      "age": 15
+    },
+    {
+      "company": "Clean Harbors",
+      "role": ".Net Fullstack Tech Lead",
+      "location": "Hyderabad",
+      "reason": "already_applied_detail",
+      "query": ".net lead",
+      "age": 30
+    },
+    {
+      "company": "Hiring for an IT Services & Consulting company",
+      "role": ".NET Full Stack Developer",
+      "location": "Hybrid - Hyderabad",
+      "reason": "skip_seniority",
+      "query": ".net lead",
+      "age": 30
+    }
+  ]
+}
