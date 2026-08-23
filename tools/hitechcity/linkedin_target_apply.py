@@ -16,6 +16,7 @@ from urllib.parse import quote
 from playwright.sync_api import Page, sync_playwright
 
 from tools.hitechcity.ats_fill import attempt_ats_apply, resume_path
+from tools.hitechcity.careers_apply import company_skip_reason
 from tools.hitechcity.filters import (
     company_name_match,
     location_or_campus_ok,
@@ -222,12 +223,14 @@ def resolve_company_f_c(page: Page, slug: str) -> str:
     if not slug:
         return ""
     try:
-        goto_retry(page, f"https://www.linkedin.com/company/{slug}/jobs/", timeout=60000)
-        time.sleep(2.0)
+        goto_retry(page, f"https://www.linkedin.com/company/{slug}/jobs/", timeout=45000, attempts=2)
+        time.sleep(1.5)
         dismiss(page)
     except Exception:
         return ""
     try:
+        # Prefer structured links first (fast); only sample a slice of HTML.
+        # Full 500k+ LinkedIn SPA walks have hung overnight CDP runs for minutes.
         found = page.evaluate(
             """() => {
               const ids = [];
@@ -243,10 +246,11 @@ def resolve_company_f_c(page: Page, slug: str) -> str:
                   }
                 }
               };
-              push(document.documentElement.innerHTML.slice(0, 500000));
-              for (const a of document.querySelectorAll('a[href*="f_C="], a[href*="search-results"]')) {
+              for (const a of document.querySelectorAll('a[href*="f_C="], a[href*="search-results"], a[href*="/jobs/search"]')) {
                 push(a.href || '');
+                if (ids.length >= 8) return ids.slice(0, 8);
               }
+              push(document.documentElement.innerHTML.slice(0, 180000));
               return ids.slice(0, 8);
             }"""
         )
@@ -865,6 +869,13 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
             if applied >= MAX_APPLY:
                 break
             name = company["name"]
+            # Honor HITECHCITY_SKIP_UHG (default on) — Optum/UHG Taleo burns inventory
+            # the same way careers/boards already skip these hosts.
+            skip_co = company_skip_reason(company)
+            if skip_co:
+                print(f"LI SKIP {name} | {skip_co}", flush=True)
+                report.skipped.append({"company": name, "reason": skip_co})
+                continue
             slug = company.get("linkedinSlug") or ""
             if not slug:
                 report.skipped.append({"company": name, "reason": "missing_linkedin_slug"})

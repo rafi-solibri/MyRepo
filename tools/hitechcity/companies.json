@@ -26,7 +26,7 @@
       "Azure Architect",
       "Cloud Architect"
     ],
-    "lastDiscoveryAt": "2026-08-21T03:31:28.566574+00:00",
+    "lastDiscoveryAt": "2026-08-23T03:32:53.979650+00:00",
     "discoveryMode": "campus_catalog+web_directories+seeds+linkedin_optional+board_hints"
   },
   "campuses": [
@@ -102,7 +102,8 @@
       "careersUrls": [
         "https://www.amazon.jobs/en/search?base_query=engineer&loc_query=Hyderabad%2C+Telangana%2C+India"
       ],
-      "priority": 1
+      "priority": 1,
+      "linkedinCompanyId": "12227"
     },
     {
       "name": "AMD",
@@ -115,7 +116,8 @@
         "https://careers.amd.com/careers-home/jobs?keywords=Engineering+Manager&location=Hyderabad"
       ],
       "priority": 1,
-      "notes": "Includes former Xilinx India footprint in Knowledge City Octave"
+      "notes": "Includes former Xilinx India footprint in Knowledge City Octave",
+      "linkedinCompanyId": "1497"
     },
     {
       "name": "Apple",
@@ -126,7 +128,8 @@
       "careersUrls": [
         "https://jobs.apple.com/en-in/search?search=Engineering+Manager&location=hyderabad-HST430090"
       ],
-      "priority": 1
+      "priority": 1,
+      "linkedinCompanyId": "162479"
     },
     {
       "name": "Blackbaud",
@@ -138,7 +141,8 @@
       "careersUrls": [
         "https://careers.blackbaud.com/search/?createNewAlert=false&q=Engineering+Manager&locationsearch=Hyderabad"
       ],
-      "priority": 1
+      "priority": 1,
+      "linkedinCompanyId": "59579"
     },
     {
       "name": "Blue Yonder",
@@ -161,7 +165,8 @@
       "careersUrls": [
         "https://careers.smartrecruiters.com/Experian?search=Engineering+Manager"
       ],
-      "priority": 1
+      "priority": 1,
+      "linkedinCompanyId": "2534"
     },
     {
       "name": "GE Vernova",
@@ -173,7 +178,8 @@
       "careersUrls": [
         "https://careers.gevernova.com/global/en/search-results?keywords=Engineering+Manager"
       ],
-      "priority": 1
+      "priority": 1,
+      "linkedinCompanyId": "2444"
     },
     {
       "name": "Goldman Sachs",
@@ -184,7 +190,8 @@
       "careersUrls": [
         "https://higher.gs.com/results?keyword=Engineering+Manager"
       ],
-      "priority": 1
+      "priority": 1,
+      "linkedinCompanyId": "1382"
     },
     {
       "name": "HighRadius",
@@ -195,7 +202,8 @@
       "careersUrls": [],
       "priority": 1,
       "source": "seed",
-      "discoveredAt": "2026-08-13"
+      "discoveredAt": "2026-08-13",
+      "linkedinCompanyId": "835110"
     },
     {
       "name": "Hyland",
@@ -220,7 +228,8 @@
         "https://intel.wd1.myworkdayjobs.com/External?q=Engineering+Manager"
       ],
       "priority": 1,
-      "notes": "Workday has no Hyderabad location facet currently (India=Bangalore only). Skip non-Hyd roles; do not trust location= query text."
+      "notes": "Workday has no Hyderabad location facet currently (India=Bangalore only). Skip non-Hyd roles; do not trust location= query text.",
+      "linkedinCompanyId": "1053"
     },
     {
       "name": "JPMorgan Chase",
@@ -244,7 +253,8 @@
       "careersUrls": [
         "https://www.metacareers.com/jobs?q=Engineering+Manager&location=Hyderabad"
       ],
-      "priority": 1
+      "priority": 1,
+      "linkedinCompanyId": "23769"
     },
     {
       "name": "Microsoft",
@@ -257,7 +267,8 @@
       "careersUrls": [
         "https://apply.careers.microsoft.com/careers?keywords=Engineering+Manager&location=Hyderabad%2C+Telangana%2C+India"
       ],
-      "priority": 1
+      "priority": 1,
+      "linkedinCompanyId": "1035"
     },
     {
       "name": "ModMed",
@@ -269,7 +280,8 @@
       "careersUrls": [
         "https://www.modmed.com/careers/"
       ],
-      "priority": 1
+      "priority": 1,
+      "linkedinCompanyId": "1133049"
     },
     {
       "name": "Optum",
@@ -292,7 +304,8 @@
       "careersUrls": [
         "https://careers.oracle.com/en/sites/jobsearch/jobs?keyword=Engineering+Manager&location=Hyderabad%2C+Telangana%2C+India"
       ],
-      "priority": 1
+      "priority": 1,
+      "linkedinCompanyId": "1028"
     },
     {
       "name": "Palo Alto Networks",
@@ -304,7 +317,8 @@
       "careersUrls": [
         "https://jobs.paloaltonetworks.com/en/search-jobs/Hyderabad"
       ],
-      "priority": 1
+      "priority": 1,
+      "linkedinCompanyId": "30086"
     },
     {
       "name": "Qualcomm",
@@ -315,7 +329,8 @@
       "careersUrls": [
         "https://careers.qualcomm.com/careers?query=Engineering+Manager&location=Hyderabad"
       ],
-      "priority": 1
+      "priority": 1,
+      "linkedinCompanyId": "2017"
     },
     {
       "name": "Solera",
@@ -338,7 +353,8 @@
       "careersUrls": [],
       "priority": 1,
       "source": "campus_catalog",
-      "discoveredAt": "2026-08-16"
+      "discoveredAt": "2026-08-16",
+      "linkedinCompanyId": "3184"
     },
     {
       "name": "Accenture",
@@ -349,7 +365,8 @@
       "careersUrls": [
         "https://www.accenture.com/in-en/careers/jobsearch?jk=architect&lc=Hyderabad"
       ],
-      "priority": 2
+      "priority": 2,
+      "linkedinCompanyId": "456960"
     },
     {
       "name": "ADP",
@@ -360,7 +377,8 @@
       "careersUrls": [],
       "priority": 2,
       "source": "seed",
-      "discoveredAt": "2026-08-13"
+      "discoveredAt": "2026-08-13",
+      "linkedinCompanyId": "1463"
     },
     {
       "name": "BA Continuum",
@@ -382,7 +400,8 @@
       "careersUrls": [],
       "priority": 2,
       "source": "campus_catalog",
-      "discoveredAt": "2026-08-16"
+      "discoveredAt": "2026-08-16",
+      "linkedinCompanyId": "1893"
     },
     {
       "name": "BluJay Solutions",
@@ -416,7 +435,8 @@
       "careersUrls": [],
       "priority": 2,
       "source": "seed",
-      "discoveredAt": "2026-08-13"
+      "discoveredAt": "2026-08-13",
+      "linkedinCompanyId": "1075"
     },
     {
       "name": "Celonis",
@@ -427,7 +447,8 @@
       "careersUrls": [],
       "priority": 2,
       "source": "linkedin_search",
-      "discoveredAt": "2026-08-14"
+      "discoveredAt": "2026-08-14",
+      "linkedinCompanyId": "3118913"
     },
     {
       "name": "Chubb",
@@ -438,7 +459,8 @@
       "careersUrls": [],
       "priority": 2,
       "source": "campus_catalog",
-      "discoveredAt": "2026-08-16"
+      "discoveredAt": "2026-08-16",
+      "linkedinCompanyId": "1269"
     },
     {
       "name": "Cognizant",
