@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import os
 import re
-import threading
+import signal
 import time
 import urllib.error
 import urllib.parse
@@ -121,27 +121,49 @@ def _captcha_poll_frames(page) -> list:
     return targets
 
 
-def _call_with_hang_timeout(fn, timeout_s: float, default=None):
-    """Run fn in a daemon thread; return (value, hung).
+class _HangTimeout(Exception):
+    """Raised when SIGALRM fires around a wedged Playwright call."""
 
-    Playwright inner_text/evaluate can ignore timeouts after
-    Page.handleJavaScriptDialog 'No dialog is showing' and block forever.
-    The owner-captcha loop must still honor ATS_CAPTCHA_WAIT_SEC.
+
+def _call_with_hang_timeout(fn, timeout_s: float, default=None):
+    """Run fn on the current thread; return (value, hung).
+
+    Playwright sync API is greenlet-bound — do NOT call it from another thread
+    (that prints 'cannot switch to a different thread' forever). Use SIGALRM
+    so a wedged inner_text/evaluate cannot starve the owner-captcha deadline.
     """
-    box: dict = {"done": False, "val": default}
-    def _run() -> None:
+    if os.name == "nt":
         try:
-            box["val"] = fn()
+            return fn(), False
         except Exception:
-            box["val"] = default
-        finally:
-            box["done"] = True
-    t = threading.Thread(target=_run, daemon=True)
-    t.start()
-    t.join(max(0.2, float(timeout_s)))
-    if not box["done"]:
-        return default, True
-    return box["val"], False
+            return default, False
+
+    def _on_alarm(_signum, _frame):
+        raise _HangTimeout()
+
+    prev = signal.getsignal(signal.SIGALRM)
+    hung = False
+    val = default
+    try:
+        signal.signal(signal.SIGALRM, _on_alarm)
+        signal.setitimer(signal.ITIMER_REAL, max(0.2, float(timeout_s)))
+        try:
+            val = fn()
+        except _HangTimeout:
+            hung = True
+            val = default
+        except Exception:
+            val = default
+    finally:
+        try:
+            signal.setitimer(signal.ITIMER_REAL, 0.0)
+        except Exception:
+            pass
+        try:
+            signal.signal(signal.SIGALRM, prev)
+        except Exception:
+            pass
+    return val, hung
 
 
 def hcaptcha_token_present(page) -> bool:
@@ -385,24 +407,20 @@ def _page_url(page) -> str:
 
 
 def _safe_body_snip(page, limit: int = 2500) -> str:
-    """Same-origin body only — never evaluate cross-origin hCaptcha frames."""
-    chunks: list[str] = []
+    """Parent-page body only — extra frames wedge Playwright after dialog errors."""
     try:
         page.set_default_timeout(1200)
     except Exception:
         pass
     try:
-        for fr in _captcha_poll_frames(page):
-            try:
-                chunks.append((fr.locator("body").inner_text(timeout=800) or "")[:limit])
-            except Exception:
-                continue
+        return (page.locator("body").inner_text(timeout=800) or "")[:limit]
+    except Exception:
+        return ""
     finally:
         try:
             page.set_default_timeout(45000)
         except Exception:
             pass
-    return "\n".join(chunks)
 
 
 def owner_hcaptcha_cleared(page, *, start_url: str = "") -> str | None:

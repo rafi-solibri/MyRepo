@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Thread hang-timeout around Playwright sync API printed greenlet cannot-switch-thread and wedged careers (68k log lines) | Keep frame skip/cap; interrupt wedged polls with SIGALRM on the Playwright thread instead of a worker thread |
 | Owner hCaptcha wait hung past 180s: Playwright inner_text/evaluate on ad iframes ignored timeout after JS dialog protocol error (8 workers 75% CPU, 0 submits) | Skip ad/tracker frames + cap poll frames; thread hang-timeout aborts wedged captcha polls so careers can fail-fast and continue |
 | Owner supplied new master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx | Synced into resumes/Rafi_Resume.docx (+ Architect alias); bootstrap prefers owner-named file; JD tailor still runs on top; upload filename/label stays Rafi_Resume |
 | Hyland iCIMS hCaptcha wall cap burned on Performance/Account Executive before Senior Software Architect .NET | Skip performance-and-scalability and account-executive titles; sort prefer_dotnet jobs first |
