@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Owner supplied new master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx | Synced into resumes/Rafi_Resume.docx (+ Architect alias); bootstrap prefers owner-named file; JD tailor still runs on top; upload filename/label stays Rafi_Resume |
 | Search-card / page-wide a[href*=/jobs/view] bait-and-switch: card said .NET Architect (Laureate) but /jobs/view was Azure Data Engineer (Strive4X); Easy Apply hung past time-cap; seed refresh raced before li_at flush | Scope detail_panel_text+parse_card_meta to top-card; re-validate skip_reason/TITLE_OK/location on /jobs/view before Easy Apply; fill_inputs deadline + body.inner_text timeout; seed cookie wait/retry |
 
 

@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Owner supplied new master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx | Synced into resumes/Rafi_Resume.docx (+ Architect alias); bootstrap prefers owner-named file; JD tailor still runs on top; upload filename/label stays Rafi_Resume |
 | Platform Architect - Java (and other Architect/Lead+Java titles) passed skipReason and got applied | java_primary hard-skip whenever Java is in the title without .NET on the title (seniority alone no longer exempts); check before generic_engineering; + tests |
 
 

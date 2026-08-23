@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Owner supplied new master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx | Synced into resumes/Rafi_Resume.docx (+ Architect alias); bootstrap prefers owner-named file; JD tailor still runs on top; upload filename/label stays Rafi_Resume |
 | resolve_company_f_c hung overnight CDP for 5+ min on Palo Alto /jobs/ (500k innerHTML walk) | link-first f_C scrape + 180k HTML cap + shorter goto_retry; kill/resume path documented in daily report |
 | LinkedIn still searched Optum/UHG despite HITECHCITY_SKIP_UHG=1 (careers/boards already skipped) | linkedin_target_apply honors company_skip_reason/skip_uhg before f_C resolve; test covers Optum |
 

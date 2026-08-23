@@ -41,7 +41,7 @@ Optional cloud automation ids (only if home JSON missing and you still have clou
 - Indeed 91b09fd7-9093-11f1-ba66-0e7d0216e441
 
 For each portal: applied, external/company-website completed, rejected, blocked (login/Cloudflare/resume/OTP), skipped highlights, and automation-results/<portal>/latest.json date when home-local.
-Note targets: Expected CTC 65 LPA; Hyd + Remote/WFH; resume file Rafi_Resume.docx.
+Note targets: Expected CTC 65 LPA; Hyd + Remote/WFH; resume file Rafi_Resume.docx (base = Mohammed_Abdul_Rafi_Ahmed_Resume.docx, JD-tailored per apply).
 
 Email delivery:
 - Prefer Resend MCP → rafi.success@gmail.com
