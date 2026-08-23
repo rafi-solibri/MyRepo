@@ -171,6 +171,8 @@ function skipTitleReason(title) {
   if (/\bservicenow\b/i.test(t)) return "ServiceNow";
   if (/\bpower\s*platform\b/i.test(t)) return "Power Platform";
   if (/\bduck\s*creek\b/i.test(t)) return "Duck Creek";
+  // Naukri/LinkedIn/Instahyre parity — insurance P&C platforms are not .NET/cloud Arch targets.
+  if (/\bguidewire\b/i.test(t)) return "Guidewire";
   // Pure AI / data titles need .NET|C#|dotnet on the TITLE (skills laundry lists are noisy).
   // Naukri parity: AI Solution Architect, Agentic/Generative AI Lead, Data Engineering Manager.
   // Arch/Lead exception must NOT apply — Socnet "Technical Lead - Agentic AI / Generative AI".

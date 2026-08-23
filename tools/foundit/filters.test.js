@@ -691,4 +691,18 @@ assert.strictEqual(
   ".NET on title still passes Arch band"
 );
 
+assert.strictEqual(
+  classifyJob({
+    jobId: 40,
+    title: "Guidewire Technical Lead",
+    companyName: "ValueMomentum",
+    locations: [{ text: "Hyderabad / Secunderabad, Telangana" }],
+    skills: [{ text: "Guidewire" }, { text: "PolicyCenter" }, { text: ".NET" }],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 12 },
+  }).reason,
+  "Guidewire",
+  "Guidewire title must skip even with Arch/Lead + skills laundry .NET (2026-08-23)"
+);
+
 console.log("filters.test.js OK");

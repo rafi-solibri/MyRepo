@@ -1,5 +1,12 @@
 # Foundit — issues & fixes
 
+## 2026-08-23 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Guidewire Technical Lead passed Arch/Lead (Duck Creek skipped; Guidewire missing) | skipTitleReason: Guidewire title parity with Naukri/LinkedIn/Instahyre |
+
+
 ## 2026-08-22 (cloud)
 
 | Issue | Fix |
