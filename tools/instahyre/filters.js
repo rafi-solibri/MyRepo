@@ -87,6 +87,13 @@ function skipReason(title, { company = "", location = "", skills = "", salary = 
     return "frontend_without_dotnet";
   }
 
+  // Java in TITLE = primary stack. Seniority alone does not exempt —
+  // require .NET on the title (skills laundry lists are noisy). Check before
+  // generic_engineering so "Full Stack Lead (Java)" is classified correctly.
+  if (/\bjava\b/i.test(t) && !hasDotNet(t, "")) {
+    return "java_primary";
+  }
+
   // Cloud/sysadmin ops IC — not SA/TL/EM/Staff product engineering
   if (
     /\b(administrator|sysadmin|system admin|desktop support|help\s*desk|virtualisation engineer|virtualization engineer)\b/i.test(
@@ -116,15 +123,6 @@ function skipReason(title, { company = "", location = "", skills = "", salary = 
     return "non_engineering_title";
   }
 
-  // Java-primary IC (unless Staff/Lead/Architect with .NET also present)
-  if (
-    /\bjava\b/i.test(t) &&
-    !hasDotNet(t, skills) &&
-    !/\b(architect|engineering manager|staff|principal|tech(?:nical)?\s+lead)\b/i.test(t)
-  ) {
-    return "java_primary";
-  }
-
   if (location && !locationOk(location, t, skills)) {
     return "location_not_hyd_remote";
   }
@@ -150,6 +148,8 @@ if (require.main === module) {
   const samples = [
     "Quality Engineering Lead",
     "Full Stack Lead (Java)",
+    "Platform Architect - Java",
+    "Staff Software Engineer Java/.NET",
     "Staff Software Engineer .NET",
     "AI Architect",
     "Solution Architect - AI",

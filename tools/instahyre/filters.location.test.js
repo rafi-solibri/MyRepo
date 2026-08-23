@@ -41,5 +41,28 @@ assert.strictEqual(
   skipReason("Azure Data Engineer", { location: "Hyderabad" }),
   "pure_ai_data_without_dotnet"
 );
+assert.strictEqual(
+  skipReason("Platform Architect - Java", { location: "Work From Home" }),
+  "java_primary",
+  "Architect + Java in title without .NET must hard-skip"
+);
+assert.strictEqual(
+  skipReason("Full Stack Lead (Java)", { location: "Hyderabad" }),
+  "java_primary",
+  "Lead + Java in title without .NET must hard-skip"
+);
+assert.strictEqual(
+  skipReason("Staff Software Engineer Java/.NET", { location: "Hyderabad" }),
+  null,
+  ".NET on the title may pass java_primary"
+);
+assert.strictEqual(
+  skipReason("Java Developer", {
+    location: "Hyderabad",
+    skills: ".NET Azure C#",
+  }),
+  "java_primary",
+  "skills laundry list must not override Java-primary title"
+);
 
 console.log("instahyre filters location soften OK");

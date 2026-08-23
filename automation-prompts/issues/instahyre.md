@@ -1,5 +1,12 @@
 # Instahyre — issues & fixes
 
+## 2026-08-23 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Platform Architect - Java (and other Architect/Lead+Java titles) passed skipReason and got applied | java_primary hard-skip whenever Java is in the title without .NET on the title (seniority alone no longer exempts); check before generic_engineering; + tests |
+
+
 ## 2026-08-22 (cloud)
 
 | Issue | Fix |
