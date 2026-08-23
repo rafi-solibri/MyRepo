@@ -1,34 +1,43 @@
 # Indeed Daily — 2026-08-24 (post-fix re-run)
 
-Same-day re-run on `main` after #245 (Mohammed_Abdul_Rafi_Ahmed_Resume master refresh).
-Earlier 2026-08-23 cron did not apply with the new resume. This run used
+Same-day re-run on `main` after #245/#246 (Mohammed_Abdul_Rafi_Ahmed_Resume master refresh).
+Earlier cron did not apply with the new resume. This agent used
 `/workspace/resumes/Rafi_Resume.docx` (JD-tailored per job).
 
-## Counts
-- **Submitted (Easy Apply):** 2
-- **External ATS confirmed:** 1
-- **Rejected incomplete:** 4
-- **Blocked:** 17
-- **Skipped:** 35 (including already-applied + 5 bot-detection Sign In pages misclassified as `title_not_target`)
-- **Seen:** 59
-- **ok:** True
-- **source:** cloud-warp-uc (WARP SOCKS + UC Turnstile)
+Two apply passes: first on merged resume, then again after the Sign In restore helper.
 
-## Applied (Easy Apply)
-- **Genpact India Pvt. Ltd.** — Sr. Tech Lead - Application Development Microsoft N 4D — Hyderabad
-- **Genpact India Pvt. Ltd.** — Architect - Enterprise Application - Oracle N 4D — Hyderabad
+## Latest artifact (second pass)
+`/opt/cursor/artifacts/indeed-daily-run.json` — **date 2026-08-24 IST**, source `cloud-warp-uc`, ok true
+
+| Metric | Count |
+| --- | ---: |
+| Easy Apply submitted | 5 |
+| External ATS confirmed | 1 |
+| Rejected incomplete | 7 |
+| Blocked | 17 |
+| Skipped | 40 |
+| Seen | 70 |
+
+## Easy Apply submitted (second pass)
+- **Genpact India Pvt. Ltd.** — Architect - Enterprise Application - Oracle N 4D — Hyderabad (`jk=6144ccb606d68e34`, also submitted on first pass)
+- **Genpact India Pvt. Ltd.** — Senior Principal Consultant - Cloud Solution Architects — Hyderabad (`jk=88c15aca14c7f524`, recovered from first-pass bot-detection Sign In)
+- **Genpact India Pvt. Ltd.** — Architect - Application Development Microsoft N 4D — Hyderabad
+- **Experian** — Senior Software Engineer — Hyderabad
+- **Emgage** — Solution Architect — Remote
 
 ## External ATS confirmed
-- **NTT Ltd** — Senior Application Architect — Hyderabad (confirmation)
+- **NTT DATA** — Senior Application Architect — Hyderabad (confirmation)
 
-## Blocked highlights
-- Infor / NTT Phenom / ABSYZ Salesforce careers: `external_incomplete_or_timeout` or `no_ats_form` (reCAPTCHA / form cap)
-- Wells Fargo / Medtronic Workday: `ats_login_wall`
-- Some company sites: `ERR_SOCKS_CONNECTION_FAILED` through WARP
-- Late inventory: Indeed `bot-detection-anonymous` Sign In hops (real jk= in continue2) were skipped as `title_not_target` instead of session restore
+## Also submitted on first pass (not re-counted above)
+- **Genpact India Pvt. Ltd.** — Sr. Tech Lead - Application Development Microsoft N 4D — Hyderabad (`jk=175c17d4f70e64b4`)
+- **NTT Ltd** — Senior Application Architect — Hyderabad (`jk=80e5e216f1e2be2f`, first listing)
+
+## First pass snapshot
+applied 2 / external 1 / rejected 4 / blocked 17 / skipped 35 / seen 59  
+Late inventory hit `bot-detection-anonymous` Sign In hops; those were skipped as `title_not_target` before the helper fix.
 
 ## Notes
 - Preflight: WARP+UC cleared CF (exit 0). Session restored via `secure.indeed.com/settings/account`.
 - Resume tailor ran; upload filename stayed `Rafi_Resume.docx`.
-- Follow-up helper fix (this PR): do not treat Sign In / bot-detection as `title_not_target`; restore Passport and retry continue2; stamp report `date` as IST so Notification Job matches 2026-08-24.
-- PRs: https://github.com/rafi-solibri/MyRepo/pull/245
+- Helper fix on this branch: login wall / bot-detection before title skip; retry `continue2`; IST report date.
+- PR create via `gh` was denied (`Resource not accessible by integration`); branch is pushed for owner merge.
