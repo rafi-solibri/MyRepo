@@ -212,5 +212,9 @@ assert_true(
     skip_reason("Senior Software Architect", "Mulya Technologies", "") is None,
     "Senior Software Architect must still allow",
 )
+assert_true(
+    skip_reason("Architect", "Sumanjali landscape architects", "") is not None,
+    "landscape-architecture company + bare Architect title must skip",
+)
 
 print("filters self-test OK")

@@ -24,7 +24,7 @@ TITLE_BLACKLIST = re.compile(
     r"big data architect|\bdata architect\b|data warehouse architect|data platform|"
     r"implementation specialist|"
     r"\bphp\b|laravel|"
-    r"interior designer|architectural designer|bim architect|\bjunior\b|\bfresher\b|"
+    r"interior designer|architectural designer|landscape architect|bim architect|\bjunior\b|\bfresher\b|"
     r"civil engineer|electrical engineering|electrical design|"
     r"shop floor|precision engineering|"
     r"golang &|golang and|"

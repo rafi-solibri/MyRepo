@@ -2,13 +2,51 @@
   "date": "2026-08-23",
   "portal": "jobs",
   "postFixRerun": true,
-  "mergedPr": "https://github.com/rafi-solibri/MyRepo/pull/238",
+  "postFixRerunNumber": 2,
+  "mergedPr": "https://github.com/rafi-solibri/MyRepo/pull/244",
+  "agent": "https://cursor.com/agents/bc-9fa6df47-b474-4890-aa53-07092ec6a16f",
   "counts": {
-    "easyApplySubmitted": 22,
-    "externalSubmitted": 1,
-    "skipped": 718,
-    "blocked": 9
+    "easyApplySubmitted": 33,
+    "externalSubmitted": 2,
+    "confirmedTotal": 35,
+    "thisPassEasyApply": 11,
+    "thisPassAts": 1,
+    "firstRunEasyApply": 22,
+    "firstRunAts": 1,
+    "thisPassEasyApplyBlocked": 4,
+    "thisPassAtsBlocked": 28,
+    "thisPassEasyApplySkipped": 470,
+    "thisPassAtsSkipped": 11
   },
+  "falseAllow": [
+    {
+      "job_id": "4451705902",
+      "company": "Sumanjali landscape architects",
+      "role": "Architect",
+      "path": "Easy Apply",
+      "note": "landscape architecture, not software; filter updated"
+    }
+  ],
+  "thisPassSubmitted": [
+    {"job_id": "4456186232", "company": "Blue Spire Inc", "role": "Calypso Dotnet Developer", "path": "Easy Apply"},
+    {"job_id": "4445725127", "company": "Cotiviti", "role": "Technical Architect", "path": "Easy Apply"},
+    {"job_id": "4456807075", "company": "Canterr, Inc.", "role": "Staff Back-End Engineer", "path": "Easy Apply"},
+    {"job_id": "4457364602", "company": "Luxoft", "role": "Senior Fullstack developer (.NET+Angular)", "path": "Easy Apply"},
+    {"job_id": "4446601488", "company": "Liquidnitro Games", "role": "Lead Software Engineer", "path": "Easy Apply"},
+    {"job_id": "4407801132", "company": "Credera", "role": "Senior Architect", "path": "Easy Apply"},
+    {"job_id": "4455300193", "company": "Quadrant IT Services", "role": "Sr Architect", "path": "Easy Apply"},
+    {"job_id": "4456446846", "company": "Solugenix", "role": "Software Architect", "path": "Easy Apply"},
+    {"job_id": "4456725146", "company": "GSPANN Technologies, Inc", "role": "Datadog Architect", "path": "Easy Apply"},
+    {"job_id": "4445956282", "company": "Emburse", "role": "Staff Engineer I (Node.JS)", "path": "Easy Apply"},
+    {"job_id": "4451705902", "company": "Sumanjali landscape architects", "role": "Architect", "path": "Easy Apply", "falseAllow": true},
+    {"job_id": "4409290239", "company": "NTT DATA, Inc.", "role": "Public Cloud Architect", "path": "ATS"}
+  ],
+  "thisPassBlocked": [
+    {"job_id": "4457897557", "company": "Blend", "role": "AI Engineering Lead - Agentic Engineering", "reason": "exceeded Easy Apply steps"},
+    {"job_id": "4452938002", "company": "Sonatype", "role": "Staff Full Stack Software Engineer", "reason": "exceeded Easy Apply steps"},
+    {"job_id": "4457310783", "company": "TalentXO", "role": "Senior Python Architect (AWS)", "reason": "exceeded Easy Apply steps"},
+    {"job_id": "4454991685", "company": "Aarushi Infotech", "role": "Senior Business Architect – Telecom Domains", "reason": "exceeded Easy Apply steps"}
+  ],
   "submitted": [
     {"job_id": "4455650102", "company": "NCompas Technology Solutions Inc.", "role": "Senior Enterprise Solution Architect", "path": "Easy Apply"},
     {"job_id": "4454970033", "company": "Ibexlabs", "role": "Senior Solutions Architect – AI Solutions", "path": "Easy Apply"},
@@ -32,6 +70,18 @@
     {"job_id": "4443251675", "company": "Tech Mahindra", "role": "Senior Software Engineer", "path": "Easy Apply"},
     {"job_id": "4454240217", "company": "Kanerika Inc", "role": "QE Architect", "path": "Easy Apply"},
     {"job_id": "4456700256", "company": "Arcesium", "role": "Business Solutions Architect", "path": "Easy Apply"},
-    {"job_id": "4409294028", "company": "NTT DATA, Inc.", "role": "Senior Application Architect", "path": "ATS"}
+    {"job_id": "4409294028", "company": "NTT DATA, Inc.", "role": "Senior Application Architect", "path": "ATS"},
+    {"job_id": "4456186232", "company": "Blue Spire Inc", "role": "Calypso Dotnet Developer", "path": "Easy Apply"},
+    {"job_id": "4445725127", "company": "Cotiviti", "role": "Technical Architect", "path": "Easy Apply"},
+    {"job_id": "4456807075", "company": "Canterr, Inc.", "role": "Staff Back-End Engineer", "path": "Easy Apply"},
+    {"job_id": "4457364602", "company": "Luxoft", "role": "Senior Fullstack developer (.NET+Angular)", "path": "Easy Apply"},
+    {"job_id": "4446601488", "company": "Liquidnitro Games", "role": "Lead Software Engineer", "path": "Easy Apply"},
+    {"job_id": "4407801132", "company": "Credera", "role": "Senior Architect", "path": "Easy Apply"},
+    {"job_id": "4455300193", "company": "Quadrant IT Services", "role": "Sr Architect", "path": "Easy Apply"},
+    {"job_id": "4456446846", "company": "Solugenix", "role": "Software Architect", "path": "Easy Apply"},
+    {"job_id": "4456725146", "company": "GSPANN Technologies, Inc", "role": "Datadog Architect", "path": "Easy Apply"},
+    {"job_id": "4445956282", "company": "Emburse", "role": "Staff Engineer I (Node.JS)", "path": "Easy Apply"},
+    {"job_id": "4451705902", "company": "Sumanjali landscape architects", "role": "Architect", "path": "Easy Apply", "falseAllow": true},
+    {"job_id": "4409290239", "company": "NTT DATA, Inc.", "role": "Public Cloud Architect", "path": "ATS"}
   ]
 }

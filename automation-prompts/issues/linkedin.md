@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-08-24 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| False-applied landscape Architect at Sumanjali (4451705902) | TITLE_BLACKLIST landscape architect matches company name; test added |
+
+
 ## 2026-08-23 (cloud)
 
 | Issue | Fix |
