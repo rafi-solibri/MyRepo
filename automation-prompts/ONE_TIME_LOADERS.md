@@ -67,19 +67,27 @@ Use resumes/Rafi_Resume.docx. Report submitted/skipped/blocked.
 ```
 
 ## Hirist Daily 9 AM
-Create a new Cursor Automation named **Hirist Daily 9 AM** (cron ~9:00 AM IST). Paste once:
+**No Cursor Automation paste required.** Hirist is launched by GHA **Daily Apply Portals**
+(`scripts/launch-daily-portals.sh`) once this PR is on `main`. Session seed lives in
+`.portal-sessions/cdp/hirist` and is restored on cloud boot; `launch-chrome-cdp.sh hirist`
+auto-refreshes via Google SSO (`tools/hirist/auto_login.js`) when `LINKEDIN_EMAIL` /
+`LINKEDIN_PASSWORD` (or `GOOGLE_*`) secrets are set.
+
+Optional (duplicate trigger only): create a Cursor Automation named **Hirist Daily 9 AM**
+(cron ~9:00 AM IST) and paste:
 
 ```text
 Read and OBEY the full instructions in automation-prompts/09-hirist.md (the fenced text block). Run `bash scripts/preflight-portal-run.sh hirist` first, then `bash scripts/launch-chrome-cdp.sh hirist`. Use resumes/Rafi_Resume.docx. Execute the daily Hirist apply job now via `node tools/hirist/daily_apply.js`.
 ```
 
-Owner once: `bash scripts/home-headed-login.sh hirist` then Save Environment snapshot so cron has a live `token` cookie.
+Owner once only if seed/auto-login fails: `bash scripts/home-headed-login.sh hirist` then
+`bash scripts/refresh-portal-session-seed.sh hirist --commit`.
 
 ## Notification Job 11 AM
 https://cursor.com/automations/8e34696c-90b1-11f1-ba66-0e7d0216e441
 
 ```text
-Read and OBEY the full instructions in automation-prompts/07-notification.md (the fenced text block). Compile status from all apply automations and email rafi.success@gmail.com. For Indeed, run `bash scripts/fetch-indeed-home-result.sh --today` first and include applied/external/rejected/blocked/skipped from that home-local JSON (do not use cloud Cloudflare as Indeed when same-day home results exist). Include Hitech City / Knowledge City Daily totals from `/opt/cursor/artifacts/hitechcity-daily.json` when present.
+Read and OBEY the full instructions in automation-prompts/07-notification.md (the fenced text block). Compile status from all apply automations and email [APPLY_EMAIL]. For Indeed, run `bash scripts/fetch-indeed-home-result.sh --today` first and include applied/external/rejected/blocked/skipped from that home-local JSON (do not use cloud Cloudflare as Indeed when same-day home results exist). Include Hitech City / Knowledge City Daily totals from `/opt/cursor/artifacts/hitechcity-daily.json` when present.
 ```
 
 Also ensure notification includes Hirist totals when present (see `07-notification.md`).
