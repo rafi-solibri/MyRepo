@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Cron: stale Google cookies + LINKEDIN_PASSWORD rejected; password retries tripped Security Verification CAPTCHA (exit 6) | Land prior unmerged auto_login: wrong-password detect (incl Wrong email or password), GSI identifier/password fill, secret alias candidates, per-method timeout; owner must refresh LINKEDIN_PASSWORD/GOOGLE_PASSWORD then headed-login if CAPTCHA persists |
 | Portal banner Wrong email or password was not matched so rejected secrets timed out as generic login_required | Match that phrase in wrong-password detector; owner must refresh password secrets or headed-login + session seed |
 | Stale li_at + GSI identifier form + wrong-password timed out as generic login fail; fix never reached main (gh pr create denied) | Detect wrong password; complete Google identifier/password; try secret aliases; per-method timeout |
 | Owner refreshed master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx (2026-08-24) | Replaced master + Rafi_Resume.docx alias; JD tailor still on top; upload label stays Rafi_Resume |
