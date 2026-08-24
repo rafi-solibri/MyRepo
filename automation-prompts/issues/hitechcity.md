@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Gartner Remote - N.A. titles passed Hyd location filter; Salesforce Location <option> clicked via get_by_text (not visible) | BAD_LOC_HINT adds remote N.A./North America; pin_portal_location_ui uses native select_option for Hyderabad |
 | Owner refreshed master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx (2026-08-24) | Replaced master + Rafi_Resume.docx alias; JD tailor still on top; upload label stays Rafi_Resume |
 | Owner refreshed master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx (2026-08-23 late) | Replaced master + Rafi_Resume.docx alias (~3.9MB); JD tailor still on top; upload label stays Rafi_Resume |
 | Owner refreshed master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx (2026-08-23 evening) | Replaced resumes/Mohammed_Abdul_Rafi_Ahmed_Resume.docx + Rafi_Resume.docx alias; JD tailor still runs on top; upload filename stays Rafi_Resume |
