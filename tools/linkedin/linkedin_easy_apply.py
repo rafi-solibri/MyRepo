@@ -44,6 +44,11 @@ except Exception:
         skip_reason,
     )
 
+try:
+    from tools.linkedin.safety import pause_status, safe_int
+except Exception:
+    from safety import pause_status, safe_int  # type: ignore
+
 CDP = os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222")
 _ROOT = Path(__file__).resolve().parents[2]
 
@@ -127,10 +132,16 @@ TITLES = [
     "Cloud Architect",
 ]
 
-MAX_APPLY = int(os.environ.get("LINKEDIN_MAX_APPLY", "50"))
-MAX_SCAN_PER_SEARCH = int(os.environ.get("LINKEDIN_MAX_SCAN", "60"))
-# Past 24h, then 3 days, then 7 days, then 14 days (thin-inventory expand)
-TPR_WINDOWS = ("r86400", "r259200", "r604800", "r1209600")
+MAX_APPLY = int(os.environ.get("LINKEDIN_MAX_APPLY", str(safe_int("maxEasyApply", 10))))
+MAX_SCAN_PER_SEARCH = int(
+    os.environ.get("LINKEDIN_MAX_SCAN", str(safe_int("maxScanPerSearch", 20)))
+)
+# Past 24h, then 3 days by default. Wider windows create unnecessary job-page volume.
+TPR_WINDOWS = tuple(
+    w.strip()
+    for w in os.environ.get("LINKEDIN_TPR_WINDOWS", "r86400,r259200").split(",")
+    if w.strip()
+)
 # After Easy Apply pass, also search without f_AL so company-site / Apply jobs are visible.
 EASY_APPLY_ONLY = os.environ.get("LINKEDIN_EASY_APPLY_ONLY", "0") == "1"
 # Always collect company-website jobs unless LINKEDIN_EASY_APPLY_ONLY=1.
@@ -154,6 +165,47 @@ class JobResult:
     reason: str = ""
     url: str = ""
     path: str = ""  # Easy Apply | company/ATS URL
+
+
+def write_safety_pause_report(status) -> None:
+    row = JobResult(
+        status="blocked",
+        reason="linkedin_safety_pause",
+        url=status.pause_until_utc or "",
+        path=status.source,
+    )
+    report = {
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "ok": False,
+        "counts": {
+            "applied": 0,
+            "submitted": 0,
+            "skipped": 0,
+            "blocked": 1,
+            "seen": 1,
+        },
+        "applied": [],
+        "submitted": [],
+        "skipped": [],
+        "blocked": [asdict(row)],
+        "external_candidates": [],
+        "all": [asdict(row)],
+        "safety": {
+            "active": True,
+            "reason": status.reason,
+            "pauseUntilUtc": status.pause_until_utc,
+            "secondsRemaining": status.seconds_remaining,
+            "source": status.source,
+        },
+    }
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    OUT.write_text(json.dumps(report, indent=2))
+    print(
+        f"LINKEDIN SAFETY PAUSE: {status.reason} "
+        f"(until {status.pause_until_utc or 'manual re-enable'})",
+        flush=True,
+    )
+    print(f"wrote {OUT}", flush=True)
 
 
 def shot(page: Page, name: str) -> None:
@@ -2095,6 +2147,11 @@ def process_search(
 
 
 def main() -> None:
+    safety = pause_status()
+    if safety.active:
+        write_safety_pause_report(safety)
+        return
+
     results: list[JobResult] = []
     # Bootstrap seed (legacy hardcodes) + artifact-driven IDs from prior reports
     seed_seen: set[str] = {

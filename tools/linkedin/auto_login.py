@@ -31,6 +31,11 @@ from zoneinfo import ZoneInfo
 
 from playwright.sync_api import sync_playwright
 
+try:
+    from tools.linkedin.safety import pause_status
+except Exception:
+    from safety import pause_status  # type: ignore
+
 CDP = os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222")
 EMAIL = (
     os.environ.get("LINKEDIN_EMAIL")
@@ -734,6 +739,16 @@ def _wait_signed_in(ctx, page, deadline: float, via: str, out: dict) -> int | No
 
 def main() -> int:
     out: dict = {"ok": False, "attempts": []}
+    safety = pause_status()
+    if safety.active:
+        out.update(
+            reason="linkedin_safety_pause",
+            pause_until_utc=safety.pause_until_utc,
+            seconds_remaining=safety.seconds_remaining,
+            hint=safety.reason,
+        )
+        print(json.dumps(out))
+        return 7
     deadline = time.time() + TIMEOUT_S
     email = EMAIL or DEFAULT_EMAIL
     pw_list = password_candidates()

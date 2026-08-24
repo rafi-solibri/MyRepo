@@ -24,6 +24,7 @@ from tools.hitechcity.filters import (
     title_matches_senior_stack,
 )
 from tools.hitechcity.apply_notify import notify_application_result
+from tools.linkedin.safety import pause_status, safe_int
 
 try:
     from tools.linkedin.filters import location_allowed
@@ -35,9 +36,11 @@ COMPANIES_PATH = Path(__file__).with_name("companies.json")
 REPORT = Path(
     os.environ.get("HITECHCITY_LINKEDIN_REPORT", "/opt/cursor/artifacts/hitechcity-linkedin.json")
 )
-MAX_APPLY = int(os.environ.get("HITECHCITY_MAX_APPLY", "35"))
-MAX_REFERRALS = int(os.environ.get("HITECHCITY_MAX_REFERRALS", "12"))
-MAX_SCAN = int(os.environ.get("HITECHCITY_MAX_SCAN", "40"))
+MAX_APPLY = int(os.environ.get("HITECHCITY_MAX_APPLY", "5"))
+MAX_REFERRALS = int(
+    os.environ.get("HITECHCITY_MAX_REFERRALS", str(safe_int("referralsPerDay", 0)))
+)
+MAX_SCAN = int(os.environ.get("HITECHCITY_MAX_SCAN", "10"))
 TPR = os.environ.get("HITECHCITY_TPR", "r1209600")  # 14 days
 
 # LinkedIn location filter — text alone is unreliable; geoId pins Hyderabad metro.
@@ -66,7 +69,7 @@ SEARCH_KEYWORDS = [
 TITLES = SEARCH_KEYWORDS
 
 # Cap per-company LinkedIn keyword searches (breadth over architect-only).
-MAX_TITLE_SEARCHES = int(os.environ.get("HITECHCITY_LI_TITLE_SEARCHES", "10"))
+MAX_TITLE_SEARCHES = int(os.environ.get("HITECHCITY_LI_TITLE_SEARCHES", "3"))
 
 # Title matches TITLE_OK via architect/principal/staff but are wrong for this .NET campus run.
 LI_TITLE_SKIP = re.compile(
@@ -819,6 +822,32 @@ def referral_people_search(page: Page, company: str, role: str) -> dict[str, Any
 
 
 def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
+    safety = pause_status()
+    if safety.active:
+        report = LiReport(startedAt=datetime.now(timezone.utc).isoformat())
+        report.finishedAt = datetime.now(timezone.utc).isoformat()
+        report.skipped.append(
+            {
+                "reason": "linkedin_safety_pause",
+                "pauseUntilUtc": safety.pause_until_utc,
+                "secondsRemaining": safety.seconds_remaining,
+                "detail": safety.reason,
+                "source": safety.source,
+            }
+        )
+        REPORT.parent.mkdir(parents=True, exist_ok=True)
+        REPORT.write_text(json.dumps(asdict(report), indent=2))
+        print(
+            json.dumps(
+                {
+                    "skipped": "linkedin_safety_pause",
+                    "pauseUntilUtc": safety.pause_until_utc,
+                }
+            ),
+            flush=True,
+        )
+        return report
+
     companies = companies or load_companies()
     # Focus priority 1–2 first (raised after discovery expands tenant list)
     max_co = int(os.environ.get("HITECHCITY_LI_MAX_COMPANIES", "30"))

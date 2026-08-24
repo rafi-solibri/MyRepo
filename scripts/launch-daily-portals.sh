@@ -75,6 +75,12 @@ name_needles() {
   esac
 }
 
+linkedin_safety_status() {
+  local rc=0
+  LINKEDIN_SAFETY_JSON="$(python3 tools/linkedin/safety.py --check 2>/dev/null)" || rc=$?
+  [[ "$rc" -eq 20 ]]
+}
+
 daily_prompt_for() {
   local portal="$1"
   local label pfile extra
@@ -82,7 +88,7 @@ daily_prompt_for() {
   pfile="$(prompt_file_for "$portal")"
   case "$portal" in
     linkedin)
-      extra="Run bash scripts/preflight-portal-run.sh linkedin then bash scripts/launch-chrome-cdp.sh linkedin. Use resumes/Rafi_Resume.docx. Execute the daily LinkedIn apply job now."
+      extra="First run python3 tools/linkedin/safety.py --check. If the safety pause is active, stop and report it. Otherwise run bash scripts/preflight-portal-run.sh linkedin then bash scripts/launch-chrome-cdp.sh linkedin. Use resumes/Rafi_Resume.docx. Execute the reduced-volume LinkedIn apply job."
       ;;
     foundit|cutshort|instahyre)
       extra="Run bash scripts/preflight-portal-run.sh $portal first. Use resumes/Rafi_Resume.docx. Execute the daily ${label} apply job now."
@@ -94,7 +100,7 @@ daily_prompt_for() {
       extra="FIRST: node tools/indeed/preflight.js (WARP+UC Turnstile clear + filelock patch + IP rotate). If it still exits 5 after that, stop and report — do not invent applies. Otherwise: bash scripts/preflight-portal-run.sh indeed, then node tools/indeed/daily_apply.js (preferred) or python3 tools/indeed/uc_daily_apply.py. Use resumes/Rafi_Resume.docx. Report submitted/skipped/blocked."
       ;;
     hitechcity)
-      extra="Run bash scripts/preflight-portal-run.sh hitechcity then bash scripts/launch-chrome-cdp.sh hitechcity. Use resumes/Rafi_Resume.docx. Execute via python3 tools/hitechcity/daily_apply.py (HITECHCITY_PARALLEL_TABS=10 by default — do not set tabs=1)."
+      extra="Run bash scripts/preflight-portal-run.sh hitechcity then bash scripts/launch-chrome-cdp.sh hitechcity. Use resumes/Rafi_Resume.docx. Execute via python3 tools/hitechcity/daily_apply.py (HITECHCITY_PARALLEL_TABS=10 by default — do not set tabs=1). If LinkedIn safety pause is active, skip the Hitech City LinkedIn/referral phase and continue official career portals/boards only."
       ;;
   esac
   cat <<EOF
@@ -207,14 +213,17 @@ launch_cloud_agent() {
   prompt="$(daily_prompt_for "$portal")"
   repo="$(repo_https_url)"
   payload="$(python3 - "$name" "$prompt" "$ENV_NAME" "$repo" "$portal" <<'PY'
-import json, sys
+import json, os, sys
 name, prompt, env_name, repo, portal = sys.argv[1:6]
+env_vars = {"DAILY_PORTAL_LAUNCH": "1", "DAILY_PORTAL": portal}
+if portal == "hitechcity" and os.environ.get("DAILY_LINKEDIN_SAFETY_PAUSED") == "1":
+    env_vars["HITECHCITY_SKIP_LINKEDIN"] = "1"
 print(json.dumps({
     "name": name,
     "prompt": {"text": prompt},
     "env": {"type": "cloud", "name": env_name},
     "autoCreatePR": False,
-    "envVars": {"DAILY_PORTAL_LAUNCH": "1", "DAILY_PORTAL": portal},
+    "envVars": env_vars,
 }))
 PY
 )"
@@ -226,14 +235,17 @@ PY
     return 0
   fi
   payload="$(python3 - "$name" "$prompt" "$repo" "$portal" <<'PY'
-import json, sys
+import json, os, sys
 name, prompt, repo, portal = sys.argv[1:6]
+env_vars = {"DAILY_PORTAL_LAUNCH": "1", "DAILY_PORTAL": portal}
+if portal == "hitechcity" and os.environ.get("DAILY_LINKEDIN_SAFETY_PAUSED") == "1":
+    env_vars["HITECHCITY_SKIP_LINKEDIN"] = "1"
 print(json.dumps({
     "name": name,
     "prompt": {"text": prompt},
     "repos": [{"url": repo, "startingRef": "main"}],
     "autoCreatePR": False,
-    "envVars": {"DAILY_PORTAL_LAUNCH": "1", "DAILY_PORTAL": portal},
+    "envVars": env_vars,
 }))
 PY
 )"
@@ -275,7 +287,21 @@ failed=0
 for raw in "${want[@]}"; do
   p="$(printf '%s' "$raw" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')"
   [[ -n "$p" ]] || continue
+  DAILY_LINKEDIN_SAFETY_PAUSED=0
   echo "=== daily-launch: $p ==="
+  if [[ "$p" == "linkedin" || "$p" == "hitechcity" ]]; then
+    if linkedin_safety_status; then
+      if [[ "$p" == "linkedin" ]]; then
+        echo "SKIP linkedin: LinkedIn safety pause is active"
+        echo "$LINKEDIN_SAFETY_JSON"
+        skipped=$((skipped + 1))
+        continue
+      fi
+      DAILY_LINKEDIN_SAFETY_PAUSED=1
+      export DAILY_LINKEDIN_SAFETY_PAUSED
+      echo "NOTE hitechcity: LinkedIn safety pause active; launching without LinkedIn phase"
+    fi
+  fi
   if [[ "$FORCE" -eq 0 ]] && same_day_agent_exists "$p"; then
     echo "SKIP $p: same-day cloud agent already exists"
     skipped=$((skipped + 1))

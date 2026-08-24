@@ -23,7 +23,7 @@ Without the key, helpers still re-exec durable apply scripts **in the current se
 https://cursor.com/automations/beb6ef8e-908f-11f1-ba66-0e7d0216e441
 
 ```text
-Read and OBEY the full instructions in automation-prompts/01-linkedin.md (the fenced text block). Run `bash scripts/preflight-portal-run.sh linkedin` first, then `bash scripts/launch-chrome-cdp.sh linkedin`. Use resumes/Rafi_Resume.docx. Execute the daily LinkedIn apply job now.
+Read and OBEY the full instructions in automation-prompts/01-linkedin.md (the fenced text block). Run `python3 tools/linkedin/safety.py --check` first; if paused, stop and report the retry time. Otherwise run `bash scripts/preflight-portal-run.sh linkedin`, then `bash scripts/launch-chrome-cdp.sh linkedin`. Use resumes/Rafi_Resume.docx. Execute the reduced-volume LinkedIn apply job now.
 ```
 
 ## Foundit Daily 9 AM
@@ -79,7 +79,7 @@ https://cursor.com/automations/b65968f7-953d-11f1-ba66-0e7d0216e441
 Rename this automation in the UI to **Hitech City / Knowledge City Daily** (it is currently Untitled). Paste once:
 
 ```text
-Read and OBEY the full instructions in automation-prompts/08-hitech-city.md (the fenced text block). Run `bash scripts/preflight-portal-run.sh hitechcity` first, then `bash scripts/launch-chrome-cdp.sh hitechcity`. Use resumes/Rafi_Resume.docx. Execute the daily Hitech City / Knowledge City / Madhapur premium-campus career-portal + LinkedIn referral apply job now via `python3 tools/hitechcity/daily_apply.py` (every run uses parallel multi-tab careers, `HITECHCITY_PARALLEL_TABS=10` by default — do not set tabs=1).
+Read and OBEY the full instructions in automation-prompts/08-hitech-city.md (the fenced text block). Run `bash scripts/preflight-portal-run.sh hitechcity` first, then `bash scripts/launch-chrome-cdp.sh hitechcity`. Use resumes/Rafi_Resume.docx. Execute the daily Hitech City / Knowledge City / Madhapur premium-campus career-portal job now via `python3 tools/hitechcity/daily_apply.py`; LinkedIn/referral work must be skipped while `tools/linkedin/safety.py --check` is paused (every run uses parallel multi-tab careers, `HITECHCITY_PARALLEL_TABS=10` by default — do not set tabs=1).
 ```
 
 ## Daily Apply Portals (GitHub Actions — primary 9 AM IST trigger)
