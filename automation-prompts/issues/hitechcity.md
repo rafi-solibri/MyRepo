@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Gartner Remote-N.A. + AI Strategy title treated as India-remote; Salesforce Hyd <option> click timed out | BAD_LOC_HINT Remote-N.A./North America + CAREERS_TITLE_SKIP/AIML ai strategy; pin_hyderabad_native_select instead of clicking option |
 | Owner refreshed master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx (2026-08-24) | Replaced master + Rafi_Resume.docx alias; JD tailor still on top; upload label stays Rafi_Resume |
 | Owner refreshed master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx (2026-08-23 late) | Replaced master + Rafi_Resume.docx alias (~3.9MB); JD tailor still on top; upload label stays Rafi_Resume |
 | Owner refreshed master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx (2026-08-23 evening) | Replaced resumes/Mohammed_Abdul_Rafi_Ahmed_Resume.docx + Rafi_Resume.docx alias; JD tailor still runs on top; upload filename stays Rafi_Resume |

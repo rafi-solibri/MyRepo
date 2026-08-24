@@ -131,9 +131,10 @@ BAD_LOC_HINT = re.compile(
     r"us[- ](?:texas|oregon|california|washington|arizona|colorado|massachusetts|"
     r"florida|georgia|illinois|new[- ]york)|india[- ](?:bangalore|bengaluru)|"
     r"hillsboro|santa[- ]clara|folsom|"
-    # Full US state names + Remote-US / Remote - U.S. (Gartner title + Workday path).
+    # Full US state names + Remote-US / Remote - U.S. / Remote - N.A. (Gartner title + Workday path).
     r"texas|oregon|arizona|colorado|massachusetts|florida|georgia|illinois|"
     r"remote[\s\-–—]*u\.?s\.?|remote[\s\-–—]*united\s*states|"
+    r"remote[\s\-–—]*n\.?\s*a\.?|remote[\s\-–—]*north\s*america|"
     r"tx|wa|ca|fl|ny|il|ga|nc|ma)\b",
     re.I,
 )
@@ -156,6 +157,7 @@ CAREERS_TITLE_SKIP = re.compile(
     r"\bai\s*/\s*ml\b|\bai\s*&\s*ml\b|\baiml\b|\bai-ml\b|"
     r"\bdeep\s*learning\b|\bgen(?:erative)?\s*ai\b|\bllm\b|"
     r"\bai\s*engineer\b|\bml\s*engineer\b|\bai\s*architect\b|\bml\s*architect\b|"
+    r"\bai\s*strategy\b|"
     r"\bartificial\s*intelligence\b|\bcuda\b|\brocm\b|"
     r"engineer in test|\bsdet\b|cyber\s*security|cybersecurity|"
     r"performance\s*test|load\s*test|fusion\s*load\s*testing|"
@@ -364,6 +366,40 @@ def pin_careers_hyderabad_location(url: str) -> str:
     return urlunparse(parts._replace(query=urlencode(flat, doseq=True)))
 
 
+def pin_hyderabad_native_select(page: Page) -> bool:
+    """Select Hyderabad on a native ``<select>`` (``<option>`` is not clickable)."""
+    try:
+        selects = page.locator("select")
+        n = min(int(selects.count() or 0), 8)
+    except Exception:
+        return False
+    for i in range(n):
+        sel = selects.nth(i)
+        try:
+            if not sel.is_visible():
+                continue
+        except Exception:
+            continue
+        try:
+            html = sel.inner_html(timeout=800) or ""
+        except Exception:
+            html = ""
+        if not re.search(r"hyderabad", html, re.I):
+            continue
+        try:
+            sel.select_option(label=re.compile(r"Hyderabad", re.I), timeout=2000)
+            time.sleep(0.6)
+            return True
+        except Exception:
+            try:
+                sel.select_option(value=re.compile(r"Hyderabad", re.I), timeout=2000)
+                time.sleep(0.6)
+                return True
+            except Exception:
+                continue
+    return False
+
+
 def pin_portal_location_ui(page: Page) -> dict[str, Any]:
     """Best-effort: set Hyderabad in on-page location filters after navigation."""
     try:
@@ -374,6 +410,9 @@ def pin_portal_location_ui(page: Page) -> dict[str, Any]:
         return workday_pin_hyderabad_location_ui(page)
 
     out: dict[str, Any] = {"pinned": False, "available": False, "note": "generic_ui"}
+    if pin_hyderabad_native_select(page):
+        out.update(pinned=True, available=True, note="native_select")
+        return out
     selectors = [
         'input[placeholder*="Location" i]',
         'input[aria-label*="Location" i]',
@@ -445,8 +484,24 @@ def pin_portal_location_ui(page: Page) -> dict[str, Any]:
             if picked is not None:
                 picked.fill(CAREERS_LOCATION, timeout=2000)
                 time.sleep(0.8)
+                if pin_hyderabad_native_select(page):
+                    out.update(pinned=True, available=True, note="button_menu_native_select")
+                    time.sleep(1.0)
+                    return out
                 hyd = page.get_by_text(re.compile(r"Hyderabad", re.I))
                 if hyd.count():
+                    tag = ""
+                    try:
+                        tag = (hyd.first.evaluate("el => (el && el.tagName) || ''") or "").lower()
+                    except Exception:
+                        tag = ""
+                    if tag == "option":
+                        if pin_hyderabad_native_select(page):
+                            out.update(pinned=True, available=True, note="button_menu_option_select")
+                            time.sleep(1.0)
+                            return out
+                        out.update(note="button_menu_option_not_selectable", available=True)
+                        return out
                     hyd.first.click(timeout=2000)
                     out.update(pinned=True, available=True, note="button_menu_hyd")
                     time.sleep(1.0)

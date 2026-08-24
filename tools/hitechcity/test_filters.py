@@ -60,6 +60,9 @@ def test_title_ok():
     assert skip_reason("Staff/Principal Engineer - AI/ML & System-Level Validation") == "title: AI/ML excluded"
     assert skip_reason("Machine Learning Engineer") == "title: AI/ML excluded"
     assert skip_reason("GenAI Architect") == "title: AI/ML excluded"
+    assert skip_reason(
+        "Sr Director Analyst - Software Engineering AI Strategy and Value (Remote - N.A.)"
+    ) == "title: AI/ML excluded"
     assert CAREERS_TITLE_SKIP.search("Staff/Principal Engineer - AI/ML & System-Level Validation")
     assert LI_TITLE_SKIP.search("Staff/Principal Engineer - AI/ML & System-Level Validation")
     assert skip_reason("Salesforce Developer") is not None
@@ -278,6 +281,28 @@ def test_careers_card_location():
     assert not card_location_ok(
         "Senior Director Analyst - Software Engineering for AI and Agentic Applications "
         "(Remote - U.S.)"
+    )
+    # Regression 2026-08-24: Remote - N.A. was rescued by bare "Remote" as India-remote.
+    assert not card_location_ok(
+        "Sr Director Analyst - Software Engineering AI Strategy and Value (Remote - N.A.)"
+    )
+    assert not card_location_ok(
+        "Sr Director Analyst - Software Engineering AI Strategy and Value (Remote - N.A.)",
+        url_loc_hint(
+            "https://jobs.gartner.com/jobs/job/111762-sr-director-analyst-"
+            "software-engineering-ai-strategy-and-value-remote-n-a/"
+        ),
+    )
+    assert CAREERS_TITLE_SKIP.search(
+        "Sr Director Analyst - Software Engineering AI Strategy and Value (Remote - N.A.)"
+    )
+    gartner_na = (
+        "https://gartner.wd5.myworkdayjobs.com/en-US/EXT/job/Remote---United-States/"
+        "Sr-Director-Analyst----Software-Engineering-AI-Strategy-and-Value--Remote---N-A-_111762"
+    )
+    assert not card_location_ok(
+        "Sr Director Analyst - Software Engineering AI Strategy and Value (Remote - N.A.)",
+        url_loc_hint(gartner_na),
     )
     gartner_tx = (
         "https://gartner.wd5.myworkdayjobs.com/en-US/EXT/job/Remote---Texas/"
