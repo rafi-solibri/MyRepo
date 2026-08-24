@@ -371,6 +371,38 @@ assert.strictEqual(
   false,
   "short card snippets must not trip JD primary skip"
 );
+assert.strictEqual(
+  isArchLeadTitle("Fullstack Developer Lead"),
+  true,
+  "Fullstack Developer Lead must get .NET card exemption (false-skip 2026-08-24)"
+);
+assert.strictEqual(
+  isArchLeadTitle("Fullstack Lead"),
+  true,
+  "Fullstack Lead must get .NET card exemption (false-skip 2026-08-24)"
+);
+assert.strictEqual(
+  isArchLeadTitle("Software Development Manager"),
+  true,
+  "Software Development Manager must get .NET card exemption (false-skip 2026-08-24)"
+);
+assert.strictEqual(
+  isArchLeadTitle("Development Manager"),
+  true,
+  "Development Manager is EM-class apply title"
+);
+assert.strictEqual(
+  shouldSkipTitle(
+    "EPAM System - Full Stack Solution Architect - Node.js/AngularJS (10-20 yrs)"
+  ),
+  true,
+  "Node.js-primary SA must title-skip (hirist burn 2026-08-24)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Full Stack AI Manager (10-13 yrs)"),
+  true,
+  "Full Stack AI Manager without .NET must skip (hirist burn 2026-08-24)"
+);
 const { workdayCompliantPassword } = require("./workday_apply");
 assert.strictEqual(workdayCompliantPassword("GoodPass123!"), "GoodPass123!");
 const weak = workdayCompliantPassword("short");
