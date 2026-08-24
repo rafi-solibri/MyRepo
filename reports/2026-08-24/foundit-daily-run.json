@@ -1,0 +1,76 @@
+{
+  "portal": "foundit",
+  "source": "cloud-post-fix-rerun",
+  "date": "2026-08-24",
+  "startedAt": "2026-08-24T02:44:46.637Z",
+  "finishedAt": "2026-08-24T02:49:00Z",
+  "ok": true,
+  "counts": {
+    "applied": 0,
+    "external": 0,
+    "rejected": 0,
+    "blocked": 0,
+    "skipped": 1196,
+    "seen": 1272,
+    "duplicates": 76
+  },
+  "applied": [],
+  "blocked": [],
+  "skipped": [],
+  "appliedBefore": 435,
+  "appliedAfter": 435,
+  "appliedDelta": 0,
+  "intentionalApplies": 0,
+  "ageWindowUsed": 3650,
+  "resume": "/workspace/resumes/Rafi_Resume.docx",
+  "resumeBytes": 3957700,
+  "referralDrafts": [],
+  "mergedPr": "https://github.com/rafi-solibri/MyRepo/pull/247",
+  "postFixRerun": true,
+  "postFixRerunNumber": 3,
+  "login": {
+    "hasAuthCookie": true,
+    "jwtOk": true,
+    "hiRafi": false,
+    "onApp": true
+  },
+  "notes": [
+    "POST_FIX_RERUN=1 after #247 resume refresh; ran on origin/main 8e3bfd2557785b8ba6381944ecb929986a4cff74",
+    "Used 3,957,700-byte Mohammed_Abdul_Rafi_Ahmed_Resume master aliased as Rafi_Resume.docx",
+    "daily_apply.js EXIT:0; Applied tab 435\u2192435 (+0); intentionalApplies 0; no invented applies",
+    "Skipped already-Applied today via userJobInfo: HSO 63894198, Solugenix 63894158 (#245), relq 63641755 (#246)",
+    "Also skipped 2026-08-23 Foundit applies (Globallogic/Accenture/Photon/Taskus) as duplicates",
+    "No new code-fixable blocker; did not launch another post-fix re-run (cap 5; this is #3 for Foundit on 2026-08-24 IST)"
+  ],
+  "skipReasonCounts": {
+    "no .NET on title+skills": 351,
+    "location not Hyd/remote: Bengaluru / Bangalore | India": 175,
+    "no seniority keyword on title": 120,
+    "SAP without .NET": 65,
+    "location not Hyd/remote: Pune | India": 52,
+    "other": 433
+  },
+  "alreadyAppliedToday": [
+    {
+      "jobId": "63894198",
+      "company": "HSO",
+      "title": "HSO Ind D365 F&O Technical Architect / Lead Developer",
+      "via": "userJobInfo",
+      "sourceRun": "#245"
+    },
+    {
+      "jobId": "63894158",
+      "company": "Solugenix",
+      "title": "Software Architect",
+      "via": "userJobInfo",
+      "sourceRun": "#245"
+    },
+    {
+      "jobId": "63641755",
+      "company": "relq technologies",
+      "title": "Senior .NET Full Stack Developer- India Remote",
+      "via": "userJobInfo",
+      "sourceRun": "#246"
+    }
+  ]
+}
