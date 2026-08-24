@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| pagead SERP repeats same jk (PanApps 11x); Title/Phone/Date/Address/India-Standard SmartApply still incomplete; UC runner killed ~90m without finishedAt | Post-open jk dedupe + vjk/encoded jk; address/postal/+91 phone fills; Title/Phone/Date/India-Standard validation recovery; UC timeout 120m + atexit flush |
 | Owner refreshed master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx (2026-08-24) | Replaced master + Rafi_Resume.docx alias; JD tailor still on top; upload label stays Rafi_Resume |
 | Owner refreshed master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx (2026-08-23 late) | Replaced master + Rafi_Resume.docx alias (~3.9MB); JD tailor still on top; upload label stays Rafi_Resume |
 | Owner refreshed master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx (2026-08-23 evening) | Replaced resumes/Mohammed_Abdul_Rafi_Ahmed_Resume.docx + Rafi_Resume.docx alias; JD tailor still runs on top; upload filename stays Rafi_Resume |
