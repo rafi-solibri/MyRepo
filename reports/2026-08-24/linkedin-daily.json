@@ -1,0 +1,20 @@
+{
+  "ts": "2026-08-24T03:40:52.585667+00:00",
+  "ok": false,
+  "portal": "linkedin",
+  "counts": {
+    "submitted": 0,
+    "skipped": 0,
+    "blocked": 1,
+    "applied": 0
+  },
+  "submitted": [],
+  "skipped": [],
+  "blocked": [
+    {
+      "reason": "linkedin_login_required_wrong_password_then_captcha",
+      "exit": 6
+    }
+  ],
+  "note": "Owner must refresh LINKEDIN_PASSWORD/GOOGLE_PASSWORD; CAPTCHA after wrong-password retries"
+}
