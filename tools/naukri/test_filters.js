@@ -107,6 +107,21 @@ assert.strictEqual(
   "Quality Architect must skip"
 );
 assert.strictEqual(
+  shouldSkipTitle("Senior Manager, Quality Data Analytics"),
+  true,
+  "Quality Data Analytics senior manager must skip (false-apply 2026-08-24)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Senior Manager Data Analytics"),
+  true,
+  "Data Analytics manager without .NET must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Data Analytics Architect .NET"),
+  false,
+  "Data Analytics with .NET on title may apply"
+);
+assert.strictEqual(
   shouldSkipTitle("Immediate Hiring For Power Platform Architect"),
   true,
   "Power Platform must skip"

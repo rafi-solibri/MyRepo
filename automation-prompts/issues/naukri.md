@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Vertiv Senior Manager Quality Data Analytics false-apply (ARCH_LEAD waiver + missing quality-data/data-analytics skip) | SKIP_TITLE_RE: quality data; PURE_AI_DATA_RE: data analytics (unless .NET on title) |
 | Fullstack Developer Lead / Fullstack Lead / Software Development Manager false skip_no_dotnet (isArchLeadTitle miss) + Node.js SA / Full Stack AI Manager burns | Expand ARCH_LEAD_RE for developer/fullstack lead + software development manager; add node.js to NON_DOTNET_PRIMARY; Full Stack AI Manager to PURE_AI_DATA |
 | Owner refreshed master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx (2026-08-24) | Replaced master + Rafi_Resume.docx alias; JD tailor still on top; upload label stays Rafi_Resume |
 | Owner refreshed master resume Mohammed_Abdul_Rafi_Ahmed_Resume.docx (2026-08-23 late) | Replaced master + Rafi_Resume.docx alias (~3.9MB); JD tailor still on top; upload label stays Rafi_Resume |
