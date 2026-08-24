@@ -96,13 +96,14 @@
       <li><div><a href="https://www.foundit.in/seeker/dashboard">Foundit dashboard</a><div class="hint">Seeker dashboard, not login</div></div><span>MSSOAT</span></li>
       <li><div><a href="https://cutshort.io/profile">Cutshort profile</a><div class="hint">Already OK on current snapshot</div></div><span>cutshort_authentication</span></li>
       <li><div><a href="https://www.instahyre.com/candidate/opportunities/">Instahyre opportunities</a><div class="hint">Logged-in opportunities list</div></div><span>sessionid</span></li>
+      <li><div><a href="https://www.hirist.tech/">Hirist home</a><div class="hint">Logged-in home / applied jobs; token cookie required</div></div><span>token</span></li>
       <li><div><a href="https://www.indeed.com/">Indeed home</a><div class="hint">Signed-in home; Cloudflare may still need private worker</div></div><span>CTK / Passport</span></li>
     </ol>
     <div class="box">
       After every portal shows a logged-in home page:<br />
       1. Quit Chrome completely<br />
       2. Run <code>bash scripts/verify-portal-logins.sh --strict</code><br />
-      3. Confirm all 6 say OK<br />
+      3. Confirm all portals say OK<br />
       4. Click <strong>Save / Update snapshot</strong> on the environment dashboard
     </div>
   </main>

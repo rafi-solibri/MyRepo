@@ -17,7 +17,7 @@ FIX="${3:-}"
 SOURCE="${ISSUE_FIX_SOURCE:-}"
 TODAY="${ISSUE_FIX_DATE:-$(TZ=Asia/Kolkata date +%Y-%m-%d)}"
 
-VALID=(linkedin foundit cutshort naukri instahyre indeed hitechcity notification hotels)
+VALID=(linkedin foundit cutshort naukri instahyre indeed hirist hitechcity notification hotels)
 ok=0
 for p in "${VALID[@]}"; do
   [[ "$p" == "$PORTAL" ]] && ok=1 && break

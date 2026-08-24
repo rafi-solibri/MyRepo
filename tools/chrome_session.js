@@ -44,6 +44,7 @@ function defaultPortalProfile(portal) {
     cutshort: "CUTSHORT_CHROME_PROFILE",
     instahyre: "INSTAHYRE_CHROME_PROFILE",
     indeed: "INDEED_CHROME_PROFILE",
+    hirist: "HIRIST_CHROME_PROFILE",
     linkedin_alt: "LINKEDIN_CHROME_PROFILE_ALT",
     hitechcity: "HITECHCITY_CHROME_PROFILE",
   }[portal];
@@ -77,6 +78,7 @@ function defaultPortalProfile(portal) {
     cutshort: "/home/ubuntu/chrome-cutshort-profile",
     instahyre: "/home/ubuntu/chrome-instahyre-profile",
     indeed: "/home/ubuntu/chrome-indeed-profile",
+    hirist: "/home/ubuntu/chrome-hirist-profile",
     linkedin_alt: "/home/ubuntu/chrome-linkedin-profile",
     hitechcity: "/home/ubuntu/chrome-cdp-profile",
   };
@@ -96,6 +98,7 @@ const PROFILES = {
   cutshort: defaultPortalProfile("cutshort"),
   instahyre: defaultPortalProfile("instahyre"),
   indeed: defaultPortalProfile("indeed"),
+  hirist: defaultPortalProfile("hirist"),
 };
 
 const AUTH_COOKIES = {
@@ -106,6 +109,8 @@ const AUTH_COOKIES = {
   cutshort: ["cutshort_authentication"],
   instahyre: ["sessionid"],
   indeed: ["__Secure-PassportAuthProxy-BearerToken"],
+  // Hirist sets a session `token` cookie after login (plus XSRF-TOKEN).
+  hirist: ["token"],
 };
 
 function cookiesDbPath(profileRoot) {
@@ -234,6 +239,7 @@ const LIVE_CDP_WAITERS = {
   foundit: path.join(__dirname, "foundit", "wait_for_cdp_login.js"),
   instahyre: path.join(__dirname, "instahyre", "wait_for_cdp_login.js"),
   naukri: path.join(__dirname, "naukri", "wait_for_cdp_login.js"),
+  hirist: path.join(__dirname, "hirist", "wait_for_cdp_login.js"),
 };
 
 function checkPortal(portal) {

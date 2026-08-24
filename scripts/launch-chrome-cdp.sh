@@ -10,7 +10,7 @@ source "$ROOT/scripts/load-job-secrets.sh" || true
 
 portal="${1:-}"
 if [[ -z "$portal" ]]; then
-  echo "Usage: bash scripts/launch-chrome-cdp.sh <linkedin|hitechcity|naukri|foundit|cutshort|instahyre|indeed>" >&2
+  echo "Usage: bash scripts/launch-chrome-cdp.sh <linkedin|hitechcity|naukri|foundit|cutshort|instahyre|indeed|hirist>" >&2
   exit 2
 fi
 

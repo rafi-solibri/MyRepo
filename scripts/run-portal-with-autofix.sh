@@ -81,6 +81,11 @@ run_once() {
       bash "$ROOT/scripts/launch-chrome-cdp.sh" instahyre || return $?
       node "$ROOT/tools/instahyre/daily_apply.js" || return $?
       ;;
+    hirist)
+      bash "$ROOT/scripts/preflight-portal-run.sh" hirist || return $?
+      bash "$ROOT/scripts/launch-chrome-cdp.sh" hirist || return $?
+      node "$ROOT/tools/hirist/daily_apply.js" || return $?
+      ;;
     indeed)
       node "$ROOT/tools/indeed/preflight.js" || return $?
       bash "$ROOT/scripts/preflight-portal-run.sh" indeed || return $?

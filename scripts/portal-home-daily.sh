@@ -7,9 +7,9 @@ set -euo pipefail
 
 PORTAL="${1:-}"
 case "$PORTAL" in
-  linkedin|foundit|cutshort|naukri|instahyre|indeed|hitechcity) ;;
+  linkedin|foundit|cutshort|naukri|instahyre|indeed|hirist|hitechcity) ;;
   *)
-    echo "Usage: bash scripts/portal-home-daily.sh <linkedin|foundit|cutshort|naukri|instahyre|indeed|hitechcity>"
+    echo "Usage: bash scripts/portal-home-daily.sh <linkedin|foundit|cutshort|naukri|instahyre|indeed|hirist|hitechcity>"
     exit 2
     ;;
 esac
@@ -37,6 +37,7 @@ prompt_file_for() {
     naukri) echo "automation-prompts/04-naukri-general.md" ;;
     instahyre) echo "automation-prompts/05-instahyre.md" ;;
     indeed) echo "automation-prompts/06-indeed.md" ;;
+    hirist) echo "automation-prompts/09-hirist.md" ;;
     hitechcity) echo "automation-prompts/08-hitech-city.md" ;;
   esac
 }

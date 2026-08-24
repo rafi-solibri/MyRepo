@@ -22,7 +22,7 @@ TODAY="${DAILY_LAUNCH_DATE:-$(TZ=Asia/Kolkata date +%Y-%m-%d)}"
 DRY_RUN=0
 FORCE=0
 PORTAL_ARG=""
-APPLY_PORTALS=(linkedin foundit cutshort naukri instahyre indeed hitechcity)
+APPLY_PORTALS=(linkedin foundit cutshort naukri instahyre indeed hirist hitechcity)
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -45,6 +45,7 @@ job_label() {
     naukri) echo "Naukri Daily" ;;
     instahyre) echo "Instahyre Daily" ;;
     indeed) echo "Indeed Daily" ;;
+    hirist) echo "Hirist Daily" ;;
     hitechcity) echo "Hitech City / Knowledge City Daily" ;;
     *) echo "$1" ;;
   esac
@@ -58,6 +59,7 @@ prompt_file_for() {
     naukri) echo "automation-prompts/04-naukri-general.md" ;;
     instahyre) echo "automation-prompts/05-instahyre.md" ;;
     indeed) echo "automation-prompts/06-indeed.md" ;;
+    hirist) echo "automation-prompts/09-hirist.md" ;;
     hitechcity) echo "automation-prompts/08-hitech-city.md" ;;
   esac
 }
@@ -71,6 +73,7 @@ name_needles() {
     naukri) echo "naukri" ;;
     instahyre) echo "instahyre" ;;
     indeed) echo "indeed" ;;
+    hirist) echo "hirist" ;;
     hitechcity) echo "hitech" ;;
   esac
 }
@@ -84,7 +87,7 @@ daily_prompt_for() {
     linkedin)
       extra="Run bash scripts/preflight-portal-run.sh linkedin then bash scripts/launch-chrome-cdp.sh linkedin. Use resumes/Rafi_Resume.docx. Execute the daily LinkedIn apply job now."
       ;;
-    foundit|cutshort|instahyre)
+    foundit|cutshort|instahyre|hirist)
       extra="Run bash scripts/preflight-portal-run.sh $portal first. Use resumes/Rafi_Resume.docx. Execute the daily ${label} apply job now."
       ;;
     naukri)

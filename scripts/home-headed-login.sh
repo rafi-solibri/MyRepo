@@ -14,9 +14,9 @@ cd "$ROOT"
 PORTAL="${1:-}"
 # hitechcity reuses the LinkedIn CDP session for campus applies + referrals.
 case "$PORTAL" in
-  linkedin|hitechcity|foundit|cutshort|naukri|instahyre|indeed) ;;
+  linkedin|hitechcity|foundit|cutshort|naukri|instahyre|indeed|hirist) ;;
   *)
-    echo "Usage: bash scripts/home-headed-login.sh <linkedin|hitechcity|foundit|cutshort|naukri|instahyre|indeed>" >&2
+    echo "Usage: bash scripts/home-headed-login.sh <linkedin|hitechcity|foundit|cutshort|naukri|instahyre|indeed|hirist>" >&2
     exit 2
     ;;
 esac
@@ -29,6 +29,7 @@ LOGIN_URL="$(
     naukri) echo "https://www.naukri.com/nlogin/login" ;;
     instahyre) echo "https://www.instahyre.com/login/" ;;
     indeed) echo "https://secure.indeed.com/auth" ;;
+    hirist) echo "https://www.hirist.tech/login" ;;
   esac
 )"
 
@@ -129,6 +130,19 @@ if [[ "$PORTAL" == "naukri" && -f "$ROOT/tools/naukri/wait_for_cdp_login.js" ]];
   echo "WARN: Naukri still not logged in (exit $rc). Stay on the Chrome window and retry." >&2
   exit "$rc"
 fi
+if [[ "$PORTAL" == "hirist" && -f "$ROOT/tools/hirist/wait_for_cdp_login.js" ]]; then
+  export NODE_PATH="$ROOT/tools/node_modules${NODE_PATH:+:$NODE_PATH}"
+  set +e
+  node "$ROOT/tools/hirist/wait_for_cdp_login.js" --open-login --wait "${HIRIST_LOGIN_WAIT_SEC:-180}"
+  rc=$?
+  set -e
+  if [[ "$rc" -eq 0 ]]; then
+    echo "OK: Hirist CDP session is live. Future home dailies can reuse this profile."
+    exit 0
+  fi
+  echo "WARN: Hirist still not logged in (exit $rc). Stay on the Chrome window and retry." >&2
+  exit "$rc"
+fi
 
 # Portal-specific smoke check via Node + playwright when available
 if [[ -d "$ROOT/tools/node_modules/playwright-core" ]]; then
@@ -146,6 +160,7 @@ const portal = process.argv[2];
     cutshort: "https://cutshort.io/profile/candidate-dashboard",
     instahyre: "https://www.instahyre.com/candidate/opportunities/",
     indeed: "https://www.indeed.com/",
+    hirist: "https://www.hirist.tech/applied-jobs",
   };
   const url = checks[portal];
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });

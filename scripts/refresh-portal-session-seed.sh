@@ -51,8 +51,13 @@ case "$PORTAL" in
     NEED=__Secure-PassportAuthProxy-BearerToken
     PROFILE="${INDEED_CHROME_PROFILE:-/home/ubuntu/chrome-indeed-profile}"
     ;;
+  hirist)
+    DEST_NAME=hirist
+    NEED=token
+    PROFILE="${HIRIST_CHROME_PROFILE:-/home/ubuntu/chrome-hirist-profile}"
+    ;;
   *)
-    echo "Usage: bash scripts/refresh-portal-session-seed.sh <linkedin|naukri|foundit|cutshort|instahyre|indeed> [--commit]" >&2
+    echo "Usage: bash scripts/refresh-portal-session-seed.sh <linkedin|naukri|foundit|cutshort|instahyre|indeed|hirist> [--commit]" >&2
     exit 2
     ;;
 esac

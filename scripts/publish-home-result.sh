@@ -6,7 +6,7 @@ set -euo pipefail
 
 PORTAL="${1:-}"
 case "$PORTAL" in
-  linkedin|foundit|cutshort|naukri|instahyre|indeed|hitechcity) ;;
+  linkedin|foundit|cutshort|naukri|instahyre|indeed|hirist|hitechcity) ;;
   *)
     echo "Usage: bash scripts/publish-home-result.sh <portal> [report.json]"
     exit 2

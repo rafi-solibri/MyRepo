@@ -45,6 +45,8 @@ PORTALS = [
     ("indeed", "/home/ubuntu/chrome-indeed-profile",
      ["__Secure-PassportAuthProxy-BearerToken", "CTK"],
      "https://www.indeed.com/"),
+    ("hirist", "/home/ubuntu/chrome-hirist-profile", ["token"],
+     "https://www.hirist.tech/applied-jobs"),
 ]
 SRC = "/home/ubuntu/.config/google-chrome"
 
