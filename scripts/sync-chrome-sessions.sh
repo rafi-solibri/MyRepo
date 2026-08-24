@@ -68,6 +68,7 @@ DESTS=(
   "${CUTSHORT_CHROME_PROFILE:-$(node tools/chrome_session.js path cutshort)}"
   "${INSTAHYRE_CHROME_PROFILE:-$(node tools/chrome_session.js path instahyre)}"
   "${INDEED_CHROME_PROFILE:-$(node tools/chrome_session.js path indeed)}"
+  "${HIRIST_CHROME_PROFILE:-$(node tools/chrome_session.js path hirist)}"
   "${LINKEDIN_CHROME_PROFILE_ALT:-${HOME}/.cursor/chrome-cdp-profiles/linkedin-alt}"
 )
 COOKIE_SETS=(
@@ -77,10 +78,11 @@ COOKIE_SETS=(
   "cutshort_authentication"
   "sessionid"
   "__Secure-PassportAuthProxy-BearerToken CTK"
+  "token"
   "li_at"
 )
 # linkedin_alt is a compatibility profile; do not fail strict mode solely for it.
-REQUIRED=(1 1 1 1 1 1 0)
+REQUIRED=(1 1 1 1 1 1 1 0)
 
 copy_tree() {
   local src="$1" dest="$2"

@@ -343,6 +343,45 @@ PY
 
 echo "Chrome CDP ready for $portal using $profile (log: $log)"
 
+# Hirist: live-probe + Google SSO auto-login, then refresh .portal-sessions seed.
+if [[ "$portal" == "hirist" ]]; then
+  if [[ "${CDP_LIVE_LOGIN_CHECK:-1}" == "1" ]] && command -v node >/dev/null 2>&1; then
+    export NODE_PATH="$ROOT/tools/node_modules${NODE_PATH:+:$NODE_PATH}"
+    export HIRIST_CDP="${HIRIST_CDP:-http://127.0.0.1:9222}"
+    set +e
+    node "$ROOT/tools/hirist/wait_for_cdp_login.js" --open-login
+    live_rc=$?
+    set -e
+    if [[ "$live_rc" -ne 0 && "${HIRIST_AUTO_LOGIN:-1}" == "1" && -f "$ROOT/tools/hirist/auto_login.js" ]]; then
+      echo "Attempting unattended Hirist auto-login (Google SSO)…"
+      set +e
+      node "$ROOT/tools/hirist/auto_login.js"
+      auto_rc=$?
+      set -e
+      if [[ "$auto_rc" -eq 0 ]]; then
+        node "$ROOT/tools/hirist/wait_for_cdp_login.js"
+        live_rc=$?
+        if [[ "$live_rc" -eq 0 ]]; then
+          echo "Hirist auto-login OK — refreshing .portal-sessions seed."
+          bash "$ROOT/scripts/refresh-portal-session-seed.sh" hirist || true
+        fi
+      else
+        echo "NOTE: Hirist auto-login exit $auto_rc (5=login required, 6=CAPTCHA)." >&2
+      fi
+    fi
+    if [[ "$live_rc" -eq 0 && "${HIRIST_REFRESH_SEED:-1}" == "1" ]]; then
+      bash "$ROOT/scripts/refresh-portal-session-seed.sh" hirist || true
+    elif [[ "$live_rc" -ne 0 ]]; then
+      echo "WARNING: Hirist CDP not logged in (live check exit $live_rc)." >&2
+      echo "         Sign in once: bash scripts/home-headed-login.sh hirist" >&2
+      if [[ "${CDP_REQUIRE_LIVE_LOGIN:-1}" == "1" ]]; then
+        echo "ERROR: CDP_REQUIRE_LIVE_LOGIN=1 — refusing Hirist without a live session." >&2
+        exit "$live_rc"
+      fi
+    fi
+  fi
+fi
+
 # LinkedIn on Windows ABE: SQLite cookie names can lie. Live-probe CDP when asked.
 if [[ "$portal" == "linkedin" || "$portal" == "hitechcity" ]]; then
   if [[ "${CDP_LIVE_LOGIN_CHECK:-1}" == "1" ]] && command -v node >/dev/null 2>&1; then
