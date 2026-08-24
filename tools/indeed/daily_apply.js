@@ -101,7 +101,7 @@ function main() {
     // 30m was killing the runner mid-inventory after a few ATS timeouts.
     const apply = runPython(
       [uc],
-      Number(process.env.INDEED_UC_TIMEOUT_MS || 5400000),
+      Number(process.env.INDEED_UC_TIMEOUT_MS || 7200000),
     );
     report.ucApplyExit = apply.status;
     const parsed = parseJsonTail(apply.stdout || "");

@@ -188,6 +188,21 @@ def test_job_dedupe_key_from_jk():
     assert job_dedupe_key("https://in.indeed.com/viewjob?jk=abc123def456", "other") == "abc123def456"
     assert job_dedupe_key("https://in.indeed.com/viewjob?jk=abc123def456", "") == "abc123def456"
     assert job_dedupe_key("https://in.indeed.com/rc/clk?from=serp", "deadbeef") == "deadbeef"
+    # Encoded continueUrl / vjk used by pagead hops (PanApps 11× repeat 2026-08-24).
+    assert (
+        job_dedupe_key(
+            "https://in.indeed.com/pagead/clk?vjk=2eb38af35baf1fdc&from=serp",
+            "",
+        )
+        == "2eb38af35baf1fdc"
+    )
+    assert (
+        job_dedupe_key(
+            "https://in.indeed.com/rc/clk?continueUrl=https%3A%2F%2Fin.indeed.com%2Fviewjob%3Fjk%3D2eb38af35baf1fdc",
+            "",
+        )
+        == "2eb38af35baf1fdc"
+    )
 
 
 if __name__ == "__main__":

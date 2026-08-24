@@ -504,13 +504,26 @@ def job_dedupe_key(href: str, jk: str = "") -> str:
 
     SERP cards often omit data-jk and use unique pagead/clk hrefs; extract jk=
     from the URL so BytesEdge-style repeats do not burn the ATS time cap.
+    Also accept vjk= / %26jk%3D (encoded continueUrl) used by pagead/rc hops.
     """
-    m = re.search(r"[?&]jk=([a-f0-9]+)", href or "", re.I)
-    if m:
-        return m.group(1)
-    if jk:
-        return jk.strip()
-    return (href or "").split("?")[0]
+    raw = href or ""
+    for pat in (
+        r"[?&]jk=([a-f0-9]+)",
+        r"[?&]vjk=([a-f0-9]+)",
+        r"[?&]job[_-]?key=([a-f0-9]+)",
+        r"%26jk%3D([a-f0-9]+)",
+        r"%3Fjk%3D([a-f0-9]+)",
+        r"/jk/([a-f0-9]+)",
+        r"jk%3D([a-f0-9]+)",
+    ):
+        m = re.search(pat, raw, re.I)
+        if m:
+            return m.group(1).lower()
+    if jk and re.fullmatch(r"[a-f0-9]+", jk.strip(), re.I):
+        return jk.strip().lower()
+    # Unique pagead paths without an extractable jk still collide on path alone
+    # less often than full href — keep query-stripped path as last resort.
+    return raw.split("?")[0]
 
 
 def looks_signed_in(body: str, url: str = "") -> bool:
@@ -790,10 +803,13 @@ def fill_common_questions(sb) -> None:
               last: 'Ahmed',
               full: 'Mohammed Abdul Rafi Ahmed',
               phone: '8790251698',
+              phoneIntl: '+918790251698',
               dob: '16/01/1989',
               title: 'Mr.',
               email: 'rafi.success@gmail.com',
               city: 'Hyderabad',
+              street: 'Gachibowli Hyderabad',
+              postal: '500032',
               current: '52',
               expected: '65',
               notice: 'Immediate',
@@ -1053,6 +1069,9 @@ def fill_common_questions(sb) -> None:
               else if (/\\bpan\\b|aadhaar|aadhar|passport number|national id/.test(lab)) val = null;
               else if (/\\bphone\\b|\\bmobile\\b|telephone|phone\\s*no/.test(lab) || type === 'tel') val = vals.phone;
               else if (/e-?mail/.test(lab) || type === 'email') val = vals.email;
+              else if (/postal|zip\\s*code|pin\\s*code|pincode/.test(lab) && !/email/.test(lab)) val = vals.postal;
+              else if (/(street\\s*address|address\\s*line|home\\s*address|^address\\b)/.test(lab)
+                  && !/email|ip address|web address/.test(lab)) val = vals.street;
               else if (/current.*(position|role|title|designation)|job title/.test(lab) && !/salary|ctc/.test(lab)) val = 'Solutions Architect';
               else if (/current.*(employer|company|organization)|present.*(employer|company)/.test(lab) && !/salary|ctc/.test(lab)) val = 'Nemetschek / Solibri';
               else if (/linkedin|profile url|portfolio url/.test(lab)) val = 'https://www.linkedin.com/in/rafi-ahmed';
@@ -1071,14 +1090,21 @@ def fill_common_questions(sb) -> None:
                   || /^immediate$/i.test((el.value || '').trim());
                 val = numericNotice ? vals.noticeDays : vals.notice;
               }
-              else if (/city|location|current\\s*location/.test(lab)) val = vals.city;
+              else if (/city|location|current\\s*location/.test(lab) && !/relocat|street|postal|address/.test(lab)) val = vals.city;
               else if (/experience|years/.test(lab)) val = vals.experience;
               else if (!(el.value || '').trim()) {
                 const w = wantFromText(lab);
                 if (w) val = w;
               }
-              if (val != null && (!(el.value || '').trim() || /\\bphone\\b|\\bmobile\\b|telephone|phone\\s*no|first|last|full\\s*name|ctc|salary|notice|city|experience|package|linkedin|employer|company|education|degree|birth|dob|start date|available date/.test(lab) || /^(yes|no)$/i.test(el.value || ''))) {
+              if (val != null && (!(el.value || '').trim() || /\\bphone\\b|\\bmobile\\b|telephone|phone\\s*no|first|last|full\\s*name|ctc|salary|notice|city|experience|package|linkedin|employer|company|education|degree|birth|dob|start date|available date|address|postal|zip|pin\\s*code/.test(lab) || /^(yes|no)$/i.test(el.value || ''))) {
                 if (setNative(el, val)) answered += 1;
+                // UST Phone No sometimes rejects bare local numbers — retry +91.
+                if (/\\bphone\\b|\\bmobile\\b|telephone|phone\\s*no/.test(lab) || type === 'tel') {
+                  const after = (el.value || '').trim();
+                  if (!after || after.length < 10) {
+                    if (setNative(el, vals.phoneIntl)) answered += 1;
+                  }
+                }
               }
             }
             // Unchecked radio groups → prefer Yes / Immediate / first option.
@@ -1175,7 +1201,7 @@ def fill_common_questions(sb) -> None:
               const lab = labelFor(el);
               const itype = (el.getAttribute('type') || '').toLowerCase();
               const req = el.required || el.getAttribute('aria-required') === 'true' || /required|\\*/.test(lab);
-              if (!req && !/question|ctc|salary|notice|experience|phone|date/.test(lab) && itype !== 'date' && itype !== 'tel') continue;
+              if (!req && !/question|ctc|salary|notice|experience|phone|date|address|postal|zip|pin/.test(lab) && itype !== 'date' && itype !== 'tel') continue;
               if (/\\bpan\\b|aadhaar|aadhar|passport number|national id/.test(lab)) continue;
               // Do NOT map bare "Date" → DOB (UST Available Date was poisoned by that).
               let w = wantFromText(lab);
@@ -1190,8 +1216,15 @@ def fill_common_questions(sb) -> None:
                   w = '15/08/2026';
                 }
                 else if (/\\bphone\\b|\\bmobile\\b|phone\\s*no|telephone/.test(lab) || itype === 'tel') w = vals.phone;
+                else if (/postal|zip\\s*code|pin\\s*code|pincode/.test(lab)) w = vals.postal;
+                else if (/(street\\s*address|address\\s*line|^address\\b)/.test(lab) && !/email|ip address/.test(lab)) w = vals.street;
+                else if (/city|state\\/territory|state or territory/.test(lab) && !/relocat/.test(lab)) w = vals.city;
               }
               if (w && setNative(el, w)) answered += 1;
+              if ((/\\bphone\\b|phone\\s*no|telephone|\\bmobile\\b/.test(lab) || itype === 'tel')
+                  && (!(el.value || '').trim() || (el.value || '').trim().length < 10)) {
+                if (setNative(el, vals.phoneIntl)) answered += 1;
+              }
             }
             return {answered, url: location.href};
             """
@@ -1296,6 +1329,9 @@ def recover_required_selects(sb) -> dict:
             pick(/b\.?\s*tech|bachelor|b\.e\.?(\b|,)|undergraduate|graduate degree|master'?s?|m\.?\s*tech|post\s*graduate/i, 'education');
             pick(/^(india|\+?\s*91)\b/i, 'country')
               || pick(/india|\+\s*91|\+91/i, 'country-loose');
+            // ValGenesis employment/education locale: "India - Standard" / "India - Engineer".
+            pick(/india\s*[-–]\s*(standard|engineer|full\s*time)/i, 'india-standard')
+              || pick(/^india\b/i, 'india-opt');
             pick(/\b(14|12|10|8)\+?\b|10\+|12-15|8-10/i, 'years');
             for (const sel of document.querySelectorAll('select')) {
               if (sel.disabled || (sel.value && sel.selectedIndex > 0)) continue;
@@ -1308,6 +1344,8 @@ def recover_required_selects(sb) -> dict:
                 re = /^mr\.?$/i; why = 'select-title';
               } else if (/\bcountry\b|dial.?code|phone.?code/.test(lab)) {
                 re = /india|\+91|^in$/i; why = 'select-country';
+              } else if (/india\s*[-–]|standard|engineer|employment|work\s*location|job\s*family/.test(lab)) {
+                re = /india\s*[-–]\s*(standard|engineer)|india/i; why = 'select-india-standard';
               }
               if (!re) continue;
               for (const opt of sel.options) {
@@ -1319,10 +1357,24 @@ def recover_required_selects(sb) -> dict:
                 }
               }
             }
+            const forceClick = (el) => {
+              if (!el) return false;
+              try { el.scrollIntoView({block:'center'}); } catch (e) {}
+              try {
+                el.dispatchEvent(new PointerEvent('pointerdown', {bubbles:true}));
+                el.dispatchEvent(new MouseEvent('mousedown', {bubbles:true}));
+                el.dispatchEvent(new PointerEvent('pointerup', {bubbles:true}));
+                el.dispatchEvent(new MouseEvent('mouseup', {bubbles:true}));
+                el.dispatchEvent(new MouseEvent('click', {bubbles:true}));
+              } catch (e) {
+                try { el.click(); } catch (e2) {}
+              }
+              return true;
+            };
             const titleRoots = [...document.querySelectorAll('fieldset, [class*="question"], [class*="Question"], li, section, div')]
               .filter(r => {
-                const t = (r.innerText || '').slice(0, 120).toLowerCase();
-                return t.length < 200 && /\btitle\b|\bsalutation\b/.test(t) && /\bmr\.?\b/.test(t) && /\bms\.?\b/.test(t);
+                const t = (r.innerText || '').slice(0, 160).toLowerCase();
+                return t.length < 220 && /\btitle\b|\bsalutation\b/.test(t) && /\bmr\.?\b/.test(t) && /\bms\.?\b/.test(t);
               });
             for (const root of titleRoots) {
               const radios = [...root.querySelectorAll('input[type=radio], [role=radio], label, button, span')];
@@ -1331,8 +1383,8 @@ def recover_required_selects(sb) -> dict:
                 return /^mr\.?$/i.test(t);
               });
               if (mr) {
-                try { mr.scrollIntoView({block:'center'}); } catch (e) {}
-                try { mr.click(); clicked.push('title-radio-mr'); } catch (e) {}
+                forceClick(mr);
+                clicked.push('title-radio-mr');
                 // LTIMindtree/LTM: clicking the text node alone may not check the input.
                 const inp = mr.matches && mr.matches('input[type=radio]')
                   ? mr
@@ -1340,15 +1392,65 @@ def recover_required_selects(sb) -> dict:
                     || [...root.querySelectorAll('input[type=radio]')].find(r =>
                          /mr\.?/i.test(((r.value||'') + ' ' + (r.getAttribute('aria-label')||'') + ' ' + (r.id||'')).trim())
                        );
-                if (inp && !inp.checked) {
-                  try { inp.click(); clicked.push('title-radio-input-mr'); } catch (e) {}
-                  try { inp.checked = true; inp.dispatchEvent(new Event('change', {bubbles:true})); inp.dispatchEvent(new Event('input', {bubbles:true})); } catch (e) {}
+                if (inp) {
+                  forceClick(inp);
+                  try {
+                    inp.checked = true;
+                    inp.setAttribute('aria-checked', 'true');
+                    inp.dispatchEvent(new Event('change', {bubbles:true}));
+                    inp.dispatchEvent(new Event('input', {bubbles:true}));
+                    clicked.push('title-radio-input-mr');
+                  } catch (e) {}
                 }
                 const lab = mr.closest && mr.closest('label');
                 if (lab) {
-                  try { lab.click(); clicked.push('title-label-mr'); } catch (e) {}
+                  forceClick(lab);
+                  clicked.push('title-label-mr');
                 }
                 break;
+              }
+            }
+            // Validation wall: "Answer this question to continue" under Title / Phone / Date.
+            for (const err of document.querySelectorAll('[class*="error"], [role=alert], span, p, div')) {
+              const et = (err.innerText || '').trim();
+              if (!/answer this question to continue|choose an option to continue/i.test(et)) continue;
+              const root = err.closest('fieldset, [class*="question"], [class*="Question"], li, section, form, div') || document.body;
+              const ctx = (root.innerText || '').toLowerCase().slice(0, 400);
+              if (/\btitle\b|\bsalutation\b|\bmr\.?\b/.test(ctx)) {
+                const mrEl = [...root.querySelectorAll('input[type=radio], label, button, span, [role=radio]')]
+                  .find(el => /^mr\.?$/i.test(((el.getAttribute('aria-label')||'') + ' ' + (el.innerText||'') + ' ' + (el.value||'')).trim()));
+                if (mrEl) { forceClick(mrEl); clicked.push('validation-title-mr'); }
+              }
+              if (/\bphone\b|phone\s*no|\bmobile\b/.test(ctx)) {
+                const phone = root.querySelector('input[type=tel], input:not([type=hidden]):not([type=radio]):not([type=checkbox])');
+                if (phone && !(phone.value || '').trim()) {
+                  const proto = window.HTMLInputElement.prototype;
+                  const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
+                  const v = '8790251698';
+                  if (setter) setter.call(phone, v); else phone.value = v;
+                  phone.dispatchEvent(new InputEvent('input', {bubbles:true}));
+                  phone.dispatchEvent(new Event('change', {bubbles:true}));
+                  clicked.push('validation-phone');
+                }
+              }
+              if (/^date|available date|\bdate\b/.test(ctx) && !/birth|dob/.test(ctx)) {
+                const dateEl = root.querySelector('input[type=date], input:not([type=hidden]):not([type=radio]):not([type=checkbox])');
+                if (dateEl && !(dateEl.value || '').trim()) {
+                  const proto = window.HTMLInputElement.prototype;
+                  const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
+                  const type = (dateEl.getAttribute('type') || '').toLowerCase();
+                  const v = type === 'date' ? '2026-08-15' : '15/08/2026';
+                  if (setter) setter.call(dateEl, v); else dateEl.value = v;
+                  dateEl.dispatchEvent(new InputEvent('input', {bubbles:true}));
+                  dateEl.dispatchEvent(new Event('change', {bubbles:true}));
+                  clicked.push('validation-date');
+                }
+              }
+              if (/based in|are you based/.test(ctx)) {
+                const yes = [...root.querySelectorAll('input[type=radio], label, button, span')]
+                  .find(el => /\byes\b/i.test(((el.getAttribute('aria-label')||'') + ' ' + (el.innerText||'')).trim())
+                    && !/\bno\b/i.test((el.innerText||'')));
+                if (yes) { forceClick(yes); clicked.push('validation-based-in-yes'); }
               }
             }
             return {clicked, url: location.href};
@@ -2868,6 +2970,25 @@ def main() -> int:
         "ok": False,
     }
 
+    def _flush_report_on_exit() -> None:
+        """Persist counts if spawnSync/SIGTERM kills the runner mid-inventory."""
+        if report.get("finishedAt"):
+            return
+        try:
+            report["finishedAt"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            applied_n = report["counts"]["applied"] + report["counts"]["external"]
+            report["ok"] = applied_n > 0
+            report["date"] = report["finishedAt"][:10]
+            report["exitHint"] = "atexit_flush"
+            OUT.parent.mkdir(parents=True, exist_ok=True)
+            OUT.write_text(json.dumps(report, indent=2))
+        except Exception:
+            pass
+
+    import atexit
+
+    atexit.register(_flush_report_on_exit)
+
     sb_kwargs = dict(
         uc=True,
         headed=True,
@@ -3001,14 +3122,6 @@ def main() -> int:
                 key = job_dedupe_key(href, jk)
                 if key in seen_keys:
                     continue
-                seen_keys.add(key)
-                report["counts"]["seen"] += 1
-                # Persist progress for the notification job even if interrupted.
-                try:
-                    OUT.parent.mkdir(parents=True, exist_ok=True)
-                    OUT.write_text(json.dumps(report, indent=2))
-                except Exception:
-                    pass
 
                 try:
                     sb.uc_open_with_reconnect(href, 4)
@@ -3018,6 +3131,27 @@ def main() -> int:
                     report["rejected"].append({"title": title_t, "error": str(e)[:160]})
                     report["counts"]["rejected"] += 1
                     continue
+
+                # Pagead/rc cards often lack jk= until after navigation. Re-key on
+                # the resolved viewjob URL so PanApps-style repeats do not re-burn
+                # the company-site / CF hop budget (11× same jk on 2026-08-24).
+                try:
+                    resolved = sb.get_current_url() or ""
+                except Exception:
+                    resolved = ""
+                real_key = job_dedupe_key(resolved, "") or key
+                if real_key in seen_keys or key in seen_keys:
+                    print(f"  dedupe_skip key={real_key[:24]}", flush=True)
+                    continue
+                seen_keys.add(key)
+                seen_keys.add(real_key)
+                report["counts"]["seen"] += 1
+                # Persist progress for the notification job even if interrupted.
+                try:
+                    OUT.parent.mkdir(parents=True, exist_ok=True)
+                    OUT.write_text(json.dumps(report, indent=2))
+                except Exception:
+                    pass
 
                 page_title = sb.get_title() or title_t
                 try:
