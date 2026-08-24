@@ -20,7 +20,7 @@ Before each apply, `tools/resume_tailor.py` builds a **JD-tailored** `Rafi_Resum
 
 ## Profile
 SA / Technical Architect / Tech Lead / EM / Principal .NET | Hyd + Remote/WFH
-Current 52 LPA | Expected 65 LPA | Immediate | +91 8790251698 | rafi.success@gmail.com
+Current 52 LPA | Expected 60 LPA | Immediate | +91 8790251698 | [APPLY_EMAIL]
 
 ## Scope / blockers
 - Primary https://in.indeed.com — logged-in session required.
@@ -47,7 +47,7 @@ Hyd/Telangana OR Remote/WFH/India Remote only.
 
 ## Filters
 Prefer .NET/C# evidence. Skip Java/Node/Python-**mandatory**-only, QA/junior, Salesforce/ServiceNow/SAP-primary titles.
-Skip listed max only if clearly under **35 LPA** (forms always 65 expected).
+Skip listed max only if clearly under **35 LPA** (forms always 60 expected).
 Do NOT skip because JD casually mentions Salesforce/Java/data as adjacent tech.
 
 ## Report

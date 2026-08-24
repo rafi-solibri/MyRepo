@@ -806,7 +806,7 @@ async function main() {
               report.referralDrafts.push({
                 company: verdict.company,
                 title: verdict.title,
-                draft: `Hi — I'm applying for ${verdict.title} at ${verdict.company}. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)`,
+                draft: `Hi — I'm applying for ${verdict.title} at ${verdict.company}. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 60 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (${process.env.APPLY_EMAIL || process.env.LINKEDIN_EMAIL || process.env.GOOGLE_EMAIL || ""} / +91 8790251698)`,
               });
             }
           } else if (screeningBlock) {

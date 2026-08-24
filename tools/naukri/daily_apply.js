@@ -1048,7 +1048,7 @@ async function answerNaukriChatbot(page) {
           const q = (root.innerText || "").slice(-400);
           let answer = "15";
           if (/relocat|hyderabad|willing|immediate|join/i.test(q)) answer = "Yes";
-          else if (/ctc|salary|lpa|compensation|expected/i.test(q)) answer = "65";
+          else if (/ctc|salary|lpa|compensation|expected/i.test(q)) answer = "60";
           else if (/current.*ctc|current.*salary/i.test(q)) answer = "52";
           else if (/notice/i.test(q)) answer = "0";
           box.focus();
@@ -1547,7 +1547,7 @@ async function confirmApplied(page, chatHint = null) {
 
 async function tryContactRecruiter(page) {
   const note =
-    "Hi — I'm a Solutions Architect / Tech Lead (.NET, Azure/AWS, microservices) based in Hyderabad, immediate joiner, expected CTC 65 LPA. Open to a 15–20 min screen if this role is a fit. Thanks — Mohammed Abdul Rafi Ahmed";
+    "Hi — I'm a Solutions Architect / Tech Lead (.NET, Azure/AWS, microservices) based in Hyderabad, immediate joiner, expected CTC 60 LPA. Open to a 15–20 min screen if this role is a fit. Thanks — Mohammed Abdul Rafi Ahmed";
   for (const sel of [
     "text=/Contact recruiter|Chat with recruiter|Message recruiter|Send message/i",
     "button:has-text('Chat')",

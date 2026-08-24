@@ -135,7 +135,7 @@ Also OBEY automation-prompts/AUTO_FIX.md for every code-fixable blocker.
 1) bash scripts/preflight-portal-run.sh ${PORTAL}
 ${EXTRA_STEPS}
 2) Execute the daily ${PORTAL} apply job for Mohammed Abdul Rafi Ahmed.
-Use resumes/Rafi_Resume.docx. Hyd/Telangana OR Remote only. Expected CTC 65 LPA.
+Use resumes/Rafi_Resume.docx. Hyd/Telangana OR Remote only. Expected CTC 60 LPA.
 Report submitted/skipped/blocked/rejected. Do not invent applies.
 
 AUTO-FIX / PUSH / MERGE (MANDATORY when code-fixable):

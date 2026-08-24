@@ -17,7 +17,7 @@ function findResume() {
 module.exports = {
   findResume,
   RESUME_CANDIDATES,
-  EXPECTED_CTC_LPA: 65,
+  EXPECTED_CTC_LPA: 60,
   CURRENT_CTC_LPA: 52,
   CHROME_INDEED: process.env.INDEED_CHROME_PROFILE || "/home/ubuntu/chrome-indeed-profile",
   CHROME_INSTAHYRE: process.env.INSTAHYRE_CHROME_PROFILE || "/home/ubuntu/chrome-instahyre-profile",

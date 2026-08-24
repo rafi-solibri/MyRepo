@@ -29,7 +29,7 @@ function findResume() {
 module.exports = {
   findResume,
   RESUME_CANDIDATES,
-  EXPECTED_CTC_LPA: 65,
+  EXPECTED_CTC_LPA: 60,
   CURRENT_CTC_LPA: 52,
   CHROME_HIRIST:
     process.env.HIRIST_CHROME_PROFILE ||

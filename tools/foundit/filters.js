@@ -241,7 +241,7 @@ function ctcOk(job) {
   if (abs == null || abs === 0) return { ok: true, lpa: null };
   const lpa = Number(abs) / 1e5;
   if (Number.isNaN(lpa)) return { ok: true, lpa: null };
-  // Listed max often understates; only skip clearly low bands. Forms still state 65 expected.
+  // Listed max often understates; only skip clearly low bands. Forms still state 60 expected.
   if (lpa < 35) return { ok: false, lpa, reason: `max CTC ${lpa} LPA < 35` };
   return { ok: true, lpa };
 }

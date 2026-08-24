@@ -18,11 +18,11 @@ Owner only solves captchas: every daily run **re-focuses the captcha / ASK_OWNER
 
 ## Profile (use exactly)
 - Location preference: Hyderabad, Telangana, India — especially Madhapur / HITEC City / Knowledge City / Knowledge Park / Gachibowli / Raidurg
-- Phone: +91 8790251698 | Email: rafi.success@gmail.com
+- Phone: +91 8790251698 | Email: [APPLY_EMAIL]
 - LinkedIn: https://linkedin.com/in/rafi-ahmed-mohammed-abdul-151644ba
 - DOB: 16 January 1989 (day=16, month=January/Jan/01, year=1989)
 - Notice: Immediate (0 days)
-- Current CTC: 5200000 (52 LPA) | Expected CTC: 6500000 (65 LPA) — use these numbers on ALL forms
+- Current CTC: 5200000 (52 LPA) | Expected CTC: 6000000 (60 LPA) — use these numbers on ALL forms
 - Experience: ~15 years; .NET Core, microservices, AWS/Azure, Kafka/RabbitMQ, K8s, Angular/React
 - Resume: Rafi_Resume.docx only — **per-JD tailored** before each ATS/Easy Apply upload (`RESUME_TAILOR=1` default via `tools/resume_tailor.py`). Filename stays `Rafi_Resume.docx`; never invent skills/employers.
 - Education: Acharya Nagarjuna University, B.Tech IT — July 2006 to May 2010
@@ -52,7 +52,7 @@ Judge location from the TOP CARD / workplace pills / job location field — neve
 
 ## Apply bias (CRITICAL — volume + never abandon matching jobs)
 - Default to APPLY for Hyd/remote Architect / Tech Lead / EM / Principal / Staff / Director .NET/cloud roles at campus companies.
-- When uncertain between skip and apply → APPLY (then state expected 65 LPA on forms).
+- When uncertain between skip and apply → APPLY (then state expected 60 LPA on forms).
 - **NEVER skip a criteria-matching job without applying.** Auto-fill all fields (including Source / How did you hear, iCIMS Email + I accept + Next). If a field/login/captcha still blocks submit, print `ASK_OWNER` and wait (headed/`HOME_LOCAL`) for the owner to finish — do not mark incomplete and move on.
 - Soft `external_incomplete_or_timeout` must NOT trip per-company attempt caps that skip remaining matching roles.
 - Aim for a solid daily batch across career portals + LinkedIn. Do not invent applies; confirm Application submitted / ATS confirmation.
@@ -84,14 +84,14 @@ Skip ONLY when the TITLE (or clear mandatory JD language) is wrong:
 - Wrong-city TITLE/location pills: non-Hyd and not Remote/WFH
 - Junior / intern / fresher titles
 - JD says Java/Python/Node/Salesforce is **mandatory/required/only** (not a casual mention)
-- Listed max CTC clearly under **35 LPA** (35–55 bands are OK — always state 65 expected)
+- Listed max CTC clearly under **35 LPA** (35–55 bands are OK — always state 60 expected)
 - Company clearly outside the campus tenant list
 
 DO NOT skip because the JD casually mentions Salesforce, SAP, Java, Data Engineer, or other stacks as adjacent teams/tools when the role itself is .NET / architect / lead / EM. Title wins over incidental JD text.
 
 ## Form mechanics
 - Careers phase: **~10 companies in parallel tabs** (default). Within each worker tab, finish one form before opening the next job on that tab; close messaging overlays before Next/Submit. LinkedIn Easy Apply remains one job at a time on its tab.
-- India (+91), CTC 52L current / 65L expected, notice 0
+- India (+91), CTC 52L current / 60L expected, notice 0
 - Confirm Application submitted or ATS confirmation before counting success
 - If LinkedIn login missing, stop and report LinkedIn login required (career-portal-only partial run is OK if some applies already landed)
 

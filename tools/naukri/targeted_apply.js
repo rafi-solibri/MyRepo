@@ -262,7 +262,7 @@ async function main() {
             if (await box.isVisible().catch(() => false)) {
               await box
                 .fill(
-                  "Hi — Solutions Architect / Tech Lead (.NET, Azure/AWS, microservices), Hyderabad, immediate, expected 65 LPA. Open to a 15–20 min screen. — Mohammed Abdul Rafi Ahmed"
+                  "Hi — Solutions Architect / Tech Lead (.NET, Azure/AWS, microservices), Hyderabad, immediate, expected 60 LPA. Open to a 15–20 min screen. — Mohammed Abdul Rafi Ahmed"
                 )
                 .catch(() => {});
               const send = page.locator("button:has-text('Send')").first();

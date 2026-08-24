@@ -15,11 +15,11 @@ Apply to LinkedIn jobs for Mohammed Abdul Rafi Ahmed (Rafi Ahmed) until a solid 
 
 ## Profile (use exactly)
 - Location preference: Hyderabad, Telangana, India
-- Phone: +91 8790251698 | Email: rafi.success@gmail.com
+- Phone: +91 8790251698 | Email: [APPLY_EMAIL]
 - LinkedIn: https://linkedin.com/in/rafi-ahmed-mohammed-abdul-151644ba
 - DOB: 16 January 1989 (day=16, month=January/Jan/01, year=1989)
 - Notice: Immediate (0 days)
-- Current CTC: 5200000 (52 LPA) | Expected CTC: 6500000 (65 LPA) — use these numbers on ALL forms
+- Current CTC: 5200000 (52 LPA) | Expected CTC: 6000000 (60 LPA) — use these numbers on ALL forms
 - Experience: ~15 years; .NET Core, microservices, AWS/Azure, Kafka/RabbitMQ, K8s, Angular/React
 - Resume: Rafi_Resume.docx only
 - Education: Acharya Nagarjuna University, B.Tech IT — July 2006 to May 2010
@@ -39,7 +39,7 @@ Judge location from the TOP CARD / workplace pills only — never the full page 
 
 ## Apply bias (CRITICAL — volume)
 - Default to APPLY for Hyd/remote Architect / Tech Lead / EM / Principal / Staff / Director .NET/cloud roles.
-- When uncertain between skip and apply → APPLY (then state expected 65 LPA on forms).
+- When uncertain between skip and apply → APPLY (then state expected 60 LPA on forms).
 - Aim for **40–50+** qualifying Easy Applies when inventory exists. Do not stop at ~20.
 - Helpers default MAX_APPLY=50 / MAX_EXTERNAL=25 / scan deeper + 14-day window.
 - Do NOT invent applies; confirm Application submitted / ATS confirmation.
@@ -67,14 +67,14 @@ Skip ONLY when the TITLE (or clear mandatory JD language) is wrong:
 - Wrong-city TITLE/location pills: non-Hyd and not Remote/WFH
 - Junior / intern / fresher titles
 - JD says Java/Python/Node/Salesforce is **mandatory/required/only** (not a casual mention)
-- Listed max CTC clearly under **35 LPA** (35–55 bands are OK — always state 65 expected)
+- Listed max CTC clearly under **35 LPA** (35–55 bands are OK — always state 60 expected)
 
 DO NOT skip because the JD casually mentions Salesforce, SAP, Java, Data Engineer, presales, or other stacks as adjacent teams/tools when the role itself is .NET / architect / lead / EM. Title wins over incidental JD text.
 
 ## Form mechanics
 - ONE job at a time; close messaging overlays before Next/Submit
 - If job page empty, wait/reload
-- India (+91), CTC 52L current / 65L expected, notice 0
+- India (+91), CTC 52L current / 60L expected, notice 0
 - Confirm Application submitted or ATS confirmation before counting success
 - If login missing, stop and report LinkedIn login required
 

@@ -796,6 +796,12 @@ def fill_common_questions(sb) -> None:
     _switch_smartapply_frame(sb)
     # JS fill by label/aria/placeholder — more reliable on SmartApply modules.
     try:
+        apply_email = (
+            os.environ.get("APPLY_EMAIL")
+            or os.environ.get("LINKEDIN_EMAIL")
+            or os.environ.get("GOOGLE_EMAIL")
+            or ""
+        ).strip().replace("\\", "\\\\").replace("'", "\\'")
         filled = sb.execute_script(
             """
             const vals = {
@@ -806,12 +812,12 @@ def fill_common_questions(sb) -> None:
               phoneIntl: '+918790251698',
               dob: '16/01/1989',
               title: 'Mr.',
-              email: 'rafi.success@gmail.com',
+              email: '__APPLY_EMAIL__',
               city: 'Hyderabad',
               street: 'Gachibowli Hyderabad',
               postal: '500032',
               current: '52',
-              expected: '65',
+              expected: '60',
               notice: 'Immediate',
               noticeDays: '0',
               experience: '14'
@@ -900,7 +906,7 @@ def fill_common_questions(sb) -> None:
                 return null;
               }
               if (/current.*(ctc|salary|compensation|pay)|ctc.*current|present.*ctc|current.*package|current salary/.test(t)) return '52';
-              if (/expected.*(ctc|salary|compensation|pay)|ctc.*expected|desired.*(salary|compensation|ctc|pay)|expected.*package/.test(t)) return '65';
+              if (/expected.*(ctc|salary|compensation|pay)|ctc.*expected|desired.*(salary|compensation|ctc|pay)|expected.*package/.test(t)) return '60';
               if (/earliest start|start date|available from|joining date|when can you (start|join)/.test(t)
                   && !/salary|ctc/.test(t)) {
                 return '15/08/2026';
@@ -941,7 +947,7 @@ def fill_common_questions(sb) -> None:
               if (/city|current location|prefer.*location|job location|base location/.test(t)) return 'Hyderabad';
               if (/\\?/.test(t) && /(yes|no)/.test(t)) return 'yes';
               if (/what makes you unique|cover letter|why (do )?you|tell us|about yourself|summary|additional information/.test(t)) {
-                return 'Solutions Architect / Tech Lead with 14+ years in .NET, Azure, microservices. Immediate joiner. Hyd/Remote. Expected 65 LPA.';
+                return 'Solutions Architect / Tech Lead with 14+ years in .NET, Azure, microservices. Immediate joiner. Hyd/Remote. Expected 60 LPA.';
               }
               return null;
             };
@@ -972,7 +978,7 @@ def fill_common_questions(sb) -> None:
                     (want === '0' && /\\b0\\b|immediate|0\\s*day|0-15|less than/.test(t)) ||
                     (want === 'Hyderabad' && /hyderabad/.test(t)) ||
                     (want === '52' && /\\b52\\b|50-55|45-55/.test(t)) ||
-                    (want === '65' && /\\b65\\b|60-70|60-65/.test(t)) ||
+                    (want === '60' && /\\b60\\b|55-65|55-60|60-65/.test(t)) ||
                     (want === '14' && /\\b14\\b|12-15|10\\+/.test(t)) ||
                     (want === '10' && /\\b10\\b|8-10|10\\+|8\\+|7\\+|5\\+/.test(t)) ||
                     (want === 'Expert' && /expert|advanced|proficient|high/.test(t)) ||
@@ -1207,7 +1213,7 @@ def fill_common_questions(sb) -> None:
               let w = wantFromText(lab);
               if (!w) {
                 if (/how many|years|experience/.test(lab)) w = '14';
-                else if (/salary|ctc|lpa|package/.test(lab)) w = '65';
+                else if (/salary|ctc|lpa|package/.test(lab)) w = '60';
                 else if (/birth|\\bdob\\b|birth date|birthday/.test(lab)) w = vals.dob;
                 else if (/start|join|avail|available date|date available/.test(lab)
                     || /^date(\\s*\\*)?$/i.test(lab.trim())
@@ -1227,7 +1233,7 @@ def fill_common_questions(sb) -> None:
               }
             }
             return {answered, url: location.href};
-            """
+            """.replace("__APPLY_EMAIL__", apply_email)
         )
         if isinstance(filled, dict):
             print(f"  fill={filled}", flush=True)

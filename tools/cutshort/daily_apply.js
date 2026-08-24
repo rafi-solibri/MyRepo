@@ -306,7 +306,7 @@ I'm applying for the ${role} role at ${company}. ${proof}
 
 ${resumeLine} 15+ years architecture + delivery across Nemetschek/Solibri, UHG, NCR, EPAM (.NET/C#, React, AWS/Azure, microservices).
 
-Hyderabad-based (remote/WFH preferred), immediate joinee. Current CTC 52 LPA → expected 65 LPA.
+Hyderabad-based (remote/WFH preferred), immediate joinee. Current CTC 52 LPA → expected 60 LPA.
 
 Could we do a 15–20 min screening call this week, or please refer me to the hiring manager?
 

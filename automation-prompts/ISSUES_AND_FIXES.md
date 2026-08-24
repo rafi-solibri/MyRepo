@@ -467,7 +467,7 @@ applies use the fix — not left as report-only notes and not deferred to tomorr
 | LinkedIn TITLE_OK too narrow + MAX_APPLY=30 | Broader titles (Software/Cloud/Azure Architect, Lead SWE, Director); MAX_APPLY=50, MAX_EXTERNAL=25, 14-day TPR |
 | LinkedIn PRIORITY_IDS skipped when missing from Easy Apply scan | Always queue `PRIORITY_IDS` in `linkedin_external_apply.py` |
 | LinkedIn Greenhouse Easy Apply stuck (education/LinkedIn URL/checkboxes/no time-cap) | Greenhouse filler + 3-min time-cap in `linkedin_easy_apply.py` |
-| Naukri 0 applies: CTC floor 50 skipped 30–40 LPA .NET Architect/Lead | Floor lowered to **35 LPA**; forms still state 65 expected |
+| Naukri 0 applies: CTC floor 50 skipped 30–40 LPA .NET Architect/Lead | Floor lowered to **35 LPA**; forms still state 60 expected |
 | Naukri `skip_no_dotnet` on Architect/Lead cards without .NET snippet | Architect/Lead/EM/Principal/Staff allowed without card .NET proof |
 | Naukri would false-allow pure AI Architect after archLead waiver | `shouldSkipTitle` skips AI/data titles without .NET on title |
 | Foundit over-skip on seniority / CTC&lt;50 / maxExp | Senior .NET seniority; CTC floor 35; keep Capgemini 6-9 reject |

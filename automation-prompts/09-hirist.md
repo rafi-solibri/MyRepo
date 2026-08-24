@@ -19,7 +19,7 @@ Upload **Rafi_Resume.docx** on every company ATS redirect. Paths after bootstrap
 
 ## Profile
 SA / Tech Lead / EM / Principal–Staff | .NET + Azure/AWS | Hyd + Remote/WFH
-Current 52 LPA | Expected 65 LPA | Immediate | +91 8790251698
+Current 52 LPA | Expected 60 LPA | Immediate | +91 8790251698
 
 ## Scope
 - https://www.hirist.tech/ (+ gladiator.hirist.tech/job search & apply-multiple APIs)
@@ -33,13 +33,13 @@ Current 52 LPA | Expected 65 LPA | Immediate | +91 8790251698
 
 ## Apply paths
 - In-app Hirist apply via `POST /job/apply-multiple` when logged in.
-- Company website / ATS `applyUrl` redirects: COMPLETE with Rafi_Resume.docx + 52→65. Do not skip.
+- Company website / ATS `applyUrl` redirects: COMPLETE with Rafi_Resume.docx + 52→60. Do not skip.
 - Cap stuck external flows ~3–4 min; continue.
 
 ## Filters
 Prefer .NET/C#/ASP.NET + architect/lead/EM. Use `node tools/hirist/filters.js` / `skipReason`.
 HARD skip titles: QA/SDET; Salesforce/ServiceNow/SAP-primary; pure AI/data TITLE without .NET on the TITLE; Java-primary without .NET; non-Hyd non-remote.
-Skip listed max only if clearly under **35 LPA** (forms always 65 expected).
+Skip listed max only if clearly under **35 LPA** (forms always 60 expected).
 
 ## Report
 Write `/opt/cursor/artifacts/hirist-apply-report.json` and `hirist-daily-run.json` with applied / external / rejected / blocked / skipped / seen. No invented applies.

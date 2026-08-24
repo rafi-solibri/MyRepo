@@ -10,7 +10,7 @@ Then run `bash scripts/launch-chrome-cdp.sh foundit`. Use `node tools/foundit/re
 Prefer durable helpers: `node tools/foundit/daily_apply.js` + `tools/foundit/filters.js` (`classifyJob`) — do not reinvent eligibility each run.
 Chrome CDP profile: /home/ubuntu/.config/chrome-foundit (synced from Desktop Default; do not CDP-attach Default).
 
-Daily Foundit job-apply agent for Mohammed Abdul Rafi Ahmed (Solutions Architect / Tech Lead / EM / Principal–Staff, .NET + Azure/AWS, Hyderabad + remote, Expected CTC 65 LPA).
+Daily Foundit job-apply agent for Mohammed Abdul Rafi Ahmed (Solutions Architect / Tech Lead / EM / Principal–Staff, .NET + Azure/AWS, Hyderabad + remote, Expected CTC 60 LPA).
 
 ## Resume (HARD)
 - Master file: **Rafi_Resume.docx** (paths: resumes/, /home/ubuntu/resumes/, /home/ubuntu/Documents/). Never invent a stub. Do not require Rafi_Resume_Architect.docx.
@@ -18,8 +18,8 @@ Daily Foundit job-apply agent for Mohammed Abdul Rafi Ahmed (Solutions Architect
 - Upload the tailored `Rafi_Resume.docx` to Foundit profile (`tools/foundit/update_profile_resume.js`) before Falcon apply, and attach the same file on external ATS forms.
 
 ## Profile
-- Phone +91 8790251698 | Email rafi.success@gmail.com
-- Current CTC 52 LPA | Expected CTC 65 LPA | Notice Immediate | Location Hyderabad / Remote-WFH
+- Phone +91 8790251698 | Email [APPLY_EMAIL]
+- Current CTC 52 LPA | Expected CTC 60 LPA | Notice Immediate | Location Hyderabad / Remote-WFH
 
 ## Scope
 - Primary: https://www.foundit.in
@@ -36,7 +36,7 @@ Daily Foundit job-apply agent for Mohammed Abdul Rafi Ahmed (Solutions Architect
 ## Order
 1. Newest: 1 day → 3 days → expand; Raven public search OK if Akamai blocks UI
 2. Queries: .net architect, .net lead, solutions architect .net, engineering manager .net, principal .net, azure .net architect, software architect .net
-3. Quick Apply / Apply Now when native (after JD-tailored profile resume upload); else complete external ATS with the **same tailored** Rafi_Resume.docx + 52→65 LPA
+3. Quick Apply / Apply Now when native (after JD-tailored profile resume upload); else complete external ATS with the **same tailored** Rafi_Resume.docx + 52→60 LPA
 4. NEVER call canJobApply as dry-run (it submits). Use userJobInfo / applicationStatus for eligibility.
 5. Cap stuck CAPTCHA/login ~3–4 min; continue inventory
 
@@ -49,7 +49,7 @@ Daily Foundit job-apply agent for Mohammed Abdul Rafi Ahmed (Solutions Architect
 - Seniority on title (includes Senior .NET / Lead / Architect / Manager)
 - Skip QA/TPM/presales/Salesforce/ServiceNow/Power Platform/Duck Creek/Java-only TITLE / pure AI without .NET on TITLE
 - Location: Hyd/Secunderabad/remote/WFH only (JD body remote counts when locations empty)
-- CTC: skip listed max only if clearly under **35 LPA**; forms always 65 expected (35–55 bands are OK)
+- CTC: skip listed max only if clearly under **35 LPA**; forms always 60 expected (35–55 bands are OK)
 
 ## Report
 Applied before→after, each role + path (Foundit vs ATS URL), blocked/skipped, top 3 LinkedIn referral drafts. No invented applies.

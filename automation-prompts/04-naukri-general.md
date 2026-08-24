@@ -11,7 +11,7 @@ Then run `bash scripts/launch-chrome-cdp.sh naukri`.
 Chrome CDP profile: /home/ubuntu/.naukri-chrome-profile (synced from Desktop Default; Default rejects DevTools). Port 9222.
 Title skips: use job title / job-panel text only — never full document.body (sidebar "Software & QA" false-skips SA roles). Prefer `shouldSkipTitle` / `shouldSkipTitleFromDetail` from resume_and_filters.js.
 
-Daily Naukri + company-ATS apply for Mohammed Abdul Rafi Ahmed. Hyd + Remote/WFH. Expected CTC 65 LPA. Maximize real applies.
+Daily Naukri + company-ATS apply for Mohammed Abdul Rafi Ahmed. Hyd + Remote/WFH. Expected CTC 60 LPA. Maximize real applies.
 
 ## Resume (HARD)
 - Canonical **Rafi_Resume.docx** at resumes/Rafi_Resume.docx and /home/ubuntu/Documents/Rafi_Resume.docx after bootstrap.
@@ -33,7 +33,7 @@ Goal: recruiters see an updated resume / “Updated today” every morning so th
 6. Hirist “On hirist” login walls: SKIP (do not count as hard blocked). Optional: Desktop login to Hirist + re-seed session later.
 
 ## Profile
-Phone +91 8790251698 | rafi.success@gmail.com | Current 52 LPA | Expected 65 LPA | Immediate
+Phone +91 8790251698 | [APPLY_EMAIL] | Current 52 LPA | Expected 60 LPA | Immediate
 Stack: .NET Core/C#, AWS/Azure, Kafka/RabbitMQ, K8s, React/Angular | 15+ years
 Preferred resume headline (keep / restore if wiped):
 Solutions Architect & Technical Lead - 15+ Yrs - .NET Core, Microservices, AWS&Azure, Kafka&RabbitMQ
@@ -41,7 +41,7 @@ Solutions Architect & Technical Lead - 15+ Yrs - .NET Core, Microservices, AWS&A
 ## Apply bias (CRITICAL — volume)
 - Default to APPLY for Hyd/remote Architect / Tech Lead / EM / Principal / Staff / Director roles.
 - Architect/Lead/EM titles may proceed even if the card snippet does not show “.NET” (JD often buries it). Still skip Coupa/Pega/Salesforce/SAP-primary titles via `shouldSkipTitle`.
-- Skip listed max CTC only if clearly under **35 LPA** (Incedo/Capgemini 30–40 bands that were wrongly hard-skipped should now apply when ≥35; always state 65 expected).
+- Skip listed max CTC only if clearly under **35 LPA** (Incedo/Capgemini 30–40 bands that were wrongly hard-skipped should now apply when ≥35; always state 60 expected).
 - Prefer `node tools/naukri/daily_apply.js` (MAX_APPLIES default 60). Auto early-expand: after freshest age, if applied &lt; `NAUKRI_EARLY_EXPAND_BELOW` (default 3) continue remaining primary ages immediately; if still &lt; `NAUKRI_EXPAND_BELOW` (default 8) expand ages 15/30/60 and run extra .NET/Azure queries. Keep cyber/QA/Salesforce title skips.
 - When uncertain → APPLY. Do not invent applies.
 
@@ -56,7 +56,7 @@ Solutions Architect & Technical Lead - 15+ Yrs - .NET Core, Microservices, AWS&A
 
 ## Apply paths (CRITICAL)
 - Naukri Quick Apply when it submits on Naukri.
-- If "Go to company site" / "On company site" / "Apply on company site" / Workday / Greenhouse / Lever / SmartRecruiters / SuccessFactors / etc.: OPEN and COMPLETE with Rafi_Resume.docx + 52/65/immediate/Hyd. Prefer **Go to company site** when Apply-on is disabled (“Apply attempted”). Log each redirect URL + outcome.
+- If "Go to company site" / "On company site" / "Apply on company site" / Workday / Greenhouse / Lever / SmartRecruiters / SuccessFactors / etc.: OPEN and COMPLETE with Rafi_Resume.docx + 52/60/immediate/Hyd. Prefer **Go to company site** when Apply-on is disabled (“Apply attempted”). Log each redirect URL + outcome.
 - Cap CAPTCHA/login walls ~3–4 min → blocked → continue.
 - After apply, attempt contact recruiter / chat with 15–20 min screen ask.
 

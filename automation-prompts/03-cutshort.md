@@ -14,8 +14,8 @@ Run the daily Cutshort job-search and apply flow for Rafi Ahmed. Maximize volume
 
 Profile:
 - Solutions Architect / Technical Lead | 15+ years | .NET/C#, React, AWS/Azure, microservices
-- Hyderabad + Remote/WFH | Immediate | Current 52 LPA | Expected **65 LPA**
-- Email rafi.success@gmail.com | Phone +91 8790251698
+- Hyderabad + Remote/WFH | Immediate | Current 52 LPA | Expected **60 LPA**
+- Email [APPLY_EMAIL] | Phone +91 8790251698
 - Resume: **Rafi_Resume.docx** (bootstrap paths). Upload on any external ATS.
 
 ## Resume (HARD)
@@ -32,7 +32,7 @@ Use only Rafi_Resume.docx from /workspace/resumes or /home/ubuntu/resumes. Never
 1. Newest find-jobs / matchesfor={seekerId}
 2. Tier 1: Architect / Tech Lead / EM / Principal / Staff / Head Eng with .NET/cloud fit
 3. Tier 2: .NET/C#/Azure senior fullstack-backend / platform lead
-4. Tier 3 stretch if Hyd/remote and listed CTC band can reach ~35+ (still state 65 expected)
+4. Tier 3 stretch if Hyd/remote and listed CTC band can reach ~35+ (still state 60 expected)
 5. Skip ONLY clear wrong fits: QA/SDET/junior/SAP/Workday-Dynamics-primary/pure data TITLE/sales/BD/low YOE/listed max clearly under 35L
 6. Answer ALL questionnaires after EACH apply (not in a careless batch)
 7. Report applied / already / failed / questionnaires filled vs locked-empty
@@ -43,11 +43,11 @@ Use only Rafi_Resume.docx from /workspace/resumes or /home/ubuntu/resumes. Never
 - NEVER set screeningSubmitted:true until loadthread shows non-empty responses
 - Wrong nested question object + screeningSubmitted returns 200 but locks EMPTY answers (400 retry) — treat that as failure
 - Prefer UI leaf option-div clicks with request capture; verify before submit
-- Notice: immediate. Salary band Yes if max>=35 else No (prefer Yes when band can reach ~55+). Free-text expected 65 LPA.
+- Notice: immediate. Salary band Yes if max>=35 else No (prefer Yes when band can reach ~55+). Free-text expected 60 LPA.
 - Location: Hyderabad/remote
 
 ## Apply notes
-Hi {first name}; JD fit + proof + Hyd/immediate/52→65; ask 15–20 min screen or HM referral.
+Hi {first name}; JD fit + proof + Hyd/immediate/52→60; ask 15–20 min screen or HM referral.
 
 ## External ATS
 If Cutshort opens company careers, complete with a **JD-tailored** Rafi_Resume.docx (built by shared `tools/resume_tailor.js` from the canonical resume — never invent skills/employers) then continue.

@@ -221,7 +221,7 @@ module.exports = {
   CARD_CTA_RE,
   SKIP_COMPANY_RE,
   RESUME_CANDIDATES,
-  EXPECTED_CTC_LPA: 65,
+  EXPECTED_CTC_LPA: 60,
   CURRENT_CTC_LPA: 52,
   CHROME_PROFILE: process.env.NAUKRI_CHROME_PROFILE || "/home/ubuntu/.naukri-chrome-profile",
   PROFILE_URL: process.env.NAUKRI_PROFILE_URL || "https://www.naukri.com/mnjuser/profile",

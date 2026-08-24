@@ -5,7 +5,7 @@ Automation: https://cursor.com/automations/8e34696c-90b1-11f1-ba66-0e7d0216e441
 Copy everything inside the block below:
 
 ```text
-Send a status email to rafi.success@gmail.com covering today’s results from ALL job-apply automations.
+Send a status email to [APPLY_EMAIL] covering today’s results from ALL job-apply automations.
 
 Preferred source: HOME-LOCAL Task Scheduler runs (see automation-prompts/HOME_AUTOMATIONS.md).
 For EACH portal, load same-day JSON before composing the mail:
@@ -44,10 +44,10 @@ Optional cloud automation ids (only if home JSON missing and you still have clou
 - Hirist — GHA Daily Apply Portals / Cursor Automation (paste loader from ONE_TIME_LOADERS.md; no fixed id until created)
 
 For each portal: applied, external/company-website completed, rejected, blocked (login/Cloudflare/resume/OTP), skipped highlights, and automation-results/<portal>/latest.json date when home-local.
-Note targets: Expected CTC 65 LPA; Hyd + Remote/WFH; resume file Rafi_Resume.docx (base = Mohammed_Abdul_Rafi_Ahmed_Resume.docx, JD-tailored per apply).
+Note targets: Expected CTC 60 LPA; Hyd + Remote/WFH; resume file Rafi_Resume.docx (base = Mohammed_Abdul_Rafi_Ahmed_Resume.docx, JD-tailored per apply).
 
 Email delivery:
-- Prefer Resend MCP → rafi.success@gmail.com
+- Prefer Resend MCP → [APPLY_EMAIL]
 - From: RESEND_FROM_EMAIL when set to a verified sender; otherwise use the documented fallback `Job Status <onboarding@resend.dev>` and mention the missing secret in the report
 - Subject: Job status — YYYY-MM-DD
 - If Resend MCP unavailable but RESEND_API_KEY is set, use scripts/send-job-status-email.mjs as fallback

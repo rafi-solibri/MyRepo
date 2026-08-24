@@ -579,7 +579,7 @@ def _fill_easy_apply_body(page: Page) -> tuple[str, str]:
             (r"phone|mobile", "8790251698"),
             (r"email", (os.environ.get("APPLY_EMAIL") or os.environ.get("LINKEDIN_EMAIL") or "").strip()),
             (r"current.*(ctc|salary|compensation)", "5200000"),
-            (r"expected.*(ctc|salary|compensation)", "6500000"),
+            (r"expected.*(ctc|salary|compensation)", "6000000"),
             (r"notice", "0"),
             (r"years of experience|total experience", "15"),
             (r"linkedin", "https://linkedin.com/in/rafi-ahmed-mohammed-abdul-151644ba"),

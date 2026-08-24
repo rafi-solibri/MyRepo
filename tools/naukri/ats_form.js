@@ -147,7 +147,7 @@ async function fillCommonAtsQuestions(page) {
     [/how did you hear/i, "Naukri"],
     [/years of experience|total experience/i, "15"],
     [/notice period|available to start|start date/i, "Immediate"],
-    [/expected (ctc|salary|compensation)|desired salary/i, "6500000"],
+    [/expected (ctc|salary|compensation)|desired salary/i, "6000000"],
     [/current (ctc|salary|compensation)|present ctc/i, "5200000"],
     [/willing to relocate/i, "Yes"],
   ];

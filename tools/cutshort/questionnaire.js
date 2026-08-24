@@ -80,10 +80,10 @@ module.exports = {
   questionOptions,
   optionText,
   RESUME_CANDIDATES,
-  EXPECTED_CTC_LPA: 65,
+  EXPECTED_CTC_LPA: 60,
   CURRENT_CTC_LPA: 52,
 };
 
 if (require.main === module) {
-  console.log(JSON.stringify({ resume: findResume(), expectedCtc: 65 }, null, 2));
+  console.log(JSON.stringify({ resume: findResume(), expectedCtc: 60 }, null, 2));
 }

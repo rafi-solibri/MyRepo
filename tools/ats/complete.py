@@ -45,7 +45,7 @@ PROFILE = {
     "country": "India",
     "postal": "500032",
     "current_ctc": "5200000",
-    "expected_ctc": "6500000",
+    "expected_ctc": "6000000",
     "notice": "0",
     "experience_years": "15",
     "school": "Acharya Nagarjuna University",

@@ -21,9 +21,9 @@ PROFILE = {
     "state": "Telangana",
     "country": "India",
     "current_ctc": "5200000",
-    "expected_ctc": "6500000",
+    "expected_ctc": "6000000",
     "current_ctc_lakhs": "52",
-    "expected_ctc_lakhs": "65",
+    "expected_ctc_lakhs": "60",
     "notice": "0",
     "experience_years": "15",
 }

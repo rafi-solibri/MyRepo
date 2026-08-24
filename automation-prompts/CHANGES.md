@@ -13,7 +13,7 @@
 
 | Topic | Before (inconsistent) | After |
 | --- | --- | --- |
-| Expected CTC | 60 LPA on LinkedIn/Foundit/General; 65 on Cutshort | **65 LPA everywhere** |
+| Expected CTC | 60 LPA on LinkedIn/Foundit/General; 65 on Cutshort | **60 LPA everywhere** (was briefly 65; restored to **60 LPA** 2026-08-24) |
 | Current CTC | 52 LPA where set | **52 LPA** (unchanged) |
 | Location | Mostly Hyd + remote | **Hard filter** Hyd / Telangana **or** Remote/WFH |
 | Apply path | LinkedIn/Foundit often **skipped** non–Easy/Quick Apply | **Must complete company website / ATS** redirects |
@@ -22,12 +22,16 @@
 
 ## Per automation
 
-1. **LinkedIn** — Removed “skip external Apply”; expected CTC 60→65; volume + interview follow-up strengthened.
-2. **Foundit** — External Workday/LinkedIn/company sites are now **complete**, not skip; CTC 65.
-3. **Cutshort** — Locked expected CTC to **65** (was ~65); added external ATS completion; Hyd/remote hard filter.
+1. **LinkedIn** — Removed “skip external Apply”; expected CTC aligned to **60 LPA**; volume + interview follow-up strengthened.
+2. **Foundit** — External Workday/LinkedIn/company sites are now **complete**, not skip; CTC **60**.
+3. **Cutshort** — Expected CTC **60 LPA**; external ATS completion; Hyd/remote hard filter.
 4. **General** — Rewritten as **Naukri-first + company ATS** (was vague resume-only / no submits). This addresses Naukri “apply on company website” stopping.
 5. **Instahyre / Indeed** — Full prompts aligned to same profile, CTC, location, and external-apply rules (prior prompts not readable from expired runs).
-6. **Notification 11 AM** — Lists cloud apply automations + **Indeed home-local** results via `fetch-indeed-home-result.sh` (applied/rejected/blocked/skipped) + external-apply counts + 65 LPA note.
+6. **Notification 11 AM** — Lists cloud apply automations + **Indeed home-local** results via `fetch-indeed-home-result.sh` (applied/rejected/blocked/skipped) + external-apply counts + 60 LPA note.
+
+## 2026-08-24
+
+- Expected CTC **65 → 60 LPA** across all daily portal tools + automation prompts (forms, Easy Apply profiles, ATS fillers, referral blurbs).
 
 ## 2026-08-10 blocker pass
 

@@ -88,12 +88,12 @@ except Exception as _e:
 
 PROFILE = {
     "phone": "8790251698",
-    "email": "rafi.success@gmail.com",
+    "email": (os.environ.get("APPLY_EMAIL") or os.environ.get("LINKEDIN_EMAIL") or os.environ.get("GOOGLE_EMAIL") or "").strip(),
     "linkedin": "https://linkedin.com/in/rafi-ahmed-mohammed-abdul-151644ba",
     "current_ctc": "5200000",
-    "expected_ctc": "6500000",
+    "expected_ctc": "6000000",
     "current_ctc_lakhs": "52",
-    "expected_ctc_lakhs": "65",
+    "expected_ctc_lakhs": "60",
     "notice": "0",
     "experience_years": "15",
     "engineers_managed": "8",
@@ -841,7 +841,7 @@ def fill_inputs(page: Page, deadline: float | None = None) -> None:
                                 )
                     continue
                 # Email select → profile email
-                if any("rafi.success@gmail.com" in o.lower() for o in opts):
+                if PROFILE["email"] and any(PROFILE["email"].lower() in o.lower() for o in opts):
                     if not cur or re.search(r"select", cur, re.I):
                         sel.select_option(label=re.compile(r"rafi\.success@gmail\.com", re.I))
                     continue

@@ -13,7 +13,7 @@ Alternatively, paste each file’s full fenced `text` block into the matching au
 | Rule | Value |
 | --- | --- |
 | Resume | **`resumes/Rafi_Resume.docx`** (= `Mohammed_Abdul_Rafi_Ahmed_Resume.docx`; JD-tailored per apply) |
-| Expected CTC | **65 LPA** (forms always) |
+| Expected CTC | **60 LPA** (forms always) |
 | Current CTC | **52 LPA** |
 | Listed max CTC skip | Only if clearly under **35 LPA** |
 | Locations | Hyderabad / Telangana **or** Remote / WFH |

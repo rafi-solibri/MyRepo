@@ -123,7 +123,7 @@ assert.strictEqual(
     maximumSalary: { absoluteValue: 4000000 },
   }).pass,
   true,
-  "listed max 40 LPA should pass (forms still state 65 expected)"
+  "listed max 40 LPA should pass (forms still state 60 expected)"
 );
 
 assert.strictEqual(
