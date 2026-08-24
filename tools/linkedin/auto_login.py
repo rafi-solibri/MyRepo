@@ -59,8 +59,9 @@ PASSWORD_ENV_KEYS = (
     "NAUKRI_ATS_PASSWORD",
 )
 WRONG_PASSWORD_RE = re.compile(
-    r"that.?s not the right password|wrong password|incorrect password|"
-    r"couldn.?t sign you in|enter a valid password",
+    r"that.?s not the right password|wrong email or password|wrong password|"
+    r"incorrect password|couldn.?t sign you in|enter a valid password|"
+    r"email or password (is|are) incorrect",
     re.I,
 )
 

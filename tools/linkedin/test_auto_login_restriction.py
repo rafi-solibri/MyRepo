@@ -40,6 +40,7 @@ def test_parse_missing_returns_none():
 def test_wrong_password_text_portal_and_google():
     assert _mod.wrong_password_text("That’s not the right password.")
     assert _mod.wrong_password_text("That's not the right password.")
+    assert _mod.wrong_password_text("Wrong email or password.")
     assert _mod.wrong_password_text(
         'Wrong password. Try again or click "Try another way" for more options.'
     )
