@@ -36,14 +36,34 @@ EMAIL = (
     os.environ.get("LINKEDIN_EMAIL")
     or os.environ.get("LINKEDIN_USER")
     or os.environ.get("LINKEDIN_USERNAME")
+    or os.environ.get("GOOGLE_EMAIL")
     or ""
 ).strip()
 PASSWORD = (os.environ.get("LINKEDIN_PASSWORD") or "").strip()
 DEFAULT_EMAIL = "rafi.success@gmail.com"
 TIMEOUT_S = int(os.environ.get("LINKEDIN_AUTO_LOGIN_TIMEOUT_S", "120"))
+# Each method (GSI / each password candidate) gets its own wait — a shared
+# deadline made password-after-SSO look like a generic timeout.
+METHOD_TIMEOUT_S = int(os.environ.get("LINKEDIN_AUTO_LOGIN_METHOD_TIMEOUT_S", "90"))  # pragma: allowlist secret
 # Wait out short temporary restrictions (cron can land mid-ban).
 RESTRICTION_WAIT_MAX_S = int(os.environ.get("LINKEDIN_RESTRICTION_WAIT_MAX_S", "7200"))
 RESTRICTION_BUFFER_S = int(os.environ.get("LINKEDIN_RESTRICTION_BUFFER_S", "90"))
+
+# Cookie names can be present while Google/portal sessions are dead.
+PASSWORD_ENV_KEYS = (
+    "LINKEDIN_PASSWORD",  # pragma: allowlist secret
+    "GOOGLE_PASSWORD",
+    "NAUKRI_WORKDAY_PASSWORD",
+    "ATS_PASSWORD",
+    "WORKDAY_PASSWORD",
+    "NAUKRI_ATS_PASSWORD",
+)
+WRONG_PASSWORD_RE = re.compile(
+    r"that.?s not the right password|wrong email or password|wrong password|"
+    r"incorrect password|couldn.?t sign you in|enter a valid password|"
+    r"email or password (is|are) incorrect",
+    re.I,
+)
 
 _TZ_ALIASES = {
     "PDT": "America/Los_Angeles",
@@ -59,6 +79,32 @@ _TZ_ALIASES = {
     "IST": "Asia/Kolkata",
 }
 
+
+
+def wrong_password_text(text: str) -> bool:
+    """True when the portal or Google shows an explicit wrong-password error."""
+    return bool(text and WRONG_PASSWORD_RE.search(text))
+
+
+def password_candidates(env: dict | None = None) -> list[str]:
+    """Unique non-empty passwords from owner secret aliases (values never logged)."""
+    src = env if env is not None else os.environ
+    seen: set[str] = set()
+    out: list[str] = []
+    for key in PASSWORD_ENV_KEYS:
+        val = (src.get(key) or "").strip()
+        if val and val not in seen:
+            seen.add(val)
+            out.append(val)
+    return out
+
+
+def is_google_identifier_url(url: str) -> bool:
+    """GSI popup fell through to email/password sign-in (stale Google cookies)."""
+    u = (url or "").lower()
+    return "accounts.google.com" in u and bool(
+        re.search(r"/signin/identifier|/challenge/pwd|/signin/challenge", u)
+    )
 
 
 def _art() -> Path:
@@ -256,13 +302,99 @@ def _pick_linkedin_page(ctx):
 
 
 def _has_google_session(ctx) -> bool:
-    """True when CDP profile has a usable Google login cookie for GSI."""
+    """True when CDP profile has Google login cookie *names* (may still be stale)."""
     try:
         cookies = ctx.cookies(["https://accounts.google.com", "https://www.google.com"])
         names = {c.get("name") for c in cookies}
         return bool(names & {"__Secure-1PSID", "__Secure-3PSID", "SID"})
     except Exception:
         return False
+
+
+def _complete_google_password_login(popup, email: str, password: str) -> str:
+    """Fill Google identifier / password form. Returns ok|wrong_password|no_form|need_human."""
+    if popup is None or not email or not password:
+        return "no_form"
+    try:
+        url = popup.url or ""
+    except Exception:
+        return "no_form"
+    if not is_google_identifier_url(url) and "accounts.google.com" not in url.lower():
+        return "no_form"
+
+    email_box = None
+    for sel in ("input[type='email']", "input[name='identifier']", "#identifierId"):
+        loc = popup.locator(sel)
+        try:
+            n = min(loc.count(), 5)
+        except Exception:
+            n = 0
+        for i in range(n):
+            try:
+                el = loc.nth(i)
+                if el.is_visible():
+                    email_box = el
+                    break
+            except Exception:
+                continue
+        if email_box is not None:
+            break
+    if email_box is not None:
+        try:
+            email_box.click(timeout=3000)
+            email_box.fill("")
+            email_box.fill(email)
+            nxt = popup.get_by_role("button", name=re.compile(r"^Next$", re.I))
+            if nxt.count():
+                nxt.first.click(timeout=5000)
+            else:
+                email_box.press("Enter")
+            time.sleep(2.5)
+        except Exception:
+            return "no_form"
+
+    pass_box = None
+    for sel in ("input[type='password']", "input[name='Passwd']", "input[name='password']"):
+        loc = popup.locator(sel)
+        try:
+            n = min(loc.count(), 5)
+        except Exception:
+            n = 0
+        for i in range(n):
+            try:
+                el = loc.nth(i)
+                if el.is_visible():
+                    pass_box = el
+                    break
+            except Exception:
+                continue
+        if pass_box is not None:
+            break
+    if pass_box is None:
+        body = _page_body(popup)
+        if wrong_password_text(body):
+            return "wrong_password"
+        if re.search(r"verify|2-step|unusual activity|captcha", body, re.I):
+            return "need_human"
+        return "no_form"
+    try:
+        pass_box.click(timeout=3000)
+        pass_box.fill("")
+        pass_box.press_sequentially(password, delay=20)
+        nxt = popup.get_by_role("button", name=re.compile(r"^Next$", re.I))
+        if nxt.count():
+            nxt.first.click(timeout=5000)
+        else:
+            pass_box.press("Enter")
+        time.sleep(2.5)
+    except Exception:
+        return "no_form"
+    body = _page_body(popup)
+    if wrong_password_text(body):
+        return "wrong_password"
+    if re.search(r"verify|2-step|unusual activity|captcha", body, re.I):
+        return "need_human"
+    return "ok"
 
 
 def _reveal_full_login_form(page) -> None:
@@ -408,6 +540,26 @@ def _click_continue_google(ctx, page) -> bool:
             if chosen:
                 break
         if not chosen:
+            # Stale Google cookies → identifier/password form instead of chooser.
+            if is_google_identifier_url(popup.url or "") or re.search(
+                r"Email or phone|Enter your password", _page_body(popup), re.I
+            ):
+                email = EMAIL or DEFAULT_EMAIL
+                ident_result = "no_form"
+                for pw in password_candidates():
+                    ident_result = _complete_google_password_login(popup, email, pw)
+                    if ident_result in ("ok", "need_human"):
+                        break
+                if ident_result == "wrong_password":
+                    try:
+                        popup.screenshot(
+                            path=str(_art() / "linkedin-auto-login-wrong-password.png"),
+                            timeout=8000,
+                        )
+                    except Exception:
+                        pass
+                if ident_result != "no_form":
+                    return True
             # Single-account auto-select may already proceed; wait.
             time.sleep(2)
         for name in ("Continue", "Allow", "Next", "Confirm"):
@@ -536,6 +688,7 @@ def _wait_signed_in(ctx, page, deadline: float, via: str, out: dict) -> int | No
 
     Exit 7 = temporary account restriction (may be waitable).
     Exit 6 = interactive CAPTCHA/checkpoint.
+    Exit 8 = explicit wrong-password error (try next candidate).
     """
     while time.time() < deadline:
         page = _pick_linkedin_page(ctx)
@@ -551,6 +704,17 @@ def _wait_signed_in(ctx, page, deadline: float, via: str, out: dict) -> int | No
             except Exception:
                 pass
             return 7
+        body = _page_body(page)
+        if wrong_password_text(body) and not _cookies_has_li_at(ctx):
+            out["attempts"].append({"step": via, "wrong_password": True})
+            try:
+                page.screenshot(
+                    path=str(_art() / "linkedin-auto-login-wrong-password.png"),
+                    timeout=8000,
+                )
+            except Exception:
+                pass
+            return 8
         if _on_captcha(page) and not _cookies_has_li_at(ctx):
             # Avoid mislabeling temporary restriction pages as CAPTCHA.
             if _temp_restriction_info(page):
@@ -572,8 +736,9 @@ def main() -> int:
     out: dict = {"ok": False, "attempts": []}
     deadline = time.time() + TIMEOUT_S
     email = EMAIL or DEFAULT_EMAIL
+    pw_list = password_candidates()
     # Cloud datacenter IPs often CAPTCHA Google SSO; prefer password when set.
-    prefer_password = bool(PASSWORD) and os.environ.get(
+    prefer_password = bool(pw_list) and os.environ.get(
         "LINKEDIN_PREFER_PASSWORD", "1"
     ).strip() not in ("0", "false", "no")
 
@@ -608,21 +773,37 @@ def main() -> int:
         out["google_session"] = google_session
 
         def try_password() -> int | None:
-            if not PASSWORD:
+            if not pw_list:
                 out["attempts"].append(
                     {
                         "step": "password",
                         "skipped": True,
-                        "hint": "Set Cursor secrets LINKEDIN_EMAIL + LINKEDIN_PASSWORD for password fallback",
+                        "hint": "Set Cursor secrets LINKEDIN_EMAIL + LINKEDIN_PASSWORD for password fallback",  # pragma: allowlist secret
                     }
                 )
                 return None
-            nonlocal_page = _goto_login_clean(ctx, _pick_linkedin_page(ctx))
-            out["attempts"].append({"step": "password", "email": email[:3] + "***"})
-            if not _password_login(nonlocal_page, email, PASSWORD):
-                out["attempts"].append({"step": "password", "submitted": False})
-                return None
-            return _wait_signed_in(ctx, nonlocal_page, deadline, "password", out)
+            last_rc = None
+            for idx, pw in enumerate(pw_list):
+                nonlocal_page = _goto_login_clean(ctx, _pick_linkedin_page(ctx))  # pragma: allowlist secret
+                out["attempts"].append(
+                    {
+                        "step": "password",
+                        "email": email[:3] + "***",
+                        "candidate": idx + 1,
+                        "n_candidates": len(pw_list),
+                    }
+                )
+                if not _password_login(nonlocal_page, email, pw):
+                    out["attempts"].append({"step": "password", "submitted": False, "candidate": idx + 1})
+                    continue
+                method_deadline = time.time() + METHOD_TIMEOUT_S
+                last_rc = _wait_signed_in(ctx, nonlocal_page, method_deadline, "password", out)
+                if last_rc == 0:
+                    return 0
+                if last_rc in (6, 7):
+                    return last_rc
+                # 8 = wrong password — try the next unique secret
+            return last_rc
 
         def try_google() -> int | None:
             nonlocal_page = _goto_login_clean(ctx, _pick_linkedin_page(ctx))
@@ -631,7 +812,8 @@ def main() -> int:
                 out["attempts"].append({"step": "google_sso", "clicked": False})
                 return None
             out["attempts"].append({"step": "google_sso", "clicked": True})
-            return _wait_signed_in(ctx, nonlocal_page, deadline, "google_sso", out)
+            method_deadline = time.time() + METHOD_TIMEOUT_S
+            return _wait_signed_in(ctx, nonlocal_page, method_deadline, "google_sso", out)
 
         # Prefer Google SSO when the CDP profile already has Google cookies.
         # Password-first often burns a checkpoint before GSI gets a clean shot;
@@ -663,6 +845,9 @@ def main() -> int:
             if rc == 6:
                 captcha_seen = True
                 # Do not hard-stop — try the other method (password after SSO CAPTCHA).
+                continue
+            if rc == 8:
+                out["wrong_password"] = True
                 continue
 
         # Temporary restriction: wait until lift (within budget) then retry once.
@@ -733,8 +918,19 @@ def main() -> int:
             url=page.url,
             has_li_at=_cookies_has_li_at(ctx),
             google_session=google_session,
-            hint="CAPTCHA/checkpoint or Google SSO failed; set Cursor secret LINKEDIN_PASSWORD and re-run",
+            hint="CAPTCHA/checkpoint or Google SSO failed; set Cursor secret LINKEDIN_PASSWORD and re-run",  # pragma: allowlist secret
         )
+        wrong_pw = bool(out.get("wrong_password")) or any(
+            isinstance(a, dict) and a.get("wrong_password") for a in out.get("attempts") or []
+        )
+        if wrong_pw:
+            out["reason"] = "wrong_password"
+            out["password_candidates"] = len(pw_list)
+            out["hint"] = (
+                "Portal/Google rejected the configured password secret(s). "
+                "Update Cursor secret LINKEDIN_PASSWORD (and optionally GOOGLE_PASSWORD) "  # pragma: allowlist secret
+                "or run: bash scripts/home-headed-login.sh linkedin"  # pragma: allowlist secret
+            )
         print(json.dumps(out))
         return 5
 
