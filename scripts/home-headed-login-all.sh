@@ -27,9 +27,10 @@ open_tab "https://www.foundit.in/profile"
 open_tab "https://cutshort.io/profile/candidate-dashboard"
 open_tab "https://www.instahyre.com/candidate/opportunities/"
 open_tab "https://www.indeed.com/"
+open_tab "https://www.hirist.tech/login"
 
 echo
-echo "Sign in where needed (LinkedIn / Naukri / Foundit / Cutshort / Instahyre / Indeed)."
+echo "Sign in where needed (LinkedIn / Naukri / Foundit / Cutshort / Instahyre / Indeed / Hirist)."
 echo "Leave Chrome open. Waiting up to 20 minutes for LinkedIn li_at (strongest signal)…"
 export NODE_PATH="$ROOT/tools/node_modules${NODE_PATH:+:$NODE_PATH}"
 set +e
@@ -42,7 +43,7 @@ echo "Quick portal cookie/live status:"
 node -e "
 const {hasAuth, PROFILES, useSystemChromeProfile}=require('./tools/chrome_session');
 console.log({system: useSystemChromeProfile(), profile: PROFILES.linkedin});
-for (const p of ['linkedin','naukri','foundit','cutshort','instahyre','indeed']) {
+for (const p of ['linkedin','naukri','foundit','cutshort','instahyre','indeed','hirist']) {
   console.log(p, hasAuth(p) ? 'cookie-name-ok' : 'cookie-name-missing-or-locked');
 }
 "

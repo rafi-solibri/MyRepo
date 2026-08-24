@@ -14,6 +14,7 @@ bash scripts/open-portal-login-tabs.sh
 bash scripts/home-headed-login.sh linkedin
 bash scripts/home-headed-login.sh cutshort
 bash scripts/home-headed-login.sh indeed
+bash scripts/home-headed-login.sh hirist
 # Optional: foundit naukri instahyre if verify fails
 ```
 

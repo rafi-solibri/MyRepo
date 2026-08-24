@@ -126,6 +126,7 @@ declare -A PORTALS=(
   [cutshort]="${CUTSHORT_CHROME_PROFILE:-/home/ubuntu/chrome-cutshort-profile}"
   [instahyre]="${INSTAHYRE_CHROME_PROFILE:-/home/ubuntu/chrome-instahyre-profile}"
   [indeed]="${INDEED_CHROME_PROFILE:-/home/ubuntu/chrome-indeed-profile}"
+  [hirist]="${HIRIST_CHROME_PROFILE:-/home/ubuntu/chrome-hirist-profile}"
   [linkedin_alt]="${LINKEDIN_CHROME_PROFILE_ALT:-/home/ubuntu/chrome-linkedin-profile}"
 )
 
@@ -136,10 +137,11 @@ declare -A NEED=(
   [cutshort]="cutshort_authentication"
   [instahyre]="sessionid"
   [indeed]="__Secure-PassportAuthProxy-BearerToken CTK"
+  [hirist]="token"
   [linkedin_alt]="li_at"
 )
 
-for portal in linkedin naukri foundit cutshort instahyre indeed linkedin_alt; do
+for portal in linkedin naukri foundit cutshort instahyre indeed hirist linkedin_alt; do
   dest="${PORTALS[$portal]}"
   seed_dir="$SEED/cdp/$portal"
   [[ -d "$seed_dir/Default" ]] || seed_dir="$SEED/source"

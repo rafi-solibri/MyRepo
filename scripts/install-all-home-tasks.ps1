@@ -58,7 +58,8 @@ $Jobs = @(
   @{ Name = "HomeDaily-Naukri";     Portal = "naukri";    Offset = 3 },
   @{ Name = "HomeDaily-Instahyre";  Portal = "instahyre"; Offset = 4 },
   @{ Name = "HomeDaily-Indeed";     Portal = "indeed";    Offset = 5 },
-  @{ Name = "HomeDaily-HitechCity"; Portal = "hitechcity"; Offset = 6 }
+  @{ Name = "HomeDaily-Hirist";     Portal = "hirist";    Offset = 6 },
+  @{ Name = "HomeDaily-HitechCity"; Portal = "hitechcity"; Offset = 7 }
 )
 
 $PortalScript = Join-Path $Root "scripts\portal-home-daily.sh"

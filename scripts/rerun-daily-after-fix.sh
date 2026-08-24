@@ -31,8 +31,8 @@ PORTAL_ARG=""
 TITLE_ARG=""
 FILES_ARGS=()
 
-APPLY_PORTALS=(linkedin foundit cutshort naukri instahyre indeed hitechcity)
-ALL_JOBS=(linkedin foundit cutshort naukri instahyre indeed hitechcity notification hotels)
+APPLY_PORTALS=(linkedin foundit cutshort naukri instahyre indeed hirist hitechcity)
+ALL_JOBS=(linkedin foundit cutshort naukri instahyre indeed hirist hitechcity notification hotels)
 
 usage() {
   cat <<'EOF'
@@ -93,6 +93,7 @@ portals_from_title() {
     fix\(naukri\)*|*\(naukri\)*|fix/naukri*|cursor/naukri-*) echo naukri ;;
     fix\(instahyre\)*|*\(instahyre\)*|fix/instahyre*|cursor/instahyre-*) echo instahyre ;;
     fix\(indeed\)*|*\(indeed\)*|fix/indeed*|cursor/indeed-*) echo indeed ;;
+    fix\(hirist\)*|*\(hirist\)*|fix/hirist*|cursor/hirist-*) echo hirist ;;
     fix\(hitechcity\)*|fix\(hitech-city\)*|*\(hitechcity\)*|*\(hitech-city\)*|cursor/hitechcity-*|cursor/hitech-city-*) echo hitechcity ;;
     fix\(notification\)*|*\(notification\)*|cursor/notification-*) echo notification ;;
     fix\(hotels\)*|fix\(hotel\)*|*\(hotels\)*|cursor/hotels-*) echo hotels ;;
@@ -122,6 +123,7 @@ portals_from_files() {
       tools/naukri/*|automation-prompts/issues/naukri.md) seen[naukri]=1 ;;
       tools/instahyre/*|automation-prompts/issues/instahyre.md) seen[instahyre]=1 ;;
       tools/indeed/*|automation-prompts/issues/indeed.md) seen[indeed]=1 ;;
+      tools/hirist/*|automation-prompts/issues/hirist.md) seen[hirist]=1 ;;
       tools/hitechcity/*|automation-prompts/issues/hitechcity.md) seen[hitechcity]=1 ;;
       scripts/send-job-status-email.mjs|scripts/fetch-home-result.sh|scripts/fetch-indeed-home-result.sh|scripts/notification-home-daily.sh|automation-prompts/issues/notification.md)
         seen[notification]=1
@@ -172,6 +174,7 @@ automation_id() {
     naukri) echo 003b88eb-909a-11f1-ba66-0e7d0216e441 ;;
     instahyre) echo 1d0ea682-9093-11f1-ba66-0e7d0216e441 ;;
     indeed) echo 91b09fd7-9093-11f1-ba66-0e7d0216e441 ;;
+    hirist) echo "" ;;
     notification) echo 8e34696c-90b1-11f1-ba66-0e7d0216e441 ;;
     hitechcity) echo b65968f7-953d-11f1-ba66-0e7d0216e441 ;;
     hotels) echo "" ;;
@@ -186,6 +189,7 @@ job_label() {
     naukri) echo "Naukri Daily" ;;
     instahyre) echo "Instahyre Daily" ;;
     indeed) echo "Indeed Daily" ;;
+    hirist) echo "Hirist Daily" ;;
     notification) echo "Notification Job" ;;
     hitechcity) echo "Hitech City / Knowledge City Daily" ;;
     hotels) echo "Hotel Price Tracker" ;;
@@ -203,6 +207,7 @@ prompt_file_for() {
     indeed) echo "automation-prompts/06-indeed.md" ;;
     notification) echo "automation-prompts/07-notification.md" ;;
     hitechcity) echo "automation-prompts/08-hitech-city.md" ;;
+    hirist) echo "automation-prompts/09-hirist.md" ;;
     hotels) echo "tools/hotels/AUTOMATION.md" ;;
   esac
 }
@@ -233,7 +238,7 @@ agent_prompt_for() {
     hitechcity)
       extra="Run bash scripts/preflight-portal-run.sh hitechcity then bash scripts/launch-chrome-cdp.sh hitechcity. Set HITECHCITY_CAREERS_ONLY=1 and run python3 tools/hitechcity/daily_apply.py so company career portals apply first in parallel (HITECHCITY_PARALLEL_TABS=10 default; do not wait on LinkedIn CAPTCHA). Success = confirmation text only."
       ;;
-    foundit|cutshort|instahyre)
+    foundit|cutshort|instahyre|hirist)
       extra="Run bash scripts/preflight-portal-run.sh $portal first."
       ;;
     naukri)
@@ -495,7 +500,7 @@ exec_portal_job() {
       rc=$((rc | $?))
       set -e
       ;;
-    foundit|cutshort|instahyre)
+    foundit|cutshort|instahyre|hirist)
       bash "$ROOT/scripts/preflight-portal-run.sh" "$portal"
       bash "$ROOT/scripts/launch-chrome-cdp.sh" "$portal" || true
       set +e

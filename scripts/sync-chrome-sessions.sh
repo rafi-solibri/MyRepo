@@ -60,7 +60,7 @@ fi
 
 # Portal CDP profiles (must stay non-default for --remote-debugging-port).
 # Keep cookie names in sync with tools/chrome_session.js.
-PORTALS=(linkedin naukri foundit cutshort instahyre indeed linkedin_alt)
+PORTALS=(linkedin naukri foundit cutshort instahyre indeed hirist linkedin_alt)
 DESTS=(
   "${LINKEDIN_CHROME_PROFILE:-$(node tools/chrome_session.js path linkedin)}"
   "${NAUKRI_CHROME_PROFILE:-$(node tools/chrome_session.js path naukri)}"

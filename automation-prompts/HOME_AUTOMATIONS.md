@@ -21,7 +21,8 @@ Every run must **auto-fix → push a ready PR → merge → same-day re-run** (`
 | HomeDaily-Naukri | 18:00 | `portal-home-daily.sh naukri` |
 | HomeDaily-Instahyre | 18:20 | `portal-home-daily.sh instahyre` |
 | HomeDaily-Indeed | 18:40 | `portal-home-daily.sh indeed` (**preferred Indeed path** — residential IP) |
-| HomeDaily-HitechCity | 19:00 | `portal-home-daily.sh hitechcity` |
+| HomeDaily-Hirist | 19:00 | `portal-home-daily.sh hirist` |
+| HomeDaily-HitechCity | 19:20 | `portal-home-daily.sh hitechcity` |
 | HomeDaily-Notification | 19:30 | `notification-home-daily.sh` |
 
 Cloud morning applies are launched by GitHub Actions **Daily Apply Portals**

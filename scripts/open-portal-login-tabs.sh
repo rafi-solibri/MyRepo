@@ -22,6 +22,7 @@ URLS=(
   "https://cutshort.io/profile"
   "https://www.instahyre.com/candidate/opportunities/"
   "https://www.indeed.com/"
+  "https://www.hirist.tech/login"
   "file:///workspace/scripts/portal-login-checklist.html"
 )
 

@@ -1,5 +1,14 @@
 # What changed vs today’s live prompts
 
+## 2026-08-24 — Hirist Daily portal
+
+| Area | Change |
+| --- | --- |
+| New portal | `tools/hirist/` daily runner (gladiator search + apply-multiple) + `09-hirist.md` |
+| Launcher | Hirist added to `scripts/launch-daily-portals.sh` (GHA 9 AM IST) |
+| Home | HomeDaily-Hirist task + fetch/publish/notification wiring |
+| Owner | Paste ONE_TIME_LOADERS Hirist loader into a new Cursor Automation; `home-headed-login.sh hirist` once |
+
 ## Shared corrections (all apply agents)
 
 | Topic | Before (inconsistent) | After |

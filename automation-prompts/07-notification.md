@@ -17,6 +17,7 @@ Cloud automations to include:
 - Naukri Daily 9 AM (003b88eb-909a-11f1-ba66-0e7d0216e441)
 - Instahyre Daily 9 AM (1d0ea682-9093-11f1-ba66-0e7d0216e441)
 - Hitech City / Knowledge City Daily (b65968f7-953d-11f1-ba66-0e7d0216e441) — campus career portals + LinkedIn referrals; read `/opt/cursor/artifacts/hitechcity-daily.json` / agent run when available
+- Hirist Daily 9 AM — create via ONE_TIME_LOADERS.md loader; also launched by GHA Daily Apply Portals
 
   bash scripts/fetch-home-result.sh linkedin --today
   bash scripts/fetch-home-result.sh foundit --today
@@ -24,6 +25,7 @@ Cloud automations to include:
   bash scripts/fetch-home-result.sh naukri --today
   bash scripts/fetch-home-result.sh instahyre --today
   bash scripts/fetch-home-result.sh indeed --today
+  bash scripts/fetch-home-result.sh hirist --today
 
 Legacy Indeed helper still works: `bash scripts/fetch-indeed-home-result.sh --today`
 
@@ -39,6 +41,7 @@ Optional cloud automation ids (only if home JSON missing and you still have clou
 - Naukri 003b88eb-909a-11f1-ba66-0e7d0216e441
 - Instahyre 1d0ea682-9093-11f1-ba66-0e7d0216e441
 - Indeed 91b09fd7-9093-11f1-ba66-0e7d0216e441
+- Hirist — GHA Daily Apply Portals / Cursor Automation (paste loader from ONE_TIME_LOADERS.md; no fixed id until created)
 
 For each portal: applied, external/company-website completed, rejected, blocked (login/Cloudflare/resume/OTP), skipped highlights, and automation-results/<portal>/latest.json date when home-local.
 Note targets: Expected CTC 65 LPA; Hyd + Remote/WFH; resume file Rafi_Resume.docx (base = Mohammed_Abdul_Rafi_Ahmed_Resume.docx, JD-tailored per apply).

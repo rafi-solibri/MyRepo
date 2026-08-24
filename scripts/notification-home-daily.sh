@@ -15,7 +15,7 @@ exec > >(tee -a "$LOG") 2>&1
 
 echo "=== notification home daily @ $STAMP ==="
 
-PORTALS=(linkedin foundit cutshort naukri instahyre indeed)
+PORTALS=(linkedin foundit cutshort naukri instahyre indeed hirist)
 for p in "${PORTALS[@]}"; do
   echo "--- fetch $p ---"
   bash scripts/fetch-home-result.sh "$p" --today || true

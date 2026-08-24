@@ -7,7 +7,7 @@ cd "$ROOT"
 
 portal="${1:-}"
 if [[ -z "$portal" ]]; then
-  echo "Usage: bash scripts/preflight-portal-run.sh <linkedin|hitechcity|naukri|foundit|cutshort|instahyre|indeed>" >&2
+  echo "Usage: bash scripts/preflight-portal-run.sh <linkedin|hitechcity|naukri|foundit|cutshort|instahyre|indeed|hirist>" >&2
   exit 2
 fi
 
