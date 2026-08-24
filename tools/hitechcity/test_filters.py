@@ -271,13 +271,22 @@ def test_careers_card_location():
         "Sr. Director Analyst, Enterprise Architecture (Remote US)",
         "Remote - United States",
     )
-    # Gartner title punctuation: Remote- US / Remote - U.S. (must not pass as India-remote).
+    # Gartner title punctuation: Remote- US / Remote - U.S. / Remote - N.A.
     assert not card_location_ok(
         "Sr Director Analyst, AI and Software Engineering (Remote- US)"
     )
     assert not card_location_ok(
         "Senior Director Analyst - Software Engineering for AI and Agentic Applications "
         "(Remote - U.S.)"
+    )
+    assert not card_location_ok(
+        "Sr Director Analyst - Software Engineering AI Strategy and Value (Remote - N.A.)"
+    )
+    assert not card_location_ok(
+        "Sr Director Analyst - Software Engineering AI Strategy and Value (Remote-N.A.)"
+    )
+    assert not card_location_ok(
+        "Sr Director Analyst, Software Engineering (Remote - North America)"
     )
     gartner_tx = (
         "https://gartner.wd5.myworkdayjobs.com/en-US/EXT/job/Remote---Texas/"

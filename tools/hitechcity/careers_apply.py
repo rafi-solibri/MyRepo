@@ -131,9 +131,10 @@ BAD_LOC_HINT = re.compile(
     r"us[- ](?:texas|oregon|california|washington|arizona|colorado|massachusetts|"
     r"florida|georgia|illinois|new[- ]york)|india[- ](?:bangalore|bengaluru)|"
     r"hillsboro|santa[- ]clara|folsom|"
-    # Full US state names + Remote-US / Remote - U.S. (Gartner title + Workday path).
+    # Full US state names + Remote-US / Remote - U.S. / Remote - N.A. (Gartner).
     r"texas|oregon|arizona|colorado|massachusetts|florida|georgia|illinois|"
     r"remote[\s\-–—]*u\.?s\.?|remote[\s\-–—]*united\s*states|"
+    r"remote[\s\-–—]*n\.?\s*a\.?|north\s*america|"
     r"tx|wa|ca|fl|ny|il|ga|nc|ma)\b",
     re.I,
 )
@@ -364,6 +365,50 @@ def pin_careers_hyderabad_location(url: str) -> str:
     return urlunparse(parts._replace(query=urlencode(flat, doseq=True)))
 
 
+def select_hyderabad_in_native_select(page: Page) -> dict[str, Any] | None:
+    """Salesforce (and similar) careers use a native <select> for Location.
+
+    get_by_text('Hyderabad') resolves the hidden <option>, which is not clickable —
+    use select_option on the parent <select> instead.
+    """
+    try:
+        selects = page.locator("select")
+        n = min(selects.count(), 12)
+    except Exception:
+        return None
+    for i in range(n):
+        sel = selects.nth(i)
+        try:
+            options = sel.locator("option")
+            count = options.count()
+            chosen_value = None
+            chosen_label = None
+            for j in range(min(count, 80)):
+                opt = options.nth(j)
+                label = (opt.inner_text(timeout=500) or "").strip()
+                value = opt.get_attribute("value") or ""
+                blob = f"{label} {value}"
+                if not re.search(r"hyderabad", blob, re.I):
+                    continue
+                chosen_value = value if value != "" else None
+                chosen_label = label or None
+                break
+            if chosen_value is None and chosen_label is None:
+                continue
+            if chosen_value is not None:
+                sel.select_option(value=chosen_value, timeout=2500)
+            else:
+                sel.select_option(label=chosen_label, timeout=2500)
+            return {
+                "pinned": True,
+                "available": True,
+                "note": f"native_select:{chosen_label or chosen_value}",
+            }
+        except Exception:
+            continue
+    return None
+
+
 def pin_portal_location_ui(page: Page) -> dict[str, Any]:
     """Best-effort: set Hyderabad in on-page location filters after navigation."""
     try:
@@ -372,6 +417,11 @@ def pin_portal_location_ui(page: Page) -> dict[str, Any]:
         url = ""
     if re.search(r"myworkdayjobs\.com", url, re.I):
         return workday_pin_hyderabad_location_ui(page)
+
+    native = select_hyderabad_in_native_select(page)
+    if native:
+        time.sleep(1.0)
+        return native
 
     out: dict[str, Any] = {"pinned": False, "available": False, "note": "generic_ui"}
     selectors = [
@@ -445,12 +495,26 @@ def pin_portal_location_ui(page: Page) -> dict[str, Any]:
             if picked is not None:
                 picked.fill(CAREERS_LOCATION, timeout=2000)
                 time.sleep(0.8)
-                hyd = page.get_by_text(re.compile(r"Hyderabad", re.I))
-                if hyd.count():
-                    hyd.first.click(timeout=2000)
-                    out.update(pinned=True, available=True, note="button_menu_hyd")
+                # Re-check native <select> after Location button (Salesforce).
+                native2 = select_hyderabad_in_native_select(page)
+                if native2:
                     time.sleep(1.0)
-                    return out
+                    return native2
+                hyd = page.get_by_text(re.compile(r"Hyderabad", re.I))
+                for hi in range(min(hyd.count(), 8)):
+                    el = hyd.nth(hi)
+                    try:
+                        tag = (el.evaluate("e => (e && e.tagName) || ''") or "").upper()
+                        if tag == "OPTION":
+                            continue
+                        if not el.is_visible():
+                            continue
+                        el.click(timeout=2000)
+                        out.update(pinned=True, available=True, note="button_menu_hyd")
+                        time.sleep(1.0)
+                        return out
+                    except Exception:
+                        continue
                 out.update(note="button_menu_no_hyd", available=False)
             else:
                 out.update(note="button_menu_no_safe_input", available=False)
