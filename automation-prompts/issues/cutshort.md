@@ -1,5 +1,12 @@
 # Cutshort — issues & fixes
 
+## 2026-08-25 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| sync-chrome-sessions.sh: PORTALS included hirist but DESTS/COOKIE_SETS/REQUIRED omitted it — DESTS[$i] unbound after indeed (preflight exit 1; also mis-synced hirist onto linkedin-alt path) | Aligned arrays: add hirist dest via chrome_session path + token cookie; linkedin_alt remains last optional (REQUIRED 0 0 for hirist/linkedin_alt until seed has hirist token) |
+
+
 ## 2026-08-24 (cloud)
 
 | Issue | Fix |
