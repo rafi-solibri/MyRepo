@@ -1,0 +1,39 @@
+{
+  "portal": "hirist",
+  "source": "cloud",
+  "date": "2026-08-25",
+  "finishedAt": "2026-08-25T03:59:14.498Z",
+  "ok": false,
+  "counts": {
+    "applied": 0,
+    "external": 0,
+    "rejected": 0,
+    "blocked": 1,
+    "skipped": 0,
+    "seen": 0
+  },
+  "applied": [],
+  "external": [],
+  "rejected": [],
+  "blocked": [
+    {
+      "reason": "hirist_login_required",
+      "detail": "jobfeed_401"
+    }
+  ],
+  "skipped": [],
+  "seen": [],
+  "blockerSummary": "hirist_login_required \u2014 jobfeed_401",
+  "notes": [
+    "resume=/workspace/resumes/Rafi_Resume.docx",
+    "ctc=52->65",
+    "post_fix_rerun=1 after #261 on main 5823080",
+    "preflight_exit=3 missing hirist token cookie",
+    "cdp_launch_ok profile=/home/ubuntu/chrome-hirist-profile",
+    "wait_for_cdp_login=hirist_login_required url=https://www.hirist.tech/",
+    "no_portal_session_seed_hirist",
+    "owner=home-headed-login.sh hirist + refresh-portal-session-seed + Save snapshot",
+    "rerun_cap=2/5 IST 2026-08-25 (prior: bc-e455d1d0 after #257); no further re-run",
+    "no_invented_applies"
+  ]
+}
