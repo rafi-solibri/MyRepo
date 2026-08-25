@@ -34,3 +34,22 @@
 - **avalara apac / Senior Software Engineering Manager:** Hi — I'm applying for Senior Software Engineering Manager at avalara apac. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)
 
 Artifact: `/opt/cursor/artifacts/foundit-apply-report.json` (copy: `reports/2026-08-25/foundit-apply-report.json`)
+
+## Post-fix re-run (POST_FIX_RERUN=1, after #260 + #261)
+
+Ran on `main` @ `5823080` (merged #261 resume compress + #260 filter skips). Preflight + Chrome CDP (`chrome-foundit`) + `node tools/foundit/daily_apply.js` exit 0.
+
+- Login: MSSOAT + jwtOk=True; hiRafi false (Hi, Seeker) but cookie + onApp OK.
+- Resume: `resumes/Rafi_Resume.docx` (20945 bytes after bootstrap compress).
+- Applied tab: **441 → 441** (+0). Intentional logged: **0**. Age → **3650d**.
+- Candidates: d1=135 / d3=70 / d7=335 / d14=247 / d30=278 / d90=179 / d3650=33.
+- Skips: 1199 | duplicates: 78 | blocked: 0.
+- No invented applies. No `canJobApply` dry-run. Eligibility via userJobInfo / applicationStatus.
+- Today's morning applies skipped as duplicates (userJobInfo), including Infosys .Net Lead / avalara SEM / Jobgether Integration SA / Blue Yonder / realty EM / aarushi OSS.
+- New filters confirmed (no re-apply):
+  - ResultsCX **Sr. Director, Solutions Architect - AI** → `pure AI/data without .NET on title`
+  - Infosys **UI Technical Architect React and Angular** → `UI/frontend React/Angular without .NET on title`
+  - Jobgether **Senior Technical Lead - Asterisk & Telephony** → `Asterisk/telephony without .NET on title`
+- Remaining inventory was already applied or filter-skipped. No new code-fixable blocker; no extra re-run launched (this is re-run 2/5 for Foundit on 2026-08-25).
+
+Post-fix artifact: `/opt/cursor/artifacts/foundit-apply-report.json` (copy: `reports/2026-08-25/foundit-apply-report-postfix.json`)
