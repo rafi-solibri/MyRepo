@@ -1,0 +1,27 @@
+{
+  "portal": "Cutshort",
+  "date": "2026-08-25",
+  "source": "cloud-postfix-rerun",
+  "mainSha": "0df8822679bd238885130eaf5d297532e4570e9a",
+  "mergedPr": 264,
+  "counts": {
+    "scanned": 3273,
+    "qualifying": 0,
+    "applied": 0,
+    "already": 0,
+    "failed": 0,
+    "external": 0,
+    "qAnswered": 0,
+    "qLockedEmpty": 0
+  },
+  "skipReasons": {
+    "ctc_under_35": 1216,
+    "exp_max_low": 1019,
+    "skip_title": 767,
+    "location": 225,
+    "no_tier_match": 46
+  },
+  "applied": [],
+  "failed": [],
+  "note": "POST_FIX_RERUN=1 on #264; inventory had 0 Hyd/remote Architect/EM/Lead/Senior .NET at >=35L. Did not invent applies. Cap 5/5."
+}
