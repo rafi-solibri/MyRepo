@@ -1,5 +1,12 @@
 # Instahyre — issues & fixes
 
+## 2026-08-25 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| preflight sync-chrome-sessions.sh unbound DESTS[$i] (PORTALS had hirist+linkedin_alt but DESTS/COOKIE_SETS/REQUIRED omitted hirist) | Insert hirist dest (/home/ubuntu/chrome-hirist-profile), cookie token, REQUIRED=1 before linkedin_alt so arrays stay aligned under set -u |
+
+
 ## 2026-08-24 (cloud)
 
 | Issue | Fix |
