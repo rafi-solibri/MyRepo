@@ -1,5 +1,12 @@
 # Indeed — issues & fixes
 
+## 2026-08-25 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| SmartApply resume-selection rejects font-stripped Rafi_Resume.docx (We could not upload your resume file) | Retry upload + fall back to fonted master Mohammed_Abdul_Rafi_Ahmed_Resume.docx (Indeed 5MB) |
+
+
 ## 2026-08-24 (cloud)
 
 | Issue | Fix |

@@ -12,10 +12,12 @@ if str(ROOT) not in sys.path:
 from tools.indeed.prepare_uc_profile import COPY_PATHS  # noqa: E402
 from tools.indeed.uc_daily_apply import (  # noqa: E402
     already_applied,
+    indeed_resume_candidates,
     looks_anonymous_marketing_home,
     looks_login_wall,
     job_dedupe_key,
     looks_signed_in,
+    resume_upload_failed,
     skip_reason,
 )
 
@@ -205,6 +207,24 @@ def test_job_dedupe_key_from_jk():
     )
 
 
+def test_resume_upload_failed_text():
+    assert resume_upload_failed(
+        "Add a resume\nWe could not upload your resume file. Wait a moment and then try again."
+    )
+    assert resume_upload_failed("Maximum size: 5 MB | We could not upload your")
+    assert not resume_upload_failed("Add a resume\nUpload a resume\nSelect file\nContinue")
+
+
+def test_indeed_resume_candidates_include_master():
+    cands = indeed_resume_candidates()
+    assert cands, "expected at least the canonical Rafi_Resume.docx"
+    names = {p.name for p in cands}
+    assert "Rafi_Resume.docx" in names or "Mohammed_Abdul_Rafi_Ahmed_Resume.docx" in names
+    master = [p for p in cands if p.name == "Mohammed_Abdul_Rafi_Ahmed_Resume.docx"]
+    if master:
+        assert master[0].stat().st_size > 100_000
+
+
 if __name__ == "__main__":
     test_skip_hyd_remote_ok()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
@@ -217,4 +237,6 @@ if __name__ == "__main__":
     test_india_home_get_started_is_not_login_proof()
     test_account_settings_and_serp_are_signed_in()
     test_job_dedupe_key_from_jk()
+    test_resume_upload_failed_text()
+    test_indeed_resume_candidates_include_master()
     print("ok")

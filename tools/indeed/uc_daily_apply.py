@@ -791,6 +791,137 @@ def _switch_smartapply_frame(sb) -> None:
         pass
 
 
+RESUME_UPLOAD_FAIL_RE = re.compile(
+    r"we could not upload your(?: resume(?: file)?)?|"
+    r"could not upload your(?: resume(?: file)?)?|"
+    r"unable to upload your resume|"
+    r"resume file\. wait a moment",
+    re.I,
+)
+
+
+def resume_upload_failed(body: str) -> bool:
+    """SmartApply resume-selection error after a rejected/failed file send."""
+    return bool(RESUME_UPLOAD_FAIL_RE.search(body or ""))
+
+
+def indeed_resume_candidates() -> list[Path]:
+    """Upload order: tailored/canonical first, then fonted master (Indeed 5MB).
+
+    Naukri bootstrap strips word/fonts/* from Rafi_Resume.docx (~20KB). Indeed
+    SmartApply then rejects the file with "We could not upload your resume file".
+    The owner master still has embeds and is under Indeed's 5MB cap.
+    """
+    seen: set[str] = set()
+    out: list[Path] = []
+
+    def add(path: Path | str | None) -> None:
+        if not path:
+            return
+        p = Path(path)
+        try:
+            if not p.is_file() or p.stat().st_size <= 1000:
+                return
+            key = str(p.resolve())
+        except OSError:
+            return
+        if key in seen:
+            return
+        seen.add(key)
+        out.append(Path(key))
+
+    try:
+        from tools.resume_paths import resume_upload_path
+
+        add(resume_upload_path())
+    except Exception:
+        pass
+    add(RESUME)
+    add(ROOT / "resumes" / "Mohammed_Abdul_Rafi_Ahmed_Resume.docx")
+    add(Path("/workspace/resumes/Mohammed_Abdul_Rafi_Ahmed_Resume.docx"))
+    return out
+
+
+def _named_upload_copy(src: Path) -> Path:
+    """Keep the upload filename Rafi_Resume.docx even when falling back to master."""
+    dest = Path("/tmp/cursor/indeed-upload-Rafi_Resume.docx")
+    try:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if src.name.lower() == "rafi_resume.docx" and src.stat().st_size < 400_000:
+            return src
+        import shutil
+
+        shutil.copy2(src, dest)
+        return dest
+    except OSError:
+        return src
+
+
+def upload_smartapply_resume(sb) -> bool:
+    """Upload resume on SmartApply; retry and fall back if Indeed rejects the file."""
+    _switch_smartapply_frame(sb)
+    try:
+        sb.execute_script(
+            """
+            const cards=[...document.querySelectorAll('button, [role=button], label, div, li')];
+            const el=cards.find(e => /rafi_resume|rafi resume|\\.docx/i.test(e.innerText||''));
+            if (el) el.click();
+            """
+        )
+    except Exception:
+        pass
+    try:
+        body = sb.get_text("body") or ""
+    except Exception:
+        body = ""
+    if body and not resume_upload_failed(body) and re.search(
+        r"rafi_resume|replace resume|change resume", body, re.I
+    ):
+        print("  resume_upload existing_card", flush=True)
+        return True
+
+    last_err = ""
+    for src in indeed_resume_candidates():
+        upload = _named_upload_copy(src)
+        for attempt in range(2):
+            _switch_smartapply_frame(sb)
+            try:
+                inputs = sb.find_elements("input[type='file']")
+            except Exception:
+                inputs = []
+            if not inputs:
+                last_err = "no_file_input"
+                continue
+            try:
+                for f in inputs:
+                    f.send_keys(str(upload.resolve()))
+            except Exception as exc:
+                last_err = str(exc)[:160]
+                time.sleep(1.2)
+                continue
+            # Indeed error copy: "Wait a moment and then try again."
+            time.sleep(2.4 if attempt == 0 else 4.0)
+            try:
+                body = sb.get_text("body") or ""
+            except Exception:
+                body = ""
+            if resume_upload_failed(body):
+                last_err = "indeed_rejected"
+                print(
+                    f"  resume_upload rejected src={src.name} size={src.stat().st_size} attempt={attempt+1}",
+                    flush=True,
+                )
+                time.sleep(1.6)
+                continue
+            print(
+                f"  resume_upload ok src={src.name} size={src.stat().st_size} attempt={attempt+1}",
+                flush=True,
+            )
+            return True
+    print(f"  resume_upload failed last={last_err}", flush=True)
+    return False
+
+
 def fill_common_questions(sb) -> None:
     """Best-effort form fill for smartapply.indeed.com / Easy Apply steps."""
     _switch_smartapply_frame(sb)
@@ -1237,20 +1368,11 @@ def fill_common_questions(sb) -> None:
     # Comboboxes (education / Title / Country) often render options only after open.
     recover_required_selects(sb)
 
-    # Resume upload — JD-tailored copy when prepare_resume_for_job ran.
+    # Resume upload — tailored first, then fonted master if SmartApply rejects.
     try:
-        from tools.resume_paths import resume_upload_path
-
-        resume_path = Path(resume_upload_path())
-    except Exception:
-        resume_path = RESUME
-    if resume_path.exists():
-        try:
-            for f in sb.find_elements("input[type='file']"):
-                f.send_keys(str(resume_path.resolve()))
-                time.sleep(1)
-        except Exception:
-            pass
+        upload_smartapply_resume(sb)
+    except Exception as exc:
+        print(f"  resume_upload_error={exc!s}"[:200], flush=True)
     tick_required_agreements(sb)
     recover_required_selects(sb)
 
@@ -2808,18 +2930,12 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
         except Exception:
             pass
         fill_common_questions(sb)
-        # Resume card: prefer an existing Rafi resume if shown.
+        # Resume card: upload (with master fallback) before Continue.
         if "resume-selection" in url or "resume" in url.lower():
             try:
-                sb.execute_script(
-                    """
-                    const cards=[...document.querySelectorAll('button, [role=button], label, div, li')];
-                    const el=cards.find(e => /rafi_resume|rafi resume|\\.docx/i.test(e.innerText||''));
-                    if (el) el.click();
-                    """
-                )
-            except Exception:
-                pass
+                upload_smartapply_resume(sb)
+            except Exception as exc:
+                print(f"  ea_resume_upload_err={exc!s}"[:200], flush=True)
         clicked = click_next_or_submit(sb, allow_disabled=False)
         print(f"  ea_step={step} clicked={clicked!r} url={url[:90]}", flush=True)
         # Same CTA on same module without navigation → validation wall; abort early.
