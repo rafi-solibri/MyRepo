@@ -6,7 +6,7 @@
 - Skips: 1200 | duplicates: 72 | blocked: 0.
 - No `canJobApply` dry-run.
 - Resume: `resumes/Rafi_Resume.docx` with per-apply JD tailor + profile upload.
-- Preflight: `sync-chrome-sessions.sh` exited unbound on `DESTS[$i]` (hirist missing from DESTS/COOKIE_SETS/REQUIRED) — Foundit cookies still synced before crash.
+- Preflight: older branch hit `DESTS[$i]` unbound (hirist already aligned on current `main`); Foundit cookies still synced before crash.
 
 ## Applied
 1. Infosys Limited — .Net production support Lead — Falcon `APPLY_REDIRECT_STAGE_NONE` / ATS `external_incomplete_or_timeout` (Infosys SSO)
@@ -27,7 +27,6 @@
 
 ## False applies / code fix
 - ResultsCX **Solutions Architect - AI**, Infosys **UI Technical Architect React and Angular**, Jobgether **Asterisk & Telephony** passed via Arch/Lead exception → `tools/foundit/filters.js` Instahyre-parity title skips + tests.
-- `scripts/sync-chrome-sessions.sh`: add hirist DEST/`token` COOKIE/REQUIRED so PORTALS arrays align (fixes preflight unbound variable).
 
 ## Top 3 LinkedIn referral drafts
 - **Infosys Limited / .Net production support Lead:** Hi — I'm applying for .Net production support Lead at Infosys Limited. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)
