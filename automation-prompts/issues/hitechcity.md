@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Gmail CDP tab hit accounts.google.com so #264 OTP reader timed out (no IMAP app password) | email_otp.py: try Google identifier+password from GOOGLE_PASSWORD/LINKEDIN_PASSWORD then re-open search |
 | Oracle apply/email showed Too Many Attempts (30 min) after earlier OTP tries; persist_retry burned minutes | Detect ats_rate_limited and fail-fast; still rewrite JD to /apply/email + mailbox OTP after cooldown |
 | Oracle JD /job/<id> never reached /apply/email so #264 OTP reader never ran (external_incomplete) | complete.py: rewrite careers.oracle.com jobsearch JD to /apply/email; try mailbox OTP on persist_retry/ASK_OWNER; JD file input is not an open form |
 | Oracle/Greenhouse email OTP treated as owner-only ats_otp_wall (no mailbox read) | tools/ats/email_otp.py: Gmail CDP tab + optional GMAIL_APP_PASSWORD IMAP; complete.py try_clear_email_otp before ats_otp_wall |

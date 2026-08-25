@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -10,7 +11,12 @@ _ROOT = Path(__file__).resolve().parents[2]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from tools.ats.email_otp import extract_otp_candidates, page_shows_otp_wall
+from tools.ats.email_otp import (
+    extract_otp_candidates,
+    google_account_password,
+    mailbox_app_password,
+    page_shows_otp_wall,
+)
 
 
 def assert_true(cond: bool, msg: str) -> None:
@@ -61,5 +67,20 @@ assert_true(
     not page_shows_otp_wall(_FakePage("Email Address\nI agree with the terms\nNEXT")),
     "pre-otp form is not wall",
 )
+_saved = {k: os.environ.get(k) for k in ("GOOGLE_PASSWORD", "LINKEDIN_PASSWORD", "GMAIL_APP_PASSWORD")}
+try:
+    os.environ.pop("GOOGLE_PASSWORD", None)
+    os.environ.pop("LINKEDIN_PASSWORD", None)
+    os.environ.pop("GMAIL_APP_PASSWORD", None)
+    assert_true(google_account_password() == "", "no leftover google password")
+    assert_true(mailbox_app_password() == "", "no leftover app password")
+    os.environ["GOOGLE_PASSWORD"] = "dummy-not-used"
+    assert_true(google_account_password() == "dummy-not-used", "reads GOOGLE_PASSWORD")
+finally:
+    for k, v in _saved.items():
+        if v is None:
+            os.environ.pop(k, None)
+        else:
+            os.environ[k] = v
 
 print("tools/ats/test_email_otp.py OK")

@@ -62,6 +62,67 @@ def mailbox_app_password() -> str:
     ).strip().replace(" ", "")
 
 
+def google_account_password() -> str:
+    """Account password for Gmail SSO in the CDP tab (not an IMAP app password)."""
+    return (
+        os.environ.get("GOOGLE_PASSWORD")
+        or os.environ.get("LINKEDIN_PASSWORD")
+        or ""
+    ).strip()
+
+
+def try_gmail_password_login(gmail) -> bool:
+    """Fill Google identifier + password on accounts.google.com. Never logs secrets."""
+    user = mailbox_user()
+    password = google_account_password()
+    if not user or not password:
+        print("email_otp=gmail_login_no_secret", flush=True)
+        return False
+    try:
+        email_box = gmail.locator("input[type='email'], input[name='identifier'], #identifierId").first
+        if email_box.count() and email_box.is_visible():
+            email_box.fill(user, timeout=8000)
+            time.sleep(0.4)
+            nxt = gmail.locator("#identifierNext button, #identifierNext").first
+            if nxt.count() and nxt.is_visible():
+                nxt.click(timeout=4000)
+            else:
+                gmail.get_by_role("button", name=re.compile(r"^next$", re.I)).first.click(timeout=4000)
+            time.sleep(2.2)
+    except Exception as exc:
+        print(f"email_otp=gmail_id_fail {type(exc).__name__}", flush=True)
+    try:
+        pw_box = gmail.locator("input[type='password'], input[name='Passwd']").first
+        if pw_box.count() and pw_box.is_visible():
+            pw_box.fill(password, timeout=8000)
+            time.sleep(0.3)
+            nxt = gmail.locator("#passwordNext button, #passwordNext").first
+            if nxt.count() and nxt.is_visible():
+                nxt.click(timeout=4000)
+            else:
+                gmail.get_by_role("button", name=re.compile(r"^next$", re.I)).first.click(timeout=4000)
+            time.sleep(3.0)
+    except Exception as exc:
+        print(f"email_otp=gmail_pw_fail {type(exc).__name__}", flush=True)
+    try:
+        cur = (getattr(gmail, "url", "") or "").lower()
+        blob = ""
+        try:
+            blob = gmail.locator("body").inner_text(timeout=4000) or ""
+        except Exception:
+            pass
+        if "accounts.google.com" in cur or "/signin" in cur:
+            if re.search(r"2-step|challenge|verify it.?s you|captcha", blob, re.I):
+                print("email_otp=gmail_login_challenge", flush=True)
+            else:
+                print("email_otp=gmail_login_failed", flush=True)
+            return False
+        print("email_otp=gmail_login_ok", flush=True)
+        return True
+    except Exception:
+        return False
+
+
 def extract_otp_candidates(text: str | None) -> list[str]:
     """Return ranked OTP candidates from email subject/body text (no secrets logged)."""
     blob = text or ""
@@ -230,7 +291,17 @@ def fetch_otp_via_gmail_tab(page, *, after_epoch: float | None = None, timeout_s
                 cur = (getattr(gmail, "url", "") or "").lower()
                 if "accounts.google.com" in cur or "/signin" in cur:
                     print("email_otp=gmail_login_required", flush=True)
-                    return None
+                    if not try_gmail_password_login(gmail):
+                        return None
+                    try:
+                        gmail.goto(url, wait_until="domcontentloaded", timeout=45000)
+                    except Exception:
+                        continue
+                    time.sleep(2.0)
+                    cur = (getattr(gmail, "url", "") or "").lower()
+                    if "accounts.google.com" in cur or "/signin" in cur:
+                        print("email_otp=gmail_login_still", flush=True)
+                        return None
                 # Collect page text (list view or thread).
                 try:
                     blob = gmail.locator("body").inner_text(timeout=8000) or ""
@@ -240,7 +311,9 @@ def fetch_otp_via_gmail_tab(page, *, after_epoch: float | None = None, timeout_s
                     r"inbox|primary|search", blob, re.I
                 ):
                     print("email_otp=gmail_login_required", flush=True)
-                    return None
+                    if not try_gmail_password_login(gmail):
+                        return None
+                    continue
                 codes = extract_otp_candidates(blob)
                 if codes:
                     print(f"email_otp=gmail_hit len={len(codes[0])} via=list", flush=True)
