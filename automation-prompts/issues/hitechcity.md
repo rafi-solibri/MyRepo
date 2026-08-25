@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-25 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| preflight sync-chrome-sessions.sh: DESTS/COOKIE_SETS/REQUIRED missing hirist entry vs PORTALS (set -u unbound DESTS[$i] after indeed→hirist mis-map to linkedin-alt) | Align PORTALS/DESTS/COOKIE_SETS/REQUIRED: insert hirist dest+token cookie; REQUIRED=(1 1 1 1 1 1 0 0) for optional hirist+linkedin_alt |
+
+
 ## 2026-08-24 (cloud)
 
 | Issue | Fix |
