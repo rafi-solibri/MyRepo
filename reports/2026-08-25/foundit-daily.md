@@ -29,8 +29,46 @@
 - ResultsCX **Solutions Architect - AI**, Infosys **UI Technical Architect React and Angular**, Jobgether **Asterisk & Telephony** passed via Arch/Lead exception → `tools/foundit/filters.js` Instahyre-parity title skips + tests.
 
 ## Top 3 LinkedIn referral drafts
-- **Infosys Limited / .Net production support Lead:** Hi — I'm applying for .Net production support Lead at Infosys Limited. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)
-- **Infosys Limited / .Net angular Lead:** Hi — I'm applying for .Net angular Lead at Infosys Limited. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)
-- **avalara apac / Senior Software Engineering Manager:** Hi — I'm applying for Senior Software Engineering Manager at avalara apac. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)
+- **Infosys Limited / .Net production support Lead:** Hi — I'm applying for .Net production support Lead at Infosys Limited. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed ([REDACTED] / +91 8790251698)
+- **Infosys Limited / .Net angular Lead:** Hi — I'm applying for .Net angular Lead at Infosys Limited. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed ([REDACTED] / +91 8790251698)
+- **avalara apac / Senior Software Engineering Manager:** Hi — I'm applying for Senior Software Engineering Manager at avalara apac. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed ([REDACTED] / +91 8790251698)
 
-Artifact: `/opt/cursor/artifacts/foundit-apply-report.json` (copy: `reports/2026-08-25/foundit-apply-report.json`)
+Artifact (morning): `/opt/cursor/artifacts/foundit-apply-report.json` (copy: `reports/2026-08-25/foundit-apply-report.json`)
+
+## Post-fix re-run (POST_FIX_RERUN=1, after #264 ATS Gmail OTP)
+
+Ran on `main` @ `0df8822` (`fix(hitechcity): read ATS email OTPs from Gmail mailbox`). Earlier cron / prior re-runs did **not** apply with this helper. This job did: preflight + Chrome CDP (`chrome-foundit`) + `node tools/foundit/resume.js` + `wait_for_cdp_login.js` + `node tools/foundit/daily_apply.js` (exit 0).
+
+- Login: MSSOAT + jwtOk=True; hiRafi false (Hi, Seeker) but cookie + onApp OK.
+- Resume: `resumes/Rafi_Resume.docx` (20,945B rebuilt from owner master). No `canJobApply` dry-run.
+- Applied tab: **441 → 441** (+0). Intentional logged: **0**. Age → **3650d**.
+- Candidates: d1=144 / d3=72 / d7=326 / d14=239 / d30=283 / d90=174 / d3650=39.
+- Skips: 1201 | duplicates: 76 (`userJobInfo`) | blocked: 0.
+- No invented applies. Today's morning 12 Falcon submits skipped as already Applied.
+- #260 filters still hold (not re-applied):
+  - ResultsCX **Sr. Director, Solutions Architect - AI** → `pure AI/data without .NET on title`
+  - Infosys **UI Technical Architect React and Angular** → `UI/frontend React/Angular without .NET on title`
+  - Jobgether **Senior Technical Lead - Asterisk & Telephony** → `Asterisk/telephony without .NET on title`
+- Remaining Hyd/remote Arch/Lead/.NET inventory is already Applied or correctly filter-skipped (Bangalore/Pune/junior/no-seniority/CTC under 35).
+- #264 OTP mailbox helper was on the apply path for any new ATS OTP wall; no new Falcon/ATS submit occurred, so Gmail IMAP was not needed this pass (`GMAIL_APP_PASSWORD` unset in this pod — CDP Gmail tab is the fallback if an OTP wall appears).
+- This is Foundit post-fix re-run **4/5** for 2026-08-25 IST. No new code-fixable blocker; do not launch another Foundit re-run for this report-only commit.
+
+### Already applied today (skipped — do not re-submit)
+Includes morning roles still on the account via `userJobInfo`: Infosys .Net production support Lead / .Net angular Lead / Senior Global Deal SA; avalara SEM; Jobgether Integration SA; Blue Yonder SCPO; realty EM; quik hire Solutions Architect; aarushi OSS Architect.
+
+### Top skip reasons (this re-run)
+
+| Count | Reason |
+| --- | --- |
+| 361 | no .NET on title+skills |
+| 196 | location Bengaluru / Bangalore |
+| 112 | no seniority keyword on title |
+| 67 | SAP without .NET |
+| 42 | location Pune |
+| 36 | location Singapore |
+| 26 | pure AI/data without .NET on title |
+
+### Referral drafts this re-run
+None — 0 new applies (do not invent).
+
+Artifact (this re-run): `/opt/cursor/artifacts/foundit-apply-report.json` (copy: `reports/2026-08-25/foundit-apply-report-postfix.json`)
