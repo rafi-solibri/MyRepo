@@ -290,6 +290,67 @@ def owner_asleep() -> bool:
     return False
 
 
+_ORACLE_JOB_URL_RE = re.compile(
+    r"(https?://(?:careers\.oracle\.com|[^/]*oraclecloud\.com)/[^\s?#]*?/sites/jobsearch/job/\d+)",
+    re.I,
+)
+
+
+def oracle_job_apply_email_url(url: str | None) -> str | None:
+    """JD URL → Oracle Recruiting apply/email step. None when already on /apply."""
+    raw = (url or "").strip()
+    if not raw or re.search(r"/apply(?:/|$|\?)", raw, re.I):
+        return None
+    m = _ORACLE_JOB_URL_RE.search(raw)
+    if not m:
+        return None
+    return m.group(1).rstrip("/") + "/apply/email"
+
+
+def try_mailbox_otp(page) -> bool:
+    """Read Gmail/IMAP OTP and fill when Confirm Your Identity (or similar) is showing."""
+    try:
+        from tools.ats.email_otp import try_clear_email_otp
+
+        return bool(try_clear_email_otp(page))
+    except Exception:
+        return False
+
+
+def ensure_oracle_apply_flow(page) -> bool:
+    """Leave the Oracle JD and open /apply/email so mailbox OTP can run.
+
+    Careers-only runs were dying on careers.oracle.com/job/<id>/ (file input on
+    the listing) and returning external_incomplete without ever hitting OTP.
+    """
+    try:
+        url = getattr(page, "url", "") or ""
+    except Exception:
+        return False
+    dest = oracle_job_apply_email_url(url)
+    if not dest:
+        return False
+    try:
+        prefer_guest_apply(page)
+    except Exception:
+        pass
+    try:
+        cur = getattr(page, "url", "") or ""
+    except Exception:
+        cur = ""
+    if re.search(r"/apply(?:/|$|\?)", cur, re.I):
+        print("oracle_apply_flow=clicked_apply", flush=True)
+        return True
+    try:
+        page.goto(dest, wait_until="domcontentloaded", timeout=45000)
+        _sleep(1.2)
+        print("oracle_apply_flow=goto_apply_email", flush=True)
+        return True
+    except Exception as exc:
+        print(f"oracle_apply_flow=goto_fail {type(exc).__name__}", flush=True)
+        return False
+
+
 def persist_retry_burst_sec() -> int:
     """Seconds for post-ASK_OWNER fill bursts. Owner-asleep → brief park only."""
     raw = (os.environ.get("ATS_PERSIST_RETRY_SEC") or "").strip()
@@ -2064,14 +2125,9 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
         if wall == "CAPTCHA/bot wall":
             return "blocked", wall
         if wall == "ats_otp_wall":
-            try:
-                from tools.ats.email_otp import try_clear_email_otp
-
-                if try_clear_email_otp(page):
-                    wall = None
-                else:
-                    return "blocked", wall
-            except Exception:
+            if try_mailbox_otp(page):
+                wall = None
+            else:
                 return "blocked", wall
         if wall in ("job_closed", "job_unavailable"):
             return "skipped", wall
@@ -2127,6 +2183,10 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
         while time.time() - burst_start < burst:
             if looks_submitted(page):
                 return "applied", "confirmation"
+            if try_mailbox_otp(page):
+                if looks_submitted(page):
+                    return "applied", "confirmation"
+                continue
             try:
                 upload_resume(page)
                 workday_fill_core(page)
@@ -2136,6 +2196,9 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
             except Exception:
                 pass
             _sleep(1.0)
+        if looks_submitted(page):
+            return "applied", "confirmation"
+    if try_mailbox_otp(page):
         if looks_submitted(page):
             return "applied", "confirmation"
     return "blocked", "external_incomplete_or_timeout"
@@ -2180,7 +2243,8 @@ def apply_form_still_open(page) -> bool:
         url = ""
     if re.search(
         r"/apply|/candidate|/questions|/login|mode=apply|mode=submit|"
-        r"oraclecloud\.com/.*/(?:job|apply)|greenhouse\.io/.*/application|"
+        r"oraclecloud\.com/.*/apply|careers\.oracle\.com/.*/apply|"
+        r"greenhouse\.io/.*/application|"
         r"myworkdayjobs\.com/.*/apply",
         url,
         re.I,
@@ -2197,6 +2261,10 @@ def apply_form_still_open(page) -> bool:
         return True
     try:
         if page.locator("input[type='file']").count() > 0:
+            # Oracle Recruiting JD pages embed a hidden file input; that is not
+            # an open apply form. /apply/email is handled by the URL check above.
+            if oracle_job_apply_email_url(url):
+                return False
             return True
     except Exception:
         pass
@@ -2246,6 +2314,11 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
             if looks_already_applied(page):
                 print("ASK_OWNER resolved=already_applied", flush=True)
                 return "skipped", "already_applied"
+            if try_mailbox_otp(page):
+                if looks_submitted(page):
+                    print("ASK_OWNER resolved=submitted", flush=True)
+                    return "applied", "confirmation"
+                continue
             now = time.time()
             if focus_page_for_owner and now - last_focus >= focus_every:
                 try:
@@ -2362,6 +2435,10 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
     stuck = 0
     leave_oneclick_oauth(page)
     prefer_guest_apply(page)
+    try:
+        ensure_oracle_apply_flow(page)
+    except Exception:
+        pass
     flags = page_flags(page)
     if is_brochure_or_dead_end(
         flags["url"],
@@ -2393,14 +2470,9 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
                 except Exception:
                     return "blocked", wall
         if wall == "ats_otp_wall":
-            try:
-                from tools.ats.email_otp import try_clear_email_otp
-
-                if try_clear_email_otp(page):
-                    wall = None
-                else:
-                    return "blocked", wall
-            except Exception:
+            if try_mailbox_otp(page):
+                wall = None
+            else:
                 return "blocked", wall
         if wall in ("job_closed", "job_unavailable"):
             return "skipped", wall
@@ -2462,7 +2534,12 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
                 return "applied", "confirmation"
             if looks_already_applied(page):
                 return "skipped", "already_applied"
+            if try_mailbox_otp(page):
+                if looks_submitted(page):
+                    return "applied", "confirmation"
+                continue
             try:
+                ensure_oracle_apply_flow(page)
                 upload_resume(page)
                 fill_labeled_fields(page)
                 fill_source_fields(page)
@@ -2473,6 +2550,9 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
             except Exception:
                 pass
             _sleep(1.0)
+        if looks_submitted(page):
+            return "applied", "confirmation"
+    if try_mailbox_otp(page):
         if looks_submitted(page):
             return "applied", "confirmation"
     return "blocked", "external_incomplete_or_timeout"
@@ -2834,6 +2914,10 @@ def complete_ats(page, time_cap_s: int | None = None) -> tuple[str, str]:
         return "applied", "confirmation"
     if looks_already_applied(page):
         return "skipped", "already_applied"
+    try:
+        ensure_oracle_apply_flow(page)
+    except Exception:
+        pass
     flags = page_flags(page)
     host = classify_ats_host(flags["url"])
     icims_url = bool(re.search(r"icims\.com/jobs/\d+", flags["url"], re.I))
@@ -2869,16 +2953,11 @@ def complete_ats(page, time_cap_s: int | None = None) -> tuple[str, str]:
         return "skipped", wall
     if wall == "ats_otp_wall":
         # Oracle / Greenhouse email OTP — read mailbox (Gmail CDP or IMAP) then continue.
-        try:
-            from tools.ats.email_otp import try_clear_email_otp
-
-            if try_clear_email_otp(page):
-                wall = None
-                flags = page_flags(page)
-                host = classify_ats_host(flags["url"])
-            else:
-                return "blocked", wall
-        except Exception:
+        if try_mailbox_otp(page):
+            wall = None
+            flags = page_flags(page)
+            host = classify_ats_host(flags["url"])
+        else:
             return "blocked", wall
     if wall and host != "workday" and not flags["has_wd"]:
         return "blocked", wall

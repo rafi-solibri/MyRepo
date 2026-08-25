@@ -31,6 +31,7 @@ from tools.ats.complete import (
     is_submitted_text,
     is_unavailable_text,
     looks_like_apply_cta,
+    oracle_job_apply_email_url,
     page_fingerprint,
     ALREADY_APPLIED_RE,
     SUBMITTED_RE,
@@ -108,6 +109,55 @@ assert_true(
     )
     == "ats_otp_wall",
     "OTP beats has_file guest continue",
+)
+assert_true(
+    oracle_job_apply_email_url(
+        "https://careers.oracle.com/en/sites/jobsearch/job/335139/?keyword=Engineering+Manager&location=HYDERABAD"
+    )
+    == "https://careers.oracle.com/en/sites/jobsearch/job/335139/apply/email",
+    "Oracle JD URL rewrites to apply/email",
+)
+assert_true(
+    oracle_job_apply_email_url(
+        "https://careers.oracle.com/en/sites/jobsearch/job/335139/apply/email"
+    )
+    is None,
+    "already on apply/email is a no-op",
+)
+assert_true(
+    oracle_job_apply_email_url(
+        "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/job/210767993/"
+    )
+    is None,
+    "JPMC Oracle HCM CandidateExperience is not Recruiting apply/email",
+)
+
+
+class _UrlOnlyPage:
+    def __init__(self, url, file_count=0):
+        self.url = url
+        self._files = file_count
+
+    def locator(self, sel):
+        class _Loc:
+            def __init__(self, n):
+                self._n = n
+
+            def count(self):
+                return self._n
+
+        if "file" in (sel or ""):
+            return _Loc(self._files)
+        return _Loc(0)
+
+
+assert_true(
+    not apply_form_still_open(_UrlOnlyPage("https://careers.oracle.com/en/sites/jobsearch/job/335139/", file_count=1)),
+    "Oracle JD + hidden file input is not an open apply form",
+)
+assert_true(
+    apply_form_still_open(_UrlOnlyPage("https://careers.oracle.com/en/sites/jobsearch/job/335139/apply/email")),
+    "Oracle /apply/email is an open apply form",
 )
 from tools.ats.complete import owner_form_wait_sec, owner_asleep, persist_retry_burst_sec
 _saved_form = {k: os.environ.get(k) for k in ("ATS_OWNER_FORM_WAIT_SEC", "ATS_CAPTCHA_WAIT_SEC", "HOME_LOCAL", "CHROME_HEADLESS", "HITECHCITY_OWNER_ASLEEP", "ATS_PERSIST_RETRY_SEC", "HITECHCITY_ATS_PERSIST_RETRY")}
