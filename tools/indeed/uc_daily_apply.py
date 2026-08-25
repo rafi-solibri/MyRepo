@@ -61,6 +61,11 @@ RESUME = Path(
         str(ROOT / "resumes" / "Rafi_Resume.docx"),
     )
 )
+# Naukri #263 font-strips Rafi_Resume.docx (~20KB). Indeed SmartApply allows 5MB
+# and rejects that stub with "We could not upload your".
+OWNER_RESUME = ROOT / "resumes" / "Mohammed_Abdul_Rafi_Ahmed_Resume.docx"
+INDEED_MAX_RESUME_BYTES = 5 * 1024 * 1024
+NAUKRI_COMPRESSED_STUB_MAX = 80_000
 PROXY = os.environ.get("INDEED_HTTP_PROXY", "socks5://127.0.0.1:40000")
 # Hybrid UC profile (auth cookies, CF cookies stripped) — see prepare_uc_profile.py
 PROFILE = os.environ.get("INDEED_UC_PROFILE", "/tmp/cursor/indeed-uc-hybrid")
@@ -69,6 +74,44 @@ PROFILE = os.environ.get("INDEED_UC_PROFILE", "/tmp/cursor/indeed-uc-hybrid")
 def _job_id_from_url(url: str) -> str:
     m = re.search(r"[?&]jk=([a-f0-9]+)", url or "", re.I)
     return m.group(1) if m else ""
+
+
+def indeed_resume_src() -> Path:
+    """Prefer the owner master for Indeed (5MB cap), not the Naukri-compressed stub."""
+    if (
+        OWNER_RESUME.is_file()
+        and 1000 < OWNER_RESUME.stat().st_size <= INDEED_MAX_RESUME_BYTES
+    ):
+        return OWNER_RESUME
+    return RESUME
+
+
+def indeed_upload_resume_path(preferred: Path | None = None) -> Path:
+    """Return a file SmartApply will accept.
+
+    Tailored copies from the owner master stay large (~3.9MB). If a Naukri
+    stub (~20KB) slipped in via RAFI_RESUME / RESUME_UPLOAD_PATH, promote
+    the owner master instead of uploading a file Indeed rejects.
+    """
+    src = indeed_resume_src()
+    if (
+        preferred
+        and preferred.is_file()
+        and NAUKRI_COMPRESSED_STUB_MAX
+        <= preferred.stat().st_size
+        <= INDEED_MAX_RESUME_BYTES
+    ):
+        return preferred
+    if src.is_file():
+        return src
+    if preferred and preferred.is_file():
+        return preferred
+    return RESUME
+
+
+def resume_upload_rejected(text: str) -> bool:
+    blob = (text or "").lower()
+    return "we could not upload" in blob or "could not upload your" in blob
 
 
 def prepare_resume_for_job(item: dict, jd_text: str) -> Path:
@@ -82,13 +125,24 @@ def prepare_resume_for_job(item: dict, jd_text: str) -> Path:
         from tools.resume_tailor import tailor_resume_for_job
 
         tailored = tailor_resume_for_job(
-            job_id=jid, title=title, company=company, jd=jd_text or ""
+            job_id=jid,
+            title=title,
+            company=company,
+            jd=jd_text or "",
+            src=indeed_resume_src(),
         )
-        set_active_resume(tailored)
-        os.environ["RESUME_UPLOAD_PATH"] = str(tailored)
-        os.environ["RAFI_RESUME"] = str(tailored)
-        item["tailoredResume"] = str(tailored)
-        return Path(tailored)
+        chosen = indeed_upload_resume_path(Path(tailored) if tailored else None)
+        set_active_resume(chosen)
+        os.environ["RESUME_UPLOAD_PATH"] = str(chosen)
+        os.environ["RAFI_RESUME"] = str(chosen)
+        item["tailoredResume"] = str(chosen)
+        if chosen.resolve() != Path(tailored).resolve():
+            tsize = Path(tailored).stat().st_size if Path(tailored).is_file() else 0
+            print(
+                f"  resume_upload_promote_master tailored={tsize} master={chosen.stat().st_size}",
+                flush=True,
+            )
+        return Path(chosen)
     except Exception as exc:
         print(f"  resume_tailor_error={exc!s}"[:200], flush=True)
         try:
@@ -97,7 +151,7 @@ def prepare_resume_for_job(item: dict, jd_text: str) -> Path:
             clear_active_resume()
         except Exception:
             pass
-        return RESUME
+        return indeed_upload_resume_path(RESUME)
 
 
 def clear_job_resume() -> None:
@@ -791,6 +845,51 @@ def _switch_smartapply_frame(sb) -> None:
         pass
 
 
+def _upload_smartapply_resume(sb, resume_path: Path) -> bool:
+    """Send the resume into SmartApply file inputs; retry master if Indeed rejects."""
+    if not resume_path or not Path(resume_path).is_file():
+        return False
+    path = Path(resume_path).resolve()
+    _switch_smartapply_frame(sb)
+    sent = False
+    try:
+        for f in sb.find_elements("input[type='file']"):
+            try:
+                f.send_keys(str(path))
+                sent = True
+                time.sleep(2)
+            except Exception:
+                continue
+    except Exception:
+        pass
+    body = ""
+    try:
+        body = sb.get_text("body") or ""
+    except Exception:
+        body = ""
+    if sent and not resume_upload_rejected(body):
+        print(f"  resume_upload ok size={path.stat().st_size} path={path}", flush=True)
+        return True
+    master = indeed_resume_src()
+    if master.is_file() and master.resolve() != path:
+        print(
+            f"  resume_upload_retry_master after={'rejected' if resume_upload_rejected(body) else 'no_input'} size={master.stat().st_size}",
+            flush=True,
+        )
+        _switch_smartapply_frame(sb)
+        try:
+            for f in sb.find_elements("input[type='file']"):
+                try:
+                    f.send_keys(str(master.resolve()))
+                    sent = True
+                    time.sleep(2)
+                except Exception:
+                    continue
+        except Exception:
+            pass
+    return sent
+
+
 def fill_common_questions(sb) -> None:
     """Best-effort form fill for smartapply.indeed.com / Easy Apply steps."""
     _switch_smartapply_frame(sb)
@@ -1237,20 +1336,14 @@ def fill_common_questions(sb) -> None:
     # Comboboxes (education / Title / Country) often render options only after open.
     recover_required_selects(sb)
 
-    # Resume upload — JD-tailored copy when prepare_resume_for_job ran.
+    # Resume upload — JD-tailored copy from owner master (not Naukri 20KB stub).
     try:
         from tools.resume_paths import resume_upload_path
 
-        resume_path = Path(resume_upload_path())
+        resume_path = indeed_upload_resume_path(Path(resume_upload_path()))
     except Exception:
-        resume_path = RESUME
-    if resume_path.exists():
-        try:
-            for f in sb.find_elements("input[type='file']"):
-                f.send_keys(str(resume_path.resolve()))
-                time.sleep(1)
-        except Exception:
-            pass
+        resume_path = indeed_upload_resume_path(RESUME)
+    _upload_smartapply_resume(sb, resume_path)
     tick_required_agreements(sb)
     recover_required_selects(sb)
 

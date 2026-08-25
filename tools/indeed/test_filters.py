@@ -11,11 +11,15 @@ if str(ROOT) not in sys.path:
 
 from tools.indeed.prepare_uc_profile import COPY_PATHS  # noqa: E402
 from tools.indeed.uc_daily_apply import (  # noqa: E402
+    NAUKRI_COMPRESSED_STUB_MAX,
     already_applied,
+    indeed_resume_src,
+    indeed_upload_resume_path,
     looks_anonymous_marketing_home,
     looks_login_wall,
     job_dedupe_key,
     looks_signed_in,
+    resume_upload_rejected,
     skip_reason,
 )
 
@@ -205,6 +209,24 @@ def test_job_dedupe_key_from_jk():
     )
 
 
+def test_indeed_uses_owner_master_not_naukri_stub():
+    src = indeed_resume_src()
+    assert src.is_file()
+    assert src.stat().st_size > NAUKRI_COMPRESSED_STUB_MAX
+    stub = ROOT / "resumes" / "Rafi_Resume.docx"
+    if stub.is_file() and stub.stat().st_size < NAUKRI_COMPRESSED_STUB_MAX:
+        chosen = indeed_upload_resume_path(stub)
+        assert chosen.stat().st_size > NAUKRI_COMPRESSED_STUB_MAX
+        assert chosen.resolve() != stub.resolve()
+
+
+def test_resume_upload_rejected_copy():
+    assert resume_upload_rejected(
+        "Maximum size: 5 MB | We could not upload your resume. Please try a different file."
+    )
+    assert not resume_upload_rejected("Upload a resume | Select file | Maximum size: 5 MB")
+
+
 if __name__ == "__main__":
     test_skip_hyd_remote_ok()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
@@ -217,4 +239,6 @@ if __name__ == "__main__":
     test_india_home_get_started_is_not_login_proof()
     test_account_settings_and_serp_are_signed_in()
     test_job_dedupe_key_from_jk()
+    test_indeed_uses_owner_master_not_naukri_stub()
+    test_resume_upload_rejected_copy()
     print("ok")

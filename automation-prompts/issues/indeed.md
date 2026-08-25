@@ -1,5 +1,12 @@
 # Indeed — issues & fixes
 
+## 2026-08-25 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| SmartApply resume-selection rejected Naukri-compressed ~20KB Rafi_Resume.docx (We could not upload your) so new Easy Applies stayed incomplete | Indeed tailor/upload now uses owner master Mohammed_Abdul_Rafi_Ahmed_Resume.docx (3.9MB < 5MB cap) and retries master if SmartApply rejects the file |
+
+
 ## 2026-08-24 (cloud)
 
 | Issue | Fix |
