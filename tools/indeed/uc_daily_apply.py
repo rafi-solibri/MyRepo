@@ -7,10 +7,12 @@ from __future__ import annotations
 
 import contextlib
 import json
+import multiprocessing
 import os
 import re
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.parse
 from pathlib import Path
@@ -284,22 +286,102 @@ def warm_passport_session(sb) -> None:
         print(f"PASSPORT_WARM skip {exc}"[:160], flush=True)
 
 
+def ats_isolate_wall_sec(cap: int) -> int:
+    """Hard wall slightly above the ATS fill cap so a hung Playwright client cannot freeze UC."""
+    return int(os.environ.get("INDEED_ATS_WALL_S") or (int(cap) + 45))
+
+
+def join_process_or_kill(proc, wall: float) -> bool:
+    """Join a child up to ``wall`` seconds. Kill if still alive. True if it exited."""
+    proc.join(wall)
+    if not proc.is_alive():
+        return True
+    print(f"ATS isolate timeout after {int(wall)}s — killing Playwright child", flush=True)
+    try:
+        proc.terminate()
+    except Exception:
+        pass
+    proc.join(8)
+    if proc.is_alive():
+        try:
+            proc.kill()
+        except Exception:
+            pass
+        proc.join(3)
+    return False
+
+
+def _ats_child_entry(url: str, cap: int, out_path: str) -> None:
+    """Spawn-safe Playwright ATS child. Writes [status, reason, final_url] JSON."""
+    try:
+        sys.path.insert(0, str(ROOT))
+        from tools.ats.complete import complete_ats_url
+
+        status, reason, final = complete_ats_url(url, time_cap_s=cap)
+        Path(out_path).write_text(
+            json.dumps([status, reason, final or url]),
+            encoding="utf-8",
+        )
+    except Exception as exc:
+        Path(out_path).write_text(
+            json.dumps(["blocked", f"ats_helper_error:{exc}"[:180], url]),
+            encoding="utf-8",
+        )
+
+
 def complete_external_ats(url: str, time_cap_s: int | None = None) -> tuple[str, str, str]:
     """Finish a company-site ATS after Indeed opens it. Confirmation only.
 
     Indeed "Apply on company site" often leaves us on applystart/rc/clk —
     the completer follows that hop. Only fail if we never leave Indeed.
+
+    Playwright runs in a spawn child with a hard wall. After a SIGTERM'd
+    CDP driver the sync client can deadlock in-process for 10m+.
     """
     if not url:
         return "blocked", "did_not_leave_indeed", ""
+    cap = int(time_cap_s or os.environ.get("INDEED_ATS_TIME_CAP_S") or 390)
+    isolate = os.environ.get("INDEED_ATS_ISOLATE", "1") != "0"
+    if isolate:
+        return _complete_external_ats_isolated(url, cap, ats_isolate_wall_sec(cap))
     try:
         sys.path.insert(0, str(ROOT))
         from tools.ats.complete import complete_ats_url
 
-        cap = int(time_cap_s or os.environ.get("INDEED_ATS_TIME_CAP_S") or 390)
         return complete_ats_url(url, time_cap_s=cap)
     except Exception as exc:
         return "blocked", f"ats_helper_error:{exc}"[:180], url
+
+
+def _complete_external_ats_isolated(
+    url: str, cap: int, wall: int
+) -> tuple[str, str, str]:
+    handle = tempfile.NamedTemporaryFile(
+        prefix="indeed-ats-", suffix=".json", delete=False
+    )
+    out_path = handle.name
+    handle.close()
+    ctx = multiprocessing.get_context("spawn")
+    proc = ctx.Process(target=_ats_child_entry, args=(url, cap, out_path))
+    proc.start()
+    finished = join_process_or_kill(proc, wall)
+    try:
+        raw = Path(out_path).read_text(encoding="utf-8") if Path(out_path).is_file() else ""
+    except Exception:
+        raw = ""
+    try:
+        Path(out_path).unlink(missing_ok=True)
+    except Exception:
+        pass
+    if not finished:
+        return "blocked", "external_incomplete_or_timeout", url
+    try:
+        data = json.loads(raw)
+        if isinstance(data, list) and len(data) >= 3:
+            return str(data[0]), str(data[1]), str(data[2] or url)
+    except Exception as exc:
+        return "blocked", f"ats_helper_error:{exc}"[:180], url
+    return "blocked", "external_incomplete_or_timeout", url
 
 
 def _record_external_result(item, report, status, reason, final_url, ats_url=""):
@@ -675,6 +757,7 @@ def load_today_seen_keys() -> set[str]:
         art / "indeed-daily-run.json",
         art / "indeed-daily-run-pass1.json",
         art / "indeed-daily-run-pass2.json",
+        art / "indeed-daily-run-pass3.json",
         art / "indeed-apply-report.json",
         ROOT / "artifacts" / "indeed-daily-run.json",
     ]
@@ -989,6 +1072,7 @@ def fill_common_questions(sb) -> None:
               title: 'Mr.',
               email: 'rafi.success@gmail.com',
               city: 'Hyderabad',
+              area: 'Gachibowli',
               street: 'Gachibowli Hyderabad',
               postal: '500032',
               current: '52',
@@ -1251,6 +1335,7 @@ def fill_common_questions(sb) -> None:
               else if (/\\bphone\\b|\\bmobile\\b|telephone|phone\\s*no/.test(lab) || type === 'tel') val = vals.phone;
               else if (/e-?mail/.test(lab) || type === 'email') val = vals.email;
               else if (/postal|zip\\s*code|pin\\s*code|pincode/.test(lab) && !/email/.test(lab)) val = vals.postal;
+              else if (/(^|\\s)area(\\s|$|\\*)/.test(lab) && !/email|textarea|work area/.test(lab)) val = vals.area;
               else if (/(street\\s*address|address\\s*line|home\\s*address|^address\\b)/.test(lab)
                   && !/email|ip address|web address/.test(lab)) val = vals.street;
               else if (/current.*(position|role|title|designation)|job title/.test(lab) && !/salary|ctc/.test(lab)) val = 'Solutions Architect';
@@ -1277,7 +1362,7 @@ def fill_common_questions(sb) -> None:
                 const w = wantFromText(lab);
                 if (w) val = w;
               }
-              if (val != null && (!(el.value || '').trim() || /\\bphone\\b|\\bmobile\\b|telephone|phone\\s*no|first|last|full\\s*name|ctc|salary|notice|city|experience|package|linkedin|employer|company|education|degree|birth|dob|start date|available date|address|postal|zip|pin\\s*code/.test(lab) || /^(yes|no)$/i.test(el.value || ''))) {
+              if (val != null && (!(el.value || '').trim() || /\\bphone\\b|\\bmobile\\b|telephone|phone\\s*no|first|last|full\\s*name|ctc|salary|notice|city|\\barea\\b|experience|package|linkedin|employer|company|education|degree|birth|dob|start date|available date|address|postal|zip|pin\\s*code/.test(lab) || /^(yes|no)$/i.test(el.value || ''))) {
                 if (setNative(el, val)) answered += 1;
                 // UST Phone No sometimes rejects bare local numbers — retry +91.
                 if (/\\bphone\\b|\\bmobile\\b|telephone|phone\\s*no/.test(lab) || type === 'tel') {
@@ -1382,7 +1467,7 @@ def fill_common_questions(sb) -> None:
               const lab = labelFor(el);
               const itype = (el.getAttribute('type') || '').toLowerCase();
               const req = el.required || el.getAttribute('aria-required') === 'true' || /required|\\*/.test(lab);
-              if (!req && !/question|ctc|salary|notice|experience|phone|date|address|postal|zip|pin/.test(lab) && itype !== 'date' && itype !== 'tel') continue;
+              if (!req && !/question|ctc|salary|notice|experience|phone|date|address|postal|zip|pin|\\barea\\b/.test(lab) && itype !== 'date' && itype !== 'tel') continue;
               if (/\\bpan\\b|aadhaar|aadhar|passport number|national id/.test(lab)) continue;
               // Do NOT map bare "Date" → DOB (UST Available Date was poisoned by that).
               let w = wantFromText(lab);
@@ -1398,6 +1483,7 @@ def fill_common_questions(sb) -> None:
                 }
                 else if (/\\bphone\\b|\\bmobile\\b|phone\\s*no|telephone/.test(lab) || itype === 'tel') w = vals.phone;
                 else if (/postal|zip\\s*code|pin\\s*code|pincode/.test(lab)) w = vals.postal;
+                else if (/(^|\\s)area(\\s|$|\\*)/.test(lab) && !/email|work area/.test(lab)) w = vals.area;
                 else if (/(street\\s*address|address\\s*line|^address\\b)/.test(lab) && !/email|ip address/.test(lab)) w = vals.street;
                 else if (/city|state\\/territory|state or territory/.test(lab) && !/relocat/.test(lab)) w = vals.city;
               }

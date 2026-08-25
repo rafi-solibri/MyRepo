@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Playwright complete_ats_url deadlocked after CDP driver death; profile-location Area left blank | Spawn-isolate ATS with hard wall+kill; seed pass3 jk keys; fill SmartApply Area=Gachibowli |
 | Pass-2 re-opened today's Senior Application Architect NTT ATS and deadlocked Playwright 10m+ | Seed seen jk keys from same-day indeed-daily-run-pass*.json so post-fix re-runs skip already processed listings |
 | SmartApply resume-selection: We could not upload your resume file then Continue stuck (5 easy_apply_incomplete); cloud ATS parked 10m+ on NTT ASK_OWNER headed wait | Retry/fallback SmartApply resume upload (tailored then master <5MB); do not Continue on upload error; cloud sets ATS_OWNER_ASLEEP so ATS does not park 6-12m |
 
