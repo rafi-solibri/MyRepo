@@ -4,7 +4,12 @@
 
 | Issue | Fix |
 | --- | --- |
+<<<<<<< HEAD
 | Naukri profile STEP 0 silent-fail: master resume ~3.9MB (embedded fonts) exceeds TopTier 2MB client reject; sync-chrome-sessions DESTS[] missing hirist/linkedin_alt entries (unbound variable); Update confirmSave re-opened filepicker | compress_resume_docx.py strips embeds in bootstrap; update_profile_resume TopTier filechooser+#resume+Uploaded today/DD-MM-YYYY verify; sync-chrome-sessions DESTS/COOKIE_SETS/REQUIRED aligned to 8 portals |
+=======
+| UHG Architect company-site hung on cookie + Candidate Experience Survey (Not Now) until 6.5m timeout | complete_page.js dismissAtsOverlays: Accept cookies + Not Now/Later before Apply click |
+| TopTier profile resume stayed Uploaded on 24/08/2026 after setInputFiles + Update click (legacy attachCV/headline missing; verify missed DD/MM/YYYY) | update_profile_resume: #resume filechooser in #profile-section-resume, do not re-click Update as Save, IST Uploaded on DD/MM/YYYY tokens + section scrape |
+>>>>>>> 4a361f0 (fix(naukri): dismiss ATS cookie and survey overlays)
 
 
 ## 2026-08-24 (cloud)

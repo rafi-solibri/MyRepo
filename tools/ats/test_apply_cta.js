@@ -42,4 +42,8 @@ assert.strictEqual(
   ""
 );
 
+const { ATS_OVERLAY_SELECTORS } = require("./complete_page");
+assert.ok(ATS_OVERLAY_SELECTORS.some((s) => /Not [Nn]ow/.test(s)));
+assert.ok(ATS_OVERLAY_SELECTORS.some((s) => /Accept All Cookies/.test(s)));
+
 console.log("tools/ats/test_apply_cta.js OK");

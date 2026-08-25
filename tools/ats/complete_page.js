@@ -88,8 +88,33 @@ async function pageFlags(page) {
   return { url, text, hasFile, hasPassword, hasEmail, hasWd, hasApplyCta };
 }
 
+/** Cookie / survey walls (UHG "Candidate Experience Survey", OneTrust, etc.). */
+const ATS_OVERLAY_SELECTORS = [
+  "button:has-text('Accept All Cookies')",
+  "button:has-text('Accept Cookies')",
+  "button:has-text('Accept all')",
+  "button:has-text('Accept All')",
+  "button:has-text('Not Now')",
+  "button:has-text('Not now')",
+  "button:has-text('Later')",
+  "button:has-text('No thanks')",
+  "[aria-label='Close']",
+  "button:has-text('Accept')",
+];
+
+async function dismissAtsOverlays(page) {
+  for (const sel of ATS_OVERLAY_SELECTORS) {
+    const el = page.locator(sel).first();
+    if (await el.isVisible().catch(() => false)) {
+      await el.click().catch(() => {});
+      await sleep(400);
+    }
+  }
+}
+
 async function completeExternalPage(page, resumePath, { maxMs = 6.5 * 60 * 1000 } = {}) {
   const start = Date.now();
+  await dismissAtsOverlays(page);
   const landing = `${page.url() || ""} ${await page.evaluate(() => (document.body?.innerText || "").slice(0, 1200)).catch(() => "")}`;
   if (isUnavailable(page.url(), landing)) {
     return { ok: false, reason: "job_unavailable", url: page.url() };
@@ -100,6 +125,7 @@ async function completeExternalPage(page, resumePath, { maxMs = 6.5 * 60 * 1000 
     });
   }
   let noAdvance = 0;
+  await dismissAtsOverlays(page);
   await preferGuestApply(page);
   const afterClick = await pageFlags(page);
   if (isBrochureOrDeadEnd(afterClick)) {
@@ -124,6 +150,7 @@ async function completeExternalPage(page, resumePath, { maxMs = 6.5 * 60 * 1000 
     if (challenge) return { ok: false, reason: "captcha_wall", url };
 
     if (isUnavailable(url, text)) return { ok: false, reason: "job_unavailable", url };
+    await dismissAtsOverlays(page);
     // Microsoft/Eightfold SSO chooser has no password field — fail fast.
     if (
       /select a method below to sign in|sign in using (microsoft|google|linkedin|facebook|apple)|if you are a microsoft employee|employees must sign in/i.test(
@@ -171,4 +198,11 @@ async function completeExternalPage(page, resumePath, { maxMs = 6.5 * 60 * 1000 
   return { ok: false, reason: "external_incomplete_or_timeout", url: page.url() };
 }
 
-module.exports = { completeExternalPage, looksWorkday, pageFlags, preferGuestApply };
+module.exports = {
+  completeExternalPage,
+  looksWorkday,
+  pageFlags,
+  preferGuestApply,
+  dismissAtsOverlays,
+  ATS_OVERLAY_SELECTORS,
+};
