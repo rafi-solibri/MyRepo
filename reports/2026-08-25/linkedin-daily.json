@@ -1,24 +1,40 @@
 {
   "date": "2026-08-25",
   "portal": "linkedin",
+  "source": "cloud-postfix-rerun",
   "status": "stopped_login_required",
   "easyApplySubmitted": 0,
   "externalCompleted": 0,
+  "ok": false,
+  "counts": {
+    "applied": 0,
+    "external": 0,
+    "rejected": 0,
+    "blocked": 1,
+    "skipped": 0,
+    "seen": 0
+  },
+  "submitted": [],
+  "applied": [],
+  "external": [],
   "skipped": [],
   "blocked": [
     {
-      "reason": "wrong_password",
-      "detail": "Auto-login: Google SSO timed out; LINKEDIN_PASSWORD candidates rejected with Wrong email or password",
-      "artifact": "/opt/cursor/artifacts/linkedin-auto-login-wrong-password.png"
+      "reason": "captcha_checkpoint",
+      "detail": "Post-fix re-run on merged main: preflight OK; live li_at stale; Google SSO timed out; LINKEDIN_PASSWORD rejected (Wrong email or password); second candidate hit Security Verification reCAPTCHA (auto-login exit 6)",
+      "artifact": "/opt/cursor/artifacts/linkedin-auto-login-captcha.png"
     }
   ],
-  "submitted": [],
+  "blockerSummary": "LinkedIn login required: stale li_at, wrong password secret, then CAPTCHA checkpoint",
   "codeFix": {
     "files": ["scripts/sync-chrome-sessions.sh"],
-    "summary": "Align DESTS/COOKIE_SETS/REQUIRED with PORTALS after hirist addition"
+    "summary": "Used already-merged #257 DESTS/COOKIE_SETS/REQUIRED alignment; no new code fix this re-run"
   },
   "ownerAction": [
-    "Refresh LINKEDIN_PASSWORD (and optionally GOOGLE_PASSWORD)",
-    "If CAPTCHA persists: headed-login + portal session seed"
-  ]
+    "Refresh LINKEDIN_PASSWORD (rejected as Wrong email or password)",
+    "Set GOOGLE_PASSWORD if Google SSO should recover a stale session",
+    "Headed-login + portal session seed after CAPTCHA: bash scripts/home-headed-login.sh linkedin"
+  ],
+  "agent": "https://cursor.com/agents/bc-6f2dea6d-f466-4cb8-8266-d653604dc725",
+  "mergedFixPr": "https://github.com/rafi-solibri/MyRepo/pull/257"
 }

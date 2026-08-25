@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| post-fix re-run on merged #257: preflight OK but live li_at stale; password rejected then CAPTCHA (exit 6) | no new code fix (owner-only login/CAPTCHA); report updated; did not launch another re-run |
 | preflight sync-chrome-sessions unbound DESTS after hirist portal added (arrays length mismatch) | Same-day fix already on main via #257 (hirist dest+token; REQUIRED optional for hirist/linkedin_alt); this run recorded report + confirmed preflight after pull |
 
 
