@@ -19,6 +19,20 @@ if [[ ! -f "$SRC" ]]; then
   exit 1
 fi
 
+# Naukri (and some ATS) reject >2MB client-side. Master embeds large fonts —
+# strip embeds into the upload copy; leave OWNER_SRC untouched.
+PY="$(bash "$ROOT/scripts/resolve-python.sh" 2>/dev/null || echo python3)"
+if [[ "$PY" == "py" ]]; then
+  py -3 "$ROOT/tools/compress_resume_docx.py" "$SRC" || true
+else
+  "$PY" "$ROOT/tools/compress_resume_docx.py" "$SRC" || true
+fi
+if [[ "$(wc -c <"$SRC")" -gt 2097152 ]]; then
+  echo "ERROR: $SRC is still >2MB after compress; Naukri profile upload will silently fail" >&2
+  ls -la "$SRC" "$OWNER_SRC" 2>/dev/null || true
+  exit 1
+fi
+
 copy_one() {
   local dest="$1"
   mkdir -p "$(dirname "$dest")" 2>/dev/null || return 0

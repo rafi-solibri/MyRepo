@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-08-25 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Naukri profile STEP 0 silent-fail: master resume ~3.9MB (embedded fonts) exceeds TopTier 2MB client reject; sync-chrome-sessions DESTS[] missing hirist/linkedin_alt entries (unbound variable); Update confirmSave re-opened filepicker | compress_resume_docx.py strips embeds in bootstrap; update_profile_resume TopTier filechooser+#resume+Uploaded today/DD-MM-YYYY verify; sync-chrome-sessions DESTS/COOKIE_SETS/REQUIRED aligned to 8 portals |
+
+
 ## 2026-08-24 (cloud)
 
 | Issue | Fix |
