@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| POST_FIX_RERUN on merged main: preflight OK; live login still blocked (stale GSI + both password secrets rejected by Google; LinkedIn password hit Security Verification CAPTCHA) | Owner-only: refresh LINKEDIN_PASSWORD and GOOGLE_PASSWORD then headed-login if CAPTCHA persists; no new code loop (2/5 same-day re-runs used) |
 | preflight sync-chrome-sessions unbound DESTS after hirist portal added (arrays length mismatch) | Same-day fix already on main via #257 (hirist dest+token; REQUIRED optional for hirist/linkedin_alt); this run recorded report + confirmed preflight after pull |
 
 

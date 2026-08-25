@@ -2,23 +2,35 @@
   "date": "2026-08-25",
   "portal": "linkedin",
   "status": "stopped_login_required",
+  "postFixRerun": true,
   "easyApplySubmitted": 0,
   "externalCompleted": 0,
   "skipped": [],
   "blocked": [
     {
       "reason": "wrong_password",
-      "detail": "Auto-login: Google SSO timed out; LINKEDIN_PASSWORD candidates rejected with Wrong email or password",
-      "artifact": "/opt/cursor/artifacts/linkedin-auto-login-wrong-password.png"
+      "detail": "POST_FIX_RERUN: preflight OK on merged main; Google SSO identifier filled; LINKEDIN_PASSWORD and NAUKRI_WORKDAY_PASSWORD rejected by Google (Wrong password). Earlier LinkedIn password attempt hit Security Verification reCAPTCHA (exit 6). GOOGLE_PASSWORD unset.",
+      "artifact": "/opt/cursor/artifacts/linkedin-google-after-ident-1.png"
+    },
+    {
+      "reason": "captcha_checkpoint",
+      "detail": "LinkedIn /checkpoint/challenge Security Verification reCAPTCHA after password candidate; no solver keys",
+      "artifact": "/opt/cursor/artifacts/linkedin-rerun-page-0.png"
     }
   ],
   "submitted": [],
   "codeFix": {
-    "files": ["scripts/sync-chrome-sessions.sh"],
-    "summary": "Align DESTS/COOKIE_SETS/REQUIRED with PORTALS after hirist addition"
+    "files": [],
+    "summary": "No new code fix. Preflight hirist array mismatch already on main (#257). Owner must refresh password secrets / headed-login."
   },
   "ownerAction": [
-    "Refresh LINKEDIN_PASSWORD (and optionally GOOGLE_PASSWORD)",
-    "If CAPTCHA persists: headed-login + portal session seed"
-  ]
+    "Refresh LINKEDIN_PASSWORD and GOOGLE_PASSWORD (both current secrets rejected)",
+    "If CAPTCHA persists: headed-login + portal session seed",
+    "Re-run LinkedIn Daily only after a live session exists"
+  ],
+  "rerunCap": {
+    "used": 2,
+    "max": 5,
+    "date": "2026-08-25"
+  }
 }
