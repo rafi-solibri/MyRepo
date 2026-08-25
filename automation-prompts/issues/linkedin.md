@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-08-25 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| preflight sync-chrome-sessions unbound DESTS after hirist portal added (arrays length mismatch) | Same-day fix already on main via #257 (hirist dest+token; REQUIRED optional for hirist/linkedin_alt); this run recorded report + confirmed preflight after pull |
+
+
 ## 2026-08-24 (cloud)
 
 | Issue | Fix |
