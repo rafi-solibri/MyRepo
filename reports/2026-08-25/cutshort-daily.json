@@ -1,0 +1,44 @@
+{
+  "portal": "job-board-daily",
+  "source": "cloud-postfix-rerun",
+  "date": "2026-08-25",
+  "finishedAt": "2026-08-25T03:43:26.869Z",
+  "ok": true,
+  "head": "c507fd250cc273052e1d23c2579dfa697f54f58b",
+  "mergedFixPr": 257,
+  "postFixRerun": 1,
+  "counts": {
+    "applied": 0,
+    "external": 0,
+    "rejected": 0,
+    "blocked": 0,
+    "skipped": 0,
+    "seen": 3271,
+    "qualifying": 0,
+    "questionnairesAnswered": 0,
+    "questionnairesLockedEmpty": 0
+  },
+  "skipReasons": {
+    "ctc_under_35": 1213,
+    "location": 221,
+    "skip_title": 773,
+    "no_tier_match": 46,
+    "exp_max_low": 1018
+  },
+  "applied": [],
+  "external": [],
+  "rejected": [],
+  "blocked": [],
+  "skipped": [],
+  "blockerSummary": null,
+  "notes": [
+    "POST_FIX_RERUN=1 on merged main after #257",
+    "qualifying=0",
+    "q_answered=0",
+    "q_locked_empty=0",
+    "q_already_submitted=0",
+    "tailored_built=0",
+    "tailored_uploaded=0",
+    "no applies invented"
+  ]
+}
