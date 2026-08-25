@@ -1,0 +1,360 @@
+{
+  "date": "2026-08-25",
+  "postFixRerun": 3,
+  "mergedPr": "https://github.com/rafi-solibri/MyRepo/pull/263",
+  "head": "041cecc",
+  "startedAt": "2026-08-25T05:12:55.858Z",
+  "finishedAt": "2026-08-25T05:33:20.663Z",
+  "resume": "/workspace/resumes/Rafi_Resume.docx",
+  "counts": {
+    "profileUpdated": true,
+    "applied": 6,
+    "externalCompleted": 0,
+    "blocked": 4,
+    "skipped": 2855,
+    "seen": 263,
+    "tailoredApplies": 6
+  },
+  "profileResumeRefresh": {
+    "ok": true,
+    "profileUpdated": true,
+    "verify": {
+      "todayHit": true,
+      "resumePresent": true,
+      "matchedToken": "Uploaded today",
+      "updateOn": "",
+      "updatedLines": [
+        "Uploaded today"
+      ],
+      "resumeName": "Resume\nUpdate\n\nRafi_Resume.docx\n\nUploaded today",
+      "tokensTried": [
+        "Updated today",
+        "updated today",
+        "Uploaded today",
+        "uploaded today",
+        "Today"
+      ]
+    },
+    "masterEnsure": {
+      "ok": true,
+      "exitCode": 0,
+      "info": {
+        "owner": "/workspace/resumes/Mohammed_Abdul_Rafi_Ahmed_Resume.docx",
+        "upload": "/workspace/resumes/Rafi_Resume.docx",
+        "ownerBytes": 3957700,
+        "uploadBytes": 20945,
+        "textSha256": "403c6a36869581a9a9146f8634c4ffcaac4f8f7c5aa847d86fcf54f83b91109f",
+        "uploadTextSha256": "403c6a36869581a9a9146f8634c4ffcaac4f8f7c5aa847d86fcf54f83b91109f"
+      },
+      "stderr": ""
+    }
+  },
+  "profileResumeRestored": {
+    "ok": true,
+    "resume": "/workspace/resumes/Rafi_Resume.docx"
+  },
+  "applied": [
+    {
+      "company": "Hiring for an IT Services & Consulting company",
+      "role": "Snowflake - Lead Development Engineer",
+      "location": "Hybrid - Hyderabad",
+      "naukriUrl": "https://www.naukri.com/engineering-manager-jobs-in-hyderabad-secunderabad?k=engineering%20manager&l=hyderabad&experience=12&jobAge=1",
+      "query": "engineering manager",
+      "age": 1,
+      "loc": "hyderabad",
+      "resume": "/tmp/naukri-tailored/e9d03561bfc3/Rafi_Resume.docx",
+      "tailored": true,
+      "tailorSkills": [
+        ".NET Core / C#",
+        "Azure",
+        "AWS",
+        "Kafka",
+        "REST APIs",
+        "SQL Server / PostgreSQL",
+        "Cloud Architecture",
+        "Mentoring / Code Reviews"
+      ],
+      "tailorHeadline": "Solutions Architect | Technical Lead \u2014 .NET Core / C# \u00b7 Azure \u00b7 AWS \u00b7 Kafka",
+      "profileTailorUpload": {
+        "ok": true,
+        "profileUpdated": true
+      },
+      "path": "Naukri",
+      "cta": "chatbot:responses_thanks",
+      "recruiterNote": false,
+      "naukriJobUrl": "https://www.naukri.com/job-listings-snowflake-lead-development-engineer-teizosoft-hyderabad-8-to-13-years-250826009170?src=directSearch"
+    },
+    {
+      "company": "Innova Solutions",
+      "role": "Senior .NET Engineer",
+      "location": "Hybrid - Hyderabad, Noida, Bengaluru",
+      "naukriUrl": "https://www.naukri.com/principal-engineer-net-jobs-in-hyderabad-secunderabad?k=principal%20engineer%20.net&l=hyderabad&experience=12&jobAge=30",
+      "query": "principal engineer .net",
+      "age": 30,
+      "loc": "hyderabad",
+      "resume": "/tmp/naukri-tailored/20253fe3ad43/Rafi_Resume.docx",
+      "tailored": true,
+      "tailorSkills": [
+        ".NET Core / C#",
+        "Microservices"
+      ],
+      "tailorHeadline": "Solutions Architect | Technical Lead \u2014 .NET Core / C# \u00b7 Microservices",
+      "profileTailorUpload": {
+        "ok": true,
+        "profileUpdated": true
+      },
+      "path": "Naukri",
+      "cta": "view_applied_jobs",
+      "recruiterNote": false,
+      "naukriJobUrl": "https://www.naukri.com/job-listings-senior-net-engineer-innova-solutions-noida-hyderabad-bengaluru-7-to-12-years-280726031544?src=directSearch"
+    },
+    {
+      "company": "Leading Consumer Products GCC",
+      "role": "Cloud Architect",
+      "location": "Hyderabad",
+      "naukriUrl": "https://www.naukri.com/cloud-architect-net-jobs-in-hyderabad-secunderabad?k=cloud%20architect%20.net&l=hyderabad&experience=12&jobAge=60",
+      "query": "cloud architect .net",
+      "age": 60,
+      "loc": "hyderabad",
+      "resume": "/tmp/naukri-tailored/9adbcf2778d5/Rafi_Resume.docx",
+      "tailored": true,
+      "tailorSkills": [
+        ".NET Core / C#",
+        "Azure",
+        "AWS",
+        "Kubernetes",
+        "Docker",
+        "CI/CD / Jenkins",
+        "Cloud Architecture"
+      ],
+      "tailorHeadline": "Solutions Architect | Technical Lead \u2014 .NET Core / C# \u00b7 Azure \u00b7 AWS \u00b7 Kubernetes",
+      "profileTailorUpload": {
+        "ok": true,
+        "profileUpdated": true
+      },
+      "path": "Naukri",
+      "cta": "chatbot:responses_thanks",
+      "recruiterNote": false,
+      "naukriJobUrl": "https://www.naukri.com/job-listings-cloud-architect-michael-page-hyderabad-9-to-13-years-290726034841?src=directSearch"
+    },
+    {
+      "company": "Presidio Solutions",
+      "role": "Cloud Migration Associate Architect",
+      "location": "Hyderabad, Chennai, Bengaluru",
+      "naukriUrl": "https://www.naukri.com/cloud-architect-net-jobs-in-hyderabad-secunderabad?k=cloud%20architect%20.net&l=hyderabad&experience=12&jobAge=60",
+      "query": "cloud architect .net",
+      "age": 60,
+      "loc": "hyderabad",
+      "resume": "/tmp/naukri-tailored/99a06c7ab05e/Rafi_Resume.docx",
+      "tailored": true,
+      "tailorSkills": [
+        ".NET Core / C#",
+        "Azure",
+        "AWS",
+        "Kubernetes",
+        "Docker",
+        "CI/CD / Jenkins",
+        "Cloud Architecture"
+      ],
+      "tailorHeadline": "Solutions Architect | Technical Lead \u2014 .NET Core / C# \u00b7 Azure \u00b7 AWS \u00b7 Kubernetes",
+      "profileTailorUpload": {
+        "ok": true,
+        "profileUpdated": true
+      },
+      "path": "Naukri",
+      "cta": "chatbot:responses_thanks",
+      "recruiterNote": false,
+      "naukriJobUrl": "https://www.naukri.com/job-listings-cloud-migration-associate-architect-presidio-solutions-hyderabad-chennai-bengaluru-10-to-12-years-290726015677?src=directSearch"
+    },
+    {
+      "company": "Centroid",
+      "role": "OCI Cloud Architect",
+      "location": "Remote",
+      "naukriUrl": "https://www.naukri.com/cloud-architect-net-jobs-in-hyderabad-secunderabad?k=cloud%20architect%20.net&l=hyderabad&experience=12&jobAge=60",
+      "query": "cloud architect .net",
+      "age": 60,
+      "loc": "hyderabad",
+      "resume": "/tmp/naukri-tailored/cbb5a53debf1/Rafi_Resume.docx",
+      "tailored": true,
+      "tailorSkills": [
+        ".NET Core / C#",
+        "Kubernetes",
+        "Cloud Architecture"
+      ],
+      "tailorHeadline": "Solutions Architect | Technical Lead \u2014 .NET Core / C# \u00b7 Kubernetes \u00b7 Cloud Architecture",
+      "profileTailorUpload": {
+        "ok": true,
+        "profileUpdated": true
+      },
+      "path": "Naukri",
+      "cta": "chatbot:responses_thanks",
+      "recruiterNote": false,
+      "naukriJobUrl": "https://www.naukri.com/job-listings-oci-cloud-architect-centroid-hyderabad-10-to-15-years-030626010598?src=directSearch"
+    },
+    {
+      "company": "Xtrm India",
+      "role": "Azure Solution Architect",
+      "location": "Remote",
+      "naukriUrl": "https://www.naukri.com/mnjuser/homepage",
+      "query": "homepage",
+      "resume": "/tmp/naukri-tailored/c0c770d88b53/Rafi_Resume.docx",
+      "tailored": true,
+      "tailorSkills": [
+        ".NET Core / C#",
+        "Azure",
+        "Kubernetes",
+        "Docker",
+        "Microservices",
+        "Event-Driven Architecture",
+        "REST APIs",
+        "SQL Server / PostgreSQL",
+        "CI/CD / Jenkins",
+        "Distributed Systems"
+      ],
+      "tailorHeadline": "Solutions Architect | Technical Lead \u2014 .NET Core / C# \u00b7 Azure \u00b7 Kubernetes \u00b7 Docker",
+      "profileTailorUpload": {
+        "ok": true,
+        "profileUpdated": true
+      },
+      "path": "Naukri",
+      "cta": "chatbot:responses_thanks",
+      "recruiterNote": false,
+      "naukriJobUrl": "https://www.naukri.com/job-listings-azure-solution-architect-xtrm-india-chennai-10-to-20-years-170226024718?src=drecomm_dashboard_aurus"
+    }
+  ],
+  "blocked": [
+    {
+      "company": "Qualcomm",
+      "role": "Cloud Platform Development Engineer -Staff",
+      "location": "Hyderabad, Bengaluru",
+      "naukriUrl": "https://www.naukri.com/engineering-manager-jobs-in-hyderabad-secunderabad?k=engineering%20manager&l=hyderabad&experience=12&jobAge=1",
+      "query": "engineering manager",
+      "age": 1,
+      "loc": "hyderabad",
+      "resume": "/tmp/naukri-tailored/966f84b9005c/Rafi_Resume.docx",
+      "tailored": true,
+      "tailorSkills": [
+        ".NET Core / C#",
+        "Azure",
+        "AWS",
+        "Kubernetes",
+        "Docker",
+        "Microservices",
+        "CI/CD / Jenkins",
+        "Cloud Architecture"
+      ],
+      "tailorHeadline": "Staff Engineer | Technical Architect \u2014 .NET Core / C# \u00b7 Azure \u00b7 AWS \u00b7 Kubernetes",
+      "reason": "ats_login_wall",
+      "url": "https://careers.qualcomm.com/careers/apply?pid=446720272187",
+      "path": "company_ATS"
+    },
+    {
+      "company": "Wells Fargo",
+      "role": "Principal Engineer",
+      "location": "Hyderabad",
+      "naukriUrl": "https://www.naukri.com/engineering-manager-jobs-in-hyderabad-secunderabad?k=engineering%20manager&l=hyderabad&experience=12&jobAge=1",
+      "query": "engineering manager",
+      "age": 1,
+      "loc": "hyderabad",
+      "resume": "/tmp/naukri-tailored/201b34173de1/Rafi_Resume.docx",
+      "tailored": true,
+      "tailorSkills": [
+        ".NET Core / C#",
+        "Azure",
+        "AWS",
+        "Kubernetes",
+        "Docker",
+        "CI/CD / Jenkins",
+        "Cloud Architecture"
+      ],
+      "tailorHeadline": "Principal Engineer | Solutions Architect \u2014 .NET Core / C# \u00b7 Azure \u00b7 AWS \u00b7 Kubernetes",
+      "reason": "ats_login_wall",
+      "url": "https://wd1.myworkdaysite.com/en-US/recruiting/wf/WellsFargoJobs/job/Hyderabad%2C-India/Principal-Engineer_R-568420/apply/applyManually",
+      "path": "company_ATS"
+    },
+    {
+      "company": "Qualcomm",
+      "role": "Principal Engineer - Core Platform Storage",
+      "location": "Hyderabad",
+      "naukriUrl": "https://www.naukri.com/principal-engineer-jobs-in-hyderabad-secunderabad?k=principal%20engineer&l=hyderabad&experience=12&jobAge=1",
+      "query": "principal engineer",
+      "age": 1,
+      "loc": "hyderabad",
+      "resume": "/tmp/naukri-tailored/1cfb554c1771/Rafi_Resume.docx",
+      "tailored": true,
+      "tailorSkills": [
+        ".NET Core / C#"
+      ],
+      "tailorHeadline": "Principal Engineer | Solutions Architect \u2014 .NET Core / C#",
+      "reason": "ats_login_wall",
+      "url": "https://careers.qualcomm.com/careers/apply?pid=446717672570",
+      "path": "company_ATS"
+    },
+    {
+      "company": "Qualcomm",
+      "role": "Principal Engineer- Camera",
+      "location": "Hyderabad",
+      "naukriUrl": "https://www.naukri.com/principal-engineer-jobs-in-hyderabad-secunderabad?k=principal%20engineer&l=hyderabad&experience=12&jobAge=1",
+      "query": "principal engineer",
+      "age": 1,
+      "loc": "hyderabad",
+      "resume": "/tmp/naukri-tailored/5a8bff54cc01/Rafi_Resume.docx",
+      "tailored": true,
+      "tailorSkills": [
+        ".NET Core / C#",
+        "REST APIs"
+      ],
+      "tailorHeadline": "Principal Engineer | Solutions Architect \u2014 .NET Core / C# \u00b7 REST APIs",
+      "reason": "ats_login_wall",
+      "url": "https://careers.qualcomm.com/careers/apply?pid=446717554986",
+      "path": "company_ATS"
+    }
+  ],
+  "external": [],
+  "earlyExpandedAges": [
+    3,
+    7
+  ],
+  "expandedAges": [
+    15,
+    30,
+    60
+  ],
+  "extraQueries": [
+    ".net azure architect",
+    "solution architect azure",
+    "dotnet engineering manager",
+    "principal software engineer .net",
+    "technical architect c#",
+    "cloud architect .net"
+  ],
+  "skipReasons": {
+    "duplicate_in_run": 2583,
+    "skip_title_keyword": 177,
+    "skip_no_dotnet": 34,
+    "skip_seniority": 29,
+    "skip_company": 13,
+    "skip_ctc_max_30": 6,
+    "skip_location": 6,
+    "hirist_login_required_skip": 3,
+    "skip_jd_non_dotnet_detail": 2,
+    "already_applied_detail": 1,
+    "skip_ctc_max_32.5": 1
+  },
+  "alreadyAppliedSkipped": [
+    {
+      "company": "Clean Harbors",
+      "role": ".Net Fullstack Tech Lead",
+      "location": "Hyderabad",
+      "naukriUrl": "https://www.naukri.com/net-lead-jobs-in-hyderabad-secunderabad?k=.net%20lead&l=hyderabad&experience=12&jobAge=30",
+      "query": ".net lead",
+      "age": 30,
+      "loc": "hyderabad",
+      "resume": "/workspace/resumes/Rafi_Resume.docx",
+      "reason": "already_applied_detail",
+      "naukriJobUrl": "https://www.naukri.com/job-listings-net-fullstack-tech-lead-clean-harbors-hyderabad-10-to-14-years-230226023126?src=directSearch",
+      "cta": "Applied",
+      "ctaState": "applied"
+    }
+  ]
+}
