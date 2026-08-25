@@ -1,0 +1,46 @@
+{
+  "startedAt": "2026-08-25T03:39:12.478391+00:00",
+  "focus": "Knowledge City / Knowledge Park / Mindspace Madhapur / premium HITEC buildings",
+  "parallelTabs": 10,
+  "discovery": {
+    "added": 0,
+    "updated": 92,
+    "total": 92,
+    "prunedJunk": [],
+    "campusCatalogAdded": 0,
+    "webDirectoryAdded": 0,
+    "webDirectoryErrors": 0,
+    "linkedinError": null,
+    "report": "/opt/cursor/artifacts/campus-discovery.json",
+    "addedNames": []
+  },
+  "careers": {
+    "applied": 0,
+    "blocked": 9,
+    "skipped": 14,
+    "scanned": 90,
+    "report": "/opt/cursor/artifacts/campus-careers.json"
+  },
+  "linkedin": {
+    "skippedPhase": "careers_only"
+  },
+  "boards": {
+    "skippedPhase": "careers_only"
+  },
+  "totals": {
+    "applied": 0,
+    "referralsSent": 0,
+    "blocked": 9,
+    "skipped": 14,
+    "discoveryAdded": 0
+  },
+  "errors": [],
+  "counts": {
+    "applied": 0,
+    "blocked": 9,
+    "skipped": 14,
+    "seen": 23
+  },
+  "ok": true,
+  "finishedAt": "2026-08-25T03:44:00.883151+00:00"
+}

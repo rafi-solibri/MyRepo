@@ -1,0 +1,780 @@
+{
+  "startedAt": "2026-08-25T03:39:15.538139+00:00",
+  "finishedAt": "2026-08-25T03:44:00.882219+00:00",
+  "applied": [],
+  "blocked": [
+    {
+      "company": "JPMorgan Chase",
+      "role": "Lead Software Engineer Hyderabad",
+      "url": "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/job/210767993/?keyword=Engineering+Manager&location=Hyderabad%252C+Telangana%252C+India&locationId=300000081155702&locationLevel=city&mode=location&radius=25&radiusUnit=KM",
+      "campus": "sattva-knowledge-city,mindspace-madhapur",
+      "path": "company-careers",
+      "status": "blocked",
+      "reason": "CAPTCHA/bot wall",
+      "finalUrl": "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/job/210767993/apply/email?keyword=Engineering+Manager&location=Hyderabad%252C+Telangana%252C+India&locationId=300000081155702&locationLevel=city&mode=location&radius=25&radiusUnit=KM"
+    },
+    {
+      "company": "JPMorgan Chase",
+      "role": "Lead Software Engineer Hyderabad",
+      "url": "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/job/210764822/?keyword=Engineering+Manager&location=Hyderabad%252C+Telangana%252C+India&locationId=300000081155702&locationLevel=city&mode=location&radius=25&radiusUnit=KM",
+      "campus": "sattva-knowledge-city,mindspace-madhapur",
+      "path": "company-careers",
+      "status": "blocked",
+      "reason": "CAPTCHA/bot wall",
+      "finalUrl": "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/job/210764822/apply/email?keyword=Engineering+Manager&location=Hyderabad%252C+Telangana%252C+India&locationId=300000081155702&locationLevel=city&mode=location&radius=25&radiusUnit=KM"
+    },
+    {
+      "company": "JPMorgan Chase",
+      "role": "Lead Software Engineer Hyderabad",
+      "url": "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/job/210776310/?keyword=Engineering+Manager&location=Hyderabad%252C+Telangana%252C+India&locationId=300000081155702&locationLevel=city&mode=location&radius=25&radiusUnit=KM",
+      "campus": "sattva-knowledge-city,mindspace-madhapur",
+      "path": "company-careers",
+      "status": "blocked",
+      "reason": "CAPTCHA/bot wall",
+      "finalUrl": "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/job/210776310/apply/email?keyword=Engineering+Manager&location=Hyderabad%252C+Telangana%252C+India&locationId=300000081155702&locationLevel=city&mode=location&radius=25&radiusUnit=KM"
+    },
+    {
+      "company": "Experian",
+      "role": "Lead Software Engineer - Mainframe Hyderabad, India Full-time",
+      "url": "https://jobs.smartrecruiters.com/Experian/744000142144341-lead-software-engineer-mainframe",
+      "campus": "mindspace-madhapur,cyber-pearl",
+      "path": "company-careers",
+      "status": "blocked",
+      "reason": "CAPTCHA/bot wall",
+      "finalUrl": "https://jobs.smartrecruiters.com/oneclick-ui/company/Experian/publication/352d1553-b276-4996-83b1-1a96c0c50fdc?dcr_ci=Experian"
+    },
+    {
+      "company": "Experian",
+      "role": "Director of Engineering Hyderabad, India Full-time",
+      "url": "https://jobs.smartrecruiters.com/Experian/744000141222695-director-of-engineering",
+      "campus": "mindspace-madhapur,cyber-pearl",
+      "path": "company-careers",
+      "status": "blocked",
+      "reason": "CAPTCHA/bot wall",
+      "finalUrl": "https://jobs.smartrecruiters.com/oneclick-ui/company/Experian/publication/95f37a7c-b295-4613-a8e0-396f78fc22dc?dcr_ci=Experian"
+    },
+    {
+      "company": "Experian",
+      "role": "Senior Staff Software Engineer Hyderabad, India Full-time",
+      "url": "https://jobs.smartrecruiters.com/Experian/744000140435649-senior-staff-software-engineer",
+      "campus": "mindspace-madhapur,cyber-pearl",
+      "path": "company-careers",
+      "status": "blocked",
+      "reason": "CAPTCHA/bot wall",
+      "finalUrl": "https://jobs.smartrecruiters.com/oneclick-ui/company/Experian/publication/bd9a7ebd-b593-42b1-8c44-3f170b555a6a?dcr_ci=Experian"
+    },
+    {
+      "company": "ModMed",
+      "role": "Principal, Cloud Engineer \u00b7 Hyderabad, India",
+      "url": "https://modmed.wd501.myworkdayjobs.com/en-US/ModMed12/job/Hyderabad-India/Principal--Cloud-Engineer_R4797?keywords=Engineering%20Manager&location=Hyderabad&locations=91eec4414de21001e574c826c6b00000",
+      "campus": "mindspace-madhapur,cyber-pearl",
+      "path": "company-careers",
+      "status": "blocked",
+      "reason": "ats_login_wall",
+      "finalUrl": "https://modmed.wd501.myworkdayjobs.com/en-US/ModMed12/login?redirect=%2Fen-US%2FModMed12%2Fjob%2FHyderabad%252C-India%2FPrincipal--Cloud-Engineer_R4797%2Fapply%2FautofillWithResume%3Fkeywords%3DEngineering%2520Manager%26location%3DHyderabad%26locations%3D91eec4414de21001e574c826c6b00000"
+    },
+    {
+      "company": "ModMed",
+      "role": "Senior Software Architect \u00b7 Hyderabad, India",
+      "url": "https://modmed.wd501.myworkdayjobs.com/en-US/ModMed12/job/Hyderabad-India/Senior-Software-Architect_R4230?keywords=Engineering%20Manager&location=Hyderabad&locations=91eec4414de21001e574c826c6b00000",
+      "campus": "mindspace-madhapur,cyber-pearl",
+      "path": "company-careers",
+      "status": "blocked",
+      "reason": "ats_login_wall",
+      "finalUrl": "https://modmed.wd501.myworkdayjobs.com/en-US/ModMed12/login?redirect=%2Fen-US%2FModMed12%2Fjob%2FHyderabad%252C-India%2FSenior-Software-Architect_R4230%2Fapply%2FautofillWithResume%3Fkeywords%3DEngineering%2520Manager%26location%3DHyderabad%26locations%3D91eec4414de21001e574c826c6b00000"
+    },
+    {
+      "company": "ModMed",
+      "role": "Principal, Cloud Engineer \u00b7 Hyderabad, India",
+      "url": "https://modmed.wd501.myworkdayjobs.com/en-US/ModMed12/job/Hyderabad-India/Principal--Cloud-Engineer_R4797?keywords=Technical%20Lead&location=Hyderabad",
+      "campus": "mindspace-madhapur,cyber-pearl",
+      "path": "company-careers",
+      "status": "blocked",
+      "reason": "ats_login_wall",
+      "finalUrl": "https://modmed.wd501.myworkdayjobs.com/en-US/ModMed12/login?redirect=%2Fen-US%2FModMed12%2Fjob%2FHyderabad%252C-India%2FPrincipal--Cloud-Engineer_R4797%2Fapply%2FautofillWithResume%3Fkeywords%3DTechnical%2520Lead%26location%3DHyderabad"
+    }
+  ],
+  "skipped": [
+    {
+      "company": "Intel",
+      "url": "https://intel.wd1.myworkdayjobs.com/en-US/External?q=Engineering+Manager&location=Hyderabad",
+      "status": "skipped",
+      "reason": "workday_no_hyderabad_facet"
+    },
+    {
+      "company": "Solera",
+      "url": "https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site?q=Engineering+Manager&location=Hyderabad",
+      "status": "skipped",
+      "reason": "workday_no_hyderabad_facet"
+    },
+    {
+      "company": "Apple",
+      "url": "https://jobs.apple.com/en-in/search?search=Engineering+Manager&location=hyderabad-HST430090",
+      "status": "skipped",
+      "reason": "hang_scan_host"
+    },
+    {
+      "company": "Apple",
+      "url": "https://jobs.apple.com/en-in/search?search=Technical+Lead&location=hyderabad-HST430090",
+      "status": "skipped",
+      "reason": "hang_scan_host"
+    },
+    {
+      "company": "Apple",
+      "url": "https://jobs.apple.com/en-in/search?search=Staff+Software+Engineer&location=hyderabad-HST430090",
+      "status": "skipped",
+      "reason": "hang_scan_host"
+    },
+    {
+      "company": "Apple",
+      "url": "https://jobs.apple.com/en-in/search?search=Principal+Software+Engineer&location=hyderabad-HST430090",
+      "status": "skipped",
+      "reason": "hang_scan_host"
+    },
+    {
+      "company": "Goldman Sachs",
+      "url": "https://higher.gs.com/results?keyword=Engineering+Manager&location=Hyderabad",
+      "status": "skipped",
+      "reason": "hang_scan_host"
+    },
+    {
+      "company": "Goldman Sachs",
+      "url": "https://higher.gs.com/results?keyword=Technical+Lead&location=Hyderabad",
+      "status": "skipped",
+      "reason": "hang_scan_host"
+    },
+    {
+      "company": "Goldman Sachs",
+      "url": "https://higher.gs.com/results?keyword=Staff+Software+Engineer&location=Hyderabad",
+      "status": "skipped",
+      "reason": "hang_scan_host"
+    },
+    {
+      "company": "Goldman Sachs",
+      "url": "https://higher.gs.com/results?keyword=Principal+Software+Engineer&location=Hyderabad",
+      "status": "skipped",
+      "reason": "hang_scan_host"
+    },
+    {
+      "company": "Meta",
+      "url": "https://www.metacareers.com/jobs?q=Engineering+Manager&location=Hyderabad",
+      "status": "skipped",
+      "reason": "hang_scan_host"
+    },
+    {
+      "company": "Meta",
+      "url": "https://www.metacareers.com/jobs?q=Technical+Lead&location=Hyderabad",
+      "status": "skipped",
+      "reason": "hang_scan_host"
+    },
+    {
+      "company": "Meta",
+      "url": "https://www.metacareers.com/jobs?q=Staff+Software+Engineer&location=Hyderabad",
+      "status": "skipped",
+      "reason": "hang_scan_host"
+    },
+    {
+      "company": "Meta",
+      "url": "https://www.metacareers.com/jobs?q=Principal+Software+Engineer&location=Hyderabad",
+      "status": "skipped",
+      "reason": "hang_scan_host"
+    }
+  ],
+  "scanned": [
+    {
+      "company": "Hyland",
+      "url": "https://careers-hyland.icims.com/jobs/search?ss=1&searchKeyword=Engineering+Manager&in_iframe=1&searchLocation=Hyderabad%2C+Telangana%2C+India&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Hyland",
+      "url": "https://careers-hyland.icims.com/jobs/search?ss=1&searchKeyword=Technical+Lead&in_iframe=1&searchLocation=Hyderabad%2C+Telangana%2C+India&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Hyland",
+      "url": "https://careers-hyland.icims.com/jobs/search?ss=1&searchKeyword=Staff+Software+Engineer&in_iframe=1&searchLocation=Hyderabad%2C+Telangana%2C+India&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Hyland",
+      "url": "https://careers-hyland.icims.com/jobs/search?ss=1&searchKeyword=Principal+Software+Engineer&in_iframe=1&searchLocation=Hyderabad%2C+Telangana%2C+India&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Cognizant",
+      "url": "https://careers.cognizant.com/global-en/jobs/?keyword=Engineering+Manager&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Cognizant",
+      "url": "https://careers.cognizant.com/global-en/jobs/?keyword=Technical+Lead&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Cognizant",
+      "url": "https://careers.cognizant.com/global-en/jobs/?keyword=Staff+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Cognizant",
+      "url": "https://careers.cognizant.com/global-en/jobs/?keyword=Principal+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Verizon",
+      "url": "https://www.verizon.com/about/work/search/jobs?q=Engineering+Manager&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Verizon",
+      "url": "https://www.verizon.com/about/work/search/jobs?q=Technical+Lead&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Verizon",
+      "url": "https://www.verizon.com/about/work/search/jobs?q=Staff+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Verizon",
+      "url": "https://www.verizon.com/about/work/search/jobs?q=Principal+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Deloitte",
+      "url": "https://apply.deloitte.com/en_US/careers/SearchJobs/?9257=%5B99705%5D&9257_format=898&listFilterMode=1&jobRecordsPerPage=20&keywords=Engineering+Manager&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Deloitte",
+      "url": "https://apply.deloitte.com/en_US/careers/SearchJobs/?9257=%5B99705%5D&9257_format=898&listFilterMode=1&jobRecordsPerPage=20&keywords=Technical+Lead&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Deloitte",
+      "url": "https://apply.deloitte.com/en_US/careers/SearchJobs/?9257=%5B99705%5D&9257_format=898&listFilterMode=1&jobRecordsPerPage=20&keywords=Staff+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Deloitte",
+      "url": "https://apply.deloitte.com/en_US/careers/SearchJobs/?9257=%5B99705%5D&9257_format=898&listFilterMode=1&jobRecordsPerPage=20&keywords=Principal+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "DXC Technology",
+      "url": "https://careers.dxc.com/job-search-results/?keywords=Engineering+Manager&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "DXC Technology",
+      "url": "https://careers.dxc.com/job-search-results/?keywords=Technical+Lead&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "DXC Technology",
+      "url": "https://careers.dxc.com/job-search-results/?keywords=Staff+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "DXC Technology",
+      "url": "https://careers.dxc.com/job-search-results/?keywords=Principal+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "JPMorgan Chase",
+      "url": "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/requisitions?keyword=Engineering+Manager&location=Hyderabad%2C+Telangana%2C+India",
+      "jobCount": 10
+    },
+    {
+      "company": "Fiserv",
+      "url": "https://careers.fiserv.com/us/en/search-results?keywords=Engineering+Manager&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Fiserv",
+      "url": "https://careers.fiserv.com/us/en/search-results?keywords=Technical+Lead&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Fiserv",
+      "url": "https://careers.fiserv.com/us/en/search-results?keywords=Staff+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Fiserv",
+      "url": "https://careers.fiserv.com/us/en/search-results?keywords=Principal+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Larsen & Toubro",
+      "url": "https://larsentoubrocareers.peoplestrong.com/?keywords=Engineering+Manager&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Larsen & Toubro",
+      "url": "https://larsentoubrocareers.peoplestrong.com/?keywords=Technical+Lead&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Larsen & Toubro",
+      "url": "https://larsentoubrocareers.peoplestrong.com/?keywords=Staff+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Larsen & Toubro",
+      "url": "https://larsentoubrocareers.peoplestrong.com/?keywords=Principal+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Gartner",
+      "url": "https://jobs.gartner.com/jobs/?search=Engineering+Manager&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Gartner",
+      "url": "https://jobs.gartner.com/jobs/?search=Technical+Lead&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Gartner",
+      "url": "https://jobs.gartner.com/jobs/?search=Staff+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Gartner",
+      "url": "https://jobs.gartner.com/jobs/?search=Principal+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Blackbaud",
+      "url": "https://careers.blackbaud.com/search/?createNewAlert=false&q=Engineering+Manager&locationsearch=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Blackbaud",
+      "url": "https://careers.blackbaud.com/search/?createNewAlert=false&q=Technical+Lead&locationsearch=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Blackbaud",
+      "url": "https://careers.blackbaud.com/search/?createNewAlert=false&q=Staff+Software+Engineer&locationsearch=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Blackbaud",
+      "url": "https://careers.blackbaud.com/search/?createNewAlert=false&q=Principal+Software+Engineer&locationsearch=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "AMD",
+      "url": "https://careers.amd.com/careers-home/jobs?keywords=Engineering+Manager&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "AMD",
+      "url": "https://careers.amd.com/careers-home/jobs?keywords=Technical+Lead&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "AMD",
+      "url": "https://careers.amd.com/careers-home/jobs?keywords=Staff+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "AMD",
+      "url": "https://careers.amd.com/careers-home/jobs?keywords=Principal+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "IBM",
+      "url": "https://www.ibm.com/careers/search?q=Engineering+Manager&loc=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "IBM",
+      "url": "https://www.ibm.com/careers/search?q=Technical+Lead&loc=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "IBM",
+      "url": "https://www.ibm.com/careers/search?q=Staff+Software+Engineer&loc=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "IBM",
+      "url": "https://www.ibm.com/careers/search?q=Principal+Software+Engineer&loc=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Experian",
+      "url": "https://careers.smartrecruiters.com/Experian?search=Engineering+Manager&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Experian",
+      "url": "https://careers.smartrecruiters.com/Experian?search=Technical+Lead&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Experian",
+      "url": "https://careers.smartrecruiters.com/Experian?search=Staff+Software+Engineer&location=Hyderabad",
+      "jobCount": 8
+    },
+    {
+      "company": "Blue Yonder",
+      "url": "https://careers.blueyonder.com/us/en/search-results?keywords=Engineering+Manager&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Blue Yonder",
+      "url": "https://careers.blueyonder.com/us/en/search-results?keywords=Technical+Lead&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Blue Yonder",
+      "url": "https://careers.blueyonder.com/us/en/search-results?keywords=Staff+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Blue Yonder",
+      "url": "https://careers.blueyonder.com/us/en/search-results?keywords=Principal+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "MathWorks",
+      "url": "https://www.mathworks.com/company/jobs/opportunities.html?keywords=Engineering+Manager&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "MathWorks",
+      "url": "https://www.mathworks.com/company/jobs/opportunities.html?keywords=Technical+Lead&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "MathWorks",
+      "url": "https://www.mathworks.com/company/jobs/opportunities.html?keywords=Staff+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "MathWorks",
+      "url": "https://www.mathworks.com/company/jobs/opportunities.html?keywords=Principal+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Palo Alto Networks",
+      "url": "https://jobs.paloaltonetworks.com/en/search-jobs/Hyderabad?keywords=Engineering+Manager",
+      "jobCount": 0
+    },
+    {
+      "company": "Palo Alto Networks",
+      "url": "https://jobs.paloaltonetworks.com/en/search-jobs/Hyderabad?keywords=Technical+Lead",
+      "jobCount": 0
+    },
+    {
+      "company": "Palo Alto Networks",
+      "url": "https://jobs.paloaltonetworks.com/en/search-jobs/Hyderabad?keywords=Staff+Software+Engineer",
+      "jobCount": 0
+    },
+    {
+      "company": "Palo Alto Networks",
+      "url": "https://jobs.paloaltonetworks.com/en/search-jobs/Hyderabad?keywords=Principal+Software+Engineer",
+      "jobCount": 0
+    },
+    {
+      "company": "GE Vernova",
+      "url": "https://careers.gevernova.com/global/en/search-results?keywords=Engineering+Manager&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "GE Vernova",
+      "url": "https://careers.gevernova.com/global/en/search-results?keywords=Technical+Lead&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "GE Vernova",
+      "url": "https://careers.gevernova.com/global/en/search-results?keywords=Staff+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "GE Vernova",
+      "url": "https://careers.gevernova.com/global/en/search-results?keywords=Principal+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "McAfee",
+      "url": "https://careers.mcafee.com/jobs?keywords=Engineering+Manager&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "McAfee",
+      "url": "https://careers.mcafee.com/jobs?keywords=Technical+Lead&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "McAfee",
+      "url": "https://careers.mcafee.com/jobs?keywords=Staff+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "McAfee",
+      "url": "https://careers.mcafee.com/jobs?keywords=Principal+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "ModMed",
+      "url": "https://www.modmed.com/careers/?keywords=Engineering+Manager&location=Hyderabad",
+      "jobCount": 2
+    },
+    {
+      "company": "ModMed",
+      "url": "https://www.modmed.com/careers/?keywords=Technical+Lead&location=Hyderabad",
+      "jobCount": 1
+    },
+    {
+      "company": "Qentelli",
+      "url": "https://www.qentelli.com/careers?keywords=Engineering+Manager&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Qentelli",
+      "url": "https://www.qentelli.com/careers?keywords=Technical+Lead&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Qentelli",
+      "url": "https://www.qentelli.com/careers?keywords=Staff+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Qentelli",
+      "url": "https://www.qentelli.com/careers?keywords=Principal+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Oracle",
+      "url": "https://careers.oracle.com/en/sites/jobsearch/jobs?keyword=Engineering+Manager&location=Hyderabad%2C+Telangana%2C+India",
+      "jobCount": 0
+    },
+    {
+      "company": "Oracle",
+      "url": "https://careers.oracle.com/en/sites/jobsearch/jobs?keyword=Technical+Lead&location=Hyderabad%2C+Telangana%2C+India",
+      "jobCount": 0
+    },
+    {
+      "company": "Oracle",
+      "url": "https://careers.oracle.com/en/sites/jobsearch/jobs?keyword=Staff+Software+Engineer&location=Hyderabad%2C+Telangana%2C+India",
+      "jobCount": 0
+    },
+    {
+      "company": "Oracle",
+      "url": "https://careers.oracle.com/en/sites/jobsearch/jobs?keyword=Principal+Software+Engineer&location=Hyderabad%2C+Telangana%2C+India",
+      "jobCount": 0
+    },
+    {
+      "company": "Salesforce",
+      "url": "https://careers.salesforce.com/en/jobs/?search=Engineering+Manager&country=India&city=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Salesforce",
+      "url": "https://careers.salesforce.com/en/jobs/?search=Technical+Lead&country=India&city=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Salesforce",
+      "url": "https://careers.salesforce.com/en/jobs/?search=Staff+Software+Engineer&country=India&city=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Salesforce",
+      "url": "https://careers.salesforce.com/en/jobs/?search=Principal+Software+Engineer&country=India&city=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Accenture",
+      "url": "https://www.accenture.com/in-en/careers/jobsearch?jk=architect&lc=Hyderabad&keywords=Engineering+Manager",
+      "jobCount": 0
+    },
+    {
+      "company": "Accenture",
+      "url": "https://www.accenture.com/in-en/careers/jobsearch?jk=architect&lc=Hyderabad&keywords=Technical+Lead",
+      "jobCount": 0
+    },
+    {
+      "company": "Accenture",
+      "url": "https://www.accenture.com/in-en/careers/jobsearch?jk=architect&lc=Hyderabad&keywords=Staff+Software+Engineer",
+      "jobCount": 0
+    },
+    {
+      "company": "Accenture",
+      "url": "https://www.accenture.com/in-en/careers/jobsearch?jk=architect&lc=Hyderabad&keywords=Principal+Software+Engineer",
+      "jobCount": 0
+    },
+    {
+      "company": "Storable",
+      "url": "https://www.storable.com/careers/?keywords=Engineering+Manager&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Storable",
+      "url": "https://www.storable.com/careers/?keywords=Technical+Lead&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Storable",
+      "url": "https://www.storable.com/careers/?keywords=Staff+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    },
+    {
+      "company": "Storable",
+      "url": "https://www.storable.com/careers/?keywords=Principal+Software+Engineer&location=Hyderabad",
+      "jobCount": 0
+    }
+  ],
+  "parallel": {
+    "tabs": 10,
+    "workers": [
+      {
+        "workerId": 3,
+        "companies": [
+          "Solera",
+          "Gartner",
+          "Blackbaud",
+          "Bayer",
+          "Infor",
+          "Novartis"
+        ],
+        "applied": 0,
+        "blocked": 0,
+        "error": ""
+      },
+      {
+        "workerId": 8,
+        "companies": [
+          "Oracle",
+          "Salesforce",
+          "HighRadius",
+          "Chubb",
+          "Macquarie",
+          "Persistent Systems"
+        ],
+        "applied": 0,
+        "blocked": 0,
+        "error": ""
+      },
+      {
+        "workerId": 0,
+        "companies": [
+          "Hyland",
+          "Cognizant",
+          "Verizon",
+          "Vanguard",
+          "Darwinbox",
+          "Mphasis"
+        ],
+        "applied": 0,
+        "blocked": 0,
+        "error": ""
+      },
+      {
+        "workerId": 6,
+        "companies": [
+          "GE Vernova",
+          "McAfee",
+          "Apple",
+          "Capgemini",
+          "LTIMindtree",
+          "PayPal"
+        ],
+        "applied": 0,
+        "blocked": 0,
+        "error": ""
+      },
+      {
+        "workerId": 1,
+        "companies": [
+          "Intel",
+          "Deloitte",
+          "DXC Technology",
+          "ADP",
+          "Hexaware",
+          "NCR Voyix"
+        ],
+        "applied": 0,
+        "blocked": 0,
+        "error": ""
+      },
+      {
+        "workerId": 9,
+        "companies": [
+          "Accenture",
+          "Storable",
+          "Meta",
+          "Cyient",
+          "Micron Technology",
+          "Postman"
+        ],
+        "applied": 0,
+        "blocked": 0,
+        "error": ""
+      },
+      {
+        "workerId": 2,
+        "companies": [
+          "JPMorgan Chase",
+          "Fiserv",
+          "Larsen & Toubro",
+          "BA Continuum",
+          "Homes.com",
+          "NTT DATA"
+        ],
+        "applied": 0,
+        "blocked": 3,
+        "error": ""
+      },
+      {
+        "workerId": 7,
+        "companies": [
+          "ModMed",
+          "Qentelli",
+          "Goldman Sachs",
+          "Celonis",
+          "MTX Group",
+          "Pegasystems"
+        ],
+        "applied": 0,
+        "blocked": 3,
+        "error": ""
+      },
+      {
+        "workerId": 4,
+        "companies": [
+          "AMD",
+          "IBM",
+          "Experian",
+          "BluJay Solutions",
+          "Invesco",
+          "OpenText"
+        ],
+        "applied": 0,
+        "blocked": 3,
+        "error": ""
+      },
+      {
+        "workerId": 5,
+        "companies": [
+          "Blue Yonder",
+          "MathWorks",
+          "Palo Alto Networks",
+          "Broadridge",
+          "InvoiceCloud",
+          "Parexel"
+        ],
+        "applied": 0,
+        "blocked": 0,
+        "error": ""
+      }
+    ]
+  }
+}
