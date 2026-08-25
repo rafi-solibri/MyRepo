@@ -1,0 +1,28 @@
+{
+  "date": "2026-08-25",
+  "portal": "hirist",
+  "source": "cloud",
+  "status": "stopped_login_required",
+  "postFixRerun": true,
+  "postFixSlot": "4/5",
+  "mergedPr": "https://github.com/rafi-solibri/MyRepo/pull/264",
+  "mainSha": "0df8822679bd238885130eaf5d297532e4570e9a",
+  "applied": 0,
+  "external": 0,
+  "rejected": 0,
+  "blocked": 1,
+  "skipped": 0,
+  "seen": 0,
+  "submitted": [],
+  "blocker": {
+    "reason": "hirist_login_required",
+    "detail": "jobfeed_401",
+    "hint": "bash scripts/home-headed-login.sh hirist"
+  },
+  "ownerAction": [
+    "bash scripts/home-headed-login.sh hirist",
+    "bash scripts/refresh-portal-session-seed.sh hirist --commit && git push",
+    "Environment \u2192 Save snapshot so cron restores the token cookie",
+    "Optional: set HIRIST_EMAIL / HIRIST_PASSWORD or a valid GOOGLE_PASSWORD"
+  ]
+}

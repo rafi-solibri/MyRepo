@@ -1,0 +1,40 @@
+{
+  "portal": "hirist",
+  "source": "cloud",
+  "date": "2026-08-25",
+  "finishedAt": "2026-08-25T05:58:55.269Z",
+  "ok": false,
+  "counts": {
+    "applied": 0,
+    "external": 0,
+    "rejected": 0,
+    "blocked": 1,
+    "skipped": 0,
+    "seen": 0
+  },
+  "applied": [],
+  "external": [],
+  "rejected": [],
+  "blocked": [
+    {
+      "reason": "hirist_login_required",
+      "detail": "jobfeed_401"
+    }
+  ],
+  "skipped": [],
+  "seen": [],
+  "blockerSummary": "hirist_login_required \u2014 jobfeed_401",
+  "notes": [
+    "resume=/workspace/resumes/Rafi_Resume.docx",
+    "ctc=52->65",
+    "POST_FIX_RERUN=1 date=2026-08-25 IST",
+    "main=0df8822679bd238885130eaf5d297532e4570e9a fix(hitechcity) #264",
+    "same_day_hirist_postfix_slot=4/5",
+    "preflight_exit=3 chrome_session check hirist login_required",
+    "no hirist.tech cookies in Desktop Default or /home/ubuntu/chrome-hirist-profile",
+    ".portal-sessions manifest has no hirist seed",
+    "HIRIST_EMAIL/HIRIST_PASSWORD/GOOGLE_PASSWORD unset \u2014 did not invent SSO",
+    "no invented applies; inventory not reachable (jobfeed_401)",
+    "owner: bash scripts/home-headed-login.sh hirist then refresh-portal-session-seed.sh hirist --commit + Save snapshot"
+  ]
+}
