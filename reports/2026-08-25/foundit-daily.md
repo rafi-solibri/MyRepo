@@ -26,7 +26,12 @@
 - None blocked. LinkedIn SCRAPPING jobs often `linkedin_no_easy_apply`; Infosys career SSO timed out under ATS cap.
 
 ## False applies / code fix
-- ResultsCX **Solutions Architect - AI**, Infosys **UI Technical Architect React and Angular**, Jobgether **Asterisk & Telephony** passed via Arch/Lead exception → `tools/foundit/filters.js` Instahyre-parity title skips + tests.
+- ResultsCX **Solutions Architect - AI**, Infosys **UI Technical Architect React and Angular**, Jobgether **Asterisk & Telephony** passed via Arch/Lead exception → fixed+merged https://github.com/rafi-solibri/MyRepo/pull/260 (`tools/foundit/filters.js` Instahyre-parity title skips).
+
+## Post-fix re-run (#260)
+- Applied tab: **441 → 441** (+0). Intentional logged: **0**.
+- False-apply titles now skipped: Architect - AI → `pure AI/data…`; UI React/Angular → `UI/frontend React/Angular…`; Asterisk → `Asterisk/telephony…`.
+- Skips: 1204 | duplicates: 78 | blocked: 0.
 
 ## Top 3 LinkedIn referral drafts
 - **Infosys Limited / .Net production support Lead:** Hi — I'm applying for .Net production support Lead at Infosys Limited. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)
