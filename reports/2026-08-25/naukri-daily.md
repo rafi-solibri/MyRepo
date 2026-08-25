@@ -16,6 +16,7 @@ Same-day re-run after merged `#257` (`POST_FIX_RERUN=1`). Ran on `main` `c507fd2
 - Live TopTier widget is `#profile-section-resume` + hidden `input#resume`. Fix: filechooser on **Update**, do not re-click Update as Save, match IST `Uploaded on DD/MM/YYYY` / `Uploaded today`.
 - Mid-run proof (`/tmp/naukri-tailored-profile-upload.json`): `uploadedVia: toptier-filechooser`, `profileUpdated: true`, `verify.updateOn: Uploaded today`.
 - End-of-run restore to canonical CV: **ok**.
+- Post-apply STEP 0 re-run with `#261` helper: **ok** — `toptier-filechooser`, compressed size 20945, `profileUpdated: true`, `Rafi_Resume.docx` / **Uploaded today**.
 
 ## Applied (Naukri Quick Apply, tailored Rafi_Resume.docx)
 - Tech Mahindra — Technical Architect (Cloud & Microservices) — Hyderabad, Pune, Bengaluru — [listing](https://www.naukri.com/job-listings-technical-architect-cloud-microservices-tech-mahindra-hyderabad-pune-bengaluru-10-to-20-years-240826002641?src=directSearch) — `chatbot:responses_thanks`
