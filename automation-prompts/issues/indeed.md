@@ -1,5 +1,12 @@
 # Indeed — issues & fixes
 
+## 2026-08-25 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| SmartApply resume-selection: We could not upload your resume file then Continue stuck (5 easy_apply_incomplete); cloud ATS parked 10m+ on NTT ASK_OWNER headed wait | Retry/fallback SmartApply resume upload (tailored then master <5MB); do not Continue on upload error; cloud sets ATS_OWNER_ASLEEP so ATS does not park 6-12m |
+
+
 ## 2026-08-24 (cloud)
 
 | Issue | Fix |

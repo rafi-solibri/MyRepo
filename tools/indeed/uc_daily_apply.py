@@ -117,6 +117,147 @@ def clear_job_resume() -> None:
             os.environ["RAFI_RESUME"] = str(canonical)
 
 
+RESUME_UPLOAD_FAIL = re.compile(
+    r"we could not upload your resume|could not upload your resume file|"
+    r"wait a moment and then try again",
+    re.I,
+)
+RESUME_ATTACHED = re.compile(
+    r"rafi_resume|replace resume|change resume|resume uploaded|"
+    r"uploaded successfully",
+    re.I,
+)
+
+
+def smartapply_resume_error(text: str) -> bool:
+    return bool(RESUME_UPLOAD_FAIL.search(text or ""))
+
+
+def smartapply_resume_attached(text: str) -> bool:
+    blob = text or ""
+    if smartapply_resume_error(blob):
+        return False
+    return bool(RESUME_ATTACHED.search(blob))
+
+
+def resume_upload_candidates() -> list[Path]:
+    """Prefer the JD-tailored copy, then compressed upload, then owner master.
+
+    Indeed allows 5MB; the Naukri-compressed ~20KB copy sometimes fails
+    SmartApply with "We could not upload your resume file".
+    """
+    seen: set[Path] = set()
+    out: list[Path] = []
+    env_path = ""
+    try:
+        from tools.resume_paths import resume_upload_path
+
+        env_path = str(resume_upload_path() or "")
+    except Exception:
+        env_path = (os.environ.get("RESUME_UPLOAD_PATH") or "").strip()
+    for raw in (
+        env_path,
+        str(RESUME),
+        str(ROOT / "resumes" / "Rafi_Resume.docx"),
+        str(ROOT / "resumes" / "Mohammed_Abdul_Rafi_Ahmed_Resume.docx"),
+    ):
+        if not raw:
+            continue
+        p = Path(raw)
+        try:
+            if not p.is_file() or p.stat().st_size < 1000:
+                continue
+            if p.stat().st_size > 5 * 1024 * 1024:
+                continue
+            rp = p.resolve()
+        except OSError:
+            continue
+        if rp in seen:
+            continue
+        seen.add(rp)
+        out.append(rp)
+    return out
+
+
+def upload_smartapply_resume(sb) -> bool:
+    """Attach Rafi_Resume on SmartApply resume-selection; retry on Indeed upload errors."""
+    _switch_smartapply_frame(sb)
+    try:
+        sb.execute_script(
+            """
+            const cards=[...document.querySelectorAll('button, [role=button], label, div, li')];
+            const el=cards.find(e => /rafi_resume|rafi resume|\\.docx/i.test(e.innerText||''));
+            if (el) el.click();
+            """
+        )
+    except Exception:
+        pass
+    time.sleep(0.5)
+    try:
+        body = sb.get_text("body") or ""
+    except Exception:
+        body = ""
+    if smartapply_resume_attached(body):
+        print("  resume_upload_ok existing_card", flush=True)
+        return True
+
+    candidates = resume_upload_candidates()
+    if not candidates:
+        print("  resume_upload_missing", flush=True)
+        return False
+
+    for attempt in range(3):
+        for path in candidates:
+            _switch_smartapply_frame(sb)
+            try:
+                sb.execute_script(
+                    """
+                    const el=[...document.querySelectorAll('button,[role=button],label,a,span')]
+                      .find(e => /select file|upload a resume|upload resume/i.test(e.innerText||''));
+                    if (el) el.click();
+                    """
+                )
+            except Exception:
+                pass
+            time.sleep(0.4)
+            sent = False
+            try:
+                for f in sb.find_elements("input[type='file']"):
+                    try:
+                        f.send_keys(str(path))
+                        sent = True
+                    except Exception:
+                        continue
+            except Exception as exc:
+                print(f"  resume_upload_send={exc!s}"[:160], flush=True)
+            if not sent:
+                continue
+            time.sleep(2.8 + attempt * 1.4)
+            try:
+                body = sb.get_text("body") or ""
+            except Exception:
+                body = ""
+            if smartapply_resume_error(body):
+                print(
+                    f"  resume_upload_retry n={attempt + 1} path={path.name} bytes={path.stat().st_size}",
+                    flush=True,
+                )
+                time.sleep(1.2)
+                continue
+            if smartapply_resume_attached(body) or re.search(
+                r"rafi_resume|\.docx", body, re.I
+            ):
+                print(f"  resume_upload_ok path={path.name}", flush=True)
+                return True
+            # File sent, error gone, still on Add a resume — Continue may enable.
+            if sent and not smartapply_resume_error(body):
+                print(f"  resume_upload_sent path={path.name}", flush=True)
+                return True
+        time.sleep(1.0)
+    print("  resume_upload_failed", flush=True)
+    return False
+
+
 def _default_seed_profile() -> str:
     env = os.environ.get("INDEED_SEED_PROFILE")
     if env:
@@ -1237,20 +1378,7 @@ def fill_common_questions(sb) -> None:
     # Comboboxes (education / Title / Country) often render options only after open.
     recover_required_selects(sb)
 
-    # Resume upload — JD-tailored copy when prepare_resume_for_job ran.
-    try:
-        from tools.resume_paths import resume_upload_path
-
-        resume_path = Path(resume_upload_path())
-    except Exception:
-        resume_path = RESUME
-    if resume_path.exists():
-        try:
-            for f in sb.find_elements("input[type='file']"):
-                f.send_keys(str(resume_path.resolve()))
-                time.sleep(1)
-        except Exception:
-            pass
+    upload_smartapply_resume(sb)
     tick_required_agreements(sb)
     recover_required_selects(sb)
 
@@ -2808,18 +2936,26 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
         except Exception:
             pass
         fill_common_questions(sb)
-        # Resume card: prefer an existing Rafi resume if shown.
-        if "resume-selection" in url or "resume" in url.lower():
+        # Resume card: attach Rafi_Resume and wait out Indeed's upload error.
+        if "resume-selection" in url or "resume-selection" in (url or "").lower() or (
+            "add a resume" in body and "upload a resume" in body
+        ):
+            attached = upload_smartapply_resume(sb)
             try:
-                sb.execute_script(
-                    """
-                    const cards=[...document.querySelectorAll('button, [role=button], label, div, li')];
-                    const el=cards.find(e => /rafi_resume|rafi resume|\\.docx/i.test(e.innerText||''));
-                    if (el) el.click();
-                    """
-                )
+                body = (sb.get_text("body") or "").lower()
             except Exception:
                 pass
+            if not attached and smartapply_resume_error(body):
+                stuck_questions += 1
+                print(f"  resume_upload_blocked stuck={stuck_questions}", flush=True)
+                time.sleep(1.5)
+                if stuck_questions >= 3:
+                    try:
+                        sb.save_screenshot("/opt/cursor/artifacts/indeed-questions-stuck.png")
+                    except Exception:
+                        pass
+                    return "failed"
+                continue
         clicked = click_next_or_submit(sb, allow_disabled=False)
         print(f"  ea_step={step} clicked={clicked!r} url={url[:90]}", flush=True)
         # Same CTA on same module without navigation → validation wall; abort early.
@@ -2929,6 +3065,10 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
 
 def main() -> int:
     os.environ.setdefault("DISPLAY", ":1")
+    # Cloud has no owner at the keyboard — do not park 6–12m per ATS form.
+    if (os.environ.get("HOME_LOCAL") or "").strip().lower() not in ("1", "true", "yes"):
+        os.environ.setdefault("ATS_OWNER_ASLEEP", "1")
+        os.environ.setdefault("ATS_OWNER_FORM_WAIT_SEC", "12")
     _patch_filelock_singleton()
     proxy = ensure_warp()
     if not RESUME.exists():

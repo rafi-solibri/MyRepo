@@ -16,7 +16,10 @@ from tools.indeed.uc_daily_apply import (  # noqa: E402
     looks_login_wall,
     job_dedupe_key,
     looks_signed_in,
+    resume_upload_candidates,
     skip_reason,
+    smartapply_resume_attached,
+    smartapply_resume_error,
 )
 
 
@@ -205,6 +208,25 @@ def test_job_dedupe_key_from_jk():
     )
 
 
+def test_smartapply_resume_upload_classifiers():
+    err = (
+        "Add a resume\nWe could not upload your resume file. "
+        "Wait a moment and then try again."
+    )
+    assert smartapply_resume_error(err)
+    assert not smartapply_resume_attached(err)
+    ok = "Add a resume\nRafi_Resume.docx\nReplace resume"
+    assert smartapply_resume_attached(ok)
+    assert not smartapply_resume_error(ok)
+
+
+def test_resume_upload_candidates_include_master():
+    paths = resume_upload_candidates()
+    assert paths, "expected at least the compressed upload resume"
+    names = {p.name for p in paths}
+    assert "Rafi_Resume.docx" in names
+
+
 if __name__ == "__main__":
     test_skip_hyd_remote_ok()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
@@ -217,4 +239,6 @@ if __name__ == "__main__":
     test_india_home_get_started_is_not_login_proof()
     test_account_settings_and_serp_are_signed_in()
     test_job_dedupe_key_from_jk()
+    test_smartapply_resume_upload_classifiers()
+    test_resume_upload_candidates_include_master()
     print("ok")
