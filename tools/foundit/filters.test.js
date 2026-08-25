@@ -705,4 +705,58 @@ assert.strictEqual(
   "Guidewire title must skip even with Arch/Lead + skills laundry .NET (2026-08-23)"
 );
 
+assert.strictEqual(
+  classifyJob({
+    jobId: 41,
+    title: "Sr. Director, Solutions Architect - AI",
+    companyName: "ResultsCX",
+    locations: [{ text: "Remote" }],
+    skills: [{ text: "AI" }, { text: ".NET" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "pure AI/data without .NET on title",
+  "Trailing Architect - AI must skip (Instahyre parity; 2026-08-25 false apply)"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 42,
+    title: "UI Technical Architect React and Angular",
+    companyName: "Infosys Limited",
+    locations: [{ text: "Hyderabad / Secunderabad, Telangana" }],
+    skills: [{ text: "React" }, { text: "Angular" }, { text: ".NET" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "UI/frontend React/Angular without .NET on title",
+  "UI React/Angular Architect must skip even with skills laundry .NET (2026-08-25)"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 43,
+    title: "Senior Technical Lead - Asterisk & Telephony",
+    companyName: "Jobgether",
+    locations: [{ text: "Remote" }],
+    skills: [{ text: "Asterisk" }, { text: ".NET" }],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 12 },
+  }).reason,
+  "Asterisk/telephony without .NET on title",
+  "Asterisk/telephony Technical Lead must skip (2026-08-25 false apply)"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 44,
+    title: "Solution Architecture Apps & AI",
+    companyName: "Microsoft Corp",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: "Azure" }],
+  }).pass,
+  true,
+  "Microsoft Architecture Apps & AI must still pass (not Architect - AI)"
+);
+
 console.log("filters.test.js OK");

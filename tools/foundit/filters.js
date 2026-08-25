@@ -174,16 +174,27 @@ function skipTitleReason(title) {
   // Naukri/LinkedIn/Instahyre parity — insurance P&C platforms are not .NET/cloud Arch targets.
   if (/\bguidewire\b/i.test(t)) return "Guidewire";
   // Pure AI / data titles need .NET|C#|dotnet on the TITLE (skills laundry lists are noisy).
-  // Naukri parity: AI Solution Architect, Agentic/Generative AI Lead, Data Engineering Manager.
+  // Naukri/Instahyre parity: AI Solution Architect, Agentic/Generative AI Lead, Data Engineering Manager,
+  // and trailing "Solutions Architect - AI" (ResultsCX 2026-08-25).
   // Arch/Lead exception must NOT apply — Socnet "Technical Lead - Agentic AI / Generative AI".
   // Do NOT match bare "Architecture … AI" (Microsoft "Solution Architecture Apps & AI" may still pass).
   if (
-    /\b(ai\s+(?:specialist\s+)?(?:solution\s+)?architect|ai\s+engineer(?:ing)?(?:\s+manager|\s+lead)?|ai\s+agent|ml\s+engineer|gen\s*-?\s*ai|genai|generative\s+ai|agentic\s+ai|\bgemini\b|\bllm\b|data\s+scientist|data\s+engineer(?:ing)?|data\s+architect)\b/i.test(
+    /\b(ai\s+(?:specialist\s+)?(?:solution\s+)?architect|ai\s+engineer(?:ing)?(?:\s+manager|\s+lead)?|ai\s+agent|ml\s+engineer|gen\s*-?\s*ai|genai|generative\s+ai|agentic\s+ai|\bgemini\b|\bllm\b|data\s+scientist|data\s+engineer(?:ing)?|data\s+architect|architect\s*[-–:]?\s*ai|ai\s*[-–:]?\s*architect)\b/i.test(
       t
     ) &&
     !hasDotNet(t, "")
   )
     return "pure AI/data without .NET on title";
+  // VoIP / Asterisk / telephony stacks — not .NET/cloud Arch targets (Jobgether 2026-08-25).
+  if (/\b(asterisk|telephony|\bvoip\b)\b/i.test(t) && !hasDotNet(t, ""))
+    return "Asterisk/telephony without .NET on title";
+  // UI/frontend React|Angular|Vue Architect without .NET on TITLE (Infosys UI Technical Architect 2026-08-25).
+  if (
+    /\b(ui\s+(?:technical\s+)?architect|frontend|front[\s-]?end)\b/i.test(t) &&
+    /\b(react|angular|vue\.?js|vue)\b/i.test(t) &&
+    !hasDotNet(t, "")
+  )
+    return "UI/frontend React/Angular without .NET on title";
   // Infra / IT ops / helpdesk — .NET only in skills laundry lists is noise (NUS Analyst case).
   if (
     /\b(infrastructure|it\s+analyst|systems?\s+analyst|sysadmin|system\s+admin|network\s+engineer|desktop\s+support|help\s*desk|helpdesk|sre\b|site\s+reliability)\b/i.test(

@@ -1,5 +1,12 @@
 # Foundit — issues & fixes
 
+## 2026-08-25 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| False applies: Solutions Architect - AI, UI React/Angular Architect, Asterisk/Telephony Lead via Arch/Lead | filters.js: Instahyre-parity Architect-AI + Asterisk/telephony + UI React/Angular title skips (+ tests) |
+
+
 ## 2026-08-24 (cloud)
 
 | Issue | Fix |
