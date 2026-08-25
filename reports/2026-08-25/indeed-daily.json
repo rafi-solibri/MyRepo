@@ -1,0 +1,94 @@
+{
+  "date": "2026-08-25",
+  "portal": "indeed",
+  "source": "cloud-warp-uc",
+  "status": "ok",
+  "postFixRerun": true,
+  "mergedPr": "https://github.com/rafi-solibri/MyRepo/pull/257",
+  "agent": "https://cursor.com/agents/bc-c5abfb31-d385-41e4-a51c-b20f09ce7278",
+  "ok": true,
+  "counts": {
+    "applied": 7,
+    "external": 0,
+    "rejected": 9,
+    "blocked": 18,
+    "skipped": 50,
+    "seen": 84
+  },
+  "easyApplySubmitted": 7,
+  "externalCompleted": 0,
+  "submitted": [
+    {
+      "company": "Genpact India Pvt. Ltd.",
+      "title": "Architect - Enterprise Application - Oracle N 4D",
+      "location": "Hyderabad, Telangana",
+      "jk": "6144ccb606d68e34",
+      "path": "easy_apply"
+    },
+    {
+      "company": "Genpact India Pvt. Ltd.",
+      "title": "Senior Principal Consultant - Cloud Solution Architects",
+      "location": "Hyderabad, Telangana",
+      "jk": "88c15aca14c7f524",
+      "path": "easy_apply"
+    },
+    {
+      "company": "Genpact India Pvt. Ltd.",
+      "title": "Architect - Application Development Microsoft N 4D",
+      "location": "Hyderabad, Telangana",
+      "jk": "9a3d016a76c03e96",
+      "path": "easy_apply"
+    },
+    {
+      "company": "PepsiCo",
+      "title": "Cloud Assoc Principal Engineer",
+      "location": "Hyderabad, Telangana",
+      "jk": "ad3f66a161f008e3",
+      "path": "easy_apply"
+    },
+    {
+      "company": "Lntechsystem Private Limited",
+      "title": "Sr. FDE (Resident Solution Architect) – Databricks",
+      "location": "Remote",
+      "jk": "4d7199bd6ccc1293",
+      "path": "easy_apply"
+    },
+    {
+      "company": "TECH NEXT",
+      "title": "AI Solution Architect",
+      "location": "Remote",
+      "jk": "6fdbfeac1614f649",
+      "path": "easy_apply"
+    },
+    {
+      "company": "Revolite Infotech Pvt. Ltd",
+      "title": "Analytics Solutions Architect",
+      "location": "Remote",
+      "jk": "e386489be34cc5a8",
+      "path": "easy_apply"
+    }
+  ],
+  "skippedHighlights": {
+    "already_applied": 25,
+    "title_not_target": 21,
+    "location": 3,
+    "title_skip": 1
+  },
+  "blockedHighlights": {
+    "no_ats_form": 4,
+    "external_incomplete_or_timeout": 6,
+    "ats_socks_failed": 4,
+    "easy_apply_recaptcha": 2,
+    "did_not_leave_indeed": 1,
+    "job_unavailable": 1
+  },
+  "preflight": {
+    "exit": 0,
+    "reason": "uc_bypass_cleared"
+  },
+  "artifacts": [
+    "/opt/cursor/artifacts/indeed-daily-run.json",
+    "/opt/cursor/artifacts/indeed-apply-report.json",
+    "/opt/cursor/artifacts/indeed-preflight.json"
+  ]
+}

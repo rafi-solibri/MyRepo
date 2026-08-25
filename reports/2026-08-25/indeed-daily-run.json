@@ -1,0 +1,1584 @@
+{
+  "portal": "indeed",
+  "source": "cloud-warp-uc",
+  "date": "2026-08-25",
+  "startedAt": "2026-08-25T03:43:01Z",
+  "finishedAt": "2026-08-25T04:48:47Z",
+  "host": "cursor",
+  "ok": true,
+  "counts": {
+    "applied": 7,
+    "external": 0,
+    "rejected": 9,
+    "blocked": 18,
+    "skipped": 50,
+    "seen": 84
+  },
+  "applied": [
+    {
+      "title": "Architect - Enterprise Application - Oracle N 4D - Hyderabad, Telangana - Indeed.com",
+      "company": "Genpact India Pvt. Ltd.",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=6144ccb606d68e34&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/6144ccb606d68e34-7bd0e9c59c/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "submitted"
+    },
+    {
+      "title": "Senior Principal Consultant - Cloud Solution Architects - Hyderabad, Telangana - Indeed.com",
+      "company": "Genpact India Pvt. Ltd.",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=88c15aca14c7f524&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/88c15aca14c7f524-ae3d5a4cf2/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "submitted"
+    },
+    {
+      "title": "Architect - Application Development Microsoft N 4D - Hyderabad, Telangana - Indeed.com",
+      "company": "Genpact India Pvt. Ltd.",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=9a3d016a76c03e96&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/9a3d016a76c03e96-edc5709edf/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "submitted"
+    },
+    {
+      "title": "Cloud Assoc Principal Engineer - Hyderabad, Telangana - Indeed.com",
+      "company": "PepsiCo",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=ad3f66a161f008e3&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/ad3f66a161f008e3-3690bd7018/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "submitted"
+    },
+    {
+      "title": "Sr. FDE (Resident Solution Architect) – Databricks - Remote - Indeed.com",
+      "company": "Lntechsystem Private Limited",
+      "location": "Location: Fully Remote (2pm to 11 pm)",
+      "url": "https://in.indeed.com/viewjob?cmp=Lntechsystem-Private-Limited&t=Senior+Solution+Architect&jk=4d7199bd6ccc1293&xpse=SoCP67I2fbuigeyT7B0LbzkdCdPP&xfps=18106dd0-ebb6-4989-8dad-19ad30f8a741&xkcb=SoAD67M2fbuSIBXVoZ0PbzkdCdPP&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/4d7199bd6ccc1293-a160df0481/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "submitted"
+    },
+    {
+      "title": "AI Solution Architect - Remote - Indeed.com",
+      "company": "TECH NEXT",
+      "location": "Work Location: Remote",
+      "url": "https://in.indeed.com/viewjob?cmp=Tech-Next&t=Solution+Architect&jk=6fdbfeac1614f649&xpse=SoD267I2fbvewLSMXB0LbzkdCdPP&xfps=cc9a6d22-a6f9-4dc2-bc32-d82df8b31d2f&xkcb=SoDD67M2fbuSIBXVoZ0CbzkdCdPP&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/6fdbfeac1614f649-c6ce42d6bd/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "submitted"
+    },
+    {
+      "title": "Analytics Solutions Architect - Remote - Indeed.com",
+      "company": "Revolite Infotech Pvt. Ltd",
+      "location": "Location: Remote",
+      "url": "https://in.indeed.com/viewjob?cmp=Mukizh-Fashions&t=Solution+Architect&jk=e386489be34cc5a8&xpse=SoCr67I2fbvaSWQHTh0LbzkdCdPP&xfps=7c49b45d-8c91-4c23-83a8-e7014b6d3fde&xkcb=SoBe67M2fbuSIBXVoZ0BbzkdCdPP&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/e386489be34cc5a8-0032a2dff5/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "submitted"
+    }
+  ],
+  "external": [],
+  "rejected": [
+    {
+      "title": "Senior Platform Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "WSA APAC",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=3a782decf99d37f1&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/3a782decf99d37f1-1bcab0bef6/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "failed",
+      "reason": "easy_apply_incomplete",
+      "lastUrl": "https://smartapply.indeed.com/beta/indeedapply/form/questions-module/questions/1",
+      "sample": "Skip to main content | Home | Company reviews | Salary guide | 1 | Messages Unread count 1 | 9+ | Employers / Post Job | Start of main content | Save and close | 60% | Answer these questions from the employer | These questions are from the employer. If a question seems inappropriate, you can report the job. | Fields marked with | an asterisk | (*) are required. | Are you based in"
+    },
+    {
+      "title": "Senior Software Engineer, Fullstack - Hyderabad, Telangana - Indeed.com",
+      "company": "ValGenesis",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=4237a5879024d3fd&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/4237a5879024d3fd-5c51339f3f/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "failed",
+      "reason": "easy_apply_incomplete",
+      "lastUrl": "https://smartapply.indeed.com/beta/indeedapply/form/questions-module/questions/1",
+      "sample": "Skip to main content | Home | Company reviews | Salary guide | 1 | Messages Unread count 1 | 9+ | Employers / Post Job | Start of main content | Save and close | 60% | Answer these questions from the employer | These questions are from the employer. If a question seems inappropriate, you can report the job. | Fields marked with | an asterisk | (*) are required. | India - Standard"
+    },
+    {
+      "title": "Senior Principal - Architecture - Hyderabad, Telangana - Indeed.com",
+      "company": "LTIMindtree",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=27c90df6398984d2&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/27c90df6398984d2-65ca7d83de/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "failed",
+      "reason": "easy_apply_incomplete",
+      "lastUrl": "https://smartapply.indeed.com/beta/indeedapply/form/questions-module/questions/1",
+      "sample": "Skip to main content | Home | Company reviews | Salary guide | 1 | Messages Unread count 1 | 9+ | Employers / Post Job | Start of main content | Save and close | 60% | Answer these questions from the employer | These questions are from the employer. If a question seems inappropriate, you can report the job. | Fields marked with | an asterisk | (*) are required. | Title * | Mr. | Ms. | "
+    },
+    {
+      "title": "Principal - Architecture - Hyderabad, Telangana - Indeed.com",
+      "company": "LTM",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=72300de2ddddecd1&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/72300de2ddddecd1-8b0259a1d9/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "failed",
+      "reason": "easy_apply_incomplete",
+      "lastUrl": "https://smartapply.indeed.com/beta/indeedapply/form/questions-module/questions/1",
+      "sample": "Skip to main content | Home | Company reviews | Salary guide | 1 | Messages Unread count 1 | 9+ | Employers / Post Job | Start of main content | Save and close | 60% | Answer these questions from the employer | These questions are from the employer. If a question seems inappropriate, you can report the job. | Fields marked with | an asterisk | (*) are required. | Title * | Mr. | Ms. | "
+    },
+    {
+      "title": "Specialist - Architecture - Hyderabad, Telangana - Indeed.com",
+      "company": "LTM",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=a69938d0a474a2bc&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/a69938d0a474a2bc-a1fbd63d01/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "failed",
+      "reason": "easy_apply_incomplete",
+      "lastUrl": "https://smartapply.indeed.com/beta/indeedapply/form/questions-module/questions/1",
+      "sample": "Skip to main content | Home | Company reviews | Salary guide | 1 | Messages Unread count 1 | 9+ | Employers / Post Job | Start of main content | Save and close | 60% | Answer these questions from the employer | These questions are from the employer. If a question seems inappropriate, you can report the job. | Fields marked with | an asterisk | (*) are required. | Title * | Mr. | Ms. | "
+    },
+    {
+      "title": "Senior Software Engineer, Database - Hyderabad, Telangana - Indeed.com",
+      "company": "ValGenesis",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=3facc2d6e7f8db28&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/3facc2d6e7f8db28-4e83a2fb8d/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "failed",
+      "reason": "easy_apply_incomplete",
+      "lastUrl": "https://smartapply.indeed.com/beta/indeedapply/form/questions-module/questions/1",
+      "sample": "Skip to main content | Home | Company reviews | Salary guide | 1 | Messages Unread count 1 | 9+ | Employers / Post Job | Start of main content | Save and close | 60% | Answer these questions from the employer | These questions are from the employer. If a question seems inappropriate, you can report the job. | Fields marked with | an asterisk | (*) are required. | India - Engineer"
+    },
+    {
+      "title": ".Net Fullstack Developer - Hyderabad, Telangana - Indeed.com",
+      "company": "UST",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=3f8a7d2275c4fdeb&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/3f8a7d2275c4fdeb-79007b07fc/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "failed",
+      "reason": "easy_apply_incomplete",
+      "lastUrl": "https://smartapply.indeed.com/beta/indeedapply/form/questions-module/questions/1",
+      "sample": "Skip to main content | Home | Company reviews | Salary guide | 1 | Messages Unread count 1 | 9+ | Employers / Post Job | Start of main content | Save and close | 60% | Answer these questions from the employer | These questions are from the employer. If a question seems inappropriate, you can report the job. | Fields marked with | an asterisk | (*) are required. | Phone No * | Date "
+    },
+    {
+      "title": "Senior Software Engineer - .NET - Hyderabad, Telangana - Indeed.com",
+      "company": "Archetype",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=1f1b00615bc403f1&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/1f1b00615bc403f1-47b56753bd/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "failed",
+      "reason": "easy_apply_incomplete",
+      "lastUrl": "https://smartapply.indeed.com/beta/indeedapply/form/questions-module/questions/1",
+      "sample": "Skip to main content | Home | Company reviews | Salary guide | 1 | Messages Unread count 1 | 9+ | Employers / Post Job | Start of main content | Save and close | 60% | Answer these questions from the employer | These questions are from the employer. If a question seems inappropriate, you can report the job. | Fields marked with | an asterisk | (*) are required. | Address * | 38 / 2"
+    },
+    {
+      "title": "Architect I - Enterprise Solutions - Bengaluru, Karnataka - Indeed.com",
+      "company": "UST",
+      "location": "E1 Developer Role Locations(s): India - Remote Role Scope / Deliverables: Hiring: Seni",
+      "url": "https://in.indeed.com/viewjob?jk=b190574a326419fb&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/b190574a326419fb-2858d58d60/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "failed",
+      "reason": "easy_apply_incomplete",
+      "lastUrl": "https://smartapply.indeed.com/beta/indeedapply/form/questions-module/questions/1",
+      "sample": "Skip to main content | Home | Company reviews | Salary guide | 1 | Messages Unread count 1 | 9+ | Employers / Post Job | Start of main content | Save and close | 60% | Answer these questions from the employer | These questions are from the employer. If a question seems inappropriate, you can report the job. | Fields marked with | an asterisk | (*) are required. | Phone No * | Date "
+    }
+  ],
+  "blocked": [
+    {
+      "title": "Senior/Lead Solution Architect- Node.js - Hyderabad, Telangana - Indeed.com",
+      "company": "EPAM Systems, Inc.",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=318d36ad81472a15&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/318d36ad81472a15-45b8e08f24/Rafi_Resume.docx",
+      "atsUrl": "https://careers.epam.com/en/vacancy/blt24wd6chmuqv2aa3x_en?city=Hyderabad&state=Telangana&country=India&utm_source=indeed&utm_medium=xml-job-feed&utm_campaign=ta&utm_source=indeed&utm_medium=%20xml-job-feed%20&utm_campaign=ta",
+      "reason": "no_ats_form",
+      "path": "company_ATS"
+    },
+    {
+      "title": ".Net Lead / Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "BytesEdge",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=8f74091e2ebd92d9&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/8f74091e2ebd92d9-825b624a87/Rafi_Resume.docx",
+      "atsUrl": "https://bytesedge.com/careers/",
+      "reason": "no_ats_form",
+      "path": "company_ATS"
+    },
+    {
+      "title": ".Net Application Architect - Madhapur, Hyderabad, Telangana - Indeed.com",
+      "company": "Profitics",
+      "location": "Madhapur, Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=f4ef6802ca3b5e7b&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/f4ef6802ca3b5e7b-71eea29f47/Rafi_Resume.docx",
+      "atsUrl": "https://profitics.com/techcarer/net-application-architect/",
+      "reason": "external_incomplete_or_timeout",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Sr Engineer - .Net FullStack - Hyderabad, Telangana - Indeed.com",
+      "company": "Clean Harbors",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=bb34caede2746387&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/bb34caede2746387-e33736bab7/Rafi_Resume.docx",
+      "atsUrl": "https://epyc.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/job/162326/apply/email",
+      "reason": "external_incomplete_or_timeout",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Technical Lead (.NET) - Hyderabad, Telangana - Indeed.com",
+      "company": "Lexicon Infotech",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=587e058f7e460de3&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/587e058f7e460de3-4991df92a1/Rafi_Resume.docx",
+      "atsUrl": "https://lexiconinfotech.com/careers.html",
+      "reason": "no_ats_form",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Technical Lead/ Manager (Sitecore) - Hyderabad, Telangana - Indeed.com",
+      "company": "Pennywise Solutions",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=3d90205ad9cdc992&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/3d90205ad9cdc992-ecefbaa1a6/Rafi_Resume.docx",
+      "atsUrl": "https://www.pennywisesolutions.com/careers/technical-lead-manager-sitecore",
+      "reason": "external_incomplete_or_timeout",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Senior Software Engineer - Gachibowli, Hyderabad, Telangana - Indeed.com",
+      "company": "Acuity Software Technologies",
+      "location": "Gachibowli, Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=5bf6261e8796ce22&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/5bf6261e8796ce22-e9e971bb3d/Rafi_Resume.docx",
+      "atsUrl": "https://www.acuitysoft.com/careers-senior-software-engineer.html",
+      "reason": "no_ats_form",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Senior Application Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "NTT DATA",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=3ae608465b27be09&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/3ae608465b27be09-1c1f47aa94/Rafi_Resume.docx",
+      "atsUrl": "https://in.indeed.com/applystart?jk=3ae608465b27be09&from=vj&pos=bottom&mvj=0&spon=0&vjfrom=serp&asub=mob&astse=d6a46394c4bc5f5a&assa=7318",
+      "reason": "did_not_leave_indeed",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Technical Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "DocOnline",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=4b42dde41824276b&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/4b42dde41824276b-165c11ff98/Rafi_Resume.docx",
+      "atsUrl": "https://www.doconline.com/career",
+      "reason": "ats_helper_error:Page.goto: net::ERR_SOCKS_CONNECTION_FAILED at https://www.doconline.com/career\nCall log:\n  - navigating to \"https://www.doconline.com/career\", waiting until \"domc",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Technical Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "IConnectIT",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=4a0f011fd8129bf8&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/4a0f011fd8129bf8-f1e5df89ec/Rafi_Resume.docx",
+      "atsUrl": "https://www.iconnectit.net/careers#",
+      "reason": "job_unavailable",
+      "path": "company_ATS"
+    },
+    {
+      "title": ".Net Lead/Senior Software Engineer - Bengaluru, Karnataka - Indeed.com",
+      "company": "Impelsys",
+      "location": "Work Location: Bangalore / LATAM Remote",
+      "url": "https://in.indeed.com/viewjob?jk=18a5f533518ab2f1&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/18a5f533518ab2f1-5088f95144/Rafi_Resume.docx",
+      "atsUrl": "https://impelsys.com/jobs/us-enterprise-healthcare-sales-head/",
+      "reason": "external_incomplete_or_timeout",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Enterprise Solution Architect - Bengaluru, Karnataka - Indeed.com",
+      "company": "Marx Technology Consulting",
+      "location": "Bengaluru, India, Hybrid or Remote",
+      "url": "https://in.indeed.com/viewjob?jk=bda51571804bdaff&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/bda51571804bdaff-796346de81/Rafi_Resume.docx",
+      "atsUrl": "https://www.marx.co/jobs/enterprise-solution-architect",
+      "reason": "external_incomplete_or_timeout",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Sr. Technical Architect (.Net) - Remote - Indeed.com",
+      "company": "MNJ Software",
+      "location": "Senior Technical Architect jobs in Remote",
+      "url": "https://in.indeed.com/viewjob?jk=f4ba178a8b9095dc&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/f4ba178a8b9095dc-6e5f920b7b/Rafi_Resume.docx",
+      "atsUrl": "https://www.mnjsoftware.com/corporate/careers/job-details.aspx?JobId=J0117",
+      "reason": "ats_helper_error:Page.goto: net::ERR_SOCKS_CONNECTION_FAILED at https://www.mnjsoftware.com/corporate/careers/job-details.aspx?JobId=J0117\nCall log:\n  - navigating to \"https://www.",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Software Architect - Remote - Indeed.com",
+      "company": "Infopine",
+      "location": "Years Experience | Remote | Freelance",
+      "url": "https://in.indeed.com/viewjob?jk=945df143593853e2&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/945df143593853e2-d6ed885dcb/Rafi_Resume.docx",
+      "atsUrl": "https://infopine.com/apply-jobs/",
+      "reason": "external_incomplete_or_timeout",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Sr. Technical Architect - Remote - Indeed.com",
+      "company": "MNJ Software",
+      "location": "Senior Technical Architect jobs in Remote",
+      "url": "https://in.indeed.com/viewjob?jk=21be082d50f5c4b5&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/21be082d50f5c4b5-273f187bd5/Rafi_Resume.docx",
+      "atsUrl": "https://www.mnjsoftware.com/corporate/careers/job-details.aspx?JobId=J0124",
+      "reason": "ats_helper_error:Page.goto: net::ERR_SOCKS_CONNECTION_FAILED at https://www.mnjsoftware.com/corporate/careers/job-details.aspx?JobId=J0124\nCall log:\n  - navigating to \"https://www.",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Senior .NET Developer with Azure Expertise - Remote - Indeed.com",
+      "company": "Core Value Technologies",
+      "location": "Developer with Azure Expertise Full time Remote (Work from Home) Immediate Screeing app",
+      "url": "https://in.indeed.com/viewjob?jk=95de54e6b5c4e727&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/95de54e6b5c4e727-591f80883f/Rafi_Resume.docx",
+      "atsUrl": "https://corevaluetech.com/pages/job.html?job=dot-net",
+      "reason": "ats_helper_error:Page.goto: net::ERR_SOCKS_CONNECTION_FAILED at https://corevaluetech.com/pages/job.html?job=dot-net\nCall log:\n  - navigating to \"https://corevaluetech.com/pages/jo",
+      "path": "company_ATS"
+    },
+    {
+      "title": "AI Solutions Architect – Agentic AI & GenAI - Remote - Indeed.com",
+      "company": "Technology Next",
+      "location": "Location: Remote / Flexible",
+      "url": "https://in.indeed.com/viewjob?cmp=Technology-Next&t=Solution+Architect&jk=f6925d00df4f6c9b&xpse=SoCI67I2fbu9beyC4R0LbzkdCdPP&xfps=303fa835-0ef6-40d4-81cc-0d306182fc15&xkcb=SoAq67M2fbuSIBXVoZ0NbzkdCdPP&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/f6925d00df4f6c9b-782ff9261a/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "recaptcha",
+      "reason": "easy_apply_recaptcha"
+    },
+    {
+      "title": "Principal or Senior / AI Solution Architect (Strategic Advisory) - Remote - Indeed.com",
+      "company": "Prahartech",
+      "location": "Location: Remote, India",
+      "url": "https://in.indeed.com/viewjob?cmp=Prahartech&t=Principal+Ai+Architect&jk=3d8c846b8d323e6b&xpse=SoBB67I2fbvWTCSNnZ0LbzkdCdPP&xfps=0ad19cb6-ef0d-4811-a4e1-5b22d5cfd401&xkcb=SoDq67M2fbuSIBXVoZ0AbzkdCdPP&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/3d8c846b8d323e6b-3e3ccc7953/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "recaptcha",
+      "reason": "easy_apply_recaptcha"
+    }
+  ],
+  "skipped": [
+    {
+      "title": "Solution Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "QualMinds Technologies",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=754ca1fc57c3da61&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/754ca1fc57c3da61-1f8a5df288/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Test Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "CODETRU",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=e565056a33b56a52&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/e565056a33b56a52-32af18eb41/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Senior Software Engineer - C#.NET - Hyderabad, Telangana - Indeed.com",
+      "company": "QualMinds Technologies",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=beb0b9a1511ef6d4&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/beb0b9a1511ef6d4-1d2e51dfab/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": ".NET Technical Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "QualMinds Technologies",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=aa373e9cacaf58ca&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/aa373e9cacaf58ca-6b0740e995/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Senior Staff Engineer, .Net Fullstack - Hyderabad, Telangana - Indeed.com",
+      "company": "Nagarro",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=cdc501f84ef40432&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/cdc501f84ef40432-0942ce91c0/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Lead Software Engineer - Hyderabad, Telangana - Indeed.com",
+      "company": "Keka Technologies Pvt. Ltd",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=9b7fb05f2029f079&from=serp&vjs=3",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Technical Lead - .Net with MySQL - Hyderabad, Telangana - Indeed.com",
+      "company": "Acads360 India Private Limited",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=0f1ad802d3af41d4&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/0f1ad802d3af41d4-acd89cf8a3/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Google CCAI Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "TTEC Digital",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=e29a6089abd6eaf9&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/e29a6089abd6eaf9-3a04472f72/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Not Found | Indeed",
+      "company": "",
+      "location": "",
+      "url": "https://in.indeed.com/viewjob?jk=abcdef0123456789",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "6015_ Lead Software Engineer - Hyderabad, Telangana - Indeed.com",
+      "company": "Recruise",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=b872d996b3798384&from=serp&vjs=3",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Principal Consultant - NICE CXone - Hyderabad, Telangana - Indeed.com",
+      "company": "TTEC Digital",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=f08993a96555c1cc&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/f08993a96555c1cc-e91c39b85f/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Technical Lead / Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "Egnify Technologies",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=5ed0f7b183c32a75&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/5ed0f7b183c32a75-21895f1883/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Senior Software Architect - Cyberabad, Hyderabad, Telangana - Indeed.com",
+      "company": "ModMed Technologies India Private Limited",
+      "location": "Cyberabad, Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=b4b08710f5989b4c&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/b4b08710f5989b4c-8bf6e0e50a/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Software Architect, Enterprise Mobile Applications - Hyderabad, Telangana - Indeed.com",
+      "company": "ValGenesis",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=cb585fa7c40aafaa&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/cb585fa7c40aafaa-2a05319f1c/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Full Stack Engineer - Dotnet - Hyderabad, Telangana - Indeed.com",
+      "company": "Aapmor",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=6a2eed407805a35b&from=serp&vjs=3",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "System Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "Axiado",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=328330348744276c&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/328330348744276c-906acf6744/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Not Found | Indeed",
+      "company": "",
+      "location": "",
+      "url": "https://in.indeed.com/viewjob?jk=f1e2d3c4b5a67890",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Software Engineer, Fullstack - Hyderabad, Telangana - Indeed.com",
+      "company": "ValGenesis",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=f3a84bf0a40a460e&from=serp&vjs=3",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Technical Lead - Angular Fullstack - Hyderabad, Telangana - Indeed.com",
+      "company": "Acads360 India Private Limited",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=e92fd0546e6d868a&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/e92fd0546e6d868a-6462aab0d6/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Engineering Manager - Hyderabad, Telangana - Indeed.com",
+      "company": "UST",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=8002ed8226d2f809&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/8002ed8226d2f809-cf228524f9/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Engineering Manager AI SaaS - HITEC City, Hyderabad, Telangana - Indeed.com",
+      "company": "Hire3 Labs",
+      "location": "HITEC City, Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?cmp=Hire3-Labs&t=Engineering+Manager&jk=6610d33df27a6d6f&xpse=SoDx67I2fbqiksTb5J0LbzkdCdPP&xfps=e748d23a-b037-4085-b3cc-5937ce449c55&xkcb=SoBA67M2fbphCCwHzR0AbzkdCdPP&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/6610d33df27a6d6f-4e421cadf3/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Specialist - Software Engineering - Hyderabad, Telangana - Indeed.com",
+      "company": "LTM",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=2bdda3ff077a4191&from=serp&vjs=3",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Not Found | Indeed",
+      "company": "",
+      "location": "",
+      "url": "https://in.indeed.com/viewjob?jk=890abcdef0123456",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Sr. Software Engineer - Full Stack (.Net) - Hyderabad, Telangana - Indeed.com",
+      "company": "Acads360 India Private Limited",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=bc35728a95a578ca&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/bc35728a95a578ca-c41e954f4f/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Deputy Director - SWE & App Arch Sr. Principal Engineer - Hyderabad, Telangana - Indeed.com",
+      "company": "PepsiCo",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=cd6591e76772a05b&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/cd6591e76772a05b-97c802efe7/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Sr. Developer - Application Development Microsoft N 4B - Hyderabad, Telangana - Indeed.com",
+      "company": "Genpact India Pvt. Ltd.",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=255e9aec0123ca35&from=serp&vjs=3",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Software Development - Web Applications - E-commerce solutions - Acuity Software",
+      "company": "",
+      "location": "",
+      "url": "https://www.acuitysoft.com/",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Technical Lead - Hyderabad, Telangana - Indeed.com",
+      "company": "Aapmor",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=8deb7354e573767c&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/8deb7354e573767c-ea2cd7532b/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Lead .NET Full Stack Engineer - Hyderabad, Telangana - Indeed.com",
+      "company": "Gradera Inc.",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=d512b1acd3b0bafc&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/d512b1acd3b0bafc-47d7f62fd0/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Not Found | Indeed",
+      "company": "",
+      "location": "",
+      "url": "https://in.indeed.com/viewjob?jk=fedcba9876543210",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Azure Cloud Solution Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "Saaki Argus & Averil Consulting",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=11b4dfd47846b685&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/11b4dfd47846b685-7eb72b2091/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Developer III - Enterprise Solutions - Hyderabad, Telangana - Indeed.com",
+      "company": "UST",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=3ade6cdecdad5fbe&from=serp&vjs=3",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Not Found | Indeed",
+      "company": "",
+      "location": "",
+      "url": "https://in.indeed.com/viewjob?jk=a1b2c3d4e5f67890",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "GoDaddy Security - Access Denied",
+      "company": "",
+      "location": "",
+      "url": "https://www.iconnectit.net/careers#",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Kafka Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "Technology Next",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?cmp=Technology-Next&t=Integration+Architect&jk=dc4f35975148033e&xpse=SoD667I2fbsrMyyC4R0LbzkdCdPP&xfps=bafa2db5-821e-4e85-a743-ec93aa036e7e&xkcb=SoAs67M2fbrYfJURmB0FbzkdCdPP&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/dc4f35975148033e-e178f76d69/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Senior Software Engineer 1-2 - Cyberabad, Hyderabad, Telangana - Indeed.com",
+      "company": "ModMed Technologies India Private Limited",
+      "location": "Cyberabad, Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=132c38cfbc98c09b&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/132c38cfbc98c09b-dba5bed824/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Not Found | Indeed",
+      "company": "",
+      "location": "",
+      "url": "https://in.indeed.com/viewjob?jk=cdef0123456789ab",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Senior Full-Stack .NET Consultant (Angular) - Bengaluru, Karnataka - Indeed.com",
+      "company": "TechBiz Global GmbH",
+      "location": "Full Stack Developer jobs in Bengaluru, Karnataka",
+      "url": "https://in.indeed.com/viewjob?jk=0fcb6fe981e0061a&from=serp&vjs=3",
+      "reason": "location"
+    },
+    {
+      "title": "Associate Principal Engineer, .Net Fullstack - Remote - Indeed.com",
+      "company": "Nagarro",
+      "location": "Full Stack Developer jobs in Remote",
+      "url": "https://in.indeed.com/viewjob?jk=2ebc990bc7308eb6&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/2ebc990bc7308eb6-1378dd18c5/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Principal Engineer, .Net Fullstack - Remote - Indeed.com",
+      "company": "Nagarro",
+      "location": "Full Stack Developer jobs in Remote",
+      "url": "https://in.indeed.com/viewjob?jk=acecdc8e8f002891&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/acecdc8e8f002891-3d8783edbd/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": ".Net + Angular Technical Architect (Full stack) - Chennai, Tamil Nadu - Indeed.com",
+      "company": "Saaki Argus & Averil Consulting",
+      "location": "Location: Chennai (Remote options available)",
+      "url": "https://in.indeed.com/viewjob?jk=401b00ff8472f7c7&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/401b00ff8472f7c7-5af61c1ca2/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Test Automation Engineer Sr - Bengaluru, Karnataka - Indeed.com",
+      "company": "Dayforce",
+      "location": "to remote work and can hire anywhere in Bangalore.",
+      "url": "https://in.indeed.com/viewjob?jk=b1d9381862d95921&from=serp&vjs=3",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Systems Designer - Bengaluru, Karnataka - Indeed.com",
+      "company": "Grantek Systems Integration",
+      "location": "P, DeviceNet, ControlNet, Profibus, DH+, Remote IO, Modbus, etc.",
+      "url": "https://in.indeed.com/viewjob?jk=df68c2b50599665a&from=serp&vjs=3",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Senior Technical Lead-.Net - Noida, Uttar Pradesh - Indeed.com",
+      "company": "Optimus Information",
+      "location": "ncouver, Latin America, Nigeria, and New Delhi.",
+      "url": "https://in.indeed.com/viewjob?jk=92f68967ac62c370&from=serp&vjs=3",
+      "reason": "location"
+    },
+    {
+      "title": "Software Architect - Thiruvananthapuram, Kerala - Indeed.com",
+      "company": "Agilitegroup",
+      "location": "",
+      "url": "https://in.indeed.com/viewjob?jk=024a3a281e7b068c&from=serp&vjs=3",
+      "reason": "location"
+    },
+    {
+      "title": "Associate Principal Engineer, CRM Salesforce - Remote - Indeed.com",
+      "company": "Nagarro",
+      "location": "Principal Software Engineer jobs in Remote",
+      "url": "https://in.indeed.com/viewjob?jk=046d68313c6d6b86&from=serp&vjs=3",
+      "reason": "title_skip"
+    },
+    {
+      "title": "Lead AI Engineer - Remote - Indeed.com",
+      "company": "WebSenor InfoTech",
+      "location": "Work Mode:Remote",
+      "url": "https://in.indeed.com/viewjob?cmp=WebSenor-InfoTech&t=Lead+Engineer&jk=a12c64ea74aa26f7&xpse=SoDE67I2fbujVJQB6p0LbzkdCdPP&xfps=a597f337-9abc-4326-bb4a-c02e1f19d816&xkcb=SoA567M2fbuSIBXVoZ0JbzkdCdPP&vjs=3",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Lead AI Engineer - Remote - Indeed.com",
+      "company": "WebSenor InfoTech",
+      "location": "Work Location: Remote",
+      "url": "https://in.indeed.com/viewjob?cmp=WebSenor-InfoTech&t=Lead+Engineer&jk=bb54bd2600a59e86&xpse=SoDX67I2fbu-MYSNj50LbzkdCdPP&xfps=96d42cc7-0e45-4939-8199-5dfdf6f7d394&xkcb=SoC367M2fbuSIBXVoZ0ObzkdCdPP&vjs=3",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Sign In | Indeed Accounts",
+      "company": "",
+      "location": "",
+      "url": "https://secure.indeed.com/auth?hl=en_US&service=my&co=US&continue=https://www.indeed.com/&continue2=https://in.indeed.com/viewjob?jk=b77cade3d341af7f&from=serp&vjs=3&from=bot-detection-anonymous",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Sign In | Indeed Accounts",
+      "company": "",
+      "location": "",
+      "url": "https://secure.indeed.com/auth?hl=en_US&service=my&co=US&continue=https://www.indeed.com/&continue2=https://in.indeed.com/viewjob?cmp=Tech-Next&t=Solution+Architect&jk=68fa356567cb5e75&xpse=SoBv67I2fbv0GcgHN70LbzkdCdPP&xfps=5aab2093-be71-4ee0-a60c-ff693152f460&xkcb=SoBN67M2fbuSIBXVoZ0FbzkdCdPP&vjs=3&from=bot-detection-anonymous",
+      "reason": "title_not_target"
+    }
+  ],
+  "seen": [
+    {
+      "title": "Senior/Lead Solution Architect- Node.js - Hyderabad, Telangana - Indeed.com",
+      "company": "EPAM Systems, Inc.",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=318d36ad81472a15&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/318d36ad81472a15-45b8e08f24/Rafi_Resume.docx",
+      "atsUrl": "https://careers.epam.com/en/vacancy/blt24wd6chmuqv2aa3x_en?city=Hyderabad&state=Telangana&country=India&utm_source=indeed&utm_medium=xml-job-feed&utm_campaign=ta&utm_source=indeed&utm_medium=%20xml-job-feed%20&utm_campaign=ta",
+      "reason": "no_ats_form",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Solution Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "QualMinds Technologies",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=754ca1fc57c3da61&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/754ca1fc57c3da61-1f8a5df288/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Test Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "CODETRU",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=e565056a33b56a52&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/e565056a33b56a52-32af18eb41/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Senior Software Engineer - C#.NET - Hyderabad, Telangana - Indeed.com",
+      "company": "QualMinds Technologies",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=beb0b9a1511ef6d4&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/beb0b9a1511ef6d4-1d2e51dfab/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": ".NET Technical Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "QualMinds Technologies",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=aa373e9cacaf58ca&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/aa373e9cacaf58ca-6b0740e995/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Senior Staff Engineer, .Net Fullstack - Hyderabad, Telangana - Indeed.com",
+      "company": "Nagarro",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=cdc501f84ef40432&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/cdc501f84ef40432-0942ce91c0/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Lead Software Engineer - Hyderabad, Telangana - Indeed.com",
+      "company": "Keka Technologies Pvt. Ltd",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=9b7fb05f2029f079&from=serp&vjs=3",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Technical Lead - .Net with MySQL - Hyderabad, Telangana - Indeed.com",
+      "company": "Acads360 India Private Limited",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=0f1ad802d3af41d4&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/0f1ad802d3af41d4-acd89cf8a3/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Google CCAI Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "TTEC Digital",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=e29a6089abd6eaf9&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/e29a6089abd6eaf9-3a04472f72/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Not Found | Indeed",
+      "company": "",
+      "location": "",
+      "url": "https://in.indeed.com/viewjob?jk=abcdef0123456789",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "6015_ Lead Software Engineer - Hyderabad, Telangana - Indeed.com",
+      "company": "Recruise",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=b872d996b3798384&from=serp&vjs=3",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Principal Consultant - NICE CXone - Hyderabad, Telangana - Indeed.com",
+      "company": "TTEC Digital",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=f08993a96555c1cc&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/f08993a96555c1cc-e91c39b85f/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Technical Lead / Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "Egnify Technologies",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=5ed0f7b183c32a75&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/5ed0f7b183c32a75-21895f1883/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": ".Net Lead / Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "BytesEdge",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=8f74091e2ebd92d9&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/8f74091e2ebd92d9-825b624a87/Rafi_Resume.docx",
+      "atsUrl": "https://bytesedge.com/careers/",
+      "reason": "no_ats_form",
+      "path": "company_ATS"
+    },
+    {
+      "title": ".Net Application Architect - Madhapur, Hyderabad, Telangana - Indeed.com",
+      "company": "Profitics",
+      "location": "Madhapur, Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=f4ef6802ca3b5e7b&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/f4ef6802ca3b5e7b-71eea29f47/Rafi_Resume.docx",
+      "atsUrl": "https://profitics.com/techcarer/net-application-architect/",
+      "reason": "external_incomplete_or_timeout",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Senior Software Architect - Cyberabad, Hyderabad, Telangana - Indeed.com",
+      "company": "ModMed Technologies India Private Limited",
+      "location": "Cyberabad, Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=b4b08710f5989b4c&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/b4b08710f5989b4c-8bf6e0e50a/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Senior Platform Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "WSA APAC",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=3a782decf99d37f1&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/3a782decf99d37f1-1bcab0bef6/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "failed",
+      "reason": "easy_apply_incomplete",
+      "lastUrl": "https://smartapply.indeed.com/beta/indeedapply/form/questions-module/questions/1",
+      "sample": "Skip to main content | Home | Company reviews | Salary guide | 1 | Messages Unread count 1 | 9+ | Employers / Post Job | Start of main content | Save and close | 60% | Answer these questions from the employer | These questions are from the employer. If a question seems inappropriate, you can report the job. | Fields marked with | an asterisk | (*) are required. | Are you based in"
+    },
+    {
+      "title": "Senior Software Engineer, Fullstack - Hyderabad, Telangana - Indeed.com",
+      "company": "ValGenesis",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=4237a5879024d3fd&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/4237a5879024d3fd-5c51339f3f/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "failed",
+      "reason": "easy_apply_incomplete",
+      "lastUrl": "https://smartapply.indeed.com/beta/indeedapply/form/questions-module/questions/1",
+      "sample": "Skip to main content | Home | Company reviews | Salary guide | 1 | Messages Unread count 1 | 9+ | Employers / Post Job | Start of main content | Save and close | 60% | Answer these questions from the employer | These questions are from the employer. If a question seems inappropriate, you can report the job. | Fields marked with | an asterisk | (*) are required. | India - Standard"
+    },
+    {
+      "title": "Software Architect, Enterprise Mobile Applications - Hyderabad, Telangana - Indeed.com",
+      "company": "ValGenesis",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=cb585fa7c40aafaa&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/cb585fa7c40aafaa-2a05319f1c/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Full Stack Engineer - Dotnet - Hyderabad, Telangana - Indeed.com",
+      "company": "Aapmor",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=6a2eed407805a35b&from=serp&vjs=3",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "System Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "Axiado",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=328330348744276c&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/328330348744276c-906acf6744/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Not Found | Indeed",
+      "company": "",
+      "location": "",
+      "url": "https://in.indeed.com/viewjob?jk=f1e2d3c4b5a67890",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Software Engineer, Fullstack - Hyderabad, Telangana - Indeed.com",
+      "company": "ValGenesis",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=f3a84bf0a40a460e&from=serp&vjs=3",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Sr Engineer - .Net FullStack - Hyderabad, Telangana - Indeed.com",
+      "company": "Clean Harbors",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=bb34caede2746387&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/bb34caede2746387-e33736bab7/Rafi_Resume.docx",
+      "atsUrl": "https://epyc.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/job/162326/apply/email",
+      "reason": "external_incomplete_or_timeout",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Technical Lead - Angular Fullstack - Hyderabad, Telangana - Indeed.com",
+      "company": "Acads360 India Private Limited",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=e92fd0546e6d868a&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/e92fd0546e6d868a-6462aab0d6/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Engineering Manager - Hyderabad, Telangana - Indeed.com",
+      "company": "UST",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=8002ed8226d2f809&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/8002ed8226d2f809-cf228524f9/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Engineering Manager AI SaaS - HITEC City, Hyderabad, Telangana - Indeed.com",
+      "company": "Hire3 Labs",
+      "location": "HITEC City, Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?cmp=Hire3-Labs&t=Engineering+Manager&jk=6610d33df27a6d6f&xpse=SoDx67I2fbqiksTb5J0LbzkdCdPP&xfps=e748d23a-b037-4085-b3cc-5937ce449c55&xkcb=SoBA67M2fbphCCwHzR0AbzkdCdPP&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/6610d33df27a6d6f-4e421cadf3/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Technical Lead (.NET) - Hyderabad, Telangana - Indeed.com",
+      "company": "Lexicon Infotech",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=587e058f7e460de3&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/587e058f7e460de3-4991df92a1/Rafi_Resume.docx",
+      "atsUrl": "https://lexiconinfotech.com/careers.html",
+      "reason": "no_ats_form",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Specialist - Software Engineering - Hyderabad, Telangana - Indeed.com",
+      "company": "LTM",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=2bdda3ff077a4191&from=serp&vjs=3",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Not Found | Indeed",
+      "company": "",
+      "location": "",
+      "url": "https://in.indeed.com/viewjob?jk=890abcdef0123456",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Technical Lead/ Manager (Sitecore) - Hyderabad, Telangana - Indeed.com",
+      "company": "Pennywise Solutions",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=3d90205ad9cdc992&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/3d90205ad9cdc992-ecefbaa1a6/Rafi_Resume.docx",
+      "atsUrl": "https://www.pennywisesolutions.com/careers/technical-lead-manager-sitecore",
+      "reason": "external_incomplete_or_timeout",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Sr. Software Engineer - Full Stack (.Net) - Hyderabad, Telangana - Indeed.com",
+      "company": "Acads360 India Private Limited",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=bc35728a95a578ca&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/bc35728a95a578ca-c41e954f4f/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Deputy Director - SWE & App Arch Sr. Principal Engineer - Hyderabad, Telangana - Indeed.com",
+      "company": "PepsiCo",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=cd6591e76772a05b&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/cd6591e76772a05b-97c802efe7/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Sr. Developer - Application Development Microsoft N 4B - Hyderabad, Telangana - Indeed.com",
+      "company": "Genpact India Pvt. Ltd.",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=255e9aec0123ca35&from=serp&vjs=3",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Senior Software Engineer - Gachibowli, Hyderabad, Telangana - Indeed.com",
+      "company": "Acuity Software Technologies",
+      "location": "Gachibowli, Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=5bf6261e8796ce22&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/5bf6261e8796ce22-e9e971bb3d/Rafi_Resume.docx",
+      "atsUrl": "https://www.acuitysoft.com/careers-senior-software-engineer.html",
+      "reason": "no_ats_form",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Software Development - Web Applications - E-commerce solutions - Acuity Software",
+      "company": "",
+      "location": "",
+      "url": "https://www.acuitysoft.com/",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Technical Lead - Hyderabad, Telangana - Indeed.com",
+      "company": "Aapmor",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=8deb7354e573767c&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/8deb7354e573767c-ea2cd7532b/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Lead .NET Full Stack Engineer - Hyderabad, Telangana - Indeed.com",
+      "company": "Gradera Inc.",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=d512b1acd3b0bafc&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/d512b1acd3b0bafc-47d7f62fd0/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Not Found | Indeed",
+      "company": "",
+      "location": "",
+      "url": "https://in.indeed.com/viewjob?jk=fedcba9876543210",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Senior Principal - Architecture - Hyderabad, Telangana - Indeed.com",
+      "company": "LTIMindtree",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=27c90df6398984d2&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/27c90df6398984d2-65ca7d83de/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "failed",
+      "reason": "easy_apply_incomplete",
+      "lastUrl": "https://smartapply.indeed.com/beta/indeedapply/form/questions-module/questions/1",
+      "sample": "Skip to main content | Home | Company reviews | Salary guide | 1 | Messages Unread count 1 | 9+ | Employers / Post Job | Start of main content | Save and close | 60% | Answer these questions from the employer | These questions are from the employer. If a question seems inappropriate, you can report the job. | Fields marked with | an asterisk | (*) are required. | Title * | Mr. | Ms. | "
+    },
+    {
+      "title": "Azure Cloud Solution Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "Saaki Argus & Averil Consulting",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=11b4dfd47846b685&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/11b4dfd47846b685-7eb72b2091/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Architect - Enterprise Application - Oracle N 4D - Hyderabad, Telangana - Indeed.com",
+      "company": "Genpact India Pvt. Ltd.",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=6144ccb606d68e34&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/6144ccb606d68e34-7bd0e9c59c/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "submitted"
+    },
+    {
+      "title": "Developer III - Enterprise Solutions - Hyderabad, Telangana - Indeed.com",
+      "company": "UST",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=3ade6cdecdad5fbe&from=serp&vjs=3",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Senior Principal Consultant - Cloud Solution Architects - Hyderabad, Telangana - Indeed.com",
+      "company": "Genpact India Pvt. Ltd.",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=88c15aca14c7f524&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/88c15aca14c7f524-ae3d5a4cf2/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "submitted"
+    },
+    {
+      "title": "Principal - Architecture - Hyderabad, Telangana - Indeed.com",
+      "company": "LTM",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=72300de2ddddecd1&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/72300de2ddddecd1-8b0259a1d9/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "failed",
+      "reason": "easy_apply_incomplete",
+      "lastUrl": "https://smartapply.indeed.com/beta/indeedapply/form/questions-module/questions/1",
+      "sample": "Skip to main content | Home | Company reviews | Salary guide | 1 | Messages Unread count 1 | 9+ | Employers / Post Job | Start of main content | Save and close | 60% | Answer these questions from the employer | These questions are from the employer. If a question seems inappropriate, you can report the job. | Fields marked with | an asterisk | (*) are required. | Title * | Mr. | Ms. | "
+    },
+    {
+      "title": "Not Found | Indeed",
+      "company": "",
+      "location": "",
+      "url": "https://in.indeed.com/viewjob?jk=a1b2c3d4e5f67890",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Senior Application Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "NTT DATA",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=3ae608465b27be09&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/3ae608465b27be09-1c1f47aa94/Rafi_Resume.docx",
+      "atsUrl": "https://in.indeed.com/applystart?jk=3ae608465b27be09&from=vj&pos=bottom&mvj=0&spon=0&vjfrom=serp&asub=mob&astse=d6a46394c4bc5f5a&assa=7318",
+      "reason": "did_not_leave_indeed",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Specialist - Architecture - Hyderabad, Telangana - Indeed.com",
+      "company": "LTM",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=a69938d0a474a2bc&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/a69938d0a474a2bc-a1fbd63d01/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "failed",
+      "reason": "easy_apply_incomplete",
+      "lastUrl": "https://smartapply.indeed.com/beta/indeedapply/form/questions-module/questions/1",
+      "sample": "Skip to main content | Home | Company reviews | Salary guide | 1 | Messages Unread count 1 | 9+ | Employers / Post Job | Start of main content | Save and close | 60% | Answer these questions from the employer | These questions are from the employer. If a question seems inappropriate, you can report the job. | Fields marked with | an asterisk | (*) are required. | Title * | Mr. | Ms. | "
+    },
+    {
+      "title": "Architect - Application Development Microsoft N 4D - Hyderabad, Telangana - Indeed.com",
+      "company": "Genpact India Pvt. Ltd.",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=9a3d016a76c03e96&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/9a3d016a76c03e96-edc5709edf/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "submitted"
+    },
+    {
+      "title": "Technical Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "DocOnline",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=4b42dde41824276b&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/4b42dde41824276b-165c11ff98/Rafi_Resume.docx",
+      "atsUrl": "https://www.doconline.com/career",
+      "reason": "ats_helper_error:Page.goto: net::ERR_SOCKS_CONNECTION_FAILED at https://www.doconline.com/career\nCall log:\n  - navigating to \"https://www.doconline.com/career\", waiting until \"domc",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Technical Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "IConnectIT",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=4a0f011fd8129bf8&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/4a0f011fd8129bf8-f1e5df89ec/Rafi_Resume.docx",
+      "atsUrl": "https://www.iconnectit.net/careers#",
+      "reason": "job_unavailable",
+      "path": "company_ATS"
+    },
+    {
+      "title": "GoDaddy Security - Access Denied",
+      "company": "",
+      "location": "",
+      "url": "https://www.iconnectit.net/careers#",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Kafka Architect - Hyderabad, Telangana - Indeed.com",
+      "company": "Technology Next",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?cmp=Technology-Next&t=Integration+Architect&jk=dc4f35975148033e&xpse=SoD667I2fbsrMyyC4R0LbzkdCdPP&xfps=bafa2db5-821e-4e85-a743-ec93aa036e7e&xkcb=SoAs67M2fbrYfJURmB0FbzkdCdPP&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/dc4f35975148033e-e178f76d69/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Senior Software Engineer 1-2 - Cyberabad, Hyderabad, Telangana - Indeed.com",
+      "company": "ModMed Technologies India Private Limited",
+      "location": "Cyberabad, Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=132c38cfbc98c09b&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/132c38cfbc98c09b-dba5bed824/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Not Found | Indeed",
+      "company": "",
+      "location": "",
+      "url": "https://in.indeed.com/viewjob?jk=cdef0123456789ab",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Senior Software Engineer, Database - Hyderabad, Telangana - Indeed.com",
+      "company": "ValGenesis",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=3facc2d6e7f8db28&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/3facc2d6e7f8db28-4e83a2fb8d/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "failed",
+      "reason": "easy_apply_incomplete",
+      "lastUrl": "https://smartapply.indeed.com/beta/indeedapply/form/questions-module/questions/1",
+      "sample": "Skip to main content | Home | Company reviews | Salary guide | 1 | Messages Unread count 1 | 9+ | Employers / Post Job | Start of main content | Save and close | 60% | Answer these questions from the employer | These questions are from the employer. If a question seems inappropriate, you can report the job. | Fields marked with | an asterisk | (*) are required. | India - Engineer"
+    },
+    {
+      "title": ".Net Fullstack Developer - Hyderabad, Telangana - Indeed.com",
+      "company": "UST",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=3f8a7d2275c4fdeb&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/3f8a7d2275c4fdeb-79007b07fc/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "failed",
+      "reason": "easy_apply_incomplete",
+      "lastUrl": "https://smartapply.indeed.com/beta/indeedapply/form/questions-module/questions/1",
+      "sample": "Skip to main content | Home | Company reviews | Salary guide | 1 | Messages Unread count 1 | 9+ | Employers / Post Job | Start of main content | Save and close | 60% | Answer these questions from the employer | These questions are from the employer. If a question seems inappropriate, you can report the job. | Fields marked with | an asterisk | (*) are required. | Phone No * | Date "
+    },
+    {
+      "title": "Senior Software Engineer - .NET - Hyderabad, Telangana - Indeed.com",
+      "company": "Archetype",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=1f1b00615bc403f1&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/1f1b00615bc403f1-47b56753bd/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "failed",
+      "reason": "easy_apply_incomplete",
+      "lastUrl": "https://smartapply.indeed.com/beta/indeedapply/form/questions-module/questions/1",
+      "sample": "Skip to main content | Home | Company reviews | Salary guide | 1 | Messages Unread count 1 | 9+ | Employers / Post Job | Start of main content | Save and close | 60% | Answer these questions from the employer | These questions are from the employer. If a question seems inappropriate, you can report the job. | Fields marked with | an asterisk | (*) are required. | Address * | 38 / 2"
+    },
+    {
+      "title": "Cloud Assoc Principal Engineer - Hyderabad, Telangana - Indeed.com",
+      "company": "PepsiCo",
+      "location": "Hyderabad, Telangana",
+      "url": "https://in.indeed.com/viewjob?jk=ad3f66a161f008e3&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/ad3f66a161f008e3-3690bd7018/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "submitted"
+    },
+    {
+      "title": "Senior Full-Stack .NET Consultant (Angular) - Bengaluru, Karnataka - Indeed.com",
+      "company": "TechBiz Global GmbH",
+      "location": "Full Stack Developer jobs in Bengaluru, Karnataka",
+      "url": "https://in.indeed.com/viewjob?jk=0fcb6fe981e0061a&from=serp&vjs=3",
+      "reason": "location"
+    },
+    {
+      "title": "Associate Principal Engineer, .Net Fullstack - Remote - Indeed.com",
+      "company": "Nagarro",
+      "location": "Full Stack Developer jobs in Remote",
+      "url": "https://in.indeed.com/viewjob?jk=2ebc990bc7308eb6&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/2ebc990bc7308eb6-1378dd18c5/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Principal Engineer, .Net Fullstack - Remote - Indeed.com",
+      "company": "Nagarro",
+      "location": "Full Stack Developer jobs in Remote",
+      "url": "https://in.indeed.com/viewjob?jk=acecdc8e8f002891&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/acecdc8e8f002891-3d8783edbd/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": ".Net + Angular Technical Architect (Full stack) - Chennai, Tamil Nadu - Indeed.com",
+      "company": "Saaki Argus & Averil Consulting",
+      "location": "Location: Chennai (Remote options available)",
+      "url": "https://in.indeed.com/viewjob?jk=401b00ff8472f7c7&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/401b00ff8472f7c7-5af61c1ca2/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "already_applied",
+      "reason": "already_applied"
+    },
+    {
+      "title": "Test Automation Engineer Sr - Bengaluru, Karnataka - Indeed.com",
+      "company": "Dayforce",
+      "location": "to remote work and can hire anywhere in Bangalore.",
+      "url": "https://in.indeed.com/viewjob?jk=b1d9381862d95921&from=serp&vjs=3",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Systems Designer - Bengaluru, Karnataka - Indeed.com",
+      "company": "Grantek Systems Integration",
+      "location": "P, DeviceNet, ControlNet, Profibus, DH+, Remote IO, Modbus, etc.",
+      "url": "https://in.indeed.com/viewjob?jk=df68c2b50599665a&from=serp&vjs=3",
+      "reason": "title_not_target"
+    },
+    {
+      "title": ".Net Lead/Senior Software Engineer - Bengaluru, Karnataka - Indeed.com",
+      "company": "Impelsys",
+      "location": "Work Location: Bangalore / LATAM Remote",
+      "url": "https://in.indeed.com/viewjob?jk=18a5f533518ab2f1&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/18a5f533518ab2f1-5088f95144/Rafi_Resume.docx",
+      "atsUrl": "https://impelsys.com/jobs/us-enterprise-healthcare-sales-head/",
+      "reason": "external_incomplete_or_timeout",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Enterprise Solution Architect - Bengaluru, Karnataka - Indeed.com",
+      "company": "Marx Technology Consulting",
+      "location": "Bengaluru, India, Hybrid or Remote",
+      "url": "https://in.indeed.com/viewjob?jk=bda51571804bdaff&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/bda51571804bdaff-796346de81/Rafi_Resume.docx",
+      "atsUrl": "https://www.marx.co/jobs/enterprise-solution-architect",
+      "reason": "external_incomplete_or_timeout",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Sr. Technical Architect (.Net) - Remote - Indeed.com",
+      "company": "MNJ Software",
+      "location": "Senior Technical Architect jobs in Remote",
+      "url": "https://in.indeed.com/viewjob?jk=f4ba178a8b9095dc&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/f4ba178a8b9095dc-6e5f920b7b/Rafi_Resume.docx",
+      "atsUrl": "https://www.mnjsoftware.com/corporate/careers/job-details.aspx?JobId=J0117",
+      "reason": "ats_helper_error:Page.goto: net::ERR_SOCKS_CONNECTION_FAILED at https://www.mnjsoftware.com/corporate/careers/job-details.aspx?JobId=J0117\nCall log:\n  - navigating to \"https://www.",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Senior Technical Lead-.Net - Noida, Uttar Pradesh - Indeed.com",
+      "company": "Optimus Information",
+      "location": "ncouver, Latin America, Nigeria, and New Delhi.",
+      "url": "https://in.indeed.com/viewjob?jk=92f68967ac62c370&from=serp&vjs=3",
+      "reason": "location"
+    },
+    {
+      "title": "Software Architect - Remote - Indeed.com",
+      "company": "Infopine",
+      "location": "Years Experience | Remote | Freelance",
+      "url": "https://in.indeed.com/viewjob?jk=945df143593853e2&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/945df143593853e2-d6ed885dcb/Rafi_Resume.docx",
+      "atsUrl": "https://infopine.com/apply-jobs/",
+      "reason": "external_incomplete_or_timeout",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Sr. Technical Architect - Remote - Indeed.com",
+      "company": "MNJ Software",
+      "location": "Senior Technical Architect jobs in Remote",
+      "url": "https://in.indeed.com/viewjob?jk=21be082d50f5c4b5&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/21be082d50f5c4b5-273f187bd5/Rafi_Resume.docx",
+      "atsUrl": "https://www.mnjsoftware.com/corporate/careers/job-details.aspx?JobId=J0124",
+      "reason": "ats_helper_error:Page.goto: net::ERR_SOCKS_CONNECTION_FAILED at https://www.mnjsoftware.com/corporate/careers/job-details.aspx?JobId=J0124\nCall log:\n  - navigating to \"https://www.",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Software Architect - Thiruvananthapuram, Kerala - Indeed.com",
+      "company": "Agilitegroup",
+      "location": "",
+      "url": "https://in.indeed.com/viewjob?jk=024a3a281e7b068c&from=serp&vjs=3",
+      "reason": "location"
+    },
+    {
+      "title": "Senior .NET Developer with Azure Expertise - Remote - Indeed.com",
+      "company": "Core Value Technologies",
+      "location": "Developer with Azure Expertise Full time Remote (Work from Home) Immediate Screeing app",
+      "url": "https://in.indeed.com/viewjob?jk=95de54e6b5c4e727&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/95de54e6b5c4e727-591f80883f/Rafi_Resume.docx",
+      "atsUrl": "https://corevaluetech.com/pages/job.html?job=dot-net",
+      "reason": "ats_helper_error:Page.goto: net::ERR_SOCKS_CONNECTION_FAILED at https://corevaluetech.com/pages/job.html?job=dot-net\nCall log:\n  - navigating to \"https://corevaluetech.com/pages/jo",
+      "path": "company_ATS"
+    },
+    {
+      "title": "Architect I - Enterprise Solutions - Bengaluru, Karnataka - Indeed.com",
+      "company": "UST",
+      "location": "E1 Developer Role Locations(s): India - Remote Role Scope / Deliverables: Hiring: Seni",
+      "url": "https://in.indeed.com/viewjob?jk=b190574a326419fb&from=serp&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/b190574a326419fb-2858d58d60/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "failed",
+      "reason": "easy_apply_incomplete",
+      "lastUrl": "https://smartapply.indeed.com/beta/indeedapply/form/questions-module/questions/1",
+      "sample": "Skip to main content | Home | Company reviews | Salary guide | 1 | Messages Unread count 1 | 9+ | Employers / Post Job | Start of main content | Save and close | 60% | Answer these questions from the employer | These questions are from the employer. If a question seems inappropriate, you can report the job. | Fields marked with | an asterisk | (*) are required. | Phone No * | Date "
+    },
+    {
+      "title": "Associate Principal Engineer, CRM Salesforce - Remote - Indeed.com",
+      "company": "Nagarro",
+      "location": "Principal Software Engineer jobs in Remote",
+      "url": "https://in.indeed.com/viewjob?jk=046d68313c6d6b86&from=serp&vjs=3",
+      "reason": "title_skip"
+    },
+    {
+      "title": "Lead AI Engineer - Remote - Indeed.com",
+      "company": "WebSenor InfoTech",
+      "location": "Work Mode:Remote",
+      "url": "https://in.indeed.com/viewjob?cmp=WebSenor-InfoTech&t=Lead+Engineer&jk=a12c64ea74aa26f7&xpse=SoDE67I2fbujVJQB6p0LbzkdCdPP&xfps=a597f337-9abc-4326-bb4a-c02e1f19d816&xkcb=SoA567M2fbuSIBXVoZ0JbzkdCdPP&vjs=3",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Sr. FDE (Resident Solution Architect) – Databricks - Remote - Indeed.com",
+      "company": "Lntechsystem Private Limited",
+      "location": "Location: Fully Remote (2pm to 11 pm)",
+      "url": "https://in.indeed.com/viewjob?cmp=Lntechsystem-Private-Limited&t=Senior+Solution+Architect&jk=4d7199bd6ccc1293&xpse=SoCP67I2fbuigeyT7B0LbzkdCdPP&xfps=18106dd0-ebb6-4989-8dad-19ad30f8a741&xkcb=SoAD67M2fbuSIBXVoZ0PbzkdCdPP&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/4d7199bd6ccc1293-a160df0481/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "submitted"
+    },
+    {
+      "title": "Lead AI Engineer - Remote - Indeed.com",
+      "company": "WebSenor InfoTech",
+      "location": "Work Location: Remote",
+      "url": "https://in.indeed.com/viewjob?cmp=WebSenor-InfoTech&t=Lead+Engineer&jk=bb54bd2600a59e86&xpse=SoDX67I2fbu-MYSNj50LbzkdCdPP&xfps=96d42cc7-0e45-4939-8199-5dfdf6f7d394&xkcb=SoC367M2fbuSIBXVoZ0ObzkdCdPP&vjs=3",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "AI Solutions Architect – Agentic AI & GenAI - Remote - Indeed.com",
+      "company": "Technology Next",
+      "location": "Location: Remote / Flexible",
+      "url": "https://in.indeed.com/viewjob?cmp=Technology-Next&t=Solution+Architect&jk=f6925d00df4f6c9b&xpse=SoCI67I2fbu9beyC4R0LbzkdCdPP&xfps=303fa835-0ef6-40d4-81cc-0d306182fc15&xkcb=SoAq67M2fbuSIBXVoZ0NbzkdCdPP&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/f6925d00df4f6c9b-782ff9261a/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "recaptcha",
+      "reason": "easy_apply_recaptcha"
+    },
+    {
+      "title": "AI Solution Architect - Remote - Indeed.com",
+      "company": "TECH NEXT",
+      "location": "Work Location: Remote",
+      "url": "https://in.indeed.com/viewjob?cmp=Tech-Next&t=Solution+Architect&jk=6fdbfeac1614f649&xpse=SoD267I2fbvewLSMXB0LbzkdCdPP&xfps=cc9a6d22-a6f9-4dc2-bc32-d82df8b31d2f&xkcb=SoDD67M2fbuSIBXVoZ0CbzkdCdPP&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/6fdbfeac1614f649-c6ce42d6bd/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "submitted"
+    },
+    {
+      "title": "Analytics Solutions Architect - Remote - Indeed.com",
+      "company": "Revolite Infotech Pvt. Ltd",
+      "location": "Location: Remote",
+      "url": "https://in.indeed.com/viewjob?cmp=Mukizh-Fashions&t=Solution+Architect&jk=e386489be34cc5a8&xpse=SoCr67I2fbvaSWQHTh0LbzkdCdPP&xfps=7c49b45d-8c91-4c23-83a8-e7014b6d3fde&xkcb=SoBe67M2fbuSIBXVoZ0BbzkdCdPP&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/e386489be34cc5a8-0032a2dff5/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "submitted"
+    },
+    {
+      "title": "Principal or Senior / AI Solution Architect (Strategic Advisory) - Remote - Indeed.com",
+      "company": "Prahartech",
+      "location": "Location: Remote, India",
+      "url": "https://in.indeed.com/viewjob?cmp=Prahartech&t=Principal+Ai+Architect&jk=3d8c846b8d323e6b&xpse=SoBB67I2fbvWTCSNnZ0LbzkdCdPP&xfps=0ad19cb6-ef0d-4811-a4e1-5b22d5cfd401&xkcb=SoDq67M2fbuSIBXVoZ0AbzkdCdPP&vjs=3",
+      "tailoredResume": "/opt/cursor/artifacts/tailored-resumes/3d8c846b8d323e6b-3e3ccc7953/Rafi_Resume.docx",
+      "path": "easy_apply",
+      "result": "recaptcha",
+      "reason": "easy_apply_recaptcha"
+    },
+    {
+      "title": "Sign In | Indeed Accounts",
+      "company": "",
+      "location": "",
+      "url": "https://secure.indeed.com/auth?hl=en_US&service=my&co=US&continue=https://www.indeed.com/&continue2=https://in.indeed.com/viewjob?jk=b77cade3d341af7f&from=serp&vjs=3&from=bot-detection-anonymous",
+      "reason": "title_not_target"
+    },
+    {
+      "title": "Sign In | Indeed Accounts",
+      "company": "",
+      "location": "",
+      "url": "https://secure.indeed.com/auth?hl=en_US&service=my&co=US&continue=https://www.indeed.com/&continue2=https://in.indeed.com/viewjob?cmp=Tech-Next&t=Solution+Architect&jk=68fa356567cb5e75&xpse=SoBv67I2fbv0GcgHN70LbzkdCdPP&xfps=5aab2093-be71-4ee0-a60c-ff693152f460&xkcb=SoBN67M2fbuSIBXVoZ0FbzkdCdPP&vjs=3&from=bot-detection-anonymous",
+      "reason": "title_not_target"
+    }
+  ],
+  "blockerSummary": "no_ats_form",
+  "notes": [],
+  "preflight": null,
+  "logPath": null
+}
