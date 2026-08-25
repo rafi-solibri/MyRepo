@@ -357,8 +357,11 @@ def fill_otp_fields(page, code: str) -> bool:
                             if not re.search(r"confirm your identity|verification code", body, re.I):
                                 continue
                     el.click(timeout=2000)
-                    el.fill("")
-                    el.type(code, delay=40)
+                    try:
+                        el.fill(code)
+                    except Exception:
+                        el.fill("")
+                        el.type(code, delay=40)
                     filled = True
                     break
                 except Exception:
