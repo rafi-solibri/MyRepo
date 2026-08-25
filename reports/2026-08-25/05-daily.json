@@ -1,0 +1,40 @@
+{
+  "date": "2026-08-25",
+  "portal": "05",
+  "postFixRerun": true,
+  "mergedMain": "c507fd250cc273052e1d23c2579dfa697f54f58b",
+  "mergedPr": "https://github.com/rafi-solibri/MyRepo/pull/257",
+  "loggedIn": true,
+  "resume": "/workspace/resumes/Rafi_Resume.docx",
+  "appliedThisSession": 0,
+  "alreadyAppliedTodaySkipped": [
+    {
+      "id": 440001,
+      "title": "Lead Solution Architect - AWS",
+      "company": "Vortiqo Technologies",
+      "location": "Work From Home"
+    },
+    {
+      "id": 439867,
+      "title": "SDE 3 (Social Planner)",
+      "company": "HighLevel",
+      "location": "Work From Home"
+    }
+  ],
+  "skipped": 676,
+  "blocked": 0,
+  "uniqueJobsSeen": 676,
+  "opportunitiesUndecided": 6,
+  "countsBefore": { "0": 6, "1": 455, "2": 28, "total": 489 },
+  "countsAfter": { "0": 6, "1": 455, "2": 28, "total": 489 },
+  "skipReasons": {
+    "location_not_hyd_remote": 545,
+    "already_interested": 93,
+    "generic_engineering_without_dotnet_cloud": 21,
+    "java_primary": 8,
+    "pure_ai_data_without_dotnet": 6,
+    "frontend_without_dotnet": 1,
+    "qa_quality_engineering": 1,
+    "wrong_stack_title": 1
+  }
+}
