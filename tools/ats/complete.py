@@ -328,6 +328,7 @@ def ensure_oracle_apply_flow(page) -> bool:
     except Exception:
         return False
     dest = oracle_job_apply_email_url(url)
+    print(f"oracle_apply_flow=check url={url[:160]} dest={dest or '-'}", flush=True)
     if not dest:
         return False
     try:
@@ -402,6 +403,7 @@ def is_hard_ats_wall(reason: str | None) -> bool:
             "account wall",
             "ats_login_wall",
             "ats_otp_wall",
+            "ats_rate_limited",
             "ats_password_missing",
             "ats_email_missing",
             "sso",
@@ -613,6 +615,18 @@ def iframe_box_is_onscreen(box: dict | None) -> bool:
     if not box:
         return False
     return float(box.get("width") or 0) >= 20 and float(box.get("height") or 0) >= 20
+
+
+def rate_limit_reason(text: str | None) -> str | None:
+    """Oracle (and similar) apply-flow cooldown after too many email OTP attempts."""
+    if re.search(
+        r"too many attempts|maximum number of attempts|"
+        r"try again (later|in \d+\s*(minute|min|hour|hr))",
+        text or "",
+        re.I,
+    ):
+        return "ats_rate_limited"
+    return None
 
 
 def otp_wall_reason(text: str | None) -> str | None:
@@ -1114,6 +1128,9 @@ def blocked_wall(page) -> str | None:
     if visible_captcha_challenge(page):
         return "CAPTCHA/bot wall"
     flags = page_flags(page)
+    limited = rate_limit_reason(flags.get("text") or "")
+    if limited:
+        return limited
     otp = otp_wall_reason(flags.get("text") or "")
     if otp:
         return otp
@@ -2129,6 +2146,8 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
                 wall = None
             else:
                 return "blocked", wall
+        if wall == "ats_rate_limited":
+            return "blocked", wall
         if wall in ("job_closed", "job_unavailable"):
             return "skipped", wall
         text = _body(page, 2000)
@@ -2474,6 +2493,8 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
                 wall = None
             else:
                 return "blocked", wall
+        if wall == "ats_rate_limited":
+            return "blocked", wall
         if wall in ("job_closed", "job_unavailable"):
             return "skipped", wall
         if wall == "ats_login_wall":
@@ -2919,6 +2940,9 @@ def complete_ats(page, time_cap_s: int | None = None) -> tuple[str, str]:
     except Exception:
         pass
     flags = page_flags(page)
+    limited = rate_limit_reason(flags.get("text") or "")
+    if limited:
+        return "blocked", limited
     host = classify_ats_host(flags["url"])
     icims_url = bool(re.search(r"icims\.com/jobs/\d+", flags["url"], re.I))
     if not icims_url:

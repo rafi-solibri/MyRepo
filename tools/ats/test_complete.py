@@ -14,6 +14,7 @@ if str(ROOT) not in sys.path:
 from tools.ats.complete import (
     ats_password,
     auth_wall_reason,
+    rate_limit_reason,
     classify_ats_host,
     extract_hop_destination_from_url,
     extract_offsite_from_text,
@@ -85,6 +86,12 @@ finally:
 assert_true(is_hard_ats_wall("CAPTCHA/bot wall"), "captcha is hard")
 assert_true(is_hard_ats_wall("ats_login_wall"), "login is hard")
 assert_true(is_hard_ats_wall("ats_otp_wall"), "oracle email OTP is hard wall")
+assert_true(is_hard_ats_wall("ats_rate_limited"), "Oracle too-many-attempts is a company wall")
+assert_true(
+    rate_limit_reason("Too Many Attempts. Try Again Later.\nYou reached the maximum number of attempts. Try again in 30 minutes.")
+    == "ats_rate_limited",
+    "Oracle apply/email cooldown is rate limited",
+)
 assert_true(is_hard_ats_wall("verification code was sent"), "otp phrase is hard wall")
 assert_true(not is_hard_ats_wall("external_incomplete_or_timeout"), "timeout is not a company wall")
 assert_true(not is_hard_ats_wall("easy_apply_incomplete"), "easy incomplete is not a company wall")

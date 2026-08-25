@@ -1262,6 +1262,12 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         row["finalUrl"] = page.url
         _close_auth_popups(page)
         return row
+    try:
+        from tools.ats.complete import ensure_oracle_apply_flow
+
+        ensure_oracle_apply_flow(page)
+    except Exception:
+        pass
     status, reason = attempt_ats_apply(
         page,
         time_cap_s=TIME_CAP_S,
