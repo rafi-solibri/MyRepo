@@ -1,0 +1,34 @@
+{
+  "date": "2026-08-25",
+  "portal": "hirist",
+  "status": "stopped_login_required",
+  "postFixRerun": true,
+  "mergedFixPr": "https://github.com/rafi-solibri/MyRepo/pull/257",
+  "mainSha": "c507fd250cc273052e1d23c2579dfa697f54f58b",
+  "applied": [],
+  "external": [],
+  "skipped": [],
+  "seen": 0,
+  "blocked": [
+    {
+      "reason": "hirist_login_required",
+      "detail": "jobfeed_401; Google SSO Continue with Google → wrong_password for GOOGLE_PASSWORD; no .portal-sessions hirist seed",
+      "artifact": "/opt/cursor/artifacts/hirist-google-wrong-password.png"
+    }
+  ],
+  "counts": {
+    "applied": 0,
+    "external": 0,
+    "rejected": 0,
+    "blocked": 1,
+    "skipped": 0,
+    "seen": 0
+  },
+  "resume": "/workspace/resumes/Rafi_Resume.docx",
+  "codeFix": null,
+  "ownerAction": [
+    "Refresh GOOGLE_PASSWORD (current secret rejected by Google SSO)",
+    "bash scripts/home-headed-login.sh hirist",
+    "bash scripts/refresh-portal-session-seed.sh hirist --commit then Save Environment snapshot"
+  ]
+}
