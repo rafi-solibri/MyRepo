@@ -40,6 +40,11 @@ except Exception:
                 return c
         raise FileNotFoundError("Rafi_Resume.docx missing")
 
+try:
+    from tools.linkedin.safety import pause_status, safe_int
+except Exception:
+    from safety import pause_status, safe_int  # type: ignore
+
 CDP = os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222")
 _ROOT = Path(__file__).resolve().parents[2]
 
@@ -139,8 +144,13 @@ SKIP_COMPANY_LOC = re.compile(
     r"indore|بنغالور|مومباي|دلهي|تشيناي|بوني|إندور",
     re.I,
 )
-MAX_EXTERNAL = int(os.environ.get("LINKEDIN_MAX_EXTERNAL", "40"))
+MAX_EXTERNAL = int(os.environ.get("LINKEDIN_MAX_EXTERNAL", str(safe_int("maxExternal", 5))))
 ATS_TIME_CAP_S = int(os.environ.get("LINKEDIN_ATS_TIME_CAP_S", "390"))  # Workday needs ~6.5m
+INCLUDE_PRIORITY_IDS = (os.environ.get("LINKEDIN_INCLUDE_PRIORITY_IDS") or "").strip().lower() in (
+    "1",
+    "true",
+    "yes",
+)
 
 
 @dataclass
@@ -153,6 +163,37 @@ class ExtResult:
     reason: str = ""
     url: str = ""
     path: str = ""
+
+
+def write_safety_pause_report(status) -> None:
+    row = ExtResult(
+        status="blocked",
+        reason="linkedin_safety_pause",
+        url=status.pause_until_utc or "",
+        path=status.source,
+    )
+    out = {
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "submitted": [],
+        "blocked": [asdict(row)],
+        "skipped": [],
+        "all": [asdict(row)],
+        "safety": {
+            "active": True,
+            "reason": status.reason,
+            "pauseUntilUtc": status.pause_until_utc,
+            "secondsRemaining": status.seconds_remaining,
+            "source": status.source,
+        },
+    }
+    REPORT_OUT.parent.mkdir(parents=True, exist_ok=True)
+    REPORT_OUT.write_text(json.dumps(out, indent=2))
+    print(
+        f"LINKEDIN SAFETY PAUSE: {status.reason} "
+        f"(until {status.pause_until_utc or 'manual re-enable'})",
+        flush=True,
+    )
+    print(f"wrote {REPORT_OUT}", flush=True)
 
 
 def shot(page: Page, name: str) -> None:
@@ -560,17 +601,23 @@ def process_external(page: Page, job: dict) -> ExtResult:
 
 
 def main() -> None:
+    safety = pause_status()
+    if safety.active:
+        write_safety_pause_report(safety)
+        return
+
     if REPORT_IN.is_file():
         data = json.loads(REPORT_IN.read_text())
     else:
-        print(f"NOTE: missing {REPORT_IN} — using PRIORITY_IDS only", flush=True)
+        print(f"NOTE: missing {REPORT_IN} — no external candidates loaded", flush=True)
         data = {"external_candidates": []}
     by_id = {c["job_id"]: c for c in external_candidates_from_report(data) if c.get("job_id")}
     # Priority first (even if missing from today's Easy Apply scan), then remaining externals
     ordered: list[str] = []
-    for jid in PRIORITY_IDS:
-        if jid not in ordered:
-            ordered.append(jid)
+    if INCLUDE_PRIORITY_IDS:
+        for jid in PRIORITY_IDS:
+            if jid not in ordered:
+                ordered.append(jid)
     for jid in by_id:
         if jid not in ordered:
             ordered.append(jid)
@@ -639,8 +686,8 @@ def main() -> None:
                 break
             job = by_id.get(jid)
             if not job:
-                # Still try priority IDs even if not in today's scan
-                if jid in PRIORITY_IDS:
+                # Only try static priority IDs when explicitly enabled.
+                if INCLUDE_PRIORITY_IDS and jid in PRIORITY_IDS:
                     job = {
                         "job_id": jid,
                         "company": "",

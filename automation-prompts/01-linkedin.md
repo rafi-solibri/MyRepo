@@ -5,13 +5,14 @@ Automation: https://cursor.com/automations/beb6ef8e-908f-11f1-ba66-0e7d0216e441
 Copy everything inside the block below:
 
 ```text
-FIRST: run `bash scripts/preflight-portal-run.sh linkedin` so resume + portal cookies are ready and verified.
+FIRST: run `python3 tools/linkedin/safety.py --check`. If it reports an active LinkedIn safety pause, STOP and report the pause/retry time; do not open LinkedIn, auto-login, search, view profiles, message people, or apply.
+Only after the safety check is clear, run `bash scripts/preflight-portal-run.sh linkedin` so resume + portal cookies are ready and verified.
 Then run `bash scripts/launch-chrome-cdp.sh linkedin`.
-Launch auto-heals LinkedIn login: WARP SOCKS on cloud + `tools/linkedin/auto_login.py` (Continue with Google; optional secrets LINKEDIN_EMAIL/LINKEDIN_PASSWORD) + `scripts/refresh-portal-session-seed.sh` on success. Do not ask the owner to headed-login unless auto-login exits CAPTCHA (6) with no Google session.
+Launch auto-heals LinkedIn login only when the safety check is clear: WARP SOCKS on cloud + `tools/linkedin/auto_login.py` (Continue with Google; optional secrets LINKEDIN_EMAIL/LINKEDIN_PASSWORD) + `scripts/refresh-portal-session-seed.sh` on success. Do not ask the owner to headed-login unless auto-login exits CAPTCHA (6) with no Google session.
 Use helpers: `python3 tools/linkedin/linkedin_easy_apply.py` and `python3 tools/linkedin/linkedin_external_apply.py`.
 Never use the Default google-chrome profile for CDP — sync copies logins into chrome-cdp-profile.
 
-Apply to LinkedIn jobs for Mohammed Abdul Rafi Ahmed (Rafi Ahmed) until a solid daily batch is done or inventory runs thin. Maximize BOTH application volume and interview callbacks.
+Apply to LinkedIn jobs for Mohammed Abdul Rafi Ahmed (Rafi Ahmed) only within the reduced safety caps. LinkedIn is no longer a high-volume channel; prefer fewer, highly relevant job applications over broad daily browsing.
 
 ## Profile (use exactly)
 - Location preference: Hyderabad, Telangana, India
@@ -37,11 +38,10 @@ Apply to LinkedIn jobs for Mohammed Abdul Rafi Ahmed (Rafi Ahmed) until a solid 
 ONLY apply if Hyderabad / Greater Hyderabad / Telangana OR Fully Remote / WFH / India Remote.
 Judge location from the TOP CARD / workplace pills only — never the full page body (profile chrome can contain "Hyderabad" and false-allow Bengaluru roles).
 
-## Apply bias (CRITICAL — volume)
+## Apply bias (SAFETY-FIRST)
 - Default to APPLY for Hyd/remote Architect / Tech Lead / EM / Principal / Staff / Director .NET/cloud roles.
-- When uncertain between skip and apply → APPLY (then state expected 65 LPA on forms).
-- Aim for **40–50+** qualifying Easy Applies when inventory exists. Do not stop at ~20.
-- Helpers default MAX_APPLY=50 / MAX_EXTERNAL=25 / scan deeper + 14-day window.
+- When uncertain, open fewer job pages and skip unless the top card clearly matches title/location.
+- Daily caps are intentionally low after the restriction: helpers default to `LINKEDIN_MAX_APPLY=10`, `LINKEDIN_MAX_EXTERNAL=5`, `LINKEDIN_MAX_SCAN=20`, and recent windows only. Do not raise these in unattended daily runs.
 - Do NOT invent applies; confirm Application submitted / ATS confirmation.
 
 ## Search / apply order
@@ -49,17 +49,17 @@ Judge location from the TOP CARD / workplace pills only — never the full page 
 2. Hyderabad then Remote India
 3. Titles: Solution Architect, Technical Architect, Software Architect, Technical Lead, Engineering Manager, Principal/Staff .NET, Azure/Cloud Architect
 4. Skip already Applied
-5. Keep going while inventory remains (expand to 7d then 14d if thin)
+5. Keep to recent inventory; do not expand to 7d/14d in unattended daily runs unless the owner explicitly changes `LINKEDIN_TPR_WINDOWS`.
 6. Retry flaky job-card clicks (scroll into view + retry) before skipping
 
-## Apply paths (CRITICAL — not Easy Apply only)
+## Apply paths
 - Prefer Easy Apply through Application submitted
-- The durable runner **always** runs a **non-Easy-Apply search pass** (`f_AL` off) so company-site / Apply jobs are collected even after Easy Apply volume or a daily Easy Apply limit. Set `LINKEDIN_EASY_APPLY_ONLY=1` only to disable that pass. External helper cap: `LINKEDIN_MAX_EXTERNAL` (default 40).
+- The durable runner can run a non-Easy-Apply search pass (`f_AL` off), but keep the default reduced caps. Set `LINKEDIN_EASY_APPLY_ONLY=1` to disable that pass when the account needs additional cooldown.
 - If Apply / company website / Workday / Greenhouse / Lever / SmartRecruiters / SuccessFactors / BambooHR / Hibob: FOLLOW and COMPLETE. Do not skip externals.
 - Dedup: load prior job IDs from `/opt/cursor/artifacts/linkedin-seen-ids.json` + prior apply reports (plus bootstrap seed). Do not re-apply known IDs.
 - One job at a time; ~6.5 min cap on Workday/Greenhouse ATS (LINKEDIN_ATS_TIME_CAP_S=390). CAPTCHA/OTP: log blocked, continue
 - Greenhouse email OTP: if GMAIL session available in Chrome, read OTP; else block and continue
-- After Easy Apply, message the poster (poster-specific Message, not generic typeahead) asking for a 15–20 min screen
+- Do not browse people search or send referral/profile messages from LinkedIn in unattended runs; the account was restricted for high-volume profile-data access.
 
 ## Skip rules (TITLE-FIRST — do not over-filter)
 Skip ONLY when the TITLE (or clear mandatory JD language) is wrong:

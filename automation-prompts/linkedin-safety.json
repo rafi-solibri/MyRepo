@@ -1,0 +1,10 @@
+{
+  "pauseUntilUtc": "2026-08-31T03:30:00Z",
+  "reason": "LinkedIn temporarily restricted the account for unusually high profile-data access. Do not run LinkedIn automation until after the restriction lift time plus buffer.",
+  "safeDefaults": {
+    "maxEasyApply": 10,
+    "maxExternal": 5,
+    "maxScanPerSearch": 20,
+    "referralsPerDay": 0
+  }
+}

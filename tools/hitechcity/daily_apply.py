@@ -70,6 +70,7 @@ from tools.hitechcity.board_campus_apply import run as run_boards
 from tools.hitechcity.careers_apply import load_companies, run as run_careers
 from tools.hitechcity.discover_tenants import run as run_discovery
 from tools.hitechcity.linkedin_target_apply import run as run_linkedin
+from tools.linkedin.safety import pause_status
 
 OUT_DEFAULT_CLOUD = Path("/opt/cursor/artifacts/hitechcity-daily.json")
 OUT_DEFAULT_LOCAL = _root / "artifacts" / "hitechcity-daily.json"
@@ -150,11 +151,12 @@ def main() -> int:
             companies = None
 
     careers_only = os.environ.get("HITECHCITY_CAREERS_ONLY", "").strip() in ("1", "true", "yes")
+    linkedin_safety = pause_status()
     skip_linkedin = careers_only or os.environ.get("HITECHCITY_SKIP_LINKEDIN", "").strip() in (
         "1",
         "true",
         "yes",
-    )
+    ) or linkedin_safety.active
 
     # 1) Official career portals FIRST — LinkedIn CAPTCHA must not starve ATS time.
     try:
@@ -173,8 +175,16 @@ def main() -> int:
 
     # 2) LinkedIn company-targeted applies + referrals (after careers)
     if skip_linkedin:
-        summary["linkedin"] = {"skippedPhase": "careers_only"}
-        print("=== HitechCity LinkedIn skipped (careers-only) ===", flush=True)
+        if linkedin_safety.active:
+            summary["linkedin"] = {
+                "skippedPhase": "linkedin_safety_pause",
+                "pauseUntilUtc": linkedin_safety.pause_until_utc,
+                "reason": linkedin_safety.reason,
+            }
+            print("=== HitechCity LinkedIn skipped (safety pause) ===", flush=True)
+        else:
+            summary["linkedin"] = {"skippedPhase": "careers_only"}
+            print("=== HitechCity LinkedIn skipped (careers-only) ===", flush=True)
     else:
         try:
             print("=== HitechCity LinkedIn + referrals ===", flush=True)

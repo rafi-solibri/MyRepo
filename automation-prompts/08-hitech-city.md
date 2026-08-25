@@ -5,14 +5,14 @@ Automation: https://cursor.com/automations/b65968f7-953d-11f1-ba66-0e7d0216e441
 Copy everything inside the block below:
 
 ```text
-FIRST: run `bash scripts/preflight-portal-run.sh hitechcity` so resume + LinkedIn cookies are ready (this flow reuses the LinkedIn CDP profile for career portals + referrals).
+FIRST: run `bash scripts/preflight-portal-run.sh hitechcity` so resume + portal cookies are ready. This flow must honor `python3 tools/linkedin/safety.py --check`; if the LinkedIn safety pause is active, skip all LinkedIn/referral work and continue official career portals/boards only.
 Then run `bash scripts/launch-chrome-cdp.sh hitechcity`.
 Use helper: `python3 tools/hitechcity/daily_apply.py`
 Company campus list: `tools/hitechcity/companies.json` (Knowledge City, Knowledge Park, Mindspace Madhapur / Raheja, The V, Cyber Pearl, DLF Cyber City, Divyasree Orion — premium Grade-A buildings). The helper **discovers** additional software tenants into this list before applying (seed employer list + LinkedIn *company-name* slug resolve — not campus-name LinkedIn searches).
 
-Apply to senior .NET / architect / tech-lead / EM roles for Mohammed Abdul Rafi Ahmed at companies in these Madhapur / HITEC City campuses. Maximize BOTH application volume and referral outreach. Target ~50 applications/day.
+Apply to senior .NET / architect / tech-lead / EM roles for Mohammed Abdul Rafi Ahmed at companies in these Madhapur / HITEC City campuses. Prefer official company career portals and avoid LinkedIn profile/referral browsing while the LinkedIn account cools down.
 
-**PRIMARY:** official company career portals in **parallel multi-tab** (default `HITECHCITY_PARALLEL_TABS=10` on every cron/daily/`daily_apply.py` run) + LinkedIn company-targeted applies/referrals.
+**PRIMARY:** official company career portals in **parallel multi-tab** (default `HITECHCITY_PARALLEL_TABS=10` on every cron/daily/`daily_apply.py` run). LinkedIn company-targeted applies are secondary and skipped automatically during safety pauses.
 **ALSO REQUIRED (campus allowlist):** browse Naukri, Foundit, Cutshort, Instahyre, and Indeed for the same campus-company set (capped; do not invent applies). Generic Hyd employers outside the campus tenant list stay skipped.
 Owner only solves captchas: every daily run **re-focuses the captcha / ASK_OWNER tab** (`focus_page_for_owner` + CDP activate, every ~2s via `ATS_OWNER_FOCUS_EVERY_SEC`) so parallel workers cannot leave you on the wrong tab. Workers keep filling/submitting on other company tabs. Do not set `HITECHCITY_PARALLEL_TABS=1` unless debugging a single portal.
 
@@ -61,7 +61,7 @@ Judge location from the TOP CARD / workplace pills / job location field — neve
 1. Run `python3 tools/hitechcity/daily_apply.py` (every cron / home / headed run) which executes:
    0. Discovery → refresh `companies.json` (+ `hitechcity-discovery.json`)
    1. Official career portals from `careersUrls` in **PARALLEL** (PRIMARY) — `HITECHCITY_PARALLEL_TABS=10` by default via `careers_parallel.py` (ProcessPool; one CDP tab per worker). Log line: `CAREERS PARALLEL start tabs=10`.
-   2. LinkedIn company applies + referrals (PRIMARY)
+   2. LinkedIn company applies only when `tools/linkedin/safety.py --check` is clear (secondary)
    3. Board browse with campus allowlist: Naukri → Foundit → Cutshort → Instahyre → Indeed (`hitechcity-boards.json`)
 2. Or stepwise:
    - `python3 tools/hitechcity/discover_tenants.py`
@@ -69,9 +69,9 @@ Judge location from the TOP CARD / workplace pills / job location field — neve
    - `python3 tools/hitechcity/linkedin_target_apply.py`
    - `python3 tools/hitechcity/board_campus_apply.py`
 3. Volume defaults every `daily_apply` run (override only when debugging): `HITECHCITY_PARALLEL_TABS=10`, `HITECHCITY_MAX_PER_COMPANY=6`, `HITECHCITY_MAX_COMPANIES=60`, `HITECHCITY_MAX_EXT_WALLS=3`, `HITECHCITY_MAX_EXT_ATTEMPTS=12`, `HITECHCITY_CAREERS_KEYWORD_SEARCHES=4`, `ATS_CAPTCHA_POLL_SEC=0.4`, `ATS_OWNER_FOCUS_EVERY_SEC=2`.
-4. LinkedIn: company-targeted **job** searches via `/jobs/search/?f_C=<companyId>&keywords=…&location=Hyderabad, Telangana, India&geoId=105556991&distance=25` (never company `/jobs/` alone — those pages lack clickable cards; never search campus strings like "Knowledge City" / "Raheja"). Keywords every run (EM-first, not architect-only): Engineering Manager, Technical Lead, Staff/Principal/Lead Software Engineer, Software Development Manager, Solution/Technical Architect, Principal .NET, Azure/.NET.
-5. Easy Apply AND company-website / ATS redirects — both required paths
-6. After a successful apply, try referral: message the job poster (poster-specific Message) OR send a short LinkedIn connection note to a Hyd engineer/recruiter/EM at that company asking for a referral / 15–20 min screen
+4. LinkedIn, only when safety check is clear: company-targeted **job** searches via `/jobs/search/?f_C=<companyId>&keywords=…&location=Hyderabad, Telangana, India&geoId=105556991&distance=25` (never company `/jobs/` alone — those pages lack clickable cards; never search campus strings like "Knowledge City" / "Raheja"). Keep reduced defaults (`HITECHCITY_MAX_APPLY=5`, `HITECHCITY_MAX_SCAN=10`, `HITECHCITY_LI_TITLE_SEARCHES=3`).
+5. Easy Apply AND company-website / ATS redirects within the reduced caps
+6. Do not run LinkedIn people search, poster messaging, or connection-note referral outreach in unattended runs.
 7. For each company (across parallel tabs): open official careers URLs from companies.json **rewritten every run** to (a) multi-role keywords EM/Tech Lead/Staff/Principal/SDM/Architect/.NET and (b) **Hyderabad ALWAYS** — invent/overwrite `location` / `loc` / `loc_query` / `city` / `locationsearch` / `lc` / `searchLocation` on every portal URL, then pin the on-page Location UI to Hyderabad after navigation. If a portal has no Hyd option (e.g. Intel Workday today), skip non-Hyd roles — never open Haifa/Bangalore/US. Find Hyd/India qualifying roles, COMPLETE Greenhouse / Lever / Workday / SmartRecruiters / SuccessFactors / company ATS when guest/logged apply is possible. iCIMS: fill Email + I accept + Next in nested `in_iframe=1` before captcha wait. Skip only clear non-Hyd / SSO-only hosts — never abandon a matching Hyd form mid-apply without `ASK_OWNER` wait.
 8. Boards: each portal gets its own preflight + CDP launch + allowlist; keep per-board caps modest (defaults ~6–12). **Cutshort/Indeed are login-probed first** (`chrome_session.js check`) — skip immediately on `*_login_required` so the phase is not burned. Other board login walls → log blocked, continue.
 9. External ATS: hard walls (captcha/login) use per-company wall caps (`HITECHCITY_MAX_EXT_WALLS=3` default). Soft incompletes do not burn matching inventory. Headed runs use longer ATS time caps + `ASK_OWNER` form wait (`ATS_CAPTCHA_WAIT_SEC`).
@@ -96,7 +96,7 @@ DO NOT skip because the JD casually mentions Salesforce, SAP, Java, Data Enginee
 - If LinkedIn login missing, stop and report LinkedIn login required (career-portal-only partial run is OK if some applies already landed)
 
 ## Report
-Write `/opt/cursor/artifacts/hitechcity-daily.json` (+ discovery/careers/linkedin/boards sub-reports). Include submitted (company, role, job id/URL, location, Easy Apply vs career ATS vs board), referrals sent, skipped, blocked, discovery added. Totals. Call out campus names when known.
+Write `/opt/cursor/artifacts/hitechcity-daily.json` (+ discovery/careers/linkedin/boards sub-reports). Include submitted (company, role, job id/URL, location, Easy Apply vs career ATS vs board), skipped/paused LinkedIn phase, blocked, discovery added. Totals. Call out campus names when known.
 
 ## Auto-fix & push (MANDATORY)
 If you hit a code-fixable blocker (company list drift, career scraper, LinkedIn company filter, ATS filler, CDP/preflight), fix under tools/hitechcity or scripts/, append via `bash scripts/append-issue-fix.sh <portal> "issue" "fix"` (writes `automation-prompts/issues/<portal>.md` only — never the shared ISSUES file), commit + push a feature branch, open a ready PR to main and run `bash scripts/auto-merge-fix-pr.sh`. That merge helper then same-day re-runs this Hitech City job with the fix (`scripts/rerun-daily-after-fix.sh`) — do not wait for tomorrow's cron. Follow automation-prompts/AUTO_FIX.md. Do not invent applies. Owner-only: login walls, CAPTCHA/OTP, Automations UI paste for ONE_TIME_LOADERS.
