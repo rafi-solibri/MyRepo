@@ -28,6 +28,20 @@
 ## False applies / code fix
 - ResultsCX **Solutions Architect - AI**, Infosys **UI Technical Architect React and Angular**, Jobgether **Asterisk & Telephony** passed via Arch/Lead exception → `tools/foundit/filters.js` Instahyre-parity title skips + tests.
 
+## Post-fix re-run (#263 resume rebuild, POST_FIX_RERUN=1)
+- Ran on `main` @ `041cecc` (`fix(naukri): always rebuild Rafi_Resume from owner master`).
+- Preflight rebuilt `Rafi_Resume.docx` from owner master (3,957,700B → upload 20,945B, text SHA `403c6a36869581a9`).
+- Login: MSSOAT + jwtOk=True; hiRafi false (Hi, Seeker) but cookie + onApp OK.
+- Applied tab: **441 → 441** (+0). Intentional logged: **0**. Age → **3650d**.
+- Candidates: d1=143 / d3=67 / d7=334 / d14=246 / d30=280 / d90=174 / d3650=38.
+- Skips: 1206 | duplicates: 76 (already Applied, including today's 12) | blocked: 0.
+- No invented applies. No `canJobApply` dry-run.
+- Morning false-applies now skipped by #260 filters: UI React/Angular Architect, Asterisk/Telephony, Architect-AI.
+- Remaining Hyd/remote Arch/Lead/.NET inventory is already Applied — no new Falcon submits.
+- This is Foundit post-fix re-run 3/5 for 2026-08-25 IST (no new code-fixable blocker).
+
+Artifact (this re-run): `/opt/cursor/artifacts/foundit-apply-report.json` (copy: `reports/2026-08-25/foundit-apply-report-postfix.json`)
+
 ## Top 3 LinkedIn referral drafts
 - **Infosys Limited / .Net production support Lead:** Hi — I'm applying for .Net production support Lead at Infosys Limited. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)
 - **Infosys Limited / .Net angular Lead:** Hi — I'm applying for .Net angular Lead at Infosys Limited. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)
