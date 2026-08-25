@@ -69,7 +69,7 @@ DESTS=(
   "${INSTAHYRE_CHROME_PROFILE:-$(node tools/chrome_session.js path instahyre)}"
   "${INDEED_CHROME_PROFILE:-$(node tools/chrome_session.js path indeed)}"
   "${HIRIST_CHROME_PROFILE:-$(node tools/chrome_session.js path hirist)}"
-  "${LINKEDIN_CHROME_PROFILE_ALT:-${HOME}/.cursor/chrome-cdp-profiles/linkedin-alt}"
+  "${LINKEDIN_CHROME_PROFILE_ALT:-/home/ubuntu/chrome-linkedin-profile}"
 )
 COOKIE_SETS=(
   "li_at"
@@ -81,7 +81,7 @@ COOKIE_SETS=(
   "token"
   "li_at"
 )
-# hirist + linkedin_alt are optional compatibility profiles; do not fail strict mode solely for them.
+# hirist + linkedin_alt are optional; do not fail strict mode solely for them.
 REQUIRED=(1 1 1 1 1 1 0 0)
 
 copy_tree() {

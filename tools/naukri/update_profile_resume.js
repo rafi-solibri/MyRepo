@@ -46,10 +46,25 @@ const SKIP_HEADLINE = process.env.NAUKRI_SKIP_HEADLINE === "1";
 function resolveResumePath() {
   const envPath =
     process.env.NAUKRI_RESUME_FILE || process.env.NAUKRI_RESUME_PATH || "";
-  if (envPath && fs.existsSync(envPath) && fs.statSync(envPath).size > 1000) {
-    return path.resolve(envPath);
+  let resume =
+    envPath && fs.existsSync(envPath) && fs.statSync(envPath).size > 1000
+      ? path.resolve(envPath)
+      : findResume();
+  if (!resume) return null;
+  // Ensure <2MB for Naukri client-side validation (strip embedded fonts).
+  if (fs.statSync(resume).size > NAUKRI_RESUME_MAX_BYTES) {
+    try {
+      const { spawnSync } = require("child_process");
+      const script = path.join(__dirname, "..", "compress_resume_docx.py");
+      const r = spawnSync("python3", [script, resume], { encoding: "utf8" });
+      if (r.status !== 0) {
+        console.error("compress_resume_docx failed:", r.stderr || r.stdout);
+      }
+    } catch (e) {
+      console.error("compress_resume_docx error:", e);
+    }
   }
-  return findResume();
+  return resume;
 }
 
 /** Prefer resume-specific inputs — never random page file inputs (photo/etc). */
@@ -60,10 +75,16 @@ const RESUME_FILE_SELECTORS = [
   "input#lazyAttachCV",
   "input[name='attachCV']",
   "input[id*='attachCV' i]",
+  // TopTier Aurus profile (2026): hidden #resume next to Resume / Update
+  "input#resume[type='file']",
+  "input[name='resume'][type='file']",
   "input[id*='resume' i][type='file']",
   "input[name*='resume' i][type='file']",
   "input[name*='cv' i][type='file']",
 ];
+
+/** Naukri client-side reject: "max size 2 MB". */
+const NAUKRI_RESUME_MAX_BYTES = 2 * 1024 * 1024;
 
 function todayTokens() {
   const d = new Date();
@@ -85,11 +106,19 @@ function todayTokens() {
   const day = d.getDate();
   const y = d.getFullYear();
   const dd = String(day).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
   return [
     "Updated today",
     "updated today",
+    "Uploaded today",
+    "uploaded today",
     "Today",
     "today",
+    // TopTier card: "Uploaded on 25/08/2026"
+    `Uploaded on ${dd}/${mm}/${y}`,
+    `Uploaded on ${day}/${d.getMonth() + 1}/${y}`,
+    `${dd}/${mm}/${y}`,
+    `${day}/${d.getMonth() + 1}/${y}`,
     `${m} ${day}, ${y}`,
     `${m} ${dd}, ${y}`,
     `${day} ${m} ${y}`,
@@ -195,6 +224,13 @@ async function findResumeFileInput(page) {
 }
 
 async function clickUpdateResume(page) {
+  // TopTier: underlined "Update" beside the Resume h3 (opens filechooser).
+  const toptier = page.locator("div.my-10 button:has-text('Update')").first();
+  if (await toptier.isVisible().catch(() => false)) {
+    await toptier.click({ timeout: 5000 }).catch(() => {});
+    await page.waitForTimeout(800);
+    return "div.my-10 button:has-text('Update')";
+  }
   const labels = [
     "text=/^Update resume$/i",
     "text=/Update resume/i",
@@ -220,30 +256,43 @@ async function clickUpdateResume(page) {
 async function waitUploadSignals(page) {
   const started = Date.now();
   let signal = null;
-  while (Date.now() - started < 20000) {
-    const hit = await page.evaluate(() => {
+  const tokens = todayTokens();
+  while (Date.now() - started < 25000) {
+    const hit = await page.evaluate((toks) => {
       const t = document.body.innerText || "";
       const patterns = [
         /successfully uploaded/i,
         /resume (has been )?uploaded/i,
         /resume updated/i,
         /updated today/i,
+        /uploaded today/i,
         /upload successful/i,
         /rafi_resume/i,
       ];
       for (const p of patterns) {
         if (p.test(t)) return p.toString();
       }
+      for (const tok of toks) {
+        if (tok && t.includes(tok)) return `token:${tok}`;
+      }
       // Progress / spinner gone + updateOn present
       const updateOn = [...document.querySelectorAll(".updateOn, [class*='updateOn']")]
         .map((e) => e.innerText.trim())
         .filter(Boolean);
       if (updateOn.length) return `updateOn:${updateOn[0]}`;
+      const card = document.querySelector("div.my-10");
+      if (card && /Uploaded on/i.test(card.innerText || "")) {
+        const line = (card.innerText.match(/Uploaded on[^\n]+/i) || [])[0];
+        if (line) return `card:${line}`;
+      }
       return null;
-    });
+    }, tokens);
     if (hit) {
       signal = hit;
-      break;
+      // Keep waiting a bit if we only saw the pre-upload card date
+      if (!/^card:Uploaded on/i.test(hit) || tokens.some((tok) => hit.includes(tok))) {
+        break;
+      }
     }
     await page.waitForTimeout(800);
   }
@@ -251,16 +300,33 @@ async function waitUploadSignals(page) {
 }
 
 async function confirmSave(page) {
+  // Do NOT click TopTier Resume "Update" — that opens the file picker again.
   for (const sel of [
     "button:has-text('Save')",
     "button:has-text('Submit')",
-    "button:has-text('Update')",
     "button:has-text('Confirm')",
+    "button:has-text('Upload')",
     "button[type='submit']",
     ".lightbox button:has-text('Save')",
+    ".lightbox button:has-text('Update')",
+    ".drawer button:has-text('Save')",
   ]) {
     const btn = page.locator(sel).first();
     if (await btn.isVisible().catch(() => false)) {
+      const txt = ((await btn.innerText().catch(() => "")) || "").trim();
+      // Skip the profile Resume section Update control
+      if (/^Update$/i.test(txt)) {
+        const inResumeHeader = await btn
+          .evaluate(
+            (el) =>
+              !!(
+                el.closest("div.my-10") &&
+                el.closest("div.my-10")?.querySelector("h3")?.textContent?.includes("Resume")
+              )
+          )
+          .catch(() => false);
+        if (inResumeHeader) continue;
+      }
       await btn.click().catch(() => {});
       await page.waitForTimeout(2000);
       return sel;
@@ -273,31 +339,54 @@ async function uploadResume(page, resumePath) {
   await scrollResumeSection(page);
   await dismissPopups(page);
 
-  let uploadedVia = null;
-  let clicked = await clickUpdateResume(page);
+  const size = fs.statSync(resumePath).size;
+  if (size > NAUKRI_RESUME_MAX_BYTES) {
+    return {
+      ok: false,
+      reason: "resume_exceeds_naukri_2mb",
+      size,
+      hint: "run tools/compress_resume_docx.py / scripts/bootstrap-job-assets.sh",
+    };
+  }
 
-  // Path A: dedicated resume file input
-  let found = await findResumeFileInput(page);
-  if (found) {
-    try {
-      await found.input.setInputFiles(resumePath, { timeout: 25000 });
-      uploadedVia = found.selector;
-    } catch (_) {
-      // fall through
+  let uploadedVia = null;
+  let clicked = null;
+
+  // TopTier preferred path: Resume "Update" → filechooser → setFiles
+  const toptierUpdate = page.locator("div.my-10 button:has-text('Update')").first();
+  if (await toptierUpdate.isVisible().catch(() => false)) {
+    const [chooser] = await Promise.all([
+      page.waitForEvent("filechooser", { timeout: 10000 }).catch(() => null),
+      toptierUpdate.click({ timeout: 5000 }).catch(() => {}),
+    ]);
+    if (chooser) {
+      await chooser.setFiles(resumePath);
+      uploadedVia = "toptier-filechooser";
+      clicked = "div.my-10 button:has-text('Update')";
     }
   }
 
-  // Path B: filechooser after clicking Update resume
+  // Path A: dedicated resume file input (legacy attachCV / #resume)
+  if (!uploadedVia) {
+    clicked = clicked || (await clickUpdateResume(page));
+    let found = await findResumeFileInput(page);
+    if (found) {
+      try {
+        await found.input.setInputFiles(resumePath, { timeout: 25000 });
+        uploadedVia = found.selector;
+      } catch (_) {
+        // fall through
+      }
+    }
+  }
+
+  // Path B: filechooser after clicking Update resume (legacy)
   if (!uploadedVia) {
     clicked = clicked || (await clickUpdateResume(page));
     const [chooser] = await Promise.all([
       page.waitForEvent("filechooser", { timeout: 10000 }).catch(() => null),
       (async () => {
-        if (!clicked) await clickUpdateResume(page);
-        else {
-          // re-click to open chooser if needed
-          await clickUpdateResume(page);
-        }
+        await clickUpdateResume(page);
       })(),
     ]);
     if (chooser) {
@@ -308,7 +397,7 @@ async function uploadResume(page, resumePath) {
 
   // Path C: retry finding resume inputs after click
   if (!uploadedVia) {
-    found = await findResumeFileInput(page);
+    const found = await findResumeFileInput(page);
     if (found) {
       await found.input.setInputFiles(resumePath, { timeout: 25000 });
       uploadedVia = found.selector;
@@ -319,7 +408,9 @@ async function uploadResume(page, resumePath) {
     return { ok: false, reason: "resume_file_input_not_found", clicked };
   }
 
-  const saveClicked = await confirmSave(page);
+  // TopTier uploads immediately on file select — do not click Resume Update again.
+  const saveClicked =
+    uploadedVia === "toptier-filechooser" ? null : await confirmSave(page);
   const signal = await waitUploadSignals(page);
   await dismissPopups(page);
 
@@ -329,6 +420,7 @@ async function uploadResume(page, resumePath) {
     clicked,
     saveClicked,
     signal,
+    size,
   };
 }
 
@@ -419,33 +511,46 @@ async function verifyUpdated(page) {
       .filter(Boolean)
       .join(" | ");
 
+    const resumeCard = document.querySelector("div.my-10");
+    const cardText = resumeCard ? (resumeCard.innerText || "").trim() : "";
+    const uploadedLine = (cardText.match(/Uploaded on[^\n]+/i) ||
+      (document.body.innerText || "").match(/Uploaded on[^\n]+/i) ||
+      [])[0] || "";
+
     const resumeBits = [...document.querySelectorAll("a, span, div, p")]
       .map((e) => (e.innerText || "").trim())
       .filter((t) => t && t.length < 100 && /Rafi_Resume|\.docx|\.pdf/i.test(t))
       .slice(0, 5);
 
-    // Collect nearby "Updated …" phrases
+    // Collect nearby "Updated …" / "Uploaded …" phrases
     const updatedLines = (document.body.innerText || "")
       .split("\n")
       .map((l) => l.trim())
-      .filter((l) => /^updated\b/i.test(l) || /\bupdated today\b/i.test(l))
+      .filter(
+        (l) =>
+          /^updated\b/i.test(l) ||
+          /\bupdated today\b/i.test(l) ||
+          /^uploaded on\b/i.test(l) ||
+          /\buploaded today\b/i.test(l)
+      )
       .slice(0, 10);
 
     return {
-      updateOn,
+      updateOn: updateOn || uploadedLine,
       updatedLines,
-      resumeName: resumeBits[0] || "",
+      resumeName: resumeBits[0] || (cardText.match(/[^\n]+\.docx/i) || [])[0] || "",
       resumeBits,
       bodySlice: document.body.innerText.slice(0, 6000),
+      cardText: cardText.slice(0, 400),
     };
   });
 
   const tokens = todayTokens();
-  const blob = `${text.updateOn}\n${text.updatedLines.join("\n")}\n${text.bodySlice}`;
+  const blob = `${text.updateOn}\n${text.updatedLines.join("\n")}\n${text.cardText || ""}\n${text.bodySlice}`;
   const matchedToken = tokens.find((t) => blob.includes(t)) || null;
   const todayHit = Boolean(matchedToken);
   const resumePresent = /Rafi_Resume|\.docx/i.test(
-    `${text.resumeName} ${text.resumeBits.join(" ")}`
+    `${text.resumeName} ${text.resumeBits.join(" ")} ${text.cardText || ""}`
   );
 
   return {
