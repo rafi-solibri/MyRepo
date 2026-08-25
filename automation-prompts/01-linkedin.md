@@ -58,7 +58,7 @@ Judge location from the TOP CARD / workplace pills only — never the full page 
 - If Apply / company website / Workday / Greenhouse / Lever / SmartRecruiters / SuccessFactors / BambooHR / Hibob: FOLLOW and COMPLETE. Do not skip externals.
 - Dedup: load prior job IDs from `/opt/cursor/artifacts/linkedin-seen-ids.json` + prior apply reports (plus bootstrap seed). Do not re-apply known IDs.
 - One job at a time; ~6.5 min cap on Workday/Greenhouse ATS (LINKEDIN_ATS_TIME_CAP_S=390). CAPTCHA/OTP: log blocked, continue
-- Greenhouse email OTP: if GMAIL session available in Chrome, read OTP; else block and continue
+- Greenhouse / Oracle email OTP: `tools/ats/email_otp.py` reads Gmail (CDP session) or IMAP (`GMAIL_APP_PASSWORD`) and fills the code; only block+continue when mailbox is unavailable
 - After Easy Apply, message the poster (poster-specific Message, not generic typeahead) asking for a 15–20 min screen
 
 ## Skip rules (TITLE-FIRST — do not over-filter)

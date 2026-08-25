@@ -2063,6 +2063,16 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
         wall = blocked_wall(page)
         if wall == "CAPTCHA/bot wall":
             return "blocked", wall
+        if wall == "ats_otp_wall":
+            try:
+                from tools.ats.email_otp import try_clear_email_otp
+
+                if try_clear_email_otp(page):
+                    wall = None
+                else:
+                    return "blocked", wall
+            except Exception:
+                return "blocked", wall
         if wall in ("job_closed", "job_unavailable"):
             return "skipped", wall
         text = _body(page, 2000)
@@ -2382,6 +2392,16 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
                         return "blocked", wall
                 except Exception:
                     return "blocked", wall
+        if wall == "ats_otp_wall":
+            try:
+                from tools.ats.email_otp import try_clear_email_otp
+
+                if try_clear_email_otp(page):
+                    wall = None
+                else:
+                    return "blocked", wall
+            except Exception:
+                return "blocked", wall
         if wall in ("job_closed", "job_unavailable"):
             return "skipped", wall
         if wall == "ats_login_wall":
@@ -2847,6 +2867,19 @@ def complete_ats(page, time_cap_s: int | None = None) -> tuple[str, str]:
     )
     if wall in ("job_closed", "job_unavailable"):
         return "skipped", wall
+    if wall == "ats_otp_wall":
+        # Oracle / Greenhouse email OTP — read mailbox (Gmail CDP or IMAP) then continue.
+        try:
+            from tools.ats.email_otp import try_clear_email_otp
+
+            if try_clear_email_otp(page):
+                wall = None
+                flags = page_flags(page)
+                host = classify_ats_host(flags["url"])
+            else:
+                return "blocked", wall
+        except Exception:
+            return "blocked", wall
     if wall and host != "workday" and not flags["has_wd"]:
         return "blocked", wall
     if host == "workday" or flags["has_wd"]:

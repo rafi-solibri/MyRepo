@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Oracle/Greenhouse email OTP treated as owner-only ats_otp_wall (no mailbox read) | tools/ats/email_otp.py: Gmail CDP tab + optional GMAIL_APP_PASSWORD IMAP; complete.py try_clear_email_otp before ats_otp_wall |
 | preflight sync-chrome-sessions.sh: DESTS/COOKIE_SETS/REQUIRED missing hirist entry vs PORTALS (set -u unbound DESTS[$i] after indeed→hirist mis-map to linkedin-alt) | Align PORTALS/DESTS/COOKIE_SETS/REQUIRED: insert hirist dest+token cookie; REQUIRED=(1 1 1 1 1 1 0 0) for optional hirist+linkedin_alt |
 
 
