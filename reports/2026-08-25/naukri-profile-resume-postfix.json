@@ -1,0 +1,60 @@
+{
+  "startedAt": "2026-08-25T04:01:28.657Z",
+  "resume": "/workspace/resumes/Rafi_Resume.docx",
+  "chromeProfileHint": "/home/ubuntu/.naukri-chrome-profile",
+  "cdp": "http://127.0.0.1:9222",
+  "auth": {
+    "destHasAuth": true
+  },
+  "ok": true,
+  "profileUpdated": true,
+  "attempts": [
+    {
+      "attempt": 1,
+      "upload": {
+        "ok": true,
+        "uploadedVia": "toptier-filechooser",
+        "clicked": "#profile-section-resume button:has-text('Update')",
+        "saveClicked": null,
+        "signal": "/uploaded today/i"
+      },
+      "headline": {
+        "touched": false,
+        "reason": "skipped_for_per_job_tailor"
+      },
+      "verify": {
+        "todayHit": true,
+        "resumePresent": true,
+        "updateOn": "Uploaded today",
+        "matchedToken": "Uploaded today"
+      }
+    }
+  ],
+  "upload": {
+    "ok": true,
+    "uploadedVia": "toptier-filechooser",
+    "clicked": "#profile-section-resume button:has-text('Update')",
+    "saveClicked": null,
+    "signal": "/uploaded today/i"
+  },
+  "headline": {
+    "touched": false,
+    "reason": "skipped_for_per_job_tailor"
+  },
+  "verify": {
+    "todayHit": true,
+    "resumePresent": true,
+    "matchedToken": "Uploaded today",
+    "updateOn": "Uploaded today",
+    "updatedLines": [],
+    "resumeName": "Resume\nUpdate\n\nRafi_Resume.docx\n\nUploaded today",
+    "tokensTried": [
+      "Updated today",
+      "updated today",
+      "Uploaded today",
+      "uploaded today",
+      "25/08/2026"
+    ]
+  },
+  "finishedAt": "2026-08-25T04:01:42.744Z"
+}
