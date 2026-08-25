@@ -12,6 +12,7 @@ if str(ROOT) not in sys.path:
 from tools.indeed.prepare_uc_profile import COPY_PATHS  # noqa: E402
 from tools.indeed.uc_daily_apply import (  # noqa: E402
     already_applied,
+    load_today_seen_keys,
     looks_anonymous_marketing_home,
     looks_login_wall,
     job_dedupe_key,
@@ -227,6 +228,13 @@ def test_resume_upload_candidates_include_master():
     assert "Rafi_Resume.docx" in names
 
 
+def test_load_today_seen_keys_from_pass_reports():
+    keys = load_today_seen_keys()
+    # Same-day re-runs persist pass reports under /opt/cursor/artifacts.
+    if Path("/opt/cursor/artifacts/indeed-daily-run-pass2.json").is_file():
+        assert keys, "expected jk keys from today's pass reports"
+
+
 if __name__ == "__main__":
     test_skip_hyd_remote_ok()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
@@ -241,4 +249,5 @@ if __name__ == "__main__":
     test_job_dedupe_key_from_jk()
     test_smartapply_resume_upload_classifiers()
     test_resume_upload_candidates_include_master()
+    test_load_today_seen_keys_from_pass_reports()
     print("ok")

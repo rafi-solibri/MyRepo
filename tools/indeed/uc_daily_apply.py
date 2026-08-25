@@ -667,6 +667,46 @@ def job_dedupe_key(href: str, jk: str = "") -> str:
     return raw.split("?")[0]
 
 
+def load_today_seen_keys() -> set[str]:
+    """Seed jk keys from earlier same-day Indeed reports so re-runs skip them."""
+    keys: set[str] = set()
+    art = Path("/opt/cursor/artifacts")
+    paths = [
+        art / "indeed-daily-run.json",
+        art / "indeed-daily-run-pass1.json",
+        art / "indeed-daily-run-pass2.json",
+        art / "indeed-apply-report.json",
+        ROOT / "artifacts" / "indeed-daily-run.json",
+    ]
+    for path in paths:
+        if not path.is_file():
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        buckets = []
+        if isinstance(data, dict):
+            for k in ("applied", "external", "skipped", "seen", "blocked", "rejected"):
+                buckets.extend(data.get(k) or [])
+            uc = data.get("ucApply") or {}
+            if isinstance(uc, dict):
+                for k in ("applied", "external", "skipped", "seen", "blocked", "rejected"):
+                    buckets.extend(uc.get(k) or [])
+        for item in buckets:
+            if not isinstance(item, dict):
+                continue
+            key = job_dedupe_key(str(item.get("url") or ""), "")
+            if key:
+                keys.add(key)
+            key2 = job_dedupe_key(str(item.get("atsUrl") or ""), "")
+            if key2:
+                keys.add(key2)
+    if keys:
+        print(f"  today_seen_keys={len(keys)}", flush=True)
+    return keys
+
+
 def looks_signed_in(body: str, url: str = "") -> bool:
     """True when nav/account chrome shows an authenticated jobseeker session.
 
@@ -3215,7 +3255,7 @@ def main() -> int:
                 # search/apply paths still skip already-applied and login walls.
                 report["sessionWarm"] = "unconfirmed_continue"
 
-        seen_keys: set[str] = set()
+        seen_keys: set[str] = load_today_seen_keys()
         for query, location in search_queries():
             if report["counts"]["applied"] + report["counts"]["external"] >= MAX_APPLIES:
                 break
