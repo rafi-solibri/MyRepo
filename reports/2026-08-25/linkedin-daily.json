@@ -2,23 +2,29 @@
   "date": "2026-08-25",
   "portal": "linkedin",
   "status": "stopped_login_required",
+  "postFixRerun": 3,
+  "postFixRerunMax": 5,
+  "commit": "5823080f19bec00f009f74db23ddc7bd8c4761e1",
+  "mergedPr": "https://github.com/rafi-solibri/MyRepo/pull/261",
+  "agent": "https://cursor.com/agents/bc-2ef241f4-3f3d-47f4-a851-1c9842503724",
   "easyApplySubmitted": 0,
   "externalCompleted": 0,
   "skipped": [],
   "blocked": [
     {
-      "reason": "wrong_password",
-      "detail": "Auto-login: Google SSO timed out; LINKEDIN_PASSWORD candidates rejected with Wrong email or password",
-      "artifact": "/opt/cursor/artifacts/linkedin-auto-login-wrong-password.png"
+      "reason": "captcha_checkpoint",
+      "detail": "Auto-login: Google SSO timed out (google_session cookie names present); password candidate 1 hit /checkpoint/challenge Security Verification reCAPTCHA (exit 6).",
+      "artifact": "/opt/cursor/artifacts/linkedin-rerun3-current.png"
     }
   ],
   "submitted": [],
   "codeFix": {
-    "files": ["scripts/sync-chrome-sessions.sh"],
-    "summary": "Align DESTS/COOKIE_SETS/REQUIRED with PORTALS after hirist addition"
+    "files": [],
+    "summary": "No new code-fixable blocker. Preflight OK on merged main (#261). Login/CAPTCHA are owner-only."
   },
   "ownerAction": [
-    "Refresh LINKEDIN_PASSWORD (and optionally GOOGLE_PASSWORD)",
-    "If CAPTCHA persists: headed-login + portal session seed"
+    "Refresh Cursor secrets LINKEDIN_PASSWORD and GOOGLE_PASSWORD (current password is rejected / trips CAPTCHA)",
+    "Complete headed login + Security Verification, then seed refresh / push .portal-sessions Cookies (omit Local State)",
+    "Re-run LinkedIn Daily only after secrets + live session are good"
   ]
 }
