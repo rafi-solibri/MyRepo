@@ -13,6 +13,8 @@
 # so cron pods get them without relying on a snapshot file:
 #   LINKEDIN_EMAIL, LINKEDIN_PASSWORD, GOOGLE_EMAIL, GOOGLE_PASSWORD,
 #   NAUKRI_WORKDAY_PASSWORD, RESEND_*,
+#   GMAIL_APP_PASSWORD (or GOOGLE_APP_PASSWORD) — optional IMAP OTP reader for
+#   Oracle/Greenhouse email verification; else Gmail tab in CDP Chrome is used.
 #   CAPSOLVER_API_KEY or TWOCAPTCHA_API_KEY — optional paid solvers.
 #   Free path: bash scripts/home-headed-careers-apply.sh (you click hCaptcha).
 # GOOGLE_PASSWORD is the Gmail/Google account password used for SSO; when set it
