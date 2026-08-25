@@ -14,8 +14,9 @@ Title skips: use job title / job-panel text only — never full document.body (s
 Daily Naukri + company-ATS apply for Mohammed Abdul Rafi Ahmed. Hyd + Remote/WFH. Expected CTC 65 LPA. Maximize real applies.
 
 ## Resume (HARD)
-- Canonical **Rafi_Resume.docx** at resumes/Rafi_Resume.docx and /home/ubuntu/Documents/Rafi_Resume.docx after bootstrap.
-- Upload this file on every company ATS. Never invent a stub. Do not require Rafi_Resume_Architect.docx.
+- **Owner master (source of truth):** `resumes/Mohammed_Abdul_Rafi_Ahmed_Resume.docx`. Drop a new master here to update every portal.
+- **Upload copy:** bootstrap / `tools/ensure_upload_resume.py` ALWAYS rebuilds `resumes/Rafi_Resume.docx` from that master (font-stripped for Naukri’s 2MB cap). Never reuse a stale committed `Rafi_Resume.docx`.
+- Upload **Rafi_Resume.docx** on every company ATS. Never invent a stub. Do not require Rafi_Resume_Architect.docx.
 - **Per-job JD tailor (default on):** `daily_apply.js` runs `tailor_resume.py` before each apply — rewrites headline + summary to emphasize JD-matched skills that already exist on the CV (never invents stacks/employers). Quick Apply syncs the tailored file to the Naukri profile first; company ATS/Workday upload the tailored path. Disable with `NAUKRI_TAILOR_RESUME=0`. Profile is restored to the canonical CV at end of run.
 
 ## STEP 0 — Naukri profile resume refresh (HARD — do before any job applies)

@@ -34,6 +34,28 @@ const CDP = process.env.NAUKRI_CDP || "http://127.0.0.1:9222";
 const REPORT =
   process.env.NAUKRI_APPLY_REPORT ||
   artifactPaths("naukri-daily-apply.json")[0];
+
+/** Rebuild upload copy from owner master before any Naukri path resolution. */
+function ensureUploadResumeFromMaster() {
+  const script = path.join(__dirname, "..", "ensure_upload_resume.py");
+  const r = spawnSync("python3", [script], {
+    cwd: path.join(__dirname, "..", ".."),
+    encoding: "utf8",
+    timeout: 60000,
+  });
+  if (r.status !== 0) {
+    console.warn(
+      JSON.stringify({
+        ensure_upload_resume: "failed",
+        exitCode: r.status,
+        stderr: String(r.stderr || "").slice(0, 300),
+      })
+    );
+  }
+  return r.status === 0;
+}
+
+ensureUploadResumeFromMaster();
 const RESUME = findResume();
 /** Per-job JD tailor (headline/summary emphasis). Set NAUKRI_TAILOR_RESUME=0 to disable. */
 const TAILOR_RESUME = process.env.NAUKRI_TAILOR_RESUME !== "0";

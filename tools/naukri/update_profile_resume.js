@@ -24,6 +24,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const { spawnSync } = require("child_process");
 const { hasAuth } = require("../chrome_session");
 const { writeArtifactJson } = require("../artifact_path");
 const {
@@ -41,30 +42,62 @@ const REPORT =
 const SOFT = process.env.NAUKRI_RESUME_SOFT === "1";
 const MAX_ATTEMPTS = Number(process.env.NAUKRI_RESUME_ATTEMPTS || 3);
 const SKIP_HEADLINE = process.env.NAUKRI_SKIP_HEADLINE === "1";
+/** Naukri client-side reject: "max size 2 MB". */
+const NAUKRI_RESUME_MAX_BYTES = 2 * 1024 * 1024;
+const ROOT = path.join(__dirname, "..", "..");
 
-/** Prefer explicit per-job tailored path, else canonical Rafi_Resume.docx. */
+/**
+ * Rebuild Rafi_Resume.docx from Mohammed_Abdul_Rafi_Ahmed_Resume.docx every run
+ * so a stale committed/cached upload copy cannot shadow the owner master.
+ */
+function ensureUploadResumeFromMaster() {
+  const script = path.join(ROOT, "tools", "ensure_upload_resume.py");
+  if (!fs.existsSync(script)) {
+    return { ok: false, reason: "ensure_upload_resume_missing" };
+  }
+  const r = spawnSync("python3", [script], {
+    cwd: ROOT,
+    encoding: "utf8",
+    timeout: 60000,
+  });
+  let info = null;
+  try {
+    const lines = String(r.stdout || "")
+      .trim()
+      .split("\n")
+      .filter(Boolean);
+    info = JSON.parse(lines[lines.length - 1]);
+  } catch (_) {}
+  return {
+    ok: r.status === 0 && Boolean(info),
+    exitCode: r.status,
+    info,
+    stderr: String(r.stderr || "").slice(0, 400),
+  };
+}
+
+/** Prefer explicit per-job tailored path, else canonical rebuilt from master. */
 function resolveResumePath() {
   const envPath =
     process.env.NAUKRI_RESUME_FILE || process.env.NAUKRI_RESUME_PATH || "";
-  let resume =
-    envPath && fs.existsSync(envPath) && fs.statSync(envPath).size > 1000
-      ? path.resolve(envPath)
-      : findResume();
-  if (!resume) return null;
-  // Ensure <2MB for Naukri client-side validation (strip embedded fonts).
-  if (fs.statSync(resume).size > NAUKRI_RESUME_MAX_BYTES) {
-    try {
-      const { spawnSync } = require("child_process");
-      const script = path.join(__dirname, "..", "compress_resume_docx.py");
-      const r = spawnSync("python3", [script, resume], { encoding: "utf8" });
-      if (r.status !== 0) {
-        console.error("compress_resume_docx failed:", r.stderr || r.stdout);
+  if (envPath && fs.existsSync(envPath) && fs.statSync(envPath).size > 1000) {
+    // Tailored temp path — do not rebuild master over it.
+    let resume = path.resolve(envPath);
+    if (fs.statSync(resume).size > NAUKRI_RESUME_MAX_BYTES) {
+      try {
+        const script = path.join(__dirname, "..", "compress_resume_docx.py");
+        const r = spawnSync("python3", [script, resume], { encoding: "utf8" });
+        if (r.status !== 0) {
+          console.error("compress_resume_docx failed:", r.stderr || r.stdout);
+        }
+      } catch (e) {
+        console.error("compress_resume_docx error:", e);
       }
-    } catch (e) {
-      console.error("compress_resume_docx error:", e);
     }
+    return resume;
   }
-  return resume;
+  ensureUploadResumeFromMaster();
+  return findResume();
 }
 
 /** Prefer resume-specific inputs — never random page file inputs (photo/etc). */
@@ -82,9 +115,6 @@ const RESUME_FILE_SELECTORS = [
   "input[name*='resume' i][type='file']",
   "input[name*='cv' i][type='file']",
 ];
-
-/** Naukri client-side reject: "max size 2 MB". */
-const NAUKRI_RESUME_MAX_BYTES = 2 * 1024 * 1024;
 
 function todayTokens() {
   const d = new Date();
@@ -604,10 +634,12 @@ async function runRefresh(page, resumePath) {
 }
 
 async function main() {
+  const ensured = ensureUploadResumeFromMaster();
   const resume = resolveResumePath();
   const result = {
     startedAt: new Date().toISOString(),
     resume,
+    masterEnsure: ensured,
     chromeProfileHint: CHROME_PROFILE,
     cdp: CDP,
     auth: {
