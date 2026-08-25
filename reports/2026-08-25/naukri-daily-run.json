@@ -1,0 +1,45 @@
+{
+  "date": "2026-08-25",
+  "portal": "naukri",
+  "postFixRerun": true,
+  "mergedPr": "https://github.com/rafi-solibri/MyRepo/pull/261",
+  "mainSha": "5823080",
+  "agent": "bc-fd2d96fc-3589-4f61-8e2f-a90564b2e9a2",
+  "counts": {
+    "profileUpdated": true,
+    "applied": 0,
+    "externalCompleted": 0,
+    "blocked": 1,
+    "skipped": 2633,
+    "seen": 203,
+    "tailoredApplies": 0
+  },
+  "profileResumeRefresh": {
+    "profileUpdated": true,
+    "matchedToken": "Uploaded today",
+    "resumeName": "Rafi_Resume.docx",
+    "size": 20945,
+    "uploadedVia": "toptier-filechooser"
+  },
+  "appliedThisSession": [],
+  "alreadyAppliedEarlierToday": [
+    "Tech Mahindra — Technical Architect (Cloud & Microservices)",
+    "HYLAND — Senior Software Architect",
+    "Tata Consultancy Services — Integration Consultant / Enterprise Integration Architect",
+    "Sonata Software — AWS Data Migration Architect",
+    "Big 4 Accounting Firms (Anlage Infotech) — Dotnet Full stack with AI Manager",
+    "Consulting Firm (Anlage Infotech) — .Net Azure AI Manager Professionals",
+    "Tiger Analytics — Principal Engineer",
+    "Everestdx — Azure Cloud Architect",
+    "Clean Harbors — .Net Fullstack Tech Lead"
+  ],
+  "blocked": [
+    {
+      "company": "Conduent",
+      "role": "Senior Manager, App Development & Support",
+      "reason": "apply_unconfirmed",
+      "path": "Naukri"
+    }
+  ],
+  "note": "No invented applies. STEP 0 succeeded with merged #261. Inventory already consumed by earlier same-day post-fix run."
+}
