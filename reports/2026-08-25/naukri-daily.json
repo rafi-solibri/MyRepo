@@ -1,0 +1,68 @@
+{
+  "date": "2026-08-25",
+  "portal": "naukri",
+  "kind": "post_fix_rerun",
+  "postFixRerun": 1,
+  "mainSha": "0df8822679bd238885130eaf5d297532e4570e9a",
+  "mergedPr": "https://github.com/rafi-solibri/MyRepo/pull/264",
+  "startedAt": "2026-08-25T05:57:25.102Z",
+  "finishedAt": "2026-08-25T06:12:03.759Z",
+  "resume": "resumes/Rafi_Resume.docx",
+  "profileUpdated": true,
+  "profileResumeRefresh": {
+    "ok": true,
+    "profileUpdated": true,
+    "uploadedVia": "toptier-filechooser",
+    "matchedToken": "Uploaded today",
+    "resumeName": "Rafi_Resume.docx",
+    "size": 20945
+  },
+  "profileResumeRestored": { "ok": true },
+  "counts": {
+    "profileUpdated": true,
+    "applied": 0,
+    "externalCompleted": 0,
+    "blocked": 0,
+    "skipped": 2725,
+    "seen": 207,
+    "tailoredApplies": 0
+  },
+  "applied": [],
+  "external": [],
+  "blocked": [],
+  "alreadyAppliedThisSession": [
+    {
+      "company": "Clean Harbors",
+      "role": ".Net Fullstack Tech Lead",
+      "reason": "already_applied_detail"
+    }
+  ],
+  "hiristSkipped": [
+    {
+      "company": "Rapidue Technologies",
+      "role": "Rapidue - Solution Architect - Full Stack Development (9-17 yrs)",
+      "reason": "hirist_login_required_skip"
+    },
+    {
+      "company": "Mancer Consulting Services",
+      "role": "Engineering Manager - Platform (10-15 yrs)",
+      "reason": "hirist_login_required_skip"
+    }
+  ],
+  "skipReasons": {
+    "duplicate_in_run": 2497,
+    "skip_title_keyword": 157,
+    "skip_no_dotnet": 28,
+    "skip_seniority": 19,
+    "skip_company": 8,
+    "skip_ctc_max_30": 5,
+    "skip_location": 5,
+    "skip_jd_non_dotnet_detail": 2,
+    "hirist_login_required_skip": 2,
+    "already_applied_detail": 1,
+    "skip_ctc_max_32.5": 1
+  },
+  "expandedAges": [15, 30, 60],
+  "earlyExpandedAges": [3, 7],
+  "note": "0 applies this session; earlier same-day Naukri runs already consumed eligible inventory. No new code-fixable blocker."
+}
