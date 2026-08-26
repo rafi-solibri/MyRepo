@@ -276,11 +276,22 @@ async function completeGooglePopup(ctx, page, knownPopup) {
   const text = await popup
     .evaluate(() => (document.body && document.body.innerText) || "")
     .catch(() => "");
-  if (
-    /2[- ]step|authenticator|verification code|check your phone|challenge/i.test(
+  if (/wrong password/i.test(text)) {
+    console.log(
+      JSON.stringify({
+        ok: false,
+        reason: "google_wrong_password",
+        hint: "Update Cursor secret GOOGLE_PASSWORD (Gmail account password), then re-run. Or: bash scripts/home-headed-login.sh hirist",
+      })
+    );
+    return false;
+  }
+  // Password page is /challenge/pwd — not authenticator 2FA.
+  const totp =
+    /2[- ]step|authenticator|verification code|check your phone|tap yes|confirm it.?s you/i.test(
       `${url}\n${text}`
-    )
-  ) {
+    ) && !/challenge\/pwd/i.test(url);
+  if (totp) {
     prompt2faBanner(url);
     tryEmailOtpFill();
     const wait = Number(argValue("--wait") || WAIT_SEC);
@@ -349,13 +360,6 @@ async function main() {
 
   const googleOk = await completeGooglePopup(ctx, page, knownPopup);
   if (!googleOk) {
-    console.log(
-      JSON.stringify({
-        ok: false,
-        reason: "google_2fa_timeout",
-        hint: "Enter authenticator code in Chrome when ASK_OWNER_GOOGLE_2FA appears in chat",
-      })
-    );
     process.exit(6);
   }
 
