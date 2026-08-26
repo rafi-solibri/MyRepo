@@ -21,6 +21,7 @@
 - Capgemini **SAPBTP** redirect passed because skills laundry listed `.NET` while title had none → require `.NET` on **title** for SAP/SAPBTP redirects.
 - Cyient **Manufacturing Engineering Manager** passed via Arch/Lead EM exception → skip manufacturing/ops EM titles without `.NET` on title (+ `manufacturing` in non-software keyword list).
 - Merged https://github.com/rafi-solibri/MyRepo/pull/266. Post-fix re-run: **450 → 450** (+0); both false-apply titles correctly skipped (`SAP without .NET` / `ops/manufacturing EM without .NET on title`).
+- Same-day post-fix re-run on merged `main` after https://github.com/rafi-solibri/MyRepo/pull/270 (`4fd61ce`): **452 → 452** (+0 intentional). Login MSSOAT + jwtOk. Age → **3650d**. Candidates d1=46 / d3=179 / d7=269 / d14=267 / d30=268 / d90=199 / d3650=38. Skips 1192 | duplicates 74 (userJobInfo, including today's morning applies) | blocked 0. Capgemini PU1 Support- Architect and Cyient Manufacturing Engineering Manager still skipped. No invented applies. No new code-fixable blocker.
 
 ## Top 3 LinkedIn referral drafts
 - **Globallogic India / Senior .NET Lead (Principal Engineer) IRC296129:** Hi — I'm applying for Senior .NET Lead (Principal Engineer) IRC296129 at Globallogic India. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)
