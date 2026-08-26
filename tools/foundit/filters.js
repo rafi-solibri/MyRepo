@@ -204,13 +204,21 @@ function skipTitleReason(title) {
   )
     return "infra/ops without .NET on title";
   // EXTRA_QUERIES Arch/Lead wave pulled non-software EM/Principal titles (2026-08-15).
+  // Specific EM titles first (Cyient "Manufacturing Engineering Manager" 2026-08-26).
   if (
-    /\b(facilities|electrical|mechanical|civil|structural|hvac|power\s+generation|wastewater|water)\b/i.test(t) &&
+    /\b(operations\s+engineering\s+manager|manufacturing\s+engineering\s+manager)\b/i.test(
+      t
+    ) &&
+    !hasDotNet(t, "")
+  )
+    return "ops/manufacturing EM without .NET on title";
+  if (
+    /\b(facilities|electrical|mechanical|civil|structural|hvac|power\s+generation|wastewater|water|manufacturing)\b/i.test(
+      t
+    ) &&
     !hasDotNet(t, "")
   )
     return "non-software engineering without .NET on title";
-  if (/\boperations\s+engineering\s+manager\b/i.test(t) && !hasDotNet(t, ""))
-    return "ops/manufacturing EM without .NET on title";
   // Naukri NON_DOTNET_PRIMARY_RE parity — Oracle Fusion/Apps/ERP is not .NET.
   if (/\b(oracle\s+fusion|oracle\s+apps|oracle\s+erp)\b/i.test(t) && !hasDotNet(t, ""))
     return "Oracle Fusion/ERP without .NET on title";
@@ -274,8 +282,9 @@ function classifyJob(job) {
   if (/\bsap\b/i.test(norm) && !hasDotNetProof(norm))
     return { pass: false, reason: "SAP without .NET" };
   // Capgemini SAPBTP URLs omit "SAP" from the display title — treat redirect as SAP signal.
+  // Require .NET on TITLE only: skills laundry lists are noisy (PU1 Support Architect 2026-08-26).
   const redirect = String(job.redirectUrl || job.applyUrl || "");
-  if (/sapbtp|\bsap\b/i.test(redirect) && !hasDotNet(title, skills))
+  if (/sapbtp|\bsap\b/i.test(redirect) && !hasDotNet(title, ""))
     return { pass: false, reason: "SAP without .NET" };
   if (/\bjava\b(?!\s*script)/i.test(norm) && !hasDotNetProof(norm))
     return { pass: false, reason: "Java-only" };

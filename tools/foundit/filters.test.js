@@ -679,6 +679,37 @@ assert.strictEqual(
 
 assert.strictEqual(
   classifyJob({
+    jobId: 38.1,
+    title: "PU1 Support- Architect - Offshore Manager",
+    companyName: "Capgemini",
+    locations: [{ text: "Hyderabad / Secunderabad, Telangana | India" }],
+    skills: [{ text: ".NET" }, { text: "REST API" }, { text: "Architecture" }],
+    redirectUrl:
+      "https://www.capgemini.com/in-en/jobs/536591-en_GB_SAPBTP/PU1%20Support-%20Architect%20-%20Offshore%20Manager",
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "SAP without .NET",
+  "SAPBTP redirect must skip even with .NET in skills laundry (2026-08-26 false apply)"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 38.2,
+    title: "Manufacturing Engineering Manager",
+    companyName: "Cyient",
+    locations: [{ text: "Hyderabad / Secunderabad, Telangana | India" }],
+    skills: [{ text: "Lean" }, { text: "Azure" }],
+    redirectUrl: "https://www.linkedin.com/jobs/view/4428537526/",
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "ops/manufacturing EM without .NET on title",
+  "Manufacturing Engineering Manager must skip Arch/Lead EM band (2026-08-26)"
+);
+
+assert.strictEqual(
+  classifyJob({
     jobId: 39,
     title: "Solutions Architect .NET",
     companyName: "Example",

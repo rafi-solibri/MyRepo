@@ -1,5 +1,12 @@
 # Foundit — issues & fixes
 
+## 2026-08-26 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Capgemini SAPBTP redirect + Manufacturing Engineering Manager passed classifyJob (skills laundry .NET / EM Arch exception) | filters.js: SAPBTP redirect requires .NET on TITLE only; skip Manufacturing/Operations Engineering Manager + manufacturing keyword without .NET on title |
+
+
 ## 2026-08-25 (cloud)
 
 | Issue | Fix |
