@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-08-26 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Netcool Architect + Cadence Principal Design Engineer burned Quick Apply/ATS (not .NET / EDA IC) | skip Netcool titles; skip Cadence company; skip Design Engineer without software/.NET |
+
+
 ## 2026-08-25 (cloud)
 
 | Issue | Fix |

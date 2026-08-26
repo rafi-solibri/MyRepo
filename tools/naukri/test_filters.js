@@ -266,6 +266,26 @@ assert.strictEqual(
   "DevOps Architect must skip (false-apply Sonata 2026-08-22)"
 );
 assert.strictEqual(
+  shouldSkipTitle("Netcool Architect"),
+  true,
+  "IBM Netcool (ops) Architect must skip — not .NET (blocked 2026-08-26)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Principal Design Engineer"),
+  true,
+  "EDA/IC Principal Design Engineer without software/.NET must skip (Cadence ATS 2026-08-26)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Software Design Engineer .NET"),
+  false,
+  "Software Design Engineer with .NET must not title-skip"
+);
+assert.strictEqual(
+  shouldSkipCompany("Cadence"),
+  true,
+  "Cadence (EDA) employer must company-skip (ATS burn 2026-08-26)"
+);
+assert.strictEqual(
   shouldSkipTitle("Data and AI Governance Architect / Lead"),
   true,
   "Data and AI title (and not just Data & AI) must skip without .NET"

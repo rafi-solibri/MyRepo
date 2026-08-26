@@ -33,14 +33,14 @@ function findResume() {
  * Only skip when title itself is a QA/SDET role.
  */
 const SKIP_TITLE_RE =
-  /\b(qa engineer|quality assurance|quality engineer|quality engineering|quality architect|quality solution architect|\bqe architect\b|sdet|tosca|test automation architect|embedded\b|firmware|intern(?!et)|fresher|salesforce|agentforce|servicenow|coupa|pega|lead system architect|\blsa\b|appian|anaplan|celonis|power platform|guidewire|sap\b|dynamics|\bd365\b|workday hms|revit|\bbarch\b|hubspot|\bsre\b|site reliability|devops engineer|devops lead|devops architect|platform sre|network operations|network ops|network support|civil\b|structural|substation|attack surface|cyber\s*security|cybersecurity|cyber architecture|infosec|penetration|red team|soc analyst|security operations|threat hunter|\bmdr\b|\bedr\b|observability|\bdatadog\b|infrastructure engineer|analog\s*ic|\bvlsi\b|digital verification|\basic\b|\bfpga\b|mulesoft|mule\s*soft|ms\s*fabric|microsoft\s*fabric|\bsynapse\b|\bdatabricks\b|datalake|data\s*lake)\b/i;
+  /\b(qa engineer|quality assurance|quality engineer|quality engineering|quality architect|quality solution architect|\bqe architect\b|sdet|tosca|test automation architect|embedded\b|firmware|intern(?!et)|fresher|salesforce|agentforce|servicenow|coupa|pega|lead system architect|\blsa\b|appian|anaplan|celonis|power platform|guidewire|sap\b|dynamics|\bd365\b|workday hms|revit|\bbarch\b|hubspot|\bsre\b|site reliability|devops engineer|devops lead|devops architect|platform sre|network operations|network ops|network support|civil\b|structural|substation|attack surface|cyber\s*security|cybersecurity|cyber architecture|infosec|penetration|red team|soc analyst|security operations|threat hunter|\bmdr\b|\bedr\b|observability|\bdatadog\b|infrastructure engineer|analog\s*ic|\bvlsi\b|digital verification|\basic\b|\bfpga\b|mulesoft|mule\s*soft|ms\s*fabric|microsoft\s*fabric|\bsynapse\b|\bdatabricks\b|datalake|data\s*lake|\bnetcool\b)\b/i;
 
 /**
  * Employer names that are Coupa/Pega/Salesforce/SAP-primary even when the
  * card title omits the stack keyword (recommended/homepage inventory).
  */
 const SKIP_COMPANY_RE =
-  /\b(pega(?:systems)?|coupa|salesforce|sap(?:\s*labs)?)\b/i;
+  /\b(pega(?:systems)?|coupa|salesforce|sap(?:\s*labs)?|cadence)\b/i;
 
 /** Pure AI/data titles need .NET|C# on the TITLE (skills laundry lists are noisy). */
 const PURE_AI_DATA_RE =
@@ -196,6 +196,14 @@ function shouldSkipTitle(title) {
   if (PURE_AI_DATA_RE.test(t) && !hasDotNet(t, "")) return true;
   // Java/MEAN/Python-primary titles without .NET|C# — do not burn ATS time
   if (NON_DOTNET_PRIMARY_RE.test(t) && !hasDotNet(t, "")) return true;
+  // IC/EDA "Principal Design Engineer" (Cadence etc.) — not software/.NET SA
+  if (
+    /\bdesign\s+engineer\b/i.test(t) &&
+    !/\bsoftware\b/i.test(t) &&
+    !hasDotNet(t, "")
+  ) {
+    return true;
+  }
   return false;
 }
 
