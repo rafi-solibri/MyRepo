@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| SmartApply resume upload still failed after #271 retries: unhiding file input left native Choose File / No file chosen + We could not upload (Genpact); ValGenesis India-Engineering/Standard Application questions stuck; exit 5 after 0 applies looked like CF | Do not unhide SmartApply file inputs; verify input.files after send_keys; pick India-Standard Application / India-Engineering options; exit 0 when inventory ran (seen>0) even if 0 new applies |
 | SmartApply resume-selection: We could not upload your resume file (6/7 easy_apply_incomplete); single send_keys+1s then Continue CTA streak | upload_smartapply_resume: prefer existing Rafi card; wait for upload ok; retry 3x on error with backoff; last try untailored master; re-upload on resume-module CTA stuck |
 
 

@@ -1318,8 +1318,26 @@ def _click_existing_smartapply_resume(sb) -> bool:
     return False
 
 
+def _file_input_has_files(sb, el) -> bool:
+    try:
+        return bool(
+            sb.execute_script(
+                "return !!(arguments[0] && arguments[0].files && arguments[0].files.length);",
+                el,
+            )
+        )
+    except Exception:
+        return False
+
+
 def _send_resume_to_file_inputs(sb, resume_path: Path) -> int:
-    """Push a local DOCX/PDF onto every visible SmartApply file input."""
+    """Push a local DOCX/PDF onto SmartApply file inputs.
+
+    Keep the input hidden. Unhiding (display:block) surfaces a native
+    'Choose File / No file chosen' control that Indeed does not treat as
+    its uploader — post-#271 cloud screenshot still showed that plus
+    'We could not upload your resume file'.
+    """
     _switch_smartapply_frame(sb)
     sent = 0
     path = str(resume_path.resolve())
@@ -1329,19 +1347,19 @@ def _send_resume_to_file_inputs(sb, resume_path: Path) -> int:
         inputs = []
     for f in inputs:
         try:
-            # Re-enable hidden inputs Indeed uses behind "Select file".
             try:
                 sb.execute_script(
-                    "arguments[0].style.display='block';"
-                    "arguments[0].style.opacity=1;"
-                    "arguments[0].removeAttribute('hidden');"
-                    "arguments[0].disabled=false;",
+                    "arguments[0].disabled=false;"
+                    "arguments[0].removeAttribute('disabled');",
                     f,
                 )
             except Exception:
                 pass
             f.send_keys(path)
-            sent += 1
+            if _file_input_has_files(sb, f):
+                sent += 1
+            else:
+                print("  resume_send_keys_empty_files", flush=True)
         except Exception as exc:
             print(f"  resume_send_keys_err={exc!s}"[:160], flush=True)
     return sent
@@ -1522,7 +1540,9 @@ def recover_required_selects(sb) -> dict:
             pick(/^(india|\+?\s*91)\b/i, 'country')
               || pick(/india|\+\s*91|\+91/i, 'country-loose');
             // ValGenesis employment/education locale: "India - Standard" / "India - Engineer".
-            pick(/india\s*[-–]\s*(standard|engineer|full\s*time)/i, 'india-standard')
+            pick(/india\s*[-–]\s*standard\s*app/i, 'india-standard-app')
+              || pick(/india\s*[-–]\s*engineering/i, 'india-engineering')
+              || pick(/india\s*[-–]\s*(standard|engineer|full\s*time)/i, 'india-standard')
               || pick(/^india\b/i, 'india-opt');
             pick(/\b(14|12|10|8)\+?\b|10\+|12-15|8-10/i, 'years');
             for (const sel of document.querySelectorAll('select')) {
@@ -3645,6 +3665,9 @@ def main() -> int:
     )
     _emit(report)
     if applied_n > 0:
+        return 0
+    # Inventory ran (skips / already-applied / residual ATS) — not a CF hard-block.
+    if report["counts"]["seen"] > 0:
         return 0
     if report["counts"]["blocked"] > 0:
         return 5
