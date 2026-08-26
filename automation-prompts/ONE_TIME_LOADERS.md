@@ -79,10 +79,10 @@ Owner once: `bash scripts/home-headed-login.sh hirist` then Save Environment sna
 https://cursor.com/automations/8e34696c-90b1-11f1-ba66-0e7d0216e441
 
 ```text
-Read and OBEY the full instructions in automation-prompts/07-notification.md (the fenced text block). Compile status from all apply automations and email rafi.success@gmail.com. For Indeed, run `bash scripts/fetch-indeed-home-result.sh --today` first and include applied/external/rejected/blocked/skipped from that home-local JSON (do not use cloud Cloudflare as Indeed when same-day home results exist). Include Hitech City / Knowledge City Daily totals from `/opt/cursor/artifacts/hitechcity-daily.json` when present.
+Read and OBEY the full instructions in automation-prompts/07-notification.md (the fenced text block). Compile status from ALL cloud job-apply automations and email [REDACTED]. Home-local is DISABLED — do NOT run fetch-home-result / fetch-indeed-home-result. Always wait/poll and include Hitech City / Knowledge City Daily (b65968f7-953d-11f1-ba66-0e7d0216e441, ~11 AM) totals from that agent (and hitechcity-daily.json when present). Count only confirmed ATS/portal submits — not Foundit redirect-only.
 ```
 
-Also ensure notification includes Hirist totals when present (see `07-notification.md`).
+Also include Hirist + Indeed cloud totals (see `07-notification.md`).
 
 ## Hitech City / Knowledge City Daily
 https://cursor.com/automations/b65968f7-953d-11f1-ba66-0e7d0216e441

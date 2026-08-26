@@ -336,6 +336,16 @@ async function tryDismissScreening(page) {
   }
 }
 
+/** True ATS confirmation statuses — Falcon redirect alone does NOT count. */
+function atsFullyCompleted(status) {
+  return /^(linkedin_easy_apply_ok|ats_submitted)$/i.test(String(status || ""));
+}
+
+/** Soft progress (Submit clicked) — still not enough to count as applied alone. */
+function atsSubmitClicked(status) {
+  return /linkedin_submit_clicked|ats_submit_clicked/i.test(String(status || ""));
+}
+
 async function handleExternalAts(context, resumePath, job, report) {
   const url = job.redirectUrl;
   if (!url) return { status: "no_redirect" };
@@ -345,11 +355,19 @@ async function handleExternalAts(context, resumePath, job, report) {
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
     await sleep(2000);
 
-    // LinkedIn Easy Apply
+    // LinkedIn: Easy Apply first; else company Apply → complete company ATS.
     if (/linkedin\.com/i.test(url)) {
+      // Sign-in wall
+      if (/\/uas\/login|authwall/i.test(page.url()) ||
+          /sign in to continue|join linkedin/i.test(
+            await page.locator("body").innerText().catch(() => "").then((t) => t.slice(0, 500))
+          )) {
+        return { status: "linkedin_login_wall", url };
+      }
+
       const easy = page
         .locator(
-          "button.jobs-apply-button, button:has-text('Easy Apply'), button:has-text('Continue applying')"
+          "button.jobs-apply-button:has-text('Easy Apply'), button:has-text('Easy Apply'), button:has-text('Continue applying')"
         )
         .first();
       if (await easy.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -396,7 +414,7 @@ async function handleExternalAts(context, resumePath, job, report) {
 
           const done = await page
             .locator(
-              "text=/application submitted|applied|your application was sent/i"
+              "text=/application submitted|your application was sent|application was submitted/i"
             )
             .first()
             .isVisible()
@@ -419,7 +437,9 @@ async function handleExternalAts(context, resumePath, job, report) {
           if (/submit/.test(label)) {
             await sleep(2000);
             const confirmed = await page
-              .locator("text=/application submitted|applied|your application was sent/i")
+              .locator(
+                "text=/application submitted|your application was sent|application was submitted/i"
+              )
               .first()
               .isVisible()
               .catch(() => false);
@@ -431,11 +451,49 @@ async function handleExternalAts(context, resumePath, job, report) {
         }
         return { status: "linkedin_ats_cap_or_incomplete", url };
       }
-      // Sign-in wall
-      if (/\/uas\/login|sign in/i.test(page.url() + (await page.title()))) {
-        return { status: "linkedin_login_wall", url };
+
+      // No Easy Apply — click company Apply and complete the external ATS.
+      const companyApply = page
+        .locator(
+          "button.jobs-apply-button:has-text('Apply'), button:has-text('Apply on company website'), a:has-text('Apply on company website'), button:has-text('Apply')"
+        )
+        .first();
+      if (await companyApply.isVisible({ timeout: 4000 }).catch(() => false)) {
+        const beforePages = new Set(context.pages());
+        await companyApply.click().catch(() => {});
+        await sleep(2500);
+        let atsPage = page;
+        for (const p of context.pages()) {
+          if (!beforePages.has(p) && !/linkedin\.com/i.test(p.url() || "")) {
+            atsPage = p;
+            break;
+          }
+        }
+        // LinkedIn sometimes navigates same tab off-site.
+        if (/linkedin\.com/i.test(atsPage.url() || "") === false || atsPage !== page) {
+          const isWorkday = /myworkdayjobs\.com|myworkdaysite\.com|workdayjobs|workday\.com/i.test(
+            atsPage.url() || ""
+          );
+          if (isWorkday) {
+            const wd = await completeWorkdayApply(atsPage, resumePath, {
+              maxMs: Math.max(60_000, ATS_CAP_MS - (Date.now() - started)),
+            });
+            return {
+              status: wd.ok ? "ats_submitted" : wd.reason || "ats_incomplete_or_cap",
+              url: wd.url || atsPage.url(),
+            };
+          }
+          const done = await completeExternalPage(atsPage, resumePath, {
+            maxMs: Math.max(60_000, ATS_CAP_MS - (Date.now() - started)),
+          });
+          return {
+            status: done.ok ? "ats_submitted" : done.reason || "ats_incomplete_or_cap",
+            url: done.url || atsPage.url(),
+          };
+        }
       }
-      return { status: "linkedin_no_easy_apply", url };
+      // Never treat LinkedIn redirect-without-submit as success.
+      return { status: "linkedin_no_easy_apply", url: page.url() };
     }
 
     // Workday / Greenhouse / generic ATS: open Apply, upload resume, fill CTC, submit
@@ -753,7 +811,8 @@ async function main() {
         let pathLabel = "Foundit Falcon";
         let ats = null;
         const redirectUrl = job.redirectUrl || verdict.redirectUrl;
-        if (redirectUrl && !/foundit\.in/i.test(redirectUrl)) {
+        const needsExternalAts = !!(redirectUrl && !/foundit\.in/i.test(redirectUrl));
+        if (needsExternalAts) {
           try {
             ats = await handleExternalAts(
               context,
@@ -770,80 +829,71 @@ async function main() {
           }
         }
 
-        if (falconOk || (ats && /_ok|_submitted|submit_clicked/i.test(ats.status))) {
-          const entry = {
+        const entry = {
+          jobId,
+          title: verdict.title,
+          company: verdict.company,
+          loc: verdict.loc,
+          path: pathLabel,
+          falconStatus: applyRes.status,
+          falconNext: applyRes.json?.next || applyRes.json?.responseType || null,
+          ats,
+          ageDays: jobAgeDays(job),
+          tailoredResume: tailorMeta?.ok
+            ? {
+                path: tailorMeta.out,
+                headline: tailorMeta.headline,
+                matchedSkills: tailorMeta.matchedSkills,
+                profileUploadOk: !!(
+                  tailorMeta.profileUpload && tailorMeta.profileUpload.ok
+                ),
+              }
+            : { ok: false, error: tailorMeta?.error || "not_run" },
+        };
+
+        // HARD: Falcon APPLY_REDIRECT / Applied-tab bump alone is NOT success when
+        // redirectUrl leaves Foundit — company ATS must reach submitted confirmation.
+        const atsOk = ats && atsFullyCompleted(ats.status);
+        const atsSoft = ats && atsSubmitClicked(ats.status);
+        const nativeFalconOnly = falconOk && !needsExternalAts;
+
+        if (nativeFalconOnly || atsOk) {
+          report.applied.push(entry);
+          applies += 1;
+          if (report.referralDrafts.length < 3) {
+            report.referralDrafts.push({
+              company: verdict.company,
+              title: verdict.title,
+              draft: `Hi — I'm applying for ${verdict.title} at ${verdict.company}. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed ([REDACTED] / +91 8790251698)`,
+            });
+          }
+        } else if (needsExternalAts && (falconOk || ats)) {
+          report.blocked.push({
             jobId,
             title: verdict.title,
             company: verdict.company,
-            loc: verdict.loc,
-            path: pathLabel,
+            reason: atsSoft
+              ? "ats_submit_unconfirmed"
+              : ats && /login_wall|captcha/i.test(ats.status)
+                ? ats.status
+                : "external_ats_incomplete",
+            detail:
+              (ats && ats.status) ||
+              "redirect_registered_on_foundit_but_company_ats_not_submitted",
+            url: redirectUrl,
             falconStatus: applyRes.status,
-            falconNext: applyRes.json?.next || applyRes.json?.responseType || null,
+            falconNext: entry.falconNext,
             ats,
-            ageDays: jobAgeDays(job),
-            tailoredResume: tailorMeta?.ok
-              ? {
-                  path: tailorMeta.out,
-                  headline: tailorMeta.headline,
-                  matchedSkills: tailorMeta.matchedSkills,
-                  profileUploadOk: !!(
-                    tailorMeta.profileUpload && tailorMeta.profileUpload.ok
-                  ),
-                }
-              : { ok: false, error: tailorMeta?.error || "not_run" },
-          };
-          // Count intentional applies only when Falcon accepted or ATS progressed
-          if (
-            falconOk ||
-            (ats &&
-              /linkedin_easy_apply_ok|ats_submitted|linkedin_submit_clicked|ats_submit_clicked/i.test(
-                ats.status
-              ))
-          ) {
-            report.applied.push(entry);
-            applies += 1;
-            if (report.referralDrafts.length < 3) {
-              report.referralDrafts.push({
-                company: verdict.company,
-                title: verdict.title,
-                draft: `Hi — I'm applying for ${verdict.title} at ${verdict.company}. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)`,
-              });
-            }
-          } else if (screeningBlock) {
-            report.blocked.push({
-              jobId,
-              title: verdict.title,
-              company: verdict.company,
-              reason: "screening_questionnaire",
-              falcon: applyRes.json,
-            });
-          } else {
-            report.blocked.push({
-              jobId,
-              title: verdict.title,
-              company: verdict.company,
-              reason: "apply_uncertain",
-              falconStatus: applyRes.status,
-              falcon: applyRes.json,
-              ats,
-            });
-          }
+          });
+          console.error(
+            `[foundit] NOT counting apply — need ATS submit; Falcon ok=${!!falconOk} ATS=${ats && ats.status}`
+          );
         } else if (screeningBlock) {
           report.blocked.push({
             jobId,
             title: verdict.title,
             company: verdict.company,
             reason: "screening_questionnaire",
-            falcon: applyRes.json,
-          });
-        } else if (ats && /login_wall|captcha/i.test(ats.status)) {
-          report.blocked.push({
-            jobId,
-            title: verdict.title,
-            company: verdict.company,
-            reason: ats.status,
-            url: redirectUrl,
-            falconStatus: applyRes.status,
             falcon: applyRes.json,
           });
         } else {

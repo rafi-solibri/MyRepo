@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Foundit counted Falcon APPLY_REDIRECT + linkedin_no_easy_apply as applied (no Gmail/ATS confirmation) | daily_apply.js: require atsFullyCompleted for redirectUrl jobs; try company Apply when no Easy Apply; incomplete → external_ats_incomplete blocked |
 | Capgemini SAPBTP redirect + Manufacturing Engineering Manager passed classifyJob (skills laundry .NET / EM Arch exception) | filters.js: SAPBTP redirect requires .NET on TITLE only; skip Manufacturing/Operations Engineering Manager + manufacturing keyword without .NET on title |
 
 

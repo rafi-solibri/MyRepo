@@ -1,5 +1,7 @@
 # Home-local automation replicas (evening — cloud stays ON)
 
+> **2026-08-26:** Owner disabled home-local for Notification reporting. The **Notification Job 11 AM** cloud automation must use **cloud agents only** (see `07-notification.md`). Home Task Scheduler jobs below remain optional/legacy and are not required for the morning status email.
+
 Cursor **cloud Automations** can keep running in the morning. These **home PC
 replicas** run in the evening on your residential IP + local Chrome logins via:
 

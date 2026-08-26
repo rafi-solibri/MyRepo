@@ -558,10 +558,37 @@ def _click_continue_google(ctx, page) -> bool:
                         )
                     except Exception:
                         pass
+                if ident_result == "need_human":
+                    # Authenticator / phone prompt — banner in chat for mobile owner.
+                    try:
+                        from tools.google_2fa_prompt import (
+                            is_google_2fa_challenge,
+                            wait_owner_google_2fa,
+                        )
+
+                        if is_google_2fa_challenge(popup):
+                            wait_owner_google_2fa(popup, portal="linkedin")
+                    except Exception as e:
+                        print(
+                            f"ASK_OWNER_GOOGLE_2FA (linkedin) helper error: {e}",
+                            flush=True,
+                        )
                 if ident_result != "no_form":
                     return True
             # Single-account auto-select may already proceed; wait.
             time.sleep(2)
+        # Post-chooser 2FA challenge (common when Google session is warm).
+        try:
+            from tools.google_2fa_prompt import (
+                is_google_2fa_challenge,
+                wait_owner_google_2fa,
+            )
+
+            challenge_page = popup
+            if is_google_2fa_challenge(challenge_page):
+                wait_owner_google_2fa(challenge_page, portal="linkedin")
+        except Exception:
+            pass
         for name in ("Continue", "Allow", "Next", "Confirm"):
             try:
                 b = popup.get_by_role("button", name=re.compile(rf"^{name}$", re.I))

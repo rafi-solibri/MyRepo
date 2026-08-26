@@ -99,6 +99,9 @@ DO NOT skip because the JD casually mentions Salesforce, SAP, Java, Data Enginee
 ## Report
 Write `/opt/cursor/artifacts/hitechcity-daily.json` (+ discovery/careers/linkedin/boards sub-reports). Include submitted (company, role, job id/URL, location, Easy Apply vs career ATS vs board), referrals sent, skipped, blocked, discovery added. Totals. Call out campus names when known.
 
+
+## Google / Gmail auth
+Follow `automation-prompts/GOOGLE_AUTH.md` every run: prefer Gmail SSO where offered; autofill email OTP via `tools/ats/email_otp.py`; on Google 2FA print `ASK_OWNER_GOOGLE_2FA` in chat and wait for the owner mobile code. Complete company ATS to submitted — never count redirect-only as applied.
 ## Auto-fix & push (MANDATORY)
 If you hit a code-fixable blocker (company list drift, career scraper, LinkedIn company filter, ATS filler, CDP/preflight), fix under tools/hitechcity or scripts/, append via `bash scripts/append-issue-fix.sh <portal> "issue" "fix"` (writes `automation-prompts/issues/<portal>.md` only — never the shared ISSUES file), commit + push a feature branch, open a ready PR to main and run `bash scripts/auto-merge-fix-pr.sh`. That merge helper then same-day re-runs this Hitech City job with the fix (`scripts/rerun-daily-after-fix.sh`) — do not wait for tomorrow's cron. Follow automation-prompts/AUTO_FIX.md. Do not invent applies. Owner-only: login walls, CAPTCHA (not mailbox-readable email OTP), Automations UI paste for ONE_TIME_LOADERS.
 ```
