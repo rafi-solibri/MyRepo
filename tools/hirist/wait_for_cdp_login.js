@@ -15,28 +15,12 @@ const CDP = process.env.HIRIST_CDP || "http://127.0.0.1:9222";
 const ROOT = path.resolve(__dirname, "../..");
 const HOME = "https://www.hirist.tech/";
 const LOGIN = "https://www.hirist.tech/login";
-const APPLIED = "https://www.hirist.tech/applied-jobs";
-const AUTH_COOKIE_RE = /^(token|access_token|auth_token|hjuid|userToken|JSID)$/i;
+const { AUTH_COOKIE_RE, probeSession } = require("./login_state");
 
 function argValue(flag) {
   const i = process.argv.indexOf(flag);
   if (i === -1 || i + 1 >= process.argv.length) return null;
   return process.argv[i + 1];
-}
-
-function isLoggedOut(url, bodyText) {
-  const u = String(url || "");
-  const text = String(bodyText || "");
-  if (/\/login\/?/i.test(u) && !/applied-jobs|myprofile|jobfeed/i.test(u)) return true;
-  if (/sign in to continue|log in to continue|candidate login/i.test(text)) return true;
-  if (
-    /\b(login|register|sign in)\b/i.test(text) &&
-    !/\b(applied jobs|my profile|job feed|saved jobs|logout|sign out)\b/i.test(text)
-  ) {
-    // Marketing homepage still shows Login/Register when logged out.
-    if (/find your dream tech job|download app|login as recruiter/i.test(text)) return true;
-  }
-  return false;
 }
 
 async function main() {
@@ -82,42 +66,23 @@ async function main() {
   const page = await ctx.newPage();
 
   async function probe() {
-    const cookies = await ctx.cookies("https://www.hirist.tech");
-    const authCookies = cookies.filter((c) => AUTH_COOKIE_RE.test(c.name) && c.value);
-    const hasAuthCookie = authCookies.length > 0;
-    let url = page.url() || "";
-    let body = "";
-
-    if (openLogin || !hasAuthCookie) {
-      await page.goto(LOGIN, { waitUntil: "domcontentloaded", timeout: 60000 }).catch(() => {});
-      url = page.url() || "";
-    }
-
-    await page.goto(APPLIED, { waitUntil: "domcontentloaded", timeout: 60000 }).catch(() => {});
-    for (let i = 0; i < 6; i++) {
+    if (openLogin) {
+      await page.goto(LOGIN, { waitUntil: "commit", timeout: 20000 }).catch(() => {});
       await page.waitForTimeout(1000).catch(() => {});
-      url = page.url() || "";
-      if (/\/login\/?/i.test(url)) break;
-      if (/applied-jobs|myprofile|jobfeed/i.test(url)) break;
+    } else if (!/hirist\.tech/i.test(page.url() || "")) {
+      await page.goto(HOME, { waitUntil: "commit", timeout: 20000 }).catch(() => {});
+      await page.waitForTimeout(800).catch(() => {});
     }
-    await page.waitForTimeout(1200).catch(() => {});
-    url = page.url() || "";
-    body = await page
-      .evaluate(() => (document.body && document.body.innerText) || "")
-      .catch(() => "");
-
-    const loggedOut = isLoggedOut(url, body);
-    const onAuthed =
-      /applied-jobs|myprofile|jobfeed|saved-jobs/i.test(url) ||
-      /\b(applied jobs|my profile|saved jobs|job feed)\b/i.test(body);
-    const ok = !loggedOut && (hasAuthCookie || onAuthed);
+    const session = await probeSession(page, ctx);
+    const cookies = await ctx.cookies("https://www.hirist.tech").catch(() => []);
+    const authCookies = cookies.filter((c) => AUTH_COOKIE_RE.test(c.name) && c.value);
     return {
-      ok,
-      hasAuthCookie,
+      ok: session.ok,
+      hasAuthCookie: session.hasAuthCookie,
       authCookieNames: authCookies.map((c) => c.name),
-      onAuthed,
-      url,
-      preview: String(body || "").slice(0, 160),
+      reason: session.reason,
+      url: session.url,
+      preview: session.preview,
       home: HOME,
     };
   }

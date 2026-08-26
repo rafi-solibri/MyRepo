@@ -21,6 +21,7 @@ const path = require("path");
 const { chromium } = require("playwright-core");
 const { skipReason, hasDotNet, hasTargetSeniority } = require("./filters");
 const { findResume, EXPECTED_CTC_LPA, CURRENT_CTC_LPA } = require("./resume");
+const { probeSession } = require("./login_state");
 const { completeExternalPage } = require("../ats/complete_page");
 const { tailorResumeForJob } = require("../resume_tailor");
 const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
@@ -223,31 +224,18 @@ async function apiPost(page, url, body) {
   );
 }
 
-function isLoggedOutUrl(url, body) {
-  const u = String(url || "");
-  const text = String(body || "");
-  if (/\/login\/?/i.test(u) && !/applied-jobs|myprofile/i.test(u)) return true;
-  if (/please login|sign in to continue|login\/signup to proceed/i.test(text)) return true;
-  return false;
-}
-
-async function ensureLoggedIn(page) {
-  await page.goto("https://www.hirist.tech/applied-jobs", {
-    waitUntil: "domcontentloaded",
-    timeout: 60000,
-  });
-  await sleep(1500);
-  const url = page.url();
-  const body = await page.evaluate(() => (document.body && document.body.innerText) || "");
-  if (isLoggedOutUrl(url, body)) {
-    return { ok: false, url, preview: body.slice(0, 200) };
+async function ensureLoggedIn(page, ctx) {
+  // Prefer homepage — /applied-jobs is public when logged out and can hang.
+  await page.goto("https://www.hirist.tech/", {
+    waitUntil: "commit",
+    timeout: 20000,
+  }).catch(() => {});
+  await sleep(1200);
+  const probe = await probeSession(page, ctx);
+  if (!probe.ok) {
+    return { ok: false, url: probe.url, preview: probe.reason || probe.preview, api: probe };
   }
-  // Soft check: jobfeed also 401s when logged out via API
-  const feed = await apiGet(page, `${API}/jobfeed`);
-  if (feed.status === 401 || feed.json?.error?.name === "UNAUTHORISED_ACCESS") {
-    return { ok: false, url, preview: "jobfeed_401", api: feed.json };
-  }
-  return { ok: true, url };
+  return { ok: true, url: probe.url, reason: probe.reason };
 }
 
 async function searchJobs(page, query, pageNo = 0) {
@@ -308,7 +296,7 @@ async function main() {
   const ctx = browser.contexts()[0] || (await browser.newContext());
   const page = await ctx.newPage();
 
-  const login = await ensureLoggedIn(page);
+  const login = await ensureLoggedIn(page, ctx);
   if (!login.ok) {
     // Attempt Gmail / Google SSO before giving up.
     console.error("[hirist] session missing — trying Google/Gmail login…");
@@ -320,7 +308,7 @@ async function main() {
     );
     if (gl.stdout) process.stdout.write(gl.stdout);
     if (gl.stderr) process.stderr.write(gl.stderr);
-    const retry = await ensureLoggedIn(page);
+    const retry = await ensureLoggedIn(page, ctx);
     if (!retry.ok) {
       state.blocked.push({
         reason: "hirist_login_required",

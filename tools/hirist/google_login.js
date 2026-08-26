@@ -15,10 +15,12 @@
 const { spawnSync } = require("child_process");
 const path = require("path");
 const fs = require("fs");
+const { probeSession } = require("./login_state");
 
 const CDP = process.env.HIRIST_CDP || "http://127.0.0.1:9222";
 const ROOT = path.resolve(__dirname, "../..");
 const LOGIN = "https://www.hirist.tech/login";
+const HOME = "https://www.hirist.tech/";
 const APPLIED = "https://www.hirist.tech/applied-jobs";
 const GMAIL = process.env.GOOGLE_EMAIL || process.env.LINKEDIN_EMAIL || process.env.APPLY_EMAIL || "";
 const WAIT_SEC = Number(
@@ -125,21 +127,43 @@ async function loadChromium() {
   }
 }
 
+async function safeGoto(page, url, timeout = 20000) {
+  await page.goto(url, { waitUntil: "commit", timeout }).catch(() => {});
+  await sleep(1200);
+}
+
 async function probeLoggedIn(page, ctx) {
-  await page.goto(APPLIED, { waitUntil: "domcontentloaded", timeout: 60000 }).catch(() => {});
-  await sleep(1500);
-  const url = page.url() || "";
-  const body = await page
-    .evaluate(() => (document.body && document.body.innerText) || "")
-    .catch(() => "");
-  const cookies = await ctx.cookies("https://www.hirist.tech").catch(() => []);
-  const hasAuth = cookies.some((c) =>
-    /^(token|access_token|auth_token|hjuid|userToken|JSID)$/i.test(c.name)
+  // Do not navigate to /applied-jobs for this probe — that route is public
+  // when logged out and can hang. Fetch jobfeed from the current origin.
+  if (!/hirist\.tech/i.test(page.url() || "")) {
+    await safeGoto(page, HOME);
+  }
+  return probeSession(page, ctx);
+}
+
+async function openLoginModal(page) {
+  await safeGoto(page, LOGIN);
+  const googleBtn = page.getByRole("button", { name: /continue with google/i });
+  if ((await googleBtn.count()) > 0 && (await googleBtn.first().isVisible().catch(() => false))) {
+    return true;
+  }
+  // Header Login opens the split-screen modal (email + Google).
+  try {
+    const loginBtns = page.getByRole("button", { name: /^login$/i });
+    const n = await loginBtns.count();
+    for (let i = 0; i < n; i++) {
+      if (await loginBtns.nth(i).isVisible().catch(() => false)) {
+        await loginBtns.nth(i).click({ timeout: 5000 });
+        await sleep(1500);
+        break;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return (
+    (await googleBtn.count()) > 0 && (await googleBtn.first().isVisible().catch(() => false))
   );
-  const onAuthed = /applied-jobs|myprofile|jobfeed/i.test(url);
-  const loggedOut =
-    /\/login\/?/i.test(url) || /sign in to continue|candidate login/i.test(body);
-  return { ok: !loggedOut && (hasAuth || onAuthed), url, hasAuth };
 }
 
 async function clickGoogleSso(page) {
@@ -277,12 +301,26 @@ async function main() {
 
   let probe = await probeLoggedIn(page, ctx);
   if (probe.ok) {
-    console.log(JSON.stringify({ ok: true, reason: "already_logged_in", url: probe.url }));
+    console.log(
+      JSON.stringify({
+        ok: true,
+        reason: "already_logged_in",
+        via: probe.reason,
+        url: probe.url,
+      })
+    );
     process.exit(0);
   }
+  console.error(
+    JSON.stringify({
+      note: "hirist_not_logged_in",
+      reason: probe.reason,
+      url: probe.url,
+      apiStatus: probe.apiStatus,
+    })
+  );
 
-  await page.goto(LOGIN, { waitUntil: "domcontentloaded", timeout: 60000 }).catch(() => {});
-  await sleep(1500);
+  await openLoginModal(page);
   const clicked = await clickGoogleSso(page);
   if (!clicked) {
     console.log(
@@ -311,6 +349,9 @@ async function main() {
   // Allow redirects back to Hirist
   const deadline = Date.now() + Math.max(30, waitSec) * 1000;
   while (Date.now() < deadline) {
+    if (!/hirist\.tech/i.test(page.url() || "")) {
+      await safeGoto(page, HOME);
+    }
     probe = await probeLoggedIn(page, ctx);
     if (probe.ok) {
       console.log(
