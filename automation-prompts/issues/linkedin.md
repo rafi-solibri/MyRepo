@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-08-26 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Post-fix re-run on main (#270): live CDP still dead; Google SSO timed out; LINKEDIN_PASSWORD rejected (Wrong email or password); GOOGLE_PASSWORD unset | No new code fix — owner secret/session (AUTO_FIX owner-only). Confirmed 0 applies; did not invent. Re-run 1/5. |
+
+
 ## 2026-08-25 (cloud)
 
 | Issue | Fix |
