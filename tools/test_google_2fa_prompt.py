@@ -46,5 +46,19 @@ assert_true(
     ),
     "identifier alone is not 2FA",
 )
+assert_true(
+    not is_google_2fa_challenge(
+        url="https://accounts.google.com/v3/signin/challenge/pwd?TL=abc",
+        body="Welcome\nEnter your password",
+    ),
+    "Google password challenge is not 2FA",
+)
+assert_true(
+    not is_google_2fa_challenge(
+        url="https://accounts.google.com/v3/signin/challenge/pwd?TL=abc",
+        body="Wrong password. Try again or click Try another way.",
+    ),
+    "Google wrong-password page is not 2FA",
+)
 
 print("google_2fa_prompt tests OK")

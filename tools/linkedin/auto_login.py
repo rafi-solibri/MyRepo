@@ -103,7 +103,7 @@ def is_google_identifier_url(url: str) -> bool:
     """GSI popup fell through to email/password sign-in (stale Google cookies)."""
     u = (url or "").lower()
     return "accounts.google.com" in u and bool(
-        re.search(r"/signin/identifier|/challenge/pwd|/signin/challenge", u)
+        re.search(r"/signin/identifier|/challenge/pwd|/signin/v2/sl/pwd", u)
     )
 
 
@@ -167,6 +167,9 @@ def _is_signed_in(ctx, page) -> bool:
 
 def _on_captcha(page) -> bool:
     url = (page.url or "").lower()
+    # Google password/2FA lives on accounts.google.com/.../challenge — not portal CAPTCHA.
+    if "accounts.google.com" in url:
+        return False
     if "/checkpoint" in url or "challenge" in url:
         return True
     try:
@@ -397,6 +400,116 @@ def _complete_google_password_login(popup, email: str, password: str) -> str:
     return "ok"
 
 
+def _google_auth_page(ctx, preferred=None):
+    """Return the live Google accounts tab (password, 2FA, or chooser)."""
+    pages = []
+    if preferred is not None:
+        try:
+            _ = preferred.url
+            pages.append(preferred)
+        except Exception:
+            pass
+    try:
+        ctx_pages = list(ctx.pages or [])
+    except Exception:
+        ctx_pages = []
+    for pg in ctx_pages:
+        if pg in pages:
+            continue
+        try:
+            u = pg.url or ""
+        except Exception:
+            continue
+        if "accounts.google.com" in u and not re.search(
+            r"/gsi/button|/accounts/CheckConnection", u, re.I
+        ):
+            pages.append(pg)
+    return pages[0] if pages else None
+
+
+def _finish_google_sso(ctx, popup) -> str:
+    """Keep driving the Google popup after GSI click: password, then 2FA.
+
+    Earlier runs returned immediately after the account chooser, so
+    challenge/pwd sat idle while _wait_signed_in timed out on portal login.
+    Returns ok | wrong_password | need_human | timeout | no_popup.
+    """
+    wait = int(os.environ.get("GOOGLE_2FA_WAIT_SEC", "300"))
+    deadline = time.time() + max(METHOD_TIMEOUT_S, wait)
+    email = EMAIL or DEFAULT_EMAIL
+    last_pwd_try = 0.0
+    saw_popup = popup is not None
+    while time.time() < deadline:
+        li_page = _pick_linkedin_page(ctx)  # pragma: allowlist secret
+        try:
+            li_url = li_page.url if li_page is not None else ""
+        except Exception:
+            li_url = ""
+        if _cookies_has_li_at(ctx) and li_page is not None and not _url_loginish(li_url):
+            return "ok"
+        popup = _google_auth_page(ctx, popup)
+        if popup is None:
+            if saw_popup and _cookies_has_li_at(ctx):
+                return "ok"
+            time.sleep(1)
+            continue
+        saw_popup = True
+        try:
+            url = popup.url or ""
+        except Exception:
+            url = ""
+        body = _page_body(popup)
+        try:
+            from tools.google_2fa_prompt import (
+                is_google_2fa_challenge,
+                wait_owner_google_2fa,
+            )
+
+            if is_google_2fa_challenge(popup, url=url, body=body):
+                wait_owner_google_2fa(popup, portal="linkedin")  # pragma: allowlist secret
+                continue
+        except Exception as e:
+            print(f"ASK_OWNER_GOOGLE_2FA (linkedin) helper error: {e}", flush=True)  # pragma: allowlist secret
+        if is_google_identifier_url(url) or re.search(
+            r"Email or phone|Enter your password", body, re.I
+        ):
+            if time.time() - last_pwd_try < 8:
+                time.sleep(1)
+                continue
+            last_pwd_try = time.time()
+            ident_result = "no_form"
+            for pw in password_candidates():
+                ident_result = _complete_google_password_login(popup, email, pw)
+                if ident_result in ("ok", "need_human", "wrong_password"):
+                    break
+            if ident_result == "wrong_password":
+                try:
+                    popup.screenshot(
+                        path=str(_art() / "linkedin-auto-login-wrong-password.png"),  # pragma: allowlist secret
+                        timeout=8000,
+                    )
+                except Exception:
+                    pass
+                return "wrong_password"
+            if ident_result == "need_human":
+                continue
+            if ident_result == "ok":
+                time.sleep(1.5)
+                continue
+            time.sleep(1)
+            continue
+        for name in ("Continue", "Allow", "Next", "Confirm"):
+            try:
+                b = popup.get_by_role("button", name=re.compile(rf"^{name}$", re.I))
+                if b.count() and b.first.is_visible():
+                    b.first.click(timeout=4000)
+                    time.sleep(1)
+            except Exception:
+                break
+        time.sleep(1.5)
+    return "timeout" if saw_popup else "no_popup"
+
+
 def _reveal_full_login_form(page) -> None:
     """Leave LinkedIn 'Welcome back' remembered-account UI so GSI is clickable.
 
@@ -539,64 +652,24 @@ def _click_continue_google(ctx, page) -> bool:
                         break
             if chosen:
                 break
-        if not chosen:
-            # Stale Google cookies → identifier/password form instead of chooser.
-            if is_google_identifier_url(popup.url or "") or re.search(
-                r"Email or phone|Enter your password", _page_body(popup), re.I
-            ):
-                email = EMAIL or DEFAULT_EMAIL
-                ident_result = "no_form"
-                for pw in password_candidates():
-                    ident_result = _complete_google_password_login(popup, email, pw)
-                    if ident_result in ("ok", "need_human"):
-                        break
-                if ident_result == "wrong_password":
-                    try:
-                        popup.screenshot(
-                            path=str(_art() / "linkedin-auto-login-wrong-password.png"),
-                            timeout=8000,
-                        )
-                    except Exception:
-                        pass
-                if ident_result == "need_human":
-                    # Authenticator / phone prompt — banner in chat for mobile owner.
-                    try:
-                        from tools.google_2fa_prompt import (
-                            is_google_2fa_challenge,
-                            wait_owner_google_2fa,
-                        )
-
-                        if is_google_2fa_challenge(popup):
-                            wait_owner_google_2fa(popup, portal="linkedin")
-                    except Exception as e:
-                        print(
-                            f"ASK_OWNER_GOOGLE_2FA (linkedin) helper error: {e}",
-                            flush=True,
-                        )
-                if ident_result != "no_form":
-                    return True
-            # Single-account auto-select may already proceed; wait.
-            time.sleep(2)
-        # Post-chooser 2FA challenge (common when Google session is warm).
-        try:
-            from tools.google_2fa_prompt import (
-                is_google_2fa_challenge,
-                wait_owner_google_2fa,
-            )
-
-            challenge_page = popup
-            if is_google_2fa_challenge(challenge_page):
-                wait_owner_google_2fa(challenge_page, portal="linkedin")
-        except Exception:
-            pass
-        for name in ("Continue", "Allow", "Next", "Confirm"):
-            try:
-                b = popup.get_by_role("button", name=re.compile(rf"^{name}$", re.I))
-                if b.count():
-                    b.first.click(timeout=5000)
-                    time.sleep(1)
-            except Exception:
-                break
+        # After chooser OR identifier: keep driving password + 2FA until the portal
+        # session or a hard fail. Do not return after a single 2FA peek — the
+        # popup often navigates to challenge/pwd a second later.
+        result = _finish_google_sso(ctx, popup)
+        print(
+            __import__("json").dumps({"step": "google_sso_finish", "result": result}),
+            flush=True,
+        )
+        if result == "wrong_password":
+            return False
+        return True
+    result = _finish_google_sso(ctx, None)
+    print(
+        __import__("json").dumps({"step": "google_sso_finish", "result": result}),
+        flush=True,
+    )
+    if result == "wrong_password":
+        return False
     return True
 
 def _visible_locator(page, selectors: str):

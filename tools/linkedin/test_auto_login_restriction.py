@@ -70,3 +70,17 @@ def test_is_google_identifier_url():
     )
     assert not _mod.is_google_identifier_url("https://accounts.google.com/gsi/select")
     assert not _mod.is_google_identifier_url("https://www.example.com/login")
+    # TOTP / phone-prompt URLs must not be treated as password identifier pages.
+    assert not _mod.is_google_identifier_url(
+        "https://accounts.google.com/v3/signin/challenge/totp?TL=abc"
+    )
+    assert not _mod.is_google_identifier_url(
+        "https://accounts.google.com/signin/challenge/ipp"
+    )
+
+
+def test_google_accounts_challenge_is_not_portal_captcha():
+    class _P:
+        url = "https://accounts.google.com/v3/signin/challenge/pwd?TL=abc"
+
+    assert _mod._on_captcha(_P()) is False

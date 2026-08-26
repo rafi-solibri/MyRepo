@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-08-26 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Google SSO returned after account chooser and left challenge/pwd idle; 2FA detector treated password pages as 2FA; portal password secrets rejected | Drive Google popup through password then 2FA (ASK_OWNER_GOOGLE_2FA); exclude challenge/pwd from 2FA; do not classify Google accounts challenge as portal CAPTCHA |
+
+
 ## 2026-08-25 (cloud)
 
 | Issue | Fix |
