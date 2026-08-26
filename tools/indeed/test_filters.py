@@ -226,6 +226,9 @@ def test_resume_upload_error_detector():
     assert any(p.name.endswith(".docx") for p in cands)
     # Owner master (3.9MB) is under Indeed's 5MB cap and must be in the cycle.
     assert any(p.name.startswith("Mohammed_Abdul_Rafi") for p in cands)
+    # PDF is preferred after 2026-08-26 DOCX rejects.
+    if any(p.suffix.lower() == ".pdf" for p in cands):
+        assert cands[0].suffix.lower() == ".pdf"
 
 
 if __name__ == "__main__":

@@ -955,12 +955,13 @@ def ensure_indeed_resume_pdf() -> Path | None:
 
 
 def _resume_upload_candidates(primary: Path) -> list[Path]:
-    """Prefer tailored DOCX, then owner master (≤5MB), then PDF."""
+    """Prefer PDF (Indeed recommended; 2026-08-26 DOCX was rejected), then DOCX."""
     compressed = ROOT / "resumes" / "Rafi_Resume.docx"
     owner = ROOT / "resumes" / "Mohammed_Abdul_Rafi_Ahmed_Resume.docx"
     pdf = ensure_indeed_resume_pdf()
     out: list[Path] = []
-    for p in (primary, compressed, owner, pdf):
+    # PDF first: SmartApply accepted Rafi_Resume.pdf after three DOCX rejects.
+    for p in (pdf, primary, compressed, owner):
         if not p:
             continue
         path = Path(p)
