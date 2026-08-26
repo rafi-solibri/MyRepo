@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-08-26 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Cron: live CDP dead; Google SSO timed out; LINKEDIN_PASSWORD rejected (Wrong email or password); GOOGLE_PASSWORD unset | No code fix — owner must refresh LINKEDIN_PASSWORD/GOOGLE_PASSWORD (and headed-login only if CAPTCHA after secret update); report written under reports/2026-08-26/ |
+
+
 ## 2026-08-25 (cloud)
 
 | Issue | Fix |
