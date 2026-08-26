@@ -206,14 +206,25 @@ async function clickGoogleSso(page) {
   return false;
 }
 
-async function completeGooglePopup(ctx, page) {
+function contextPages(ctx) {
+  try {
+    const pages = typeof ctx.pages === "function" ? ctx.pages() : ctx.pages;
+    return Array.isArray(pages) ? pages : [];
+  } catch {
+    return [];
+  }
+}
+
+async function completeGooglePopup(ctx, page, knownPopup) {
   await sleep(2000);
-  let popup = null;
-  for (const pg of ctx.pages) {
-    const u = pg.url() || "";
-    if (/accounts\.google\.com/i.test(u)) {
-      popup = pg;
-      break;
+  let popup = knownPopup || null;
+  if (!popup) {
+    for (const pg of contextPages(ctx)) {
+      const u = pg.url() || "";
+      if (/accounts\.google\.com/i.test(u)) {
+        popup = pg;
+        break;
+      }
     }
   }
   if (!popup) popup = page;
@@ -321,7 +332,9 @@ async function main() {
   );
 
   await openLoginModal(page);
+  const popupWait = page.waitForEvent("popup", { timeout: 15000 }).catch(() => null);
   const clicked = await clickGoogleSso(page);
+  const knownPopup = await popupWait;
   if (!clicked) {
     console.log(
       JSON.stringify({
@@ -334,7 +347,7 @@ async function main() {
     process.exit(5);
   }
 
-  const googleOk = await completeGooglePopup(ctx, page);
+  const googleOk = await completeGooglePopup(ctx, page, knownPopup);
   if (!googleOk) {
     console.log(
       JSON.stringify({
