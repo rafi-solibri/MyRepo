@@ -84,3 +84,11 @@ def test_google_accounts_challenge_is_not_portal_captcha():
         url = "https://accounts.google.com/v3/signin/challenge/pwd?TL=abc"
 
     assert _mod._on_captcha(_P()) is False
+
+
+def test_repo_root_on_sys_path_for_google_2fa_import():
+    import sys
+    from pathlib import Path
+
+    root = Path(_mod.__file__).resolve().parents[2]
+    assert any(Path(p).resolve() == root for p in sys.path if p)

@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| auto_login run as a script could not import tools.google_2fa_prompt (No module named tools) so ASK_OWNER_GOOGLE_2FA never waited | Put repo root on sys.path before Google 2FA import so launch-chrome-cdp.sh script invocation can wait on authenticator |
 | Google SSO returned after account chooser and left challenge/pwd idle; 2FA detector treated password pages as 2FA; portal password secrets rejected | Drive Google popup through password then 2FA (ASK_OWNER_GOOGLE_2FA); exclude challenge/pwd from 2FA; do not classify Google accounts challenge as portal CAPTCHA |
 
 

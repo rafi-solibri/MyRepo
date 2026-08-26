@@ -29,6 +29,12 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+# Running as `python3 tools/<portal>/auto_login.py` puts this dir on sys.path[0],
+# so `import tools.google_2fa_prompt` fails unless the repo root is included.
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 from playwright.sync_api import sync_playwright
 
 CDP = os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222")
