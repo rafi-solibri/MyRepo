@@ -11,12 +11,15 @@ if str(ROOT) not in sys.path:
 
 from tools.indeed.prepare_uc_profile import COPY_PATHS  # noqa: E402
 from tools.indeed.uc_daily_apply import (  # noqa: E402
+    RESUME_UPLOAD_ERROR_RE,
+    _resume_upload_candidates,
     already_applied,
     looks_anonymous_marketing_home,
     looks_login_wall,
     job_dedupe_key,
     looks_signed_in,
     skip_reason,
+    upload_smartapply_resume,
 )
 
 
@@ -205,6 +208,26 @@ def test_job_dedupe_key_from_jk():
     )
 
 
+def test_resume_upload_error_detector():
+    # 2026-08-26 SmartApply: Continue fired before upload finished.
+    body = (
+        "Add a resume | Upload a resume | Accepted file types are PDF "
+        "(recommended), DOCX, RTF, or TXT. | Select file | Maximum size: 5 MB "
+        "| We could not upload your resume file"
+    )
+    assert RESUME_UPLOAD_ERROR_RE.search(body)
+    assert not RESUME_UPLOAD_ERROR_RE.search(
+        "Rafi_Resume.docx selected · Upload a resume"
+    )
+    assert callable(upload_smartapply_resume)
+    primary = Path("/workspace/resumes/Rafi_Resume.docx")
+    cands = _resume_upload_candidates(primary)
+    assert cands, "expected at least the compressed upload copy"
+    assert any(p.name.endswith(".docx") for p in cands)
+    # Owner master (3.9MB) is under Indeed's 5MB cap and must be in the cycle.
+    assert any(p.name.startswith("Mohammed_Abdul_Rafi") for p in cands)
+
+
 if __name__ == "__main__":
     test_skip_hyd_remote_ok()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
@@ -217,4 +240,5 @@ if __name__ == "__main__":
     test_india_home_get_started_is_not_login_proof()
     test_account_settings_and_serp_are_signed_in()
     test_job_dedupe_key_from_jk()
+    test_resume_upload_error_detector()
     print("ok")
