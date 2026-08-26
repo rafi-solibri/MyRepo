@@ -1,5 +1,16 @@
 # What changed vs today’s live prompts
 
+## 2026-08-26 — Honest applies + Notification cloud-only + Google 2FA
+
+| Area | Change |
+| --- | --- |
+| Foundit | Count **applied** only when company ATS reaches `linkedin_easy_apply_ok` / `ats_submitted`. Falcon `APPLY_REDIRECT` alone → `external_ats_incomplete` (not applied). LinkedIn path tries company Apply when no Easy Apply. |
+| Notification | Home-local **disabled** for reporting; cloud agents only; always wait/poll Hitech ~11 AM automation; honest ATS-confirmed counts |
+| Google auth | Shared `GOOGLE_AUTH.md` + `tools/google_2fa_prompt.py` — `ASK_OWNER_GOOGLE_2FA` in chat for mobile owner |
+| Hirist | `tools/hirist/google_login.js` Gmail SSO; wired from `daily_apply.js` |
+| LinkedIn | auto_login waits on Google 2FA with chat banner |
+| Resume | Unchanged: every run rebuilds `Rafi_Resume.docx` from `Mohammed_Abdul_Rafi_Ahmed_Resume.docx` via `ensure_upload_resume.py`; JD tailor default ON |
+
 ## 2026-08-24 — Hirist Daily portal
 
 | Area | Change |

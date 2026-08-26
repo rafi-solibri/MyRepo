@@ -1,5 +1,12 @@
 # Hirist issues log
 
+## 2026-08-26 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Hirist blocked on login with no Gmail SSO / 2FA chat prompt | google_login.js + daily_apply Google SSO; google_2fa_prompt.py ASK_OWNER_GOOGLE_2FA in chat; GOOGLE_AUTH.md |
+
+
 Portal-scoped log. Append via `bash scripts/append-issue-fix.sh hirist "issue" "fix"`.
 
 | Date | Issue | Fix |

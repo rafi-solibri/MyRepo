@@ -1,5 +1,12 @@
 # Notification — issues & fixes
 
+## 2026-08-26 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Notification still fetched home-local JSON and under-reported Hitech; Foundit counted Falcon redirects as applies | 07-notification + ONE_TIME_LOADERS: cloud-only, always poll Hitech 11 AM; no home fetch; honest ATS-confirmed counts only |
+
+
 ## 2026-08-19 (cloud)
 
 | Issue | Fix |

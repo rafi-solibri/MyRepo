@@ -19,6 +19,8 @@ Alternatively, paste each file’s full fenced `text` block into the matching au
 | Locations | Hyderabad / Telangana **or** Remote / WFH |
 | Apply bias | When uncertain on Hyd/remote senior .NET/cloud → **APPLY** |
 | Apply paths | Easy/Quick Apply **and** company website / ATS |
+| Notification | Cloud agents only (home-local disabled for status email); always include Hitech ~11 AM |
+| Google auth | `GOOGLE_AUTH.md` — Gmail SSO, email OTP autofill, `ASK_OWNER_GOOGLE_2FA` in chat |
 | Durable runners | `tools/{linkedin,hitechcity,naukri,cutshort,foundit,instahyre,indeed,hirist}/…` |
 
 ## First command every run

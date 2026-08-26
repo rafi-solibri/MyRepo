@@ -310,15 +310,31 @@ async function main() {
 
   const login = await ensureLoggedIn(page);
   if (!login.ok) {
-    state.blocked.push({
-      reason: "hirist_login_required",
-      detail: login.preview || login.url,
-    });
-    writeReports(state);
-    console.log(JSON.stringify({ ok: false, ...state.counts, blocked: state.blocked }, null, 2));
-    process.exit(5);
+    // Attempt Gmail / Google SSO before giving up.
+    console.error("[hirist] session missing — trying Google/Gmail login…");
+    const { spawnSync } = require("child_process");
+    const gl = spawnSync(
+      process.execPath,
+      [path.join(__dirname, "google_login.js"), "--wait", String(process.env.GOOGLE_2FA_WAIT_SEC || "300")],
+      { cwd: path.join(__dirname, "../.."), env: process.env, encoding: "utf8" }
+    );
+    if (gl.stdout) process.stdout.write(gl.stdout);
+    if (gl.stderr) process.stderr.write(gl.stderr);
+    const retry = await ensureLoggedIn(page);
+    if (!retry.ok) {
+      state.blocked.push({
+        reason: "hirist_login_required",
+        detail: retry.preview || retry.url || login.preview || login.url,
+        googleLoginExit: gl.status,
+      });
+      writeReports(state);
+      console.log(JSON.stringify({ ok: false, ...state.counts, blocked: state.blocked }, null, 2));
+      process.exit(5);
+    }
+    state.notes.push(`login_ok_after_google url=${retry.url}`);
+  } else {
+    state.notes.push(`login_ok url=${login.url}`);
   }
-  state.notes.push(`login_ok url=${login.url}`);
 
   const seenIds = new Set();
   const candidates = [];

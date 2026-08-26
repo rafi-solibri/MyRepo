@@ -44,6 +44,9 @@ Do NOT skip because JD casually mentions Java/Salesforce/data as adjacent tech.
 ## Report
 Submitted (path Instahyre vs ATS), skipped, blocked. No invented applies.
 
+
+## Google / Gmail auth
+Follow `automation-prompts/GOOGLE_AUTH.md` every run: prefer Gmail SSO where offered; autofill email OTP via `tools/ats/email_otp.py`; on Google 2FA print `ASK_OWNER_GOOGLE_2FA` in chat and wait for the owner mobile code. Complete company ATS to submitted — never count redirect-only as applied.
 ## Auto-fix & push (MANDATORY)
 If you hit a code-fixable blocker (filters.js / skipReason, daily_apply.js, resume path), fix durable helpers under tools/instahyre or scripts/, append via `bash scripts/append-issue-fix.sh <portal> "issue" "fix"`, commit + push a feature branch, open a ready PR to main and run `bash scripts/auto-merge-fix-pr.sh`. That merge helper then same-day re-runs this Instahyre job with the fix (`scripts/rerun-daily-after-fix.sh`) — do not wait for tomorrow's cron. Follow automation-prompts/AUTO_FIX.md. Do not invent applies. Owner-only: login walls, CAPTCHA/OTP, HTTP 429 that needs backoff already in runner.
 ```

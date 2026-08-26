@@ -23,7 +23,9 @@ Current 52 LPA | Expected 65 LPA | Immediate | +91 8790251698
 
 ## Scope
 - https://www.hirist.tech/ (+ gladiator.hirist.tech/job search & apply-multiple APIs)
-- Must be logged in. If login wall after sync: stop and report Hirist login required — `bash scripts/home-headed-login.sh hirist`, then sync-chrome-sessions / Save Environment snapshot.
+- Must be logged in. Prefer **Gmail / Continue with Google**: `node tools/hirist/google_login.js` (wired from `daily_apply.js`). Email OTP via `tools/ats/email_otp.py`. On Google 2FA/authenticator, print `ASK_OWNER_GOOGLE_2FA (hirist)` in chat and wait (`tools/google_2fa_prompt.py`) so the owner can enter the code from mobile. See `automation-prompts/GOOGLE_AUTH.md`.
+- If Google SSO still fails: stop and report Hirist login required — `bash scripts/home-headed-login.sh hirist`, then sync-chrome-sessions / Save Environment snapshot.
+- External ATS redirects: COMPLETE to submitted confirmation — do not count redirect-only.
 - Newest first; Hyd then Remote/WFH (`workFromHome`).
 
 ## Apply bias (CRITICAL)

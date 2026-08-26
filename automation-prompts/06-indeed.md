@@ -58,6 +58,9 @@ with counts: applied, external, rejected, blocked, skipped, seen — then
 `node tools/indeed/daily_run_report.js write --in <file> --source home-local --out <file>`
 so the 11 AM Notification Job can include Indeed in the daily mail.
 
+
+## Google / Gmail auth
+Follow `automation-prompts/GOOGLE_AUTH.md` every run: prefer Gmail SSO where offered; autofill email OTP via `tools/ats/email_otp.py`; on Google 2FA print `ASK_OWNER_GOOGLE_2FA` in chat and wait for the owner mobile code. Complete company ATS to submitted — never count redirect-only as applied.
 ## Auto-fix & push (MANDATORY)
 If you hit a code-fixable blocker (preflight false exit 5, filelock/UC Turnstile helper, daily_run_report, publish/fetch scripts, Easy Apply helper), fix durable helpers under tools/indeed or scripts/, append via `bash scripts/append-issue-fix.sh <portal> "issue" "fix"`, commit + push a feature branch, open a ready PR to main and run `bash scripts/auto-merge-fix-pr.sh`. That merge helper then same-day re-runs this Indeed job with the fix (`scripts/rerun-daily-after-fix.sh`) — do not wait for tomorrow's cron. Follow automation-prompts/AUTO_FIX.md. Do not invent applies.
 Hard residual after WARP+UC multi-strategy + IP rotate still exits 5: report home worker / residential INDEED_HTTP_PROXY (not invent applies).

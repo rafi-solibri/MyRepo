@@ -23,7 +23,9 @@ Daily Foundit job-apply agent for Mohammed Abdul Rafi Ahmed (Solutions Architect
 
 ## Scope
 - Primary: https://www.foundit.in
-- If redirected to LinkedIn/Workday/Greenhouse/company careers — FOLLOW and COMPLETE, then return to Foundit.
+- If redirected to LinkedIn/Workday/Greenhouse/company careers — FOLLOW and **COMPLETE the company ATS to Application submitted / ATS confirmation**, then return to Foundit.
+- **HARD count rule:** Falcon `APPLY_REDIRECT` / Foundit Applied-tab bump alone is NOT an apply when `redirectUrl` leaves Foundit. `daily_apply.js` only counts `linkedin_easy_apply_ok` / `ats_submitted`. Incomplete redirects go to blocked (`external_ats_incomplete`).
+- Google SSO / Gmail OTP / 2FA chat prompt: see `automation-prompts/GOOGLE_AUTH.md`.
 - Confirm logged in (Hi, Rafi). Live check: `node tools/foundit/wait_for_cdp_login.js` (or `--wait 180 --open-login`). If not: stop and report Foundit login required — `bash scripts/home-headed-login.sh foundit` (Windows home / ABE). Cloud: Desktop Chrome Default → sync-chrome-sessions.sh → Save Environment snapshot.
 
 ## Apply bias (CRITICAL — volume)

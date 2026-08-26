@@ -69,6 +69,9 @@ Hyd/Telangana OR Remote/WFH only.
 2) Every job submit: company, role, id/URL, location, Naukri vs ATS path, resume file used
 Counts: profileUpdated / applied / external / blocked / skipped
 
+
+## Google / Gmail auth
+Follow `automation-prompts/GOOGLE_AUTH.md` every run: prefer Gmail SSO where offered; autofill email OTP via `tools/ats/email_otp.py`; on Google 2FA print `ASK_OWNER_GOOGLE_2FA` in chat and wait for the owner mobile code. Complete company ATS to submitted — never count redirect-only as applied.
 ## Auto-fix & push (MANDATORY)
 If you hit a code-fixable blocker (update_profile_resume.js, daily_apply.js, resume_and_filters.js, Hirist skip), fix durable helpers under tools/naukri or scripts/, append via `bash scripts/append-issue-fix.sh <portal> "issue" "fix"`, commit + push a feature branch, open a ready PR to main and run `bash scripts/auto-merge-fix-pr.sh`. That merge helper then same-day re-runs this Naukri job with the fix (`scripts/rerun-daily-after-fix.sh`) — do not wait for tomorrow's cron. Follow automation-prompts/AUTO_FIX.md. Do not invent applies. Owner-only: Naukri login/OTP, snapshot cookies, Hirist login (optional).
 ```
