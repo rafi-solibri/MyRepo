@@ -1,0 +1,45 @@
+{
+  "date": "2026-08-26",
+  "portal": "li-daily",
+  "status": "stopped_login_required",
+  "postFixRerun": 1,
+  "mergedMainSha": "e825b10",
+  "mergedPr": "https://github.com/rafi-solibri/MyRepo/pull/272",
+  "easyApplySubmitted": 0,
+  "externalCompleted": 0,
+  "skipped": [],
+  "blocked": [
+    {
+      "reason": "wrong_password",
+      "detail": "Google SSO reached challenge/pwd; configured password secret(s) rejected. GOOGLE_PASSWORD unset.",
+      "artifact": "/opt/cursor/artifacts/*-auto-login-wrong-password.png"
+    },
+    {
+      "reason": "captcha_checkpoint",
+      "detail": "jobs portal /checkpoint/challenge Security Verification reCAPTCHA after password retries (auto_login exit 6)",
+      "artifact": "/opt/cursor/artifacts/*-auto-login-captcha.png",
+      "url": "/checkpoint/challenge/"
+    }
+  ],
+  "submitted": [],
+  "applied": [],
+  "codeFix": {
+    "branch": "this-agent-branch",
+    "commits": [
+      "729d3b8",
+      "d9bece0"
+    ],
+    "summary": "Finish Google SSO after chooser; exclude challenge/pwd from 2FA; import google_2fa_prompt when auto_login is run as a script"
+  },
+  "ownerAction": [
+    "Update Cursor secrets (portal password + GOOGLE_PASSWORD). Current portal password rejected by both the jobs site and Google",
+    "Headed login: bash scripts/home-headed-login.sh <portal> then refresh .portal-sessions seed (CAPTCHA is up)",
+    "Do not expect this cloud job to invent applies"
+  ],
+  "counts": {
+    "applied": 0,
+    "submitted": 0,
+    "skipped": 0,
+    "blocked": 2
+  }
+}
