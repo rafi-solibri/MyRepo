@@ -1,0 +1,1430 @@
+{
+  "date": "2026-08-26",
+  "kind": "post-fix-rerun",
+  "mergedFix": "https://github.com/rafi-solibri/MyRepo/pull/269",
+  "head": "1348367",
+  "startedAt": "2026-08-26T04:08:07.014Z",
+  "finishedAt": "2026-08-26T04:22:40.824Z",
+  "resume": "/workspace/resumes/Rafi_Resume.docx",
+  "counts": {
+    "profileUpdated": true,
+    "applied": 0,
+    "externalCompleted": 0,
+    "blocked": 0,
+    "skipped": 2934,
+    "seen": 204,
+    "tailoredApplies": 0
+  },
+  "profileResumeRefresh": {
+    "ok": true,
+    "profileUpdated": true,
+    "verify": {
+      "todayHit": true,
+      "resumePresent": true,
+      "matchedToken": "Uploaded today",
+      "updateOn": "",
+      "updatedLines": [
+        "Uploaded today"
+      ],
+      "resumeName": "Resume\nUpdate\n\nRafi_Resume.docx\n\nUploaded today",
+      "tokensTried": [
+        "Updated today",
+        "updated today",
+        "Uploaded today",
+        "uploaded today",
+        "Today"
+      ]
+    },
+    "resume": "/workspace/resumes/Rafi_Resume.docx"
+  },
+  "profileResumeRestored": {
+    "ok": true,
+    "resume": "/workspace/resumes/Rafi_Resume.docx"
+  },
+  "applied": [],
+  "blocked": [],
+  "external": [],
+  "skipReasons": {
+    "skip_jd_non_dotnet_detail": 6,
+    "skip_title_keyword": 148,
+    "skip_seniority": 30,
+    "duplicate_in_run": 2708,
+    "skip_no_dotnet": 25,
+    "skip_company": 5,
+    "skip_ctc_max_30": 4,
+    "already_applied_detail": 1,
+    "hirist_login_required_skip": 1,
+    "skip_ctc_max_32.5": 1,
+    "skip_location": 5
+  },
+  "alreadyAppliedThisSession": [
+    {
+      "company": "Clean Harbors",
+      "role": ".Net Fullstack Tech Lead",
+      "location": "Hyderabad",
+      "reason": "already_applied_detail"
+    }
+  ],
+  "fixVerification": {
+    "cadencePrincipalDesignEngineer": "skip_company",
+    "netcoolArchitect": "not_in_inventory_this_rerun"
+  },
+  "uniqueNonDuplicateSkips": [
+    {
+      "company": "LTM",
+      "role": "MS Copilot Architect - Pan India",
+      "location": "Hybrid - Hyderabad, Chennai, Bengaluru",
+      "reason": "skip_jd_non_dotnet_detail"
+    },
+    {
+      "company": "Virtusa",
+      "role": "AS400 Developer",
+      "location": "Hyderabad, Remote, Chennai",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Mashreq Global Services",
+      "role": "Assistant Vice President - Auditor.Shared services_Audit",
+      "location": "Remote",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Cascades Data Solutions India",
+      "role": "GCP Data Engineer",
+      "location": "Remote",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Excelra",
+      "role": "Automation Testing Consultant",
+      "location": "Remote",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Apexon",
+      "role": "JDE Finance Functional Consultant",
+      "location": "Remote",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "CES LTD",
+      "role": "Technical Manager",
+      "location": "Hybrid - Hyderabad, Chennai",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "Infosys",
+      "role": "Java Full Stack Architect - STG",
+      "location": "Hyderabad, Pune, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "EY",
+      "role": "Immediate Req : Senior Lead Product Analytics & AI/ML | Hyderabad",
+      "location": "Hybrid - Hyderabad",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "Infosys",
+      "role": "Java full stack Architect-STG",
+      "location": "Hyderabad, Kolkata, Pune",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Solugenix",
+      "role": "AI Technical Architect",
+      "location": "Hybrid - Hyderabad, Bengaluru",
+      "reason": "skip_jd_non_dotnet_detail"
+    },
+    {
+      "company": "Luxoft",
+      "role": "Full Stack .NET/WPF and TypeScript",
+      "location": "Hyderabad",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Infosys BPM",
+      "role": "Infosys - Senior Technologist - Python Full Stack Development (8-20 yrs)",
+      "location": "Hyderabad, Noida, Kolkata, Bhubaneswar, Mohali, Chandigarh, Pune, Mysuru, Chennai, Jaipur, Coimbatore, Bengaluru, Mangalore, Trivandrum/Thiruvananthapuram",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "VMware",
+      "role": "R & D Software Engineer",
+      "location": "Hyderabad",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Aziro",
+      "role": "Python Architect",
+      "location": "Hybrid - Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Infosys BPM",
+      "role": "Infosys - Senior Technologist - Java Full Stack Development (8-20 yrs)",
+      "location": "Hyderabad, Noida, Kolkata, Bhubaneswar, Mohali, Chandigarh, Pune, Mysuru, Chennai, Jaipur, Coimbatore, Bengaluru, Mangalore, Trivandrum/Thiruvananthapuram",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Aparajita Consultancy Services",
+      "role": "AI Architect \u2013 Life Sciences",
+      "location": "Hyderabad, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Infosys",
+      "role": "Java full stack",
+      "location": "Hyderabad, Bengaluru, Delhi / NCR",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Luxoft",
+      "role": "DevOps + MLOps Engineer",
+      "location": "Hyderabad, Gurugram, Bengaluru",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Hiring for an IT Services & Consulting company",
+      "role": "Gen AI Architect",
+      "location": "Hybrid - Hyderabad, Chennai, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "L''OREAL INDIA PVT LTD",
+      "role": "Senior Data Engineer - Python, SQL & AI-Augmented Engineering",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "EY",
+      "role": "Manager-TD&E-PM-PMO",
+      "location": "Hybrid - Hyderabad",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "Hiring for a Recruitment / Staffing company",
+      "role": "AI/ML Architect",
+      "location": "Hyderabad",
+      "reason": "skip_jd_non_dotnet_detail"
+    },
+    {
+      "company": "Assurant Automotive Warranty Solutions",
+      "role": "Senior Software Engineer (C#.net + Angular + SQL + AI-Literacy)",
+      "location": "Hyderabad, Bengaluru",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Fint Solutions",
+      "role": "Senior AI Application Developer",
+      "location": "Hybrid - Hyderabad, Chennai",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "JPMorgan Chase Bank",
+      "role": "Software Engineer III",
+      "location": "Hyderabad",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "BIG4",
+      "role": "Lead Applied AI Engineer - Azure - Manager",
+      "location": "Hybrid - Hyderabad, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Qualcomm",
+      "role": "Lead Databricks Data Engineer",
+      "location": "Hyderabad, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Experian",
+      "role": "Sr Product Manager - Digital Intelligence",
+      "location": "Hyderabad",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "Hiring for an IT Services & Consulting company",
+      "role": "Agile Product Owner Advisor",
+      "location": "Hyderabad",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Hiring for an IT Services & Consulting company",
+      "role": "Gen Ai Engineer",
+      "location": "Hybrid - Hyderabad, Noida, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Infosys",
+      "role": "Java Full Stack Developer",
+      "location": "Hyderabad, Pune, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Cognizant",
+      "role": "GeoSpatial Engineer MAP",
+      "location": "Hyderabad",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Epam Systems",
+      "role": "Senior Software Engineer - (Java Fullstack Angular)",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Qualcomm",
+      "role": "Staff Data Scientist",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "IT Comapny",
+      "role": "GKE Administrator & Cloud Delivery Engineer",
+      "location": "Hyderabad, Pune",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Radiant Digital Solutions",
+      "role": "Full Stack Developer - Java, Angular & React",
+      "location": "Hybrid - Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "IT Comapny",
+      "role": "Cloud Delivery Engineer( Terraform & Ansible )",
+      "location": "Hyderabad, Pune",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Prudent Globaltech Solutions",
+      "role": "Sr Data Engineer",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Technogen India",
+      "role": "Python Full stack Developer",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Virtusa",
+      "role": "Collibra",
+      "location": "Hyderabad, Chennai, Bengaluru",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Tecnics Integration Technologies",
+      "role": "Sr Java Developer (Liberty) | 8Yrs Exp | Hyderabad | Tecnics",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Hiring for a BPM / BPO company",
+      "role": "Java AI Developer",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Teksystems",
+      "role": "Fullstack Developer with react",
+      "location": "Hyderabad, Bengaluru",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Hiring for an IT Services & Consulting company",
+      "role": "MS SQL DBA Administrator with Fabric",
+      "location": "Hyderabad",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "HUCON Solutions",
+      "role": "Head of Unit - Technical AI Product Owner",
+      "location": "Hyderabad",
+      "reason": "skip_jd_non_dotnet_detail"
+    },
+    {
+      "company": "Qualcomm",
+      "role": "Engineer, Staff-Ai,Python Dev Testing",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Providence College Of Engineering",
+      "role": "Sr Manager - Cybersecurity Engineering",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Eruvaka Technologies",
+      "role": "Engineering Manager",
+      "location": "Hyderabad",
+      "reason": "skip_jd_non_dotnet_detail"
+    },
+    {
+      "company": "Blend360 India",
+      "role": "Lead / Manager - Data Engineering",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Pepsico",
+      "role": "Senior Manager - ServiceNow Technical Lead",
+      "location": "Hybrid - Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Infosys",
+      "role": "Big Data Engineer",
+      "location": "Hyderabad, Pune, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Infosys",
+      "role": "Java Full Stack Architect",
+      "location": "Hyderabad, Pune, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Progress Software",
+      "role": "Software Engineer, Principal - Salesforce",
+      "location": "Hyderabad, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Tiger Analytics",
+      "role": "Lead AI/ML Engineer/Associate Principal - MLOps (7-12 yrs)",
+      "location": "Hyderabad, Chennai, Bengaluru, Bengaluru, Chennai, Karnataka, Tamil Nadu, India",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Cadence",
+      "role": "Principal Design Engineer",
+      "location": "Hyderabad",
+      "reason": "skip_company"
+    },
+    {
+      "company": "M W Group",
+      "role": "HVAC Design Engineer",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Newrocket",
+      "role": "ServiceNow Solution Architect- ITSM +Integrations",
+      "location": "Remote",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Cascades Data Solutions India",
+      "role": "Data Engineer",
+      "location": "Remote",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Pepsico",
+      "role": "Gen AI Architect",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Tata Consultancy Services",
+      "role": "Architect (Java, Kotlin, TypeScript)",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Tech Mahindra",
+      "role": "SAP AI",
+      "location": "Hybrid - Hyderabad, Pune, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Capco",
+      "role": "Java Solution Architect Opening -Bangalore /Hyderabad",
+      "location": "Hybrid - Hyderabad, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Mattel Global Business Services",
+      "role": "Lead Data Engineer",
+      "location": "Hybrid - Hyderabad(Raidurgam)",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Amgen Inc",
+      "role": "Principal Data Engineer",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Qentelli",
+      "role": "Servicenow Architect",
+      "location": "Hybrid - Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Hiring for an IT Services & Consulting company",
+      "role": "Servicenow Architect",
+      "location": "Hyderabad, Pune, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "ModMed Technologies India Private Limited",
+      "role": "Senior Software Engineer 2",
+      "location": "Hyderabad",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "Cotiviti",
+      "role": "Java Lead",
+      "location": "Hybrid - Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Oracle",
+      "role": "Oracle EPM Consultant",
+      "location": "Hyderabad, Bengaluru, Delhi / NCR",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Solenis",
+      "role": "Senior Data Scientist",
+      "location": "Hybrid - Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "ZeMoSo Technologies",
+      "role": "Data Engineer Manager | Hyderabad , Chennai, Pune, Bangalore & Mumbai",
+      "location": "Hybrid - Hyderabad, Chennai, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "BIG4",
+      "role": "Applied AI Engineer",
+      "location": "Hybrid - Hyderabad, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Everestdx",
+      "role": "Databricks Architect",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "PwC",
+      "role": "Oracle Cloud Technical - Manager",
+      "location": "Hyderabad, Kolkata, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "National Payments Corporation of India (NPCI)",
+      "role": "Lead Java Fullstack Application Engineer",
+      "location": "Hyderabad, Mumbai",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Canterr Inc",
+      "role": "Staff Engineer",
+      "location": "Remote",
+      "reason": "skip_jd_non_dotnet_detail"
+    },
+    {
+      "company": "Hiring for an IT Services & Consulting company",
+      "role": "Technical Lead IoT Embedded Applications",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "HCA Healthcare",
+      "role": "Data Architect",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Mitratech India",
+      "role": "Principal Data Engineer",
+      "location": "Remote",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Oddball",
+      "role": "Sr Product Manager",
+      "location": "Remote",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "Sparix Global",
+      "role": "Sr. IT Transition Manager - ServiceNow ITSM CSDM",
+      "location": "Remote",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Oddball",
+      "role": "Product Manager",
+      "location": "Remote",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "Milestone Technologies",
+      "role": "ServiceNow Sr Technical Consultant",
+      "location": "Remote",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Iassess Consultants",
+      "role": "Sr Data Scientist (Machine Learning & AI) - CB",
+      "location": "Remote",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Ekloud Inc",
+      "role": "Salesforce Lead- Experience Cloud",
+      "location": "Remote",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Mashreq Global Services",
+      "role": "Assistant Vice President - Auditor.International_Audit",
+      "location": "Remote",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Cyan360 Solution India",
+      "role": "Senior SAP Integration Suite Developer",
+      "location": "Remote",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Hiring for a Recruitment / Staffing company",
+      "role": "Salesforce Marketing Cloud Developer",
+      "location": "Remote",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "OSI Digital",
+      "role": "Oracle Scm Functional Consultant",
+      "location": "Remote",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Tata Consultancy Services",
+      "role": "AI solution architect",
+      "location": "Hyderabad, Chennai, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Epam Systems",
+      "role": "Python GenAI Solution Architect",
+      "location": "Hybrid - Hyderabad, Gurugram, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Epam Systems",
+      "role": "Solution Architect / Senior Solution Architect - MEAN",
+      "location": "Hyderabad, Hyderbad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Epam Systems",
+      "role": "EPAM System - Full Stack Solution Architect - Node.js/AngularJS (10-20 yrs)",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Tata Consultancy Services",
+      "role": "Machine Learning Software Engineer _GenAI Applications",
+      "location": "Hyderabad",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Yash Technologies",
+      "role": "Sr. Solution Architect - AI",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Hiring for an IT Services & Consulting company",
+      "role": "Solution Architect/Lead Developer - AI & ML",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "SRS Infoway",
+      "role": "D365 CRM Technical Architect",
+      "location": "Hyderabad, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Infidocs Technologies",
+      "role": "Oracle Solution Architect",
+      "location": "Hybrid - Hyderabad, Pune, Bengaluru",
+      "reason": "skip_ctc_max_30"
+    },
+    {
+      "company": "Hiring for a Software Product company",
+      "role": "Full Stack Java Architect",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "National Payments Corporation of India (NPCI)",
+      "role": "NBBL - Lead/Senior Lead Application Development(Java Developer)",
+      "location": "Hyderabad(Narsingi), Chennai(Siruseri Sipcot IT Park), Mumbai (All Areas)(Goregaon)",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Hiring for an IT Services & Consulting company",
+      "role": "Servicenow Solution Architect",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "PwC",
+      "role": "Gen AI-Full Stack Engineer-Manager",
+      "location": "Hybrid - Hyderabad, Gurugram, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Altimetrik",
+      "role": "Principal AI Architect",
+      "location": "Hybrid - Hyderabad, Chennai, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Cotiviti",
+      "role": "AI/ML Delivery Manager",
+      "location": "Hybrid - Hyderabad",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "NTT DATA BUSINESS SOLUTIONS",
+      "role": "Portfolio Manager - Data, AI & Analytics",
+      "location": "Hyderabad",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "Highradius",
+      "role": "Solution Design Manager",
+      "location": "Hyderabad",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "PwC",
+      "role": "Performance Manager",
+      "location": "Hybrid - Hyderabad, Bengaluru",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "Ascentforce Services Private Limited",
+      "role": "Senior .NET Full Stack Engineer - AI & Azure",
+      "location": "Hybrid - Hyderabad, Chennai, Bengaluru",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Tata Projects",
+      "role": "Electrical Design Engineer/Manager - Thermal Power (EBOP)",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Hiring for a Software Product company",
+      "role": "AI Architect",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "NTT DATA BUSINESS SOLUTIONS",
+      "role": "Guidewire Technical Architect",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Vensure",
+      "role": "Senior Software Engineer",
+      "location": "Hyderabad, Delhi / NCR, Thiruvananthapuram",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Cisco",
+      "role": "ASIC DFT Engineering Technical Leader",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Hiring for an IT Services & Consulting company",
+      "role": "D365 Technical Consultant",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "NTT DATA BUSINESS SOLUTIONS",
+      "role": "SAP Technical Lead (Tools)",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Hiring for an IT Services & Consulting company",
+      "role": "Power pages Lead/Architect",
+      "location": "Hybrid - Hyderabad, Pune, Bengaluru",
+      "reason": "skip_ctc_max_30"
+    },
+    {
+      "company": "Globallogic",
+      "role": "Principal AI|ML Engineer - Model Behavior and Evaluation",
+      "location": "Secunderabad, Pune, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "GERENT",
+      "role": "",
+      "location": "Hybrid - Hyderabad, Noida, Bengaluru",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "Principal Financial Group",
+      "role": "Consultant - Data Engineer",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Hiring for a Recruitment / Staffing company",
+      "role": "DevOps Engineer",
+      "location": "Remote",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "DHR Holding India",
+      "role": "HRSD Functional Product Owner",
+      "location": "Remote",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "Ciklum",
+      "role": "Expert .Net Engineer",
+      "location": "Remote",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Caresource",
+      "role": "Program Manager National Networks",
+      "location": "Remote",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "Blackbuck Insights (BBI)",
+      "role": "Sr Data Engineer (DBT)",
+      "location": "Remote",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Hiring for a Recruitment / Staffing company",
+      "role": "Data Scientist || GCP || Vertex AI atleast 3 Years of expereince",
+      "location": "Posted by Spotshine Consulting Delhi",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Nagarro",
+      "role": "Principal Engineer, Python fullstack (React+Genai)",
+      "location": "Remote",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Nagarro",
+      "role": "Principal Engineer, AI Architect",
+      "location": "Remote",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Nagarro",
+      "role": "Associate Principal Engineer, AI Architect",
+      "location": "Remote",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Incedo",
+      "role": ".Net Lead role- Immediate joiner",
+      "location": "Hyderabad",
+      "reason": "skip_ctc_max_30"
+    },
+    {
+      "company": "Yash Technologies",
+      "role": "Solution Architect Celonis",
+      "location": "Hybrid - Hyderabad, Pune, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Capgemini",
+      "role": "Java Solution Architect",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Epam Systems",
+      "role": "Solution Architect - MERN",
+      "location": "Hyderabad, Chennai, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Coforge",
+      "role": "Hiirng \"MS Dynamics D365 Architect\" @ Coforge",
+      "location": "Hyderabad, Pune, Greater Noida",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Yash Technologies",
+      "role": "Solution Architect - Celonis",
+      "location": "Hybrid - Hyderabad, Indore, Pune, Chennai, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Cognizant",
+      "role": "CyberSecurity Architect - CNI",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Hiring for an IT Services & Consulting company",
+      "role": "D365 F&O Functional Solution Architect",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Intellics Global Services Mumbai",
+      "role": "MDM Solution Architect Presales, Solutioning",
+      "location": "Hybrid - Hyderabad, Chennai, Bengaluru",
+      "reason": "skip_ctc_max_30"
+    },
+    {
+      "company": "Global MNC",
+      "role": "SAP QM Solution Lead / Architect",
+      "location": "Hybrid - Hyderabad, Pune, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Mytech Global",
+      "role": "Engineering Manager with Java/Python",
+      "location": "Hybrid - Hyderabad, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Highradius",
+      "role": "HighRadius - Engineering Manager - Java/Spring Boot (10-15 yrs)",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "PwC",
+      "role": "QA Engineer-Manager",
+      "location": "Hybrid - Hyderabad, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Blend360 India",
+      "role": "Manager - Data Engineering",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Empower",
+      "role": "Senior Manager, Quality Engineering",
+      "location": "Hyderabad, Pune, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Virtusa",
+      "role": "Power Platform Technical Lead / Expert",
+      "location": "Hyderabad, Chennai, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "STIC Soft",
+      "role": "Power Platform Technical Lead",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "IT Service Company",
+      "role": "Java Technical Lead",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Hiring for an IT Services & Consulting company",
+      "role": "Oracle PaaS Senior Consultant",
+      "location": "Hyderabad",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Hiring for an IT Services & Consulting company",
+      "role": "SAP ABAP S4HANA Lead Technical Consultant",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "MANEVA CONSULTING PRIVATE LIMITED",
+      "role": "Oracle Fusion Technical - Reporting Lead",
+      "location": "Hybrid - Hyderabad, Pune, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Elizabeth N Queen",
+      "role": "ServiceNow Technical Lead - Pune, Hyd, Chennai & Bangalore",
+      "location": "Hyderabad, Pune, Chennai, Bengaluru, Delhi / NCR, Mumbai (All Areas)",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "WinWire",
+      "role": "Technical Lead - Veeva CRM & Salesforce",
+      "location": "Hyderabad, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Cisco",
+      "role": "Software Engineer",
+      "location": "Hyderabad",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "Cotiviti",
+      "role": "Technical Delivery Manager",
+      "location": "Hybrid - Hyderabad",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "Dun & Bradstreet",
+      "role": "Principal Data Engineer",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Insight Global",
+      "role": "Principal AI Engineer",
+      "location": "Hybrid - Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Providence College Of Engineering",
+      "role": "Principal Cybersecurity Engineer",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Client of ilink Talent Solutions",
+      "role": "Principal Software Engineer - Python Developer",
+      "location": "Hybrid - Hyderabad, Chennai",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Cubic Transportation",
+      "role": "Principal ServiceNow Engineer",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Tekfriday Processing Solutions",
+      "role": "VP Developer",
+      "location": "Hyderabad",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Epam Systems",
+      "role": "Quality Solution Architect",
+      "location": "Hyderabad, Pune, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Epam Systems",
+      "role": "Quality Architect",
+      "location": "Hyderabad, Pune, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Hiring for a Recruitment / Staffing company",
+      "role": "SharePoint Developers",
+      "location": "Remote",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Hiring for an Accounting / Auditing company",
+      "role": "Nephrology Consultant",
+      "location": "Hyderabad, Remote, Raipur",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Frobin Technologies",
+      "role": "Technical Lead - Microsoft Dynamics D365 F&O",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Sonata Software",
+      "role": "Solution Architect-Power Platform",
+      "location": "Hybrid - Hyderabad, Chennai, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Epam Systems",
+      "role": "Solution Architect \u2013 Python with GenAI",
+      "location": "Hyderabad, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Wits Innovation Lab",
+      "role": "Java Solution Architect",
+      "location": "Hyderabad, Mumbai, Chennai",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Hiring for an IT Services & Consulting company",
+      "role": "AI Solution Architect",
+      "location": "Hyderabad, Gurugram, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Tata Consultancy Services",
+      "role": "SAP SuccessFactors solution architect,",
+      "location": "Hyderabad, Pune, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "PwC",
+      "role": "Artificial Intelligence Engineer - Manager",
+      "location": "Hybrid - Hyderabad, Bengaluru",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "PwC",
+      "role": "AI Engineer : Manager",
+      "location": "Hyderabad, Kolkata, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "PwC",
+      "role": "Fabric Data Engg. Manager with MS Fabric ecosystem, OneLake, Pyspark",
+      "location": "Hybrid - Hyderabad, Pune, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Hiring for an IT Services & Consulting company",
+      "role": "Cloud Engineer (Manager)",
+      "location": "Hyderabad",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "Transunion",
+      "role": "Data Engineer Manager",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Criticalriver",
+      "role": "Engineering Manager - Salesforce",
+      "location": "Hybrid - Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Mancer Consulting Services",
+      "role": "Senior Engineering Manager/Development Manager - Quality Assurance (10-16 yrs)",
+      "location": "Hyderabad, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Qentelli",
+      "role": "Qentelli - Engineering Manager - Java (10-16 yrs)",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Value Lane Consulting",
+      "role": "Engineering Manager - Data & AI/ML (6-12 yrs)",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "TIE-UPS",
+      "role": "Project Engineering Manager Substation (Civil & Structural)- Riyadh",
+      "location": "Hyderabad, Pune, Chennai, Saudi Arabia, Delhi / NCR, Mumbai (All Areas)",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Cisco",
+      "role": "ASIC DFT Engineering Technical Leader | ATPG, MBIST, SSN, SCAN",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "GSPANN",
+      "role": "Salesforce B2B Commerce - Technical Lead",
+      "location": "Hyderabad, Gurugram",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Milestone Technologies",
+      "role": "Agentforce Technical Lead",
+      "location": "Hybrid - Hyderabad, Kochi, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Hiring for a Recruitment / Staffing company",
+      "role": "Salesforce Technical Lead - Sales",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Hiring for an IT Services & Consulting company",
+      "role": "Python Architects",
+      "location": "Hybrid - Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "The Hartford",
+      "role": "INDStaff Software Engineer - AI",
+      "location": "Hyderabad",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "Bristol Myers Squibb",
+      "role": "Principal AI Engineer",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Centroid",
+      "role": "Principal DevOps Engineer - IST",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Arcesium",
+      "role": "Principal Site Reliability Engineer",
+      "location": "Hybrid - Hyderabad, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Eyeota",
+      "role": "Principal Data Engineer (R-19440)",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Clean Harbors",
+      "role": ".Net Fullstack Tech Lead",
+      "location": "Hyderabad",
+      "reason": "already_applied_detail"
+    },
+    {
+      "company": "Hiring for an IT Services & Consulting company",
+      "role": ".NET Full Stack Developer",
+      "location": "Hybrid - Hyderabad",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Anlage Infotech",
+      "role": "Full Stack AI Manager (10-13 yrs)",
+      "location": "Hyderabad, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Cloudsufi",
+      "role": "Technical Architect - Data Engineering",
+      "location": "Remote",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Rapidue Technologies",
+      "role": "Rapidue - Solution Architect - Full Stack Development (9-17 yrs)",
+      "location": "Hyderabad",
+      "reason": "hirist_login_required_skip"
+    },
+    {
+      "company": "Hiring for a Recruitment / Staffing company",
+      "role": "Senior Solution Architect (Gen AI)",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Guardanthealth",
+      "role": "Data Engineering Manager",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Agriitex Systems And Services",
+      "role": "J2EE Technical Lead",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Qualibar",
+      "role": "QE Architect",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Zeta",
+      "role": "Principal Site Reliability Engineer I",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Optum",
+      "role": "VP AI ML Engineering",
+      "location": "Hyderabad",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Virtusa",
+      "role": "GEN AI Architect",
+      "location": "Hyderabad, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "S&P Global Market Intelligence",
+      "role": "Lead Database Engineer",
+      "location": "Hyderabad, Noida, Bengaluru",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "Cirruslabs",
+      "role": "Head of IT Operations",
+      "location": "Hyderabad, Bengaluru",
+      "reason": "skip_ctc_max_32.5"
+    },
+    {
+      "company": "Elastiq",
+      "role": "Director Software Engineering- Agentic AI (Product)",
+      "location": "Remote",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Hiring for an IT Services & Consulting company",
+      "role": "Salesforce Architects/Leads/SFDC managers and associate directors",
+      "location": "Hybrid - Hyderabad, Pune, Chennai, Bengaluru, Delhi / NCR, Mumbai (All Areas)",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Salesforce",
+      "role": "Salesforce Technical Architect",
+      "location": "Hybrid - Hyderabad, Bengaluru",
+      "reason": "skip_company"
+    },
+    {
+      "company": "Shashwath Solution",
+      "role": "ServiceNow Technical Architect",
+      "location": "Hyderabad, Chennai, Bengaluru",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Hiring for an IT Services & Consulting company",
+      "role": "Technical Architect - Salesforce Development",
+      "location": "Hybrid - Noida, Hyderabad, Gurugram, Chennai, Bengaluru, Delhi / NCR",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Salesforce",
+      "role": "Salesforce DevOps - Technical Architect",
+      "location": "Hyderabad",
+      "reason": "skip_company"
+    },
+    {
+      "company": "Salesforce",
+      "role": "Salesforce Manager/Senior Technical Manager",
+      "location": "Hyderabad",
+      "reason": "skip_company"
+    },
+    {
+      "company": "Hiring for a Software Product company",
+      "role": "Senior Principal Software Engineer",
+      "location": "Pune",
+      "reason": "skip_location"
+    },
+    {
+      "company": "Leading Startup",
+      "role": "Head Technology",
+      "location": "Bengaluru",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Mastercard",
+      "role": "Senior Principal Software Engineer",
+      "location": "Pune",
+      "reason": "skip_location"
+    },
+    {
+      "company": "First American",
+      "role": "First American - Engineering Manager (10-15 yrs)",
+      "location": "Bengaluru",
+      "reason": "skip_location"
+    },
+    {
+      "company": "Fiserv",
+      "role": "Cloud Solutions Architect(Multi Cloud)",
+      "location": "Bengaluru",
+      "reason": "skip_location"
+    },
+    {
+      "company": "Wes India",
+      "role": "Senior Software Engineer",
+      "location": "Canada",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "Hiring for a Software Product company",
+      "role": "Head of Engineer",
+      "location": "Bengaluru, Delhi / NCR, Mumbai (All Areas)",
+      "reason": "skip_location"
+    },
+    {
+      "company": "Hiring for an Internet company",
+      "role": "Technology Head - For a Large and Growing B2C Services Org ! Mumbai",
+      "location": "Technology Head - For a Large and Growing B2C Services Org ! Mumbai",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "Hiring for a FinTech / Payments company",
+      "role": "Senior Vice President",
+      "location": "Gurugram",
+      "reason": "skip_no_dotnet"
+    },
+    {
+      "company": "Salesforce",
+      "role": "Salesforce Technical Architect - Lifesciences",
+      "location": "Hybrid - Hyderabad, Bengaluru",
+      "reason": "skip_company"
+    },
+    {
+      "company": "Highradius",
+      "role": "Java Architect",
+      "location": "Hyderabad",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Client of Mancer",
+      "role": "Senior Application Engineer",
+      "location": "Hybrid - Hyderabad",
+      "reason": "skip_seniority"
+    },
+    {
+      "company": "Infosys BPM",
+      "role": "Javascript, Full Stack, React.js, Python, TypeScript, Microservices Architecture, Django, Cloud, AI Integration, Flask",
+      "location": "",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "Mondelez",
+      "role": "Architect - COUPA/PEGA",
+      "location": "Remote",
+      "reason": "skip_title_keyword"
+    },
+    {
+      "company": "GERENT",
+      "role": "Solution Architecting, Solution Design, Delivery Leadership",
+      "location": "Hybrid - Noida, Hyderabad, Bengaluru",
+      "reason": "skip_no_dotnet"
+    }
+  ]
+}
