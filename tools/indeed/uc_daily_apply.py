@@ -1238,21 +1238,213 @@ def fill_common_questions(sb) -> None:
     recover_required_selects(sb)
 
     # Resume upload — JD-tailored copy when prepare_resume_for_job ran.
+    # Retries on "We could not upload your resume file" (2026-08-26 cloud flake).
+    upload_smartapply_resume(sb)
+    tick_required_agreements(sb)
+    recover_required_selects(sb)
+
+
+def _smartapply_resume_status(sb) -> dict:
+    """Detect resume card selection / upload success / Indeed upload error."""
+    _switch_smartapply_frame(sb)
+    try:
+        return sb.execute_script(
+            r"""
+            const body = (document.body && document.body.innerText) || '';
+            const err = /we could not upload your resume|could not upload your resume|upload failed|file (is )?too large|file type (is )?not supported/i.test(body);
+            const hasFileInput = !!document.querySelector('input[type=file]');
+            const selected = [...document.querySelectorAll('[aria-selected=true], [class*="selected"], [data-testid*="resume"], button, label, li, div')]
+              .some(el => {
+                const t = (el.innerText || '').trim();
+                if (!t || t.length > 180) return false;
+                return /rafi_resume|rafi resume|\.docx|\.pdf/i.test(t)
+                  && (el.getAttribute('aria-selected') === 'true'
+                      || /selected|in use|current resume/i.test(t)
+                      || (el.closest && el.closest('[aria-selected=true], [class*="selected"]')));
+              });
+            const uploadedName = [...document.querySelectorAll('button, label, span, div, p, li')]
+              .map(el => (el.innerText || '').trim())
+              .find(t => t && t.length < 120 && /rafi_resume|rafi resume|\.docx|\.pdf/i.test(t)
+                && !/upload a resume|add a resume|select file|accepted file/i.test(t));
+            const addResumeOnly = /add a resume|upload a resume/i.test(body)
+              && /select file/i.test(body)
+              && !uploadedName;
+            return {
+              error: err,
+              hasFileInput,
+              selected: !!selected,
+              uploadedName: uploadedName || null,
+              addResumeOnly: !!addResumeOnly,
+              ok: (!err && (!!selected || !!uploadedName)),
+            };
+            """
+        ) or {}
+    except Exception as exc:
+        return {"error": False, "ok": False, "exc": str(exc)[:120]}
+
+
+def _click_existing_smartapply_resume(sb) -> bool:
+    """Prefer an already-hosted Rafi / .docx card over a fresh upload."""
+    _switch_smartapply_frame(sb)
+    try:
+        clicked = sb.execute_script(
+            r"""
+            const cards=[...document.querySelectorAll('button, [role=button], label, div, li, [data-testid*="resume"]')];
+            const scored = cards.map(el => {
+              const t=(el.innerText||'').trim();
+              if (!t || t.length > 220) return null;
+              if (/upload a resume|add a resume|select file|accepted file/i.test(t)) return null;
+              let s = 0;
+              if (/rafi_resume|rafi resume/i.test(t)) s += 10;
+              if (/\.docx|\.pdf/i.test(t)) s += 4;
+              if (/mohammed|abdul rafi|rafi ahmed/i.test(t)) s += 6;
+              if (s < 4) return null;
+              const r = el.getBoundingClientRect();
+              if (r.width < 2 || r.height < 2) return null;
+              return {el, t, s};
+            }).filter(Boolean).sort((a,b) => b.s - a.s);
+            if (!scored.length) return null;
+            try { scored[0].el.scrollIntoView({block:'center'}); } catch (e) {}
+            try { scored[0].el.click(); } catch (e) { return null; }
+            return scored[0].t.slice(0, 80);
+            """
+        )
+        if clicked:
+            print(f"  resume_card_click={clicked!r}", flush=True)
+            time.sleep(0.8)
+            return True
+    except Exception as exc:
+        print(f"  resume_card_err={exc!s}"[:160], flush=True)
+    return False
+
+
+def _send_resume_to_file_inputs(sb, resume_path: Path) -> int:
+    """Push a local DOCX/PDF onto every visible SmartApply file input."""
+    _switch_smartapply_frame(sb)
+    sent = 0
+    path = str(resume_path.resolve())
+    try:
+        inputs = sb.find_elements("input[type='file']")
+    except Exception:
+        inputs = []
+    for f in inputs:
+        try:
+            # Re-enable hidden inputs Indeed uses behind "Select file".
+            try:
+                sb.execute_script(
+                    "arguments[0].style.display='block';"
+                    "arguments[0].style.opacity=1;"
+                    "arguments[0].removeAttribute('hidden');"
+                    "arguments[0].disabled=false;",
+                    f,
+                )
+            except Exception:
+                pass
+            f.send_keys(path)
+            sent += 1
+        except Exception as exc:
+            print(f"  resume_send_keys_err={exc!s}"[:160], flush=True)
+    return sent
+
+
+def upload_smartapply_resume(sb, max_attempts: int = 3) -> dict:
+    """Upload / select Rafi_Resume on SmartApply resume-selection with retries.
+
+    Cloud runs often hit "We could not upload your resume file" after a single
+    send_keys + 1s sleep, then burn CTA retries on Continue without re-uploading.
+    Prefer an existing profile card; otherwise upload the tailored DOCX, wait for
+    success, and on upload error retry with backoff — last try uses the untailored
+    master at resumes/Rafi_Resume.docx.
+    """
     try:
         from tools.resume_paths import resume_upload_path
 
-        resume_path = Path(resume_upload_path())
+        primary = Path(resume_upload_path())
     except Exception:
-        resume_path = RESUME
-    if resume_path.exists():
+        primary = Path(os.environ.get("RESUME_UPLOAD_PATH") or RESUME)
+    if not primary.exists():
+        primary = RESUME
+    master = ROOT / "resumes" / "Rafi_Resume.docx"
+    if not master.exists():
+        master = RESUME
+
+    # Already good (selected card / uploaded name, no error).
+    status = _smartapply_resume_status(sb)
+    if status.get("ok"):
+        print(f"  resume_already_ok={status}", flush=True)
+        return {"ok": True, "via": "already", **status}
+
+    if _click_existing_smartapply_resume(sb):
+        status = _smartapply_resume_status(sb)
+        if status.get("ok") or (status.get("selected") and not status.get("error")):
+            print(f"  resume_selected={status}", flush=True)
+            return {"ok": True, "via": "card", **status}
+
+    last = dict(status or {})
+    for attempt in range(1, max_attempts + 1):
+        # Final attempt: fall back to untailored master (tailored DOCX can flake).
+        path = primary if attempt < max_attempts or primary.resolve() == master.resolve() else master
+        if not path.exists():
+            path = primary if primary.exists() else master
+        print(
+            f"  resume_upload_attempt={attempt}/{max_attempts} path={path} bytes={path.stat().st_size if path.exists() else 0}",
+            flush=True,
+        )
+        # Dismiss stale error state if Indeed left the dropzone red.
         try:
-            for f in sb.find_elements("input[type='file']"):
-                f.send_keys(str(resume_path.resolve()))
-                time.sleep(1)
+            _switch_smartapply_frame(sb)
+            sb.execute_script(
+                r"""
+                const btn=[...document.querySelectorAll('button, a, [role=button]')]
+                  .find(el => /try again|replace|remove|change resume|upload (a )?different/i.test((el.innerText||'').trim()));
+                if (btn) btn.click();
+                """
+            )
         except Exception:
             pass
-    tick_required_agreements(sb)
-    recover_required_selects(sb)
+        sent = _send_resume_to_file_inputs(sb, path)
+        if not sent:
+            # Click "Select file" to surface the input, then retry once.
+            try:
+                _switch_smartapply_frame(sb)
+                sb.execute_script(
+                    r"""
+                    const el=[...document.querySelectorAll('button, label, [role=button], span, div')]
+                      .find(e => /^select file$/i.test((e.innerText||'').trim()) || /select file/i.test(e.getAttribute('aria-label')||''));
+                    if (el) el.click();
+                    """
+                )
+                time.sleep(0.4)
+                sent = _send_resume_to_file_inputs(sb, path)
+            except Exception:
+                pass
+        if not sent:
+            print("  resume_upload_no_file_input", flush=True)
+            last = _smartapply_resume_status(sb)
+            time.sleep(1.2 * attempt)
+            continue
+
+        # Wait for Indeed to accept the file (or show the red upload error).
+        deadline = time.time() + 18
+        while time.time() < deadline:
+            time.sleep(1.0)
+            last = _smartapply_resume_status(sb)
+            if last.get("error"):
+                print(f"  resume_upload_error status={last}", flush=True)
+                break
+            if last.get("ok") or last.get("uploadedName") or last.get("selected"):
+                print(f"  resume_upload_ok status={last}", flush=True)
+                return {"ok": True, "via": "upload", "attempt": attempt, "path": str(path), **last}
+            # Upload in flight: dropzone no longer "Add a resume" only.
+            if not last.get("addResumeOnly") and last.get("hasFileInput"):
+                # Keep waiting; name node can lag.
+                continue
+        if last.get("ok") or (last.get("uploadedName") and not last.get("error")):
+            return {"ok": True, "via": "upload", "attempt": attempt, "path": str(path), **last}
+        time.sleep(1.5 * attempt)
+
+    print(f"  resume_upload_failed last={last}", flush=True)
+    return {"ok": False, "via": "failed", **(last or {})}
 
 
 def recover_required_selects(sb) -> dict:
@@ -2808,18 +3000,12 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
         except Exception:
             pass
         fill_common_questions(sb)
-        # Resume card: prefer an existing Rafi resume if shown.
+        # Resume card / upload: prefer existing Rafi card; retry on Indeed upload error.
         if "resume-selection" in url or "resume" in url.lower():
-            try:
-                sb.execute_script(
-                    """
-                    const cards=[...document.querySelectorAll('button, [role=button], label, div, li')];
-                    const el=cards.find(e => /rafi_resume|rafi resume|\\.docx/i.test(e.innerText||''));
-                    if (el) el.click();
-                    """
-                )
-            except Exception:
-                pass
+            st = _smartapply_resume_status(sb)
+            if st.get("error") or not st.get("ok"):
+                print(f"  resume_module_retry status={st}", flush=True)
+                upload_smartapply_resume(sb)
         clicked = click_next_or_submit(sb, allow_disabled=False)
         print(f"  ea_step={step} clicked={clicked!r} url={url[:90]}", flush=True)
         # Same CTA on same module without navigation → validation wall; abort early.
@@ -2832,6 +3018,15 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
         if same_cta_streak >= 2:
             tick_required_agreements(sb)
             recover_required_selects(sb)
+            # Resume upload error: re-upload instead of burning Continue clicks.
+            try:
+                if "resume-selection" in (url or "") or "resume" in (url or "").lower():
+                    st = _smartapply_resume_status(sb)
+                    if st.get("error") or not st.get("ok"):
+                        print(f"  cta_stuck_resume_reupload status={st}", flush=True)
+                        upload_smartapply_resume(sb)
+            except Exception as exc:
+                print(f"  cta_stuck_resume_err={exc!s}"[:160], flush=True)
             # Questions Continue often no-ops under invisible reCAPTCHA (ValGenesis).
             try:
                 if _page_has_recaptcha(sb) and not _recaptcha_cleared(sb):

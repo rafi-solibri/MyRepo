@@ -1,5 +1,12 @@
 # Indeed — issues & fixes
 
+## 2026-08-26 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| SmartApply resume-selection: We could not upload your resume file (6/7 easy_apply_incomplete); single send_keys+1s then Continue CTA streak | upload_smartapply_resume: prefer existing Rafi card; wait for upload ok; retry 3x on error with backoff; last try untailored master; re-upload on resume-module CTA stuck |
+
+
 ## 2026-08-24 (cloud)
 
 | Issue | Fix |
