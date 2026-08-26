@@ -1,208 +1,24 @@
 {
-  "ts": "2026-08-26T03:30:53.787Z",
+  "ts": "2026-08-26T05:55:00.062Z",
   "resume": "/workspace/resumes/Rafi_Resume.docx",
   "expectedCtcLpa": 65,
   "currentCtcLpa": 52,
   "forbiddenDryRun": "/home/api/canJobApply",
-  "appliedBefore": 445,
-  "appliedAfter": 450,
-  "applied": [
-    {
-      "jobId": "64108671",
-      "title": "Senior .NET Lead (Principal Engineer) IRC296129",
-      "company": "Globallogic India",
-      "loc": "Hyderabad / Secunderabad, Telangana | India",
-      "path": "Foundit + ATS https://www.linkedin.com/jobs/view/4440673109/",
-      "falconStatus": 200,
-      "falconNext": "APPLY_REDIRECT_STAGE_ONE",
-      "ats": {
-        "status": "linkedin_no_easy_apply",
-        "url": "https://www.linkedin.com/jobs/view/4440673109/"
-      },
-      "ageDays": 0.5722446759259259,
-      "tailoredResume": {
-        "path": "/opt/cursor/artifacts/tailored-resumes/64108671-d9903be5c4/Rafi_Resume.docx",
-        "headline": "Principal Engineer — Azure, .NET Core",
-        "matchedSkills": [
-          "Agile",
-          "Angular",
-          "Azure",
-          "React",
-          "REST API",
-          "SQL Server",
-          ".NET Core",
-          "API Design",
-          "ASP.NET Core",
-          "Cloud Architecture",
-          "High Availability",
-          "Software Architecture",
-          "System Design",
-          "Technical Leadership"
-        ],
-        "profileUploadOk": true
-      }
-    },
-    {
-      "jobId": "64183238",
-      "title": "PU1 Support- Architect - Offshore Manager",
-      "company": "Capgemini",
-      "loc": "Hyderabad / Secunderabad, Telangana | India",
-      "path": "Foundit + ATS https://www.capgemini.com/in-en/jobs/536591-en_GB_SAPBTP/PU1%20Support-%20Architect%20-%20Offshore%20Manager",
-      "falconStatus": 200,
-      "falconNext": "APPLY_REDIRECT_STAGE_ONE",
-      "ats": {
-        "status": "external_incomplete_or_timeout",
-        "url": "https://www.capgemini.com/in-en/jobs/536591-en_GB_SAPBTP/PU1%20Support-%20Architect%20-%20Offshore%20Manager"
-      },
-      "ageDays": 0.03851123842592592,
-      "tailoredResume": {
-        "path": "/opt/cursor/artifacts/tailored-resumes/64183238-d54d71949f/Rafi_Resume.docx",
-        "headline": "Architect — .NET Core",
-        "matchedSkills": [
-          "REST API",
-          ".NET Core",
-          "API Design",
-          "Architecture Reviews",
-          "ASP.NET Core",
-          "Cloud Architecture",
-          "Distributed Systems",
-          "Domain-Driven Design",
-          "Event-Driven Architecture",
-          "High Availability",
-          "Software Architecture",
-          "Solution Architecture",
-          "SQL Server",
-          "System Design",
-          "Technical Leadership"
-        ],
-        "profileUploadOk": true
-      }
-    },
-    {
-      "jobId": "64087171",
-      "title": "Software Engineer, Principal - .NET Developer",
-      "company": "blackbaud india",
-      "loc": "Hyderabad / Secunderabad, Telangana | India",
-      "path": "Foundit + ATS https://www.linkedin.com/jobs/view/4445178303/",
-      "falconStatus": 200,
-      "falconNext": "APPLY_REDIRECT_STAGE_ONE",
-      "ats": {
-        "status": "linkedin_no_easy_apply",
-        "url": "https://www.linkedin.com/jobs/view/4445178303/"
-      },
-      "ageDays": 0.7666398958333334,
-      "tailoredResume": {
-        "path": "/opt/cursor/artifacts/tailored-resumes/64087171-8c69e95381/Rafi_Resume.docx",
-        "headline": "Technical Architect | Technical Lead — AWS, Azure, Kubernetes",
-        "matchedSkills": [
-          "Angular",
-          "AWS",
-          "Azure",
-          "Distributed Systems",
-          "Kubernetes",
-          "REST API",
-          "SQL Server",
-          ".NET Core",
-          "API Design",
-          "Architecture Reviews",
-          "Cloud Architecture",
-          "Domain-Driven Design",
-          "Event-Driven Architecture",
-          "High Availability",
-          "Software Architecture",
-          "Solution Architecture",
-          "System Design",
-          "Technical Leadership"
-        ],
-        "profileUploadOk": true
-      }
-    },
-    {
-      "jobId": "64113443",
-      "title": "Sr Enterprise Technical Architect (Planning) - GPTS Consulting",
-      "company": "Blue Yonder",
-      "loc": "Hyderabad / Secunderabad, Telangana | India",
-      "path": "Foundit + ATS https://www.linkedin.com/jobs/view/4441228105/",
-      "falconStatus": 200,
-      "falconNext": "APPLY_REDIRECT_STAGE_ONE",
-      "ats": {
-        "status": "linkedin_no_easy_apply",
-        "url": "https://www.linkedin.com/jobs/view/4441228105/"
-      },
-      "ageDays": 0.5539958912037037,
-      "tailoredResume": {
-        "path": "/opt/cursor/artifacts/tailored-resumes/64113443-0ebeff02de/Rafi_Resume.docx",
-        "headline": "Technical Architect — AWS, Azure, Microservices",
-        "matchedSkills": [
-          "Agile",
-          "AWS",
-          "Azure",
-          "Microservices",
-          "SQL Server",
-          "Solution Architecture",
-          ".NET Core",
-          "API Design",
-          "Architecture Reviews",
-          "ASP.NET Core",
-          "Cloud Architecture",
-          "Domain-Driven Design",
-          "Event-Driven Architecture",
-          "REST API",
-          "Software Architecture",
-          "System Design",
-          "Technical Leadership"
-        ],
-        "profileUploadOk": true
-      }
-    },
-    {
-      "jobId": "64184674",
-      "title": "Manufacturing Engineering Manager",
-      "company": "Cyient",
-      "loc": "Hyderabad / Secunderabad, Telangana | India",
-      "path": "Foundit + ATS https://www.linkedin.com/jobs/view/4428537526/",
-      "falconStatus": 200,
-      "falconNext": "APPLY_REDIRECT_STAGE_ONE",
-      "ats": {
-        "status": "linkedin_no_easy_apply",
-        "url": "https://www.linkedin.com/jobs/view/4428537526/"
-      },
-      "ageDays": 0.0061585532407407405,
-      "tailoredResume": {
-        "path": "/opt/cursor/artifacts/tailored-resumes/64184674-e9f5acf450/Rafi_Resume.docx",
-        "headline": "Engineering Manager — .NET, Cloud, Distributed Systems",
-        "matchedSkills": [
-          "Mentoring",
-          "Technical Leadership",
-          "API Design",
-          "Architecture Reviews",
-          "Distributed Systems",
-          "Domain-Driven Design",
-          "High Availability",
-          "System Design"
-        ],
-        "profileUploadOk": true
-      }
-    }
-  ],
+  "appliedBefore": 453,
+  "appliedAfter": 453,
+  "applied": [],
   "skipped": [
-    {
-      "jobId": "64075631",
-      "title": "Java Software Engineer (Mandarin Speaking)",
-      "company": "DXC Technology",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "64069235",
-      "title": "Senior Software Engineer - Ipoh",
-      "company": "Exact",
-      "reason": "location not Hyd/remote: Perak | Malaysia | Ipoh"
-    },
     {
       "jobId": "64091714",
       "title": "Dot Net Fullstack Lead Developer",
       "company": "Data Software Research Company Private Limited",
       "reason": "maxExp 8<10 (junior/mid band)"
+    },
+    {
+      "jobId": "64187043",
+      "title": "ASP.NET - Technical Engineer",
+      "company": "Capgemini",
+      "reason": "no seniority keyword on title"
     },
     {
       "jobId": "64093236",
@@ -217,10 +33,16 @@
       "reason": "no seniority keyword on title"
     },
     {
-      "jobId": "64072747",
-      "title": ".Net Developer",
-      "company": "codev philippines",
-      "reason": "no seniority keyword on title"
+      "jobId": "64187162",
+      "title": "Sr .NET developer with SAP/Dynamics IRC300973",
+      "company": "Globallogic India",
+      "reason": "maxExp 9<10 (junior/mid band)"
+    },
+    {
+      "jobId": "64187159",
+      "title": "Engineering Manager Devops/SRE IRC294669",
+      "company": "Globallogic India",
+      "reason": "infra/ops without .NET on title"
     },
     {
       "jobId": "64149797",
@@ -253,28 +75,16 @@
       "reason": "no .NET on title+skills"
     },
     {
-      "jobId": "64076139",
-      "title": "DevOps Engineer (Remote)",
-      "company": "Aprimo",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "64073091",
-      "title": "Senior Software Engineer - Technical Lead (Consumer Pulse)",
-      "company": "Procter & Gamble",
-      "reason": "location not Hyd/remote: Taguig | Philippines"
-    },
-    {
-      "jobId": "64073090",
-      "title": "Senior Software Engineer - Technical Lead (Consumer Pulse)",
-      "company": "Procter & Gamble",
-      "reason": "location not Hyd/remote: Philippines | Manila"
-    },
-    {
       "jobId": "64164536",
       "title": "Mainframe Application Architect",
       "company": "Atos India",
       "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "64183238",
+      "title": "PU1 Support- Architect - Offshore Manager",
+      "company": "Capgemini",
+      "reason": "SAP without .NET"
     },
     {
       "jobId": "64167006",
@@ -301,22 +111,10 @@
       "reason": "Snowflake/Databricks without .NET on title"
     },
     {
-      "jobId": "64081932",
-      "title": "Consulting Solution Architect - Data Management",
-      "company": "SimCorp",
-      "reason": "location not Hyd/remote: Singapore"
-    },
-    {
-      "jobId": "64072999",
-      "title": "Senior Solutions Architect - Singapore",
-      "company": "Temporal Technologies",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "64073819",
-      "title": "Oracle OFSAA Solution Architect (FTP/PFT)",
-      "company": "Happiest Minds Technologies",
-      "reason": "location not Hyd/remote: Singapore"
+      "jobId": "64190451",
+      "title": "SAP Solution Architect",
+      "company": "Vinovaai Private Limited",
+      "reason": "SAP without .NET"
     },
     {
       "jobId": "64128951",
@@ -331,10 +129,22 @@
       "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
     },
     {
+      "jobId": "64187555",
+      "title": "Salesforce- Senior Technical Architect",
+      "company": "Salesforce",
+      "reason": "no .NET on title+skills"
+    },
+    {
       "jobId": "64158427",
       "title": "Sr Enterprise Technical Architect (Planning) - GPTS Consulting",
       "company": "Blue Yonder",
       "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+    },
+    {
+      "jobId": "64189869",
+      "title": "Salesforce- Senior Technical Architect",
+      "company": "Salesforce",
+      "reason": "no .NET on title+skills"
     },
     {
       "jobId": "64158430",
@@ -349,28 +159,28 @@
       "reason": "location not Hyd/remote: Coimbatore | India"
     },
     {
+      "jobId": "64187155",
+      "title": "Senior Engineering Manager Product Engineering IRC300975",
+      "company": "Globallogic India",
+      "reason": "no .NET on title+skills"
+    },
+    {
       "jobId": "64110806",
       "title": "Senior Engineering Manager - Confluent",
       "company": "IBM",
       "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
     },
     {
+      "jobId": "64184674",
+      "title": "Manufacturing Engineering Manager",
+      "company": "Cyient",
+      "reason": "ops/manufacturing EM without .NET on title"
+    },
+    {
       "jobId": "64108677",
       "title": "UI / UX Principal Engineer ((AI & Quality Engineering)) IRC300112",
       "company": "Globallogic India",
       "reason": "location not Hyd/remote: Nagpur | India"
-    },
-    {
-      "jobId": "64076119",
-      "title": "Principal Engineer, Process Integration (Semicon)",
-      "company": "Adecco Group",
-      "reason": "location not Hyd/remote: Singapore"
-    },
-    {
-      "jobId": "64071077",
-      "title": "Principal Engineer, Test",
-      "company": "coherent corp.",
-      "reason": "location not Hyd/remote: Binh Dinh | Vietnam"
     },
     {
       "jobId": "64177569",
@@ -385,27 +195,33 @@
       "reason": "no .NET on title+skills"
     },
     {
+      "jobId": "64096834",
+      "title": "Custom Software Engineer",
+      "company": "Accenture",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "64187161",
+      "title": "Software Engineer IRC301786",
+      "company": "Globallogic India",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "64108690",
+      "title": "Software Engineer IRC300484",
+      "company": "Globallogic India",
+      "reason": "no .NET on title+skills"
+    },
+    {
       "jobId": "64133689",
       "title": "Principal, Embedded Software Architect",
       "company": "Schneider Electric",
       "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
     },
     {
-      "jobId": "64070890",
-      "title": "Head of Development / Lead Software Architect",
-      "company": "Meraki Talent",
-      "reason": "location not Hyd/remote: United Arab Emirates | Dubai"
-    },
-    {
       "jobId": "64173438",
       "title": "Software Architect (Java)",
       "company": "Cubic Transportation Systems",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "64075418",
-      "title": "Technical Lead",
-      "company": "OSF Digital",
       "reason": "no .NET on title+skills"
     },
     {
@@ -415,16 +231,10 @@
       "reason": "no .NET on title+skills"
     },
     {
-      "jobId": "64075592",
-      "title": "SAP Technical Lead",
-      "company": "IBM",
-      "reason": "SAP without .NET"
-    },
-    {
       "jobId": "64130938",
       "title": "Senior Critical Manufacturing (CM) - Technical lead",
       "company": "Capgemini",
-      "reason": "location not Hyd/remote: Chennai | India"
+      "reason": "non-software engineering without .NET on title"
     },
     {
       "jobId": "64142391",
@@ -457,10 +267,34 @@
       "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
     },
     {
-      "jobId": "64010309",
-      "title": ".Net Fullstack Architect",
-      "company": "Persistent Systems",
-      "reason": "location not Hyd/remote: Pune | India"
+      "jobId": "63982649",
+      "title": ".Net Core Lead",
+      "company": "Infosys Limited",
+      "reason": "maxExp 7<10 (junior/mid band)"
+    },
+    {
+      "jobId": "63982650",
+      "title": ".Net Core Senior Developer",
+      "company": "Infosys Limited",
+      "reason": "maxExp 5<10 (junior/mid band)"
+    },
+    {
+      "jobId": "63982077",
+      "title": ".NET Angular Developer",
+      "company": "Infosys Limited",
+      "reason": "no seniority keyword on title"
+    },
+    {
+      "jobId": "64075631",
+      "title": "Java Software Engineer (Mandarin Speaking)",
+      "company": "DXC Technology",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "64069235",
+      "title": "Senior Software Engineer - Ipoh",
+      "company": "Exact",
+      "reason": "location not Hyd/remote: Perak | Malaysia | Ipoh"
     },
     {
       "jobId": "63886989",
@@ -479,6 +313,12 @@
       "title": ".Net Architect",
       "company": "Infosys Limited",
       "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+    },
+    {
+      "jobId": "64010309",
+      "title": ".Net Fullstack Architect",
+      "company": "Persistent Systems",
+      "reason": "location not Hyd/remote: Pune | India"
     },
     {
       "jobId": "64010494",
@@ -505,12 +345,6 @@
       "reason": "no seniority keyword on title"
     },
     {
-      "jobId": "63982649",
-      "title": ".Net Core Lead",
-      "company": "Infosys Limited",
-      "reason": "maxExp 7<10 (junior/mid band)"
-    },
-    {
       "jobId": "64050268",
       "title": "Senior/Lead .NET Developer (f/m/x)",
       "company": "Sii Poland",
@@ -526,6 +360,12 @@
       "jobId": "64066487",
       "title": "Azure AI & .NET Developer",
       "company": "24x7 Direct",
+      "reason": "no seniority keyword on title"
+    },
+    {
+      "jobId": "64072747",
+      "title": ".Net Developer",
+      "company": "codev philippines",
       "reason": "no seniority keyword on title"
     },
     {
@@ -613,6 +453,12 @@
       "reason": "location not Hyd/remote: Egypt"
     },
     {
+      "jobId": "64076139",
+      "title": "DevOps Engineer (Remote)",
+      "company": "Aprimo",
+      "reason": "no .NET on title+skills"
+    },
+    {
       "jobId": "33772570",
       "title": "Azure Solution Architect",
       "company": "Bahwan CyberTek Private Limited",
@@ -637,6 +483,12 @@
       "reason": "no .NET on title+skills"
     },
     {
+      "jobId": "64073091",
+      "title": "Senior Software Engineer - Technical Lead (Consumer Pulse)",
+      "company": "Procter & Gamble",
+      "reason": "location not Hyd/remote: Taguig | Philippines"
+    },
+    {
       "jobId": "63982389",
       "title": "Production Support - .Net II",
       "company": "Infosys Limited",
@@ -659,6 +511,12 @@
       "title": "ServiceNow IRM Architect",
       "company": "Tata Consultancy Services",
       "reason": "ServiceNow"
+    },
+    {
+      "jobId": "64073090",
+      "title": "Senior Software Engineer - Technical Lead (Consumer Pulse)",
+      "company": "Procter & Gamble",
+      "reason": "location not Hyd/remote: Philippines | Manila"
     },
     {
       "jobId": "64052622",
@@ -751,22 +609,34 @@
       "reason": "location not Hyd/remote: United Arab Emirates | Dubai"
     },
     {
-      "jobId": "64069024",
-      "title": "Solution Architect Data & AI Platform",
-      "company": "Jobgether",
-      "reason": "location not Hyd/remote: United Arab Emirates"
-    },
-    {
       "jobId": "63899042",
       "title": "Procurement / Supply Planning Solution Architect",
       "company": "Jobgether",
       "reason": "maxExp 9<10 (junior/mid band)"
     },
     {
+      "jobId": "64069024",
+      "title": "Solution Architect Data & AI Platform",
+      "company": "Jobgether",
+      "reason": "location not Hyd/remote: United Arab Emirates"
+    },
+    {
+      "jobId": "64081932",
+      "title": "Consulting Solution Architect - Data Management",
+      "company": "SimCorp",
+      "reason": "location not Hyd/remote: Singapore"
+    },
+    {
       "jobId": "64065665",
       "title": "AI Solutions Architect",
       "company": "Cactus Global",
       "reason": "maxExp 8<10 (junior/mid band)"
+    },
+    {
+      "jobId": "64072999",
+      "title": "Senior Solutions Architect - Singapore",
+      "company": "Temporal Technologies",
+      "reason": "no .NET on title+skills"
     },
     {
       "jobId": "64057738",
@@ -799,6 +669,12 @@
       "reason": "location not Hyd/remote: Noida | India"
     },
     {
+      "jobId": "64073819",
+      "title": "Oracle OFSAA Solution Architect (FTP/PFT)",
+      "company": "Happiest Minds Technologies",
+      "reason": "location not Hyd/remote: Singapore"
+    },
+    {
       "jobId": "64050255",
       "title": "Cloud Computing Solution Architect",
       "company": "Ericsson",
@@ -823,12 +699,6 @@
       "reason": "location not Hyd/remote: Mumbai | India"
     },
     {
-      "jobId": "63987988",
-      "title": "Windchill Solution Architect",
-      "company": "Infosys Limited",
-      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
-    },
-    {
       "jobId": "63982882",
       "title": "SAP Solution Architect (SD/MM/PP/FICO/S4Hana)",
       "company": "Infosys Limited",
@@ -847,21 +717,27 @@
       "reason": "SAP without .NET"
     },
     {
+      "jobId": "63987988",
+      "title": "Windchill Solution Architect",
+      "company": "Infosys Limited",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+    },
+    {
       "jobId": "63898550",
       "title": "Senior Technical Software Architect",
       "company": "Everstage",
       "reason": "location not Hyd/remote: Coimbatore | India"
     },
     {
-      "jobId": "64014504",
-      "title": "Python Architect IRC299508",
-      "company": "Globallogic India",
-      "reason": "no .NET on title+skills"
-    },
-    {
       "jobId": "64073206",
       "title": "Platform Engineer - ServiceNow (Global Role)",
       "company": "Atos India",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "64014504",
+      "title": "Python Architect IRC299508",
+      "company": "Globallogic India",
       "reason": "no .NET on title+skills"
     },
     {
@@ -1003,16 +879,16 @@
       "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
     },
     {
-      "jobId": "64009213",
-      "title": "Engineering Manager, Workspace Search Quality",
-      "company": "Google India",
-      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
-    },
-    {
       "jobId": "64055688",
       "title": "Principal Software Engineering Manager",
       "company": "Microsoft Corp",
       "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "64009213",
+      "title": "Engineering Manager, Workspace Search Quality",
+      "company": "Google India",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
     },
     {
       "jobId": "64050186",
@@ -1069,6 +945,12 @@
       "reason": "no .NET on title+skills"
     },
     {
+      "jobId": "64071077",
+      "title": "Principal Engineer, Test",
+      "company": "coherent corp.",
+      "reason": "location not Hyd/remote: Binh Dinh | Vietnam"
+    },
+    {
       "jobId": "64048679",
       "title": "Principal Engineer - Agentic Engineering",
       "company": "Fidelity International",
@@ -1091,6 +973,12 @@
       "title": "Principal Engineer - Digital Platforms",
       "company": "Barclays",
       "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "64076119",
+      "title": "Principal Engineer, Process Integration (Semicon)",
+      "company": "Adecco Group",
+      "reason": "location not Hyd/remote: Singapore"
     },
     {
       "jobId": "63981935",
@@ -1123,22 +1011,28 @@
       "reason": "no .NET on title+skills"
     },
     {
-      "jobId": "64096834",
-      "title": "Custom Software Engineer",
-      "company": "Accenture",
-      "reason": "no .NET on title+skills"
-    },
-    {
       "jobId": "64018196",
       "title": "Associate Software Engineer IRC303008",
       "company": "Globallogic India",
       "reason": "no .NET on title+skills"
     },
     {
-      "jobId": "64108690",
-      "title": "Software Engineer IRC300484",
+      "jobId": "64187156",
+      "title": "Principal Software Development Architect rApps (O-RAN) IRC299952",
       "company": "Globallogic India",
       "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "64009911",
+      "title": "Staff Architect II, Software & Data Architecture",
+      "company": "Bain & Company",
+      "reason": "location not Hyd/remote: Gurugram | Gurgaon / Gurugram | India"
+    },
+    {
+      "jobId": "64070890",
+      "title": "Head of Development / Lead Software Architect",
+      "company": "Meraki Talent",
+      "reason": "location not Hyd/remote: United Arab Emirates | Dubai"
     },
     {
       "jobId": "64013484",
@@ -1147,10 +1041,10 @@
       "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
     },
     {
-      "jobId": "64009911",
-      "title": "Staff Architect II, Software & Data Architecture",
-      "company": "Bain & Company",
-      "reason": "location not Hyd/remote: Gurugram | Gurgaon / Gurugram | India"
+      "jobId": "63898291",
+      "title": "Software Architect",
+      "company": "Aspire",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
     },
     {
       "jobId": "64052384",
@@ -1181,6 +1075,12 @@
       "title": "Senior Technical Lead - Agentic AI / Generative AI",
       "company": "weekday (yc w21)",
       "reason": "pure AI/data without .NET on title"
+    },
+    {
+      "jobId": "64075418",
+      "title": "Technical Lead",
+      "company": "OSF Digital",
+      "reason": "no .NET on title+skills"
     },
     {
       "jobId": "64034788",
@@ -1241,6 +1141,12 @@
       "title": "Technical Lead- Data Platform",
       "company": "Myntra",
       "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "64075592",
+      "title": "SAP Technical Lead",
+      "company": "IBM",
+      "reason": "SAP without .NET"
     },
     {
       "jobId": "64014478",
@@ -1333,6 +1239,18 @@
       "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
     },
     {
+      "jobId": "64053949",
+      "title": "Custom Application Architect",
+      "company": "Accenture",
+      "reason": "location not Hyd/remote: Pune | India"
+    },
+    {
+      "jobId": "64057609",
+      "title": "Application Architect-AWS Cloud Migration",
+      "company": "IBM",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+    },
+    {
       "jobId": "64059634",
       "title": "Architect, Applications & Platforms - R01569772",
       "company": "Brillio",
@@ -1367,18 +1285,6 @@
       "title": "Web Application Architect",
       "company": "Customerxps Software",
       "reason": "location not Hyd/remote: Gurgaon / Gurugram"
-    },
-    {
-      "jobId": "64053949",
-      "title": "Custom Application Architect",
-      "company": "Accenture",
-      "reason": "location not Hyd/remote: Pune | India"
-    },
-    {
-      "jobId": "64057609",
-      "title": "Application Architect-AWS Cloud Migration",
-      "company": "IBM",
-      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
     },
     {
       "jobId": "63640532",
@@ -1417,14 +1323,14 @@
       "reason": "no seniority keyword on title"
     },
     {
-      "jobId": "63641167",
-      "title": ".Net core Developer",
+      "jobId": "63646694",
+      "title": ".NET React Developer",
       "company": "Infosys Limited",
       "reason": "no seniority keyword on title"
     },
     {
-      "jobId": "63646694",
-      "title": ".NET React Developer",
+      "jobId": "63641167",
+      "title": ".Net core Developer",
       "company": "Infosys Limited",
       "reason": "no seniority keyword on title"
     },
@@ -1435,16 +1341,16 @@
       "reason": "maxExp 7<10 (junior/mid band)"
     },
     {
-      "jobId": "63642371",
-      "title": "Dot Net with Angular Developer",
-      "company": "Tata Consultancy Services",
-      "reason": "no seniority keyword on title"
-    },
-    {
       "jobId": "63641181",
       "title": ".Net Core Senior Developer",
       "company": "Infosys Limited",
       "reason": "maxExp 5<10 (junior/mid band)"
+    },
+    {
+      "jobId": "63642371",
+      "title": "Dot Net with Angular Developer",
+      "company": "Tata Consultancy Services",
+      "reason": "no seniority keyword on title"
     },
     {
       "jobId": "63407355",
@@ -1463,18 +1369,6 @@
       "title": "Mainframe Senior Developer",
       "company": "Infosys Limited",
       "reason": "non-.NET primary stack on title"
-    },
-    {
-      "jobId": "63982650",
-      "title": ".Net Core Senior Developer",
-      "company": "Infosys Limited",
-      "reason": "maxExp 5<10 (junior/mid band)"
-    },
-    {
-      "jobId": "63982077",
-      "title": ".NET Angular Developer",
-      "company": "Infosys Limited",
-      "reason": "no seniority keyword on title"
     },
     {
       "jobId": "63367974",
@@ -1540,7 +1434,7 @@
       "jobId": "63640107",
       "title": "Lead Software Engineer|6-9 Yrs|Bangalore,Chennai,Hyderabad,Pune",
       "company": "Capgemini",
-      "reason": "maxExp 8<10 (junior/mid band)"
+      "reason": "SAP without .NET"
     },
     {
       "jobId": "63667032",
@@ -1909,12 +1803,6 @@
       "reason": "pure AI/data without .NET on title"
     },
     {
-      "jobId": "63631714",
-      "title": "S4 Fashion/SD Solution Architect",
-      "company": "Infosys Limited",
-      "reason": "SAP without .NET"
-    },
-    {
       "jobId": "63400246",
       "title": "SAP TM Global Solution Architect",
       "company": "Hitachi Energy",
@@ -1924,6 +1812,12 @@
       "jobId": "45776657",
       "title": "Q2C Solution Architect",
       "company": "Hitachi Energy",
+      "reason": "SAP without .NET"
+    },
+    {
+      "jobId": "63631714",
+      "title": "S4 Fashion/SD Solution Architect",
+      "company": "Infosys Limited",
       "reason": "SAP without .NET"
     },
     {
@@ -2005,12 +1899,6 @@
       "reason": "location not Hyd/remote: Gurgaon / Gurugram | India"
     },
     {
-      "jobId": "63646759",
-      "title": "Foundation Solution Architect - Apple Devices & macOS (Tenant-to-Tenant Migration)",
-      "company": "Kyndryl",
-      "reason": "location not Hyd/remote: Taiwan"
-    },
-    {
       "jobId": "63641714",
       "title": "Solution Architect / Functional Architect - Cloud",
       "company": "Bnp Paribas Bank",
@@ -2021,6 +1909,12 @@
       "title": "Customer Solutions Architect",
       "company": "Nokia",
       "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+    },
+    {
+      "jobId": "63648638",
+      "title": "SAP BASIS Solution Architect",
+      "company": "Infosys Limited",
+      "reason": "SAP without .NET"
     },
     {
       "jobId": "63643514",
@@ -2041,26 +1935,20 @@
       "reason": "infra/ops without .NET on title"
     },
     {
-      "jobId": "63648638",
-      "title": "SAP BASIS Solution Architect",
-      "company": "Infosys Limited",
-      "reason": "SAP without .NET"
-    },
-    {
       "jobId": "63618110",
       "title": "Senior Security Assurance Solutions Architect",
       "company": "Amazon",
       "reason": "location not Hyd/remote: Riyadh"
     },
     {
-      "jobId": "63621190",
-      "title": "Lead Software Engineer - Solution Architect - Public cloud",
+      "jobId": "63617996",
+      "title": "Lead Pharma Solution Architect",
       "company": "Capgemini",
       "reason": "SAP without .NET"
     },
     {
-      "jobId": "63617996",
-      "title": "Lead Pharma Solution Architect",
+      "jobId": "63621190",
+      "title": "Lead Software Engineer - Solution Architect - Public cloud",
       "company": "Capgemini",
       "reason": "SAP without .NET"
     },
@@ -2083,8 +1971,8 @@
       "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
     },
     {
-      "jobId": "63648265",
-      "title": "Solution Architect Lead - Cyber Airport",
+      "jobId": "63648267",
+      "title": "Solution Architect Lead - Integration Airport",
       "company": "DXC Technology",
       "reason": "location not Hyd/remote: Saudi Arabia | Riyadh"
     },
@@ -2095,34 +1983,10 @@
       "reason": "SAP without .NET"
     },
     {
-      "jobId": "63634266",
-      "title": "SAP Solution Architect - Presales",
-      "company": "Capgemini",
-      "reason": "SAP without .NET"
-    },
-    {
-      "jobId": "63625269",
-      "title": "Oracle Fusion Cloud Financials Solution Architect",
-      "company": "Infosys Limited",
-      "reason": "no .NET on title+skills"
-    },
-    {
       "jobId": "63734997",
       "title": "Solution Architect",
       "company": "Accenture",
       "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
-    },
-    {
-      "jobId": "63640533",
-      "title": "SAP MDG Solution Architect",
-      "company": "Infosys Limited",
-      "reason": "SAP without .NET"
-    },
-    {
-      "jobId": "63628592",
-      "title": "SAP BTP Solution Architect",
-      "company": "Infosys Limited",
-      "reason": "SAP without .NET"
     },
     {
       "jobId": "63650123",
@@ -2149,6 +2013,30 @@
       "reason": "SAP without .NET"
     },
     {
+      "jobId": "63634266",
+      "title": "SAP Solution Architect - Presales",
+      "company": "Capgemini",
+      "reason": "SAP without .NET"
+    },
+    {
+      "jobId": "63625269",
+      "title": "Oracle Fusion Cloud Financials Solution Architect",
+      "company": "Infosys Limited",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "63640533",
+      "title": "SAP MDG Solution Architect",
+      "company": "Infosys Limited",
+      "reason": "SAP without .NET"
+    },
+    {
+      "jobId": "63628592",
+      "title": "SAP BTP Solution Architect",
+      "company": "Infosys Limited",
+      "reason": "SAP without .NET"
+    },
+    {
       "jobId": "63475077",
       "title": "RTR Solution Architect",
       "company": "Zensar Technologies",
@@ -2167,10 +2055,10 @@
       "reason": "location not Hyd/remote: Ahmedabad | India"
     },
     {
-      "jobId": "63642118",
-      "title": "Windchill Solution Architect",
+      "jobId": "63647862",
+      "title": "SAP Solution Architect (SD/MM/PP/FICO/S4Hana)",
       "company": "Infosys Limited",
-      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+      "reason": "SAP without .NET"
     },
     {
       "jobId": "63760136",
@@ -2179,16 +2067,16 @@
       "reason": "location not Hyd/remote: Saudi Arabia | Riyadh"
     },
     {
-      "jobId": "63647862",
-      "title": "SAP Solution Architect (SD/MM/PP/FICO/S4Hana)",
-      "company": "Infosys Limited",
-      "reason": "SAP without .NET"
-    },
-    {
       "jobId": "63745593",
       "title": "Enterprise Solution Architect",
       "company": "Accenture",
       "reason": "location not Hyd/remote: Pune | India"
+    },
+    {
+      "jobId": "63642118",
+      "title": "Windchill Solution Architect",
+      "company": "Infosys Limited",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
     },
     {
       "jobId": "63489369",
@@ -2203,16 +2091,16 @@
       "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
     },
     {
-      "jobId": "63743759",
-      "title": "Solution Architect",
-      "company": "Accenture",
-      "reason": "no .NET on title+skills"
-    },
-    {
       "jobId": "63760131",
       "title": "Solution Architect Lead - Data Airport",
       "company": "DXC Technology",
       "reason": "location not Hyd/remote: Saudi Arabia | Riyadh"
+    },
+    {
+      "jobId": "63645827",
+      "title": "FICO Solution Architect",
+      "company": "Infosys Limited",
+      "reason": "SAP without .NET"
     },
     {
       "jobId": "34013872",
@@ -2311,16 +2199,64 @@
       "reason": "UI/frontend React/Angular without .NET on title"
     },
     {
+      "jobId": "63578820",
+      "title": "Sr Enterprise Technical Architect (TMS) - GPTS Consulting",
+      "company": "Blue Yonder",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+    },
+    {
       "jobId": "63617878",
       "title": "Technical Architect",
       "company": "Infosys Limited",
       "reason": "no .NET on title+skills"
     },
     {
-      "jobId": "63578820",
-      "title": "Sr Enterprise Technical Architect (TMS) - GPTS Consulting",
-      "company": "Blue Yonder",
+      "jobId": "63743982",
+      "title": "Engineering Manager (Tech Lead)",
+      "company": "Konrad",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "63478575",
+      "title": "Java Backend Engineering Manager",
+      "company": "curately ai, inc",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "63734568",
+      "title": "Engineering Manager",
+      "company": "Termgrid",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "63735073",
+      "title": "Director of Engineering / Engineering Manager",
+      "company": "Uplers",
       "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+    },
+    {
+      "jobId": "63501924",
+      "title": "Engineering Manager",
+      "company": "gft technologies apac & gcc",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "63745499",
+      "title": "QA Lead / Quality Engineering Manager",
+      "company": "UpStream",
+      "reason": "QA/test"
+    },
+    {
+      "jobId": "63607079",
+      "title": "Senior Machine Learning Systems Engineering Manager - AI & ML Platform",
+      "company": "Atlassian",
+      "reason": "maxExp 7<10 (junior/mid band)"
+    },
+    {
+      "jobId": "63511242",
+      "title": "Engineering Manager",
+      "company": "gaic professional services inc.",
+      "reason": "location not Hyd/remote: Philippines | Central Visayas"
     },
     {
       "jobId": "63644264",
@@ -2473,12 +2409,6 @@
       "reason": "location not Hyd/remote: India"
     },
     {
-      "jobId": "63634253",
-      "title": "Principal Software Engineer",
-      "company": "Capgemini",
-      "reason": "SAP without .NET"
-    },
-    {
       "jobId": "63555075",
       "title": "Principal Data Systems Software Engineer",
       "company": "Oracle",
@@ -2498,6 +2428,12 @@
     },
     {
       "jobId": "63621172",
+      "title": "Principal Software Engineer",
+      "company": "Capgemini",
+      "reason": "SAP without .NET"
+    },
+    {
+      "jobId": "63634253",
       "title": "Principal Software Engineer",
       "company": "Capgemini",
       "reason": "SAP without .NET"
@@ -2527,12 +2463,6 @@
       "reason": "SAP without .NET"
     },
     {
-      "jobId": "63634272",
-      "title": "Principal Software Engineer",
-      "company": "Capgemini",
-      "reason": "SAP without .NET"
-    },
-    {
       "jobId": "63555066",
       "title": "Principal Application Software Engineer",
       "company": "Oracle",
@@ -2540,6 +2470,12 @@
     },
     {
       "jobId": "63617991",
+      "title": "Principal Software Engineer",
+      "company": "Capgemini",
+      "reason": "SAP without .NET"
+    },
+    {
+      "jobId": "63634272",
       "title": "Principal Software Engineer",
       "company": "Capgemini",
       "reason": "SAP without .NET"
@@ -2575,22 +2511,34 @@
       "reason": "max CTC 15 LPA < 35"
     },
     {
+      "jobId": "34502075",
+      "title": "System Software Architect, Programmable Vision Accelerator",
+      "company": "NVIDIA",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore"
+    },
+    {
+      "jobId": "34501942",
+      "title": "System Software Architect, Programmable Vision Accelerator",
+      "company": "NVIDIA",
+      "reason": "location not Hyd/remote: Pune"
+    },
+    {
+      "jobId": "63754549",
+      "title": "AI Software Architect",
+      "company": "delta technology hub",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "63763035",
+      "title": "Senior Software Architect",
+      "company": "Aspire Technology",
+      "reason": "no .NET on title+skills"
+    },
+    {
       "jobId": "34927759",
       "title": "Software Architect",
       "company": "Launch IT Consulting",
       "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "34871108",
-      "title": "Software Architect",
-      "company": "Ametek Instruments India",
-      "reason": "location not Hyd/remote: Bengaluru / Bangalore"
-    },
-    {
-      "jobId": "34837743",
-      "title": "Software Architect",
-      "company": "Atria Convergence Technologies",
-      "reason": "location not Hyd/remote: Bengaluru / Bangalore"
     },
     {
       "jobId": "63643735",
@@ -2615,6 +2563,12 @@
       "title": "Embedded_Software_Architect_ECT",
       "company": "Robert Bosch",
       "reason": "location not Hyd/remote: India"
+    },
+    {
+      "jobId": "63641264",
+      "title": "Software Architect",
+      "company": "GoComet",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
     },
     {
       "jobId": "63475607",
@@ -2881,14 +2835,14 @@
       "reason": "no seniority keyword on title"
     },
     {
-      "jobId": "34256314",
-      "title": ".net Full Stack Developer (4-5 years)",
+      "jobId": "34256313",
+      "title": ".Net Full stack developer with Azure Cosmos",
       "company": "Orion India Systems Private Limited",
       "reason": "no seniority keyword on title"
     },
     {
-      "jobId": "34256313",
-      "title": ".Net Full stack developer with Azure Cosmos",
+      "jobId": "34256314",
+      "title": ".net Full Stack Developer (4-5 years)",
       "company": "Orion India Systems Private Limited",
       "reason": "no seniority keyword on title"
     },
@@ -2974,6 +2928,12 @@
       "jobId": "63267856",
       "title": ".Net Developer",
       "company": "NTT Data",
+      "reason": "no seniority keyword on title"
+    },
+    {
+      "jobId": "62524526",
+      "title": ".NET developer with SAP/Dynamics IRC301115",
+      "company": "Globallogic India",
       "reason": "no seniority keyword on title"
     },
     {
@@ -3349,15 +3309,21 @@
       "reason": "no .NET on title+skills"
     },
     {
-      "jobId": "63108216",
-      "title": "Senior Project Manager",
-      "company": "Infinite Computer Solutions",
-      "reason": "PM/TPM/delivery"
-    },
-    {
       "jobId": "62858257",
       "title": "Technical Project Manager (.NET)",
       "company": "Mahindra Satyam",
+      "reason": "PM/TPM/delivery"
+    },
+    {
+      "jobId": "62962434",
+      "title": "International Business Development Manager",
+      "company": "Tata Consulting Engineers",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "63108216",
+      "title": "Senior Project Manager",
+      "company": "Infinite Computer Solutions",
       "reason": "PM/TPM/delivery"
     },
     {
@@ -3490,7 +3456,7 @@
       "jobId": "63160221",
       "title": "Critical Manufacturing Consultant, Technical Transformation",
       "company": "Deloitte",
-      "reason": "no seniority keyword on title"
+      "reason": "non-software engineering without .NET on title"
     },
     {
       "jobId": "62548829",
@@ -3535,8 +3501,8 @@
       "reason": "SAP without .NET"
     },
     {
-      "jobId": "63648267",
-      "title": "Solution Architect Lead - Integration Airport",
+      "jobId": "63648265",
+      "title": "Solution Architect Lead - Cyber Airport",
       "company": "DXC Technology",
       "reason": "location not Hyd/remote: Saudi Arabia | Riyadh"
     },
@@ -3607,15 +3573,15 @@
       "reason": "location not Hyd/remote: Chennai | India"
     },
     {
-      "jobId": "63108278",
-      "title": "Senior Technical Architect",
-      "company": "Accenture",
-      "reason": "no .NET on title+skills"
-    },
-    {
       "jobId": "62955112",
       "title": "Enovia Technical Architect",
       "company": "Tata Consultancy Services",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "63108278",
+      "title": "Senior Technical Architect",
+      "company": "Accenture",
       "reason": "no .NET on title+skills"
     },
     {
@@ -3733,54 +3699,6 @@
       "reason": "no .NET on title+skills"
     },
     {
-      "jobId": "63743982",
-      "title": "Engineering Manager (Tech Lead)",
-      "company": "Konrad",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "63478575",
-      "title": "Java Backend Engineering Manager",
-      "company": "curately ai, inc",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "63734568",
-      "title": "Engineering Manager",
-      "company": "Termgrid",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "63735073",
-      "title": "Director of Engineering / Engineering Manager",
-      "company": "Uplers",
-      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
-    },
-    {
-      "jobId": "63501924",
-      "title": "Engineering Manager",
-      "company": "gft technologies apac & gcc",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "63745499",
-      "title": "QA Lead / Quality Engineering Manager",
-      "company": "UpStream",
-      "reason": "QA/test"
-    },
-    {
-      "jobId": "63607079",
-      "title": "Senior Machine Learning Systems Engineering Manager - AI & ML Platform",
-      "company": "Atlassian",
-      "reason": "maxExp 7<10 (junior/mid band)"
-    },
-    {
-      "jobId": "63511242",
-      "title": "Engineering Manager",
-      "company": "gaic professional services inc.",
-      "reason": "location not Hyd/remote: Philippines | Central Visayas"
-    },
-    {
       "jobId": "62860819",
       "title": "Senior Data Engineering Manager",
       "company": "Atlassian",
@@ -3805,13 +3723,13 @@
       "reason": "location not Hyd/remote: Egypt | Cairo"
     },
     {
-      "jobId": "62558624",
+      "jobId": "62553791",
       "title": "Engineering Manager - Data and Infrastructure",
       "company": "Jobgether",
       "reason": "infra/ops without .NET on title"
     },
     {
-      "jobId": "62553791",
+      "jobId": "62558624",
       "title": "Engineering Manager - Data and Infrastructure",
       "company": "Jobgether",
       "reason": "infra/ops without .NET on title"
@@ -3881,12 +3799,6 @@
       "title": "Engineering Manager - AI-Native Email App",
       "company": "Bjak",
       "reason": "location not Hyd/remote: Thailand"
-    },
-    {
-      "jobId": "62553096",
-      "title": "Engineering Manager, Managed Services",
-      "company": "Canonical",
-      "reason": "no .NET on title+skills"
     },
     {
       "jobId": "62579914",
@@ -4081,18 +3993,6 @@
       "reason": "no .NET on title+skills"
     },
     {
-      "jobId": "63072964",
-      "title": "Forward Deployed Engineering Manager",
-      "company": "SAP",
-      "reason": "SAP without .NET"
-    },
-    {
-      "jobId": "62845905",
-      "title": "Engineering Manager- Embedded Software",
-      "company": "Eaton",
-      "reason": "location not Hyd/remote: Pune | India"
-    },
-    {
       "jobId": "62555890",
       "title": "Customer Project Technical Senior Principal Engineer",
       "company": "Schneider Electric",
@@ -4213,48 +4113,6 @@
       "reason": "location not Hyd/remote: Egypt | Cairo"
     },
     {
-      "jobId": "62460229",
-      "title": "Senior Software Engineer",
-      "company": "NTT Data",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "63105643",
-      "title": "Custom Software Engineer",
-      "company": "Accenture",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "63161755",
-      "title": "Custom Software Engineer",
-      "company": "Accenture",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "63244583",
-      "title": "Custom Software Engineer",
-      "company": "Accenture",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "63132947",
-      "title": "Custom Software Engineer",
-      "company": "Accenture",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "62573915",
-      "title": "Software Engineer",
-      "company": "Microsoft Corp",
-      "reason": "no seniority keyword on title"
-    },
-    {
-      "jobId": "62574055",
-      "title": "Software Engineer 2 (Essential Protocols)",
-      "company": "Microsoft Corp",
-      "reason": "no seniority keyword on title"
-    },
-    {
       "jobId": "63155499",
       "title": "Custom Software Engineer",
       "company": "Accenture",
@@ -4273,6 +4131,18 @@
       "reason": "no .NET on title+skills"
     },
     {
+      "jobId": "62573915",
+      "title": "Software Engineer",
+      "company": "Microsoft Corp",
+      "reason": "no seniority keyword on title"
+    },
+    {
+      "jobId": "62574055",
+      "title": "Software Engineer 2 (Essential Protocols)",
+      "company": "Microsoft Corp",
+      "reason": "no seniority keyword on title"
+    },
+    {
       "jobId": "63074017",
       "title": "Software Architect",
       "company": "Schneider Electric",
@@ -4285,22 +4155,16 @@
       "reason": "location not Hyd/remote: Pune | India"
     },
     {
-      "jobId": "62581986",
-      "title": "System Software and Performance Architect, Silicon",
-      "company": "Google India",
-      "reason": "no .NET on title+skills"
+      "jobId": "34871108",
+      "title": "Software Architect",
+      "company": "Ametek Instruments India",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore"
     },
     {
-      "jobId": "62577017",
-      "title": "System Software and Performance Architect, Silicon",
-      "company": "Google India",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "62581981",
-      "title": "System Software and Performance Architect, Silicon",
-      "company": "Google India",
-      "reason": "no .NET on title+skills"
+      "jobId": "34837743",
+      "title": "Software Architect",
+      "company": "Atria Convergence Technologies",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore"
     },
     {
       "jobId": "63096101",
@@ -4525,16 +4389,16 @@
       "reason": "location not Hyd/remote: Bhubaneswar | India"
     },
     {
-      "jobId": "62524219",
-      "title": "Custom Application Architect",
-      "company": "Accenture",
-      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
-    },
-    {
       "jobId": "63241004",
       "title": "Custom Application Architect",
       "company": "Accenture",
       "reason": "SAP without .NET"
+    },
+    {
+      "jobId": "62524219",
+      "title": "Custom Application Architect",
+      "company": "Accenture",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
     },
     {
       "jobId": "62547315",
@@ -4637,12 +4501,6 @@
       "title": "Application Support Engineer",
       "company": "Accenture",
       "reason": "no seniority keyword on title"
-    },
-    {
-      "jobId": "61941727",
-      "title": "Technical Architect",
-      "company": "tenerity india",
-      "reason": "location not Hyd/remote: Pune | India"
     },
     {
       "jobId": "61931707",
@@ -4759,16 +4617,16 @@
       "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
     },
     {
-      "jobId": "61044541",
-      "title": "Tech Manager, CX",
-      "company": "Nice",
-      "reason": "location not Hyd/remote: Pune | India"
-    },
-    {
       "jobId": "61325838",
       "title": "Senior D365 F&O Developer",
       "company": "Danaher",
       "reason": "maxExp 8<10 (junior/mid band)"
+    },
+    {
+      "jobId": "61044541",
+      "title": "Tech Manager, CX",
+      "company": "Nice",
+      "reason": "location not Hyd/remote: Pune | India"
     },
     {
       "jobId": "61661945",
@@ -5005,16 +4863,16 @@
       "reason": "no seniority keyword on title"
     },
     {
-      "jobId": "60893608",
-      "title": "Senior Engineering Manager - Digital Solutions Development",
-      "company": "Johnson Controls India",
-      "reason": "location not Hyd/remote: Pune | India"
+      "jobId": "62193826",
+      "title": "R&D Principal Technologist",
+      "company": "Aveva",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
     },
     {
-      "jobId": "61320935",
-      "title": "SENIOR SOFTWARE ENGINEER - .net",
-      "company": "Happiest Minds Technologies",
-      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+      "jobId": "61054576",
+      "title": "Project Director PMC (Owner's Representative Services)",
+      "company": "Turner & Townsend",
+      "reason": "no .NET on title+skills"
     },
     {
       "jobId": "61942298",
@@ -5173,16 +5031,16 @@
       "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
     },
     {
+      "jobId": "62202772",
+      "title": "Critical Manufacturing Consultant, Technical Transformation",
+      "company": "Deloitte",
+      "reason": "non-software engineering without .NET on title"
+    },
+    {
       "jobId": "61418858",
       "title": "Custom Software Engineer",
       "company": "Accenture",
       "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "62222202",
-      "title": "T&T Intern - Innovation & Cloud Development Centre (Software Development) - MY",
-      "company": "Deloitte",
-      "reason": "no seniority keyword on title"
     },
     {
       "jobId": "61544412",
@@ -5242,6 +5100,12 @@
       "jobId": "61426565",
       "title": "Application Support Engineer",
       "company": "Accenture",
+      "reason": "no seniority keyword on title"
+    },
+    {
+      "jobId": "62222202",
+      "title": "T&T Intern - Innovation & Cloud Development Centre (Software Development) - MY",
+      "company": "Deloitte",
       "reason": "no seniority keyword on title"
     },
     {
@@ -5335,12 +5199,6 @@
       "reason": "location not Hyd/remote: Thailand"
     },
     {
-      "jobId": "60332145",
-      "title": "Fractional SoC Architect / Technical Advisor — AI-Assisted Fabless Startup",
-      "company": "Ensoft Consulting Pte Ltd",
-      "reason": "location not Hyd/remote: Vijayawada"
-    },
-    {
       "jobId": "61670260",
       "title": "Bus & Technology Delivery Senior Analyst",
       "company": "Accenture",
@@ -5351,12 +5209,6 @@
       "title": "Servicenow Architect",
       "company": "Virtusa",
       "reason": "ServiceNow"
-    },
-    {
-      "jobId": "62220511",
-      "title": "IN-Sr Technical Architect - Consulting (GPTS - TMS)",
-      "company": "Blue Yonder",
-      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
     },
     {
       "jobId": "62356452",
@@ -5401,12 +5253,6 @@
       "reason": "SAP without .NET"
     },
     {
-      "jobId": "61672983",
-      "title": "Senior Technical Architect",
-      "company": "Tata Consultancy Services",
-      "reason": "location not Hyd/remote: Chennai | India"
-    },
-    {
       "jobId": "61941651",
       "title": "Engineering Manager -IP-MPLS Data Networking system",
       "company": "Larsen & Toubro",
@@ -5449,12 +5295,6 @@
       "reason": "no .NET on title+skills"
     },
     {
-      "jobId": "62218729",
-      "title": "Software Engineering, Manager",
-      "company": "Newfold Digital",
-      "reason": "no .NET on title+skills"
-    },
-    {
       "jobId": "62308701",
       "title": "Software Engineering Manager, Cloud AI/ML Infrastructure",
       "company": "Google India",
@@ -5467,16 +5307,16 @@
       "reason": "infra/ops without .NET on title"
     },
     {
-      "jobId": "62216841",
-      "title": "Principal Agentic AI Engineer / Hands-on Technical Lead",
-      "company": "NTT Data",
-      "reason": "no .NET on title+skills"
-    },
-    {
       "jobId": "62356398",
       "title": "MS Fabric - Principal Data Engineer",
       "company": "NTT Data",
       "reason": "pure AI/data without .NET on title"
+    },
+    {
+      "jobId": "62216841",
+      "title": "Principal Agentic AI Engineer / Hands-on Technical Lead",
+      "company": "NTT Data",
+      "reason": "no .NET on title+skills"
     },
     {
       "jobId": "62186636",
@@ -5581,100 +5421,52 @@
       "reason": "location not Hyd/remote: Pune | India"
     },
     {
-      "jobId": "60554185",
-      "title": "Software Architect",
-      "company": "TeamViewer",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "61426511",
-      "title": "Custom Software Engineer",
-      "company": "Accenture",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "61420636",
-      "title": "Custom Software Engineer",
-      "company": "Accenture",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "61534466",
-      "title": "Custom Software Engineer",
-      "company": "Accenture",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "62204303",
-      "title": "Software Engineer (Python,SQL,React) , Portfolio Management Group, Analyst",
-      "company": "Blackrock",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "61430492",
-      "title": "Software Engineer, Google Pay, Growth and Communications",
-      "company": "Google India",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "61550977",
-      "title": "Custom Software Engineer",
-      "company": "Accenture",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "61531323",
-      "title": "Custom Software Engineer",
-      "company": "Accenture",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "61691248",
-      "title": "Custom Software Engineer",
-      "company": "Accenture",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "61550379",
-      "title": "Custom Software Engineer",
-      "company": "Accenture",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "61598191",
-      "title": "Business Consulting-Developer Software Engineer",
+      "jobId": "62460229",
+      "title": "Senior Software Engineer",
       "company": "NTT Data",
       "reason": "no .NET on title+skills"
     },
     {
-      "jobId": "61796465",
+      "jobId": "63105643",
       "title": "Custom Software Engineer",
       "company": "Accenture",
       "reason": "no .NET on title+skills"
     },
     {
-      "jobId": "61943535",
+      "jobId": "63161755",
       "title": "Custom Software Engineer",
       "company": "Accenture",
       "reason": "no .NET on title+skills"
     },
     {
-      "jobId": "61535600",
+      "jobId": "63244583",
       "title": "Custom Software Engineer",
       "company": "Accenture",
       "reason": "no .NET on title+skills"
     },
     {
-      "jobId": "61806424",
-      "title": "Java Software Engineer",
-      "company": "DXC Technology",
+      "jobId": "63132947",
+      "title": "Custom Software Engineer",
+      "company": "Accenture",
       "reason": "no .NET on title+skills"
     },
     {
-      "jobId": "61466105",
-      "title": "Senior Software Developer (Full Stack)",
-      "company": "NTT Data",
-      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+      "jobId": "62193387",
+      "title": "Software Engineering Architect",
+      "company": "ascendion",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "61788369",
+      "title": "Staff Consulting Architect- Virtualization, Network & Security (Software-Defined Infrastructure)",
+      "company": "Nutanix",
+      "reason": "infra/ops without .NET on title"
+    },
+    {
+      "jobId": "60464054",
+      "title": "Principal Software Engineer/ Architect- AI",
+      "company": "avalara apac",
+      "reason": "pure AI/data without .NET on title"
     },
     {
       "jobId": "61788293",
@@ -5725,39 +5517,21 @@
       "reason": "location not Hyd/remote: Malaysia | Kuala Lumpur"
     },
     {
-      "jobId": "34502075",
-      "title": "System Software Architect, Programmable Vision Accelerator",
-      "company": "NVIDIA",
-      "reason": "location not Hyd/remote: Bengaluru / Bangalore"
-    },
-    {
-      "jobId": "63641264",
-      "title": "Software Architect",
-      "company": "GoComet",
-      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
-    },
-    {
-      "jobId": "34501942",
-      "title": "System Software Architect, Programmable Vision Accelerator",
-      "company": "NVIDIA",
-      "reason": "location not Hyd/remote: Pune"
-    },
-    {
-      "jobId": "63898291",
-      "title": "Software Architect",
-      "company": "Aspire",
-      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
-    },
-    {
-      "jobId": "63754549",
-      "title": "AI Software Architect",
-      "company": "delta technology hub",
+      "jobId": "62581986",
+      "title": "System Software and Performance Architect, Silicon",
+      "company": "Google India",
       "reason": "no .NET on title+skills"
     },
     {
-      "jobId": "63763035",
-      "title": "Senior Software Architect",
-      "company": "Aspire Technology",
+      "jobId": "62577017",
+      "title": "System Software and Performance Architect, Silicon",
+      "company": "Google India",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "62581981",
+      "title": "System Software and Performance Architect, Silicon",
+      "company": "Google India",
       "reason": "no .NET on title+skills"
     },
     {
@@ -5953,12 +5727,6 @@
       "reason": "SAP without .NET"
     },
     {
-      "jobId": "61537162",
-      "title": "Custom Application Architect",
-      "company": "Accenture",
-      "reason": "location not Hyd/remote: Coimbatore | India"
-    },
-    {
       "jobId": "61563711",
       "title": "Custom Application Architect",
       "company": "Accenture",
@@ -5987,6 +5755,12 @@
       "title": "Custom Application Architect",
       "company": "Accenture",
       "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+    },
+    {
+      "jobId": "61537162",
+      "title": "Custom Application Architect",
+      "company": "Accenture",
+      "reason": "location not Hyd/remote: Coimbatore | India"
     },
     {
       "jobId": "61419498",
@@ -6247,6 +6021,12 @@
       "reason": "no seniority keyword on title"
     },
     {
+      "jobId": "57652772",
+      "title": ".Net Developer - 3 months contract",
+      "company": "Dpr Technologies Solutions Private Limited",
+      "reason": "no seniority keyword on title"
+    },
+    {
       "jobId": "47558676",
       "title": "Senior .NET Developer - Remote Work",
       "company": "BairesDev",
@@ -6301,13 +6081,13 @@
       "reason": "maxExp 7<10 (junior/mid band)"
     },
     {
-      "jobId": "47558680",
+      "jobId": "47558672",
       "title": "Senior .NET Developer - Remote Work",
       "company": "BairesDev",
       "reason": "maxExp 7<10 (junior/mid band)"
     },
     {
-      "jobId": "47558672",
+      "jobId": "47558680",
       "title": "Senior .NET Developer - Remote Work",
       "company": "BairesDev",
       "reason": "maxExp 7<10 (junior/mid band)"
@@ -6340,24 +6120,6 @@
       "jobId": "48079438",
       "title": ".NET Developer",
       "company": "Getz Group",
-      "reason": "no seniority keyword on title"
-    },
-    {
-      "jobId": "44206646",
-      "title": ".Net Developer - Immediate Joiners Required & Remote work",
-      "company": "Techolution",
-      "reason": "no seniority keyword on title"
-    },
-    {
-      "jobId": "58874958",
-      "title": ".NET Developers (3+ years)",
-      "company": "Dart Innovations",
-      "reason": "no seniority keyword on title"
-    },
-    {
-      "jobId": "58201589",
-      "title": ".NET Developer",
-      "company": "Fuji Academy private limited",
       "reason": "no seniority keyword on title"
     },
     {
@@ -6491,18 +6253,6 @@
       "title": "Development Lead, Vice President",
       "company": "Blackrock",
       "reason": "location not Hyd/remote: Gurgaon / Gurugram | India"
-    },
-    {
-      "jobId": "62193826",
-      "title": "R&D Principal Technologist",
-      "company": "Aveva",
-      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
-    },
-    {
-      "jobId": "61054576",
-      "title": "Project Director PMC (Owner's Representative Services)",
-      "company": "Turner & Townsend",
-      "reason": "no .NET on title+skills"
     },
     {
       "jobId": "59863654",
@@ -6805,12 +6555,6 @@
       "reason": "ServiceNow"
     },
     {
-      "jobId": "53110207",
-      "title": "Guidewire Technical Architect",
-      "company": "ntt data north america",
-      "reason": "Guidewire"
-    },
-    {
       "jobId": "48651332",
       "title": "Technical Architect",
       "company": "Photon",
@@ -6883,6 +6627,12 @@
       "reason": "no .NET on title+skills"
     },
     {
+      "jobId": "60332145",
+      "title": "Fractional SoC Architect / Technical Advisor — AI-Assisted Fabless Startup",
+      "company": "Ensoft Consulting Pte Ltd",
+      "reason": "location not Hyd/remote: Vijayawada"
+    },
+    {
       "jobId": "50737802",
       "title": "Software Architect Technical Lead",
       "company": "futures and careers",
@@ -6946,7 +6696,7 @@
       "jobId": "59228936",
       "title": "Principal Manufacturing Engineer",
       "company": "Microsoft Corp",
-      "reason": "location not Hyd/remote: Vietnam | Hanoi"
+      "reason": "non-software engineering without .NET on title"
     },
     {
       "jobId": "44128118",
@@ -7003,6 +6753,102 @@
       "reason": "ServiceNow"
     },
     {
+      "jobId": "60554185",
+      "title": "Software Architect",
+      "company": "TeamViewer",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "61426511",
+      "title": "Custom Software Engineer",
+      "company": "Accenture",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "61420636",
+      "title": "Custom Software Engineer",
+      "company": "Accenture",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "61534466",
+      "title": "Custom Software Engineer",
+      "company": "Accenture",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "62204303",
+      "title": "Software Engineer (Python,SQL,React) , Portfolio Management Group, Analyst",
+      "company": "Blackrock",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "61430492",
+      "title": "Software Engineer, Google Pay, Growth and Communications",
+      "company": "Google India",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "61550977",
+      "title": "Custom Software Engineer",
+      "company": "Accenture",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "61531323",
+      "title": "Custom Software Engineer",
+      "company": "Accenture",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "61691248",
+      "title": "Custom Software Engineer",
+      "company": "Accenture",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "61550379",
+      "title": "Custom Software Engineer",
+      "company": "Accenture",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "61598191",
+      "title": "Business Consulting-Developer Software Engineer",
+      "company": "NTT Data",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "61796465",
+      "title": "Custom Software Engineer",
+      "company": "Accenture",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "61943535",
+      "title": "Custom Software Engineer",
+      "company": "Accenture",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "61535600",
+      "title": "Custom Software Engineer",
+      "company": "Accenture",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "61806424",
+      "title": "Java Software Engineer",
+      "company": "DXC Technology",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "61466105",
+      "title": "Senior Software Developer (Full Stack)",
+      "company": "NTT Data",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+    },
+    {
       "jobId": "54921705",
       "title": "Software Architect, OCI Networking",
       "company": "Oracle",
@@ -7019,72 +6865,6 @@
       "title": "Software Architect",
       "company": "TATA Technologies",
       "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
-    },
-    {
-      "jobId": "62193387",
-      "title": "Software Engineering Architect",
-      "company": "ascendion",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "61788369",
-      "title": "Staff Consulting Architect- Virtualization, Network & Security (Software-Defined Infrastructure)",
-      "company": "Nutanix",
-      "reason": "infra/ops without .NET on title"
-    },
-    {
-      "jobId": "60464054",
-      "title": "Principal Software Engineer/ Architect- AI",
-      "company": "avalara apac",
-      "reason": "pure AI/data without .NET on title"
-    },
-    {
-      "jobId": "59837269",
-      "title": "Principal AI Architect (Software)",
-      "company": "IConnect Business Private Limited",
-      "reason": "pure AI/data without .NET on title"
-    },
-    {
-      "jobId": "59946597",
-      "title": "Principal Software Development Architect rApps (O-RAN) IRC299952",
-      "company": "Globallogic Ukraine",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "52649544",
-      "title": "Lead C++ Software Architect",
-      "company": "Astrome Technologies Private Limited",
-      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
-    },
-    {
-      "jobId": "60461550",
-      "title": "Senior Lead Software Architect",
-      "company": "BAJAJ FINSERV HEALTH",
-      "reason": "location not Hyd/remote: Pune | India"
-    },
-    {
-      "jobId": "52558302",
-      "title": "Specialist Software Architect",
-      "company": "Nice",
-      "reason": "location not Hyd/remote: Pune | India"
-    },
-    {
-      "jobId": "57683284",
-      "title": "Software Architect",
-      "company": "Eurofins",
-      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
-    },
-    {
-      "jobId": "51338483",
-      "title": "Senior Software Architect",
-      "company": "modmed india",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "46938753",
-      "title": "Software Architect",
-      "company": "the am3 global singapore/usa",
-      "reason": "location not Hyd/remote: Philippines"
     },
     {
       "jobId": "59906791",
@@ -7165,6 +6945,12 @@
       "reason": "no seniority keyword on title"
     },
     {
+      "jobId": "34669768",
+      "title": ".NET Architect",
+      "company": "Qentelli",
+      "reason": "max CTC 16 LPA < 35"
+    },
+    {
       "jobId": "52577631",
       "title": "Full Stack Developer Technical Lead - .Net",
       "company": "Bnp Paribas Bank",
@@ -7237,6 +7023,12 @@
       "reason": "SAP without .NET"
     },
     {
+      "jobId": "53110207",
+      "title": "Guidewire Technical Architect",
+      "company": "ntt data north america",
+      "reason": "Guidewire"
+    },
+    {
       "jobId": "45693493",
       "title": "Lead Technical Architect - Discovery stream (1 year Fixed Term Contract)",
       "company": "ResMed",
@@ -7285,18 +7077,6 @@
       "reason": "maxExp 7<10 (junior/mid band)"
     },
     {
-      "jobId": "55985699",
-      "title": "Oracle Technical Lead Architect (OIC / BIP/Data conversion )",
-      "company": "trinamix inc",
-      "reason": "location not Hyd/remote: Pune | India"
-    },
-    {
-      "jobId": "46883757",
-      "title": "Technical Account Manager Architect - Singapore",
-      "company": "ClickHouse",
-      "reason": "location not Hyd/remote: Singapore"
-    },
-    {
       "jobId": "45042468",
       "title": "Engineering Manager, Water",
       "company": "Jacobs",
@@ -7333,22 +7113,70 @@
       "reason": "infra/ops without .NET on title"
     },
     {
-      "jobId": "51726791",
-      "title": "Software Architect (Ruby on Rails, relocation to Riyadh provided)",
-      "company": "Rubikal",
-      "reason": "no .NET on title+skills"
-    },
-    {
-      "jobId": "46162831",
-      "title": "Principal Software Architect",
-      "company": "vitaledge technologies",
-      "reason": "no .NET on title+skills"
-    },
-    {
       "jobId": "43261055",
       "title": "Software Architect",
       "company": "INSCALE",
       "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "59837269",
+      "title": "Principal AI Architect (Software)",
+      "company": "IConnect Business Private Limited",
+      "reason": "pure AI/data without .NET on title"
+    },
+    {
+      "jobId": "59946597",
+      "title": "Principal Software Development Architect rApps (O-RAN) IRC299952",
+      "company": "Globallogic Ukraine",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "52649544",
+      "title": "Lead C++ Software Architect",
+      "company": "Astrome Technologies Private Limited",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+    },
+    {
+      "jobId": "60461550",
+      "title": "Senior Lead Software Architect",
+      "company": "BAJAJ FINSERV HEALTH",
+      "reason": "location not Hyd/remote: Pune | India"
+    },
+    {
+      "jobId": "60189738",
+      "title": "Specialist Software Architect",
+      "company": "Nice",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "52558302",
+      "title": "Specialist Software Architect",
+      "company": "Nice",
+      "reason": "location not Hyd/remote: Pune | India"
+    },
+    {
+      "jobId": "57683284",
+      "title": "Software Architect",
+      "company": "Eurofins",
+      "reason": "location not Hyd/remote: Bengaluru / Bangalore | India"
+    },
+    {
+      "jobId": "51338483",
+      "title": "Senior Software Architect",
+      "company": "modmed india",
+      "reason": "no .NET on title+skills"
+    },
+    {
+      "jobId": "46938753",
+      "title": "Software Architect",
+      "company": "the am3 global singapore/usa",
+      "reason": "location not Hyd/remote: Philippines"
+    },
+    {
+      "jobId": "33710561",
+      "title": "Software Architect",
+      "company": "Rapsys Technologies Pte Ltd",
+      "reason": "location not Hyd/remote: Liang Seah Street | Singapore"
     },
     {
       "jobId": "47482278",
@@ -7371,6 +7199,24 @@
   ],
   "blocked": [],
   "duplicates": [
+    {
+      "jobId": "64108671",
+      "title": "Senior .NET Lead (Principal Engineer) IRC296129",
+      "company": "Globallogic India",
+      "via": "userJobInfo"
+    },
+    {
+      "jobId": "64087171",
+      "title": "Software Engineer, Principal - .NET Developer",
+      "company": "blackbaud india",
+      "via": "userJobInfo"
+    },
+    {
+      "jobId": "64113443",
+      "title": "Sr Enterprise Technical Architect (Planning) - GPTS Consulting",
+      "company": "Blue Yonder",
+      "via": "userJobInfo"
+    },
     {
       "jobId": "63988201",
       "title": ".Net production support Lead",
@@ -7399,12 +7245,6 @@
       "jobId": "64062399",
       "title": "Solutions Architect (Remote)",
       "company": "quik hire staffing",
-      "via": "userJobInfo"
-    },
-    {
-      "jobId": "64020592",
-      "title": "Sr. Solutions Architect/Senior Enterprise Integration Architect - Finance Systems",
-      "company": "Jobgether",
       "via": "userJobInfo"
     },
     {
@@ -7666,6 +7506,12 @@
       "via": "userJobInfo"
     },
     {
+      "jobId": "64020592",
+      "title": "Sr. Solutions Architect/Senior Enterprise Integration Architect - Finance Systems",
+      "company": "Jobgether",
+      "via": "userJobInfo"
+    },
+    {
       "jobId": "60592472",
       "title": "Engineering Manager-PT",
       "company": "Hitachi Energy",
@@ -7804,23 +7650,7 @@
       "via": "userJobInfo"
     }
   ],
-  "referralDrafts": [
-    {
-      "company": "Globallogic India",
-      "title": "Senior .NET Lead (Principal Engineer) IRC296129",
-      "draft": "Hi — I'm applying for Senior .NET Lead (Principal Engineer) IRC296129 at Globallogic India. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)"
-    },
-    {
-      "company": "Capgemini",
-      "title": "PU1 Support- Architect - Offshore Manager",
-      "draft": "Hi — I'm applying for PU1 Support- Architect - Offshore Manager at Capgemini. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)"
-    },
-    {
-      "company": "blackbaud india",
-      "title": "Software Engineer, Principal - .NET Developer",
-      "draft": "Hi — I'm applying for Software Engineer, Principal - .NET Developer at blackbaud india. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)"
-    }
-  ],
+  "referralDrafts": [],
   "queries": [
     ".net architect",
     ".net lead",
@@ -7850,15 +7680,15 @@
   },
   "loggedIn": true,
   "jwtOk": true,
-  "cookieCacheLen": 8262,
+  "cookieCacheLen": 8476,
   "ageWindowUsed": 3650,
-  "candidates_d1": 49,
-  "candidates_d3": 167,
-  "candidates_d7": 258,
-  "candidates_d14": 300,
-  "candidates_d30": 270,
-  "candidates_d90": 192,
-  "candidates_d3650": 38,
-  "appliedDelta": 5,
-  "intentionalApplies": 5
+  "candidates_d1": 45,
+  "candidates_d3": 182,
+  "candidates_d7": 266,
+  "candidates_d14": 285,
+  "candidates_d30": 256,
+  "candidates_d90": 193,
+  "candidates_d3650": 46,
+  "appliedDelta": 0,
+  "intentionalApplies": 0
 }
