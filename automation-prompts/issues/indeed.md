@@ -5,6 +5,7 @@
 | Issue | Fix |
 | --- | --- |
 | SmartApply resume-selection: We could not upload your resume file (6/7 easy_apply_incomplete); single send_keys+1s then Continue CTA streak | upload_smartapply_resume: prefer existing Rafi card; wait for upload ok; retry 3x on error with backoff; last try untailored master; re-upload on resume-module CTA stuck |
+| SmartApply still rejected font-stripped 20KB DOCX (Genpact resume-selection: Wait a moment and try again) | Cycle owner 3.9MB master + Chrome PDF fallback; wait after Indeed upload error; do not unhide file input unless send_keys misses |
 
 
 ## 2026-08-24 (cloud)
