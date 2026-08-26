@@ -70,6 +70,7 @@ from tools.hitechcity.board_campus_apply import run as run_boards
 from tools.hitechcity.careers_apply import load_companies, run as run_careers
 from tools.hitechcity.discover_tenants import run as run_discovery
 from tools.hitechcity.linkedin_target_apply import run as run_linkedin
+from tools.ats.email_otp import reset_gmail_login_flag
 
 OUT_DEFAULT_CLOUD = Path("/opt/cursor/artifacts/hitechcity-daily.json")
 OUT_DEFAULT_LOCAL = _root / "artifacts" / "hitechcity-daily.json"
@@ -99,6 +100,7 @@ OUT = default_report_path()
 
 def main() -> int:
     configure_windows_stdio()
+    reset_gmail_login_flag()
     started = datetime.now(timezone.utc).isoformat()
     parallel_tabs = os.environ.get("HITECHCITY_PARALLEL_TABS", "10")
     print(

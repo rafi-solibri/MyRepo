@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-26 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Oracle ats_otp_wall: parallel workers each burned full ATS_EMAIL_OTP_WAIT on repeated gmail_login_required (no IMAP) | email_otp: cross-process /tmp flag + abort OTP wait when Gmail Sign-in and no GMAIL_APP_PASSWORD; reset flag each daily_apply start |
+
+
 ## 2026-08-25 (cloud)
 
 | Issue | Fix |

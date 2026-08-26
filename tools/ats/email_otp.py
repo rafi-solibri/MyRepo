@@ -36,11 +36,44 @@ _CODE_NEAR = re.compile(
 _BARE_CODE = re.compile(r"\b(\d{6})\b")
 _YEARISH = re.compile(r"^(19|20)\d{2}$")
 _LOCK_PATH = Path(os.environ.get("ATS_GMAIL_OTP_LOCK", "/tmp/ats-gmail-otp.lock"))
+# Cross-process: when Gmail CDP shows Sign-in and no IMAP app password is set,
+# parallel careers workers must not each burn the full ATS_EMAIL_OTP_WAIT_SEC.
+_GMAIL_LOGIN_FLAG = Path(
+    os.environ.get("ATS_GMAIL_LOGIN_FLAG", "/tmp/ats-gmail-otp-login-required")
+)
 
 _GMAIL_SEARCH = (
     "newer_than:1d (verification OR OTP OR \"one-time\" OR \"security code\" "
     "OR \"confirm your identity\" OR passcode OR \"verification code\")"
 )
+
+
+def reset_gmail_login_flag() -> None:
+    """Clear the per-run Gmail Sign-in cache (call once at daily apply start)."""
+    try:
+        _GMAIL_LOGIN_FLAG.unlink(missing_ok=True)
+    except Exception:
+        pass
+
+
+def gmail_session_known_dead() -> bool:
+    try:
+        return _GMAIL_LOGIN_FLAG.exists()
+    except Exception:
+        return False
+
+
+def mark_gmail_login_required() -> None:
+    try:
+        _GMAIL_LOGIN_FLAG.parent.mkdir(parents=True, exist_ok=True)
+        _GMAIL_LOGIN_FLAG.write_text("1", encoding="utf-8")
+    except Exception:
+        pass
+
+
+def mailbox_unavailable_for_otp() -> bool:
+    """True when Gmail CDP needs Sign-in and no IMAP app password is configured."""
+    return gmail_session_known_dead() and not mailbox_app_password()
 
 
 def mailbox_user() -> str:
@@ -198,6 +231,9 @@ def _with_gmail_lock(fn):
 
 def fetch_otp_via_gmail_tab(page, *, after_epoch: float | None = None, timeout_s: float = 55) -> str | None:
     """Open Gmail in a new CDP tab, scrape recent OTP mail, close the tab."""
+    if mailbox_unavailable_for_otp():
+        print("email_otp=gmail_login_required_cached", flush=True)
+        return None
     try:
         context = page.context
     except Exception:
@@ -229,6 +265,7 @@ def fetch_otp_via_gmail_tab(page, *, after_epoch: float | None = None, timeout_s
                 time.sleep(2.2)
                 cur = (getattr(gmail, "url", "") or "").lower()
                 if "accounts.google.com" in cur or "/signin" in cur:
+                    mark_gmail_login_required()
                     print("email_otp=gmail_login_required", flush=True)
                     return None
                 # Collect page text (list view or thread).
@@ -239,6 +276,7 @@ def fetch_otp_via_gmail_tab(page, *, after_epoch: float | None = None, timeout_s
                 if re.search(r"sign in|couldn't sign you in", blob, re.I) and not re.search(
                     r"inbox|primary|search", blob, re.I
                 ):
+                    mark_gmail_login_required()
                     print("email_otp=gmail_login_required", flush=True)
                     return None
                 codes = extract_otp_candidates(blob)
@@ -457,6 +495,12 @@ def try_clear_email_otp(page, *, wait_s: float | None = None) -> bool:
     ).exists():
         budget = min(budget, float(os.environ.get("ATS_EMAIL_OTP_ASLEEP_WAIT_SEC", "45")))
 
+    # Fast-fail: prior probe already saw Gmail Sign-in and IMAP is not configured.
+    # Do not burn ATS_EMAIL_OTP_WAIT_SEC × parallel workers on Oracle OTP walls.
+    if mailbox_unavailable_for_otp():
+        print("email_otp=gmail_login_required_abort", flush=True)
+        return False
+
     sent_after = time.time() - 30
     print(f"email_otp=start wait={int(budget)}s", flush=True)
     deadline = time.time() + max(8.0, budget)
@@ -465,6 +509,9 @@ def try_clear_email_otp(page, *, wait_s: float | None = None) -> bool:
         attempt += 1
         code = fetch_email_otp(page, after_epoch=sent_after, timeout_s=min(25.0, deadline - time.time()))
         if not code:
+            if mailbox_unavailable_for_otp():
+                print("email_otp=gmail_login_required_abort", flush=True)
+                return False
             time.sleep(3.0)
             continue
         if not fill_otp_fields(page, code):

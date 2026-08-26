@@ -10,7 +10,14 @@ _ROOT = Path(__file__).resolve().parents[2]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from tools.ats.email_otp import extract_otp_candidates, page_shows_otp_wall
+from tools.ats.email_otp import (
+    extract_otp_candidates,
+    gmail_session_known_dead,
+    mailbox_unavailable_for_otp,
+    mark_gmail_login_required,
+    page_shows_otp_wall,
+    reset_gmail_login_flag,
+)
 
 
 def assert_true(cond: bool, msg: str) -> None:
@@ -61,5 +68,16 @@ assert_true(
     not page_shows_otp_wall(_FakePage("Email Address\nI agree with the terms\nNEXT")),
     "pre-otp form is not wall",
 )
+
+# Cross-process Gmail Sign-in flag: abort OTP wait when mailbox is unreachable.
+reset_gmail_login_flag()
+assert_true(not gmail_session_known_dead(), "flag clear")
+assert_true(not mailbox_unavailable_for_otp(), "available before mark")
+mark_gmail_login_required()
+assert_true(gmail_session_known_dead(), "flag set")
+# Without GMAIL_APP_PASSWORD in env, mailbox is unavailable.
+assert_true(mailbox_unavailable_for_otp(), "unavailable after mark without IMAP")
+reset_gmail_login_flag()
+assert_true(not gmail_session_known_dead(), "flag reset")
 
 print("tools/ats/test_email_otp.py OK")
