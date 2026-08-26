@@ -1018,7 +1018,23 @@ def upload_smartapply_resume(sb, max_attempts: int = 4) -> dict:
         primary = RESUME
     candidates = _resume_upload_candidates(primary)
 
+    url = ""
+    try:
+        url = sb.get_current_url() or ""
+    except Exception:
+        url = ""
     status = _smartapply_resume_status(sb)
+    on_resume = bool(
+        "resume-selection" in url.lower()
+        or "/form/resume" in url.lower()
+        or status.get("hasFileInput")
+        or status.get("addResumeOnly")
+        or status.get("error")
+    )
+    if not on_resume:
+        print("  resume_upload_skip_not_on_module", flush=True)
+        return {"ok": False, "via": "skip_not_module", "url": url[:120]}
+
     if status.get("ok"):
         print(f"  resume_already_ok={status}", flush=True)
         return {"ok": True, "via": "already", **status}
