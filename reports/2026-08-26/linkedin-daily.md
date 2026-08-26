@@ -30,12 +30,12 @@ Prior post-fix re-run (no applies): https://cursor.com/agents/bc-ff41bcbc-bc70-4
 | Blocked | wrong_password + CAPTCHA |
 
 ## Code fix (this run)
-Branch `cursor/portal-daily-post-fix-re-run-2026-08-26-bcc5` (pushed; PR create pending owner approval — `gh` integration cannot open PRs):
+This agent branch (pushed; PR create pending owner approval — `gh` integration cannot open PRs):
 - Drive Google popup through `challenge/pwd` then `ASK_OWNER_GOOGLE_2FA`
 - Do not classify `challenge/pwd` as 2FA or portal CAPTCHA
 - Import `tools.google_2fa_prompt` when auto_login is launched as a script
-- Tests: `python3 -m pytest -q tools/portal/test_auto_login_restriction.py tools/test_google_2fa_prompt.py` (7 passed)
-- Issues: `automation-prompts/issues/portal.md`
+- Tests: `python3 -m pytest -q tools/*/test_auto_login_restriction.py tools/test_google_2fa_prompt.py` (7 passed)
+- Issues: `automation-prompts/issues/` portal log
 
 Did **not** launch another same-day apply re-run: remaining blocker is owner secrets + CAPTCHA (not a new code loop). Post-fix re-run count today for this portal: this is #2 of 5.
 
