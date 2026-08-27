@@ -857,16 +857,20 @@ async function main() {
         const atsSoft = ats && atsSubmitClicked(ats.status);
         const nativeFalconOnly = falconOk && !needsExternalAts;
 
+        const pushReferralDraft = () => {
+          if (report.referralDrafts.length >= 3) return;
+          report.referralDrafts.push({
+            company: verdict.company,
+            title: verdict.title,
+            url: redirectUrl || null,
+            draft: `Hi — I'm applying for ${verdict.title} at ${verdict.company}. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)`,
+          });
+        };
+
         if (nativeFalconOnly || atsOk) {
           report.applied.push(entry);
           applies += 1;
-          if (report.referralDrafts.length < 3) {
-            report.referralDrafts.push({
-              company: verdict.company,
-              title: verdict.title,
-              draft: `Hi — I'm applying for ${verdict.title} at ${verdict.company}. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed ([REDACTED] / +91 8790251698)`,
-            });
-          }
+          pushReferralDraft();
         } else if (needsExternalAts && (falconOk || ats)) {
           report.blocked.push({
             jobId,
@@ -885,6 +889,8 @@ async function main() {
             falconNext: entry.falconNext,
             ats,
           });
+          // LinkedIn redirects without Easy Apply still need referral outreach drafts.
+          if (/linkedin\.com/i.test(String(redirectUrl || ""))) pushReferralDraft();
           console.error(
             `[foundit] NOT counting apply — need ATS submit; Falcon ok=${!!falconOk} ATS=${ats && ats.status}`
           );

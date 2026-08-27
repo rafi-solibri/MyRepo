@@ -1,5 +1,12 @@
 # Foundit — issues & fixes
 
+## 2026-08-27 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| hasDotNetProof used \\bc#\\b so C#-only titles/skills never matched (.NET proof false) | Match Cutshort: detect c# / csharp without trailing word-boundary; add filters.test.js coverage |
+
+
 ## 2026-08-26 (cloud)
 
 | Issue | Fix |
