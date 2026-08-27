@@ -98,7 +98,9 @@ function titleForMatch(title) {
 
 function hasDotNetProof(text) {
   const norm = String(text || "").replace(/asp\.?\s*net/gi, "DOTNET");
-  return /\.net|\bdotnet\b|\bdot\s*net\b|\bc#\b/i.test(norm);
+  // Do NOT use `\bc#\b` — `#` is non-word so trailing `\b` never matches "C#" / "C#," / "C# &".
+  // Cutshort parity: bare `c#` + `\bcsharp\b`.
+  return /\.net|\bdotnet\b|\bdot\s*net\b|c#|\bcsharp\b/i.test(norm);
 }
 
 function hasDotNet(title, skills) {

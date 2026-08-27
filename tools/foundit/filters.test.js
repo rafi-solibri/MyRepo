@@ -26,6 +26,24 @@ assert.strictEqual(
 
 assert.strictEqual(hasDotNet("Solution Architect", "ASP.Net Core, Azure"), true);
 assert.strictEqual(hasDotNet("SAP Architect", "SAP MM"), false);
+// C# word-boundary trap: `\bc#\b` never matches "C#" (# is non-word).
+assert.strictEqual(hasDotNet("R&D Senior Software C# Engineer", ""), true);
+assert.strictEqual(hasDotNet("Senior SDET (C# + Selenium)", ""), true);
+assert.strictEqual(hasDotNet("Software Engineer III (Full Stack - Python/C# & Javascript)", ""), true);
+assert.strictEqual(hasDotNet("Firmware Lead", "C++, C#"), true);
+assert.strictEqual(
+  classifyJob({
+    jobId: "csharp-title",
+    title: "R&D Senior Software C# Engineer",
+    companyName: "Hitachi Energy",
+    locations: [{ text: "Hyderabad" }],
+    skills: [],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 12 },
+  }).pass,
+  true,
+  "C# on title must count as .NET proof for Hyd senior roles"
+);
 
 const pass = classifyJob({
   jobId: 1,
