@@ -1,0 +1,21 @@
+{
+  "date": "2026-08-26",
+  "portal": "linkedin",
+  "status": "stopped_login_required",
+  "easyApplySubmitted": 0,
+  "externalCompleted": 0,
+  "skipped": [],
+  "blocked": [
+    {
+      "reason": "wrong_password",
+      "detail": "Auto-login: Google SSO timed out; LINKEDIN_PASSWORD candidates rejected with Wrong email or password; GOOGLE_PASSWORD unset",
+      "artifact": "/opt/cursor/artifacts/linkedin-auto-login-wrong-password.png"
+    }
+  ],
+  "submitted": [],
+  "codeFix": null,
+  "ownerAction": [
+    "Refresh LINKEDIN_PASSWORD (and ideally GOOGLE_PASSWORD)",
+    "If CAPTCHA persists: headed-login + portal session seed"
+  ]
+}
