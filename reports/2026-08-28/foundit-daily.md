@@ -15,7 +15,7 @@
 
 ## False applies / code fix
 - Macquarie **Data Governance** Lead/Architect passed via Arch/Lead exception with no `.NET` on title → add `data governance` to pure AI/data title skip (skills laundry ignored).
-- Fix + test in this run; merge + same-day re-run via `auto-merge-fix-pr.sh`.
+- Merged https://github.com/rafi-solibri/MyRepo/pull/277. Post-fix re-run: **461 → 461** (+0); Macquarie correctly skipped (`pure AI/data without .NET on title`); skips 1191 / dupes 78 / blocked 0.
 
 ## Top 3 LinkedIn referral drafts
 - **Macquarie Group / Data Governance Technology Lead / Solution Architect:** Hi — I'm applying for Data Governance Technology Lead / Solution Architect at Macquarie Group. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)
