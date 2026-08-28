@@ -1,5 +1,12 @@
 # Hirist issues log
 
+## 2026-08-28 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| No Cursor Automation + GHA CURSOR_API_KEY empty → no same-day Hirist agent (other portals fire via Automations) | Notification Hirist recovery launch when CURSOR_API_KEY set; louder ONE_TIME_LOADERS create steps; launch-daily-portals hirist prompt includes CDP; launched Hirist Daily 2026-08-28 via API |
+
+
 ## 2026-08-26 (cloud)
 
 | Issue | Fix |

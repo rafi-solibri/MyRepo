@@ -1,5 +1,7 @@
 # Hirist Daily 9 AM — paste into Agent instructions
 
+**Status (2026-08-28):** No Cursor Automation UUID yet — owner must create **Hirist Daily 9 AM** from [ONE_TIME_LOADERS.md](ONE_TIME_LOADERS.md). Until then, launches come from GHA Daily Apply Portals (needs repo secret `CURSOR_API_KEY`) or Notification Hirist recovery (`launch-daily-portals.sh --portal hirist`).
+
 Create a new Cursor Automation named **Hirist Daily 9 AM** (cron ~9:00 AM IST).  
 This cloud agent cannot write Automations UI — paste the loader from ONE_TIME_LOADERS.md once after merge.
 

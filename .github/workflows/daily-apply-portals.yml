@@ -1,6 +1,8 @@
-# Reliable 9:00 AM IST launcher for all daily apply portals.
+# Reliable 9:00 AM IST launcher for all daily apply portals (incl. Hirist).
 # Cursor Automations cron can miss even when enabled; this workflow is the
 # durable trigger. Skips portals that already have a same-day agent.
+# REQUIRES repo secret CURSOR_API_KEY — without it Hirist never starts
+# (Hirist has no Cursor Automation UUID yet; other portals still fire via Automations).
 name: Daily Apply Portals
 
 on:
