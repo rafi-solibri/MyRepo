@@ -137,7 +137,7 @@ declare -A NEED=(
   [cutshort]="cutshort_authentication"
   [instahyre]="sessionid"
   [indeed]="__Secure-PassportAuthProxy-BearerToken CTK"
-  [hirist]="token"
+  [hirist]="hirist_seeker_enc token"
   [linkedin_alt]="li_at"
 )
 

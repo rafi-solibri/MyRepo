@@ -78,7 +78,7 @@ COOKIE_SETS=(
   "cutshort_authentication"
   "sessionid"
   "__Secure-PassportAuthProxy-BearerToken CTK"
-  "token"
+  "hirist_seeker_enc token"
   "li_at"
 )
 # hirist + linkedin_alt are optional; do not fail strict mode solely for them.

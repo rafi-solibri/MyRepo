@@ -300,6 +300,27 @@ async function main() {
   state.notes.push(`resume=${resume}`);
   state.notes.push(`ctc=${CURRENT_CTC_LPA}->${EXPECTED_CTC_LPA}`);
 
+  // google_login.js / wait_for_cdp_login.js must be the sole Playwright CDP client.
+  // Connecting here first then spawnSync-ing google_login deadlocks page.goto.
+  const { spawnSync } = require("child_process");
+  const root = path.join(__dirname, "../..");
+  const waitSec = Number(process.env.GOOGLE_2FA_WAIT_SEC || "300");
+  const spawnOpts = { cwd: root, env: process.env, stdio: "inherit" };
+  const probe = spawnSync(process.execPath, [path.join(__dirname, "wait_for_cdp_login.js")], {
+    ...spawnOpts,
+    timeout: 90_000,
+  });
+  let googleLoginExit = null;
+  if (probe.status !== 0) {
+    console.error("[hirist] session missing — trying Google/Gmail login…");
+    const gl = spawnSync(
+      process.execPath,
+      [path.join(__dirname, "google_login.js"), "--wait", String(waitSec)],
+      { ...spawnOpts, timeout: (waitSec + 90) * 1000 }
+    );
+    googleLoginExit = gl.status;
+  }
+
   let browser;
   try {
     browser = await loadChromium().connectOverCDP(CDP);
@@ -317,31 +338,21 @@ async function main() {
 
   const login = await ensureLoggedIn(page);
   if (!login.ok) {
-    // Attempt Gmail / Google SSO before giving up.
-    console.error("[hirist] session missing — trying Google/Gmail login…");
-    const { spawnSync } = require("child_process");
-    const gl = spawnSync(
-      process.execPath,
-      [path.join(__dirname, "google_login.js"), "--wait", String(process.env.GOOGLE_2FA_WAIT_SEC || "300")],
-      { cwd: path.join(__dirname, "../.."), env: process.env, encoding: "utf8" }
-    );
-    if (gl.stdout) process.stdout.write(gl.stdout);
-    if (gl.stderr) process.stderr.write(gl.stderr);
-    const retry = await ensureLoggedIn(page);
-    if (!retry.ok) {
-      state.blocked.push({
-        reason: "hirist_login_required",
-        detail: retry.preview || retry.url || login.preview || login.url,
-        googleLoginExit: gl.status,
-      });
-      writeReports(state);
-      console.log(JSON.stringify({ ok: false, ...state.counts, blocked: state.blocked }, null, 2));
-      process.exit(5);
-    }
-    state.notes.push(`login_ok_after_google url=${retry.url}`);
-  } else {
-    state.notes.push(`login_ok url=${login.url}`);
+    state.blocked.push({
+      reason: "hirist_login_required",
+      detail: login.preview || login.url,
+      googleLoginExit,
+      probeExit: probe.status,
+    });
+    writeReports(state);
+    console.log(JSON.stringify({ ok: false, counts: { applied: 0 }, blocked: state.blocked }, null, 2));
+    process.exit(5);
   }
+  state.notes.push(
+    googleLoginExit != null
+      ? `login_ok_after_google url=${login.url} googleExit=${googleLoginExit}`
+      : `login_ok url=${login.url}`
+  );
 
   const seenIds = new Set();
   const candidates = [];
