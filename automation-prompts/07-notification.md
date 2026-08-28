@@ -19,7 +19,7 @@ Cloud automations to include (always):
 - Naukri Daily 9 AM (003b88eb-909a-11f1-ba66-0e7d0216e441)
 - Instahyre Daily 9 AM (1d0ea682-9093-11f1-ba66-0e7d0216e441)
 - Indeed Daily (91b09fd7-9093-11f1-ba66-0e7d0216e441)
-- **Hirist Daily 9 AM** — no Cursor Automation ID until owner pastes ONE_TIME_LOADERS. Relies on GHA Daily Apply Portals **or** Notification Hirist recovery below. ALWAYS include Hirist totals when a same-day agent exists (or after recovery launch).
+- **Hirist Daily 9 AM (566599f1-a2a4-11f1-b532-320a589b8025)** — ALWAYS include Hirist totals from that automation and any same-day GHA / post-fix re-run agent (`hirist-apply-report.json` / `hirist-daily-run.json`).
 - **Hitech City / Knowledge City Daily (b65968f7-953d-11f1-ba66-0e7d0216e441)** — runs ~11 AM on its own automation. ALWAYS wait/poll this agent and include applied/blocked/skipped (+ `/opt/cursor/artifacts/hitechcity-daily.json` when present on that run). Do not omit Hitech because the JSON is missing on the Notification pod — pull totals from the Hitech agent transcript.
 
 ## Counts (honest)
@@ -37,7 +37,7 @@ Email delivery:
 - Always write the full report to automation memory
 - Wait/poll still-running apply agents (especially Hitech + Indeed + Hirist) before sending when possible
 - Daily apply launches are owned by GitHub Actions **Daily Apply Portals** (`scripts/launch-daily-portals.sh`, 9:00 AM IST). Do NOT launch LinkedIn/Foundit/Cutshort/Naukri/Instahyre/Indeed/Hitech from Notification.
-- **Hirist recovery (MANDATORY when missing):** if there is no same-day Hirist cloud agent and `CURSOR_API_KEY` is set, run `bash scripts/launch-daily-portals.sh --portal hirist` once, wait/poll that agent, and include applied/external/rejected/blocked/skipped in the email. If the key is unset and Hirist is missing, say so and note owner must set GHA `CURSOR_API_KEY` + create **Hirist Daily 9 AM** from ONE_TIME_LOADERS.
+- **Hirist recovery (MANDATORY when missing):** if there is no same-day Hirist cloud agent and `CURSOR_API_KEY` is set, run `bash scripts/launch-daily-portals.sh --portal hirist` once, wait/poll that agent, and include applied/external/rejected/blocked/skipped in the email. If the key is unset and Hirist is missing, say so and note owner must set GHA `CURSOR_API_KEY`.
 
 ## Auto-fix & push (MANDATORY)
 If the mail pipeline itself has a code-fixable bug (send-job-status-email.mjs, prompt formatting), fix under scripts/ or automation-prompts/, append via `bash scripts/append-issue-fix.sh notification "issue" "fix"`, commit + push a feature branch, open a ready PR to main and run `bash scripts/auto-merge-fix-pr.sh`. Follow automation-prompts/AUTO_FIX.md. List today’s open/merged portal fix PRs in the email. Owner-only: missing RESEND secrets / verified domain.

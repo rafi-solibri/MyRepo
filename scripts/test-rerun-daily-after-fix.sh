@@ -33,7 +33,7 @@ got="$(bash "$SCRIPT" --detect-from-files tools/naukri/workday_apply.js automati
 expect "$got" "naukri" "files naukri helper"
 
 got="$(bash "$SCRIPT" --detect-from-files tools/chrome_session.js)"
-want="$(printf '%s\n' linkedin foundit cutshort naukri instahyre indeed hitechcity)"
+want="$(printf '%s\n' linkedin foundit cutshort naukri instahyre indeed hirist hitechcity)"
 expect "$got" "$want" "shared chrome_session → all apply portals"
 
 got="$(bash "$SCRIPT" --detect-from-files tools/ats/complete.py)"

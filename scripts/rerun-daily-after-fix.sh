@@ -174,7 +174,7 @@ automation_id() {
     naukri) echo 003b88eb-909a-11f1-ba66-0e7d0216e441 ;;
     instahyre) echo 1d0ea682-9093-11f1-ba66-0e7d0216e441 ;;
     indeed) echo 91b09fd7-9093-11f1-ba66-0e7d0216e441 ;;
-    hirist) echo "" ;;
+    hirist) echo 566599f1-a2a4-11f1-b532-320a589b8025 ;;
     notification) echo 8e34696c-90b1-11f1-ba66-0e7d0216e441 ;;
     hitechcity) echo b65968f7-953d-11f1-ba66-0e7d0216e441 ;;
     hotels) echo "" ;;
