@@ -99,6 +99,55 @@ def password_candidates(env: dict | None = None) -> list[str]:
     return out
 
 
+def is_google_password_challenge(url: str, body: str = "") -> bool:
+    """Google account password page — not authenticator 2FA."""
+    u = (url or "").lower()
+    if re.search(r"signin/challenge/pwd|/challenge/pwd", u):
+        return True
+    if "accounts.google.com" in u and re.search(
+        r"enter your password|that.?s not the right password|wrong password",
+        body or "",
+        re.I,
+    ):
+        return True
+    return False
+
+
+def _google_password_box(popup):
+    """First visible Google password input (Passwd on /signin/challenge/pwd)."""
+    if popup is None:
+        return None
+    for sel in (
+        "input[name='Passwd']",
+        "input[type='password']",
+        "input[name='password']",
+        "input[autocomplete*='current-password']",
+    ):
+        loc = popup.locator(sel)
+        try:
+            n = min(loc.count(), 5)
+        except Exception:
+            n = 0
+        for i in range(n):
+            try:
+                el = loc.nth(i)
+                if el.is_visible():
+                    return el
+            except Exception:
+                continue
+    return None
+
+
+def _wait_google_password_box(popup, timeout_s: float = 8.0):
+    deadline = time.time() + timeout_s
+    while time.time() < deadline:
+        box = _google_password_box(popup)
+        if box is not None:
+            return box
+        time.sleep(0.4)
+    return None
+
+
 def is_google_identifier_url(url: str) -> bool:
     """GSI popup fell through to email/password sign-in (stale Google cookies)."""
     u = (url or "").lower()
@@ -353,23 +402,7 @@ def _complete_google_password_login(popup, email: str, password: str) -> str:
         except Exception:
             return "no_form"
 
-    pass_box = None
-    for sel in ("input[type='password']", "input[name='Passwd']", "input[name='password']"):
-        loc = popup.locator(sel)
-        try:
-            n = min(loc.count(), 5)
-        except Exception:
-            n = 0
-        for i in range(n):
-            try:
-                el = loc.nth(i)
-                if el.is_visible():
-                    pass_box = el
-                    break
-            except Exception:
-                continue
-        if pass_box is not None:
-            break
+    pass_box = _wait_google_password_box(popup, timeout_s=6.0)
     if pass_box is None:
         body = _page_body(popup)
         if wrong_password_text(body):
@@ -395,6 +428,64 @@ def _complete_google_password_login(popup, email: str, password: str) -> str:
     if re.search(r"verify|2-step|unusual activity|captcha", body, re.I):
         return "need_human"
     return "ok"
+
+
+def _fill_google_password_if_needed(popup) -> str:
+    """Fill Google /signin/challenge/pwd after GSI chooser or identifier.
+
+    Account-chooser clicks used to skip this and treat /challenge/pwd as 2FA,
+    so Google SSO timed out and the portal native password burned next.
+    """
+    if popup is None:
+        return "skipped"
+    try:
+        popup.wait_for_load_state("domcontentloaded", timeout=15000)
+    except Exception:
+        pass
+    _wait_google_password_box(popup, timeout_s=6.0)
+    try:
+        url = popup.url or ""
+    except Exception:
+        url = ""
+    body = _page_body(popup)
+    if not (
+        is_google_password_challenge(url, body)
+        or is_google_identifier_url(url)
+        or _google_password_box(popup) is not None
+        or re.search(r"Enter your password|Email or phone", body, re.I)
+    ):
+        return "skipped"
+    email = EMAIL or DEFAULT_EMAIL
+    last = "no_form"
+    for pw in password_candidates():
+        last = _complete_google_password_login(popup, email, pw)
+        if last in ("ok", "need_human"):
+            break
+    if last == "wrong_password":
+        try:
+            popup.screenshot(
+                path=str(_art() / "linkedin-auto-login-wrong-password.png"),  # pragma: allowlist secret
+                timeout=8000,
+            )
+        except Exception:
+            pass
+    return last
+
+
+def _maybe_wait_google_2fa(popup) -> None:
+    """Wait on real authenticator/phone 2FA — never on /signin/challenge/pwd."""
+    if popup is None:
+        return
+    try:
+        from tools.google_2fa_prompt import (
+            is_google_2fa_challenge,
+            wait_owner_google_2fa,
+        )
+
+        if is_google_2fa_challenge(popup):
+            wait_owner_google_2fa(popup, portal="linkedin")  # pragma: allowlist secret
+    except Exception as e:
+        print(f"ASK_OWNER_GOOGLE_2FA (linkedin) helper error: {e}", flush=True)  # pragma: allowlist secret
 
 
 def _reveal_full_login_form(page) -> None:
@@ -539,56 +630,11 @@ def _click_continue_google(ctx, page) -> bool:
                         break
             if chosen:
                 break
-        if not chosen:
-            # Stale Google cookies → identifier/password form instead of chooser.
-            if is_google_identifier_url(popup.url or "") or re.search(
-                r"Email or phone|Enter your password", _page_body(popup), re.I
-            ):
-                email = EMAIL or DEFAULT_EMAIL
-                ident_result = "no_form"
-                for pw in password_candidates():
-                    ident_result = _complete_google_password_login(popup, email, pw)
-                    if ident_result in ("ok", "need_human"):
-                        break
-                if ident_result == "wrong_password":
-                    try:
-                        popup.screenshot(
-                            path=str(_art() / "linkedin-auto-login-wrong-password.png"),
-                            timeout=8000,
-                        )
-                    except Exception:
-                        pass
-                if ident_result == "need_human":
-                    # Authenticator / phone prompt — banner in chat for mobile owner.
-                    try:
-                        from tools.google_2fa_prompt import (
-                            is_google_2fa_challenge,
-                            wait_owner_google_2fa,
-                        )
-
-                        if is_google_2fa_challenge(popup):
-                            wait_owner_google_2fa(popup, portal="linkedin")
-                    except Exception as e:
-                        print(
-                            f"ASK_OWNER_GOOGLE_2FA (linkedin) helper error: {e}",
-                            flush=True,
-                        )
-                if ident_result != "no_form":
-                    return True
-            # Single-account auto-select may already proceed; wait.
-            time.sleep(2)
-        # Post-chooser 2FA challenge (common when Google session is warm).
-        try:
-            from tools.google_2fa_prompt import (
-                is_google_2fa_challenge,
-                wait_owner_google_2fa,
-            )
-
-            challenge_page = popup
-            if is_google_2fa_challenge(challenge_page):
-                wait_owner_google_2fa(challenge_page, portal="linkedin")
-        except Exception:
-            pass
+        # After chooser OR identifier: fill /signin/challenge/pwd (not 2FA).
+        ident_result = _fill_google_password_if_needed(popup)
+        if ident_result not in ("skipped",):
+            print(f"google_password_fill={ident_result}", flush=True)
+        _maybe_wait_google_2fa(popup)
         for name in ("Continue", "Allow", "Next", "Confirm"):
             try:
                 b = popup.get_by_role("button", name=re.compile(rf"^{name}$", re.I))

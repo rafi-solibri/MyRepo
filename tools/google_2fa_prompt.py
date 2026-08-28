@@ -36,6 +36,15 @@ _CHALLENGE_RE = re.compile(
     re.I,
 )
 
+_PASSWORD_CHALLENGE_URL_RE = re.compile(
+    r"signin/challenge/pwd|/challenge/pwd",
+    re.I,
+)
+_PASSWORD_BODY_RE = re.compile(
+    r"enter your password|that.?s not the right password|wrong password",
+    re.I,
+)
+
 _DONE_URL_RE = re.compile(
     r"linkedin\.com/(feed|jobs|in/)|hirist\.tech/(applied|jobfeed|myprofile)|"
     r"naukri\.com|foundit\.in|cutshort\.io|instahyre\.com|indeed\.com|"
@@ -44,8 +53,7 @@ _DONE_URL_RE = re.compile(
 )
 
 
-def is_google_2fa_challenge(page: Any = None, *, url: str = "", body: str = "") -> bool:
-    """True when the page looks like a Google 2FA / challenge screen."""
+def _page_url_body(page: Any = None, url: str = "", body: str = "") -> tuple[str, str]:
     u = url or ""
     text = body or ""
     if page is not None:
@@ -58,6 +66,27 @@ def is_google_2fa_challenge(page: Any = None, *, url: str = "", body: str = "") 
                 text = page.locator("body").inner_text(timeout=2000)[:2500]
             except Exception:
                 text = ""
+    return u, text
+
+
+def is_google_password_challenge(
+    page: Any = None, *, url: str = "", body: str = ""
+) -> bool:
+    """True for Google account password (/signin/challenge/pwd) — not 2FA."""
+    u, text = _page_url_body(page, url, body)
+    if _PASSWORD_CHALLENGE_URL_RE.search(u):
+        return True
+    if "accounts.google.com" in u.lower() and _PASSWORD_BODY_RE.search(text):
+        return True
+    return False
+
+
+def is_google_2fa_challenge(page: Any = None, *, url: str = "", body: str = "") -> bool:
+    """True when the page looks like a Google 2FA / challenge screen."""
+    u, text = _page_url_body(page, url, body)
+    # Password page shares /signin/challenge/ in the URL; Hirist #282: do not wait as 2FA.
+    if is_google_password_challenge(url=u, body=text):
+        return False
     blob = f"{u}\n{text}"
     if "accounts.google.com" in u.lower() and _CHALLENGE_RE.search(blob):
         return True

@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-08-28 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Google SSO timed out on /signin/challenge/pwd after account chooser (treated as 2FA; native portal password then rejected) | Fill Passwd on challenge/pwd after chooser; google_2fa_prompt excludes password page from 2FA wait |
+
+
 ## 2026-08-25 (cloud)
 
 | Issue | Fix |

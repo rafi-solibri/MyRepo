@@ -70,3 +70,14 @@ def test_is_google_identifier_url():
     )
     assert not _mod.is_google_identifier_url("https://accounts.google.com/gsi/select")
     assert not _mod.is_google_identifier_url("https://www.example.com/login")
+
+
+def test_is_google_password_challenge():
+    assert _mod.is_google_password_challenge(
+        "https://accounts.google.com/v3/signin/challenge/pwd?TL=abc",
+        "Enter your password",
+    )
+    assert not _mod.is_google_password_challenge(
+        "https://accounts.google.com/v3/signin/challenge/totp?TL=abc",
+        "Enter the code from your authenticator app",
+    )

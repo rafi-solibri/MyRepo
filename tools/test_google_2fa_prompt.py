@@ -10,7 +10,10 @@ _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from tools.google_2fa_prompt import is_google_2fa_challenge  # noqa: E402
+from tools.google_2fa_prompt import (  # noqa: E402
+    is_google_2fa_challenge,
+    is_google_password_challenge,
+)
 
 
 def assert_true(cond: bool, msg: str) -> None:
@@ -45,6 +48,20 @@ assert_true(
         body="Email or phone",
     ),
     "identifier alone is not 2FA",
+)
+assert_true(
+    is_google_password_challenge(
+        url="https://accounts.google.com/v3/signin/challenge/pwd?TL=abc",
+        body="Enter your password",
+    ),
+    "pwd URL is a password challenge",
+)
+assert_true(
+    not is_google_2fa_challenge(
+        url="https://accounts.google.com/v3/signin/challenge/pwd?TL=abc",
+        body="Enter your password\nWrong password. Try again",
+    ),
+    "challenge/pwd must not count as 2FA",
 )
 
 print("google_2fa_prompt tests OK")
