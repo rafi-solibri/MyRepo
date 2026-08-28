@@ -31,6 +31,10 @@ from zoneinfo import ZoneInfo
 
 from playwright.sync_api import sync_playwright
 
+_ROOT = Path(__file__).resolve().parents[2]
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
 CDP = os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222")
 EMAIL = (
     os.environ.get("LINKEDIN_EMAIL")

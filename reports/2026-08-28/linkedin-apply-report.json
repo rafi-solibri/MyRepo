@@ -1,0 +1,29 @@
+{
+  "ts": "2026-08-28T06:17:00+00:00",
+  "ok": false,
+  "counts": {
+    "applied": 0,
+    "submitted": 0,
+    "skipped": 0,
+    "blocked": 1,
+    "seen": 0
+  },
+  "applied": [],
+  "submitted": [],
+  "skipped": [],
+  "blocked": [
+    {
+      "status": "blocked",
+      "company": "",
+      "role": "",
+      "job_id": "",
+      "location": "",
+      "reason": "wrong_password: Google /signin/challenge/pwd rejected the aliased Gmail secret and the Workday password; native portal login also rejected. 0 applies.",
+      "url": "",
+      "path": "login"
+    }
+  ],
+  "external_candidates": [],
+  "all": [],
+  "note": "POST_FIX_RERUN=1 after #282. Code fix fills Google Passwd after GSI chooser; owner must set GOOGLE_PASSWORD. No invented applies."
+}
