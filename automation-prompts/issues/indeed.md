@@ -1,5 +1,12 @@
 # Indeed — issues & fixes
 
+## 2026-08-28 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Crowe SmartApply: sponsorship/visa + familial relationship defaulted Yes (empty follow-up); currently-work-at-client filled employer name | wantFromText: sponsorship/relationship/work-at-client → No + N/A details; clickMatching want=no; unchecked radios prefer No on those questions |
+
+
 ## 2026-08-26 (cloud)
 
 | Issue | Fix |

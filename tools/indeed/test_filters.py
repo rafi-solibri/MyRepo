@@ -205,6 +205,18 @@ def test_job_dedupe_key_from_jk():
     )
 
 
+def test_smartapply_yes_no_does_not_default_sponsorship_or_relationship():
+    """Crowe 2026-08-28: visa-in-sponsorship and catch-all yes/no selected Yes."""
+    src = Path(ROOT / "tools/indeed/uc_daily_apply.py").read_text(encoding="utf-8")
+    assert "want === 'no'" in src
+    assert "employment visa" in src.lower()
+    assert "familial" in src
+    assert "currently work at (this |the )?(company|client" in src
+    # Generic visa token must not force Yes on sponsorship questions.
+    assert "&& !/authorized|work authori/.test(t)" in src
+    assert "if (want === 'no') continue" in src
+
+
 if __name__ == "__main__":
     test_skip_hyd_remote_ok()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
@@ -217,4 +229,6 @@ if __name__ == "__main__":
     test_india_home_get_started_is_not_login_proof()
     test_account_settings_and_serp_are_signed_in()
     test_job_dedupe_key_from_jk()
+    test_company_ats_email_gate_is_not_indeed_login()
+    test_smartapply_yes_no_does_not_default_sponsorship_or_relationship()
     print("ok")

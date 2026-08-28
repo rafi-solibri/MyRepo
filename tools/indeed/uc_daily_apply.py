@@ -864,8 +864,15 @@ def fill_common_questions(sb) -> None:
                   && !/salary|ctc|compensation|pay/.test(t)) {
                 return 'Solutions Architect';
               }
+              // "Do you currently work at <this company/client>?" is Yes/No, not employer name.
+              // Crowe 2026-08-28: "If yes, provide the company name" made this look like employer.
+              if (/do you currently work (at|for)|currently work at (this |the )?(company|client|employer)/.test(t)
+                  && /(yes|no)/.test(t)) {
+                return 'no';
+              }
               if (/current.*(employer|company|organization)|present.*(employer|company)|where.*(work|employed)/.test(t)
-                  && !/salary|ctc|compensation|pay/.test(t)) {
+                  && !/salary|ctc|compensation|pay/.test(t)
+                  && !/do you currently work|if yes, provide/.test(t)) {
                 return 'Nemetschek / Solibri';
               }
               if (/linkedin(\\.com)?|profile url|portfolio url/.test(t)) {
@@ -936,10 +943,26 @@ def fill_common_questions(sb) -> None:
                 return 'yes';
               }
               if (/relocat|willing to work|hybrid|work from office|bond|service agreement|background check|drug test/.test(t)) return 'yes';
-              if (/authorized|work authori|visa|citizen|india|legally/.test(t)) return 'yes';
+              // Sponsorship / work-permit must be No (Indian citizen, Immediate).
+              // BEFORE authorized/visa → Yes: "Employment Visa (E Visa)" was matching visa and
+              // forcing Yes (Crowe 2026-08-28 Azure Integration Engineering Manager).
+              if (/(sponsor|work permit|employment visa|e\\s*visa|h-?1b)/.test(t)
+                  && /(require|need|will you|do you)/.test(t)
+                  && !/authorized|work authori/.test(t)) {
+                return 'no';
+              }
+              if (/(familial|romantic|close personal relationship|related to (a |any )?(employee|applicant)|conflict of interest)/.test(t)
+                  && !/linkedin|current employer/.test(t)) {
+                return 'no';
+              }
+              if (/identify the individual|describe the relationship|if none.{0,20}n\\/?a/.test(t)) {
+                return 'N/A';
+              }
+              if (/authorized|work authori|citizen|legally/.test(t) && !/sponsor|work permit/.test(t)) return 'yes';
               if (/gender/.test(t)) return 'male';
               if (/city|current location|prefer.*location|job location|base location/.test(t)) return 'Hyderabad';
-              if (/\\?/.test(t) && /(yes|no)/.test(t)) return 'yes';
+              if (/\\?/.test(t) && /(yes|no)/.test(t)
+                  && !/(familial|romantic|relationship with|sponsor|conflict|work permit)/.test(t)) return 'yes';
               if (/what makes you unique|cover letter|why (do )?you|tell us|about yourself|summary|additional information/.test(t)) {
                 return 'Solutions Architect / Tech Lead with 14+ years in .NET, Azure, microservices. Immediate joiner. Hyd/Remote. Expected 65 LPA.';
               }
@@ -951,6 +974,7 @@ def fill_common_questions(sb) -> None:
                 const lab = ((r.getAttribute('aria-label')||'') + ' ' + (r.parentElement?.innerText||'') + ' ' + (r.value||'')).toLowerCase().slice(0,160);
                 const hit =
                   (want === 'yes' && /\\byes\\b|yep|true|agree|available/.test(lab) && !/\\bno\\b/.test(lab)) ||
+                  (want === 'no' && /\\bno\\b|false|never|disagree|n\\/?a/.test(lab) && !/\\byes\\b/.test(lab)) ||
                   (want === 'male' && /\\bmale\\b/.test(lab) && !/female/.test(lab)) ||
                   (want === 'Mr.' && (/^mr\\.?$/.test(lab.trim()) || (/\\bmr\\.?\\b/.test(lab) && !/mrs|miss|\\bms\\.?\\b/.test(lab)))) ||
                   (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than|currently serving|serving notice/.test(lab)) ||
@@ -967,6 +991,7 @@ def fill_common_questions(sb) -> None:
                   const t = (opt.text||'').toLowerCase();
                   if (
                     (want === 'yes' && /\\byes\\b/.test(t)) ||
+                    (want === 'no' && /\\bno\\b/.test(t) && !/\\byes\\b/.test(t)) ||
                     (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs/.test(t)) ||
                     (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than/.test(t)) ||
                     (want === '0' && /\\b0\\b|immediate|0\\s*day|0-15|less than/.test(t)) ||
@@ -998,6 +1023,8 @@ def fill_common_questions(sb) -> None:
                     return true;
                   }
                 }
+                // Do not dump "no" into an unrelated text box when radios failed.
+                if (want === 'no') continue;
                 if (want) { setNative(el, want); return true; }
               }
               // Custom listbox / button options (Indeed education / years are often comboboxes).
@@ -1013,6 +1040,7 @@ def fill_common_questions(sb) -> None:
                 const t = ((el.innerText||'') + ' ' + (el.getAttribute('aria-label')||'')).trim().toLowerCase();
                 if (!t || t.length > 80) continue;
                 if (want === 'yes' && /\\byes\\b|i certify|yes, i certify/.test(t) && !/don'?t certify|\\bno,/.test(t)) { el.click(); return true; }
+                if (want === 'no' && (/^no\\.?$/.test(t.trim()) || (/\\bno\\b/.test(t) && !/\\byes\\b/.test(t) && t.length <= 12))) { el.click(); return true; }
                 // Prefer exact "Mr." / "Mr" nodes — avoid clicking a parent that contains both Mr. and Ms.
                 if (want === 'Mr.' && /^mr\\.?$/.test(t.trim())) { el.click(); return true; }
                 if (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs|miss|\\bms\\.?\\b/.test(t) && t.length <= 12) { el.click(); return true; }
@@ -1107,19 +1135,28 @@ def fill_common_questions(sb) -> None:
                 }
               }
             }
-            // Unchecked radio groups → prefer Yes / Immediate / first option.
+            // Unchecked radio groups → prefer Yes / Immediate / first option,
+            // except sponsorship / relationship / "work at this client" → No.
             const names = new Set(
               [...document.querySelectorAll('input[type=radio]')].map(r => r.name).filter(Boolean)
             );
             for (const name of names) {
               const group = [...document.querySelectorAll(`input[type=radio][name="${CSS.escape(name)}"]`)];
               if (!group.length || group.some(r => r.checked)) continue;
+              const wrap = group[0].closest('fieldset, [class*="question"], [data-testid*="question"], .ia-Questions-item, .ia-FormField, li, section, label, div') || group[0].parentElement;
+              const ctx = ((wrap && wrap.innerText) || '').toLowerCase().slice(0, 280);
+              const preferNo = /(sponsor|work permit|employment visa|familial|romantic|close personal relationship|conflict of interest|currently work at (this |the )?(company|client))/.test(ctx);
               const scored = group.map(r => {
                 const lab = ((r.getAttribute('aria-label')||'') + ' ' + (r.parentElement?.innerText||'') + ' ' + (r.value||'')).toLowerCase();
                 let s = 0;
                 if (/decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not/.test(lab)) s += 4;
-                if (/\\byes\\b|immediate|agree|available|hyderabad|male\\b|\\bmr\\.?\\b/.test(lab)) s += 3;
-                if (/\\bno\\b|female|not available|never/.test(lab)) s -= 2;
+                if (preferNo) {
+                  if (/\\bno\\b/.test(lab) && !/\\byes\\b/.test(lab)) s += 6;
+                  if (/\\byes\\b/.test(lab)) s -= 4;
+                } else {
+                  if (/\\byes\\b|immediate|agree|available|hyderabad|male\\b|\\bmr\\.?\\b/.test(lab)) s += 3;
+                  if (/\\bno\\b|female|not available|never/.test(lab)) s -= 2;
+                }
                 return {r, s, lab};
               }).sort((a,b) => b.s - a.s);
               try { scored[0].r.click(); answered += 1; } catch (e) {}
