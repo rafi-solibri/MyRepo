@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Senior VDI Architect (Citrix & Azure Virtual Desktop) false Quick Apply (Manpowergroup 2026-08-28 re-run) | SKIP_TITLE_RE: vdi\|citrix\|azure virtual desktop\|avd\|virtual desktop (+ tests) |
 | Broadcom Workday: fillFieldInput matched wrapper div so phone stayed +91… and names ALL-CAPS; empty companyName / multi-row degree Select One blocked My Experience | Prefer nested input in fillFieldInput; normalizeWorkdayPhone strips +91; fillWorkExperience from title/desc; per-row 70-Bachelor degree + Siddhartha school; title-skips for BigData/Copilot/Oracle EPM/Meraki/UI/Security/Tableau/Sharepoint/SD-WAN false Quick Applies |
 
 

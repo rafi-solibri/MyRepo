@@ -477,6 +477,21 @@ assert.strictEqual(
   false,
   "Generic Senior Solution Architect must still apply"
 );
+assert.strictEqual(
+  shouldSkipTitle("Senior VDI Architect (Citrix & Azure Virtual Desktop)"),
+  true,
+  "VDI/Citrix/AVD Architect must skip (false Quick Apply 2026-08-28 post-fix re-run)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Citrix Architect"),
+  true,
+  "Citrix Architect must skip — desktop virtualization, not .NET"
+);
+assert.strictEqual(
+  shouldSkipTitle("Azure Virtual Desktop Architect"),
+  true,
+  "Azure Virtual Desktop / AVD Architect must skip"
+);
 const { workdayCompliantPassword } = require("./workday_apply");
 assert.strictEqual(workdayCompliantPassword("GoodPass123!"), "GoodPass123!");
 const weak = workdayCompliantPassword("short");
