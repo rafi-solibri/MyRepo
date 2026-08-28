@@ -87,8 +87,11 @@ daily_prompt_for() {
     linkedin)
       extra="Run bash scripts/preflight-portal-run.sh linkedin then bash scripts/launch-chrome-cdp.sh linkedin. Use resumes/Rafi_Resume.docx. Execute the daily LinkedIn apply job now."
       ;;
-    foundit|cutshort|instahyre|hirist)
+    foundit|cutshort|instahyre)
       extra="Run bash scripts/preflight-portal-run.sh $portal first. Use resumes/Rafi_Resume.docx. Execute the daily ${label} apply job now."
+      ;;
+    hirist)
+      extra="Run bash scripts/preflight-portal-run.sh hirist first, then bash scripts/launch-chrome-cdp.sh hirist. Use resumes/Rafi_Resume.docx. Execute the daily Hirist apply job now via node tools/hirist/daily_apply.js."
       ;;
     naukri)
       extra="Run bash scripts/preflight-portal-run.sh naukri then bash scripts/launch-chrome-cdp.sh naukri. CRITICAL STEP 0: refresh Naukri profile resume with resumes/Rafi_Resume.docx via node tools/naukri/update_profile_resume.js (or node tools/naukri/daily_apply.js which does STEP 0) BEFORE applying. Then execute the daily Naukri apply job."

@@ -1,5 +1,12 @@
 # Notification — issues & fixes
 
+## 2026-08-28 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Hirist missing from status mail because no Automation and GHA launch failed | 07-notification: mandatory Hirist recovery via launch-daily-portals.sh --portal hirist when same-day agent missing |
+
+
 ## 2026-08-26 (cloud)
 
 | Issue | Fix |

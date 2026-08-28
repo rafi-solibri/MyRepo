@@ -66,14 +66,18 @@ Otherwise: `bash scripts/preflight-portal-run.sh indeed`, then `node tools/indee
 Use resumes/Rafi_Resume.docx. Report submitted/skipped/blocked.
 ```
 
-## Hirist Daily 9 AM
-Create a new Cursor Automation named **Hirist Daily 9 AM** (cron ~9:00 AM IST). Paste once:
+## Hirist Daily 9 AM — OWNER MUST CREATE (still missing as of 2026-08-28)
+Unlike LinkedIn/Foundit/etc., **Hirist has no Cursor Automation ID yet**. Without this automation **and** without GitHub Actions secret `CURSOR_API_KEY`, morning Hirist never starts (Notification will recover-launch only when the cloud env has `CURSOR_API_KEY`).
+
+1. Create a new Cursor Automation named **Hirist Daily 9 AM** (cron ~9:00 AM IST).
+2. Paste once:
 
 ```text
 Read and OBEY the full instructions in automation-prompts/09-hirist.md (the fenced text block). Run `bash scripts/preflight-portal-run.sh hirist` first, then `bash scripts/launch-chrome-cdp.sh hirist`. Use resumes/Rafi_Resume.docx. Execute the daily Hirist apply job now via `node tools/hirist/daily_apply.js`.
 ```
 
-Owner once: `bash scripts/home-headed-login.sh hirist` then Save Environment snapshot so cron has a live `token` cookie.
+3. Owner once: `bash scripts/home-headed-login.sh hirist` then Save Environment snapshot so cron has a live `token` cookie (session seed currently lacks Hirist).
+4. After create, paste the new automation URL/UUID into `automation-prompts/09-hirist.md` + `07-notification.md` + `scripts/rerun-daily-after-fix.sh` `automation_id` for hirist.
 
 ## Notification Job 11 AM
 https://cursor.com/automations/8e34696c-90b1-11f1-ba66-0e7d0216e441
