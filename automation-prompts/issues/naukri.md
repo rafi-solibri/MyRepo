@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-08-28 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Broadcom Workday: fillFieldInput matched wrapper div so phone stayed +91… and names ALL-CAPS; empty companyName / multi-row degree Select One blocked My Experience | Prefer nested input in fillFieldInput; normalizeWorkdayPhone strips +91; fillWorkExperience from title/desc; per-row 70-Bachelor degree + Siddhartha school; title-skips for BigData/Copilot/Oracle EPM/Meraki/UI/Security/Tableau/Sharepoint/SD-WAN false Quick Applies |
+
+
 ## 2026-08-26 (cloud)
 
 | Issue | Fix |

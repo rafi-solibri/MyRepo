@@ -48,10 +48,18 @@ function workdayCompliantPassword(raw) {
   if (!/[^A-Za-z0-9]/.test(pw)) extra += "!";
   pw += extra;
   if (pw.length < 12) {
-    pw = (pw + "Aa1!").slice(0, Math.max(12, pw.length));
-    while (pw.length < 12) pw += "x";
+    pw = (pw + "Aa1!Aa1!Aa1!").slice(0, 12);
   }
   return pw;
+}
+
+/** Workday phone fields reject "+91 …" when country code is already India (+91). */
+function normalizeWorkdayPhone(raw) {
+  let s = String(raw || "").trim();
+  s = s.replace(/^\+?\s*91[\s-]*/, "");
+  s = s.replace(/[^\d]/g, "");
+  if (s.length > 10 && s.startsWith("91")) s = s.slice(2);
+  return s.slice(0, 10) || "8790251698";
 }
 
 const CREATE_PASS = workdayCompliantPassword(PASS);
@@ -544,9 +552,12 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
   }
 
   async function fillFieldInput(formFieldId, value) {
-    const el = page
-      .locator(`[data-automation-id='${formFieldId}'] input, [data-automation-id='${formFieldId}']`)
-      .first();
+    // Prefer the nested input. A union with the wrapper matches the wrapper
+    // first in document order, so fills silently no-op on Broadcom/Workday.
+    let el = page.locator(`[data-automation-id='${formFieldId}'] input`).first();
+    if (!(await el.isVisible().catch(() => false))) {
+      el = page.locator(`[data-automation-id='${formFieldId}']`).first();
+    }
     if (!(await el.isVisible().catch(() => false))) return false;
     await el.click({ force: true }).catch(() => {});
     await el.fill("").catch(() => {});
@@ -645,18 +656,28 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
       }
     }
 
-    await fillFieldInput("legalNameSection_firstName", "Mohammed Abdul Rafi");
-    await fillFieldInput("legalNameSection_lastName", "Ahmed");
-    await fillFieldInput("formField-legalName--firstName", "Mohammed Abdul Rafi");
-    await fillFieldInput("formField-legalName--lastName", "Ahmed");
+    // Title-case given/family only — multi-word Given Name(s) with 3+ capitals
+    // triggers Workday "verify capitalization" alerts (Broadcom etc.).
+    const firstName = "Mohammed";
+    const lastName = "Ahmed";
+    const phone = normalizeWorkdayPhone("8790251698");
+
+    await fillFieldInput("legalNameSection_firstName", firstName);
+    await fillFieldInput("legalNameSection_lastName", lastName);
+    await fillFieldInput("formField-legalName--firstName", firstName);
+    await fillFieldInput("formField-legalName--lastName", lastName);
     await fillFieldInput("addressSection_city", "Hyderabad");
     await fillFieldInput("formField-addressLine1", "Hyderabad, Telangana");
     await fillFieldInput("formField-city", "Hyderabad");
     await fillFieldInput("formField-postalCode", "500032");
-    await fillFieldInput("phone", "8790251698");
-    await fillFieldInput("formField-phoneNumber", "8790251698");
+    await fillFieldInput("phone", phone);
+    await fillFieldInput("formField-phoneNumber", phone);
 
     await pickPromptOption("formField-phoneType", [/^Mobile$/i, /Cell/i, /Mobile/i]);
+    await pickPromptOption("formField-countryPhoneCode", [
+      /\+91/,
+      /India/i,
+    ]);
     await pickPromptOption("formField-source", [
       /^Job Board$/i,
       /Naukri/i,
@@ -666,86 +687,223 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
       /Company Websites/i,
     ]);
 
-    // Aria-label fallbacks.
+    // Aria-label fallbacks — always overwrite autofill ALL-CAPS / +91 phone.
     for (const [re, val] of [
-      [/first name/i, "Mohammed Abdul Rafi"],
-      [/last name/i, "Ahmed"],
+      [/given name|first name/i, firstName],
+      [/family name|last name/i, lastName],
       [/^city$/i, "Hyderabad"],
       [/postal|zip/i, "500032"],
-      [/phone number|mobile/i, "8790251698"],
+      [/phone number|mobile/i, phone],
       [/email/i, EMAIL],
     ]) {
       const el = page.getByLabel(re).first();
       if (await el.isVisible().catch(() => false)) {
         const cur = await el.inputValue().catch(() => "");
-        if (!cur) await el.fill(val).catch(() => {});
+        if (cur !== val) {
+          await el.fill("").catch(() => {});
+          await el.fill(val).catch(() => {});
+        }
       }
     }
   }
 
-  async function selectListboxShort(formFieldId, typeText, acceptRe) {
-    const root = page.locator(`[data-automation-id='${formFieldId}']`).first();
+  async function selectListboxShort(formFieldId, typeText, acceptRe, rootLoc) {
+    const root = rootLoc || page.locator(`[data-automation-id='${formFieldId}']`).first();
     if (!(await root.isVisible().catch(() => false))) return false;
     const cur = ((await root.innerText().catch(() => "")) || "").trim();
     if (acceptRe.test(cur) && !/Select One/i.test(cur)) return true;
-    const btn = root.locator("button[aria-haspopup='listbox']").first();
+    const btn = root.locator("button[aria-haspopup='listbox'], button").first();
     if (!(await btn.isVisible().catch(() => false))) return false;
     await btn.click({ force: true }).catch(() => {});
     await sleep(500);
-    await page.keyboard.type(String(typeText), { delay: 40 }).catch(() => {});
-    await page.keyboard.press("Enter").catch(() => {});
-    await sleep(500);
+    // Broadcom-style coded degrees: "70-Bachelor"
+    const opt = page
+      .locator("[role='option']")
+      .filter({ hasText: acceptRe })
+      .first();
+    if (await opt.isVisible().catch(() => false)) {
+      await opt.click({ force: true }).catch(() => {});
+      await sleep(400);
+    } else {
+      await page.keyboard.type(String(typeText), { delay: 40 }).catch(() => {});
+      await page.keyboard.press("Enter").catch(() => {});
+      await sleep(500);
+    }
+    await page.keyboard.press("Escape").catch(() => {});
     const after = ((await root.innerText().catch(() => "")) || "").trim();
     return acceptRe.test(after) && !/Select One/i.test(after);
   }
 
+  /**
+   * Autofill often leaves Company blank while stuffing the employer into Role Description.
+   * Fill every empty companyName (+ location) from title / description heuristics.
+   */
+  async function fillWorkExperience() {
+    const companyInputs = page.locator(
+      "[data-automation-id='formField-companyName'] input[name='companyName'], input[name='companyName']"
+    );
+    const n = await companyInputs.count().catch(() => 0);
+    if (!n) return;
+
+    const TITLE_COMPANY = [
+      [/nemetschek|solibri/i, "Nemetschek"],
+      [/unitedhealth|uhg/i, "UnitedHealth Group"],
+      [/epam/i, "EPAM Systems"],
+      [/cdk/i, "ADP / CDK Global"],
+      [/^adp$/i, "ADP"],
+      [/ncr/i, "NCR"],
+      [/infosys/i, "Infosys"],
+    ];
+
+    for (let i = 0; i < n; i++) {
+      const el = companyInputs.nth(i);
+      if (!(await el.isVisible().catch(() => false))) continue;
+      let cur = ((await el.inputValue().catch(() => "")) || "").trim();
+      if (cur) continue;
+
+      const meta = await el
+        .evaluate((input) => {
+          const titleId = String(input.id || "").replace(/companyName$/i, "jobTitle");
+          const titleEl = titleId ? document.getElementById(titleId) : null;
+          const title = (titleEl?.value || "").trim();
+          const descId = String(input.id || "").replace(/companyName$/i, "roleDescription");
+          const descEl = descId ? document.getElementById(descId) : null;
+          const desc = (descEl?.value || "").trim();
+          const firstLine = (desc.split("\n")[0] || "").trim();
+          return { title, firstLine, desc };
+        })
+        .catch(() => ({ title: "", firstLine: "", desc: "" }));
+
+      let company = "";
+      if (
+        meta.firstLine &&
+        meta.firstLine.length < 80 &&
+        !/^·|^-|^•/.test(meta.firstLine) &&
+        !/architected|developed|led |optimized|engineered/i.test(meta.firstLine)
+      ) {
+        company = meta.firstLine;
+      }
+      for (const [re, name] of TITLE_COMPANY) {
+        if (re.test(company) || re.test(meta.desc) || re.test(meta.title)) {
+          company = name;
+          break;
+        }
+      }
+      if (!company || /lead|engineer|developer|architect/i.test(company)) {
+        if (/senior developer/i.test(meta.title)) company = "ADP / CDK Global";
+        else if (/systems engineer/i.test(meta.title)) company = "Infosys";
+        else if (/technical lead|technical architect/i.test(meta.title))
+          company = "NCR";
+        else company = company && company.length < 60 ? company : "NCR";
+      }
+
+      await el.click({ force: true }).catch(() => {});
+      await el.fill("").catch(() => {});
+      await el.fill(String(company)).catch(() => {});
+      await sleep(200);
+    }
+
+    const locInputs = page.locator(
+      "[data-automation-id='formField-location'] input[name='location'], input[name='location']"
+    );
+    const ln = await locInputs.count().catch(() => 0);
+    for (let i = 0; i < ln; i++) {
+      const el = locInputs.nth(i);
+      if (!(await el.isVisible().catch(() => false))) continue;
+      const cur = ((await el.inputValue().catch(() => "")) || "").trim();
+      if (!cur) {
+        await el.fill("Hyderabad").catch(() => {});
+      }
+    }
+  }
+
   async function fillEducation() {
-    const schoolRoot = page.locator("[data-automation-id='formField-schoolName']");
-    if (!(await schoolRoot.isVisible().catch(() => false))) return;
-    const schoolText = ((await schoolRoot.innerText().catch(() => "")) || "");
-    if (!/Acharya Nagarjuna|University/i.test(schoolText) || /required/i.test(schoolText)) {
-      const schoolOpen = schoolRoot
-        .locator(
-          "[data-automation-id='multiselectInputContainer'], input, button"
-        )
-        .first();
-      await schoolOpen.click({ force: true }).catch(() => {});
-      await sleep(400);
-      await page.keyboard
-        .type("Acharya Nagarjuna University", { delay: 25 })
-        .catch(() => {});
-      await sleep(900);
+    const schoolInputs = page.locator(
+      "[data-automation-id='formField-schoolName'] input"
+    );
+    const schoolCount = await schoolInputs.count().catch(() => 0);
+    const SCHOOL = "V.R. Siddhartha Engineering College";
+
+    for (let i = 0; i < schoolCount; i++) {
+      const el = schoolInputs.nth(i);
+      if (!(await el.isVisible().catch(() => false))) continue;
+      const cur = ((await el.inputValue().catch(() => "")) || "").trim();
+      if (/Siddhartha|Acharya Nagarjuna|University|College/i.test(cur)) continue;
+      await el.click({ force: true }).catch(() => {});
+      await el.fill("").catch(() => {});
+      await el.fill(SCHOOL).catch(() => {});
+      await sleep(600);
       const schoolOpt = page
         .locator("[data-automation-id='promptOption']")
-        .filter({ hasText: /Acharya Nagarjuna/i })
+        .filter({ hasText: /Siddhartha/i })
         .first();
       if (await schoolOpt.isVisible().catch(() => false)) {
-        const box = await schoolOpt.boundingBox().catch(() => null);
-        if (box) await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-        else await schoolOpt.click({ force: true }).catch(() => {});
+        await schoolOpt.click({ force: true }).catch(() => {});
       } else {
-        await fillFieldInput("formField-schoolName", "Acharya Nagarjuna University");
+        await page.keyboard.press("Enter").catch(() => {});
       }
       await page.keyboard.press("Escape").catch(() => {});
       await sleep(300);
     }
 
-    // SS&C / US Workday degree list is BA/BS/MS — type short code (most reliable).
-    if (!(await selectListboxShort("formField-degree", "BS", /\bBS\b/i))) {
-      await pickPromptOption("formField-degree", [
-        /^BS$/i,
-        /^Bachelor of Science/i,
-        /^BA$/i,
-        /B\.?\s*Tech/i,
-        /^Bachelor/i,
+    // Legacy single-root path when inputs are not plain text.
+    if (!schoolCount) {
+      const schoolRoot = page.locator("[data-automation-id='formField-schoolName']");
+      if (await schoolRoot.first().isVisible().catch(() => false)) {
+        const schoolText = ((await schoolRoot.first().innerText().catch(() => "")) || "");
+        if (!/Siddhartha|Acharya Nagarjuna|University|College/i.test(schoolText) || /required/i.test(schoolText)) {
+          await fillFieldInput("formField-schoolName", SCHOOL);
+        }
+      }
+    }
+
+    // Fill every degree Select One (Broadcom has 2 education rows; options like "70-Bachelor").
+    const degreeRoots = page.locator("[data-automation-id='formField-degree']");
+    const degreeCount = await degreeRoots.count().catch(() => 0);
+    for (let i = 0; i < Math.max(degreeCount, 1); i++) {
+      const root = degreeCount ? degreeRoots.nth(i) : degreeRoots.first();
+      if (!(await root.isVisible().catch(() => false))) continue;
+      const cur = ((await root.innerText().catch(() => "")) || "").trim();
+      if (
+        /\bBS\b|Bachelor|B\.?\s*Tech|70-Bachelor/i.test(cur) &&
+        !/Select One/i.test(cur)
+      ) {
+        continue;
+      }
+      const ok = await selectListboxShort(
+        "formField-degree",
+        "70-Bachelor",
+        /70-Bachelor|\bBS\b|Bachelor/i,
+        root
+      );
+      if (!ok) {
+        await pickPromptOption("formField-degree", [
+          /70-Bachelor/i,
+          /^BS$/i,
+          /^Bachelor of Science/i,
+          /^BA$/i,
+          /B\.?\s*Tech/i,
+          /^Bachelor/i,
+        ]);
+      }
+    }
+
+    const fosRoots = page.locator("[data-automation-id='formField-fieldOfStudy']");
+    const fosCount = await fosRoots.count().catch(() => 0);
+    for (let i = 0; i < Math.max(fosCount, 1); i++) {
+      const root = fosCount ? fosRoots.nth(i) : fosRoots.first();
+      if (!(await root.isVisible().catch(() => false))) continue;
+      const cur = ((await root.innerText().catch(() => "")) || "").trim();
+      if (/Information Technology|Computer Science/i.test(cur) && !/0 items selected/i.test(cur)) {
+        continue;
+      }
+      await pickPromptOption("formField-fieldOfStudy", [
+        /Information Technology/i,
+        /Computer Science/i,
+        /Computer Engineering/i,
+        /IT\b/i,
       ]);
     }
-    await pickPromptOption("formField-fieldOfStudy", [
-      /Information Technology/i,
-      /Computer Science/i,
-      /Computer Engineering/i,
-      /IT\b/i,
-    ]);
   }
 
   async function fillVoluntaryAndQuestions() {
@@ -827,6 +985,7 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
     }
 
     await fillMyInformation();
+    await fillWorkExperience();
     await fillEducation();
     if (/Voluntary Disclosure|Application Question|Self Identify|Review/i.test(text)) {
       await fillVoluntaryAndQuestions();
@@ -847,7 +1006,11 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
       continue;
     }
     // Validation errors: keep filling within budget instead of bailing once.
-    if (/Errors Found|is required and must have a value/i.test(text2)) {
+    if (
+      /Errors(?:\s+and\s+Alerts)?\s+Found|is required and must have a value|Enter a valid format for Phone/i.test(
+        text2
+      )
+    ) {
       await sleep(800);
       continue;
     }
@@ -864,5 +1027,6 @@ module.exports = {
   completeWorkdayApply,
   isSubmittedText,
   workdayCompliantPassword,
+  normalizeWorkdayPhone,
   EMAIL,
 };
