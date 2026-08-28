@@ -1,0 +1,79 @@
+{
+  "startedAt": "2026-08-28T04:29:40.885Z",
+  "resume": "/workspace/resumes/Rafi_Resume.docx",
+  "masterEnsure": {
+    "ok": true,
+    "exitCode": 0,
+    "info": {
+      "owner": "/workspace/resumes/Mohammed_Abdul_Rafi_Ahmed_Resume.docx",
+      "upload": "/workspace/resumes/Rafi_Resume.docx",
+      "ownerBytes": 3957700,
+      "uploadBytes": 20945,
+      "textSha256": "403c6a36869581a9a9146f8634c4ffcaac4f8f7c5aa847d86fcf54f83b91109f",
+      "uploadTextSha256": "403c6a36869581a9a9146f8634c4ffcaac4f8f7c5aa847d86fcf54f83b91109f"
+    },
+    "stderr": ""
+  },
+  "chromeProfileHint": "/home/ubuntu/.naukri-chrome-profile",
+  "cdp": "http://127.0.0.1:9222",
+  "auth": {
+    "destHasAuth": true
+  },
+  "ok": true,
+  "profileUpdated": true,
+  "attempts": [
+    {
+      "attempt": 1,
+      "upload": {
+        "ok": true,
+        "uploadedVia": "toptier-filechooser",
+        "clicked": "div.my-10 button:has-text('Update')",
+        "saveClicked": null,
+        "signal": "/uploaded today/i",
+        "size": 20945
+      },
+      "headline": {
+        "touched": false,
+        "reason": "headline_input_missing",
+        "opened": false
+      },
+      "verify": {
+        "todayHit": true,
+        "resumePresent": true,
+        "updateOn": "",
+        "matchedToken": "Uploaded today"
+      }
+    }
+  ],
+  "upload": {
+    "ok": true,
+    "uploadedVia": "toptier-filechooser",
+    "clicked": "div.my-10 button:has-text('Update')",
+    "saveClicked": null,
+    "signal": "/uploaded today/i",
+    "size": 20945
+  },
+  "headline": {
+    "touched": false,
+    "reason": "headline_input_missing",
+    "opened": false
+  },
+  "verify": {
+    "todayHit": true,
+    "resumePresent": true,
+    "matchedToken": "Uploaded today",
+    "updateOn": "",
+    "updatedLines": [
+      "Uploaded today"
+    ],
+    "resumeName": "Resume\nUpdate\n\nRafi_Resume.docx\n\nUploaded today",
+    "tokensTried": [
+      "Updated today",
+      "updated today",
+      "Uploaded today",
+      "uploaded today",
+      "Today"
+    ]
+  },
+  "finishedAt": "2026-08-28T04:29:53.352Z"
+}
