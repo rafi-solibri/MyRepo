@@ -72,8 +72,11 @@ function skipReason(
     return "wrong_stack_title";
   }
 
+  // Title-first AI / data / ML roles without .NET on the TITLE.
+  // Foundit/Naukri parity: "AI Solution Architect", "Solution Architect - Agentic AI",
+  // "Solution Architect - Data Engineering", "Data Platform Architect".
   if (
-    /\b(ai architect|ai engineer|ai scientist|ai developer|ml engineer|ml scientist|machine learning|data scientist|data science|data engineer|data analyst|data specialist|data architect|genai|architect\s*[-–:]?\s*ai|ai\s*[-–:]?\s*architect|quality data|data analytics)\b/i.test(
+    /\b(ai\s+(?:specialist\s+)?(?:solution\s+)?architect|ai\s+engineer(?:ing)?(?:\s+manager|\s+lead)?|ai\s+scientist|ai\s+developer|ai\s+agent|ml\s+engineer|ml\s+scientist|machine[\s-]?learning|gen(?:erative)?[\s-]?ai|genai|agentic[\s-]?ai|\bgemini\b|\bllm\b|data\s+scientist|data\s+science|data\s+engineer(?:ing)?|data\s+analyst|data\s+analytics|data\s+specialist|data\s+architect|data\s+platform|data\s+governance|quality[\s-]?data|architect\s*[-–:]?\s*ai|ai\s*[-–:]?\s*architect|solution\s+architect\s*[-–:]?\s*(?:agentic\s+)?ai)\b/i.test(
       t
     ) &&
     !hasDotNet(t, "")

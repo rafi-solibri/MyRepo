@@ -10,7 +10,7 @@
  * Env:
  *   HIRIST_CDP            default http://127.0.0.1:9222
  *   HIRIST_REPORT         default /opt/cursor/artifacts/hirist-apply-report.json
- *   HIRIST_MAX_APPLIES    default 40
+ *   HIRIST_MAX_APPLIES    default 80
  *   HIRIST_DRY_RUN=1      search/filter only (no apply POST)
  *   HIRIST_TAILOR=0       disable JD resume tailor for external ATS
  */
@@ -43,7 +43,7 @@ const HOME_REPORT =
   (fs.existsSync("/opt/cursor/artifacts")
     ? "/opt/cursor/artifacts/hirist-daily-run.json"
     : path.join(process.cwd(), "artifacts", "hirist-daily-run.json"));
-const MAX_APPLIES = Number(process.env.HIRIST_MAX_APPLIES || 40);
+const MAX_APPLIES = Number(process.env.HIRIST_MAX_APPLIES || 80);
 const DRY_RUN = process.env.HIRIST_DRY_RUN === "1";
 const TAILOR = process.env.HIRIST_TAILOR !== "0";
 const TODAY = new Date().toISOString().slice(0, 10);
