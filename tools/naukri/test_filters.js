@@ -423,6 +423,60 @@ assert.strictEqual(
   true,
   "Full Stack AI Manager without .NET must skip (hirist burn 2026-08-24)"
 );
+assert.strictEqual(
+  shouldSkipTitle("BigData Engineer - Architect"),
+  true,
+  "BigData Engineer Architect must skip (false Quick Apply 2026-08-28)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Copilot Architect"),
+  true,
+  "Copilot Architect must skip (false Quick Apply 2026-08-28)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Oracle EPM - Planning Architect/ PBCS / EPBCS solutions."),
+  true,
+  "Oracle EPM/PBCS Architect must skip (false Quick Apply 2026-08-28)"
+);
+assert.strictEqual(
+  shouldSkipTitle(
+    "Platform Architect - Network Cisco Meraki implementation L2/L3"
+  ),
+  true,
+  "Cisco Meraki L2/L3 network Platform Architect must skip (false Quick Apply 2026-08-28)"
+);
+assert.strictEqual(
+  shouldSkipTitle("UI Architect"),
+  true,
+  "UI Architect must skip (false Quick Apply 2026-08-28)"
+);
+assert.strictEqual(
+  shouldSkipTitle(
+    "Principal Security Engineer (AI Enablement & Security Architecture)"
+  ),
+  true,
+  "Principal Security Engineer must skip (false Quick Apply 2026-08-28)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Solution Architect Tableau Platform & Analytics Products"),
+  true,
+  "Tableau Platform SA must skip (false Quick Apply 2026-08-28)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Sharepoint Architect"),
+  true,
+  "Sharepoint Architect must skip (false Quick Apply 2026-08-28)"
+);
+assert.strictEqual(
+  shouldSkipTitle("SD-WAN Technical lead Engineers"),
+  true,
+  "SD-WAN Technical Lead must skip (ATS burn 2026-08-28)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Senior Solution Architect"),
+  false,
+  "Generic Senior Solution Architect must still apply"
+);
 const { workdayCompliantPassword } = require("./workday_apply");
 assert.strictEqual(workdayCompliantPassword("GoodPass123!"), "GoodPass123!");
 const weak = workdayCompliantPassword("short");
