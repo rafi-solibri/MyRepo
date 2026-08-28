@@ -1,0 +1,47 @@
+{
+  "portal": "cutshort",
+  "source": "cloud-postfix-rerun",
+  "date": "2026-08-28",
+  "finishedAt": "2026-08-28T06:25:37.512Z",
+  "ok": true,
+  "counts": {
+    "applied": 1,
+    "external": 0,
+    "rejected": 0,
+    "blocked": 0,
+    "skipped": 0,
+    "seen": 3323,
+    "questionnairesAnswered": 1,
+    "questionnairesLockedEmpty": 316
+  },
+  "applied": [
+    {
+      "id": "6a912450a2f45440192d528a",
+      "title": "Technical Project Manager",
+      "company": "J&F",
+      "tier": 3,
+      "ctc": 45
+    }
+  ],
+  "external": [],
+  "rejected": [],
+  "blocked": [],
+  "skipped": [],
+  "seen": [
+    {
+      "id": "6a912450a2f45440192d528a",
+      "title": "Technical Project Manager",
+      "company": "J&F",
+      "tier": 3
+    }
+  ],
+  "blockerSummary": null,
+  "notes": [
+    "qualifying=1",
+    "q_answered=1",
+    "q_locked_empty=316",
+    "q_already_submitted=50",
+    "tailored_built=1",
+    "tailored_uploaded=1"
+  ]
+}
