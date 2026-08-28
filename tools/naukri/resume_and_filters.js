@@ -95,7 +95,7 @@ const DOTNET_RE = /(\.net|dotnet|asp\.?\s*net|c#|csharp)/i;
 
 /** Architect / Lead / EM / Principal / Staff / Director — apply even if card omits .NET. */
 const ARCH_LEAD_RE =
-  /\b(architect(?:ure)?|technical lead|tech lead|technology lead|engineering manager|engineering lead|engineer manager|software engineer manager|principal|staff|director|avp|head of|chief technology|solution architect(?:ure)?|cloud architect(?:ure)?|azure architect(?:ure)?|\.net lead|dotnet lead|lead (software|development|developer|engineer|fullstack|full[\s-]?stack)|(software|development|developer|fullstack|full[\s-]?stack)\s+lead|software\s+(engineering\s+|development\s+)?manager|development manager|senior manager|manager\b[^.\n]{0,32}\b(sw|software|engineering|technology|platform|development)|senior engineering)\b/i;
+  /\b(architect(?:ure|ing)?|technical lead|tech lead|technology lead|engineering manager|engineering lead|engineer manager|software engineer manager|principal|staff|director|avp|head of|chief technology|solution architect(?:ure|ing)?|cloud architect(?:ure|ing)?|azure architect(?:ure|ing)?|\.net lead|dotnet lead|lead (software|development|developer|engineer|fullstack|full[\s-]?stack)|(software|development|developer|fullstack|full[\s-]?stack)\s+lead|software\s+(engineering\s+|development\s+)?manager|development manager|senior manager|manager\b[^.\n]{0,32}\b(sw|software|engineering|technology|platform|development)|senior engineering)\b/i;
 
 /** TopTier search cards: CTA then role. Homepage cards: role then location then CTA last. */
 const CARD_CTA_RE =

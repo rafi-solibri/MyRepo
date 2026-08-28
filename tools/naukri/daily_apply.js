@@ -353,6 +353,16 @@ function isAppliedFilterChip(text) {
  * button.innerText always concatenates to "Quick apply Applied" even when only one
  * layer is on-screen — the off state translates the Applied layer by ~button height.
  */
+/** Disabled dual-layer "Quick apply Applied" means the submit already landed. */
+function disabledCtaMeansApplied(raw, disabled) {
+  const t = String(raw || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!disabled || !t) return false;
+  if (/company site|hirist|view applied/i.test(t)) return false;
+  return /Applied/i.test(t) && /Quick apply|Applied/i.test(t);
+}
+
 function isAlreadyAppliedCta(text) {
   const t = String(text || "")
     .replace(/\s+/g, " ")
@@ -1445,7 +1455,7 @@ async function waitForAppliedCta(page, { timeoutMs = 12000 } = {}) {
   return last;
 }
 
-async function confirmApplied(page, chatHint = null) {
+async function confirmApplied(page, chatHint = null, jobUrl = null) {
   if (
     chatHint?.reason === "success" ||
     chatHint?.reason === "responses_thanks"
@@ -1563,8 +1573,49 @@ async function confirmApplied(page, chatHint = null) {
       .catch(() => "");
     if (disabledAgain) return { ok: true, cta: `disabled:${disabledAgain}` };
   }
+  // Recruise 2026-08-28: overlay/list tab had empty CTA while the job-listings
+  // URL later showed disabled "Quick apply Applied". Reload and re-read.
+  const reloadUrl = jobUrl || page.url();
+  if (/naukri\.com\/job-listings/i.test(String(reloadUrl || ""))) {
+    const reloaded = await rereadAppliedOnJobUrl(page, reloadUrl);
+    if (reloaded?.state === "applied") {
+      return { ok: true, cta: reloaded.label || "Applied" };
+    }
+  }
   const detail = await readDetail(page);
   return { ok: false, cta: detail.cta || visible?.label || "" };
+}
+
+async function rereadAppliedOnJobUrl(page, jobUrl) {
+  const url = String(jobUrl || "").trim();
+  if (!/naukri\.com\/job-listings/i.test(url)) return null;
+  await page
+    .goto(url, { waitUntil: "domcontentloaded", timeout: 45000 })
+    .catch(() => {});
+  await sleep(2500);
+  await dismiss(page);
+  const visible = await readVisibleApplyCta(page).catch(() => null);
+  if (visible?.state === "applied") return visible;
+  const disabled = await page
+    .evaluate(() => {
+      const buttons = [
+        ...document.querySelectorAll("button, a, [role='button']"),
+      ];
+      for (const btn of buttons) {
+        const raw = (btn.innerText || btn.getAttribute("aria-label") || "")
+          .replace(/\s+/g, " ")
+          .trim();
+        if (!/Quick apply|Applied/i.test(raw)) continue;
+        if (/company site|hirist|view applied/i.test(raw)) continue;
+        if (btn.disabled || btn.getAttribute("aria-disabled") === "true") {
+          return raw || "disabled_cta";
+        }
+      }
+      return "";
+    })
+    .catch(() => "");
+  if (disabled) return { state: "applied", label: `disabled:${disabled}`, raw: disabled };
+  return visible;
 }
 
 async function tryContactRecruiter(page) {
@@ -2012,7 +2063,11 @@ async function processCard(context, page, card, i, jobMeta, report) {
     return;
   }
   await sleep(2000);
-  const conf = await confirmApplied(detailPage, click.chat);
+  const conf = await confirmApplied(
+    detailPage,
+    click.chat,
+    detail.url || detailPage.url()
+  );
   if (conf.ok) {
     const rec = await tryContactRecruiter(detailPage);
     report.applied.push({
@@ -2377,4 +2432,5 @@ module.exports = {
   isAlreadyAppliedCta,
   isFalseApplyCta,
   isCompanySiteCta,
+  disabledCtaMeansApplied,
 };

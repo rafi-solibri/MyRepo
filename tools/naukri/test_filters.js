@@ -477,6 +477,16 @@ assert.strictEqual(
   false,
   "Generic Senior Solution Architect must still apply"
 );
+assert.strictEqual(
+  isArchLeadTitle("Solution Architecting, Solution Design, Delivery Leadership"),
+  true,
+  "Architecting titles are Arch/Lead (GERENT false skip_no_dotnet 2026-08-28)"
+);
+assert.strictEqual(
+  isArchLeadTitle("Solution Architecture"),
+  true,
+  "Architecture titles stay Arch/Lead"
+);
 const { workdayCompliantPassword } = require("./workday_apply");
 assert.strictEqual(workdayCompliantPassword("GoodPass123!"), "GoodPass123!");
 const weak = workdayCompliantPassword("short");
