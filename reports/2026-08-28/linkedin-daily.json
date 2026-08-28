@@ -1,0 +1,17 @@
+{
+  "date": "2026-08-28",
+  "portal": "linkedin",
+  "status": "stopped_login_required",
+  "reason": "wrong_password",
+  "easy_apply_submitted": 0,
+  "external_completed": 0,
+  "skipped": 0,
+  "blocked": ["login", "wrong_password"],
+  "preflight_ok": true,
+  "google_password_set": false,
+  "linkedin_password_set": true,
+  "auto_login_exit": 5,
+  "artifact": "/opt/cursor/artifacts/linkedin-auto-login-wrong-password.png",
+  "code_fix": false,
+  "owner_action": "Refresh LINKEDIN_PASSWORD and GOOGLE_PASSWORD Cursor secrets; headed-login only if CAPTCHA after secret update"
+}
