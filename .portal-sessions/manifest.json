@@ -8,9 +8,10 @@
     "cutshort": true,
     "instahyre": true,
     "indeed": true,
-    "linkedin_alt": true
+    "linkedin_alt": true,
+    "hirist": true
   },
   "note": "Private session seed for Cloud Agent install restore. Do not share publicly.",
-  "updatedAt": "2026-08-23T03:44:43Z",
-  "updatedPortal": "linkedin"
+  "updatedAt": "2026-08-28T06:02:42Z",
+  "updatedPortal": "hirist"
 }

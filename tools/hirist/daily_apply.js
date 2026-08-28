@@ -18,7 +18,13 @@
 
 const fs = require("fs");
 const path = require("path");
-const { chromium } = require("playwright-core");
+function loadChromium() {
+  try {
+    return require("playwright-core").chromium;
+  } catch {
+    return require(path.join(__dirname, "../node_modules/playwright-core")).chromium;
+  }
+}
 const { skipReason, hasDotNet, hasTargetSeniority } = require("./filters");
 const { findResume, EXPECTED_CTC_LPA, CURRENT_CTC_LPA } = require("./resume");
 const { completeExternalPage } = require("../ats/complete_page");
@@ -232,7 +238,8 @@ function isLoggedOutUrl(url, body) {
 }
 
 async function ensureLoggedIn(page) {
-  await page.goto("https://www.hirist.tech/applied-jobs", {
+  // jobfeed is the post-login landing page; applied-jobs can hang on a stale tab.
+  await page.goto("https://www.hirist.tech/jobfeed", {
     waitUntil: "domcontentloaded",
     timeout: 60000,
   });
@@ -295,7 +302,7 @@ async function main() {
 
   let browser;
   try {
-    browser = await chromium.connectOverCDP(CDP);
+    browser = await loadChromium().connectOverCDP(CDP);
   } catch (err) {
     state.blocked.push({
       reason: "cdp_connect_failed",

@@ -53,7 +53,7 @@ case "$PORTAL" in
     ;;
   hirist)
     DEST_NAME=hirist
-    NEED=token
+    NEED=hirist_seeker_enc
     PROFILE="${HIRIST_CHROME_PROFILE:-/home/ubuntu/chrome-hirist-profile}"
     ;;
   *)
