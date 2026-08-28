@@ -59,9 +59,18 @@ def is_google_2fa_challenge(page: Any = None, *, url: str = "", body: str = "") 
             except Exception:
                 text = ""
     blob = f"{u}\n{text}"
+    # Password form is not 2FA — helpers must fill GOOGLE_PASSWORD, not wait.
+    if re.search(r"challenge/pwd", u, re.I) and not re.search(
+        r"authenticator|2[- ]step|totp|check your phone|tap yes", blob, re.I
+    ):
+        return False
     if "accounts.google.com" in u.lower() and _CHALLENGE_RE.search(blob):
+        if re.search(r"challenge/pwd", u, re.I):
+            return False
         return True
-    if re.search(r"accounts\.google\.com/.*/challenge", u, re.I):
+    if re.search(r"accounts\.google\.com/.*/challenge", u, re.I) and not re.search(
+        r"challenge/pwd", u, re.I
+    ):
         return True
     if _CHALLENGE_RE.search(text) and re.search(
         r"google|g-?suite|rafi\.success@gmail", text, re.I

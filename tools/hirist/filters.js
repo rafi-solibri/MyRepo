@@ -59,7 +59,9 @@ function skipReason(
   const t = title || "";
 
   if (
-    /\b(quality engineering|quality assurance|qa engineer|qa lead|sdet|test engineer)\b/i.test(t)
+    /\b(quality engineering|quality assurance|qa engineer|qa lead|sdet|test engineer|automation testing|sde[\s-]*test|software development engineer\s*[-–]\s*test)\b/i.test(
+      t
+    )
   ) {
     return "qa_quality_engineering";
   }
@@ -73,7 +75,7 @@ function skipReason(
   }
 
   if (
-    /\b(ai architect|ai engineer|ai scientist|ai developer|ml engineer|ml scientist|machine learning|data scientist|data science|data engineer|data analyst|data specialist|data architect|genai|architect\s*[-–:]?\s*ai|ai\s*[-–:]?\s*architect|quality data|data analytics)\b/i.test(
+    /\b(ai architect|ai engineer|ai scientist|ai developer|ai\s+solution\s+architect|ml engineer|ml scientist|machine learning|data scientist|data science|data engineer|data engineering|data analyst|data specialist|data architect|genai|architect\s*[-–:]?\s*ai|ai\s*[-–:]?\s*architect|quality data|data analytics)\b/i.test(
       t
     ) &&
     !hasDotNet(t, "")

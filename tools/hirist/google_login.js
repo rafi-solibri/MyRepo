@@ -48,7 +48,7 @@ function passwordCandidates() {
 }
 
 function isHiristAuthCookieName(name) {
-  return /^(hirist_seeker_enc|token|access_token|auth_token|hjuid|userToken|JSID)$/i.test(
+  return /^(HIRIST_CK1|hirist_seeker_enc|token|access_token|auth_token|hjuid|userToken|JSID)$/i.test(
     String(name || "")
   );
 }
@@ -143,6 +143,15 @@ function tryEmailOtpFill() {
   return true;
 }
 
+/** Hirist /login is a homepage SPA; Google SSO lives in the Login modal. */
+function loginModalVisible(text) {
+  const t = String(text || "");
+  return (
+    /continue with google|sign in with google|login with google/i.test(t) ||
+    (/login here/i.test(t) && /email address/i.test(t))
+  );
+}
+
 async function loadChromium() {
   try {
     return require("playwright-core").chromium;
@@ -169,13 +178,43 @@ async function probeLoggedIn(page, ctx) {
   return { ok: !loggedOut && (hasAuth || onAuthed), url, hasAuth };
 }
 
-async function clickGoogleSso(page) {
-  const patterns = [
-    /continue with google/i,
-    /sign in with google/i,
-    /login with google/i,
-    /google/i,
+async function pageText(page) {
+  return page
+    .evaluate(() => (document.body && document.body.innerText) || "")
+    .catch(() => "");
+}
+
+async function openLoginModal(page) {
+  let text = await pageText(page);
+  if (loginModalVisible(text)) return true;
+
+  const locators = [
+    page.getByRole("button", { name: /^Login$/i }),
+    page.locator("button").filter({ hasText: /^Login$/i }),
   ];
+  for (const loc of locators) {
+    try {
+      const n = Math.min(await loc.count(), 8);
+      for (let i = 0; i < n; i++) {
+        const el = loc.nth(i);
+        const label = ((await el.innerText().catch(() => "")) || "").trim();
+        // Header "Login" only — never "Login as Recruiter" / "Login here" submit.
+        if (!/^login$/i.test(label)) continue;
+        if (!(await el.isVisible().catch(() => false))) continue;
+        await el.click({ timeout: 8000 });
+        await sleep(1500);
+        text = await pageText(page);
+        if (loginModalVisible(text)) return true;
+      }
+    } catch {
+      /* try next locator */
+    }
+  }
+  return loginModalVisible(await pageText(page));
+}
+
+async function clickGoogleSso(page) {
+  const patterns = [/continue with google/i, /sign in with google/i, /login with google/i];
   for (const re of patterns) {
     try {
       const btn = page.getByRole("button", { name: re });
@@ -196,9 +235,8 @@ async function clickGoogleSso(page) {
       /* try next */
     }
   }
-  // Fallback: any element with Google branding text.
   try {
-    const loc = page.locator("text=/Continue with Google|Sign in with Google|Google/i").first();
+    const loc = page.locator("text=/Continue with Google|Sign in with Google|Login with Google/i").first();
     if (await loc.isVisible().catch(() => false)) {
       await loc.click({ timeout: 8000 });
       return true;
@@ -209,17 +247,67 @@ async function clickGoogleSso(page) {
   return false;
 }
 
-async function completeGooglePopup(ctx, page) {
-  await sleep(2000);
-  let popup = null;
-  for (const pg of ctx.pages) {
-    const u = pg.url() || "";
-    if (/accounts\.google\.com/i.test(u)) {
-      popup = pg;
-      break;
+async function waitForGooglePage(ctx, page, ms = 20000) {
+  const deadline = Date.now() + ms;
+  while (Date.now() < deadline) {
+    const pages = typeof ctx.pages === "function" ? ctx.pages() : ctx.pages || [];
+    for (const pg of pages) {
+      if (/accounts\.google\.com/i.test(pg.url() || "")) return pg;
     }
+    if (/accounts\.google\.com/i.test(page.url() || "")) return page;
+    await sleep(500);
   }
-  if (!popup) popup = page;
+  return null;
+}
+
+async function loginWithEmailPassword(page, ctx) {
+  const email = GMAIL;
+  const pws = passwordCandidates();
+  if (!email || !pws.length) return false;
+  await page.goto("https://www.hirist.tech/", { waitUntil: "domcontentloaded", timeout: 60000 }).catch(
+    () => {}
+  );
+  await sleep(1200);
+  if (!(await openLoginModal(page))) return false;
+  try {
+    const emailBox = page
+      .locator("input[type='email'], input[name='email'], input[placeholder*='Email' i]")
+      .first();
+    const passBox = page
+      .locator(".MuiDialog-root input[type='password'], [role='dialog'] input[type='password']")
+      .first();
+    if (!(await emailBox.isVisible().catch(() => false))) return false;
+    await emailBox.click({ timeout: 5000 });
+    await emailBox.fill("");
+    await emailBox.pressSequentially(email, { delay: 15 });
+    if (await passBox.isVisible().catch(() => false)) {
+      await passBox.click({ timeout: 5000 });
+      await passBox.fill("");
+      await passBox.pressSequentially(pws[0], { delay: 15 });
+    }
+    const submit = page
+      .locator("[role='dialog'] button, .MuiDialog-root button")
+      .filter({ hasText: /^Login$/i })
+      .last();
+    if (await submit.isVisible().catch(() => false)) {
+      await submit.click({ timeout: 8000 });
+    } else {
+      await page.getByRole("button", { name: /^Login$/i }).last().click({ timeout: 8000 });
+    }
+    await sleep(3000);
+  } catch {
+    return false;
+  }
+  const probe = await probeLoggedIn(page, ctx);
+  return probe.ok;
+}
+
+async function completeGooglePopup(ctx, page) {
+  let popup = await waitForGooglePage(ctx, page, 20000);
+  if (!popup) {
+    console.error("hirist: Google SSO click did not open accounts.google.com");
+    return false;
+  }
 
   // Account chooser
   try {
@@ -351,55 +439,66 @@ async function main() {
 
   await page.goto(LOGIN, { waitUntil: "domcontentloaded", timeout: 60000 }).catch(() => {});
   await sleep(1500);
-  const clicked = await clickGoogleSso(page);
-  if (!clicked) {
+  // /login is the marketing homepage; the SSO CTA is inside the Login modal.
+  const modalOpen = await openLoginModal(page);
+  if (!modalOpen) {
     console.log(
       JSON.stringify({
         ok: false,
-        reason: "google_sso_button_missing",
+        reason: "login_modal_missing",
         url: page.url(),
-        hint: "Hirist login page had no Google button — try bash scripts/home-headed-login.sh hirist",
+        hint: "Click header Login to open the modal, then Continue with Google",
       })
     );
     process.exit(5);
   }
-
-  const googleOk = await completeGooglePopup(ctx, page);
-  if (!googleOk) {
-    console.log(
-      JSON.stringify({
-        ok: false,
-        reason: "google_login_incomplete",
-        hint: "Password rejected, 2FA timeout, or SSO did not finish — check ASK_OWNER_GOOGLE_2FA",
-      })
-    );
-    process.exit(6);
+  console.error("hirist: login modal open — clicking Continue with Google");
+  const clicked = await clickGoogleSso(page);
+  let googleOk = false;
+  if (clicked) {
+    googleOk = await completeGooglePopup(ctx, page);
+  } else {
+    console.error("hirist: Google SSO button missing — will try email/password");
   }
 
-  // Allow redirects back to Hirist
-  const deadline = Date.now() + Math.max(30, waitSec) * 1000;
-  while (Date.now() < deadline) {
-    probe = await probeLoggedIn(page, ctx);
-    if (probe.ok) {
-      console.log(
-        JSON.stringify({
-          ok: true,
-          reason: "google_login_ok",
-          url: probe.url,
-          email: GMAIL,
-        })
-      );
-      process.exit(0);
+  if (googleOk) {
+    const deadline = Date.now() + Math.max(30, waitSec) * 1000;
+    while (Date.now() < deadline) {
+      probe = await probeLoggedIn(page, ctx);
+      if (probe.ok) {
+        console.log(
+          JSON.stringify({
+            ok: true,
+            reason: "google_login_ok",
+            url: probe.url,
+            email: GMAIL,
+          })
+        );
+        process.exit(0);
+      }
+      await sleep(4000);
     }
-    await sleep(4000);
+  }
+
+  console.error("hirist: Google SSO did not finish — trying Hirist email/password");
+  if (await loginWithEmailPassword(page, ctx)) {
+    console.log(
+      JSON.stringify({
+        ok: true,
+        reason: "email_password_ok",
+        url: page.url(),
+        email: GMAIL,
+      })
+    );
+    process.exit(0);
   }
 
   console.log(
     JSON.stringify({
       ok: false,
-      reason: "hirist_login_required",
+      reason: clicked && googleOk ? "hirist_login_required" : "google_sso_then_password_failed",
       url: page.url(),
-      hint: "Google SSO did not establish Hirist session — re-run with ASK_OWNER_GOOGLE_2FA if challenged",
+      hint: "Update GOOGLE_PASSWORD if Google says wrong password, or bash scripts/home-headed-login.sh hirist",
     })
   );
   process.exit(5);
@@ -413,6 +512,9 @@ if (require.main === module) {
 }
 
 module.exports = {
+  loginModalVisible,
+  openLoginModal,
+  clickGoogleSso,
   isGooglePasswordChallenge,
   isGoogle2faChallenge,
   isHiristAuthCookieName,

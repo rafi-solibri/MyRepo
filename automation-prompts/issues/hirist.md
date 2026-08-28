@@ -4,6 +4,9 @@
 
 | Issue | Fix |
 | --- | --- |
+| Preflight looked for missing token cookie; Google password rejected; AI/data titles applied | Detect HIRIST_CK1/hirist_seeker_enc; email/password fallback; skip AI Solution Architect and Data Engineering without .NET on title |
+| google_login crashed after SSO: ctx.pages is not iterable | use Playwright ctx.pages() when waiting for accounts.google.com |
+| Google SSO never ran: /login is homepage SPA and helper never opened Login modal; daily_apply buffered ASK_OWNER_GOOGLE_2FA | openLoginModal then Continue with Google; inherit google_login stdio so 2FA banner is live |
 | Gmail SSO hung on password page; auth cookie is hirist_seeker_enc not token | Fill Google Passwd via CDP; treat challenge/pwd as password not 2FA; recognize hirist_seeker_enc |
 | No Cursor Automation + GHA CURSOR_API_KEY empty → no same-day Hirist agent (other portals fire via Automations) | Notification Hirist recovery launch when CURSOR_API_KEY set; louder ONE_TIME_LOADERS create steps; launch-daily-portals hirist prompt includes CDP; launched Hirist Daily 2026-08-28 via API |
 

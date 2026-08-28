@@ -27,5 +27,20 @@ assert.strictEqual(
 assert.ok(locationOk("Remote - India", "Staff Engineer", "Azure", 0));
 assert.ok(locationOk("Pune", "Architect", ".NET", 1));
 assert.ok(hasDotNet("Cloud SA", "C# ASP.NET"));
+assert.strictEqual(
+  skipReason("AI Solution Architect", { location: "Hyderabad", skills: "Python" }),
+  "pure_ai_data_without_dotnet"
+);
+assert.strictEqual(
+  skipReason("Solution Architect - Data Engineering", { location: "Hyderabad", skills: "Spark" }),
+  "pure_ai_data_without_dotnet"
+);
+assert.strictEqual(
+  skipReason("Principal Software Development Engineer - Test - Automation Testing", {
+    location: "Hyderabad",
+    skills: "Selenium",
+  }),
+  "qa_quality_engineering"
+);
 
 console.log("hirist filters ok");

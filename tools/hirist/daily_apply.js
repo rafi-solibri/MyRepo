@@ -320,13 +320,12 @@ async function main() {
     // Attempt Gmail / Google SSO before giving up.
     console.error("[hirist] session missing — trying Google/Gmail login…");
     const { spawnSync } = require("child_process");
+    // inherit so ASK_OWNER_GOOGLE_2FA prints live (spawnSync pipe buffers until exit).
     const gl = spawnSync(
       process.execPath,
       [path.join(__dirname, "google_login.js"), "--wait", String(process.env.GOOGLE_2FA_WAIT_SEC || "300")],
-      { cwd: path.join(__dirname, "../.."), env: process.env, encoding: "utf8" }
+      { cwd: path.join(__dirname, "../.."), env: process.env, stdio: "inherit" }
     );
-    if (gl.stdout) process.stdout.write(gl.stdout);
-    if (gl.stderr) process.stderr.write(gl.stderr);
     const retry = await ensureLoggedIn(page);
     if (!retry.ok) {
       state.blocked.push({

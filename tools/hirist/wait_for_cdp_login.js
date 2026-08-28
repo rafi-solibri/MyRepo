@@ -17,7 +17,7 @@ const HOME = "https://www.hirist.tech/";
 const LOGIN = "https://www.hirist.tech/login";
 const APPLIED = "https://www.hirist.tech/applied-jobs";
 const AUTH_COOKIE_RE =
-  /^(hirist_seeker_enc|token|access_token|auth_token|hjuid|userToken|JSID)$/i;
+  /^(HIRIST_CK1|hirist_seeker_enc|token|access_token|auth_token|hjuid|userToken|JSID)$/i;
 
 function argValue(flag) {
   const i = process.argv.indexOf(flag);
