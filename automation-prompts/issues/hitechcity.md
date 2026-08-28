@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-28 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Oracle apply/email persist_retry looped on Too Many Attempts; Accenture jk=architect never rewritten; Gartner Location button opened /locations/ nav | UNAVAILABLE_RE fail-fast Oracle rate-limit; rewrite jk/searchTerm; skip Locations nav in pin_portal_location_ui |
+
+
 ## 2026-08-26 (cloud)
 
 | Issue | Fix |

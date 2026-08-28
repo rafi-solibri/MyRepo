@@ -84,6 +84,9 @@ _SEARCH_PARAM_KEYS = (
     "query",
     "searchKeyword",
     "base_query",
+    "jk",  # Accenture jobsearch
+    "searchTerm",
+    "searchtext",
 )
 _LOCATION_PARAM_KEYS = (
     "location",
@@ -455,8 +458,13 @@ def pin_portal_location_ui(page: Page) -> dict[str, Any]:
         except Exception:
             continue
     try:
-        btn = page.get_by_role("button", name=re.compile(r"^Location", re.I))
-        if btn.count() and btn.first.is_visible():
+        # "^Location" also matches Gartner nav <a role="button">Locations</a>
+        # which navigates to /locations/ and empties the job scan.
+        btn = page.get_by_role("button", name=re.compile(r"^Location(?!s)", re.I))
+        if btn.count() and btn.first.is_visible() and location_filter_control_ok(
+            btn.first.inner_text(timeout=800) or "",
+            btn.first.get_attribute("href") or "",
+        ):
             btn.first.click(timeout=2000)
             time.sleep(0.6)
             # Prefer real location/city inputs — Salesforce careers exposes an
@@ -521,6 +529,17 @@ def pin_portal_location_ui(page: Page) -> dict[str, Any]:
     except Exception as e:
         out["note"] = f"generic_failed:{e}"
     return out
+
+
+def location_filter_control_ok(name: str, href: str = "") -> bool:
+    """False for site-nav 'Locations' links (Gartner /locations/), not a job filter."""
+    label = (name or "").strip()
+    dest = (href or "").strip()
+    if re.search(r"^locations$", label, re.I):
+        return False
+    if re.search(r"/locations/?$", dest, re.I):
+        return False
+    return True
 
 
 def location_ui_input_meta_ok(meta: str) -> bool:

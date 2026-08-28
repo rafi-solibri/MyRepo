@@ -21,6 +21,7 @@ from tools.hitechcity.careers_apply import (
     is_hang_scan_url,
     is_sso_only_careers_url,
     is_uhg_skip_url,
+    location_filter_control_ok,
     location_ui_input_meta_ok,
     role_has_foreign_location,
     url_loc_hint,
@@ -132,6 +133,13 @@ def test_title_ok():
     assert len(expanded) >= 4
     assert any("Engineering" in u for u in expanded)
     assert all("Hyderabad" in u for u in expanded)
+    acc = "https://www.accenture.com/in-en/careers/jobsearch?jk=architect&lc=Hyderabad"
+    acc_em = rewrite_careers_search_keyword(acc, "Engineering Manager")
+    assert "jk=Engineering" in acc_em or "jk=Engineering+Manager" in acc_em or "jk=Engineering%20Manager" in acc_em
+    assert "architect" not in acc_em.lower()
+    acc_exp = expand_careers_scan_urls([acc])
+    assert len(set(acc_exp)) >= 4
+    assert any("Engineering" in u for u in acc_exp)
     # Workday: always invent/keep location=Hyderabad on the URL; UI facet is separate.
     intel = (
         "https://intel.wd1.myworkdayjobs.com/en-US/External"
@@ -519,6 +527,10 @@ def test_location_ui_skips_agentforce():
     assert not location_ui_input_meta_ok("oda-chat-input")
     assert location_ui_input_meta_ok("Location City or metro area")
     assert location_ui_input_meta_ok("Search jobs by city")
+    assert not location_filter_control_ok("Locations", "/locations/")
+    assert not location_filter_control_ok("Locations", "https://jobs.gartner.com/locations/")
+    assert location_filter_control_ok("Location", "")
+    assert location_filter_control_ok("Location filter", "")
 
 
 if __name__ == "__main__":

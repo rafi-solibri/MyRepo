@@ -94,7 +94,11 @@ UNAVAILABLE_RE = re.compile(
     r"this job is no longer|position has been filled|"
     r"no longer accepting applications|requisition is closed|"
     r"job is no longer available|"
-    r"403 forbidden|\berror 403\b|access denied",
+    r"403 forbidden|\berror 403\b|access denied|"
+    # Oracle Cloud apply/email: persist_retry must not loop on rate-limit interstitial.
+    r"too many attempts|"
+    r"you reached the maximum number of attempts|"
+    r"maximum number of attempts",
     re.I,
 )
 

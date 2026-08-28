@@ -210,6 +210,21 @@ assert_true(is_board_tracking_url("https://www.indeed.com/rc/clk?jk=abc"), "rc/c
 assert_true(not is_board_tracking_url("https://acme.wd1.myworkdayjobs.com/en-US/job"), "wd not tracking")
 assert_true(is_unavailable_text("We'll be back shortly — scheduled maintenance"), "maint text")
 assert_true(is_unavailable_text("403 Forbidden"), "http 403 is unavailable")
+assert_true(
+    is_unavailable_text(
+        "Too Many Attempts. Try Again Later.\nYou reached the maximum number of attempts. Try again in 30 minutes."
+    ),
+    "Oracle apply/email rate-limit must fail-fast (not persist_retry)",
+)
+assert_true(
+    auth_wall_reason(
+        "https://careers.oracle.com/en/sites/jobsearch/job/340319/apply/email",
+        "Too Many Attempts. Try Again Later. You reached the maximum number of attempts.",
+        has_file=True,
+    )
+    == "job_unavailable",
+    "Oracle too-many-attempts is unavailable not a fillable form",
+)
 assert_true(is_submitted_text("Thanks for applying — we've got your application"), "got-app must count")
 
 
