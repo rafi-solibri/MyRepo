@@ -117,6 +117,48 @@ function salaryOf(job) {
   return "";
 }
 
+function appliedIdsPath() {
+  return path.join(path.dirname(OUT), "hirist-applied-ids.json");
+}
+
+function loadTodayAppliedIds() {
+  const ids = new Set();
+  const files = [OUT, HOME_REPORT, appliedIdsPath()];
+  for (const f of files) {
+    try {
+      if (!fs.existsSync(f)) continue;
+      const j = JSON.parse(fs.readFileSync(f, "utf8"));
+      const sameDay =
+        j.date === TODAY ||
+        (typeof j.ts === "string" && j.ts.startsWith(TODAY)) ||
+        (typeof j.finishedAt === "string" && j.finishedAt.startsWith(TODAY));
+      if (j.date && j.date !== TODAY && !sameDay) continue;
+      for (const row of [...(j.applied || []), ...(j.external || [])]) {
+        if (row && row.id != null) ids.add(Number(row.id));
+      }
+      if (Array.isArray(j.ids) && (j.date === TODAY || !j.date)) {
+        for (const id of j.ids) ids.add(Number(id));
+      }
+    } catch {
+      /* ignore corrupt sidecar */
+    }
+  }
+  return ids;
+}
+
+function persistTodayAppliedIds(ids) {
+  const p = appliedIdsPath();
+  let prev = { date: TODAY, ids: [] };
+  try {
+    if (fs.existsSync(p)) prev = JSON.parse(fs.readFileSync(p, "utf8"));
+  } catch {
+    /* ignore */
+  }
+  const merged = new Set([...(prev.date === TODAY ? prev.ids || [] : []), ...ids]);
+  fs.mkdirSync(path.dirname(p), { recursive: true });
+  fs.writeFileSync(p, JSON.stringify({ date: TODAY, ids: [...merged] }, null, 2) + "\n");
+}
+
 function writeReports(state) {
   const finishedAt = new Date().toISOString();
   const applied = state.applied || [];
@@ -170,6 +212,10 @@ function writeReports(state) {
   };
   fs.mkdirSync(path.dirname(HOME_REPORT), { recursive: true });
   fs.writeFileSync(HOME_REPORT, JSON.stringify(home, null, 2) + "\n");
+  persistTodayAppliedIds([
+    ...applied.map((r) => Number(r.id)),
+    ...external.map((r) => Number(r.id)),
+  ].filter((id) => Number.isFinite(id)));
   return { detail, home };
 }
 
@@ -344,6 +390,10 @@ async function main() {
   }
 
   const seenIds = new Set();
+  const todayApplied = loadTodayAppliedIds();
+  if (todayApplied.size) {
+    state.notes.push(`already_applied_today=${todayApplied.size}`);
+  }
   const candidates = [];
 
   for (const query of QUERY_WAVES) {
@@ -383,6 +433,10 @@ async function main() {
         // applyStatus: 0 often means already applied / closed for apply
         if (Number(job.applyStatus) === 0 && !job.applyUrl) {
           state.skipped.push({ id, title, company, reason: "already_applied_or_closed" });
+          continue;
+        }
+        if (todayApplied.has(Number(id))) {
+          state.skipped.push({ id, title, company, reason: "already_applied_today" });
           continue;
         }
 

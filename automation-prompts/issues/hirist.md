@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Same-day re-run re-POSTed 14 already-applied ids (applyStatus still open); Deep Learning architect still passed | Persist today applied ids and skip already_applied_today; skipReason also matches deep learning titles |
 | False applies: AI Solution Architect / Agentic AI / Data Engineering / Data Platform Architect (no .NET on title); MAX_APPLIES=40 left inventory | Widen skipReason AI/data title patterns (Foundit/Naukri parity) + raise HIRIST_MAX_APPLIES default 40→80 |
 | Gmail SSO hung on password page; auth cookie is hirist_seeker_enc not token | Fill Google Passwd via CDP; treat challenge/pwd as password not 2FA; recognize hirist_seeker_enc |
 | No Cursor Automation + GHA CURSOR_API_KEY empty → no same-day Hirist agent (other portals fire via Automations) | Notification Hirist recovery launch when CURSOR_API_KEY set; louder ONE_TIME_LOADERS create steps; launch-daily-portals hirist prompt includes CDP; launched Hirist Daily 2026-08-28 via API |

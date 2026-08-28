@@ -37,6 +37,12 @@ assert.strictEqual(
   "pure_ai_data_without_dotnet"
 );
 assert.strictEqual(
+  skipReason("Senior Architect - Applied Research & Deep Learning", {
+    location: "Hyderabad",
+  }),
+  "pure_ai_data_without_dotnet"
+);
+assert.strictEqual(
   skipReason("Cloud Architect - AWS/Azure/Google Cloud Platform", {
     location: "Hyderabad",
     skills: "AWS Azure",
