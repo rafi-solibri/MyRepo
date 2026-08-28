@@ -109,8 +109,8 @@ const AUTH_COOKIES = {
   cutshort: ["cutshort_authentication"],
   instahyre: ["sessionid"],
   indeed: ["__Secure-PassportAuthProxy-BearerToken"],
-  // Hirist sets a session `token` cookie after login (plus XSRF-TOKEN).
-  hirist: ["token"],
+  // Hirist seeker session is `hirist_seeker_enc` (older builds used `token` + XSRF-TOKEN).
+  hirist: ["hirist_seeker_enc", "token"],
 };
 
 function cookiesDbPath(profileRoot) {

@@ -47,6 +47,32 @@ function passwordCandidates() {
   return out;
 }
 
+function isHiristAuthCookieName(name) {
+  return /^(hirist_seeker_enc|token|access_token|auth_token|hjuid|userToken|JSID)$/i.test(
+    String(name || "")
+  );
+}
+
+function isGooglePasswordChallenge(url, body) {
+  const u = String(url || "");
+  const text = String(body || "");
+  if (/signin\/challenge\/pwd/i.test(u)) return true;
+  if (/accounts\.google\.com/i.test(u) && /enter your password|wrong password/i.test(text)) {
+    return true;
+  }
+  return false;
+}
+
+function isGoogle2faChallenge(url, body) {
+  const u = String(url || "");
+  const text = String(body || "");
+  if (isGooglePasswordChallenge(u, text)) return false;
+  if (/signin\/challenge\/(totp|ipp|az|sk|iap|selection)/i.test(u)) return true;
+  return /2[- ]step|authenticator|verification code|check your phone|tap yes|confirm it.?s you/i.test(
+    `${u}\n${text}`
+  );
+}
+
 function prompt2faBanner(detail) {
   const wait = Number(argValue("--wait") || WAIT_SEC);
   const msg = [
@@ -126,16 +152,17 @@ async function loadChromium() {
 }
 
 async function probeLoggedIn(page, ctx) {
+  const cookies = await ctx.cookies("https://www.hirist.tech").catch(() => []);
+  const hasAuth = cookies.some((c) => isHiristAuthCookieName(c.name));
+  if (hasAuth) {
+    return { ok: true, url: page.url() || "", hasAuth };
+  }
   await page.goto(APPLIED, { waitUntil: "domcontentloaded", timeout: 60000 }).catch(() => {});
   await sleep(1500);
   const url = page.url() || "";
   const body = await page
     .evaluate(() => (document.body && document.body.innerText) || "")
     .catch(() => "");
-  const cookies = await ctx.cookies("https://www.hirist.tech").catch(() => []);
-  const hasAuth = cookies.some((c) =>
-    /^(token|access_token|auth_token|hjuid|userToken|JSID)$/i.test(c.name)
-  );
   const onAuthed = /applied-jobs|myprofile|jobfeed/i.test(url);
   const loggedOut =
     /\/login\/?/i.test(url) || /sign in to continue|candidate login/i.test(body);
@@ -213,27 +240,16 @@ async function completeGooglePopup(ctx, page) {
     /* ignore */
   }
 
-  // Password if asked
-  const body = await popup
+  // Password if asked (URL /signin/challenge/pwd or visible Passwd field).
+  const urlBefore = popup.url() || "";
+  const bodyBefore = await popup
     .evaluate(() => (document.body && document.body.innerText) || "")
     .catch(() => "");
-  if (/enter your password|password/i.test(body)) {
-    const pws = passwordCandidates();
-    for (const pw of pws) {
-      try {
-        const box = popup.locator("input[type='password']").first();
-        if (await box.isVisible().catch(() => false)) {
-          await box.fill("");
-          await box.pressSequentially(pw, { delay: 20 });
-          const next = popup.getByRole("button", { name: /^Next$/i });
-          if ((await next.count()) > 0) await next.first().click({ timeout: 5000 });
-          else await box.press("Enter");
-          await sleep(2500);
-          break;
-        }
-      } catch {
-        /* try next password */
-      }
+  if (isGooglePasswordChallenge(urlBefore, bodyBefore) || (await passwordField(popup))) {
+    const filled = await fillGooglePassword(popup);
+    if (!filled.ok && filled.reason === "wrong_password") {
+      console.log(JSON.stringify({ ok: false, reason: "google_wrong_password" }));
+      return false;
     }
   }
 
@@ -241,11 +257,7 @@ async function completeGooglePopup(ctx, page) {
   const text = await popup
     .evaluate(() => (document.body && document.body.innerText) || "")
     .catch(() => "");
-  if (
-    /2[- ]step|authenticator|verification code|check your phone|challenge/i.test(
-      `${url}\n${text}`
-    )
-  ) {
+  if (isGoogle2faChallenge(url, text)) {
     prompt2faBanner(url);
     tryEmailOtpFill();
     const wait = Number(argValue("--wait") || WAIT_SEC);
@@ -253,6 +265,62 @@ async function completeGooglePopup(ctx, page) {
     return ok;
   }
   return true;
+}
+
+async function passwordField(popup) {
+  const sels = [
+    "input[name='Passwd']",
+    "input[type='password']",
+    "input[autocomplete*='current-password']",
+  ];
+  for (const sel of sels) {
+    try {
+      const loc = popup.locator(sel).first();
+      if ((await loc.count()) > 0 && (await loc.isVisible().catch(() => false))) return loc;
+    } catch {
+      /* try next */
+    }
+  }
+  return null;
+}
+
+async function fillGooglePassword(popup) {
+  const pws = passwordCandidates();
+  if (!pws.length) return { ok: false, reason: "no_password_secret" };
+  let box = await passwordField(popup);
+  const deadline = Date.now() + 15000;
+  while (!box && Date.now() < deadline) {
+    await sleep(400);
+    box = await passwordField(popup);
+  }
+  if (!box) return { ok: false, reason: "no_password_field" };
+  for (const pw of pws) {
+    try {
+      await box.click({ timeout: 5000 }).catch(() => {});
+      await box.fill("");
+      await box.pressSequentially(pw, { delay: 20 });
+      const next = popup.getByRole("button", { name: /^Next$/i });
+      if ((await next.count()) > 0) await next.first().click({ timeout: 8000 });
+      else await box.press("Enter");
+      await sleep(2500);
+      const body = await popup
+        .evaluate(() => (document.body && document.body.innerText) || "")
+        .catch(() => "");
+      if (/wrong password|that.?s not the right password|incorrect password/i.test(body)) {
+        continue;
+      }
+      return { ok: true };
+    } catch {
+      /* try next password */
+    }
+  }
+  const body = await popup
+    .evaluate(() => (document.body && document.body.innerText) || "")
+    .catch(() => "");
+  if (/wrong password|that.?s not the right password|incorrect password/i.test(body)) {
+    return { ok: false, reason: "wrong_password" };
+  }
+  return { ok: true };
 }
 
 async function main() {
@@ -301,8 +369,8 @@ async function main() {
     console.log(
       JSON.stringify({
         ok: false,
-        reason: "google_2fa_timeout",
-        hint: "Enter authenticator code in Chrome when ASK_OWNER_GOOGLE_2FA appears in chat",
+        reason: "google_login_incomplete",
+        hint: "Password rejected, 2FA timeout, or SSO did not finish — check ASK_OWNER_GOOGLE_2FA",
       })
     );
     process.exit(6);
@@ -337,7 +405,16 @@ async function main() {
   process.exit(5);
 }
 
-main().catch((err) => {
-  console.error(JSON.stringify({ ok: false, reason: "unexpected", error: String(err) }));
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(JSON.stringify({ ok: false, reason: "unexpected", error: String(err) }));
+    process.exit(1);
+  });
+}
+
+module.exports = {
+  isGooglePasswordChallenge,
+  isGoogle2faChallenge,
+  isHiristAuthCookieName,
+  passwordCandidates,
+};
