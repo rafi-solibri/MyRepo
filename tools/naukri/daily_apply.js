@@ -17,8 +17,10 @@ const {
   shouldSkipTitleFromCard,
   shouldSkipNonDotNetPrimaryJd,
   shouldSkipCompany,
+  shouldSkipTitle,
   parseNaukriCardLines,
   isArchLeadTitle,
+  titleFromNaukriJobUrl,
   EXPECTED_CTC_LPA,
   CURRENT_CTC_LPA,
 } = require("./resume_and_filters");
@@ -726,11 +728,13 @@ async function readDetail(page) {
       )
       // Footer "Careers" on Naukri is InfoEdge — never treat as job ATS.
       .filter((h) => !/careers\.infoedge\.com|infoedge\.in/i.test(h));
+    const h1 = (document.querySelector("h1")?.innerText || "").replace(/\s+/g, " ").trim();
     return {
       cta: preferred,
       links: [...new Set(links)].slice(0, 8),
       blob: ptext.slice(0, 4000),
       url: location.href,
+      jobTitle: h1,
     };
   });
   const visible = await readVisibleApplyCta(page).catch(() => null);
@@ -1965,6 +1969,19 @@ async function processCard(context, page, card, i, jobMeta, report) {
       await page.keyboard.press("Escape").catch(() => {});
     }
   };
+  const listingTitle =
+    (detail.jobTitle || "").trim() ||
+    titleFromNaukriJobUrl(detail.url || detailPage.url());
+  if (listingTitle && shouldSkipTitle(listingTitle)) {
+    report.skipped.push({
+      ...jobMeta,
+      reason: "skip_title_listing",
+      listingTitle,
+      naukriJobUrl: detail.url,
+    });
+    await closeDetail();
+    return;
+  }
   if (
     detailSkip &&
     detailSkip !== "already_applied" &&

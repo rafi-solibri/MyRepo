@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| GERENT homepage card Solution Architecting Quick-Applied Salesforce Principal Architect listing | skip_title_listing from job-listings URL slug / detail h1 so Salesforce titles are not burned |
 | Recruise EM apply_unconfirmed empty CTA after landed Quick Apply; GERENT Solution Architecting skip_no_dotnet | confirmApplied reloads job-listings URL and treats disabled dual-layer as Applied; ARCH_LEAD_RE matches architecting |
 | Broadcom Workday: fillFieldInput matched wrapper div so phone stayed +91… and names ALL-CAPS; empty companyName / multi-row degree Select One blocked My Experience | Prefer nested input in fillFieldInput; normalizeWorkdayPhone strips +91; fillWorkExperience from title/desc; per-row 70-Bachelor degree + Siddhartha school; title-skips for BigData/Copilot/Oracle EPM/Meraki/UI/Security/Tableau/Sharepoint/SD-WAN false Quick Applies |
 

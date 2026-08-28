@@ -208,6 +208,20 @@ function shouldSkipTitle(title) {
 }
 
 /** Skip Coupa/Pega/Salesforce/SAP employers even when title omits stack keyword. */
+/** Recover the listing title from a Naukri job-listings URL slug. */
+function titleFromNaukriJobUrl(url) {
+  const m = String(url || "").match(/\/job-listings-([^/?#]+)/i);
+  if (!m) return "";
+  let slug = m[1];
+  try {
+    slug = decodeURIComponent(slug);
+  } catch (_) {}
+  return slug
+    .replace(/-/g, " ")
+    .replace(/\s+\d+\s+to\s+\d+\s+years.*$/i, "")
+    .trim();
+}
+
 function shouldSkipCompany(company) {
   const c = String(company || "").trim();
   if (!c) return false;
@@ -224,6 +238,7 @@ module.exports = {
   shouldSkipCompany,
   parseNaukriCardLines,
   isArchLeadTitle,
+  titleFromNaukriJobUrl,
   normalizeAspNet,
   ARCH_LEAD_RE,
   CARD_CTA_RE,

@@ -8,6 +8,7 @@ const {
   hasDotNet,
   isArchLeadTitle,
   parseNaukriCardLines,
+  titleFromNaukriJobUrl,
 } = require("./resume_and_filters");
 
 assert.strictEqual(shouldSkipTitle("Solution Architect .NET"), false);
@@ -486,6 +487,17 @@ assert.strictEqual(
   isArchLeadTitle("Solution Architecture"),
   true,
   "Architecture titles stay Arch/Lead"
+);
+const gerentSlug =
+  "https://www.naukri.com/job-listings-salesforce-principal-architect-practice-lead-india-hybrid-60-lpa-gerent-noida-hyderabad-bengaluru-10-to-20-years-220826003049?src=drecomm_dashboard_aurus";
+assert.ok(
+  /salesforce/i.test(titleFromNaukriJobUrl(gerentSlug)),
+  "job-listings slug must recover Salesforce title"
+);
+assert.strictEqual(
+  shouldSkipTitle(titleFromNaukriJobUrl(gerentSlug)),
+  true,
+  "GERENT Salesforce Principal Architect listing must skip (false apply 2026-08-28)"
 );
 const { workdayCompliantPassword } = require("./workday_apply");
 assert.strictEqual(workdayCompliantPassword("GoodPass123!"), "GoodPass123!");

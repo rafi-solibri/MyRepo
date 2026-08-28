@@ -1,19 +1,20 @@
 {
   "date": "2026-08-28",
   "postFixRerun": true,
+  "pass": 2,
   "mergedFix": "https://github.com/rafi-solibri/MyRepo/pull/280",
-  "head": "93e35d6",
-  "startedAt": "2026-08-28T04:29:40.554Z",
-  "finishedAt": "2026-08-28T04:46:22.581Z",
+  "localHead": "39350be+",
+  "startedAt": "2026-08-28T04:56:20.174Z",
+  "finishedAt": "2026-08-28T05:13:30.472Z",
   "resume": "/workspace/resumes/Rafi_Resume.docx",
   "counts": {
     "profileUpdated": true,
-    "applied": 0,
+    "applied": 1,
     "externalCompleted": 0,
     "blocked": 1,
-    "skipped": 3087,
-    "seen": 213,
-    "tailoredApplies": 0
+    "skipped": 3099,
+    "seen": 226,
+    "tailoredApplies": 1
   },
   "profileResumeRefresh": {
     "profileUpdated": true,
@@ -35,48 +36,68 @@
       ]
     }
   },
-  "profileResumeRestored": {
-    "ok": true,
-    "resume": "/workspace/resumes/Rafi_Resume.docx"
-  },
-  "appliedHelper": [],
-  "blockedHelper": [
+  "applied": [
     {
-      "company": "Software Company",
-      "role": "Engineering Manager",
-      "location": "Posted by Recruise India Consulting",
-      "naukriUrl": "https://www.naukri.com/mnjuser/recommendedjobs",
-      "query": "recommended",
-      "resume": "/tmp/naukri-tailored/8e347f59acd4/Rafi_Resume.docx",
+      "company": "GERENT",
+      "role": "Solution Architecting, Solution Design, Delivery Leadership",
+      "location": "Hybrid - Noida, Hyderabad, Bengaluru",
+      "naukriUrl": "https://www.naukri.com/mnjuser/homepage",
+      "query": "homepage",
+      "resume": "/tmp/naukri-tailored/9a73667494be/Rafi_Resume.docx",
       "tailored": true,
       "tailorSkills": [
         ".NET Core / C#",
-        "CI/CD / Jenkins",
-        "Agile / Scrum"
+        "Cloud Architecture",
+        "Mentoring / Code Reviews"
       ],
-      "tailorHeadline": "Engineering Manager | Technical Architect \u2014 .NET Core / C# \u00b7 CI/CD / Jenkins \u00b7 Agile / Scrum",
+      "tailorHeadline": "Solutions Architect | Technical Lead \u2014 .NET Core / C# \u00b7 Cloud Architecture \u00b7 Mentoring / Code Reviews",
       "profileTailorUpload": {
         "ok": true,
         "profileUpdated": true
       },
-      "reason": "apply_unconfirmed",
-      "cta": "",
       "path": "Naukri",
-      "naukriJobUrl": "https://www.naukri.com/job-listings-engineering-manager-recruise-india-consulting-hyderabad-bengaluru-14-to-19-years-050226038710?src=drecomm_aurus",
-      "chat": {
-        "done": true,
-        "reason": "no_chat"
-      }
+      "cta": "Applied",
+      "recruiterNote": false,
+      "naukriJobUrl": "https://www.naukri.com/job-listings-salesforce-principal-architect-practice-lead-india-hybrid-60-lpa-gerent-noida-hyderabad-bengaluru-10-to-20-years-220826003049?src=drecomm_dashboard_aurus"
     }
   ],
-  "verifiedAppliedAfterRun": [
+  "blocked": [
+    {
+      "company": "Accenture",
+      "role": "Packaged/SaaS App Engineering Lead",
+      "location": "Hyderabad",
+      "naukriUrl": "https://www.naukri.com/net-lead-jobs-in-hyderabad-secunderabad?k=.net%20lead&l=hyderabad&experience=12&jobAge=30",
+      "query": ".net lead",
+      "age": 30,
+      "loc": "hyderabad",
+      "resume": "/tmp/naukri-tailored/ab00627a126a/Rafi_Resume.docx",
+      "tailored": true,
+      "tailorSkills": [
+        ".NET Core / C#",
+        "Azure",
+        "Cloud Architecture",
+        "Mentoring / Code Reviews"
+      ],
+      "tailorHeadline": "Solutions Architect | Technical Lead \u2014 .NET Core / C# \u00b7 Azure \u00b7 Cloud Architecture \u00b7 Mentoring / Code Reviews",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://www.accenture.com/in-en/careers/jobdetails?id=ATCI-5699566-S2061172_en&title=Packaged%2FSaaS+App+Engineering+Lead&SRC=RECNau",
+      "path": "company_ATS"
+    }
+  ],
+  "falseApplies": [
+    {
+      "company": "GERENT",
+      "cardRole": "Solution Architecting, Solution Design, Delivery Leadership",
+      "listingTitle": "Salesforce Principal Architect Practice Lead",
+      "naukriJobUrl": "https://www.naukri.com/job-listings-salesforce-principal-architect-practice-lead-india-hybrid-60-lpa-gerent-noida-hyderabad-bengaluru-10-to-20-years-220826003049?src=drecomm_dashboard_aurus",
+      "reason": "homepage card omitted Salesforce; listing URL is Salesforce Principal Architect"
+    }
+  ],
+  "verifiedAppliedPass1": [
     {
       "company": "Software Company / Recruise India Consulting",
       "role": "Engineering Manager",
-      "naukriJobUrl": "https://www.naukri.com/job-listings-engineering-manager-recruise-india-consulting-hyderabad-bengaluru-14-to-19-years-050226038710?src=drecomm_aurus",
-      "cta": "Quick apply Applied",
-      "ctaDisabled": true,
-      "note": "Helper logged apply_unconfirmed/empty CTA; live job page after run showed disabled dual-layer Applied"
+      "cta": "disabled Quick apply Applied"
     }
   ],
   "alreadyApplied": [
@@ -96,621 +117,16 @@
     }
   ],
   "skipReasons": {
-    "skip_no_dotnet": 30,
-    "duplicate_in_run": 2851,
-    "skip_title_keyword": 143,
-    "skip_seniority": 28,
-    "skip_company": 9,
-    "hirist_login_required_skip": 3,
+    "skip_no_dotnet": 31,
+    "duplicate_in_run": 2852,
+    "skip_title_keyword": 148,
+    "skip_seniority": 30,
+    "skip_company": 10,
+    "hirist_login_required_skip": 4,
     "skip_ctc_max_30": 5,
-    "skip_jd_non_dotnet_detail": 9,
+    "skip_jd_non_dotnet_detail": 10,
     "already_applied_detail": 1,
     "skip_ctc_max_32.5": 1,
     "skip_location": 7
-  },
-  "interestingSkips": [
-    {
-      "company": "JPMorgan Chase Bank",
-      "role": "Software Engineer III",
-      "location": "Hyderabad, Bengaluru",
-      "reason": "skip_seniority",
-      "query": "solution architect",
-      "age": 1
-    },
-    {
-      "company": "Salesforce",
-      "role": "Solution Architect/Sr Solution Architect- Marketing Cloud Next",
-      "location": "Hyderabad, Bengaluru",
-      "reason": "skip_company",
-      "query": "solution architect",
-      "age": 1
-    },
-    {
-      "company": "VMware",
-      "role": "R & D Software Engineer",
-      "location": "Hyderabad",
-      "reason": "skip_seniority",
-      "query": "solution architect",
-      "age": 1
-    },
-    {
-      "company": "Broadcom",
-      "role": "R & D Software Engineer",
-      "location": "Hyderabad",
-      "reason": "skip_seniority",
-      "query": "solution architect",
-      "age": 1
-    },
-    {
-      "company": "Atyeti",
-      "role": "Senior PingFederate Engineer",
-      "location": "Hyderabad, Chennai, Mumbai (All Areas)",
-      "reason": "skip_seniority",
-      "query": "solution architect",
-      "age": 1
-    },
-    {
-      "company": "Hiring for a Recruitment / Staffing company",
-      "role": "CAST Imaging Application Assessment & Modernization Consultant",
-      "location": "Hyderabad, Chennai, Bengaluru",
-      "reason": "skip_seniority",
-      "query": "solution architect",
-      "age": 1
-    },
-    {
-      "company": "Highradius",
-      "role": "HighRadius - Senior Manager - TechOps (10-12 yrs)",
-      "location": "Hyderabad",
-      "reason": "hirist_login_required_skip",
-      "query": "engineering manager",
-      "age": 1
-    },
-    {
-      "company": "Mouri Tech",
-      "role": ".Net Fullstack developer",
-      "location": "Hyderabad",
-      "reason": "skip_seniority",
-      "query": "engineering manager",
-      "age": 1
-    },
-    {
-      "company": "Anlage Infotech",
-      "role": "Assistant Manager/Manager - AI Platform (6-13 yrs)",
-      "location": "Hyderabad, Bengaluru",
-      "reason": "hirist_login_required_skip",
-      "query": "engineering manager",
-      "age": 1
-    },
-    {
-      "company": "Hiring for an IT Services & Consulting company",
-      "role": "Senior Performance Test Engineer",
-      "location": "Hyderabad, Bengaluru",
-      "reason": "skip_seniority",
-      "query": "engineering manager",
-      "age": 1
-    },
-    {
-      "company": "Vichara Technologies",
-      "role": "Senior Technical Solutions Engineer",
-      "location": "Hybrid - Hyderabad, Delhi / NCR",
-      "reason": "skip_seniority",
-      "query": "engineering manager",
-      "age": 1
-    },
-    {
-      "company": "Vichara Technologies",
-      "role": "FX Trading Systems Developer",
-      "location": "Hybrid - Hyderabad, Bengaluru, Delhi / NCR",
-      "reason": "skip_seniority",
-      "query": "engineering manager",
-      "age": 1
-    },
-    {
-      "company": "Unknown Worlds Entertainment",
-      "role": "Senior Technical Animator",
-      "location": "Remote",
-      "reason": "skip_seniority",
-      "query": "solution architect .net",
-      "age": 3
-    },
-    {
-      "company": "Mashreq Global Services",
-      "role": "Assistant Vice President - Auditor.Shared services_Audit",
-      "location": "Remote",
-      "reason": "skip_seniority",
-      "query": "solution architect .net",
-      "age": 3
-    },
-    {
-      "company": "Excelra",
-      "role": "Automation Testing Consultant",
-      "location": "Remote",
-      "reason": "skip_seniority",
-      "query": "solution architect .net",
-      "age": 3
-    },
-    {
-      "company": "Apexon",
-      "role": "JDE Finance Functional Consultant",
-      "location": "Remote",
-      "reason": "skip_seniority",
-      "query": "solution architect .net",
-      "age": 3
-    },
-    {
-      "company": "Yupptv",
-      "role": "Technical Manager",
-      "location": "Hyderabad",
-      "reason": "skip_ctc_max_30",
-      "query": ".net technical lead",
-      "age": 3
-    },
-    {
-      "company": "Wells Fargo",
-      "role": "Lead Software Engineer",
-      "location": "Hyderabad",
-      "reason": "skip_jd_non_dotnet_detail",
-      "query": "solution architect",
-      "age": 3
-    },
-    {
-      "company": "Innova Solutions",
-      "role": "IDMC Lead/Architect and Developer - HYD/Chennai/BLRE/NOIDA",
-      "location": "Hybrid - Hyderabad, Chennai, Bengaluru",
-      "reason": "skip_ctc_max_30",
-      "query": "solution architect",
-      "age": 3
-    },
-    {
-      "company": "Radiant Digital Solutions",
-      "role": "Fullstack Software Developer",
-      "location": "Hyderabad",
-      "reason": "skip_seniority",
-      "query": "solution architect",
-      "age": 3
-    },
-    {
-      "company": "CBRE",
-      "role": "Senior Principal Software Engineer",
-      "location": "Hybrid - Hyderabad",
-      "reason": "skip_jd_non_dotnet_detail",
-      "query": "engineering manager",
-      "age": 3
-    },
-    {
-      "company": "Hiring for an Analytics / KPO / Research company",
-      "role": "Engineering Manager",
-      "location": "Hybrid - Hyderabad, Kolkata, Mumbai (All Areas)",
-      "reason": "skip_jd_non_dotnet_detail",
-      "query": "engineering manager",
-      "age": 3
-    },
-    {
-      "company": "Optum",
-      "role": "Manager of AI/ML Engineering",
-      "location": "Hyderabad",
-      "reason": "skip_jd_non_dotnet_detail",
-      "query": "engineering manager",
-      "age": 3
-    },
-    {
-      "company": "Salesforce",
-      "role": "Salesforce Tech Arch/Mgr (Health domain or Health cloud exp)",
-      "location": "Hyderabad, Pune, Bengaluru",
-      "reason": "skip_company",
-      "query": "engineering manager",
-      "age": 3
-    },
-    {
-      "company": "Salesforce",
-      "role": "Salesforce - Senior Software Engineering Manager (10-14 yrs)",
-      "location": "Hyderabad, Hyderabad, Bengaluru, Bengaluru, Telangana, Karnataka, India",
-      "reason": "skip_company",
-      "query": "engineering manager",
-      "age": 3
-    },
-    {
-      "company": "HUCON Solutions",
-      "role": "Head of Unit - Technical AI Product Owner",
-      "location": "Hyderabad",
-      "reason": "skip_jd_non_dotnet_detail",
-      "query": "engineering manager",
-      "age": 3
-    },
-    {
-      "company": "Eruvaka Technologies",
-      "role": "Engineering Manager",
-      "location": "Hyderabad",
-      "reason": "skip_jd_non_dotnet_detail",
-      "query": "engineering manager",
-      "age": 3
-    },
-    {
-      "company": "Radiant Digital Solutions",
-      "role": "Fullstack Developer",
-      "location": "Hybrid - Hyderabad",
-      "reason": "skip_seniority",
-      "query": "engineering manager",
-      "age": 3
-    },
-    {
-      "company": "Amgen Inc",
-      "role": "Encryption Agility Team Architect",
-      "location": "Hyderabad",
-      "reason": "skip_jd_non_dotnet_detail",
-      "query": "engineering manager",
-      "age": 3
-    },
-    {
-      "company": "Solugenix",
-      "role": "AI Technical Architect",
-      "location": "Hybrid - Hyderabad, Bengaluru",
-      "reason": "skip_jd_non_dotnet_detail",
-      "query": "engineering manager",
-      "age": 3
-    },
-    {
-      "company": "LTM",
-      "role": ".Net FullStack Developer with Azure Cloud",
-      "location": "Hybrid - Hyderabad, Pune, Bengaluru",
-      "reason": "skip_seniority",
-      "query": "engineering manager",
-      "age": 3
-    },
-    {
-      "company": "Pepsico",
-      "role": "Software Eng Sr Engineer",
-      "location": "Hyderabad",
-      "reason": "skip_seniority",
-      "query": "engineering manager",
-      "age": 3
-    },
-    {
-      "company": "Assurant Automotive Warranty Solutions",
-      "role": "Senior Software Engineer (C#.net + Angular + SQL + AI-Literacy)",
-      "location": "Hyderabad, Bengaluru",
-      "reason": "skip_seniority",
-      "query": "engineering manager",
-      "age": 3
-    },
-    {
-      "company": "Vanguard",
-      "role": "Application Engineering Technical Lead",
-      "location": "Hyderabad",
-      "reason": "skip_jd_non_dotnet_detail",
-      "query": "technical lead",
-      "age": 3
-    },
-    {
-      "company": "Cadence",
-      "role": "Principal Design Engineer",
-      "location": "Hyderabad",
-      "reason": "skip_company",
-      "query": "principal engineer",
-      "age": 3
-    },
-    {
-      "company": "Mashreq Global Services",
-      "role": "Assistant Vice President - Auditor.International_Audit",
-      "location": "Remote",
-      "reason": "skip_seniority",
-      "query": "solution architect .net",
-      "age": 7
-    },
-    {
-      "company": "Ascentforce Services Private Limited",
-      "role": "Senior .NET Full Stack Engineer - AI & Azure",
-      "location": "Hybrid - Hyderabad, Chennai, Bengaluru",
-      "reason": "skip_seniority",
-      "query": "engineering manager",
-      "age": 7
-    },
-    {
-      "company": "Incedo",
-      "role": ".Net Lead role- Immediate joiner",
-      "location": "Hyderabad",
-      "reason": "skip_ctc_max_30",
-      "query": ".net technical lead",
-      "age": 15
-    },
-    {
-      "company": "Infidocs Technologies",
-      "role": "Oracle Solution Architect",
-      "location": "Hybrid - Hyderabad, Pune, Bengaluru",
-      "reason": "skip_ctc_max_30",
-      "query": "solution architect",
-      "age": 15
-    },
-    {
-      "company": "Intellics Global Services",
-      "role": "MDM Solution Architect Presales, Solutioning",
-      "location": "Hybrid - Hyderabad, Chennai, Bengaluru",
-      "reason": "skip_ctc_max_30",
-      "query": "solution architect",
-      "age": 15
-    },
-    {
-      "company": "Tata Consultancy Services",
-      "role": "Machine Learning Software Engineer _GenAI Applications",
-      "location": "Hyderabad",
-      "reason": "skip_seniority",
-      "query": "engineering manager",
-      "age": 15
-    },
-    {
-      "company": "Hiring for an IT Services & Consulting company",
-      "role": "Oracle PaaS Senior Consultant",
-      "location": "Hyderabad",
-      "reason": "skip_seniority",
-      "query": "technical lead",
-      "age": 15
-    },
-    {
-      "company": "Tekfriday Processing Solutions",
-      "role": "VP Developer",
-      "location": "Hyderabad",
-      "reason": "skip_seniority",
-      "query": ".net lead",
-      "age": 15
-    },
-    {
-      "company": "Hiring for an Accounting / Auditing company",
-      "role": "Nephrology Consultant",
-      "location": "Hyderabad, Remote, Raipur",
-      "reason": "skip_seniority",
-      "query": "solution architect .net",
-      "age": 30
-    },
-    {
-      "company": "Leading Client",
-      "role": ".NET Full Stack Developer",
-      "location": "Hybrid - Hyderabad",
-      "reason": "skip_seniority",
-      "query": ".net lead",
-      "age": 30
-    },
-    {
-      "company": "Rapidue Technologies",
-      "role": "Rapidue - Solution Architect - Full Stack Development (9-17 yrs)",
-      "location": "Hyderabad",
-      "reason": "hirist_login_required_skip",
-      "query": "solution architect",
-      "age": 60
-    },
-    {
-      "company": "Clean Harbors",
-      "role": ".Net Fullstack Tech Lead",
-      "location": "Hyderabad",
-      "reason": "already_applied_detail",
-      "query": ".net lead",
-      "age": 60
-    },
-    {
-      "company": "Fint Solutions",
-      "role": "Senior AI Application Developer",
-      "location": "Hybrid - Hyderabad, Chennai",
-      "reason": "skip_seniority",
-      "query": "solution architect azure",
-      "age": 3
-    },
-    {
-      "company": "Cirruslabs",
-      "role": "Head of IT Operations",
-      "location": "Hyderabad, Bengaluru",
-      "reason": "skip_ctc_max_32.5",
-      "query": "solution architect azure",
-      "age": 7
-    },
-    {
-      "company": "Salesforce",
-      "role": "Salesforce Technical Architect",
-      "location": "Hybrid - Hyderabad, Bengaluru",
-      "reason": "skip_company",
-      "query": "recommended",
-      "age": null
-    },
-    {
-      "company": "Salesforce",
-      "role": "Sr Technical Architect",
-      "location": "Hyderabad, Bengaluru",
-      "reason": "skip_company",
-      "query": "recommended",
-      "age": null
-    },
-    {
-      "company": "Hiring for a Software Product company",
-      "role": "Senior Principal Software Engineer",
-      "location": "Hybrid - Pune",
-      "reason": "skip_location",
-      "query": "recommended",
-      "age": null
-    },
-    {
-      "company": "Leading Startup",
-      "role": "Head Technology",
-      "location": "Bengaluru",
-      "reason": "skip_seniority",
-      "query": "recommended",
-      "age": null
-    },
-    {
-      "company": "Mastercard",
-      "role": "Senior Principal Software Engineer",
-      "location": "Pune",
-      "reason": "skip_location",
-      "query": "recommended",
-      "age": null
-    },
-    {
-      "company": "First American",
-      "role": "First American - Engineering Manager (10-15 yrs)",
-      "location": "Bengaluru",
-      "reason": "skip_location",
-      "query": "recommended",
-      "age": null
-    },
-    {
-      "company": "Fiserv",
-      "role": "Cloud Solutions Architect(Multi Cloud)",
-      "location": "Bengaluru",
-      "reason": "skip_location",
-      "query": "recommended",
-      "age": null
-    },
-    {
-      "company": "Hiring for a Software Product company",
-      "role": "Head of Engineer",
-      "location": "Bengaluru, Delhi / NCR, Mumbai (All Areas)",
-      "reason": "skip_location",
-      "query": "recommended",
-      "age": null
-    },
-    {
-      "company": "Happiest Minds Technologies",
-      "role": "SENIOR ARCHITECT - Enterprise Architecture",
-      "location": "Bengaluru",
-      "reason": "skip_location",
-      "query": "recommended",
-      "age": null
-    },
-    {
-      "company": "Capital One",
-      "role": "Senior Lead Software Engineer",
-      "location": "Bengaluru",
-      "reason": "skip_location",
-      "query": "recommended",
-      "age": null
-    },
-    {
-      "company": "Salesforce",
-      "role": "Salesforce DevOps - Technical Architect",
-      "location": "Hyderabad",
-      "reason": "skip_company",
-      "query": "homepage",
-      "age": null
-    },
-    {
-      "company": "Salesforce",
-      "role": "Salesforce Manager/Senior Technical Manager",
-      "location": "Hyderabad",
-      "reason": "skip_company",
-      "query": "homepage",
-      "age": null
-    },
-    {
-      "company": "Salesforce",
-      "role": "Salesforce Technical Architect - Lifesciences",
-      "location": "Hybrid - Hyderabad, Bengaluru",
-      "reason": "skip_company",
-      "query": "homepage",
-      "age": null
-    },
-    {
-      "company": "Client of Mancer",
-      "role": "Senior Application Engineer",
-      "location": "Hybrid - Hyderabad",
-      "reason": "skip_seniority",
-      "query": "homepage",
-      "age": null
-    }
-  ],
-  "hiristSkips": [
-    {
-      "company": "Highradius",
-      "role": "HighRadius - Senior Manager - TechOps (10-12 yrs)",
-      "location": "Hyderabad",
-      "naukriUrl": "https://www.naukri.com/engineering-manager-jobs-in-hyderabad-secunderabad?k=engineering%20manager&l=hyderabad&experience=12&jobAge=1",
-      "query": "engineering manager",
-      "age": 1,
-      "loc": "hyderabad",
-      "resume": "/tmp/naukri-tailored/0eaaa9303a00/Rafi_Resume.docx",
-      "tailored": true,
-      "tailorSkills": [
-        ".NET Core / C#",
-        "Azure",
-        "AWS",
-        "Kubernetes",
-        "Docker",
-        "CI/CD / Jenkins",
-        "Cloud Architecture",
-        "Mentoring / Code Reviews"
-      ],
-      "tailorHeadline": "Solutions Architect | Technical Lead \u2014 .NET Core / C# \u00b7 Azure \u00b7 AWS \u00b7 Kubernetes",
-      "reason": "hirist_login_required_skip",
-      "path": "hirist",
-      "cta": "Apply on hirist.com Apply attempted"
-    },
-    {
-      "company": "Anlage Infotech",
-      "role": "Assistant Manager/Manager - AI Platform (6-13 yrs)",
-      "location": "Hyderabad, Bengaluru",
-      "naukriUrl": "https://www.naukri.com/engineering-manager-jobs-in-hyderabad-secunderabad?k=engineering%20manager&l=hyderabad&experience=12&jobAge=1",
-      "query": "engineering manager",
-      "age": 1,
-      "loc": "hyderabad",
-      "resume": "/tmp/naukri-tailored/cf1a97a1dbe7/Rafi_Resume.docx",
-      "tailored": true,
-      "tailorSkills": [
-        ".NET Core / C#",
-        "Azure",
-        "AWS",
-        "Kubernetes",
-        "Docker",
-        "React",
-        "Angular",
-        "SQL Server / PostgreSQL",
-        "CI/CD / Jenkins",
-        "Distributed Systems"
-      ],
-      "tailorHeadline": "Solutions Architect | Technical Lead \u2014 .NET Core / C# \u00b7 Azure \u00b7 AWS \u00b7 Kubernetes",
-      "reason": "hirist_login_required_skip",
-      "path": "hirist",
-      "cta": "Apply on hirist.com Apply attempted"
-    },
-    {
-      "company": "Rapidue Technologies",
-      "role": "Rapidue - Solution Architect - Full Stack Development (9-17 yrs)",
-      "location": "Hyderabad",
-      "naukriUrl": "https://www.naukri.com/solution-architect-jobs-in-hyderabad-secunderabad?k=solution%20architect&l=hyderabad&experience=12&jobAge=60",
-      "query": "solution architect",
-      "age": 60,
-      "loc": "hyderabad",
-      "resume": "/tmp/naukri-tailored/2232bbf8e38a/Rafi_Resume.docx",
-      "tailored": true,
-      "tailorSkills": [
-        ".NET Core / C#",
-        "Microservices",
-        "REST APIs",
-        "Distributed Systems",
-        "Cloud Architecture",
-        "Mentoring / Code Reviews"
-      ],
-      "tailorHeadline": "Solutions Architect | Technical Lead \u2014 .NET Core / C# \u00b7 Microservices \u00b7 REST APIs \u00b7 Distributed Systems",
-      "reason": "hirist_login_required_skip",
-      "path": "hirist",
-      "cta": "Apply on hirist.com Apply attempted"
-    }
-  ],
-  "jobAges": [
-    1,
-    3,
-    7
-  ],
-  "expandedAges": [
-    15,
-    30,
-    60
-  ],
-  "earlyExpandedAges": [
-    3,
-    7
-  ],
-  "extraQueries": [
-    ".net azure architect",
-    "solution architect azure",
-    "dotnet engineering manager",
-    "principal software engineer .net",
-    "technical architect c#",
-    "cloud architect .net"
-  ]
+  }
 }
