@@ -808,4 +808,18 @@ assert.strictEqual(
   "Microsoft Architecture Apps & AI must still pass (not Architect - AI)"
 );
 
+assert.strictEqual(
+  classifyJob({
+    jobId: 64378770,
+    title: "Data Governance Technology Lead / Solution Architect",
+    companyName: "Macquarie Group",
+    locations: [{ text: "Hyderabad / Secunderabad" }],
+    skills: [{ text: "Azure" }, { text: ".NET" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "pure AI/data without .NET on title",
+  "Data Governance Lead/Architect must skip even with Arch/Lead + skills laundry .NET (2026-08-28)"
+);
+
 console.log("filters.test.js OK");

@@ -1,5 +1,12 @@
 # Foundit — issues & fixes
 
+## 2026-08-28 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Macquarie Data Governance Technology Lead/Solution Architect passed via Arch/Lead without .NET on title (Falcon APPLY_REDIRECT + Applied tab bump; LinkedIn no Easy Apply) | filters.js: add data governance to pure AI/data title skip (Arch/Lead must not waive .NET); test jobId 64378770 |
+
+
 ## 2026-08-27 (cloud)
 
 | Issue | Fix |
