@@ -17,6 +17,16 @@
 - Macquarie **Data Governance** Lead/Architect passed via Arch/Lead exception with no `.NET` on title → add `data governance` to pure AI/data title skip (skills laundry ignored).
 - Merged https://github.com/rafi-solibri/MyRepo/pull/277. Post-fix re-run: **461 → 461** (+0); Macquarie correctly skipped (`pure AI/data without .NET on title`); skips 1191 / dupes 78 / blocked 0.
 
+## Same-day post-fix re-run on main (after #282 chrome_session shared infra)
+- Ran `POST_FIX_RERUN=1` on `main` @ `5a71a82` (includes #277 Foundit filter + #282 chrome_session).
+- Login: MSSOAT + jwtOk=True; onApp dashboard (`wait_for_cdp_login.js` + `daily_apply.js`). Resume: `resumes/Rafi_Resume.docx`. No `canJobApply` dry-run.
+- Applied tab: **465 → 465** (+0). Intentional logged: **0**. Age → **3650d**.
+- Candidates: d1=22 / d3=93 / d7=345 / d14=263 / d30=296 / d90=205 / d3650=45.
+- Skips: 1191 | duplicates: 78 (all `userJobInfo` — already applied, skipped) | blocked: 0.
+- Macquarie Data Governance still correctly skipped (`pure AI/data without .NET on title`).
+- No new code-fixable blocker; no further post-fix re-run launched (1/5 cap).
+- Artifact: `/opt/cursor/artifacts/foundit-apply-report.json` (copy: `reports/2026-08-28/foundit-apply-report-postfix-rerun.json`)
+
 ## Top 3 LinkedIn referral drafts
 - **Macquarie Group / Data Governance Technology Lead / Solution Architect:** Hi — I'm applying for Data Governance Technology Lead / Solution Architect at Macquarie Group. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)
 - **Globallogic India / Senior .NET Lead (Principal Engineer) IRC296129:** Hi — I'm applying for Senior .NET Lead (Principal Engineer) IRC296129 at Globallogic India. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)
