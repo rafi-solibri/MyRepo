@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-08-29 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| False Quick Apply Teamcenter/Windchill/AWS Infra Architect (TCS 2026-08-29) | Title-skip teamcenter\|windchill\|plm\|aws infra architect in resume_and_filters.js |
+
+
 ## 2026-08-28 (cloud)
 
 | Issue | Fix |
