@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| SmartApply Crowe questions: Yes-default relationship radio + current-employer filled into 'if no, reply No'; Continue blocked on empty N/A | want_from_question: relationship/client → No, if-none → N/A; flip wrong Yes; dismiss cookie banner; recover_selects validation |
 | Company-site ATS hung UC inventory ~40m (Solix): Playwright attach to UC :9222 + Selenium tab-close wedge after external timeout | complete_external_ats subprocess + ATS_CDP=0 owned Chromium (no WARP SOCKS); finish_company_site page-load/script timeouts + threaded URL/tab-close abandon; resolve_ats_cdp |
 
 

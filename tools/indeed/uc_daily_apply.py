@@ -874,8 +874,35 @@ def _switch_smartapply_frame(sb) -> None:
         pass
 
 
+def dismiss_indeed_cookies(sb) -> None:
+    """Cookie banner overlays Continue on SmartApply questions / resume-selection."""
+    try:
+        sb.driver.switch_to.default_content()
+    except Exception:
+        pass
+    try:
+        clicked = sb.execute_script(
+            """
+            const btns = [...document.querySelectorAll('button, a, [role=button]')];
+            const el = btns.find(b => {
+              const t = ((b.innerText || '') + ' ' + (b.getAttribute('aria-label') || '')).trim();
+              return /accept all cookies|reject all/i.test(t) && t.length < 40;
+            });
+            if (!el) return null;
+            el.click();
+            return (el.innerText || '').trim().slice(0, 40);
+            """
+        )
+        if clicked:
+            print(f"  cookies_dismiss={clicked!r}", flush=True)
+            time.sleep(0.4)
+    except Exception as exc:
+        print(f"  cookies_dismiss_err={exc!s}"[:160], flush=True)
+
+
 def fill_common_questions(sb) -> None:
     """Best-effort form fill for smartapply.indeed.com / Easy Apply steps."""
+    dismiss_indeed_cookies(sb)
     _switch_smartapply_frame(sb)
     # JS fill by label/aria/placeholder — more reliable on SmartApply modules.
     try:
@@ -943,12 +970,24 @@ def fill_common_questions(sb) -> None:
             };
             const wantFromText = (text) => {
               const t = (text || '').toLowerCase();
+              // Keep in sync with tools/indeed/smartapply_answers.py
+              if (/familial|romantic|close personal relationship|relationship with.{0,60}(employee|applicant|staff)|relative (who )?(work|employed)|conflict of interest/.test(t)) {
+                return 'no';
+              }
+              if (/identify the individual|describe the relationship|if none[,.]?\\s*(write|enter|type|put)\\s*n\\/?a/.test(t)) {
+                return 'N/A';
+              }
+              if ((/currently work at.{0,80}client|work (at|for) (a )?(crowe |our |the )?client/.test(t))
+                  && /if no|reply no|provide the company/.test(t)) {
+                return 'No';
+              }
               if (/current.*(position|role|title|designation)|present.*(position|role|title)|job title/.test(t)
                   && !/salary|ctc|compensation|pay/.test(t)) {
                 return 'Solutions Architect';
               }
               if (/current.*(employer|company|organization)|present.*(employer|company)|where.*(work|employed)/.test(t)
-                  && !/salary|ctc|compensation|pay/.test(t)) {
+                  && !/salary|ctc|compensation|pay/.test(t)
+                  && !/client|if no[,.]?\\s*reply no|if yes[,.]?\\s*provide the company/.test(t)) {
                 return 'Nemetschek / Solibri';
               }
               if (/linkedin(\\.com)?|profile url|portfolio url/.test(t)) {
@@ -1022,7 +1061,8 @@ def fill_common_questions(sb) -> None:
               if (/authorized|work authori|visa|citizen|india|legally/.test(t)) return 'yes';
               if (/gender/.test(t)) return 'male';
               if (/city|current location|prefer.*location|job location|base location/.test(t)) return 'Hyderabad';
-              if (/\\?/.test(t) && /(yes|no)/.test(t)) return 'yes';
+              if (/\\?/.test(t) && /(yes|no)/.test(t)
+                  && !/familial|romantic|relationship with|client|if no|reply no/.test(t)) return 'yes';
               if (/what makes you unique|cover letter|why (do )?you|tell us|about yourself|summary|additional information/.test(t)) {
                 return 'Solutions Architect / Tech Lead with 14+ years in .NET, Azure, microservices. Immediate joiner. Hyd/Remote. Expected 65 LPA.';
               }
@@ -1034,6 +1074,7 @@ def fill_common_questions(sb) -> None:
                 const lab = ((r.getAttribute('aria-label')||'') + ' ' + (r.parentElement?.innerText||'') + ' ' + (r.value||'')).toLowerCase().slice(0,160);
                 const hit =
                   (want === 'yes' && /\\byes\\b|yep|true|agree|available/.test(lab) && !/\\bno\\b/.test(lab)) ||
+                  (want === 'no' && /\\bno\\b/.test(lab) && !/\\byes\\b/.test(lab)) ||
                   (want === 'male' && /\\bmale\\b/.test(lab) && !/female/.test(lab)) ||
                   (want === 'Mr.' && (/^mr\\.?$/.test(lab.trim()) || (/\\bmr\\.?\\b/.test(lab) && !/mrs|miss|\\bms\\.?\\b/.test(lab)))) ||
                   (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than|currently serving|serving notice/.test(lab)) ||
@@ -1050,6 +1091,7 @@ def fill_common_questions(sb) -> None:
                   const t = (opt.text||'').toLowerCase();
                   if (
                     (want === 'yes' && /\\byes\\b/.test(t)) ||
+                    (want === 'no' && /\\bno\\b/.test(t)) ||
                     (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs/.test(t)) ||
                     (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than/.test(t)) ||
                     (want === '0' && /\\b0\\b|immediate|0\\s*day|0-15|less than/.test(t)) ||
@@ -1096,6 +1138,7 @@ def fill_common_questions(sb) -> None:
                 const t = ((el.innerText||'') + ' ' + (el.getAttribute('aria-label')||'')).trim().toLowerCase();
                 if (!t || t.length > 80) continue;
                 if (want === 'yes' && /\\byes\\b|i certify|yes, i certify/.test(t) && !/don'?t certify|\\bno,/.test(t)) { el.click(); return true; }
+                if (want === 'no' && /^no\\b/.test(t) && !/\\byes\\b/.test(t)) { el.click(); return true; }
                 // Prefer exact "Mr." / "Mr" nodes — avoid clicking a parent that contains both Mr. and Ms.
                 if (want === 'Mr.' && /^mr\\.?$/.test(t.trim())) { el.click(); return true; }
                 if (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs|miss|\\bms\\.?\\b/.test(t) && t.length <= 12) { el.click(); return true; }
@@ -1156,7 +1199,9 @@ def fill_common_questions(sb) -> None:
               else if (/(street\\s*address|address\\s*line|home\\s*address|^address\\b)/.test(lab)
                   && !/email|ip address|web address/.test(lab)) val = vals.street;
               else if (/current.*(position|role|title|designation)|job title/.test(lab) && !/salary|ctc/.test(lab)) val = 'Solutions Architect';
-              else if (/current.*(employer|company|organization)|present.*(employer|company)/.test(lab) && !/salary|ctc/.test(lab)) val = 'Nemetschek / Solibri';
+              else if (/current.*(employer|company|organization)|present.*(employer|company)/.test(lab)
+                  && !/salary|ctc/.test(lab)
+                  && !/client|if no[,.]?\\s*reply no|if yes[,.]?\\s*provide the company/.test(lab)) val = 'Nemetschek / Solibri';
               else if (/linkedin|profile url|portfolio url/.test(lab)) val = 'https://www.linkedin.com/in/rafi-ahmed';
               else if (/highest (degree|education|qualification)|education|university|college|degree/.test(lab)) val = 'B.Tech';
               else if (/current.*(ctc|salary|compensation|package)|ctc.*current|current salary/.test(lab)) val = vals.current;
@@ -1197,16 +1242,39 @@ def fill_common_questions(sb) -> None:
             for (const name of names) {
               const group = [...document.querySelectorAll(`input[type=radio][name="${CSS.escape(name)}"]`)];
               if (!group.length || group.some(r => r.checked)) continue;
+              const wrap = group[0].closest('fieldset, [class*="question"], [data-testid*="question"], .ia-Questions-item, li, section, form') || group[0].closest('div');
+              const ctx = (wrap?.innerText || '').toLowerCase().slice(0, 400);
+              const preferNo = /familial|romantic|close personal|relationship with|relative (who )?(work|employed)|conflict of interest|currently work at.{0,80}client|convicted|criminal/.test(ctx);
               const scored = group.map(r => {
                 const lab = ((r.getAttribute('aria-label')||'') + ' ' + (r.parentElement?.innerText||'') + ' ' + (r.value||'')).toLowerCase();
                 let s = 0;
                 if (/decline|prefer not|do not wish|don't wish|choose not|not to answer|rather not/.test(lab)) s += 4;
-                if (/\\byes\\b|immediate|agree|available|hyderabad|male\\b|\\bmr\\.?\\b/.test(lab)) s += 3;
-                if (/\\bno\\b|female|not available|never/.test(lab)) s -= 2;
+                if (preferNo) {
+                  if (/\\bno\\b/.test(lab) && !/\\byes\\b/.test(lab)) s += 6;
+                  if (/\\byes\\b/.test(lab)) s -= 5;
+                } else {
+                  if (/\\byes\\b|immediate|agree|available|hyderabad|male\\b|\\bmr\\.?\\b/.test(lab)) s += 3;
+                  if (/\\bno\\b|female|not available|never/.test(lab)) s -= 2;
+                }
                 return {r, s, lab};
               }).sort((a,b) => b.s - a.s);
               try { scored[0].r.click(); answered += 1; } catch (e) {}
               try { (scored[0].r.closest('label') || scored[0].r).click(); } catch (e) {}
+            }
+            // Flip a wrong Yes on relationship / client radios (prior Yes-default).
+            for (const name of names) {
+              const group = [...document.querySelectorAll(`input[type=radio][name="${CSS.escape(name)}"]`)];
+              if (!group.length) continue;
+              const wrap = group[0].closest('fieldset, [class*="question"], [data-testid*="question"], .ia-Questions-item, li, section, form') || group[0].closest('div');
+              const ctx = (wrap?.innerText || '').toLowerCase().slice(0, 400);
+              if (!/familial|romantic|close personal|relationship with|relative (who )?(work|employed)|conflict of interest|currently work at.{0,80}client/.test(ctx)) continue;
+              const yesOn = group.find(r => r.checked && /\\byes\\b/.test(((r.getAttribute('aria-label')||'') + ' ' + (r.parentElement?.innerText||'') + ' ' + (r.value||'')).toLowerCase()));
+              if (!yesOn) continue;
+              const noEl = group.find(r => /\\bno\\b/.test(((r.getAttribute('aria-label')||'') + ' ' + (r.parentElement?.innerText||'') + ' ' + (r.value||'')).toLowerCase()) && !/\\byes\\b/.test(((r.innerText||'') + (r.value||'')).toLowerCase()));
+              if (noEl) {
+                try { noEl.click(); answered += 1; } catch (e) {}
+                try { (noEl.closest('label') || noEl).click(); } catch (e) {}
+              }
             }
             // Required empty selects → first non-placeholder option.
             for (const sel of document.querySelectorAll('select')) {
@@ -1726,6 +1794,37 @@ def recover_required_selects(sb) -> dict:
                   .find(el => /\byes\b/i.test(((el.getAttribute('aria-label')||'') + ' ' + (el.innerText||'')).trim())
                     && !/\bno\b/i.test((el.innerText||'')));
                 if (yes) { forceClick(yes); clicked.push('validation-based-in-yes'); }
+              }
+              if (/familial|romantic|close personal|relationship with|currently work at.{0,80}client/.test(ctx)
+                  && !/identify the individual|describe the relationship|if none/.test(ctx)) {
+                const noEl = [...root.querySelectorAll('input[type=radio], label, button, span')]
+                  .find(el => /^no$/i.test(((el.getAttribute('aria-label')||'') + ' ' + (el.innerText||'') + ' ' + (el.value||'')).trim())
+                    || (/\bno\b/i.test((el.innerText||'')) && !/\byes\b/i.test((el.innerText||'')) && ((el.innerText||'').trim().length <= 8)));
+                if (noEl) { forceClick(noEl); clicked.push('validation-conflict-no'); }
+              }
+              if (/identify the individual|describe the relationship|if none[,.]?\s*(write|enter|type|put)\s*n\/?a/.test(ctx)) {
+                const box = root.querySelector('textarea, input:not([type=hidden]):not([type=radio]):not([type=checkbox]):not([type=file])');
+                if (box && !(box.value || '').trim()) {
+                  const proto = box.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
+                  const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
+                  const v = 'N/A';
+                  if (setter) setter.call(box, v); else box.value = v;
+                  box.dispatchEvent(new InputEvent('input', {bubbles:true}));
+                  box.dispatchEvent(new Event('change', {bubbles:true}));
+                  clicked.push('validation-none-na');
+                }
+              }
+              if (/currently work at.{0,80}client|if no[,.]?\s*reply no/.test(ctx)) {
+                const box = root.querySelector('textarea, input:not([type=hidden]):not([type=radio]):not([type=checkbox]):not([type=file])');
+                if (box && (!(box.value || '').trim() || /nemetschek|solibri/i.test(box.value || ''))) {
+                  const proto = box.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
+                  const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
+                  const v = 'No';
+                  if (setter) setter.call(box, v); else box.value = v;
+                  box.dispatchEvent(new InputEvent('input', {bubbles:true}));
+                  box.dispatchEvent(new Event('change', {bubbles:true}));
+                  clicked.push('validation-client-no');
+                }
               }
             }
             return {clicked, url: location.href};
@@ -3007,6 +3106,8 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
         if deadline and time.time() > deadline:
             return "failed"
         time.sleep(0.8)
+        if step in (0, 1, 4):
+            dismiss_indeed_cookies(sb)
         # SmartApply often navigates to smartapply.indeed.com modules.
         try:
             sb.driver.switch_to.default_content()
