@@ -70,3 +70,55 @@ def test_is_google_identifier_url():
     )
     assert not _mod.is_google_identifier_url("https://accounts.google.com/gsi/select")
     assert not _mod.is_google_identifier_url("https://www.example.com/login")
+
+
+def test_page_needs_google_password_url_and_body():
+    class FakePage:
+        def __init__(self, url: str, body: str = ""):
+            self.url = url
+            self._body = body
+
+        def locator(self, sel):
+            raise AssertionError("unused")
+
+    assert _mod._page_needs_google_password(
+        FakePage("https://accounts.google.com/v3/signin/challenge/pwd?TL=x")
+    )
+    assert _mod._page_needs_google_password(
+        FakePage(
+            "https://accounts.google.com/signin/v2/challenge/pwd",
+            "Enter your password",
+        )
+    )
+    # Monkeypatch body reader for non-identifier URL with password copy.
+    orig = _mod._page_body
+    _mod._page_body = lambda p: getattr(p, "_body", "")
+    try:
+        assert _mod._page_needs_google_password(
+            FakePage("https://accounts.google.com/signin/oauth", "Enter your password")
+        )
+        assert not _mod._page_needs_google_password(
+            FakePage("https://accounts.google.com/gsi/select", "Choose an account")
+        )
+    finally:
+        _mod._page_body = orig
+
+
+def test_google_auth_pages_filters():
+    class FakeCtx:
+        def __init__(self, urls):
+            self.pages = [types.SimpleNamespace(url=u) for u in urls]
+
+    pages = _mod._google_auth_pages(
+        FakeCtx(
+            [
+                "https://www.linkedin.com/login",
+                "https://accounts.google.com/v3/signin/identifier?hl=en",
+                "https://accounts.google.com/gsi/select",
+                "https://www.google.com/",
+            ]
+        )
+    )
+    assert len(pages) == 2
+    assert "identifier" in pages[0].url
+    assert "gsi/select" in pages[1].url
