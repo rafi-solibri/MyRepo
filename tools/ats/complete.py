@@ -2110,6 +2110,9 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
         _sleep(1.2)
     if looks_submitted(page):
         return "applied", "confirmation"
+    otp_block = _try_clear_or_block_otp(page)
+    if otp_block:
+        return otp_block
     owner = wait_owner_finish_apply(
         page, hint="Source / required fields / Submit on this Workday apply"
     )
@@ -2139,6 +2142,70 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
         if looks_submitted(page):
             return "applied", "confirmation"
     return "blocked", "external_incomplete_or_timeout"
+
+
+def ask_owner_should_nudge(
+    *,
+    already_nudged: bool,
+    already_extended: bool,
+    now: float,
+    deadline: float,
+) -> bool:
+    """Inner fingerprint-progress extend fires at most once.
+
+    Helper resume uploads / field fills change the page fingerprint every few
+    seconds. Treating each change as owner progress previously reset the
+    deadline forever and starved remaining campus companies.
+    """
+    if already_nudged or already_extended:
+        return False
+    return now + 90 > deadline
+
+
+def ask_owner_hard_cap_sec(wait: int, *, asleep: bool) -> int:
+    """Absolute ceiling: initial wait + one progress nudge + one form-open extend."""
+    wait = max(0, int(wait or 0))
+    if asleep:
+        return max(wait, 12)
+    return wait + 120 + max(120, min(wait, 360))
+
+
+def ask_owner_unrecoverable_otp(page) -> bool:
+    """True when email OTP is showing and this run cannot read the mailbox."""
+    try:
+        wall = blocked_wall(page)
+    except Exception:
+        wall = None
+    if wall != "ats_otp_wall":
+        try:
+            if otp_wall_reason(_body(page, 2000)) != "ats_otp_wall":
+                return False
+        except Exception:
+            return False
+    try:
+        from tools.ats.email_otp import mailbox_unavailable_for_otp
+
+        return bool(mailbox_unavailable_for_otp())
+    except Exception:
+        return True
+
+
+def _try_clear_or_block_otp(page) -> tuple[str, str] | None:
+    """If an OTP wall is up, try mailbox fill; otherwise return the wall."""
+    try:
+        wall = blocked_wall(page)
+    except Exception:
+        wall = None
+    if wall != "ats_otp_wall":
+        return None
+    try:
+        from tools.ats.email_otp import try_clear_email_otp
+
+        if try_clear_email_otp(page):
+            return None
+    except Exception:
+        pass
+    return "blocked", "ats_otp_wall"
 
 
 def owner_form_wait_sec() -> int:
@@ -2209,9 +2276,13 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
     Returns (status, reason) when submitted / already-applied, else None after timeout.
     Keeps auto-filling Source and other gaps while waiting. Extends once if the form
     is still open after owner activity (captcha/login) so we never walk away mid-apply.
+    Fingerprint-progress nudge is also once — helper fills must not loop forever.
     """
     wait = owner_form_wait_sec()
     if wait <= 0:
+        return None
+    if ask_owner_unrecoverable_otp(page):
+        print("ASK_OWNER skip — ats_otp_wall and mailbox unavailable", flush=True)
         return None
     # Overnight / owner-asleep: brief park only — do not extend or burn inventory.
     asleep = owner_asleep()
@@ -2231,21 +2302,27 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
         f"Helper keeps filling Source/required blanks and resumes on confirmation.",
         flush=True,
     )
-    deadline = time.time() + wait
+    started_at = time.time()
+    deadline = started_at + wait
+    hard_cap = started_at + ask_owner_hard_cap_sec(wait, asleep=asleep)
     last_beat = 0.0
     last_focus = 0.0
     last_fp = page_fingerprint(page)
     extended = asleep  # skip extend loop when owner cannot respond
+    progress_nudged = False
     poll = float(os.environ.get("ATS_CAPTCHA_POLL_SEC", "0.4") or "0.4")
     poll = min(1.0, max(0.25, poll))
     while True:
-        while time.time() < deadline:
+        while time.time() < deadline and time.time() < hard_cap:
             if looks_submitted(page):
                 print("ASK_OWNER resolved=submitted", flush=True)
                 return "applied", "confirmation"
             if looks_already_applied(page):
                 print("ASK_OWNER resolved=already_applied", flush=True)
                 return "skipped", "already_applied"
+            if ask_owner_unrecoverable_otp(page):
+                print("ASK_OWNER skip — ats_otp_wall and mailbox unavailable", flush=True)
+                return None
             now = time.time()
             if focus_page_for_owner and now - last_focus >= focus_every:
                 try:
@@ -2286,8 +2363,15 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
             if fp != last_fp:
                 # Owner or helper progressed — keep working; nudge deadline forward once.
                 last_fp = fp
-                if not extended and time.time() + 90 > deadline:
-                    deadline = max(deadline, time.time() + 120)
+                now = time.time()
+                if ask_owner_should_nudge(
+                    already_nudged=progress_nudged,
+                    already_extended=extended,
+                    now=now,
+                    deadline=deadline,
+                ):
+                    deadline = min(hard_cap, max(deadline, now + 120))
+                    progress_nudged = True
                     print("ASK_OWNER progress — extending while form still open", flush=True)
             now = time.time()
             if now - last_beat >= 8.0:
@@ -2299,10 +2383,13 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
             return "applied", "confirmation"
         if looks_already_applied(page):
             return "skipped", "already_applied"
-        if not extended and apply_form_still_open(page):
+        if not extended and apply_form_still_open(page) and time.time() < hard_cap:
+            if ask_owner_unrecoverable_otp(page):
+                print("ASK_OWNER skip — ats_otp_wall and mailbox unavailable", flush=True)
+                return None
             extended = True
             extra = max(120, min(wait, 360))
-            deadline = time.time() + extra
+            deadline = min(hard_cap, time.time() + extra)
             print(
                 f"ASK_OWNER extend={extra}s — form still open after owner action; "
                 f"continuing fill/submit (will not abandon)",
@@ -2442,6 +2529,9 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
         last_fp = fp
     if looks_submitted(page):
         return "applied", "confirmation"
+    otp_block = _try_clear_or_block_otp(page)
+    if otp_block:
+        return otp_block
     owner = wait_owner_finish_apply(
         page, hint="Source / How did you hear / required fields / Submit"
     )

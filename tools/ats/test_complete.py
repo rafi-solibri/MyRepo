@@ -21,6 +21,9 @@ from tools.ats.complete import (
     complete_icims,
     icims_hcaptcha_login,
     apply_form_still_open,
+    ask_owner_hard_cap_sec,
+    ask_owner_should_nudge,
+    ask_owner_unrecoverable_otp,
     visible_captcha_challenge,
     icims_logged_in,
     icims_should_wait_captcha,
@@ -260,6 +263,55 @@ _fp_b = page_fingerprint(_FpPage("https://apply.careers.microsoft.com/careers/ap
 _fp_c = page_fingerprint(_FpPage("https://apply.careers.microsoft.com/careers/apply?pid=1", "Thank you for applying"))
 assert_true(_fp_a == _fp_b, "same page fingerprint")
 assert_true(_fp_a != _fp_c, "changed body changes fingerprint")
+
+# ASK_OWNER fingerprint churn (resume upload / field fill) must not loop forever.
+assert_true(
+    ask_owner_should_nudge(already_nudged=False, already_extended=False, now=100.0, deadline=180.0),
+    "first near-deadline fingerprint change may nudge once",
+)
+assert_true(
+    not ask_owner_should_nudge(already_nudged=True, already_extended=False, now=200.0, deadline=220.0),
+    "second fingerprint change must not nudge again",
+)
+assert_true(
+    not ask_owner_should_nudge(already_nudged=False, already_extended=True, now=200.0, deadline=220.0),
+    "outer form-open extend already used — no extra nudge",
+)
+assert_true(
+    not ask_owner_should_nudge(already_nudged=False, already_extended=False, now=10.0, deadline=180.0),
+    "early in the wait — do not nudge yet",
+)
+assert_true(ask_owner_hard_cap_sec(180, asleep=False) == 180 + 120 + 180, "headed hard cap = wait+nudge+extend")
+assert_true(ask_owner_hard_cap_sec(12, asleep=True) == 12, "asleep hard cap is the short park")
+
+class _OtpPage:
+    url = "https://careers.oracle.com/en/sites/jobsearch/job/340319/apply/email"
+    def locator(self, sel: str):
+        class _Body:
+            def inner_text(self, *a, **k):
+                return "Confirm Your Identity\nThe verification code was sent"
+            def count(self):
+                return 0
+            def first(self):
+                return self
+            def is_visible(self):
+                return False
+        return _Body()
+
+_otp_flag = Path("/tmp/ats-gmail-otp-login-required")
+_otp_flag.write_text("1")
+_saved_imap = os.environ.get("GMAIL_APP_PASSWORD")
+os.environ.pop("GMAIL_APP_PASSWORD", None)
+os.environ.pop("GOOGLE_APP_PASSWORD", None)
+try:
+    assert_true(ask_owner_unrecoverable_otp(_OtpPage()), "Oracle OTP + Gmail Sign-in flag is unrecoverable")
+finally:
+    if _saved_imap is not None:
+        os.environ["GMAIL_APP_PASSWORD"] = _saved_imap
+    try:
+        _otp_flag.unlink(missing_ok=True)
+    except Exception:
+        pass
 
 assert_true(frame_url_is_captcha_challenge("https://www.google.com/recaptcha/api2/bframe?x=1"), "bframe")
 assert_true(not frame_url_is_captcha_challenge("https://www.google.com/recaptcha/api2/anchor"), "hidden badge")

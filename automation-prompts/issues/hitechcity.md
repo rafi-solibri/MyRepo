@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-29 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| ASK_OWNER looped forever on Oracle OTP: helper resume uploads changed page fingerprint so progress-extend never stopped | ASK_OWNER fingerprint nudge once + hard cap; skip/fail-fast when ats_otp_wall and Gmail mailbox unavailable |
+
+
 ## 2026-08-26 (cloud)
 
 | Issue | Fix |
