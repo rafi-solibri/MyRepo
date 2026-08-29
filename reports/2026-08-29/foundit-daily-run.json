@@ -1,0 +1,58 @@
+{
+  "portal": "foundit",
+  "date": "2026-08-29",
+  "source": "cloud-postfix-rerun",
+  "mergedPr": "https://github.com/rafi-solibri/MyRepo/pull/286",
+  "gitHead": "d996c638b207e318e7f0b5df8ec64511c173e0e7",
+  "finishedAt": "2026-08-29T05:23:23Z",
+  "loggedIn": true,
+  "jwtOk": true,
+  "appliedBefore": 462,
+  "appliedAfter": 462,
+  "appliedDelta": 0,
+  "intentionalApplies": 0,
+  "ageWindowUsed": 3650,
+  "candidates": {
+    "candidates_d1": 41,
+    "candidates_d3": 66,
+    "candidates_d7": 275,
+    "candidates_d14": 286,
+    "candidates_d30": 329,
+    "candidates_d90": 218,
+    "candidates_d3650": 47
+  },
+  "counts": {
+    "applied": 0,
+    "external": 0,
+    "rejected": 0,
+    "blocked": 0,
+    "skipped": 1190,
+    "seen": 1262,
+    "duplicates": 72
+  },
+  "applied": [],
+  "blocked": [],
+  "referralDrafts": [
+    {
+      "company": "Globallogic India",
+      "title": "Senior .NET Lead (Principal Engineer) IRC296129",
+      "jobId": "64108671",
+      "note": "already applied (userJobInfo); outreach draft only"
+    },
+    {
+      "company": "blackbaud india",
+      "title": "Laureate - .Net Architect",
+      "jobId": "63471909",
+      "note": "already applied (userJobInfo); outreach draft only"
+    },
+    {
+      "company": "blackbaud india",
+      "title": "Software Engineer, Principal - .NET Developer",
+      "jobId": "64087171",
+      "note": "already applied (userJobInfo); outreach draft only"
+    }
+  ],
+  "blockerSummary": "inventory_exhausted_3650d",
+  "morningRun": "https://cursor.com/agents/bc-de6edaa2-997c-4490-a25b-905e7cb46844",
+  "postfixRun": "https://cursor.com/agents/bc-9ad8f894-dd73-4141-94e3-c899c3f793f7"
+}
