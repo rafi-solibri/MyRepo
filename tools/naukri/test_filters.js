@@ -477,6 +477,26 @@ assert.strictEqual(
   false,
   "Generic Senior Solution Architect must still apply"
 );
+assert.strictEqual(
+  shouldSkipTitle("Teamcenter Architect"),
+  true,
+  "Siemens Teamcenter PLM Architect must skip (false Quick Apply 2026-08-29)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Windchill Architect"),
+  true,
+  "PTC Windchill PLM Architect must skip (false Quick Apply 2026-08-29)"
+);
+assert.strictEqual(
+  shouldSkipTitle("AWS Infra Architect - S"),
+  true,
+  "AWS Infra Architect must skip (false Quick Apply 2026-08-29)"
+);
+assert.strictEqual(
+  shouldSkipTitle("PLM Solution Architect"),
+  true,
+  "PLM-primary Solution Architect must skip"
+);
 const { workdayCompliantPassword } = require("./workday_apply");
 assert.strictEqual(workdayCompliantPassword("GoodPass123!"), "GoodPass123!");
 const weak = workdayCompliantPassword("short");
