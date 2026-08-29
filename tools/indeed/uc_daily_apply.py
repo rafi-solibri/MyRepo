@@ -974,6 +974,11 @@ def fill_common_questions(sb) -> None:
               if (/familial|romantic|close personal relationship|relationship with.{0,60}(employee|applicant|staff)|relative (who )?(work|employed)|conflict of interest/.test(t)) {
                 return 'no';
               }
+              if (/have you ever (worked|been employed|applied)/.test(t)
+                  && /\\b(at|for|with|here|crowe|this (company|firm|organization)|our (company|firm))\\b/.test(t)
+                  && !/how many years|years of experience/.test(t)) {
+                return 'no';
+              }
               if (/identify the individual|describe the relationship|if none[,.]?\\s*(write|enter|type|put)\\s*n\\/?a/.test(t)) {
                 return 'N/A';
               }
@@ -1244,7 +1249,7 @@ def fill_common_questions(sb) -> None:
               if (!group.length || group.some(r => r.checked)) continue;
               const wrap = group[0].closest('fieldset, [class*="question"], [data-testid*="question"], .ia-Questions-item, li, section, form') || group[0].closest('div');
               const ctx = (wrap?.innerText || '').toLowerCase().slice(0, 400);
-              const preferNo = /familial|romantic|close personal|relationship with|relative (who )?(work|employed)|conflict of interest|currently work at.{0,80}client|convicted|criminal/.test(ctx);
+              const preferNo = /familial|romantic|close personal|relationship with|relative (who )?(work|employed)|conflict of interest|currently work at.{0,80}client|have you ever (worked|been employed)|convicted|criminal/.test(ctx);
               const scored = group.map(r => {
                 const lab = ((r.getAttribute('aria-label')||'') + ' ' + (r.parentElement?.innerText||'') + ' ' + (r.value||'')).toLowerCase();
                 let s = 0;
@@ -1267,7 +1272,7 @@ def fill_common_questions(sb) -> None:
               if (!group.length) continue;
               const wrap = group[0].closest('fieldset, [class*="question"], [data-testid*="question"], .ia-Questions-item, li, section, form') || group[0].closest('div');
               const ctx = (wrap?.innerText || '').toLowerCase().slice(0, 400);
-              if (!/familial|romantic|close personal|relationship with|relative (who )?(work|employed)|conflict of interest|currently work at.{0,80}client/.test(ctx)) continue;
+              if (!/familial|romantic|close personal|relationship with|relative (who )?(work|employed)|conflict of interest|currently work at.{0,80}client|have you ever (worked|been employed)/.test(ctx)) continue;
               const yesOn = group.find(r => r.checked && /\\byes\\b/.test(((r.getAttribute('aria-label')||'') + ' ' + (r.parentElement?.innerText||'') + ' ' + (r.value||'')).toLowerCase()));
               if (!yesOn) continue;
               const noEl = group.find(r => /\\bno\\b/.test(((r.getAttribute('aria-label')||'') + ' ' + (r.parentElement?.innerText||'') + ' ' + (r.value||'')).toLowerCase()) && !/\\byes\\b/.test(((r.innerText||'') + (r.value||'')).toLowerCase()));
@@ -1795,7 +1800,7 @@ def recover_required_selects(sb) -> dict:
                     && !/\bno\b/i.test((el.innerText||'')));
                 if (yes) { forceClick(yes); clicked.push('validation-based-in-yes'); }
               }
-              if (/familial|romantic|close personal|relationship with|currently work at.{0,80}client/.test(ctx)
+              if (/familial|romantic|close personal|relationship with|currently work at.{0,80}client|have you ever (worked|been employed)/.test(ctx)
                   && !/identify the individual|describe the relationship|if none/.test(ctx)) {
                 const noEl = [...root.querySelectorAll('input[type=radio], label, button, span')]
                   .find(el => /^no$/i.test(((el.getAttribute('aria-label')||'') + ' ' + (el.innerText||'') + ' ' + (el.value||'')).trim())

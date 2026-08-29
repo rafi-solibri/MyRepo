@@ -40,6 +40,15 @@ def test_crowe_relationship_is_no_and_na():
     assert prefer_no_radio("Are you authorized to lawfully work in India?") is False
 
 
+def test_have_you_ever_worked_at_crowe_is_no():
+    assert (
+        want_from_question("Have you ever worked at Crowe or a Crowe client?")
+        == "no"
+    )
+    assert prefer_no_radio("Have you ever worked for this company?") is True
+    assert want_from_question("How many years have you worked with .NET?") is None
+
+
 def test_generic_current_employer_still_fills():
     assert want_from_question("Current Company / Organization") == "Nemetschek / Solibri"
     assert want_from_question("Current CTC (LPA)") is None
@@ -48,5 +57,6 @@ def test_generic_current_employer_still_fills():
 if __name__ == "__main__":
     test_crowe_client_is_no_not_current_employer()
     test_crowe_relationship_is_no_and_na()
+    test_have_you_ever_worked_at_crowe_is_no()
     test_generic_current_employer_still_fills()
     print("ok")

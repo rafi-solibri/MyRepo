@@ -16,6 +16,8 @@ def want_from_question(text: str) -> str | None:
         return None
     if _is_relationship_conflict(t):
         return "no"
+    if _is_prior_employer(t):
+        return "no"
     if _is_none_na(t):
         return "N/A"
     if _is_client_employer(t):
@@ -28,7 +30,7 @@ def want_from_question(text: str) -> str | None:
 def prefer_no_radio(text: str) -> bool:
     """True when an unanswered Yes/No group should pick No, not Yes."""
     t = (text or "").lower()
-    return _is_relationship_conflict(t) or _is_client_employer(t)
+    return _is_relationship_conflict(t) or _is_client_employer(t) or _is_prior_employer(t)
 
 
 def _is_relationship_conflict(t: str) -> bool:
@@ -49,6 +51,15 @@ def _is_none_na(t: str) -> bool:
             r"if none[,.]?\s*(write|enter|type|put)\s*n/?a",
             t,
         )
+    )
+
+
+def _is_prior_employer(t: str) -> bool:
+    """'Have you ever worked at Crowe / this company?' — not current employer."""
+    return bool(
+        re.search(r"have you ever (worked|been employed|applied)", t)
+        and re.search(r"\b(at|for|with|here|crowe|this (company|firm|organization)|our (company|firm))\b", t)
+        and not re.search(r"how many years|years of experience", t)
     )
 
 
