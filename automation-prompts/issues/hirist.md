@@ -1,5 +1,12 @@
 # Hirist issues log
 
+## 2026-08-29 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| apply-multiple 200 re-applies already-submitted jobs; applyStatus stays open | GET /job/applied-jobs + /job/applied/count; skip known IDs; count apply only when lastAppliedJobId/count lands |
+
+
 ## 2026-08-28 (cloud)
 
 | Issue | Fix |

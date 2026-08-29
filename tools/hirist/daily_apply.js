@@ -27,6 +27,7 @@ function loadChromium() {
 }
 const { skipReason, hasDotNet, hasTargetSeniority } = require("./filters");
 const { findResume, EXPECTED_CTC_LPA, CURRENT_CTC_LPA } = require("./resume");
+const { collectAppliedJobIds, idsFromReport, applyLanded } = require("./applied");
 const { completeExternalPage } = require("../ats/complete_page");
 const { tailorResumeForJob } = require("../resume_tailor");
 const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
@@ -170,6 +171,29 @@ function writeReports(state) {
   };
   fs.mkdirSync(path.dirname(HOME_REPORT), { recursive: true });
   fs.writeFileSync(HOME_REPORT, JSON.stringify(home, null, 2) + "\n");
+
+  const appliedTodayPath = path.join(path.dirname(OUT), "hirist-applied-today.json");
+  try {
+    const prior = (() => {
+      try {
+        return JSON.parse(fs.readFileSync(appliedTodayPath, "utf8"));
+      } catch {
+        return {};
+      }
+    })();
+    const ids = idsFromReport(prior);
+    for (const row of [...applied, ...external]) {
+      const n = Number(row?.id);
+      if (Number.isFinite(n) && n > 0) ids.add(n);
+    }
+    fs.writeFileSync(
+      appliedTodayPath,
+      JSON.stringify({ date: TODAY, ids: [...ids], jobIds: [...ids] }, null, 2) + "\n"
+    );
+  } catch {
+    /* artifacts dir may be read-only in some hosts */
+  }
+
   return { detail, home };
 }
 
@@ -278,6 +302,41 @@ async function applyInApp(page, jobIds) {
   return apiPost(page, `${API}/apply-multiple`, { jobIds });
 }
 
+function loadAppliedIdsFromReports() {
+  const ids = new Set();
+  const files = [OUT, HOME_REPORT, path.join(path.dirname(OUT), "hirist-applied-today.json")];
+  for (const f of files) {
+    try {
+      const json = JSON.parse(fs.readFileSync(f, "utf8"));
+      for (const id of idsFromReport(json)) ids.add(id);
+    } catch {
+      /* missing / invalid */
+    }
+  }
+  return ids;
+}
+
+async function fetchAppliedCount(page) {
+  const res = await apiGet(page, `${API}/applied/count/`);
+  return {
+    count: Number(res.json?.count || 0),
+    lastAppliedJobId: Number(res.json?.lastAppliedJobId || 0),
+  };
+}
+
+async function fetchAppliedJobIds(page) {
+  const ids = new Set();
+  for (let pageNo = 0; pageNo < 15; pageNo++) {
+    const res = await apiGet(page, `${API}/applied-jobs?page=${pageNo}&size=50`);
+    const rows = res.json?.data?.jobs;
+    if (!Array.isArray(rows) || !rows.length) break;
+    for (const id of collectAppliedJobIds(rows)) ids.add(id);
+    if (!res.json?.data?.hasMore) break;
+    await sleep(200);
+  }
+  return ids;
+}
+
 async function main() {
   const resume = findResume();
   const state = {
@@ -343,6 +402,17 @@ async function main() {
     state.notes.push(`login_ok url=${login.url}`);
   }
 
+  const alreadyApplied = loadAppliedIdsFromReports();
+  try {
+    const fromApi = await fetchAppliedJobIds(page);
+    for (const id of fromApi) alreadyApplied.add(id);
+    state.notes.push(`already_applied_known=${alreadyApplied.size} api=${fromApi.size}`);
+  } catch (err) {
+    state.notes.push(
+      `applied_jobs_fetch_failed ${String(err && err.message ? err.message : err).slice(0, 80)} reports=${alreadyApplied.size}`
+    );
+  }
+
   const seenIds = new Set();
   const candidates = [];
 
@@ -377,6 +447,11 @@ async function main() {
 
         if (allowlistActive() && !companyAllowed(company)) {
           state.skipped.push({ id, title, company, reason: "campus_allowlist" });
+          continue;
+        }
+
+        if (alreadyApplied.has(Number(id))) {
+          state.skipped.push({ id, title, company, reason: "already_applied" });
           continue;
         }
 
@@ -420,6 +495,16 @@ async function main() {
   let applies = 0;
   for (const job of candidates) {
     if (applies >= MAX_APPLIES) break;
+
+    if (alreadyApplied.has(Number(job.id))) {
+      state.skipped.push({
+        id: job.id,
+        title: job.title,
+        company: job.company,
+        reason: "already_applied",
+      });
+      continue;
+    }
 
     if (DRY_RUN) {
       state.notes.push(`dry_run would_apply id=${job.id} ${job.title}`);
@@ -481,7 +566,8 @@ async function main() {
       continue;
     }
 
-    // In-app Hirist apply
+    // In-app Hirist apply — HTTP 200 is not enough (already-applied still returns 200).
+    const beforeCount = await fetchAppliedCount(page);
     const res = await applyInApp(page, [job.id]);
     const okStatus = res.status >= 200 && res.status < 300;
     const errName = res.json?.error?.name || res.json?.status?.message || "";
@@ -490,14 +576,28 @@ async function main() {
       break;
     }
     if (okStatus && !res.json?.error) {
-      state.applied.push({
-        id: job.id,
-        title: job.title,
-        company: job.company,
-        path: "hirist_apply",
-        url: job.jobDetailUrl,
-      });
-      applies += 1;
+      await sleep(400);
+      const afterCount = await fetchAppliedCount(page);
+      if (!applyLanded(beforeCount, afterCount, job.id)) {
+        alreadyApplied.add(Number(job.id));
+        state.skipped.push({
+          id: job.id,
+          title: job.title,
+          company: job.company,
+          reason: "already_applied",
+        });
+        state.notes.push(`apply_http_200_not_landed id=${job.id}`);
+      } else {
+        alreadyApplied.add(Number(job.id));
+        state.applied.push({
+          id: job.id,
+          title: job.title,
+          company: job.company,
+          path: "hirist_apply",
+          url: job.jobDetailUrl,
+        });
+        applies += 1;
+      }
     } else {
       const reason =
         res.json?.error?.message ||
