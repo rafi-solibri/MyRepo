@@ -143,22 +143,78 @@ def warm_passport_session(sb) -> None:
         print(f"PASSPORT_WARM skip {exc}"[:160], flush=True)
 
 
+def _sb_call_timeout(fn, timeout_s: float, default=None):
+    """Run a Selenium call in a worker thread; abandon if it exceeds timeout_s.
+
+    UC Chrome can wedge on page-load waits after "Apply on company site". A hung
+    get_current_url must not freeze the whole daily inventory.
+    """
+    import concurrent.futures
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        fut = pool.submit(fn)
+        try:
+            return fut.result(timeout=timeout_s)
+        except Exception:
+            return default
+
+
 def complete_external_ats(url: str, time_cap_s: int | None = None) -> tuple[str, str, str]:
     """Finish a company-site ATS after Indeed opens it. Confirmation only.
 
     Indeed "Apply on company site" often leaves us on applystart/rc/clk —
     the completer follows that hop. Only fail if we never leave Indeed.
+
+    Always runs in a **subprocess** with ``ATS_CDP=0`` (owned Chromium). Attaching
+    Playwright to UC's ``:9222`` deadlocks SeleniumBase mid-inventory.
     """
     if not url:
         return "blocked", "did_not_leave_indeed", ""
+    cap = int(time_cap_s or os.environ.get("INDEED_ATS_TIME_CAP_S") or 390)
+    hard = max(cap + 45, 90)
+    env = os.environ.copy()
+    env["ATS_CDP"] = "0"
+    env["ATS_TIME_CAP_S"] = str(cap)
+    # Don't inherit WARP SOCKS for employer ATS — many corp sites fail through it.
+    for k in ("ALL_PROXY", "HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy", "all_proxy"):
+        env.pop(k, None)
+    helper = (
+        "import json,sys\n"
+        "from tools.ats.complete import complete_ats_url\n"
+        "u,c=sys.argv[1],int(sys.argv[2])\n"
+        "s,r,f=complete_ats_url(u,time_cap_s=c,cdp='0')\n"
+        "print(json.dumps({'status':s,'reason':r,'finalUrl':f}))\n"
+    )
     try:
-        sys.path.insert(0, str(ROOT))
-        from tools.ats.complete import complete_ats_url
-
-        cap = int(time_cap_s or os.environ.get("INDEED_ATS_TIME_CAP_S") or 390)
-        return complete_ats_url(url, time_cap_s=cap)
+        res = subprocess.run(
+            [sys.executable, "-c", helper, url, str(cap)],
+            capture_output=True,
+            text=True,
+            timeout=hard,
+            env=env,
+            cwd=str(ROOT),
+        )
+    except subprocess.TimeoutExpired:
+        print(f"EXTERNAL ats_subprocess_timeout cap={cap}s url={url[:120]}", flush=True)
+        return "blocked", "external_incomplete_or_timeout", url
     except Exception as exc:
         return "blocked", f"ats_helper_error:{exc}"[:180], url
+    raw = (res.stdout or "").strip()
+    if res.returncode != 0 and not raw:
+        err = (res.stderr or "")[:160].replace("\n", " ")
+        return "blocked", f"ats_helper_error:{err or f'exit {res.returncode}'}"[:180], url
+    try:
+        # Last JSON object on stdout (playwright may noise).
+        idx = raw.rfind("{")
+        payload = json.loads(raw[idx:] if idx >= 0 else raw)
+        return (
+            str(payload.get("status") or "blocked"),
+            str(payload.get("reason") or "ats_helper_error")[:180],
+            str(payload.get("finalUrl") or url),
+        )
+    except Exception as exc:
+        err = (res.stderr or raw or str(exc))[:160].replace("\n", " ")
+        return "blocked", f"ats_helper_error:{err}"[:180], url
 
 
 def _record_external_result(item, report, status, reason, final_url, ats_url=""):
@@ -178,16 +234,37 @@ def _record_external_result(item, report, status, reason, final_url, ats_url="")
 
 def finish_company_site(sb, item, report, handles_before=None) -> None:
     """Wait for Indeed tracking hops, then complete the employer ATS."""
-    time.sleep(2.5)
-    ats_url = ""
+    # Bound page-load waits so a stuck employer tab cannot freeze Selenium forever.
     try:
+        sb.driver.set_page_load_timeout(25)
+        sb.driver.set_script_timeout(25)
+    except Exception:
+        pass
+    time.sleep(2.0)
+    ats_url = ""
+
+    def _read_ats_url() -> str:
         handles_after = list(sb.driver.window_handles)
         new_h = [h for h in handles_after if h not in (handles_before or [])]
         if new_h:
             sb.switch_to_window(new_h[-1])
-        ats_url = sb.get_current_url() or ""
-    except Exception:
-        ats_url = ""
+        return sb.get_current_url() or ""
+
+    ats_url = _sb_call_timeout(_read_ats_url, 30, "") or ""
+    if not ats_url:
+        # Prefer any non-Indeed tab URL via a second timed probe.
+        def _any_external() -> str:
+            for h in list(sb.driver.window_handles):
+                try:
+                    sb.switch_to_window(h)
+                    u = sb.get_current_url() or ""
+                    if u.startswith("http") and "indeed.com" not in u.lower():
+                        return u
+                except Exception:
+                    continue
+            return ""
+
+        ats_url = _sb_call_timeout(_any_external, 20, "") or ""
     if ats_url and "indeed.com" in ats_url.lower():
         dest = ""
         try:
@@ -200,13 +277,12 @@ def finish_company_site(sb, item, report, handles_before=None) -> None:
         if dest:
             ats_url = dest
         else:
-            for _ in range(15):
+            for _ in range(8):
                 time.sleep(1.0)
-                try:
-                    ats_url = sb.get_current_url() or ats_url
-                except Exception:
-                    break
-                if "indeed.com" not in ats_url.lower():
+                nxt = _sb_call_timeout(lambda: sb.get_current_url() or "", 10, "") or ""
+                if nxt:
+                    ats_url = nxt
+                if ats_url and "indeed.com" not in ats_url.lower():
                     break
                 try:
                     dest = extract_hop_destination_from_url(ats_url)
@@ -215,21 +291,28 @@ def finish_company_site(sb, item, report, handles_before=None) -> None:
                 if dest:
                     ats_url = dest
                     break
+    print(f"EXTERNAL ats_url={ats_url[:160]!r}", flush=True)
     status, reason, final_url = complete_external_ats(ats_url)
     _record_external_result(item, report, status, reason, final_url, ats_url)
-    try:
+
+    def _close_extra_tabs() -> None:
         handles = list(sb.driver.window_handles)
-        if len(handles) > 1:
-            current = sb.driver.current_window_handle
-            for h in handles[1:]:
-                if h == current:
-                    continue
-                try:
-                    sb.switch_to_window(h)
-                    sb.driver.close()
-                except Exception:
-                    pass
+        if len(handles) <= 1:
+            return
+        for h in handles[1:]:
+            try:
+                sb.switch_to_window(h)
+                sb.driver.close()
+            except Exception:
+                pass
+        try:
             sb.switch_to_window(handles[0])
+        except Exception:
+            pass
+
+    _sb_call_timeout(_close_extra_tabs, 20, None)
+    try:
+        sb.driver.set_page_load_timeout(60)
     except Exception:
         pass
 # Volume: cron used to stop at 8 applies / 40 seen — raise so each run

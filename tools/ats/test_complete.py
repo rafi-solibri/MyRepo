@@ -32,6 +32,7 @@ from tools.ats.complete import (
     is_unavailable_text,
     looks_like_apply_cta,
     page_fingerprint,
+    resolve_ats_cdp,
     ALREADY_APPLIED_RE,
     SUBMITTED_RE,
     workday_compliant_password,
@@ -52,6 +53,32 @@ assert_true(is_submitted_text("Your application was sent"), "sent must count")
 assert_true(is_submitted_text("We have received your application"), "received must count")
 assert_true(is_submitted_text("Thanks for your interest — you're all set"), "all-set must count")
 assert_true(not is_submitted_text("Apply now to submit your application"), "CTA text must not count")
+
+# Indeed UC owns :9222 — ATS must opt into owned Chromium via cdp="0" / ATS_CDP=0.
+_prev_ats = os.environ.pop("ATS_CDP", None)
+_prev_li = os.environ.pop("LINKEDIN_CDP", None)
+try:
+    assert_true(resolve_ats_cdp("0") is None, "cdp=0 must force owned browser")
+    assert_true(resolve_ats_cdp("off") is None, "cdp=off must force owned browser")
+    assert_true(
+        resolve_ats_cdp("http://127.0.0.1:9222") == "http://127.0.0.1:9222",
+        "explicit CDP URL must pass through",
+    )
+    assert_true(
+        resolve_ats_cdp(None) == "http://127.0.0.1:9222",
+        "unset default remains LinkedIn-compatible :9222",
+    )
+    os.environ["ATS_CDP"] = "0"
+    assert_true(resolve_ats_cdp(None) is None, "ATS_CDP=0 must force owned browser")
+finally:
+    if _prev_ats is None:
+        os.environ.pop("ATS_CDP", None)
+    else:
+        os.environ["ATS_CDP"] = _prev_ats
+    if _prev_li is None:
+        os.environ.pop("LINKEDIN_CDP", None)
+    else:
+        os.environ["LINKEDIN_CDP"] = _prev_li
 
 
 # Oracle Cloud My Profile after apply
