@@ -1,6 +1,10 @@
 {
   "date": "2026-08-29",
   "portal": "linkedin",
+  "postFixRerun": 1,
+  "postFixRerunIndex": 2,
+  "mergedMain": "d996c638b207e318e7f0b5df8ec64511c173e0e7",
+  "mergedPr": "https://github.com/rafi-solibri/MyRepo/pull/286",
   "status": "stopped_login_required",
   "easyApplySubmitted": 0,
   "externalCompleted": 0,
@@ -8,20 +12,15 @@
   "blocked": [
     {
       "reason": "wrong_password",
-      "detail": "Auto-login: Google SSO late challenge/pwd healed then rejected; LINKEDIN_PASSWORD and GOOGLE_PASSWORD candidates both Wrong email or password on LinkedIn form",
+      "detail": "Auto-login on merged main: Google SSO late challenge/pwd healed then rejected; LINKEDIN_PASSWORD and NAUKRI_WORKDAY_PASSWORD both Wrong email or password. GOOGLE_PASSWORD not injected.",
       "artifact": "/opt/cursor/artifacts/linkedin-auto-login-wrong-password.png"
     }
   ],
   "submitted": [],
-  "codeFix": {
-    "files": [
-      "tools/linkedin/auto_login.py",
-      "tools/linkedin/test_auto_login_restriction.py"
-    ],
-    "summary": "Heal late Google password/2FA during google_sso wait after account chooser; stop silent SSO timeouts"
-  },
+  "codeFix": null,
   "ownerAction": [
-    "Refresh LINKEDIN_PASSWORD and GOOGLE_PASSWORD (both rejected)",
+    "Refresh LINKEDIN_PASSWORD (rejected by LinkedIn and Google)",
+    "Add/refresh GOOGLE_PASSWORD as its own Cursor environment secret (not present this run)",
     "If CAPTCHA/2FA persists: headed-login + portal session seed"
   ]
 }
