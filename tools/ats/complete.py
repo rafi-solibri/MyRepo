@@ -2908,19 +2908,43 @@ def complete_ats(page, time_cap_s: int | None = None) -> tuple[str, str]:
     return complete_generic(page, cap)
 
 
+def resolve_ats_cdp(cdp: str | None = None) -> str | None:
+    """Return a CDP endpoint to attach, or None to launch an owned Chromium.
+
+    Explicit ``0`` / ``off`` / ``none`` / ``false`` / ``no`` (arg or ``ATS_CDP``)
+    forces an owned browser. Unset defaults to ``http://127.0.0.1:9222`` so
+    LinkedIn/home CDP sessions keep working. Indeed UC must pass ``cdp="0"`` —
+    attaching Playwright to the same Chrome SeleniumBase UC drives deadlocks.
+    """
+    if cdp is not None:
+        raw = str(cdp).strip()
+    else:
+        raw = (
+            os.environ.get("ATS_CDP")
+            or os.environ.get("LINKEDIN_CDP")
+            or "http://127.0.0.1:9222"
+        ).strip()
+    if raw.lower() in ("", "0", "off", "none", "false", "no"):
+        return None
+    return raw
+
+
 def complete_ats_url(url: str, time_cap_s: int | None = None, cdp: str | None = None) -> tuple[str, str, str]:
     """Open an ATS URL in Playwright and complete it. Returns (status, reason, final_url)."""
     from playwright.sync_api import sync_playwright
 
     cap = int(time_cap_s or DEFAULT_TIME_CAP_S)
-    cdp_url = cdp or os.environ.get("ATS_CDP") or os.environ.get("LINKEDIN_CDP") or "http://127.0.0.1:9222"
+    cdp_url = resolve_ats_cdp(cdp)
     with sync_playwright() as p:
         owned = False
         browser = None
         try:
-            browser = p.chromium.connect_over_cdp(cdp_url)
-            context = browser.contexts[0] if browser.contexts else browser.new_context()
-            page = context.new_page()
+            if cdp_url:
+                browser = p.chromium.connect_over_cdp(cdp_url)
+                context = browser.contexts[0] if browser.contexts else browser.new_context()
+                page = context.new_page()
+            else:
+                raise RuntimeError("ats_owned_browser")
         except Exception:
             browser = p.chromium.launch(headless=True)
             context = browser.new_context()

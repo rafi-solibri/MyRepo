@@ -1,5 +1,12 @@
 # Indeed — issues & fixes
 
+## 2026-08-29 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Company-site ATS hung UC inventory ~40m (Solix): Playwright attach to UC :9222 + Selenium tab-close wedge after external timeout | complete_external_ats subprocess + ATS_CDP=0 owned Chromium (no WARP SOCKS); finish_company_site page-load/script timeouts + threaded URL/tab-close abandon; resolve_ats_cdp |
+
+
 ## 2026-08-26 (cloud)
 
 | Issue | Fix |
