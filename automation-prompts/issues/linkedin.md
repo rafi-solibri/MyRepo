@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-08-29 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Google SSO timed out after account chooser: late challenge/pwd never filled so GOOGLE_PASSWORD unused; LinkedIn password secrets also rejected | Heal Google identifier/password/2FA during google_sso wait + after chooser click (_heal_google_auth_pages); owner must still refresh LINKEDIN_PASSWORD/GOOGLE_PASSWORD (both rejected this run) |
+
+
 ## 2026-08-25 (cloud)
 
 | Issue | Fix |
