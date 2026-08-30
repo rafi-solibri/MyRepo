@@ -70,6 +70,7 @@ from tools.hitechcity.board_campus_apply import run as run_boards
 from tools.hitechcity.careers_apply import load_companies, run as run_careers
 from tools.hitechcity.discover_tenants import run as run_discovery
 from tools.hitechcity.linkedin_target_apply import run as run_linkedin
+from tools.hitechcity.openings_probe import run as run_openings_probe
 from tools.ats.email_otp import reset_gmail_login_flag
 
 OUT_DEFAULT_CLOUD = Path("/opt/cursor/artifacts/hitechcity-daily.json")
@@ -115,6 +116,7 @@ def main() -> int:
         "focus": "Knowledge City / Knowledge Park / Mindspace Madhapur / premium HITEC buildings",
         "parallelTabs": int(parallel_tabs) if str(parallel_tabs).isdigit() else parallel_tabs,
         "discovery": {},
+        "openings": {},
         "careers": {},
         "linkedin": {},
         "boards": {},
@@ -150,6 +152,24 @@ def main() -> int:
             companies = load_companies()
         except Exception:
             companies = None
+
+    # 0b) Probe preferred home campuses for live Hyd openings → boost apply order.
+    try:
+        print("=== HitechCity openings probe (preferred campuses) ===", flush=True)
+        op = run_openings_probe(persist=True)
+        summary["openings"] = {
+            "probed": op.get("probed"),
+            "withOpenings": op.get("withOpenings") or [],
+            "hintsAttached": op.get("hintsAttached") or [],
+            "report": op.get("report"),
+            "skipped": op.get("skipped"),
+        }
+        companies = load_companies()
+    except Exception as e:
+        summary["errors"].append(
+            {"phase": "openings_probe", "error": str(e), "trace": traceback.format_exc()[-1500:]}
+        )
+        print("OPENINGS PROBE ERROR", e, flush=True)
 
     careers_only = os.environ.get("HITECHCITY_CAREERS_ONLY", "").strip() in ("1", "true", "yes")
     skip_linkedin = careers_only or os.environ.get("HITECHCITY_SKIP_LINKEDIN", "").strip() in (

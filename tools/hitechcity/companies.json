@@ -35,7 +35,8 @@
       "rmz-nexity",
       "rmz-skyview",
       "rmz-futura"
-    ]
+    ],
+    "lastOpeningsProbeAt": "2026-08-30T14:23:49.076163+00:00"
   },
   "campuses": [
     {
@@ -142,7 +143,11 @@
         "https://www.amazon.jobs/en/search?base_query=engineer&loc_query=Hyderabad%2C+Telangana%2C+India"
       ],
       "priority": 1,
-      "linkedinCompanyId": "12227"
+      "linkedinCompanyId": "12227",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:22:11.272290+00:00"
     },
     {
       "name": "AMD",
@@ -156,7 +161,11 @@
       ],
       "priority": 1,
       "notes": "Includes former Xilinx India footprint in Knowledge City Octave",
-      "linkedinCompanyId": "1497"
+      "linkedinCompanyId": "1497",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:22:27.485588+00:00"
     },
     {
       "name": "Apple",
@@ -169,7 +178,11 @@
         "https://jobs.apple.com/en-in/search?search=Engineering+Manager&location=hyderabad-HST430090"
       ],
       "priority": 1,
-      "linkedinCompanyId": "162479"
+      "linkedinCompanyId": "162479",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:19:02.910836+00:00"
     },
     {
       "name": "Blackbaud",
@@ -182,7 +195,11 @@
         "https://careers.blackbaud.com/search/?createNewAlert=false&q=Engineering+Manager&locationsearch=Hyderabad"
       ],
       "priority": 1,
-      "linkedinCompanyId": "59579"
+      "linkedinCompanyId": "59579",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:22:34.762319+00:00"
     },
     {
       "name": "Blue Yonder",
@@ -193,7 +210,11 @@
       "careersUrls": [
         "https://careers.blueyonder.com/us/en/search-results?keywords=Engineering+Manager&location=Hyderabad"
       ],
-      "priority": 1
+      "priority": 1,
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:22:46.434629+00:00"
     },
     {
       "name": "CGI",
@@ -203,10 +224,16 @@
         "rmz-futura"
       ],
       "linkedinSlug": "cgi",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://cgi.njoyn.com/corp/xweb/XWeb.asp?NTKN=c&clid=21001&Page=SearchResults&lang=1&Keyword=Engineering+Manager&CountryID=IN&CountryDesc=India"
+      ],
       "priority": 1,
       "source": "campus_catalog",
-      "discoveredAt": "2026-08-30"
+      "discoveredAt": "2026-08-30",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:19:09.465154+00:00"
     },
     {
       "name": "Cotelligent",
@@ -214,10 +241,16 @@
         "rmz-skyview"
       ],
       "linkedinSlug": "cotelligent",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://www.cotelligent.com/careers/"
+      ],
       "priority": 1,
       "source": "web_directory",
-      "discoveredAt": "2026-08-30"
+      "discoveredAt": "2026-08-30",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:19:16.017636+00:00"
     },
     {
       "name": "Electronic Arts",
@@ -225,10 +258,16 @@
         "rmz-nexity"
       ],
       "linkedinSlug": "electronic-arts",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://jobs.ea.com/en_US/careers/SearchJobs/?3_47_3=%2C7622%2C&3_47_3_format=448&listFilterMode=1&jobRecordsPerPage=20"
+      ],
       "priority": 1,
       "source": "campus_catalog",
-      "discoveredAt": "2026-08-30"
+      "discoveredAt": "2026-08-30",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:19:40.030612+00:00"
     },
     {
       "name": "Experian",
@@ -241,7 +280,37 @@
         "https://careers.smartrecruiters.com/Experian?search=Engineering+Manager"
       ],
       "priority": 1,
-      "linkedinCompanyId": "2534"
+      "linkedinCompanyId": "2534",
+      "hasOpenings": true,
+      "openingsCount": 7,
+      "sampleOpenings": [
+        {
+          "role": "Senior Staff Engineer (Full Stack-Next.js/React, Node.js, Python, AWS) Hyderabad, India Full-time",
+          "url": "https://jobs.smartrecruiters.com/Experian/744000145937164-senior-staff-engineer-full-stack-next-js-react-node-js-python-aws-",
+          "location": ""
+        },
+        {
+          "role": "Solutions Architect Hyderabad, India Full-time",
+          "url": "https://jobs.smartrecruiters.com/Experian/744000144809179-solutions-architect",
+          "location": ""
+        },
+        {
+          "role": "Lead Software Engineer - Mainframe Hyderabad, India Full-time",
+          "url": "https://jobs.smartrecruiters.com/Experian/744000142144341-lead-software-engineer-mainframe",
+          "location": ""
+        },
+        {
+          "role": "Director of Engineering Hyderabad, India Full-time",
+          "url": "https://jobs.smartrecruiters.com/Experian/744000141222695-director-of-engineering",
+          "location": ""
+        },
+        {
+          "role": "Senior Staff Software Engineer Hyderabad, India Full-time",
+          "url": "https://jobs.smartrecruiters.com/Experian/744000140435649-senior-staff-software-engineer",
+          "location": ""
+        }
+      ],
+      "openingsProbedAt": "2026-08-30T14:23:14.378501+00:00"
     },
     {
       "name": "EY",
@@ -249,10 +318,16 @@
         "rmz-skyview"
       ],
       "linkedinSlug": "ey",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://careers.ey.com/ey/search/?q=Engineering+Manager&locationsearch=Hyderabad"
+      ],
       "priority": 1,
       "source": "campus_catalog",
-      "discoveredAt": "2026-08-30"
+      "discoveredAt": "2026-08-30",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:19:52.028171+00:00"
     },
     {
       "name": "GE Vernova",
@@ -265,7 +340,11 @@
         "https://careers.gevernova.com/global/en/search-results?keywords=Engineering+Manager"
       ],
       "priority": 1,
-      "linkedinCompanyId": "2444"
+      "linkedinCompanyId": "2444",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:23:49.063172+00:00"
     },
     {
       "name": "Goldman Sachs",
@@ -277,7 +356,11 @@
         "https://higher.gs.com/results?keyword=Engineering+Manager"
       ],
       "priority": 1,
-      "linkedinCompanyId": "1382"
+      "linkedinCompanyId": "1382",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:24:14.014546+00:00"
     },
     {
       "name": "HighRadius",
@@ -285,11 +368,17 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "highradius",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://highradius.wd1.myworkdayjobs.com/HighRadius?q=Engineering%20Manager"
+      ],
       "priority": 1,
       "source": "seed",
       "discoveredAt": "2026-08-13",
-      "linkedinCompanyId": "835110"
+      "linkedinCompanyId": "835110",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:24:21.242725+00:00"
     },
     {
       "name": "Hyland",
@@ -301,7 +390,11 @@
       "careersUrls": [
         "https://careers-hyland.icims.com/jobs/search?ss=1&searchKeyword=Engineering+Manager&in_iframe=1"
       ],
-      "priority": 1
+      "priority": 1,
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:24:29.017538+00:00"
     },
     {
       "name": "Intel",
@@ -315,7 +408,11 @@
       ],
       "priority": 1,
       "notes": "Workday has no Hyderabad location facet currently (India=Bangalore only). Skip non-Hyd roles; do not trust location= query text.",
-      "linkedinCompanyId": "1053"
+      "linkedinCompanyId": "1053",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:24:40.568564+00:00"
     },
     {
       "name": "JPMorgan Chase",
@@ -328,7 +425,11 @@
         "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/requisitions?keyword=Engineering+Manager&location=Hyderabad%2C+Telangana%2C+India"
       ],
       "priority": 1,
-      "linkedinCompanyId": "1068"
+      "linkedinCompanyId": "1068",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:24:52.024256+00:00"
     },
     {
       "name": "Meta",
@@ -341,7 +442,11 @@
         "https://www.metacareers.com/jobs?q=Engineering+Manager&location=Hyderabad"
       ],
       "priority": 1,
-      "linkedinCompanyId": "23769"
+      "linkedinCompanyId": "23769",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:20:37.894789+00:00"
     },
     {
       "name": "Microsoft",
@@ -355,7 +460,37 @@
         "https://apply.careers.microsoft.com/careers?keywords=Engineering+Manager&location=Hyderabad%2C+Telangana%2C+India"
       ],
       "priority": 1,
-      "linkedinCompanyId": "1035"
+      "linkedinCompanyId": "1035",
+      "hasOpenings": true,
+      "openingsCount": 5,
+      "sampleOpenings": [
+        {
+          "role": "Principal Software Engineer India, Telangana, Hyderabad + 1 more Posted 4 days ago",
+          "url": "https://apply.careers.microsoft.com/careers/job/1970393556979740?keywords=Engineering+Manager",
+          "location": ""
+        },
+        {
+          "role": "Principal Software Engineer India, Telangana, Hyderabad + 1 more Posted 24 days ago",
+          "url": "https://apply.careers.microsoft.com/careers/job/1970393556956963?keywords=Engineering+Manager",
+          "location": ""
+        },
+        {
+          "role": "Principal Software Engineer India, Telangana, Hyderabad Posted 2 days ago",
+          "url": "https://apply.careers.microsoft.com/careers/job/1970393556979715?keywords=Engineering+Manager",
+          "location": ""
+        },
+        {
+          "role": "Principal Software Engineering Manager- GitHub India India, Telangana, Hyderabad Posted 4 months ago",
+          "url": "https://apply.careers.microsoft.com/careers/job/1970393556864880?keywords=Engineering+Manager",
+          "location": ""
+        },
+        {
+          "role": "Principal Software Engineer India, Telangana, Hyderabad + 2 more Posted a month ago",
+          "url": "https://apply.careers.microsoft.com/careers/job/1970393556952571?keywords=Engineering+Manager",
+          "location": ""
+        }
+      ],
+      "openingsProbedAt": "2026-08-30T14:24:58.477394+00:00"
     },
     {
       "name": "ModMed",
@@ -368,7 +503,11 @@
         "https://www.modmed.com/careers/"
       ],
       "priority": 1,
-      "linkedinCompanyId": "1133049"
+      "linkedinCompanyId": "1133049",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:25:13.271872+00:00"
     },
     {
       "name": "Optum",
@@ -392,7 +531,27 @@
         "https://careers.oracle.com/en/sites/jobsearch/jobs?keyword=Engineering+Manager&location=Hyderabad%2C+Telangana%2C+India"
       ],
       "priority": 1,
-      "linkedinCompanyId": "1028"
+      "linkedinCompanyId": "1028",
+      "hasOpenings": true,
+      "openingsCount": 3,
+      "sampleOpenings": [
+        {
+          "role": "Principal Core Infrastructure Engineer HYDERABAD",
+          "url": "https://careers.oracle.com/en/sites/jobsearch/job/336980/?keyword=Engineering+Manager&location=HYDERABAD%252C+TELANGANA%252C+India&locationId=300001842985230&locationLevel=city&mode=location&radius=25&radiusUnit=KM",
+          "location": ""
+        },
+        {
+          "role": "Senior Principal Forward Deployed Engineer HYDERABAD",
+          "url": "https://careers.oracle.com/en/sites/jobsearch/job/340319/?keyword=Engineering+Manager&location=HYDERABAD%252C+TELANGANA%252C+India&locationId=300001842985230&locationLevel=city&mode=location&radius=25&radiusUnit=KM",
+          "location": ""
+        },
+        {
+          "role": "Principal Core Infrastructure Engineer HYDERABAD",
+          "url": "https://careers.oracle.com/en/sites/jobsearch/job/335139/?keyword=Engineering+Manager&location=HYDERABAD%252C+TELANGANA%252C+India&locationId=300001842985230&locationLevel=city&mode=location&radius=25&radiusUnit=KM",
+          "location": ""
+        }
+      ],
+      "openingsProbedAt": "2026-08-30T14:25:19.260277+00:00"
     },
     {
       "name": "Palo Alto Networks",
@@ -414,10 +573,17 @@
         "rmz-skyview"
       ],
       "linkedinSlug": "providence",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://www.providenceindia.com/careers",
+        "https://careers.providence.org/us/en/search-results?keywords=Engineering%20Manager"
+      ],
       "priority": 1,
       "source": "campus_catalog",
-      "discoveredAt": "2026-08-30"
+      "discoveredAt": "2026-08-30",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:20:56.655798+00:00"
     },
     {
       "name": "Qualcomm",
@@ -430,7 +596,37 @@
         "https://careers.qualcomm.com/careers?query=Engineering+Manager&location=Hyderabad"
       ],
       "priority": 1,
-      "linkedinCompanyId": "2017"
+      "linkedinCompanyId": "2017",
+      "hasOpenings": true,
+      "openingsCount": 6,
+      "sampleOpenings": [
+        {
+          "role": "Director Engineering - Project Engineer Linux IOT Projects Hyderabad",
+          "url": "https://careers.qualcomm.com/careers/job/446704579019",
+          "location": ""
+        },
+        {
+          "role": "Director, Engineering \u2013 Wearables Software Hyderabad, Telang\u0101na, India Software Engineering Posted 2 months ago",
+          "url": "https://careers.qualcomm.com/careers/job/446718352014",
+          "location": ""
+        },
+        {
+          "role": "Engineer, Principal/Manager - Linux Distros Architecture(Yocto, Ubuntu, Debian) Hyderabad",
+          "url": "https://careers.qualcomm.com/careers/job/446714783909",
+          "location": ""
+        },
+        {
+          "role": "Engineer, Senior Staff - Software PE IOT Projects Hyderabad, Telang\u0101na, India Software Engineering Posted 6 months ago",
+          "url": "https://careers.qualcomm.com/careers/job/446717059641",
+          "location": ""
+        },
+        {
+          "role": "Senior Lead Engineer - Linux Kernel Development Hyderabad, Telang\u0101na, India Software Engineering Posted 14 days ago",
+          "url": "https://careers.qualcomm.com/careers/job/446720449165",
+          "location": ""
+        }
+      ],
+      "openingsProbedAt": "2026-08-30T14:21:02.280501+00:00"
     },
     {
       "name": "Solera",
@@ -442,7 +638,11 @@
       "careersUrls": [
         "https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site?q=engineer"
       ],
-      "priority": 1
+      "priority": 1,
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:25:28.376901+00:00"
     },
     {
       "name": "Vanguard",
@@ -450,11 +650,17 @@
         "sattva-knowledge-park"
       ],
       "linkedinSlug": "vanguard",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://www.vanguardjobs.com/job-search-results/?keyword=Engineering+Manager&location=Hyderabad"
+      ],
       "priority": 1,
       "source": "campus_catalog",
       "discoveredAt": "2026-08-16",
-      "linkedinCompanyId": "3184"
+      "linkedinCompanyId": "3184",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:25:41.214422+00:00"
     },
     {
       "name": "Accenture",
@@ -466,7 +672,11 @@
         "https://www.accenture.com/in-en/careers/jobsearch?jk=architect&lc=Hyderabad"
       ],
       "priority": 2,
-      "linkedinCompanyId": "456960"
+      "linkedinCompanyId": "456960",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:21:59.957318+00:00"
     },
     {
       "name": "ADP",
@@ -572,7 +782,11 @@
       "careersUrls": [
         "https://careers.cognizant.com/global-en/jobs/?keyword=Engineering+Manager&location=Hyderabad"
       ],
-      "priority": 2
+      "priority": 2,
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:22:57.690325+00:00"
     },
     {
       "name": "Cyient",
@@ -592,10 +806,17 @@
         "rmz-futura"
       ],
       "linkedinSlug": "darwinbox",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://darwinbox.darwinbox.in/ms/candidate/careers",
+        "https://www.darwinbox.com/careers"
+      ],
       "priority": 2,
       "source": "seed",
-      "discoveredAt": "2026-08-16"
+      "discoveredAt": "2026-08-16",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:19:24.506381+00:00"
     },
     {
       "name": "Deloitte",
@@ -608,7 +829,11 @@
       "careersUrls": [
         "https://apply.deloitte.com/en_US/careers/SearchJobs/?9257=%5B99705%5D&9257_format=898&listFilterMode=1&jobRecordsPerPage=20&"
       ],
-      "priority": 2
+      "priority": 2,
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:19:30.945440+00:00"
     },
     {
       "name": "Fiserv",
@@ -619,7 +844,11 @@
       "careersUrls": [
         "https://careers.fiserv.com/us/en/search-results?keywords=Engineering+Manager&location=Hyderabad"
       ],
-      "priority": 2
+      "priority": 2,
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:23:25.830403+00:00"
     },
     {
       "name": "Flutter Entertainment",
@@ -627,10 +856,16 @@
         "rmz-nexity"
       ],
       "linkedinSlug": "flutter-entertainment",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://careers.flutter.com/search/?q=Engineering+Manager&locationsearch=Hyderabad"
+      ],
       "priority": 2,
       "source": "campus_catalog",
-      "discoveredAt": "2026-08-30"
+      "discoveredAt": "2026-08-30",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:19:58.362431+00:00"
     },
     {
       "name": "Gartner",
@@ -641,7 +876,11 @@
       "careersUrls": [
         "https://jobs.gartner.com/jobs/?search=Engineering+Manager&location=Hyderabad"
       ],
-      "priority": 2
+      "priority": 2,
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:23:37.781583+00:00"
     },
     {
       "name": "Hexaware",
@@ -674,7 +913,11 @@
       "careersUrls": [
         "https://www.ibm.com/careers/search?q=Engineering+Manager&loc=Hyderabad"
       ],
-      "priority": 2
+      "priority": 2,
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:25:52.045131+00:00"
     },
     {
       "name": "Infor",
@@ -684,10 +927,16 @@
         "rmz-skyview"
       ],
       "linkedinSlug": "infor",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://careers.infor.com/en-US/careers/SearchJobs/?listFilterMode=1&jobRecordsPerPage=20&keywords=Engineering+Manager"
+      ],
       "priority": 2,
       "source": "seed",
-      "discoveredAt": "2026-08-13"
+      "discoveredAt": "2026-08-13",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:20:05.373679+00:00"
     },
     {
       "name": "Invesco",
@@ -717,10 +966,16 @@
         "rmz-nexity"
       ],
       "linkedinSlug": "kpmg",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://ejof.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/requisitions?keyword=Engineering+Manager&location=Hyderabad%2C+Telangana%2C+India"
+      ],
       "priority": 2,
       "source": "campus_catalog",
-      "discoveredAt": "2026-08-30"
+      "discoveredAt": "2026-08-30",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:20:16.875227+00:00"
     },
     {
       "name": "LTIMindtree",
@@ -729,10 +984,16 @@
         "rmz-skyview"
       ],
       "linkedinSlug": "ltimindtree",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://careers.ltimindtree.com/search/?q=Engineering+Manager&locationsearch=Hyderabad"
+      ],
       "priority": 2,
       "source": "seed",
-      "discoveredAt": "2026-08-16"
+      "discoveredAt": "2026-08-16",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:20:26.791323+00:00"
     },
     {
       "name": "Macquarie",
@@ -754,7 +1015,11 @@
       "careersUrls": [
         "https://www.mathworks.com/company/jobs/opportunities.html"
       ],
-      "priority": 2
+      "priority": 2,
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:26:53.638951+00:00"
     },
     {
       "name": "McAfee",
@@ -765,7 +1030,11 @@
       "careersUrls": [
         "https://careers.mcafee.com/jobs?keywords=Engineering+Manager"
       ],
-      "priority": 2
+      "priority": 2,
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:27:19.850954+00:00"
     },
     {
       "name": "Micron Technology",
@@ -774,10 +1043,22 @@
         "rmz-skyview"
       ],
       "linkedinSlug": "micron-technology",
-      "careersUrls": [],
-      "priority": 2,
+      "careersUrls": [
+        "https://careers.micron.com/careers?query=Engineering%20Manager&location=Hyderabad"
+      ],
+      "priority": 1,
       "source": "seed",
-      "discoveredAt": "2026-08-13"
+      "discoveredAt": "2026-08-13",
+      "hasOpenings": true,
+      "openingsCount": 1,
+      "sampleOpenings": [
+        {
+          "role": "Staff Engineer, Scribe Layout Design Hyderabad, Telangana, India Posted 2 months ago",
+          "url": "https://careers.micron.com/careers/job/42481366",
+          "location": ""
+        }
+      ],
+      "openingsProbedAt": "2026-08-30T14:20:43.439056+00:00"
     },
     {
       "name": "Mphasis",
@@ -786,10 +1067,16 @@
         "rmz-skyview"
       ],
       "linkedinSlug": "mphasis",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://careers.mphasis.com/home/careers/jobsearch.html?q=Engineering+Manager&loc=Hyderabad"
+      ],
       "priority": 2,
       "source": "seed",
-      "discoveredAt": "2026-08-16"
+      "discoveredAt": "2026-08-16",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:20:50.236368+00:00"
     },
     {
       "name": "MTX Group",
@@ -867,7 +1154,11 @@
       "careersUrls": [],
       "priority": 2,
       "source": "seed",
-      "discoveredAt": "2026-08-13"
+      "discoveredAt": "2026-08-13",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:25:52.045158+00:00"
     },
     {
       "name": "Pegasystems",
@@ -922,7 +1213,11 @@
       "careersUrls": [
         "https://www.pwc.com/gx/en/careers.html"
       ],
-      "priority": 2
+      "priority": 2,
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:27:28.663744+00:00"
     },
     {
       "name": "Qentelli",
@@ -933,7 +1228,11 @@
       "careersUrls": [
         "https://www.qentelli.com/careers"
       ],
-      "priority": 2
+      "priority": 2,
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:27:35.059942+00:00"
     },
     {
       "name": "Rackspace",
@@ -964,10 +1263,16 @@
         "rmz-skyview"
       ],
       "linkedinSlug": "s-and-p-global",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://careers.spglobal.com/jobs?keywords=Engineering%20Manager&location=Hyderabad"
+      ],
       "priority": 2,
       "source": "seed",
-      "discoveredAt": "2026-08-13"
+      "discoveredAt": "2026-08-13",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:21:29.846035+00:00"
     },
     {
       "name": "Salesforce",
@@ -980,7 +1285,11 @@
         "https://careers.salesforce.com/en/jobs/?search=Engineering+Manager&country=India&city=Hyderabad"
       ],
       "priority": 2,
-      "notes": "Skip Salesforce-product-primary titles via title blacklist; keep .NET/cloud architect roles"
+      "notes": "Skip Salesforce-product-primary titles via title blacklist; keep .NET/cloud architect roles",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:26:45.819967+00:00"
     },
     {
       "name": "ServiceNow",
@@ -991,7 +1300,11 @@
       "careersUrls": [],
       "priority": 2,
       "source": "seed",
-      "discoveredAt": "2026-08-13"
+      "discoveredAt": "2026-08-13",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:26:45.819988+00:00"
     },
     {
       "name": "Silicon Labs",
@@ -1013,7 +1326,11 @@
       "careersUrls": [
         "https://www.storable.com/careers/"
       ],
-      "priority": 2
+      "priority": 2,
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:27:44.955220+00:00"
     },
     {
       "name": "Tech Mahindra",
@@ -1056,10 +1373,16 @@
         "rmz-skyview"
       ],
       "linkedinSlug": "ttec",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://www.ttecjobs.com/en/careers?search=Engineering+Manager&country=IN"
+      ],
       "priority": 2,
       "source": "campus_catalog",
-      "discoveredAt": "2026-08-30"
+      "discoveredAt": "2026-08-30",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:21:41.788213+00:00"
     },
     {
       "name": "Uber",
@@ -1070,7 +1393,11 @@
       "careersUrls": [],
       "priority": 2,
       "source": "seed",
-      "discoveredAt": "2026-08-13"
+      "discoveredAt": "2026-08-13",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:26:45.819999+00:00"
     },
     {
       "name": "UnitedHealth Group",
@@ -1138,10 +1465,17 @@
         "rmz-futura"
       ],
       "linkedinSlug": "zenoti",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://job-boards.greenhouse.io/zenoti",
+        "https://boards.greenhouse.io/zenoti"
+      ],
       "priority": 2,
       "source": "campus_catalog",
-      "discoveredAt": "2026-08-30"
+      "discoveredAt": "2026-08-30",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:21:48.355935+00:00"
     },
     {
       "name": "DXC Technology",
@@ -1153,7 +1487,11 @@
       "careersUrls": [
         "https://careers.dxc.com/job-search-results/?keywords=Engineering+Manager"
       ],
-      "priority": 3
+      "priority": 3,
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-08-30T14:23:10.818434+00:00"
     },
     {
       "name": "HCLTech",
