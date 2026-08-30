@@ -1364,7 +1364,6 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
             company_walls = 0
             company_attempts = 0
             company_soft = 0
-            soft_cap = _soft_incomplete_cap()
             workday_no_hyd = False
             loc_ui_done = False
             for url in urls:
@@ -1595,7 +1594,9 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                             company_attempts += 1
                         elif "incomplete" in (why or "").lower() or "timeout" in (why or "").lower():
                             company_soft += 1
-                            if soft_cap and company_soft >= soft_cap:
+                            # Recompute after OTP/Gmail flag may have been set mid-company.
+                            cap_now = _soft_incomplete_cap()
+                            if cap_now and company_soft >= cap_now:
                                 _safe_print(
                                     f"CAREERS SKIP {name} | soft_incomplete_cap_{company_soft}"
                                 )
@@ -1617,7 +1618,7 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                         break
                     if company_attempts >= MAX_ATTEMPTS_PER_COMPANY:
                         break
-                    if soft_cap and company_soft >= soft_cap:
+                    if _soft_incomplete_cap() and company_soft >= _soft_incomplete_cap():
                         break
                 else:
                     continue
