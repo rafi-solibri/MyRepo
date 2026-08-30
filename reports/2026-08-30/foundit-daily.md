@@ -24,3 +24,8 @@
 - 4× `linkedin_no_easy_apply` after Falcon `APPLY_REDIRECT_STAGE_ONE` correctly recorded as `external_ats_incomplete` (Applied-tab +4 noise only).
 - Filter miss: Jobgether **Engineering Manager, AI Product Development** passed via Arch/Lead EM exception — fix in filters.js (pure AI: `engineering manager, AI` / `AI product`).
 - Artifact: `/opt/cursor/artifacts/foundit-apply-report.json` (ts=2026-08-30T03:47:36.805Z)
+
+## Post-fix re-run (#289)
+- Applied tab: **452 → 452** (+0). Intentional logged: **0**.
+- Jobgether Engineering Manager, AI Product Development correctly skipped (`pure AI/data without .NET on title`).
+- Skips: 1200 | duplicates: 68 | blocked: 0.
