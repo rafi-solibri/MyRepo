@@ -3,8 +3,8 @@
 
 Sources (best-effort; never wipe curated Priority-1 rows):
 1. Full campus tenant catalog (Raheja / Knowledge City / Knowledge Park /
-   Madhapur–HITEC peer parks) — every daily run
-2. Live scrape of Mindspace REIT + Cityinfo Knowledge City parcel directories
+   RMZ Nexity·Skyview·Futura / Madhapur–HITEC peer parks) — every daily run
+2. Live scrape of Mindspace REIT + Cityinfo Knowledge City / RMZ Skyview directories
 3. Legacy DISCOVERY_SEEDS merge (subset / aliases)
 4. LinkedIn *company-name* slug resolve when enabled (off by default)
 5. Optional board-surface companies passed via env JSON
@@ -26,6 +26,7 @@ from typing import Any
 from urllib.parse import quote
 
 from tools.hitechcity.campus_tenant_catalog import (
+    CAMPUS_DEFINITIONS,
     catalog_candidates,
     fetch_web_directory_tenants,
 )
@@ -434,7 +435,21 @@ def run(persist: bool = True) -> dict[str, Any]:
     # Stable sort: priority then name
     companies.sort(key=lambda c: (int(c.get("priority") or 9), (c.get("name") or "").lower()))
     data["companies"] = companies
+    # Keep campus metadata in sync (RMZ Nexity / Skyview / Futura + preferred parks).
+    data["campuses"] = [dict(row) for row in CAMPUS_DEFINITIONS]
     data.setdefault("meta", {})["lastDiscoveryAt"] = datetime.now(timezone.utc).isoformat()
+    data["meta"]["focus"] = (
+        "Premium Madhapur / HITEC City campuses — Knowledge City, Knowledge Park, "
+        "Raheja Mindspace, RMZ Nexity / Skyview / Futura, The V, Cyber Pearl and peer Grade-A"
+    )
+    data["meta"]["preferredHomeCampuses"] = [
+        "sattva-knowledge-city",
+        "sattva-knowledge-park",
+        "mindspace-madhapur",
+        "rmz-nexity",
+        "rmz-skyview",
+        "rmz-futura",
+    ]
     data["meta"]["discoveryMode"] = (
         "campus_catalog+web_directories+seeds"
         "+linkedin_optional+board_hints"

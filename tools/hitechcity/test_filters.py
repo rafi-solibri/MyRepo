@@ -170,9 +170,22 @@ def test_title_ok():
     assert not any(re.search(r"knowledge city|raheja", q, re.I) for q in disc.LI_COMPANY_NAME_QUERIES)
 
 
+def test_short_company_name_match_no_false_substring():
+    assert company_name_match("EY", "EY")
+    assert not company_name_match("EY", "Blue Yonder")
+    assert not company_name_match("Blue Yonder", "EY")
+    assert company_name_match("CGI", "CGI")
+    assert not company_name_match("CGI", "Cognizant")
+    assert company_name_match("GE Vernova", "GE Vernova")
+    assert company_name_match("Meta", "Facebook")  # alias still works (len>3 path via aliases… Meta is 4)
+
+
 def test_campus_location():
     assert location_or_campus_ok("Madhapur, Hyderabad")
     assert location_or_campus_ok("Knowledge City, HITEC City")
+    assert location_or_campus_ok("RMZ Nexity, HITEC City")
+    assert location_or_campus_ok("The Skyview Madhapur")
+    assert location_or_campus_ok("Raheja Mindspace")
     assert location_or_campus_ok("Remote, India", "WFH")
     assert not location_or_campus_ok("Bengaluru, Karnataka")
     assert not location_or_campus_ok("Remote, Canada")

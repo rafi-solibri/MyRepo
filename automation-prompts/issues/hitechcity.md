@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-30 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| RMZ Nexity / Skyview / Futura campuses missing from tenant catalog; EY falsely matched Blue Yonder | Add rmz-nexity/skyview/futura campuses + tenants; prefer home parks in apply sort; short company-name match guard |
+
+
 ## 2026-08-26 (cloud)
 
 | Issue | Fix |
