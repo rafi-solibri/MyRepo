@@ -13,8 +13,11 @@ from tools.hitechcity.campus_allowlist import (
     write_allowlist_artifact,
 )
 from tools.hitechcity.campus_tenant_catalog import (
+    CAMPUS_DEFINITIONS,
     CAMPUS_TENANT_CATALOG,
+    PREFERRED_HOME_CAMPUSES,
     canonicalize_tenant_name,
+    campus_preference_rank,
     fetch_web_directory_tenants,
     _parse_mindspace_top_tenants,
     _parse_cityinfo_tenants,
@@ -131,13 +134,30 @@ def test_campus_catalog_covers_priority_parks():
     assert "mindspace-madhapur" in camps  # Raheja
     assert "sattva-knowledge-city" in camps
     assert "sattva-knowledge-park" in camps
+    assert "rmz-nexity" in camps
+    assert "rmz-skyview" in camps
+    assert "rmz-futura" in camps
     names = {row["name"] for row in CAMPUS_TENANT_CATALOG}
     assert "HighRadius" in names
     assert "Vanguard" in names
     assert "Apple" in names
+    assert "Electronic Arts" in names
+    assert "CGI" in names
+    assert "EY" in names
     assert canonicalize_tenant_name("Highradius") == "HighRadius"
     assert canonicalize_tenant_name("Xilinx India Technology Services") == "AMD"
     assert canonicalize_tenant_name("OTIS Elevator Company") is None
+    assert canonicalize_tenant_name("Ernst & Young") == "EY"
+    assert canonicalize_tenant_name("EA Sports") == "Electronic Arts"
+    assert campus_preference_rank({"campuses": ["rmz-nexity"]}) == 0
+    assert campus_preference_rank({"campuses": ["dlf-cyber-city"]}) == 1
+    assert any(c["id"] == "rmz-nexity" for c in CAMPUS_DEFINITIONS)
+    assert PREFERRED_HOME_CAMPUSES >= {
+        "sattva-knowledge-city",
+        "mindspace-madhapur",
+        "rmz-nexity",
+        "rmz-skyview",
+    }
 
 
 def test_discover_from_campus_catalog_adds_knowledge_park():
@@ -166,6 +186,15 @@ def test_parse_mindspace_and_cityinfo_html():
     assert "Apple" in parsed
     assert "Blue Yonder" in parsed
     assert "Intel" in parsed
+    sky = (
+        "<p>The present tenants in this facility are Qualcomm, CGI Information Systems "
+        "and Management Consultants, LTI Mindtree, and Providence Global Center. "
+        "Related Projects Foo</p>"
+    )
+    sky_parsed = _parse_cityinfo_tenants(sky)
+    assert "Qualcomm" in sky_parsed
+    assert "CGI" in sky_parsed
+    assert "Providence" in sky_parsed
     jpmc = (
         "<p>The current tenant of this building is J.P. Morgan India. "
         "Related Projects Salarpuria</p>"

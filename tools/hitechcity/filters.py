@@ -39,7 +39,8 @@ except Exception:
 CAMPUS_OK = re.compile(
     r"knowledge\s*city|knowledge\s*park|mindspace|madhapur|hitech\s*city|hitec\s*city|"
     r"gachibowli|raidurg|raidurgam|cyber\s*pearl|the\s*v\b|ascendas|dlf\s*cyber|"
-    r"divyasree|\borion\b|sattva|\boctave\b|cyberabad|financial\s*district",
+    r"divyasree|\borion\b|sattva|\boctave\b|cyberabad|financial\s*district|"
+    r"\brmz\b|\bnexity\b|sky\s*view|skyview|\bfutura\b|\braheja\b",
     re.I,
 )
 
@@ -94,15 +95,23 @@ def company_name_match(target: str, found: str) -> bool:
     f = _norm_company(found)
     if not t or not f:
         return False
-    if t in f or f in t:
+    if t == f:
         return True
     t_tokens = set(t.split())
     f_tokens = set(f.split())
-    # Collapse jpmorganchase style
-    t_compact = t.replace(" ", "")
-    f_compact = f.replace(" ", "")
-    if t_compact in f_compact or f_compact in t_compact:
-        return True
+    short = min(len(t), len(f)) <= 3
+    if short:
+        # Short codes (EY, GE, …): whole-token only — never "ey" ⊂ "blueyonder".
+        if (len(t) <= 3 and t in f_tokens) or (len(f) <= 3 and f in t_tokens):
+            return True
+    else:
+        if t in f or f in t:
+            return True
+        # Collapse jpmorganchase style
+        t_compact = t.replace(" ", "")
+        f_compact = f.replace(" ", "")
+        if t_compact in f_compact or f_compact in t_compact:
+            return True
     aliases = [
         ({"jpmorgan", "jp", "chase", "jpmc", "jpmorganchase"}, {"jpmorgan", "jp", "chase", "jpmc", "morgan"}),
         ({"meta", "facebook"}, {"meta", "facebook"}),
@@ -115,6 +124,8 @@ def company_name_match(target: str, found: str) -> bool:
     for left, right in aliases:
         if t_tokens & left and f_tokens & right:
             return True
+    if short:
+        return False
     return len(t_tokens & f_tokens) >= max(1, min(2, len(t_tokens)))
 
 

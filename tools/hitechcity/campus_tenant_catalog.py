@@ -2,12 +2,13 @@
 """Curated + live campus tenant catalogs for Madhapur / HITEC City.
 
 Every daily run merges these into companies.json so Raheja Mindspace,
-Knowledge City, Knowledge Park, and peer Madhapur / HITEC Grade-A parks
-stay covered — we do not rely on LinkedIn campus-name searches.
+Knowledge City, Knowledge Park, RMZ Nexity / Skyview / Futura, and peer
+Madhapur / HITEC Grade-A parks stay covered — we do not rely on LinkedIn
+campus-name searches.
 
 Sources:
   - Static research catalog (REIT top tenants, Cityinfo parcel directories, news)
-  - Live HTTP scrape of Mindspace REIT Madhapur page + Cityinfo KC parcels
+  - Live HTTP scrape of Mindspace REIT Madhapur page + Cityinfo KC / RMZ parcels
 """
 
 from __future__ import annotations
@@ -17,6 +18,91 @@ import urllib.error
 import urllib.request
 from html import unescape
 from typing import Any
+
+# Owner home-proximate Grade-A parks — careers/LinkedIn apply these first.
+PREFERRED_HOME_CAMPUSES: frozenset[str] = frozenset(
+    {
+        "sattva-knowledge-city",
+        "sattva-knowledge-park",
+        "mindspace-madhapur",  # Raheja Mindspace
+        "rmz-nexity",
+        "rmz-skyview",
+        "rmz-futura",
+    }
+)
+
+# Canonical campus metadata synced into companies.json every discovery run.
+CAMPUS_DEFINITIONS: list[dict[str, Any]] = [
+    {
+        "id": "sattva-knowledge-city",
+        "name": "Sattva Knowledge City",
+        "aliases": ["Knowledge City", "Salarpuria Sattva Knowledge City", "Octave"],
+        "area": "HITEC City / Madhapur",
+    },
+    {
+        "id": "sattva-knowledge-park",
+        "name": "Sattva Knowledge Park",
+        "aliases": ["Knowledge Park"],
+        "area": "HITEC City / Madhapur",
+    },
+    {
+        "id": "mindspace-madhapur",
+        "name": "Mindspace Madhapur (Raheja Mindspace)",
+        "aliases": ["Raheja Mindspace", "Mindspace", "Raheja"],
+        "area": "Madhapur",
+    },
+    {
+        "id": "rmz-nexity",
+        "name": "RMZ Nexity",
+        "aliases": ["Nexity", "RMZ Nexity", "Nexity HITEC"],
+        "area": "HITEC City / Madhapur",
+    },
+    {
+        "id": "rmz-skyview",
+        "name": "The Skyview (RMZ)",
+        "aliases": ["Skyview", "RMZ Skyview", "The Skyview", "RMZ Sky View"],
+        "area": "Madhapur / HITEC City",
+    },
+    {
+        "id": "rmz-futura",
+        "name": "RMZ Futura",
+        "aliases": ["Futura", "RMZ Futura IT Park"],
+        "area": "HITEC City",
+    },
+    {
+        "id": "the-v",
+        "name": "The V IT Park (Ascendas)",
+        "aliases": ["The V", "Ascendas The V"],
+        "area": "Madhapur",
+    },
+    {
+        "id": "cyber-pearl",
+        "name": "Cyber Pearl",
+        "aliases": ["CyberPearl"],
+        "area": "Madhapur / HITEC City",
+    },
+    {
+        "id": "dlf-cyber-city",
+        "name": "DLF Cyber City Hyderabad",
+        "aliases": ["DLF IT SEZ", "DLF Cybercity"],
+        "area": "Gachibowli / HITEC corridor",
+    },
+    {
+        "id": "divyasree-orion",
+        "name": "Divyasree Orion",
+        "aliases": ["Orion"],
+        "area": "Raidurg / HITEC corridor",
+    },
+]
+
+
+def campus_preference_rank(company: dict[str, Any]) -> int:
+    """0 = preferred home campus (apply first); 1 = other allowlisted parks."""
+    camps = set(company.get("campuses") or [])
+    if camps & PREFERRED_HOME_CAMPUSES:
+        return 0
+    return 1
+
 
 # Canonical employer display name → LinkedIn slug hint (optional).
 SLUG_HINTS: dict[str, str] = {
@@ -47,6 +133,14 @@ SLUG_HINTS: dict[str, str] = {
     "Salesforce": "salesforce",
     "ZenQ": "zenq",
     "Winshuttle": "winshuttle",
+    "EY": "ey",
+    "Providence": "providence",
+    "CGI": "cgi",
+    "Electronic Arts": "electronic-arts",
+    "KPMG": "kpmg",
+    "Zenoti": "zenoti",
+    "Flutter Entertainment": "flutter-entertainment",
+    "TTEC": "ttec",
 }
 
 # Normalize scraped / seed aliases → one company row name.
@@ -100,6 +194,25 @@ NAME_ALIASES: dict[str, str] = {
     "parexel": "Parexel",
     "pegasystems": "Pegasystems",
     "pega": "Pegasystems",
+    "ernst & young": "EY",
+    "ey": "EY",
+    "providence global center": "Providence",
+    "providence": "Providence",
+    "cgi information systems and management consultants": "CGI",
+    "cgi": "CGI",
+    "electronic arts": "Electronic Arts",
+    "ea sports": "Electronic Arts",
+    "ea": "Electronic Arts",
+    "zenoti india": "Zenoti",
+    "zenoti": "Zenoti",
+    "flutter entertainment plc": "Flutter Entertainment",
+    "flutter entertainment": "Flutter Entertainment",
+    "ttec digital analytics": "TTEC",
+    "ttec": "TTEC",
+    "s&p capital iq": "S&P Global",
+    "s&p capital iq india": "S&P Global",
+    "cotelligent india": "Cotelligent",
+    "kpmg": "KPMG",
 }
 
 # Skip non-employer / non-IT noise from directories.
@@ -163,7 +276,7 @@ CAMPUS_TENANT_CATALOG: list[dict[str, Any]] = [
     tenant_row("BA Continuum", ["mindspace-madhapur"], 2),
     tenant_row("Tablespace", ["mindspace-madhapur"], 3),
     tenant_row("Smartworks", ["mindspace-madhapur"], 3),
-    tenant_row("Qualcomm", ["mindspace-madhapur"], 1),
+    tenant_row("Qualcomm", ["mindspace-madhapur", "rmz-skyview"], 1),
     tenant_row("Larsen & Toubro", ["mindspace-madhapur"], 2),
     tenant_row("AMD", ["mindspace-madhapur", "sattva-knowledge-city"], 1),
     tenant_row("HighRadius", ["mindspace-madhapur"], 1),
@@ -180,17 +293,17 @@ CAMPUS_TENANT_CATALOG: list[dict[str, Any]] = [
     tenant_row("OpenText", ["mindspace-madhapur"], 2),
     tenant_row("Broadridge", ["mindspace-madhapur"], 2),
     tenant_row("Progress Software", ["mindspace-madhapur"], 2),
-    tenant_row("S&P Global", ["mindspace-madhapur"], 2),
+    tenant_row("S&P Global", ["mindspace-madhapur", "rmz-skyview"], 2),
     tenant_row("Uber", ["mindspace-madhapur"], 2),
     tenant_row("PayPal", ["mindspace-madhapur"], 2),
     tenant_row("Thomson Reuters", ["mindspace-madhapur"], 2),
-    tenant_row("Infor", ["mindspace-madhapur"], 2),
-    tenant_row("Deloitte", ["mindspace-madhapur", "the-v"], 2),
+    tenant_row("Infor", ["mindspace-madhapur", "rmz-skyview"], 2),
+    tenant_row("Deloitte", ["mindspace-madhapur", "the-v", "rmz-futura"], 2),
     tenant_row("Capgemini", ["mindspace-madhapur", "the-v"], 2),
     tenant_row("Infosys", ["mindspace-madhapur"], 3),
     tenant_row("HCLTech", ["mindspace-madhapur"], 3),
-    tenant_row("LTIMindtree", ["mindspace-madhapur"], 2),
-    tenant_row("Mphasis", ["mindspace-madhapur"], 2),
+    tenant_row("LTIMindtree", ["mindspace-madhapur", "rmz-skyview"], 2),
+    tenant_row("Mphasis", ["mindspace-madhapur", "rmz-skyview"], 2),
     tenant_row("Persistent Systems", ["mindspace-madhapur"], 2),
     tenant_row("Cyient", ["mindspace-madhapur"], 2),
     tenant_row("Novartis", ["mindspace-madhapur", "sattva-knowledge-city"], 2),
@@ -198,19 +311,19 @@ CAMPUS_TENANT_CATALOG: list[dict[str, Any]] = [
     tenant_row("Microsoft", ["mindspace-madhapur", "sattva-knowledge-city", "the-v"], 1),
     tenant_row("JPMorgan Chase", ["mindspace-madhapur", "sattva-knowledge-city"], 1),
     tenant_row("Salesforce", ["mindspace-madhapur", "cyber-pearl"], 1),
-    tenant_row("Meta", ["mindspace-madhapur"], 1),
+    tenant_row("Meta", ["mindspace-madhapur", "rmz-skyview"], 1),
     # —— Sattva Knowledge City / Octave / Argus ——
-    tenant_row("Apple", ["sattva-knowledge-city"], 1),
+    tenant_row("Apple", ["sattva-knowledge-city", "rmz-nexity"], 1),
     tenant_row("Oracle", ["sattva-knowledge-city"], 1),
     tenant_row("Intel", ["sattva-knowledge-city"], 1),
     tenant_row("ServiceNow", ["sattva-knowledge-city"], 1),
     tenant_row("Wells Fargo", ["sattva-knowledge-city"], 2),
     tenant_row("Invesco", ["sattva-knowledge-city"], 2),
     tenant_row("ValueLabs", ["sattva-knowledge-city"], 2),
-    tenant_row("Micron Technology", ["sattva-knowledge-city"], 2),
+    tenant_row("Micron Technology", ["sattva-knowledge-city", "rmz-skyview"], 2),
     tenant_row("RealPage", ["sattva-knowledge-city"], 2),
     tenant_row("Homes.com", ["sattva-knowledge-city"], 2),
-    tenant_row("Darwinbox", ["sattva-knowledge-city"], 2),
+    tenant_row("Darwinbox", ["sattva-knowledge-city", "rmz-futura"], 2),
     tenant_row("Blue Yonder", ["sattva-knowledge-city"], 1),
     tenant_row("BluJay Solutions", ["sattva-knowledge-city"], 2),
     tenant_row("MTX Group", ["sattva-knowledge-city"], 2),
@@ -251,6 +364,15 @@ CAMPUS_TENANT_CATALOG: list[dict[str, Any]] = [
     tenant_row("Experian", ["mindspace-madhapur", "cyber-pearl"], 2),
     tenant_row("Fiserv", ["mindspace-madhapur"], 2),
     tenant_row("Storable", ["mindspace-madhapur"], 2),
+    # —— RMZ Nexity / Skyview / Futura (owner home-proximate preferred) ——
+    tenant_row("Electronic Arts", ["rmz-nexity"], 1),
+    tenant_row("KPMG", ["rmz-nexity"], 2),
+    tenant_row("Providence", ["rmz-nexity", "rmz-skyview"], 1),
+    tenant_row("CGI", ["rmz-nexity", "rmz-skyview", "rmz-futura"], 1),
+    tenant_row("EY", ["rmz-skyview"], 1),
+    tenant_row("TTEC", ["rmz-skyview"], 2),
+    tenant_row("Zenoti", ["rmz-futura"], 2),
+    tenant_row("Flutter Entertainment", ["rmz-nexity"], 2),
 ]
 
 # Live directory endpoints scraped every daily discovery run.
@@ -281,6 +403,16 @@ WEB_DIRECTORY_SOURCES: list[dict[str, Any]] = [
         "campuses": ["sattva-knowledge-city"],
         "kind": "cityinfo_tenants_sentence",
         "priority": 2,
+    },
+    {
+        "id": "rmz-skyview-20",
+        "url": (
+            "https://properties.cityinfoservices.com/"
+            "rmz-sky-view-20-the-skyview-madhapur-hyderabad/j429fv5/pjd"
+        ),
+        "campuses": ["rmz-skyview"],
+        "kind": "cityinfo_tenants_sentence",
+        "priority": 1,
     },
 ]
 
@@ -325,15 +457,25 @@ def _parse_cityinfo_tenants(html: str) -> list[str]:
     text = unescape(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html)))
     # Stop at "Related Projects" / next section — not at periods inside "J.P. Morgan".
     m = re.search(
-        r"current tenants? of this building (?:is|are)\s+(.+?)(?:\s+Related Projects|\s+Tenants To Unlock|\s+Overview\s|$)",
+        r"(?:current|present)\s+tenants?\s+"
+        r"(?:(?:of|in)\s+this\s+(?:building|facility)\s+)?"
+        r"(?:is|are)\s+(.+?)(?:\s+Related Projects|\s+Tenants To Unlock|\s+Overview\s|$)",
         text,
         re.I,
     )
     if not m:
         return []
     blob = m.group(1).strip().rstrip(".")
-    # Split on commas / " and " (incl. Oxford comma ", and ").
-    parts = re.split(r"\s*,\s*|\s+and\s+", blob)
+    # Comma-split first so names like "CGI Information Systems and Management
+    # Consultants" stay intact; only split a final "X and Y" list tail.
+    parts = [p.strip() for p in re.split(r"\s*,\s*", blob) if p.strip()]
+    if parts:
+        last = re.sub(r"(?i)^\s*and\s+", "", parts[-1]).strip()
+        m_and = re.match(r"^(.+?)\s+and\s+(.+)$", last, re.I)
+        if m_and:
+            parts = parts[:-1] + [m_and.group(1).strip(), m_and.group(2).strip()]
+        else:
+            parts[-1] = last
     out: list[str] = []
     for p in parts:
         p = re.sub(r"(?i)^\s*and\s+", "", p).strip()

@@ -1,6 +1,6 @@
 {
   "meta": {
-    "focus": "Premium Madhapur / HITEC City campuses only \u2014 Knowledge City, Knowledge Park, Mindspace Madhapur, The V, Cyber Pearl and peer Grade-A buildings",
+    "focus": "Premium Madhapur / HITEC City campuses \u2014 Knowledge City, Knowledge Park, Raheja Mindspace, RMZ Nexity / Skyview / Futura, The V, Cyber Pearl and peer Grade-A",
     "locationBias": [
       "Hyderabad",
       "Madhapur",
@@ -26,8 +26,16 @@
       "Azure Architect",
       "Cloud Architect"
     ],
-    "lastDiscoveryAt": "2026-08-23T03:32:53.979650+00:00",
-    "discoveryMode": "campus_catalog+web_directories+seeds+linkedin_optional+board_hints"
+    "lastDiscoveryAt": "2026-08-30T14:10:54.178667+00:00",
+    "discoveryMode": "campus_catalog+web_directories+seeds+linkedin_optional+board_hints",
+    "preferredHomeCampuses": [
+      "sattva-knowledge-city",
+      "sattva-knowledge-park",
+      "mindspace-madhapur",
+      "rmz-nexity",
+      "rmz-skyview",
+      "rmz-futura"
+    ]
   },
   "campuses": [
     {
@@ -53,9 +61,40 @@
       "name": "Mindspace Madhapur (Raheja Mindspace)",
       "aliases": [
         "Raheja Mindspace",
-        "Mindspace"
+        "Mindspace",
+        "Raheja"
       ],
       "area": "Madhapur"
+    },
+    {
+      "id": "rmz-nexity",
+      "name": "RMZ Nexity",
+      "aliases": [
+        "Nexity",
+        "RMZ Nexity",
+        "Nexity HITEC"
+      ],
+      "area": "HITEC City / Madhapur"
+    },
+    {
+      "id": "rmz-skyview",
+      "name": "The Skyview (RMZ)",
+      "aliases": [
+        "Skyview",
+        "RMZ Skyview",
+        "The Skyview",
+        "RMZ Sky View"
+      ],
+      "area": "Madhapur / HITEC City"
+    },
+    {
+      "id": "rmz-futura",
+      "name": "RMZ Futura",
+      "aliases": [
+        "Futura",
+        "RMZ Futura IT Park"
+      ],
+      "area": "HITEC City"
     },
     {
       "id": "the-v",
@@ -122,7 +161,8 @@
     {
       "name": "Apple",
       "campuses": [
-        "sattva-knowledge-city"
+        "sattva-knowledge-city",
+        "rmz-nexity"
       ],
       "linkedinSlug": "apple",
       "careersUrls": [
@@ -156,6 +196,41 @@
       "priority": 1
     },
     {
+      "name": "CGI",
+      "campuses": [
+        "rmz-nexity",
+        "rmz-skyview",
+        "rmz-futura"
+      ],
+      "linkedinSlug": "cgi",
+      "careersUrls": [],
+      "priority": 1,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-30"
+    },
+    {
+      "name": "Cotelligent",
+      "campuses": [
+        "rmz-skyview"
+      ],
+      "linkedinSlug": "cotelligent",
+      "careersUrls": [],
+      "priority": 1,
+      "source": "web_directory",
+      "discoveredAt": "2026-08-30"
+    },
+    {
+      "name": "Electronic Arts",
+      "campuses": [
+        "rmz-nexity"
+      ],
+      "linkedinSlug": "electronic-arts",
+      "careersUrls": [],
+      "priority": 1,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-30"
+    },
+    {
       "name": "Experian",
       "campuses": [
         "mindspace-madhapur",
@@ -167,6 +242,17 @@
       ],
       "priority": 1,
       "linkedinCompanyId": "2534"
+    },
+    {
+      "name": "EY",
+      "campuses": [
+        "rmz-skyview"
+      ],
+      "linkedinSlug": "ey",
+      "careersUrls": [],
+      "priority": 1,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-30"
     },
     {
       "name": "GE Vernova",
@@ -247,7 +333,8 @@
     {
       "name": "Meta",
       "campuses": [
-        "mindspace-madhapur"
+        "mindspace-madhapur",
+        "rmz-skyview"
       ],
       "linkedinSlug": "meta",
       "careersUrls": [
@@ -321,9 +408,22 @@
       "linkedinCompanyId": "30086"
     },
     {
+      "name": "Providence",
+      "campuses": [
+        "rmz-nexity",
+        "rmz-skyview"
+      ],
+      "linkedinSlug": "providence",
+      "careersUrls": [],
+      "priority": 1,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-30"
+    },
+    {
       "name": "Qualcomm",
       "campuses": [
-        "mindspace-madhapur"
+        "mindspace-madhapur",
+        "rmz-skyview"
       ],
       "linkedinSlug": "qualcomm",
       "careersUrls": [
@@ -488,7 +588,8 @@
     {
       "name": "Darwinbox",
       "campuses": [
-        "sattva-knowledge-city"
+        "sattva-knowledge-city",
+        "rmz-futura"
       ],
       "linkedinSlug": "darwinbox",
       "careersUrls": [],
@@ -500,7 +601,8 @@
       "name": "Deloitte",
       "campuses": [
         "the-v",
-        "mindspace-madhapur"
+        "mindspace-madhapur",
+        "rmz-futura"
       ],
       "linkedinSlug": "deloitte",
       "careersUrls": [
@@ -518,6 +620,17 @@
         "https://careers.fiserv.com/us/en/search-results?keywords=Engineering+Manager&location=Hyderabad"
       ],
       "priority": 2
+    },
+    {
+      "name": "Flutter Entertainment",
+      "campuses": [
+        "rmz-nexity"
+      ],
+      "linkedinSlug": "flutter-entertainment",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-30"
     },
     {
       "name": "Gartner",
@@ -567,7 +680,8 @@
       "name": "Infor",
       "campuses": [
         "mindspace-madhapur",
-        "sattva-knowledge-city"
+        "sattva-knowledge-city",
+        "rmz-skyview"
       ],
       "linkedinSlug": "infor",
       "careersUrls": [],
@@ -598,9 +712,21 @@
       "discoveredAt": "2026-08-16"
     },
     {
+      "name": "KPMG",
+      "campuses": [
+        "rmz-nexity"
+      ],
+      "linkedinSlug": "kpmg",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-30"
+    },
+    {
       "name": "LTIMindtree",
       "campuses": [
-        "mindspace-madhapur"
+        "mindspace-madhapur",
+        "rmz-skyview"
       ],
       "linkedinSlug": "ltimindtree",
       "careersUrls": [],
@@ -644,7 +770,8 @@
     {
       "name": "Micron Technology",
       "campuses": [
-        "sattva-knowledge-city"
+        "sattva-knowledge-city",
+        "rmz-skyview"
       ],
       "linkedinSlug": "micron-technology",
       "careersUrls": [],
@@ -655,7 +782,8 @@
     {
       "name": "Mphasis",
       "campuses": [
-        "mindspace-madhapur"
+        "mindspace-madhapur",
+        "rmz-skyview"
       ],
       "linkedinSlug": "mphasis",
       "careersUrls": [],
@@ -832,7 +960,8 @@
     {
       "name": "S&P Global",
       "campuses": [
-        "mindspace-madhapur"
+        "mindspace-madhapur",
+        "rmz-skyview"
       ],
       "linkedinSlug": "s-and-p-global",
       "careersUrls": [],
@@ -922,6 +1051,17 @@
       "discoveredAt": "2026-08-13"
     },
     {
+      "name": "TTEC",
+      "campuses": [
+        "rmz-skyview"
+      ],
+      "linkedinSlug": "ttec",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-30"
+    },
+    {
       "name": "Uber",
       "campuses": [
         "mindspace-madhapur"
@@ -991,6 +1131,17 @@
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
+    },
+    {
+      "name": "Zenoti",
+      "campuses": [
+        "rmz-futura"
+      ],
+      "linkedinSlug": "zenoti",
+      "careersUrls": [],
+      "priority": 2,
+      "source": "campus_catalog",
+      "discoveredAt": "2026-08-30"
     },
     {
       "name": "DXC Technology",

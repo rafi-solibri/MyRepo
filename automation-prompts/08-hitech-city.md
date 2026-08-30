@@ -8,9 +8,9 @@ Copy everything inside the block below:
 FIRST: run `bash scripts/preflight-portal-run.sh hitechcity` so resume + LinkedIn cookies are ready (this flow reuses the LinkedIn CDP profile for career portals + referrals).
 Then run `bash scripts/launch-chrome-cdp.sh hitechcity`.
 Use helper: `python3 tools/hitechcity/daily_apply.py`
-Company campus list: `tools/hitechcity/companies.json` (Knowledge City, Knowledge Park, Mindspace Madhapur / Raheja, The V, Cyber Pearl, DLF Cyber City, Divyasree Orion — premium Grade-A buildings). The helper **discovers** additional software tenants into this list before applying (seed employer list + LinkedIn *company-name* slug resolve — not campus-name LinkedIn searches).
+Company campus list: `tools/hitechcity/companies.json` (Knowledge City, Knowledge Park, Mindspace Madhapur / Raheja, RMZ Nexity / Skyview / Futura, The V, Cyber Pearl, DLF Cyber City, Divyasree Orion — premium Grade-A buildings). The helper **discovers** additional software tenants into this list before applying (seed employer list + LinkedIn *company-name* slug resolve — not campus-name LinkedIn searches).
 
-Apply to senior .NET / architect / tech-lead / EM roles for Mohammed Abdul Rafi Ahmed at companies in these Madhapur / HITEC City campuses. Maximize BOTH application volume and referral outreach. Target ~50 applications/day.
+Apply to senior .NET / architect / tech-lead / EM roles for Mohammed Abdul Rafi Ahmed at companies in these Madhapur / HITEC City campuses. Maximize BOTH application volume and referral outreach. Target ~50 applications/day. Prefer employers in Knowledge City, Knowledge Park, Raheja Mindspace, RMZ Nexity, RMZ Skyview, and RMZ Futura (new Grade-A parks close to home).
 
 **PRIMARY:** official company career portals in **parallel multi-tab** (default `HITECHCITY_PARALLEL_TABS=10` on every cron/daily/`daily_apply.py` run) + LinkedIn company-targeted applies/referrals.
 **ALSO REQUIRED (campus allowlist):** browse Naukri, Foundit, Cutshort, Instahyre, and Indeed for the same campus-company set (capped; do not invent applies). Generic Hyd employers outside the campus tenant list stay skipped.
@@ -37,12 +37,13 @@ Owner only solves captchas: every daily run **re-focuses the captcha / ASK_OWNER
 ## Campus / company scope (HARD)
 ONLY target companies listed in `tools/hitechcity/companies.json` after the discovery step (or clear tenants of the campuses named there).
 Priority campuses:
-1. Sattva Knowledge City / Knowledge Park (incl. Octave)
-2. Mindspace Madhapur (Raheja Mindspace)
-3. The V IT Park (Ascendas), Cyber Pearl
-4. Peer Grade-A Madhapur / HITEC buildings on the list (DLF Cyber City, Divyasree Orion) when the company is a known premium tenant
+1. Sattva Knowledge City / Knowledge Park (incl. Octave) — preferred (near home)
+2. Mindspace Madhapur (Raheja Mindspace) — preferred (near home)
+3. RMZ Nexity / The Skyview / RMZ Futura — preferred (near home, Grade-A Madhapur–HITEC)
+4. The V IT Park (Ascendas), Cyber Pearl
+5. Peer Grade-A Madhapur / HITEC buildings on the list (DLF Cyber City, Divyasree Orion) when the company is a known premium tenant
 
-Discovery (required each run): `discover_tenants` merges the full Madhapur/HITEC campus tenant catalog (Raheja Mindspace, Knowledge City, Knowledge Park, The V, Cyber Pearl, DLF, Orion) plus live Mindspace REIT / Cityinfo directory scrapes into `companies.json` before applies. Never wipe curated Priority-1 rows. LinkedIn company-name slug search stays off by default.
+Discovery (required each run): `discover_tenants` merges the full Madhapur/HITEC campus tenant catalog (Raheja Mindspace, Knowledge City, Knowledge Park, RMZ Nexity/Skyview/Futura, The V, Cyber Pearl, DLF, Orion) plus live Mindspace REIT / Cityinfo directory scrapes into `companies.json` before applies. Preferred home campuses are applied first. Never wipe curated Priority-1 rows. LinkedIn company-name slug search stays off by default.
 
 Do NOT apply to random Hyderabad employers outside this campus tenant set. Job boards must use `HITECHCITY_COMPANY_ALLOWLIST` and skip `hitechcity_campus_allowlist` misses.
 
