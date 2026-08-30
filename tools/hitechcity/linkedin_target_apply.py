@@ -119,10 +119,16 @@ class LiReport:
 def load_companies() -> list[dict[str, Any]]:
     data = json.loads(COMPANIES_PATH.read_text())
     from tools.hitechcity.campus_tenant_catalog import campus_preference_rank
+    from tools.hitechcity.openings_probe import openings_preference_rank
 
     return sorted(
         data.get("companies", []),
-        key=lambda c: (campus_preference_rank(c), c.get("priority", 9), c.get("name", "")),
+        key=lambda c: (
+            campus_preference_rank(c),
+            openings_preference_rank(c),
+            c.get("priority", 9),
+            c.get("name", ""),
+        ),
     )
 
 

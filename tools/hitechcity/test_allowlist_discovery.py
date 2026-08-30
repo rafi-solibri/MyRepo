@@ -202,6 +202,28 @@ def test_parse_mindspace_and_cityinfo_html():
     assert "JPMorgan Chase" in _parse_cityinfo_tenants(jpmc)
 
 
+def test_openings_preference_and_hints():
+    from tools.hitechcity.openings_probe import (
+        CAREERS_URL_HINTS,
+        ensure_careers_url_hints,
+        openings_preference_rank,
+    )
+
+    assert openings_preference_rank({"hasOpenings": True}) == 0
+    assert openings_preference_rank({"openingsCount": 2}) == 0
+    assert openings_preference_rank({}) == 1
+    assert "Electronic Arts" in CAREERS_URL_HINTS
+    assert "CGI" in CAREERS_URL_HINTS
+    companies = [
+        {"name": "Electronic Arts", "campuses": ["rmz-nexity"], "careersUrls": []},
+        {"name": "Someone Else", "campuses": ["dlf-cyber-city"], "careersUrls": []},
+    ]
+    touched = ensure_careers_url_hints(companies)
+    assert "Electronic Arts" in touched
+    assert companies[0]["careersUrls"]
+    assert not companies[1].get("careersUrls")
+
+
 if __name__ == "__main__":
     test_allowlist_match()
     test_discovery_seeds_merge()
@@ -210,4 +232,5 @@ if __name__ == "__main__":
     test_campus_catalog_covers_priority_parks()
     test_discover_from_campus_catalog_adds_knowledge_park()
     test_parse_mindspace_and_cityinfo_html()
+    test_openings_preference_and_hints()
     print("ok")

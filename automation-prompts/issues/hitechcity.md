@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Preferred campus companies not prioritized by live openings | openings_probe stamps hasOpenings; careers/LinkedIn sort preferred+openings first |
 | RMZ Nexity / Skyview / Futura campuses missing from tenant catalog; EY falsely matched Blue Yonder | Add rmz-nexity/skyview/futura campuses + tenants; prefer home parks in apply sort; short company-name match guard |
 
 
