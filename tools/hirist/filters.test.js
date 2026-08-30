@@ -17,6 +17,35 @@ assert.strictEqual(
   "pure_ai_data_without_dotnet"
 );
 assert.strictEqual(
+  skipReason("AI Solution Architect", { location: "Hyderabad", skills: "GenAI" }),
+  "pure_ai_data_without_dotnet"
+);
+assert.strictEqual(
+  skipReason("AI Solution Architect - RAG/Agentic AI", {
+    location: "Hyderabad",
+    skills: "RAG",
+  }),
+  "pure_ai_data_without_dotnet"
+);
+assert.strictEqual(
+  skipReason("Solution Architect - Data Engineering", {
+    location: "Hyderabad",
+    skills: "Spark",
+  }),
+  "pure_ai_data_without_dotnet"
+);
+assert.strictEqual(
+  skipReason("ETL Architect", { location: "Hyderabad", skills: "Informatica" }),
+  "pure_ai_data_without_dotnet"
+);
+assert.strictEqual(
+  skipReason("Senior Solution Architect - Google Cloud", {
+    location: "Hyderabad",
+    skills: "GCP",
+  }),
+  null
+);
+assert.strictEqual(
   skipReason("Full Stack Lead (Java)", { location: "Hyderabad", skills: "Java" }),
   "java_primary"
 );
