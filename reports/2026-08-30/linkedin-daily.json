@@ -1,0 +1,52 @@
+{
+  "date": "2026-08-30",
+  "portal": "li",
+  "postFixRerun": true,
+  "mergedFix": {
+    "pr": 293,
+    "sha": "fa8b17fdcef5637e0a02c434ea48cf8d1643eb7d",
+    "title": "avoid profile-data bans, pace applies, require tailored resumes"
+  },
+  "status": "stopped_login_required_and_restricted",
+  "easyApplySubmitted": 0,
+  "externalCompleted": 0,
+  "applied": [],
+  "submitted": [],
+  "skipped": [],
+  "blocked": [
+    {
+      "reason": "wrong_password",
+      "detail": "same-day re-run auto-login: Google SSO google_password_heal wrong_password; password candidates (2) Wrong email or password",
+      "artifact": "/opt/cursor/artifacts/auto-login-wrong-password.png"
+    },
+    {
+      "reason": "temporarily_restricted",
+      "lift_utc": "2026-08-31T02:43:00+00:00",
+      "lift_pdt": "August 30, 2026 7:43 PM PDT",
+      "detail": "Account restricted for high profile-data volume (confirmed earlier today). Helpers skip until lift. Do not retry login/apply.",
+      "artifact": "/opt/cursor/artifacts/restriction-until.json"
+    }
+  ],
+  "counts": {
+    "applied": 0,
+    "submitted": 0,
+    "skipped": 0,
+    "blocked": 2,
+    "seen": 0
+  },
+  "restriction": {
+    "active": true,
+    "lift_utc": "2026-08-31T02:43:00+00:00",
+    "hint": "Wait until lift_utc; do not retry login/apply (profile-data volume ban)."
+  },
+  "codeFix": {
+    "files": [],
+    "summary": "No new code fix this re-run. Executed on merged #293."
+  },
+  "ownerAction": [
+    "Wait until restriction lifts 2026-08-31T02:43Z (Aug 30 7:43 PM PDT)",
+    "Refresh portal password and GOOGLE_PASSWORD (both still rejected)",
+    "If CAPTCHA/2FA persists: headed-login + portal session seed",
+    "Re-run daily job after lift + live session"
+  ]
+}

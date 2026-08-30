@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| POST_FIX_RERUN on #293 still 0 applies: wrong_password + restriction until 2026-08-31T02:43Z | Honored skip-until-lift; persisted restriction memory; no invented applies; owner must refresh secrets after lift |
 | Temporary restriction from high profile-data volume; LI volume thin / generic resume risk | restriction memory+skip until lift; people-referrals OFF; apply pacing; MAX_APPLY 50; mandatory per-JD resume tailor |
 
 

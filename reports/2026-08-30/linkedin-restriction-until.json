@@ -1,0 +1,8 @@
+{
+  "writtenAt": "2026-08-30T14:40:00+00:00",
+  "lift_utc": "2026-08-31T02:43:00+00:00",
+  "url": "checkpoint",
+  "kind": "account_temporarily_restricted",
+  "hint": "Do not hammer login/apply until lift_utc. Avoid people-search/profile scrapes. Prefer Easy Apply with pacing; disable people referrals.",
+  "source": "hitechcity-2026-08-30 + same-day re-run persisted on this VM"
+}
