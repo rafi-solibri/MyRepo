@@ -3,6 +3,7 @@
 
 import json
 import re
+from pathlib import Path
 
 from tools.hitechcity.ats_fill import (
     attempt_ats_apply,
@@ -472,6 +473,9 @@ def test_skip_uhg_default():
         assert company_skip_reason({"name": "Hyland", "careersUrls": [
             "https://careers-hyland.icims.com/jobs/search"
         ]}) is None
+        # Empty careersUrls stay LinkedIn-eligible; careers run() skips them separately.
+        assert company_skip_reason({"name": "CGI", "careersUrls": []}) is None
+        assert company_skip_reason({"name": "EY", "careersUrls": []}) is None
         # Board allowlist must drop Optum/UHG by default (careers already skip them).
         from tools.hitechcity.campus_allowlist import write_allowlist_artifact
         import tempfile
@@ -527,6 +531,33 @@ def test_skip_uhg_default():
             os.environ["HITECHCITY_SKIP_COMPANIES"] = prev_names
 
 
+def test_soft_incomplete_cap_when_gmail_dead():
+    import os
+    from tools.hitechcity.careers_apply import _soft_incomplete_cap  # pragma: allowlist secret
+
+    prev = os.environ.get("HITECHCITY_MAX_SOFT_INCOMPLETE")  # pragma: allowlist secret
+    flag = Path("/tmp/ats-gmail-otp-login-required")
+    existed = flag.exists()
+    try:
+        os.environ.pop("HITECHCITY_MAX_SOFT_INCOMPLETE", None)  # pragma: allowlist secret
+        flag.write_text("1", encoding="utf-8")
+        assert _soft_incomplete_cap() == 2
+        os.environ["HITECHCITY_MAX_SOFT_INCOMPLETE"] = "0"  # pragma: allowlist secret
+        assert _soft_incomplete_cap() == 0
+        os.environ["HITECHCITY_MAX_SOFT_INCOMPLETE"] = "3"  # pragma: allowlist secret
+        assert _soft_incomplete_cap() == 3
+    finally:
+        if prev is None:
+            os.environ.pop("HITECHCITY_MAX_SOFT_INCOMPLETE", None)  # pragma: allowlist secret
+        else:
+            os.environ["HITECHCITY_MAX_SOFT_INCOMPLETE"] = prev  # pragma: allowlist secret
+        if not existed:
+            try:
+                flag.unlink()
+            except OSError:
+                pass
+
+
 def test_location_ui_skips_agentforce():
     assert not location_ui_input_meta_ok("Ask Agentforce anything search-field")
     assert not location_ui_input_meta_ok("oda-chat-input")
@@ -546,5 +577,6 @@ if __name__ == "__main__":
     test_hyland_icims_url()
     test_attempt_ats_apply_persist_env_no_nameerror()
     test_skip_uhg_default()
+    test_soft_incomplete_cap_when_gmail_dead()
     test_location_ui_skips_agentforce()
     print("ok")

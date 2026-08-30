@@ -51,6 +51,29 @@ TIME_CAP_S = int(os.environ.get("HITECHCITY_ATS_TIME_CAP_S", os.environ.get("HIT
 MAX_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "3"))
 # Soft incompletes must not starve remaining matching roles at the same company.
 MAX_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "16"))
+
+
+def _soft_incomplete_cap() -> int:
+    """Cap persist_retry loops when mailbox OTP cannot be read.
+
+    Soft incompletes must not starve remaining matching roles by default.
+    After Gmail Sign-in is cached (no IMAP), Oracle HCM jobs loop
+    persist_retry forever — allow a small cap so later guest ATS still run.
+    """
+    raw = (os.environ.get("HITECHCITY_MAX_SOFT_INCOMPLETE") or "").strip()  # pragma: allowlist secret
+    if raw:
+        try:
+            return max(0, int(raw))
+        except ValueError:
+            return 0
+    try:
+        from tools.ats.email_otp import mailbox_unavailable_for_otp
+
+        if mailbox_unavailable_for_otp():
+            return 2
+    except Exception:
+        pass
+    return 0
 # Headed/owner-available runs get a longer ATS budget so forms can be finished.
 # Owner-asleep keeps the short cron cap even on headed CDP.
 if (
@@ -1296,6 +1319,10 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
     kept: list[dict[str, Any]] = []
     for company in companies:
         reason = company_skip_reason(company)
+        if not reason and not (company.get("careersUrls") or []):
+            # LinkedIn still targets these tenants; do not spend MAX_COMPANIES
+            # slots on empty URL rows (RMZ catalog names before URL seed merge).
+            reason = "no_careers_urls"
         if reason:
             report.skipped.append(
                 {
@@ -1336,6 +1363,8 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
             company_applied = 0
             company_walls = 0
             company_attempts = 0
+            company_soft = 0
+            soft_cap = _soft_incomplete_cap()
             workday_no_hyd = False
             loc_ui_done = False
             for url in urls:
@@ -1564,13 +1593,31 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                         if is_hard_ats_wall(why):
                             company_walls += 1
                             company_attempts += 1
-                        elif "incomplete" not in (why or "").lower():
+                        elif "incomplete" in (why or "").lower() or "timeout" in (why or "").lower():
+                            company_soft += 1
+                            if soft_cap and company_soft >= soft_cap:
+                                _safe_print(
+                                    f"CAREERS SKIP {name} | soft_incomplete_cap_{company_soft}"
+                                )
+                                report.skipped.append(
+                                    {
+                                        "company": name,
+                                        "role": job.get("role"),
+                                        "url": job.get("url"),
+                                        "status": "skipped",
+                                        "reason": f"soft_incomplete_cap_{company_soft}",
+                                    }
+                                )
+                                break
+                        else:
                             company_attempts += 1
                     if company_applied >= MAX_PER_COMPANY:
                         break
                     if company_walls >= MAX_WALLS_PER_COMPANY:
                         break
                     if company_attempts >= MAX_ATTEMPTS_PER_COMPANY:
+                        break
+                    if soft_cap and company_soft >= soft_cap:
                         break
                 else:
                     continue

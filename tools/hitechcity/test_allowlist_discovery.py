@@ -73,7 +73,37 @@ def test_discovery_seeds_merge():
     assert status == "updated"
     ms = next(c for c in companies if c["name"] == "Microsoft")
     assert "mindspace-madhapur" in ms["campuses"]
+    assert ms["careersUrls"] == ["https://example.com"]  # never wipe curated
     assert len(DISCOVERY_SEEDS) >= 10
+
+
+def test_discovery_fills_empty_careers_urls_from_catalog():
+    from tools.hitechcity.campus_tenant_catalog import CATALOG_CAREERS_URLS  # pragma: allowlist secret
+
+    companies = [
+        {
+            "name": "CGI",
+            "campuses": ["rmz-nexity"],
+            "linkedinSlug": "cgi",
+            "careersUrls": [],
+            "priority": 1,
+        }
+    ]
+    status = _merge_candidate(
+        companies,
+        {
+            "name": "CGI",
+            "campuses": ["rmz-skyview"],
+            "linkedinSlug": "cgi",
+            "careersUrls": CATALOG_CAREERS_URLS["CGI"],
+        },
+        "campus_catalog",
+    )
+    assert status == "updated"
+    cgi = companies[0]
+    assert "rmz-skyview" in cgi["campuses"]
+    assert cgi["careersUrls"] == CATALOG_CAREERS_URLS["CGI"]
+    assert "cgi.com" in cgi["careersUrls"][0]
 
 
 def test_discovery_junk_rejected_and_pruned():
@@ -152,6 +182,12 @@ def test_campus_catalog_covers_priority_parks():
     assert campus_preference_rank({"campuses": ["rmz-nexity"]}) == 0
     assert campus_preference_rank({"campuses": ["dlf-cyber-city"]}) == 1
     assert any(c["id"] == "rmz-nexity" for c in CAMPUS_DEFINITIONS)
+    from tools.hitechcity.campus_tenant_catalog import CATALOG_CAREERS_URLS  # pragma: allowlist secret
+
+    assert CATALOG_CAREERS_URLS["EY"]
+    assert CATALOG_CAREERS_URLS["Electronic Arts"]
+    ey_row = next(r for r in CAMPUS_TENANT_CATALOG if r["name"] == "EY")
+    assert ey_row.get("careersUrls")
     assert PREFERRED_HOME_CAMPUSES >= {
         "sattva-knowledge-city",
         "mindspace-madhapur",
@@ -233,4 +269,5 @@ if __name__ == "__main__":
     test_discover_from_campus_catalog_adds_knowledge_park()
     test_parse_mindspace_and_cityinfo_html()
     test_openings_preference_and_hints()
+    test_discovery_fills_empty_careers_urls_from_catalog()
     print("ok")

@@ -253,15 +253,63 @@ def canonicalize_tenant_name(raw: str) -> str | None:
     return name
 
 
-def tenant_row(name: str, campuses: list[str], priority: int = 2) -> dict[str, Any]:
+# Official guest-apply career search URLs for catalog tenants that were
+# added as campus names only (empty careersUrls). Discovery merges these
+# into companies.json when the existing row has no URL yet — never wipes
+# Priority-1 curated portals.
+CATALOG_CAREERS_URLS: dict[str, list[str]] = {
+    "CGI": ["https://www.cgi.com/en/careers/search-jobs"],
+    "EY": ["https://careers.ey.com/ey/search/?locationsearch=Hyderabad"],
+    "Electronic Arts": ["https://ea.wd5.myworkdayjobs.com/EA_Careers"],
+    "HighRadius": ["https://highradius.wd5.myworkdayjobs.com/HighRadius"],
+    "Vanguard": ["https://www.vanguardjobs.com/search-jobs"],
+    "ADP": ["https://jobs.adp.com/careers"],
+    "Capgemini": ["https://www.capgemini.com/jobs/"],
+    "Micron Technology": ["https://micron.wd1.myworkdayjobs.com/External"],
+    "Broadridge": ["https://wd1.myworkdaysite.com/recruiting/broadridge/Broadridge_Careers"],
+    "Invesco": ["https://invesco.wd5.myworkdayjobs.com/InvescoCareers"],
+    "OpenText": ["https://opentext.wd3.myworkdayjobs.com/opentextcareers"],
+    "Hexaware": ["https://hexaware.wd5.myworkdayjobs.com/External"],
+    "Flutter Entertainment": ["https://careers.flutter.com/search-jobs"],
+    "NCR Voyix": ["https://ncrvoyix.wd1.myworkdayjobs.com/ncrvoyixcareers"],
+    "LTIMindtree": ["https://careers.ltimindtree.com/search/"],
+    "Mphasis": ["https://careers.mphasis.com/home.html"],
+    "Novartis": ["https://www.novartis.com/careers/career-search"],
+    "Infor": ["https://careers.infor.com/en/search-jobs"],
+    "Chubb": ["https://careers.chubb.com/global/en/search-jobs"],
+    "Bayer": ["https://career.bayer.com/en/career"],
+    "PayPal": ["https://paypal.wd1.myworkdayjobs.com/jobs"],
+    "Wells Fargo": ["https://www.wellsfargojobs.com/en/jobs/"],
+    "ServiceNow": ["https://careers.servicenow.com/jobs/"],
+    "Persistent Systems": ["https://careers.persistent.com/"],
+    "Virtusa": ["https://www.virtusa.com/careers"],
+    "Uber": ["https://www.uber.com/careers/list/"],
+    "Celonis": ["https://www.celonis.com/careers/jobs/"],
+    "Macquarie": ["https://www.macquarie.com/careers/job-search.html"],
+    "KPMG": ["https://www.kpmg.com/in/en/home/careers.html"],
+    "Darwinbox": ["https://darwinbox.freshteam.com/jobs"],
+    "Providence": ["https://providence.wd5.myworkdayjobs.com/providence"],
+}
+
+
+def tenant_row(
+    name: str,
+    campuses: list[str],
+    priority: int = 2,
+    careers_urls: list[str] | None = None,
+) -> dict[str, Any]:
     canon = canonicalize_tenant_name(name) or name
     slug = SLUG_HINTS.get(canon) or re.sub(r"[^a-z0-9]+", "-", canon.lower()).strip("-")[:64]
-    return {
+    urls = list(careers_urls or CATALOG_CAREERS_URLS.get(canon) or [])
+    row: dict[str, Any] = {
         "name": canon,
         "campuses": list(campuses),
         "linkedinSlug": slug,
         "priority": priority,
     }
+    if urls:
+        row["careersUrls"] = urls
+    return row
 
 
 # ---------------------------------------------------------------------------

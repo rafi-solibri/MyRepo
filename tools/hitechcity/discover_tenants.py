@@ -166,7 +166,8 @@ def _merge_candidate(companies: list[dict], cand: dict[str, Any], source: str) -
     if source != "seed" and _is_junk_tenant(name, slug):
         return None
     if _already_listed(companies, name, slug):
-        # Expand campuses if we learn new ones
+        # Expand campuses if we learn new ones. Fill empty careersUrls from
+        # catalog seeds — never wipe Priority-1 curated portals.
         for c in companies:
             if company_name_match(name, c.get("name") or "") or (
                 slug and (c.get("linkedinSlug") or "").lower() == slug.lower()
@@ -176,6 +177,9 @@ def _merge_candidate(companies: list[dict], cand: dict[str, Any], source: str) -
                     if x not in camps:
                         camps.append(x)
                 c["campuses"] = camps
+                incoming = [u for u in (cand.get("careersUrls") or []) if isinstance(u, str) and u.strip()]
+                if incoming and not (c.get("careersUrls") or []):
+                    c["careersUrls"] = incoming
                 return "updated"
         return None
     row = {
