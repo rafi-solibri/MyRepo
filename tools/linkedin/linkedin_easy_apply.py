@@ -2013,41 +2013,39 @@ def process_search(
 
         print(f"  APPLY? {company} | {role} | {loc[:60]} | id={jid}", flush=True)
         # Per-JD tailored resume → upload path for Easy Apply / ATS screening (MANDATORY)
-        tailor_ok = False
         try:
             from tools.resume_paths import clear_active_resume, set_active_resume
             from tools.resume_tailor import tailor_enabled, tailor_resume_for_job
+        except Exception as import_err:
+            job.status = "blocked"
+            job.reason = f"resume_tailor_import_failed: {import_err}"
+            results.append(job)
+            print(f"  BLOCKED resume tailor import | {company} | {role}", flush=True)
+            continue
 
-            if tailor_enabled():
-                last_err: Exception | None = None
-                for attempt in range(2):
-                    try:
-                        tailored = tailor_resume_for_job(
-                            job_id=jid, title=role, company=company, jd=jd
-                        )
-                        set_active_resume(tailored)
-                        tailor_ok = True
-                        print(f"  RESUME_TAILOR ok id={jid}", flush=True)
-                        break
-                    except Exception as e:
-                        last_err = e
-                        print(f"  RESUME_TAILOR retry={attempt + 1}: {e}", flush=True)
-                if not tailor_ok:
-                    job.status = "blocked"
-                    job.reason = f"resume_tailor_failed: {last_err}"
-                    results.append(job)
-                    print(f"  BLOCKED resume tailor | {company} | {role}", flush=True)
-                    continue
-            else:
-                clear_active_resume()
-        except Exception as tailor_err:
-            print(f"  WARN: resume tailor skipped: {str(tailor_err)[:120]}", flush=True)
-            try:
-                from tools.resume_paths import clear_active_resume
-
-                clear_active_resume()
-            except Exception:
-                pass
+        if tailor_enabled():
+            tailor_ok = False
+            last_err: Exception | None = None
+            for attempt in range(2):
+                try:
+                    tailored = tailor_resume_for_job(
+                        job_id=jid, title=role, company=company, jd=jd
+                    )
+                    set_active_resume(tailored)
+                    tailor_ok = True
+                    print(f"  RESUME_TAILOR ok id={jid}", flush=True)
+                    break
+                except Exception as e:
+                    last_err = e
+                    print(f"  RESUME_TAILOR retry={attempt + 1}: {e}", flush=True)
+            if not tailor_ok:
+                job.status = "blocked"
+                job.reason = f"resume_tailor_failed: {last_err}"
+                results.append(job)
+                print(f"  BLOCKED resume tailor | {company} | {role}", flush=True)
+                continue
+        else:
+            clear_active_resume()
         try:
             if record_restriction_from_page and record_restriction_from_page(page):
                 job.status = "blocked"

@@ -862,6 +862,17 @@ def _wait_signed_in(ctx, page, deadline: float, via: str, out: dict) -> int | No
 
 def main() -> int:
     out: dict = {"ok": False, "attempts": []}
+    # Honor persisted restriction memory — do not hammer login while banned.
+    try:
+        from tools.linkedin.restriction import should_skip_linkedin_for_restriction
+
+        skip = should_skip_linkedin_for_restriction()
+        if skip:
+            out.update(ok=False, **skip)
+            print(json.dumps(out), flush=True)
+            return 7
+    except Exception:
+        pass
     deadline = time.time() + TIMEOUT_S
     email = EMAIL or DEFAULT_EMAIL
     pw_list = password_candidates()
