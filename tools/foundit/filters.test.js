@@ -822,4 +822,18 @@ assert.strictEqual(
   "Data Governance Lead/Architect must skip even with Arch/Lead + skills laundry .NET (2026-08-28)"
 );
 
+assert.strictEqual(
+  classifyJob({
+    jobId: 64657593,
+    title: "Engineering Manager, AI Product Development",
+    companyName: "Jobgether",
+    locations: [{ text: "Remote" }],
+    skills: [{ text: "AI" }, { text: "Product" }, { text: ".NET" }],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "pure AI/data without .NET on title",
+  "Engineering Manager, AI Product Development must skip Arch/Lead EM band (2026-08-30)"
+);
+
 console.log("filters.test.js OK");

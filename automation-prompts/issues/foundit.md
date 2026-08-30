@@ -1,5 +1,12 @@
 # Foundit — issues & fixes
 
+## 2026-08-30 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Jobgether Engineering Manager, AI Product Development passed via Arch/Lead EM without .NET on title (Falcon APPLY_REDIRECT + Applied tab bump; LinkedIn no Easy Apply) | filters.js: add engineering manager,+AI and ai product to pure AI/data title skip (Arch/Lead must not waive .NET); test jobId 64657593 |
+
+
 ## 2026-08-28 (cloud)
 
 | Issue | Fix |

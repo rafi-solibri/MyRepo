@@ -181,8 +181,9 @@ function skipTitleReason(title) {
   // Arch/Lead exception must NOT apply — Socnet "Technical Lead - Agentic AI / Generative AI".
   // Do NOT match bare "Architecture … AI" (Microsoft "Solution Architecture Apps & AI" may still pass).
   // "Data Governance … Lead/Architect" (Macquarie 2026-08-28) — Arch/Lead must not waive .NET.
+  // "Engineering Manager, AI Product Development" (Jobgether 2026-08-30) — EM + trailing AI Product.
   if (
-    /\b(ai\s+(?:specialist\s+)?(?:solution\s+)?architect|ai\s+engineer(?:ing)?(?:\s+manager|\s+lead)?|ai\s+agent|ml\s+engineer|gen\s*-?\s*ai|genai|generative\s+ai|agentic\s+ai|\bgemini\b|\bllm\b|data\s+scientist|data\s+engineer(?:ing)?|data\s+architect|data\s+governance|architect\s*[-–:]?\s*ai|ai\s*[-–:]?\s*architect)\b/i.test(
+    /\b(ai\s+(?:specialist\s+)?(?:solution\s+)?architect|ai\s+engineer(?:ing)?(?:\s+manager|\s+lead)?|engineering\s+manager[,\s:/|-]+ai|ai\s+product|ai\s+agent|ml\s+engineer|gen\s*-?\s*ai|genai|generative\s+ai|agentic\s+ai|\bgemini\b|\bllm\b|data\s+scientist|data\s+engineer(?:ing)?|data\s+architect|data\s+governance|architect\s*[-–:]?\s*ai|ai\s*[-–:]?\s*architect)\b/i.test(
       t
     ) &&
     !hasDotNet(t, "")
