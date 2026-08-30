@@ -89,6 +89,7 @@ def test_title_ok():
     assert CAREERS_TITLE_SKIP.search("Staff Analyst - IT EA EPS Hyderabad")
     assert CAREERS_TITLE_SKIP.search("Principal Engineer - STA Synthesis Hyderabad")
     assert CAREERS_TITLE_SKIP.search("Staff Data Science Engineer, SMAI Hyderabad")
+    assert CAREERS_TITLE_SKIP.search("Principal Engineer TD Device Characterization Hyderabad")
     assert LI_TITLE_SKIP.search("Staff Engineer, Scribe Layout Design")
     assert LI_TITLE_SKIP.search("Lead Principal Engineer, Design Verification")
     assert not CAREERS_TITLE_SKIP.search(
