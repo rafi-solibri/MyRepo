@@ -1562,6 +1562,39 @@ async function confirmApplied(page, chatHint = null) {
       })
       .catch(() => "");
     if (disabledAgain) return { ok: true, cta: `disabled:${disabledAgain}` };
+    // Overlay / empty-CTA lag: reload job-listings and re-read Applied
+    // (ValueLabs Azure Platform Architect 2026-08-30 — apply landed, confirm missed).
+    const jobUrl = page.url();
+    if (/naukri\.com\/job-listings-/i.test(jobUrl)) {
+      await page
+        .goto(jobUrl, { waitUntil: "domcontentloaded", timeout: 45000 })
+        .catch(() => {});
+      await sleep(2000);
+      await dismiss(page);
+      const afterReload = await waitForAppliedCta(page, { timeoutMs: 10000 });
+      if (afterReload?.state === "applied") {
+        return { ok: true, cta: afterReload.label || "Applied" };
+      }
+      const disabledReload = await page
+        .evaluate(() => {
+          const buttons = [
+            ...document.querySelectorAll("button, a, [role='button']"),
+          ];
+          for (const btn of buttons) {
+            const raw = (btn.innerText || btn.getAttribute("aria-label") || "")
+              .replace(/\s+/g, " ")
+              .trim();
+            if (!/Quick apply|Applied/i.test(raw)) continue;
+            if (/company site|hirist|view applied/i.test(raw)) continue;
+            if (btn.disabled || btn.getAttribute("aria-disabled") === "true") {
+              return raw || "disabled_cta";
+            }
+          }
+          return "";
+        })
+        .catch(() => "");
+      if (disabledReload) return { ok: true, cta: `disabled:${disabledReload}` };
+    }
   }
   const detail = await readDetail(page);
   return { ok: false, cta: detail.cta || visible?.label || "" };

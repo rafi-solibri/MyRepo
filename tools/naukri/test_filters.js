@@ -493,6 +493,21 @@ assert.strictEqual(
   "AWS Infra Architect must skip (false Quick Apply 2026-08-29)"
 );
 assert.strictEqual(
+  shouldSkipTitle("Azure Platform Architect"),
+  true,
+  "Azure Platform Architect is landing-zone/IaC infra (ValueLabs 2026-08-30)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Azure Landing Zone Architect"),
+  true,
+  "Azure landing zone titles must skip"
+);
+assert.strictEqual(
+  shouldSkipTitle("Solutions Architect .NET Azure"),
+  false,
+  "Generic .NET Azure SA must still apply"
+);
+assert.strictEqual(
   shouldSkipTitle("PLM Solution Architect"),
   true,
   "PLM-primary Solution Architect must skip"

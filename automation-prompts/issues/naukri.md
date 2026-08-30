@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-08-30 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| ValueLabs Azure Platform Architect apply_unconfirmed (empty CTA/no_chat) after Quick Apply actually landed; JD is Azure landing-zone/IaC not .NET | Title-skip azure platform architect / azure landing zone; confirmApplied reloads job-listings after no_chat miss and re-reads Applied |
+
+
 ## 2026-08-29 (cloud)
 
 | Issue | Fix |
