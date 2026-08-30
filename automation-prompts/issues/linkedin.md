@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-08-30 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Live CDP stale li_at; Google SSO + LinkedIn password both Wrong email or password (exit 5); seventh consecutive morning | No code change — auto_login already heals late Google pwd and detects wrong_password; owner must refresh LINKEDIN_PASSWORD and GOOGLE_PASSWORD then re-run (headed-login only if CAPTCHA/2FA after secret update) |
+
+
 ## 2026-08-29 (cloud)
 
 | Issue | Fix |
