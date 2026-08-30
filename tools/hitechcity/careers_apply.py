@@ -157,6 +157,7 @@ CAREERS_TITLE_SKIP = re.compile(
     r"analog\s*design|digital\s*design\s*engineer|verification\s*engineer|"
     r"design\s*verification|layout\s*design|scribe\s*layout|standard\s*cell|"
     r"\bdram\b|\bhbm\b|power\s*integrity|\bnvm\b|\bnand\b|ssd\s*(nvm|test|qra)|"
+    r"sta\s*synthesis|\bdata\s*science\b|"
     r"staff\s*analyst|"
     r"sales\s*specialist|especialista|"
     r"program\s*manager|technical\s*program\s*manager|\btpm\b|"
