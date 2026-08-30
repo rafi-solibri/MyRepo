@@ -35,9 +35,9 @@ COMPANIES_PATH = Path(__file__).with_name("companies.json")
 REPORT = Path(
     os.environ.get("HITECHCITY_LINKEDIN_REPORT", "/opt/cursor/artifacts/hitechcity-linkedin.json")
 )
-MAX_APPLY = int(os.environ.get("HITECHCITY_MAX_APPLY", "35"))
-MAX_REFERRALS = int(os.environ.get("HITECHCITY_MAX_REFERRALS", "12"))
-MAX_SCAN = int(os.environ.get("HITECHCITY_MAX_SCAN", "40"))
+MAX_APPLY = int(os.environ.get("HITECHCITY_MAX_APPLY", "50"))
+MAX_REFERRALS = int(os.environ.get("HITECHCITY_MAX_REFERRALS", "8"))
+MAX_SCAN = int(os.environ.get("HITECHCITY_MAX_SCAN", "50"))
 TPR = os.environ.get("HITECHCITY_TPR", "r1209600")  # 14 days
 
 # LinkedIn location filter — text alone is unreliable; geoId pins Hyderabad metro.
@@ -158,13 +158,24 @@ def goto_retry(page: Page, url: str, *, timeout: int = 70000, attempts: int = 3)
     for i in range(attempts):
         try:
             page.goto(url, wait_until="domcontentloaded", timeout=timeout)
-            # Soft throttle signal in URL/title
+            # Soft throttle / temporary-restriction signals
             u = (page.url or "").lower()
             if any(x in u for x in ("/authwall", "/checkpoint/challenge", "unavailable")):
+                try:
+                    from tools.linkedin.restriction import record_restriction_from_page
+
+                    if record_restriction_from_page(page):
+                        raise RuntimeError("linkedin_temporarily_restricted")
+                except RuntimeError:
+                    raise
+                except Exception:
+                    pass
                 time.sleep(2.5 + i * 2.0)
             return
         except Exception as e:
             last = e
+            if "linkedin_temporarily_restricted" in str(e):
+                raise
             msg = str(e)
             if "ERR_HTTP_RESPONSE_CODE_FAILURE" in msg or "Timeout" in msg or "net::ERR_" in msg:
                 time.sleep(3.0 + i * 3.5)
@@ -522,6 +533,7 @@ def fill_easy_apply(
     *,
     role: str = "",
     company: str = "",
+    job_id: str = "",
 ) -> tuple[str, str]:
     """Minimal Easy Apply walker — confirm submitted only."""
     # Prefer existing durable helper if importable as subprocess would be heavy; keep local.
@@ -536,9 +548,15 @@ def fill_easy_apply(
         from tools.hitechcity.ats_fill import _activate_tailored_resume, _clear_tailored_resume, _scrape_jd_text
 
         jd_text = _scrape_jd_text(page)
-        _activate_tailored_resume(role=role, company=company, jd=jd_text, job_id="linkedin-easy")
+        _activate_tailored_resume(
+            role=role,
+            company=company,
+            jd=jd_text,
+            job_id=job_id or "linkedin-easy",
+        )
     except Exception as e:
-        print(f"RESUME_TAILOR easy_apply fallback: {e}", flush=True)
+        print(f"RESUME_TAILOR easy_apply REQUIRED FAIL: {e}", flush=True)
+        return "blocked", f"resume_tailor_failed:{e}"
 
     try:
         return _fill_easy_apply_body(page)
@@ -839,6 +857,39 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
     applied = 0
     referrals = 0
 
+    # Do not touch LinkedIn while a known temporary restriction is active.
+    try:
+        from tools.linkedin.restriction import (
+            people_referrals_enabled,
+            pace_between_linkedin_applies,
+            record_restriction_from_page,
+            should_skip_linkedin_for_restriction,
+        )
+
+        skip_restr = should_skip_linkedin_for_restriction()
+        if skip_restr:
+            report.blocked.append(dict(skip_restr))
+            report.finishedAt = datetime.now(timezone.utc).isoformat()
+            REPORT.write_text(json.dumps(asdict(report), indent=2))
+            print(json.dumps({"error": "linkedin_temporarily_restricted", **skip_restr}))
+            return report
+    except Exception:
+        people_referrals_enabled = lambda: False  # type: ignore
+        pace_between_linkedin_applies = lambda: time.sleep(8)  # type: ignore
+        record_restriction_from_page = lambda _p: None  # type: ignore
+
+    allow_people_refs = False
+    try:
+        allow_people_refs = people_referrals_enabled()
+    except Exception:
+        allow_people_refs = False
+    if not allow_people_refs:
+        print(
+            "LI_REFERRALS people-search OFF (default) — poster Message only; "
+            "set HITECHCITY_LI_PEOPLE_REFERRALS=1 to re-enable",
+            flush=True,
+        )
+
     f_c_updates: dict[str, str] = {}
 
     with sync_playwright() as p:
@@ -852,6 +903,14 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
 
         goto_retry(page, "https://www.linkedin.com/feed/", timeout=60000)
         time.sleep(2.5)
+        if record_restriction_from_page(page):
+            report.blocked.append(
+                {"reason": "linkedin_temporarily_restricted", "url": page.url}
+            )
+            report.finishedAt = datetime.now(timezone.utc).isoformat()
+            REPORT.write_text(json.dumps(asdict(report), indent=2))
+            print(json.dumps({"error": "linkedin_temporarily_restricted", "url": page.url}))
+            return report
         url_l = (page.url or "").lower()
         logged_in = bool(
             page.locator(
@@ -869,6 +928,16 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                 body_head = page.locator("body").inner_text()[:500]
             except Exception:
                 pass
+            if record_restriction_from_page(page) or re.search(
+                r"temporarily restricted|restriction will be lifted", body_head, re.I
+            ):
+                report.blocked.append(
+                    {"reason": "linkedin_temporarily_restricted", "url": page.url}
+                )
+                report.finishedAt = datetime.now(timezone.utc).isoformat()
+                REPORT.write_text(json.dumps(asdict(report), indent=2))
+                print(json.dumps({"error": "linkedin_temporarily_restricted", "url": page.url}))
+                return report
             if login_wall or re.search(r"sign in to linkedin|join linkedin|welcome back", body_head, re.I):
                 report.blocked.append({"reason": "linkedin_login_required", "url": page.url})
                 report.finishedAt = datetime.now(timezone.utc).isoformat()
@@ -1060,6 +1129,7 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                         page,
                         role=role,
                         company=company_found or name,
+                        job_id=str(jid or ""),
                     )
                     row = {
                         "company": company_found or name,
@@ -1088,13 +1158,35 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                             report.referrals.append(msg)
                             if msg.get("status") == "sent":
                                 referrals += 1
-                            elif referrals < MAX_REFERRALS:
+                            elif allow_people_refs and referrals < MAX_REFERRALS:
                                 ref = referral_people_search(page, company_found or name, role)
                                 report.referrals.append(ref)
                                 if ref.get("status") == "sent":
                                     referrals += 1
+                        try:
+                            pace_between_linkedin_applies()
+                        except Exception:
+                            time.sleep(10)
                     else:
                         report.blocked.append(row)
+                        if "linkedin_temporarily_restricted" in (why or "") or record_restriction_from_page(
+                            page
+                        ):
+                            report.blocked.append(
+                                {"reason": "linkedin_temporarily_restricted", "url": page.url}
+                            )
+                            report.finishedAt = datetime.now(timezone.utc).isoformat()
+                            REPORT.write_text(json.dumps(asdict(report), indent=2))
+                            print(
+                                json.dumps(
+                                    {
+                                        "error": "linkedin_temporarily_restricted",
+                                        "url": page.url,
+                                        "applied": applied,
+                                    }
+                                )
+                            )
+                            return report
                     dismiss(page)
                     try:
                         page.keyboard.press("Escape")
@@ -1154,10 +1246,19 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                     applied += 1
                     ext_attempts += 1
                     if referrals < MAX_REFERRALS:
-                        ref = referral_people_search(page, company_found or name, role)
-                        report.referrals.append(ref)
-                        if ref.get("status") == "sent":
+                        msg = message_poster(page, company_found or name, role)
+                        report.referrals.append(msg)
+                        if msg.get("status") == "sent":
                             referrals += 1
+                        elif allow_people_refs and referrals < MAX_REFERRALS:
+                            ref = referral_people_search(page, company_found or name, role)
+                            report.referrals.append(ref)
+                            if ref.get("status") == "sent":
+                                referrals += 1
+                    try:
+                        pace_between_linkedin_applies()
+                    except Exception:
+                        time.sleep(10)
                 elif ext["status"] == "skipped":
                     report.skipped.append(ext)
                 else:
@@ -1185,16 +1286,23 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                     else:
                         ext_attempts += 1
 
-        # Extra referral sweep for priority-1 companies even if thin inventory
-        for company in companies:
-            if referrals >= MAX_REFERRALS:
-                break
-            if int(company.get("priority", 9)) > 1:
-                continue
-            ref = referral_people_search(page, company["name"], "Solution Architect / Technical Lead")
-            report.referrals.append(ref)
-            if ref.get("status") == "sent":
-                referrals += 1
+        # Extra people-search sweep is OFF by default (profile-data bans).
+        if allow_people_refs:
+            for company in companies:
+                if referrals >= MAX_REFERRALS:
+                    break
+                if int(company.get("priority", 9)) > 1:
+                    continue
+                ref = referral_people_search(
+                    page, company["name"], "Solution Architect / Technical Lead"
+                )
+                report.referrals.append(ref)
+                if ref.get("status") == "sent":
+                    referrals += 1
+                    try:
+                        pace_between_linkedin_applies()
+                    except Exception:
+                        time.sleep(12)
 
     n_saved = persist_linkedin_company_ids(f_c_updates)
     if n_saved:

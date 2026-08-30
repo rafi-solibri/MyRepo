@@ -14,6 +14,35 @@ if [[ -z "$portal" ]]; then
   exit 2
 fi
 
+# Skip LinkedIn login/apply CDP when a known temporary restriction is still active.
+# Careers-only hitechcity may continue without LI; pure linkedin portal exits 7.
+if [[ "$portal" == "linkedin" || "$portal" == "hitechcity" ]]; then
+  if [[ "${LINKEDIN_IGNORE_RESTRICTION_FLAG:-}" != "1" ]]; then
+    PY_RESTR="$(bash "$ROOT/scripts/resolve-python.sh" 2>/dev/null || echo python3)"
+    set +e
+    if [[ "$PY_RESTR" == "py" ]]; then
+      restr_out="$(py -3 -c "from tools.linkedin.restriction import should_skip_linkedin_for_restriction; import json; s=should_skip_linkedin_for_restriction(); print(json.dumps(s) if s else '')" 2>/dev/null)"
+      restr_rc=$?
+    else
+      restr_out="$("$PY_RESTR" -c "from tools.linkedin.restriction import should_skip_linkedin_for_restriction; import json; s=should_skip_linkedin_for_restriction(); print(json.dumps(s) if s else '')" 2>/dev/null)"
+      restr_rc=$?
+    fi
+    set -e
+    if [[ "$restr_rc" -eq 0 && -n "${restr_out:-}" ]]; then
+      echo "NOTE: LinkedIn temporary restriction still active — $restr_out" >&2
+      if [[ "$portal" == "linkedin" ]]; then
+        echo "ERROR: refusing LinkedIn CDP launch until lift (exit 7). Careers can use: HITECHCITY_CAREERS_ONLY=1" >&2
+        exit 7
+      fi
+      # hitechcity: allow careers CDP without LI auto-login / WARP thrash
+      export LINKEDIN_AUTO_LOGIN=0
+      export CDP_LIVE_LOGIN_CHECK=0
+      export LINKEDIN_SKIP_WARP="${LINKEDIN_SKIP_WARP:-1}"
+      echo "NOTE: hitechcity continuing careers-only (LinkedIn auto-login/WARP disabled until lift)." >&2
+    fi
+  fi
+fi
+
 profile="$(
   node - "$portal" <<'NODE'
 const { PROFILES } = require("./tools/chrome_session");
@@ -381,6 +410,9 @@ if [[ "$portal" == "linkedin" || "$portal" == "hitechcity" ]]; then
           fi
         else
           echo "NOTE: auto-login exit $auto_rc (5=login required, 6=CAPTCHA/checkpoint, 7=temporary restriction)." >&2
+          if [[ "$auto_rc" -eq 7 ]]; then
+            echo "NOTE: Temporary LinkedIn restriction — runners will skip LI until lift time in /tmp/linkedin-restriction-until.json (do not hammer login)." >&2
+          fi
         fi
       fi
     fi

@@ -92,26 +92,37 @@ def _scrape_jd_text(page: Page, limit: int = 6000) -> str:
         return ""
 
 
-def _activate_tailored_resume(*, role: str, company: str, jd: str, job_id: str = "") -> None:
-    try:
-        from tools.resume_paths import clear_active_resume, set_active_resume
-        from tools.resume_tailor import tailor_resume_for_job
+def _activate_tailored_resume(*, role: str, company: str, jd: str, job_id: str = "") -> str:
+    """Build JD-tailored Rafi_Resume.docx and set as active upload path.
 
-        path = tailor_resume_for_job(
-            job_id=job_id or company or "careers",
-            title=role,
-            company=company,
-            jd=jd,
-        )
-        set_active_resume(path)
-    except Exception as e:
-        print(f"RESUME_TAILOR fallback to canonical: {e}", flush=True)
+    Returns the active resume path. When RESUME_TAILOR is on (default), raises
+    if tailor fails so callers do not silently upload a stale generic copy.
+    """
+    from tools.resume_paths import clear_active_resume, resume_upload_path, set_active_resume
+    from tools.resume_tailor import tailor_enabled, tailor_resume_for_job
+
+    if not tailor_enabled():
+        clear_active_resume()
+        return resume_upload_path()
+
+    last_err: Exception | None = None
+    for attempt in range(2):
         try:
-            from tools.resume_paths import clear_active_resume
-
-            clear_active_resume()
-        except Exception:
-            pass
+            path = tailor_resume_for_job(
+                job_id=job_id or f"{company}-{role}"[:80] or "careers",
+                title=role,
+                company=company,
+                jd=jd,
+            )
+            set_active_resume(path)
+            active = resume_upload_path()
+            print(f"RESUME_TAILOR ok job_id={job_id or '-'} path={active}", flush=True)
+            return active
+        except Exception as e:
+            last_err = e
+            print(f"RESUME_TAILOR retry={attempt + 1}: {e}", flush=True)
+    clear_active_resume()
+    raise RuntimeError(f"RESUME_TAILOR required but failed: {last_err}")
 
 
 def _clear_tailored_resume() -> None:
@@ -472,7 +483,11 @@ def attempt_ats_apply(
 
     if role or company or jd:
         jd_text = jd or _scrape_jd_text(page)
-        _activate_tailored_resume(role=role, company=company, jd=jd_text, job_id=job_id)
+        try:
+            _activate_tailored_resume(role=role, company=company, jd=jd_text, job_id=job_id)
+        except Exception as e:
+            # Careers ATS: still attempt upload with canonical after loud fail.
+            print(f"RESUME_TAILOR REQUIRED FAIL (using canonical): {e}", flush=True)
 
     try:
         status, reason = complete_ats(page, time_cap_s=time_cap_s)

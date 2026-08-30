@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-08-30 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Temporary restriction from high profile-data volume; LI volume thin / generic resume risk | restriction memory+skip until lift; people-referrals OFF; apply pacing; MAX_APPLY 50; mandatory per-JD resume tailor |
+
+
 ## 2026-08-29 (cloud)
 
 | Issue | Fix |

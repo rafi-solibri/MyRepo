@@ -810,6 +810,12 @@ def _wait_signed_in(ctx, page, deadline: float, via: str, out: dict) -> int | No
         if info and not _cookies_has_li_at(ctx):
             out.update(ok=False, reason="account_temporarily_restricted", via=via, **info)
             try:
+                from tools.linkedin.restriction import write_restriction_memory
+
+                write_restriction_memory(info)
+            except Exception:
+                pass
+            try:
                 page.screenshot(path=str(_art() / "linkedin-auto-login-captcha.png"), timeout=8000)
             except Exception:
                 pass
@@ -856,6 +862,17 @@ def _wait_signed_in(ctx, page, deadline: float, via: str, out: dict) -> int | No
 
 def main() -> int:
     out: dict = {"ok": False, "attempts": []}
+    # Honor persisted restriction memory — do not hammer login while banned.
+    try:
+        from tools.linkedin.restriction import should_skip_linkedin_for_restriction
+
+        skip = should_skip_linkedin_for_restriction()
+        if skip:
+            out.update(ok=False, **skip)
+            print(json.dumps(out), flush=True)
+            return 7
+    except Exception:
+        pass
     deadline = time.time() + TIMEOUT_S
     email = EMAIL or DEFAULT_EMAIL
     pw_list = password_candidates()
@@ -1008,9 +1025,16 @@ def main() -> int:
                 seconds_until_lift=restriction_info.get("seconds_until_lift"),
                 hint=(
                     "Temporary LinkedIn restriction; wait until lift_utc then re-run "
-                    "(or raise LINKEDIN_RESTRICTION_WAIT_MAX_S)"
+                    "(or raise LINKEDIN_RESTRICTION_WAIT_MAX_S). Avoid people-search/"
+                    "profile scrapes; Easy Apply with pacing only."
                 ),
             )
+            try:
+                from tools.linkedin.restriction import write_restriction_memory
+
+                write_restriction_memory(restriction_info)
+            except Exception:
+                pass
             print(json.dumps(out))
             return 7
 

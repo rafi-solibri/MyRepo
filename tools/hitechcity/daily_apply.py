@@ -41,6 +41,10 @@ os.environ.setdefault("HITECHCITY_MAX_COMPANIES", "60")
 os.environ.setdefault("HITECHCITY_MAX_EXT_WALLS", "3")
 os.environ.setdefault("HITECHCITY_MAX_EXT_ATTEMPTS", "12")
 os.environ.setdefault("HITECHCITY_CAREERS_KEYWORD_SEARCHES", "4")
+os.environ.setdefault("HITECHCITY_MAX_APPLY", "50")
+os.environ.setdefault("HITECHCITY_LI_PEOPLE_REFERRALS", "0")
+os.environ.setdefault("LINKEDIN_APPLY_PACING_SEC", "12")
+os.environ.setdefault("LINKEDIN_APPLY_PACING_JITTER_SEC", "10")
 os.environ.setdefault("HITECHCITY_DISCOVERY", "1")
 os.environ.setdefault("HITECHCITY_DISCOVERY_LINKEDIN", "0")
 os.environ.setdefault("HITECHCITY_DISCOVERY_WEB", "1")
@@ -198,22 +202,53 @@ def main() -> int:
         summary["linkedin"] = {"skippedPhase": "careers_only"}
         print("=== HitechCity LinkedIn skipped (careers-only) ===", flush=True)
     else:
+        restr_skip = None
         try:
-            print("=== HitechCity LinkedIn + referrals ===", flush=True)
-            linkedin_rep = run_linkedin(companies)
+            from tools.linkedin.restriction import should_skip_linkedin_for_restriction
+
+            restr_skip = should_skip_linkedin_for_restriction()
+        except Exception:
+            restr_skip = None
+        if restr_skip:
             summary["linkedin"] = {
-                "applied": len(linkedin_rep.applied),
-                "external": len(linkedin_rep.external),
-                "referralsSent": sum(1 for r in linkedin_rep.referrals if r.get("status") == "sent"),
-                "blocked": len(linkedin_rep.blocked),
-                "skipped": len(linkedin_rep.skipped),
-                "report": str(
-                    Path(os.environ.get("HITECHCITY_LINKEDIN_REPORT", "/opt/cursor/artifacts/hitechcity-linkedin.json"))
-                ),
+                "skippedPhase": "linkedin_temporarily_restricted",
+                **restr_skip,
             }
-        except Exception as e:
-            summary["errors"].append({"phase": "linkedin", "error": str(e), "trace": traceback.format_exc()[-1500:]})
-            print("LINKEDIN ERROR", e, flush=True)
+            print(
+                "=== HitechCity LinkedIn skipped (temporary restriction until "
+                f"{restr_skip.get('lift_utc')}) ===",
+                flush=True,
+            )
+        else:
+            try:
+                print("=== HitechCity LinkedIn + referrals ===", flush=True)
+                linkedin_rep = run_linkedin(companies)
+                summary["linkedin"] = {
+                    "applied": len(linkedin_rep.applied),
+                    "external": len(linkedin_rep.external),
+                    "referralsSent": sum(
+                        1 for r in linkedin_rep.referrals if r.get("status") == "sent"
+                    ),
+                    "blocked": len(linkedin_rep.blocked),
+                    "skipped": len(linkedin_rep.skipped),
+                    "report": str(
+                        Path(
+                            os.environ.get(
+                                "HITECHCITY_LINKEDIN_REPORT",
+                                "/opt/cursor/artifacts/hitechcity-linkedin.json",
+                            )
+                        )
+                    ),
+                }
+            except Exception as e:
+                summary["errors"].append(
+                    {
+                        "phase": "linkedin",
+                        "error": str(e),
+                        "trace": traceback.format_exc()[-1500:],
+                    }
+                )
+                print("LINKEDIN ERROR", e, flush=True)
 
     # 3) Job boards — campus allowlist (secondary). Skip when careers-only.
     if careers_only:
