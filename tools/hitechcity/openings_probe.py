@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -63,7 +64,7 @@ CAREERS_URL_HINTS: dict[str, list[str]] = {
         "https://boards.greenhouse.io/zenoti",
     ],
     "Flutter Entertainment": [
-        "https://careers.flutter.com/search/?q=Engineering+Manager&locationsearch=Hyderabad"
+        "https://careers.fluttergroup.com/"
     ],
     "Darwinbox": [
         "https://darwinbox.darwinbox.in/ms/candidate/careers",
@@ -77,7 +78,7 @@ CAREERS_URL_HINTS: dict[str, list[str]] = {
         "https://careers.micron.com/careers?query=Engineering%20Manager&location=Hyderabad"
     ],
     "LTIMindtree": [
-        "https://careers.ltimindtree.com/search/?q=Engineering+Manager&locationsearch=Hyderabad"
+        "https://careers.ltm.com/"
     ],
     "Mphasis": [
         "https://careers.mphasis.com/home/careers/jobsearch.html?q=Engineering+Manager&loc=Hyderabad"
@@ -108,6 +109,13 @@ def openings_preference_rank(company: dict[str, Any]) -> int:
     return 1
 
 
+# Dead hosts that DNS/cert-fail on every scan — drop when a live hint exists.
+DEAD_CAREERS_HOST_RE = re.compile(
+    r"careers\.flutter\.com|careers\.ltimindtree\.com",
+    re.I,
+)
+
+
 def ensure_careers_url_hints(companies: list[dict[str, Any]]) -> list[str]:
     """Attach curated careers URLs to preferred companies missing them."""
     touched: list[str] = []
@@ -120,7 +128,9 @@ def ensure_careers_url_hints(companies: list[dict[str, Any]]) -> list[str]:
         if not (camps & PREFERRED_HOME_CAMPUSES):
             continue
         urls = list(c.get("careersUrls") or [])
-        added = False
+        cleaned = [u for u in urls if u and not DEAD_CAREERS_HOST_RE.search(u)]
+        added = cleaned != urls
+        urls = cleaned
         for u in hints:
             if u and u not in urls:
                 urls.append(u)

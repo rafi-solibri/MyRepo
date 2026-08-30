@@ -214,14 +214,36 @@ def test_openings_preference_and_hints():
     assert openings_preference_rank({}) == 1
     assert "Electronic Arts" in CAREERS_URL_HINTS
     assert "CGI" in CAREERS_URL_HINTS
+    assert "fluttergroup.com" in " ".join(CAREERS_URL_HINTS["Flutter Entertainment"])
+    assert "careers.ltm.com" in " ".join(CAREERS_URL_HINTS["LTIMindtree"])
     companies = [
         {"name": "Electronic Arts", "campuses": ["rmz-nexity"], "careersUrls": []},
         {"name": "Someone Else", "campuses": ["dlf-cyber-city"], "careersUrls": []},
+        {
+            "name": "Flutter Entertainment",
+            "campuses": ["rmz-nexity"],
+            "careersUrls": [
+                "https://careers.flutter.com/search/?q=Engineering+Manager&locationsearch=Hyderabad"
+            ],
+        },
+        {
+            "name": "LTIMindtree",
+            "campuses": ["mindspace-madhapur"],
+            "careersUrls": [
+                "https://careers.ltimindtree.com/search/?q=Engineering+Manager&locationsearch=Hyderabad"
+            ],
+        },
     ]
     touched = ensure_careers_url_hints(companies)
     assert "Electronic Arts" in touched
     assert companies[0]["careersUrls"]
     assert not companies[1].get("careersUrls")
+    assert "Flutter Entertainment" in touched
+    assert not any("careers.flutter.com" in u for u in companies[2]["careersUrls"])
+    assert any("fluttergroup.com" in u for u in companies[2]["careersUrls"])
+    assert "LTIMindtree" in touched
+    assert not any("careers.ltimindtree.com" in u for u in companies[3]["careersUrls"])
+    assert any("careers.ltm.com" in u for u in companies[3]["careersUrls"])
 
 
 if __name__ == "__main__":

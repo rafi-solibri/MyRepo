@@ -79,6 +79,20 @@ def test_title_ok():
     assert CAREERS_TITLE_SKIP.search("Principal Silicon Design Engineer")
     assert CAREERS_TITLE_SKIP.search("Principal Silicon Design Engineer India, Telangana, Hyderabad")
     assert CAREERS_TITLE_SKIP.search("Product Design Manager")
+    # Micron Workday silicon / layout inventory matched Staff/Principal TITLE_OK (2026-08-30).
+    assert CAREERS_TITLE_SKIP.search("Staff Engineer, Scribe Layout Design Hyderabad, Telangana, India")
+    assert CAREERS_TITLE_SKIP.search("Member Of Technical Staff TLP - HBM Verification Hyderabad")
+    assert CAREERS_TITLE_SKIP.search("Lead Principal Engineer, Design Verification Hyderabad")
+    assert CAREERS_TITLE_SKIP.search("Design Methodology – Senior / Staff DRAM Power Integrity Engineer")
+    assert CAREERS_TITLE_SKIP.search("Staff Engineer - Standard Cell Design Hyderabad")
+    assert CAREERS_TITLE_SKIP.search("STAFF ENGINEER, SSD NVMQRA TEST DEV ENG Hyderabad")
+    assert CAREERS_TITLE_SKIP.search("Staff Analyst - IT EA EPS Hyderabad")
+    assert LI_TITLE_SKIP.search("Staff Engineer, Scribe Layout Design")
+    assert LI_TITLE_SKIP.search("Lead Principal Engineer, Design Verification")
+    assert not CAREERS_TITLE_SKIP.search(
+        "Staff ENGINEER, Software Development, SMAI Hyderabad, Telangana, India"
+    )
+    assert not CAREERS_TITLE_SKIP.search("Principal Software Engineer .NET")
     assert CAREERS_TITLE_SKIP.search(
         "Lead Principal Technical Program Manager DUBAI, United Arab Emirates"
     )

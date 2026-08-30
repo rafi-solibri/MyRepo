@@ -34,6 +34,8 @@ def test_daily_apply_import_sets_parallel_when_unset():
         src = Path(careers_apply.__file__).read_text(encoding="utf-8")
         assert re.search(r'HITECHCITY_PARALLEL_TABS.*["\']10["\']', src)
         assert "run_parallel" in src
+        assert "MAX_SOFT_INCOMPLETE" in src
+        assert "soft_incomplete_cap" in src
     finally:
         if prev is None:
             os.environ.pop("HITECHCITY_PARALLEL_TABS", None)

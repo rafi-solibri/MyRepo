@@ -51,6 +51,10 @@ TIME_CAP_S = int(os.environ.get("HITECHCITY_ATS_TIME_CAP_S", os.environ.get("HIT
 MAX_WALLS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_WALLS", "3"))
 # Soft incompletes must not starve remaining matching roles at the same company.
 MAX_ATTEMPTS_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_EXT_ATTEMPTS", "16"))
+# Overnight / owner-asleep: after N soft incompletes, move to next company (0 = unlimited).
+# daily_apply sets MAX_SOFT_INCOMPLETE=2 when OWNER_ASLEEP=1 — honor it here
+# so persist_retry loops cannot starve remaining campus tenants (same as LinkedIn EXT).
+MAX_SOFT_INCOMPLETE_PER_COMPANY = int(os.environ.get("HITECHCITY_MAX_SOFT_INCOMPLETE", "0"))  # pragma: allowlist secret
 # Headed/owner-available runs get a longer ATS budget so forms can be finished.
 # Owner-asleep keeps the short cron cap even on headed CDP.
 if (
@@ -151,6 +155,9 @@ CAREERS_TITLE_SKIP = re.compile(
     r"physical\s*design|silicon\s*design|silicon\s*engineer|product\s*design\s*manager|"
     r"chiplet|\basic\b|\bvlsi\b|rtl\s*design|dft\s*engineer|"
     r"analog\s*design|digital\s*design\s*engineer|verification\s*engineer|"
+    r"design\s*verification|layout\s*design|scribe\s*layout|standard\s*cell|"
+    r"\bdram\b|\bhbm\b|power\s*integrity|\bnvm\b|\bnand\b|ssd\s*(nvm|test|qra)|"
+    r"staff\s*analyst|"
     r"sales\s*specialist|especialista|"
     r"program\s*manager|technical\s*program\s*manager|\btpm\b|"
     r"\bai\s*native\b|\bdata\s*&\s*ai\b|staff\s*engineer\s*\(\s*ai|"
@@ -1336,6 +1343,7 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
             company_applied = 0
             company_walls = 0
             company_attempts = 0
+            company_soft = 0
             workday_no_hyd = False
             loc_ui_done = False
             for url in urls:
@@ -1564,13 +1572,27 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                         if is_hard_ats_wall(why):
                             company_walls += 1
                             company_attempts += 1
-                        elif "incomplete" not in (why or "").lower():
+                        elif "incomplete" in (why or "").lower():
+                            company_soft += 1
+                            _safe_print(
+                                f"CAREERS SOFT {name} soft={company_soft}/"
+                                f"{MAX_SOFT_INCOMPLETE_PER_COMPANY or '∞'} | {why[:60]}"
+                            )
+                        else:
                             company_attempts += 1
                     if company_applied >= MAX_PER_COMPANY:
                         break
                     if company_walls >= MAX_WALLS_PER_COMPANY:
                         break
                     if company_attempts >= MAX_ATTEMPTS_PER_COMPANY:
+                        break
+                    if (
+                        MAX_SOFT_INCOMPLETE_PER_COMPANY > 0
+                        and company_soft >= MAX_SOFT_INCOMPLETE_PER_COMPANY
+                    ):
+                        _safe_print(
+                            f"CAREERS SKIP {name} | soft_incomplete_cap_{company_soft}"
+                        )
                         break
                 else:
                     continue
