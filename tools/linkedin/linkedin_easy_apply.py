@@ -2012,15 +2012,34 @@ def process_search(
             continue
 
         print(f"  APPLY? {company} | {role} | {loc[:60]} | id={jid}", flush=True)
-        # Per-JD tailored resume → upload path for Easy Apply / ATS screening
+        # Per-JD tailored resume → upload path for Easy Apply / ATS screening (MANDATORY)
+        tailor_ok = False
         try:
             from tools.resume_paths import clear_active_resume, set_active_resume
-            from tools.resume_tailor import tailor_resume_for_job
+            from tools.resume_tailor import tailor_enabled, tailor_resume_for_job
 
-            tailored = tailor_resume_for_job(
-                job_id=jid, title=role, company=company, jd=jd
-            )
-            set_active_resume(tailored)
+            if tailor_enabled():
+                last_err: Exception | None = None
+                for attempt in range(2):
+                    try:
+                        tailored = tailor_resume_for_job(
+                            job_id=jid, title=role, company=company, jd=jd
+                        )
+                        set_active_resume(tailored)
+                        tailor_ok = True
+                        print(f"  RESUME_TAILOR ok id={jid}", flush=True)
+                        break
+                    except Exception as e:
+                        last_err = e
+                        print(f"  RESUME_TAILOR retry={attempt + 1}: {e}", flush=True)
+                if not tailor_ok:
+                    job.status = "blocked"
+                    job.reason = f"resume_tailor_failed: {last_err}"
+                    results.append(job)
+                    print(f"  BLOCKED resume tailor | {company} | {role}", flush=True)
+                    continue
+            else:
+                clear_active_resume()
         except Exception as tailor_err:
             print(f"  WARN: resume tailor skipped: {str(tailor_err)[:120]}", flush=True)
             try:
@@ -2030,6 +2049,13 @@ def process_search(
             except Exception:
                 pass
         try:
+            if record_restriction_from_page and record_restriction_from_page(page):
+                job.status = "blocked"
+                job.reason = "linkedin_temporarily_restricted"
+                results.append(job)
+                print("  STOP: LinkedIn temporary restriction", flush=True)
+                OUT.write_text(json.dumps([asdict(r) for r in results], indent=2))
+                raise SystemExit(7)
             job = easy_apply_flow(page, job)
         finally:
             try:
@@ -2043,6 +2069,24 @@ def process_search(
         if job.reason == "easy_apply_daily_limit":
             print("  STOP: LinkedIn Easy Apply daily limit reached", flush=True)
             return
+        if job.status == "submitted":
+            try:
+                if pace_between_linkedin_applies:
+                    pace_between_linkedin_applies()
+                else:
+                    time.sleep(10)
+            except Exception:
+                time.sleep(10)
+            try:
+                if clear_restriction_memory:
+                    # Successful apply means we are not on a restriction interstitial.
+                    clear_restriction_memory()
+            except Exception:
+                pass
+        if job.reason and "temporarily restricted" in (job.reason or "").lower():
+            print("  STOP: LinkedIn temporary restriction", flush=True)
+            OUT.write_text(json.dumps([asdict(r) for r in results], indent=2))
+            raise SystemExit(7)
         # easy_apply_flow often navigates to /jobs/view/{id}. Stale search-card
         # locators then hang (ep_poll) on the next iteration — restore the list.
         try:
@@ -2096,6 +2140,39 @@ def process_search(
 
 def main() -> None:
     results: list[JobResult] = []
+    try:
+        from tools.linkedin.restriction import (
+            clear_restriction_memory,
+            pace_between_linkedin_applies,
+            record_restriction_from_page,
+            should_skip_linkedin_for_restriction,
+        )
+
+        skip_restr = should_skip_linkedin_for_restriction()
+        if skip_restr:
+            results.append(
+                JobResult(
+                    status="blocked",
+                    reason="linkedin_temporarily_restricted",
+                    company="",
+                    role="",
+                    url="",
+                )
+            )
+            # Attach lift metadata in reason text for reports
+            results[-1].reason = (
+                f"linkedin_temporarily_restricted until {skip_restr.get('lift_utc')}"
+            )
+            OUT.write_text(json.dumps([asdict(r) for r in results], indent=2))
+            print(json.dumps({"error": "linkedin_temporarily_restricted", **skip_restr}))
+            raise SystemExit(7)
+    except SystemExit:
+        raise
+    except Exception:
+        pace_between_linkedin_applies = None  # type: ignore
+        record_restriction_from_page = None  # type: ignore
+        clear_restriction_memory = None  # type: ignore
+
     # Bootstrap seed (legacy hardcodes) + artifact-driven IDs from prior reports
     seed_seen: set[str] = {
         # Prior automation runs

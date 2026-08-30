@@ -44,6 +44,13 @@ Judge location from the TOP CARD / workplace pills only — never the full page 
 - Helpers default MAX_APPLY=50 / MAX_EXTERNAL=25 / scan deeper + 14-day window.
 - Do NOT invent applies; confirm Application submitted / ATS confirmation.
 
+## Anti-restriction (HARD — avoid temporary profile-data bans)
+- LinkedIn bans for "unusually high volume of LinkedIn profile data" come from **people-search / profile scrapes**, not paced Easy Apply.
+- **People-search referrals are OFF by default** (`LINKEDIN_PEOPLE_REFERRALS=0` / `HITECHCITY_LI_PEOPLE_REFERRALS=0`). Prefer poster Message after apply only.
+- Pace Easy Applies (`LINKEDIN_APPLY_PACING_SEC` ≈12s + jitter). Do not burst.
+- On temporary restriction interstitial: persist lift time to `/tmp/linkedin-restriction-until.json`, **stop LinkedIn** until lift — do not retry login/apply. Careers portals may continue.
+- After lift (~Aug 30 7:43 PM PDT for the current ban): re-run with pacing; keep people referrals off unless owner sets `=1`.
+
 ## Search / apply order
 1. Latest / Most recent first
 2. Hyderabad then Remote India

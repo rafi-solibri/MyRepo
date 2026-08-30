@@ -381,6 +381,9 @@ if [[ "$portal" == "linkedin" || "$portal" == "hitechcity" ]]; then
           fi
         else
           echo "NOTE: auto-login exit $auto_rc (5=login required, 6=CAPTCHA/checkpoint, 7=temporary restriction)." >&2
+          if [[ "$auto_rc" -eq 7 ]]; then
+            echo "NOTE: Temporary LinkedIn restriction — runners will skip LI until lift time in /tmp/linkedin-restriction-until.json (do not hammer login)." >&2
+          fi
         fi
       fi
     fi
