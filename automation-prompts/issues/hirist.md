@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Same-day re-run re-POSTed already-applied jobs (apply-multiple HTTP 200, applyStatus stays open) | Load IDs from /job/applied-jobs + today's reports; count apply only when applied/count lastAppliedJobId or count changes |
 | AI Solution Architect / Data Engineering / ETL titles passed skipReason (no .NET on title) | HARD-skip AI+architect, data engineering, and ETL architect titles without .NET |
 
 
