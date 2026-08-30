@@ -836,4 +836,32 @@ assert.strictEqual(
   "Engineering Manager, AI Product Development must skip Arch/Lead EM band (2026-08-30)"
 );
 
+assert.strictEqual(
+  classifyJob({
+    jobId: 64753771,
+    title: "PU1 Support- Architect - Offshore Manager",
+    companyName: "Capgemini",
+    locations: [{ text: "Hyderabad / Secunderabad, Telangana | India" }],
+    skills: [{ text: ".NET" }, { text: "REST API" }, { text: "Architecture" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "support architect without .NET on title",
+  "PU1 Support-Architect must skip even without SAPBTP redirect (2026-08-30 native Falcon)"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 64686483,
+    title: "Engineering Manager Mobile Application(Android /IOS)",
+    companyName: "right advisors private limited",
+    locations: [{ text: "Hyderabad / Secunderabad, Telangana | India" }],
+    skills: [{ text: "Android" }, { text: "iOS" }, { text: ".NET" }],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "mobile Android/iOS without .NET on title",
+  "Android/iOS mobile EM must skip Arch/Lead EM band (2026-08-30)"
+);
+
 console.log("filters.test.js OK");

@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| PU1 Support-Architect native Falcon + Android/iOS mobile EM passed Arch/Lead (skills laundry .NET; no SAPBTP URL) | filters.js: title-only skip support architect/PU1 Support and android\|ios\|mobile application without .NET on title; tests 64753771 + 64686483 |
 | Jobgether Engineering Manager, AI Product Development passed via Arch/Lead EM without .NET on title (Falcon APPLY_REDIRECT + Applied tab bump; LinkedIn no Easy Apply) | filters.js: add engineering manager,+AI and ai product to pure AI/data title skip (Arch/Lead must not waive .NET); test jobId 64657593 |
 
 

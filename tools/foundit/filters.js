@@ -207,6 +207,16 @@ function skipTitleReason(title) {
     !hasDotNet(t, "")
   )
     return "infra/ops without .NET on title";
+  // Capgemini PU1 / AMS "Support- Architect" (job 64753771, 2026-08-30) — native Falcon
+  // has no SAPBTP redirect, so the URL SAP check never fires. Title-only skip.
+  if (/\b(pu1\s+support|support[\s-]+architect)\b/i.test(t) && !hasDotNet(t, ""))
+    return "support architect without .NET on title";
+  // Mobile-native EM/Arch (right advisors Android/iOS EM 64686483, 2026-08-30).
+  if (
+    /\b(android|\bios\b|mobile\s+application|mobile\s+app(?:lication)?s?)\b/i.test(t) &&
+    !hasDotNet(t, "")
+  )
+    return "mobile Android/iOS without .NET on title";
   // EXTRA_QUERIES Arch/Lead wave pulled non-software EM/Principal titles (2026-08-15).
   // Specific EM titles first (Cyient "Manufacturing Engineering Manager" 2026-08-26).
   if (
