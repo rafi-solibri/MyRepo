@@ -79,6 +79,51 @@ def test_title_ok():
     assert CAREERS_TITLE_SKIP.search("Principal Silicon Design Engineer")
     assert CAREERS_TITLE_SKIP.search("Principal Silicon Design Engineer India, Telangana, Hyderabad")
     assert CAREERS_TITLE_SKIP.search("Product Design Manager")
+    # 2026-08-30: Micron Hyd silicon titles matched Staff/Principal/Lead and starved careers.
+    assert CAREERS_TITLE_SKIP.search(
+        "Staff Engineer, Scribe Layout Design Hyderabad, Telangana, India"
+    )
+    assert CAREERS_TITLE_SKIP.search(
+        "Member Of Technical Staff TLP - HBM Verification Hyderabad, Telangana, India"
+    )
+    assert CAREERS_TITLE_SKIP.search(
+        "Lead Principal Engineer, Design Verification Hyderabad, Telangana, India"
+    )
+    assert CAREERS_TITLE_SKIP.search(
+        "Principal Engineer, Project Design Verification Lead Hyderabad, Telangana, India"
+    )
+    assert CAREERS_TITLE_SKIP.search(
+        "Design Methodology – Senior / Staff DRAM Power Integrity Engineer Hyderabad"
+    )
+    assert LI_TITLE_SKIP.search("Staff Engineer, Scribe Layout Design")
+    assert LI_TITLE_SKIP.search("Lead Principal Engineer, Design Verification")
+    assert not CAREERS_TITLE_SKIP.search("Staff ENGINEER, Software Development, SMAI")
+    import importlib.util
+    from pathlib import Path as _P
+
+    _spec = importlib.util.spec_from_file_location(
+        "hitech_openings_probe", _P(__file__).with_name("openings_probe.py")
+    )
+    _op = importlib.util.module_from_spec(_spec)
+    assert _spec.loader is not None
+    _spec.loader.exec_module(_op)
+    _qualifying_jobs = _op._qualifying_jobs
+
+    probe_hits = _qualifying_jobs(
+        [
+            {
+                "role": "Staff Engineer, Scribe Layout Design Hyderabad, Telangana, India",
+                "url": "https://careers.micron.com/a",
+                "location": "Hyderabad",
+            },
+            {
+                "role": "Principal Software Engineer Hyderabad, Telangana, India",
+                "url": "https://careers.example.com/b",
+                "location": "Hyderabad",
+            },
+        ]
+    )
+    assert [j["url"] for j in probe_hits] == ["https://careers.example.com/b"]
     assert CAREERS_TITLE_SKIP.search(
         "Lead Principal Technical Program Manager DUBAI, United Arab Emirates"
     )

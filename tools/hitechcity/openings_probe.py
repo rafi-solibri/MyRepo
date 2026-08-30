@@ -132,6 +132,11 @@ def ensure_careers_url_hints(companies: list[dict[str, Any]]) -> list[str]:
 
 
 def _qualifying_jobs(raw: list[dict[str, str]]) -> list[dict[str, str]]:
+    try:
+        from .careers_apply import CAREERS_TITLE_SKIP
+    except Exception:
+        from careers_apply import CAREERS_TITLE_SKIP  # type: ignore
+
     out: list[dict[str, str]] = []
     seen: set[str] = set()
     for j in raw:
@@ -143,6 +148,10 @@ def _qualifying_jobs(raw: list[dict[str, str]]) -> list[dict[str, str]]:
         if url in seen:
             continue
         if not title_matches_senior_stack(role):
+            continue
+        # Same silicon / wrong-stack skip as careers extract — do not boost
+        # preferred campuses for Physical/Layout/HBM/DV titles.
+        if CAREERS_TITLE_SKIP.search(role):
             continue
         if not location_or_campus_ok(loc or role, "", role):
             # Title/card may embed Hyd — accept when role blob has Hyd/campus
