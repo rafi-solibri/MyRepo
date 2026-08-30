@@ -73,8 +73,11 @@ function skipReason(
   }
 
   if (
-    /\b(ai architect|ai engineer|ai scientist|ai developer|ml engineer|ml scientist|machine learning|data scientist|data science|data engineer|data analyst|data specialist|data architect|genai|architect\s*[-–:]?\s*ai|ai\s*[-–:]?\s*architect|quality data|data analytics)\b/i.test(
-      t
+    (
+      /\b(ai architect|ai engineer|ai scientist|ai developer|ml engineer|ml scientist|machine learning|data scientist|data science|data engineer(?:ing)?|data analyst|data specialist|data architect|genai|architect\s*[-–:]?\s*ai|ai\s*[-–:]?\s*architect|quality data|data analytics|etl architect)\b/i.test(
+        t
+      ) ||
+      (/\bai\b/i.test(t) && /\barchitect\b/i.test(t))
     ) &&
     !hasDotNet(t, "")
   ) {

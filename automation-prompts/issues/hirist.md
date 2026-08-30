@@ -1,5 +1,12 @@
 # Hirist issues log
 
+## 2026-08-30 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| AI Solution Architect / Data Engineering / ETL titles passed skipReason (no .NET on title) | HARD-skip AI+architect, data engineering, and ETL architect titles without .NET |
+
+
 ## 2026-08-28 (cloud)
 
 | Issue | Fix |
