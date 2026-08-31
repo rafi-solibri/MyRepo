@@ -104,8 +104,12 @@ def test_title_ok():
     # Micron CAD / STA leftover after #298 (Staff/Principal still matched TITLE_OK).
     assert CAREERS_TITLE_SKIP.search("Staff Engineer, CAD Hyderabad, Telangana, India Posted 4 months ago")
     assert CAREERS_TITLE_SKIP.search("Principal Engineer - STA/Synthesis Hyderabad, Telangana, India")
+    assert CAREERS_TITLE_SKIP.search(
+        "Senior/Staff/Principal Engineer, Product Engineering Hyderabad, Telangana, India"
+    )
     assert LI_TITLE_SKIP.search("Staff Engineer, CAD")
     assert LI_TITLE_SKIP.search("Principal Engineer - STA/Synthesis")
+    assert LI_TITLE_SKIP.search("Senior/Staff/Principal Engineer, Product Engineering")
     assert skip_reason("Staff Engineer, CAD Hyderabad") is not None
     assert skip_reason("Principal Engineer - STA/Synthesis") is not None
     assert not CAREERS_TITLE_SKIP.search("Staff ENGINEER, Software Development, SMAI Hyderabad")

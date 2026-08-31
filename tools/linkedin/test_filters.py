@@ -80,6 +80,11 @@ assert_true(
     "Micron STA/Synthesis hardware title must skip",
 )
 assert_true(
+    skip_reason("Senior/Staff/Principal Engineer, Product Engineering", "Micron Technology", "")
+    is not None,
+    "Micron Product Engineering hardware title must skip",
+)
+assert_true(
     skip_reason("Director, Data Engineering & Platforms", "Acme", "") is not None,
     "Data Engineering director without .NET must skip",
 )
