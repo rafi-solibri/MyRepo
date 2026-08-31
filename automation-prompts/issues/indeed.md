@@ -1,5 +1,12 @@
 # Indeed — issues & fixes
 
+## 2026-08-31 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| SmartApply Continue covered by OneTrust cookie strip (WSA/Crowe questions stuck; sample shows Accept All Cookies over CTA) | dismiss_indeed_cookie_banner before Continue/review; cookie_banner_visible_from_text gate + test |
+
+
 ## 2026-08-29 (cloud)
 
 | Issue | Fix |

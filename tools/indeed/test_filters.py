@@ -12,6 +12,7 @@ if str(ROOT) not in sys.path:
 from tools.indeed.prepare_uc_profile import COPY_PATHS  # noqa: E402
 from tools.indeed.uc_daily_apply import (  # noqa: E402
     already_applied,
+    cookie_banner_visible_from_text,
     looks_anonymous_marketing_home,
     looks_login_wall,
     job_dedupe_key,
@@ -183,6 +184,17 @@ def test_company_ats_email_gate_is_not_indeed_login():
     )
 
 
+def test_cookie_banner_visible_from_text():
+    # WSA/Crowe stuck screenshot 2026-08-31: OneTrust strip over Continue.
+    assert cookie_banner_visible_from_text(
+        "Cookies Settings\nReject All\nAccept All Cookies\nAnswer these questions"
+    )
+    assert cookie_banner_visible_from_text("Please Accept All Cookies to continue")
+    assert not cookie_banner_visible_from_text(
+        "Answer these questions from the employer\nContinue"
+    )
+
+
 def test_job_dedupe_key_from_jk():
     assert job_dedupe_key("https://in.indeed.com/pagead/clk?jk=abc123def456&from=serp", "") == "abc123def456"
     assert job_dedupe_key("https://in.indeed.com/viewjob?jk=abc123def456", "other") == "abc123def456"
@@ -216,5 +228,6 @@ if __name__ == "__main__":
     test_hybrid_profile_copies_local_state()
     test_india_home_get_started_is_not_login_proof()
     test_account_settings_and_serp_are_signed_in()
+    test_cookie_banner_visible_from_text()
     test_job_dedupe_key_from_jk()
     print("ok")

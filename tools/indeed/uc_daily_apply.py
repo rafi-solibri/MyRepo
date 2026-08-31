@@ -1850,9 +1850,62 @@ def tick_required_agreements(sb) -> dict:
         return {}
 
 
+def cookie_banner_visible_from_text(body: str) -> bool:
+    """True when Indeed OneTrust/cookie strip text is on the page.
+
+    That strip covers SmartApply Continue (WSA/Crowe questions stuck 2026-08-31).
+    """
+    b = (body or "").lower()
+    if "accept all cookies" in b or "reject all cookies" in b:
+        return True
+    return ("reject all" in b or "accept all" in b) and "cookie" in b
+
+
+def dismiss_indeed_cookie_banner(sb) -> str:
+    """Click Accept/Reject on Indeed cookie strip so Continue is clickable."""
+    try:
+        sb.driver.switch_to.default_content()
+    except Exception:
+        pass
+    try:
+        clicked = sb.execute_script(
+            """
+            const labels = [
+              'accept all cookies', 'accept all', 'allow all cookies', 'allow all',
+              'reject all cookies', 'reject all', 'i agree', 'got it', 'ok'
+            ];
+            const els = [...document.querySelectorAll(
+              'button, a[role=button], [role=button], input[type=button], input[type=submit]'
+            )];
+            const textOf = (el) => ((el.innerText || el.value || el.getAttribute('aria-label') || '')).trim().toLowerCase();
+            const scored = els.map(el => {
+              const t = textOf(el);
+              const r = el.getBoundingClientRect();
+              const idx = labels.findIndex(l => t === l || t.startsWith(l));
+              return {el, t, idx, onScreen: r.width > 0 && r.height > 0};
+            }).filter(x => x.idx >= 0 && x.onScreen)
+              .sort((a,b) => a.idx - b.idx);
+            const hit = scored[0];
+            if (!hit) return null;
+            try { hit.el.scrollIntoView({block:'center'}); } catch (e) {}
+            try { hit.el.click(); } catch (e) {}
+            return (hit.el.innerText || hit.el.value || '').trim().slice(0, 80);
+            """
+        )
+        if clicked:
+            print(f"  cookie_banner_dismissed={clicked!r}", flush=True)
+            time.sleep(0.7)
+            return str(clicked)
+    except Exception as exc:
+        print(f"  cookie_banner_err={exc!s}"[:160], flush=True)
+    return ""
+
+
 def click_next_or_submit(
     sb, allow_disabled: bool = False, submit_only: bool = False
 ) -> str:
+    # Cookie strip often covers Continue on questions/resume modules.
+    dismiss_indeed_cookie_banner(sb)
     # SmartApply primary CTA via JS (visible Continue/Submit).
     _switch_smartapply_frame(sb)
     try:
@@ -3031,12 +3084,16 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
             return "submitted"
         if "apply on company site" in body and "indeed apply" not in body:
             return "external"
+        # OneTrust strip covers Continue on questions/resume (WSA screenshot 2026-08-31).
+        if cookie_banner_visible_from_text(body):
+            dismiss_indeed_cookie_banner(sb)
         # Review page: dedicated submit path (JS click alone often no-ops).
         if "review-module" in url.lower() or (
             "review" in url.lower() and "question" not in url.lower()
         ):
             review_submit_attempts += 1
             print(f"  ea_step={step} review_submit attempt={review_submit_attempts} url={url[:90]}", flush=True)
+            dismiss_indeed_cookie_banner(sb)
             if submit_review_application(sb, deadline=deadline):
                 return "submitted"
             # CAPTCHA wall: don't burn the whole job budget (AUTO_FIX ~3–4 min).
@@ -3082,6 +3139,7 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
             )
         except Exception:
             pass
+        dismiss_indeed_cookie_banner(sb)
         fill_common_questions(sb)
         # Resume card / upload: prefer existing Rafi card; retry on Indeed upload error.
         if "resume-selection" in url or "resume" in url.lower():
@@ -3089,6 +3147,7 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
             if st.get("error") or not st.get("ok"):
                 print(f"  resume_module_retry status={st}", flush=True)
                 upload_smartapply_resume(sb)
+        dismiss_indeed_cookie_banner(sb)
         clicked = click_next_or_submit(sb, allow_disabled=False)
         print(f"  ea_step={step} clicked={clicked!r} url={url[:90]}", flush=True)
         # Same CTA on same module without navigation → validation wall; abort early.
@@ -3099,6 +3158,7 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
             same_cta_streak = 0
             last_cta_key = cta_key if clicked else ""
         if same_cta_streak >= 2:
+            dismiss_indeed_cookie_banner(sb)
             tick_required_agreements(sb)
             recover_required_selects(sb)
             # Resume upload error: re-upload instead of burning Continue clicks.
