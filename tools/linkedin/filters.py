@@ -37,7 +37,10 @@ TITLE_BLACKLIST = re.compile(
     r"netsuite|nice cxone|"
     # Hardware / chip (not software architect/director)
     r"\bsoc\b|system[- ]?on[- ]?chip|\basic\b|rtl design|physical design|"
-    r"silicon|semiconductor|fpga|verilog|vhdl",
+    r"silicon|semiconductor|fpga|verilog|vhdl|"
+    r"layout\s*design|scribe\s*layout|standard\s*cell|"
+    r"design\s*verification|\bhbm\b|\bdram\b|power\s*integrity|"
+    r"\bnvm\b|\bnvmqra\b|circuit\s*design|mask\s*design",
     re.I,
 )
 
