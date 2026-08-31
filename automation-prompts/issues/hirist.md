@@ -1,5 +1,12 @@
 # Hirist issues log
 
+## 2026-08-31 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Technical Architect - Conga CPQ/CLM passed skipReason (product CPQ/CLM, no .NET) | HARD-skip Conga/CPQ titles as wrong_stack_title (same family as Coupa/Salesforce) |
+
+
 ## 2026-08-30 (cloud)
 
 | Issue | Fix |

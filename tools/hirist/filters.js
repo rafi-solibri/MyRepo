@@ -65,7 +65,7 @@ function skipReason(
   }
 
   if (
-    /\b(salesforce|servicenow|\bsap\b|coupa|pega|guidewire|hubspot|revit|\bbarch\b|anaplan|kinaxis|shopify)\b/i.test(
+    /\b(salesforce|servicenow|\bsap\b|coupa|conga|cpq|pega|guidewire|hubspot|revit|\bbarch\b|anaplan|kinaxis|shopify)\b/i.test(
       t
     )
   ) {
