@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-08-31 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Micron Staff/Principal HW titles (layout/DV/DRAM/HBM/NVM/data-science) burned careers overnight; soft incompletes never capped on careers tabs | Expand CAREERS_TITLE_SKIP/LI_TITLE_SKIP/TITLE_BLACKLIST for chip HW; honor HITECHCITY_MAX_SOFT_INCOMPLETE on careers_apply (owner-asleep=2) |
+
+
 ## 2026-08-30 (cloud)
 
 | Issue | Fix |

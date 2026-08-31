@@ -83,6 +83,27 @@ def test_title_ok():
         "Lead Principal Technical Program Manager DUBAI, United Arab Emirates"
     )
     assert CAREERS_TITLE_SKIP.search("Technical Program Manager")
+    # Micron HW inventory that matched Staff/Principal via TITLE_OK (#294).
+    assert CAREERS_TITLE_SKIP.search(
+        "Staff Engineer, Scribe Layout Design Hyderabad, Telangana, India"
+    )
+    assert CAREERS_TITLE_SKIP.search(
+        "Member Of Technical Staff TLP - HBM Verification Hyderabad, Telangana, India"
+    )
+    assert CAREERS_TITLE_SKIP.search(
+        "Lead Principal Engineer, Design Verification Hyderabad, Telangana, India"
+    )
+    assert CAREERS_TITLE_SKIP.search(
+        "Design Methodology – Senior / Staff DRAM Power Integrity Engineer Hyderabad"
+    )
+    assert CAREERS_TITLE_SKIP.search("Staff Engineer - Standard Cell Design Hyderabad")
+    assert CAREERS_TITLE_SKIP.search(
+        "STAFF ENGINEER, SSD NVMQRA TEST DEV ENG Hyderabad, Telangana, India"
+    )
+    assert CAREERS_TITLE_SKIP.search("Staff Data Science Engineer, SMAI Hyderabad")
+    assert LI_TITLE_SKIP.search("Staff Engineer, Scribe Layout Design")
+    assert LI_TITLE_SKIP.search("Lead Principal Engineer, Design Verification")
+    assert skip_reason("Staff Engineer, Scribe Layout Design") is not None
     assert LI_TITLE_SKIP.search("Principal Silicon Design Engineer")
     assert JD_WRONG_STACK.search("We need a Mobile Architect for Ionic Capacitor and Zscaler")
     assert JD_WRONG_STACK.search(
@@ -95,6 +116,8 @@ def test_title_ok():
     assert not LI_TITLE_SKIP.search("Solution Architect")
     assert not CAREERS_TITLE_SKIP.search("Principal Software Engineer")
     assert not CAREERS_TITLE_SKIP.search("Solution Architect (Microsoft .NET/Azure Cloud)")
+    assert not CAREERS_TITLE_SKIP.search("Staff Software Engineer - .NET")
+    assert not CAREERS_TITLE_SKIP.search("Staff ENGINEER, Software Development, SMAI Hyderabad")
     # LinkedIn company-jobs keywords must not be architect-only / architect-first.
     from tools.hitechcity.linkedin_target_apply import SEARCH_KEYWORDS
 
