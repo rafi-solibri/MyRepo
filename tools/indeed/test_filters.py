@@ -236,6 +236,8 @@ def test_want_from_crowe_conflict_and_client_questions():
         want_from_question_text("What is your current employer / company?")
         == "Nemetschek / Solibri"
     )
+    assert want_from_question_text("What is your expected CTC?") == "65"
+    assert want_from_question_text("What is your Current CTC?") == "52"
 
 
 def test_job_dedupe_key_from_jk():

@@ -917,6 +917,10 @@ def want_from_question_text(text: str) -> str | None:
         and not re.search(r"do you (currently )?work at", t)
     ):
         return "Nemetschek / Solibri"
+    if re.search(r"expected.*(ctc|salary|compensation|pay|package)|ctc.*expected", t):
+        return "65"
+    if re.search(r"current.*(ctc|salary|compensation|pay|package)|ctc.*current", t):
+        return "52"
     return None
 
 
@@ -1375,6 +1379,20 @@ def fill_common_questions(sb) -> None:
               if ((/\\bphone\\b|phone\\s*no|telephone|\\bmobile\\b/.test(lab) || itype === 'tel')
                   && (!(el.value || '').trim() || (el.value || '').trim().length < 10)) {
                 if (setNative(el, vals.phoneIntl)) answered += 1;
+              }
+            }
+            // WSA 2026-08-31: current CTC 52 filled, expected CTC left blank (below fold).
+            for (const el of document.querySelectorAll(
+              'input:not([type=hidden]):not([type=file]):not([type=radio]):not([type=checkbox]), textarea'
+            )) {
+              if (el.disabled || el.readOnly || (el.value || '').trim()) continue;
+              const lab = labelFor(el);
+              if (/expected/.test(lab) && /ctc|salary|compensation|package|pay|lpa/.test(lab)) {
+                try { el.scrollIntoView({block:'center'}); } catch (e) {}
+                if (setNative(el, vals.expected)) answered += 1;
+              } else if (/current/.test(lab) && /ctc|salary|compensation|package|pay|lpa/.test(lab)) {
+                try { el.scrollIntoView({block:'center'}); } catch (e) {}
+                if (setNative(el, vals.current)) answered += 1;
               }
             }
             return {answered, url: location.href};
