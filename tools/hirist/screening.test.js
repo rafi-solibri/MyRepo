@@ -22,6 +22,7 @@ assert.match(owned, /^Yes/i);
 assert.match(answerScreeningQuestion("Current CTC?"), /52/);
 assert.match(answerScreeningQuestion("Expected CTC"), /65/);
 assert.match(answerScreeningQuestion("Notice period"), /Immediate/i);
+assert.match(answerScreeningQuestion("What is your current notice period?"), /Immediate/i);
 
 assert.ok(looksSubmitted("https://www.hirist.tech/applied-jobs", ""));
 assert.ok(looksSubmitted("https://www.hirist.tech/job/applied?jobId=1660067", ""));

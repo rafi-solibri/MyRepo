@@ -84,21 +84,94 @@ async function fillVisibleAnswers(page) {
     }, answers)
     .catch(() => 0);
 
-  const radios = page.locator("input[type='radio'], [role='radio']");
-  const rc = await radios.count().catch(() => 0);
-  for (let i = 0; i < Math.min(rc, 20); i++) {
-    const el = radios.nth(i);
-    if (!(await el.isVisible().catch(() => false))) continue;
-    const label = ((await el.evaluate((n) => {
-      const id = n.id;
-      const lab = id && document.querySelector(`label[for="${id}"]`);
-      return (lab && lab.innerText) || n.parentElement?.innerText || n.value || "";
-    }).catch(() => "")) || "").trim();
-    if (/^yes\b/i.test(label)) {
-      await el.click({ force: true }).catch(() => {});
-    }
-  }
-  return filled;
+  // Hidden radios + visible labels (Hirist .radio-container-hirist).
+  await page
+    .evaluate(() => {
+      const prefer = [/^yes$/i, /^10$/, /^8$/, /^immediately available$/i];
+      const containers = [...document.querySelectorAll(".answer-options, .radio-container-hirist")];
+      const groups = new Map();
+      for (const lab of document.querySelectorAll(".answer-options label, .radio-container-hirist label")) {
+        const group = lab.closest(".answer-options") || lab.closest(".screening-question-container") || lab.parentElement;
+        if (!groups.has(group)) groups.set(group, []);
+        groups.get(group).push(lab);
+      }
+      for (const labs of groups.values()) {
+        let pick = null;
+        for (const re of prefer) {
+          pick = labs.find((l) => re.test((l.innerText || "").trim()));
+          if (pick) break;
+        }
+        if (!pick) pick = labs[0];
+        if (pick) pick.click();
+      }
+      return containers.length;
+    })
+    .catch(() => 0);
+
+  await page
+    .evaluate((currentCtc) => {
+      for (const el of document.querySelectorAll("input[type='number'], input[type='text']")) {
+        if (!el.offsetParent) continue;
+        const block = (el.closest("form") || el.parentElement || el).innerText || "";
+        const want = /expected/i.test(block) ? "65" : String(el.value || currentCtc);
+        const proto = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value");
+        if (proto && proto.set) proto.set.call(el, want);
+        else el.value = want;
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    }, CURRENT_CTC_LPA)
+    .catch(() => {});
+
+  // Recruiter MCQ chips (Next stays disabled until a choice is selected).
+  const clicked = await page
+    .evaluate(() => {
+      const skip = /next|submit|apply|premium|save|posted by/i;
+      const prefer = [
+        /^immediately available$/i,
+        /^immediate$/i,
+        /^yes$/i,
+        /^10$/,
+        /^8$/,
+      ];
+      const buttons = [...document.querySelectorAll("button")].filter(
+        (el) => el.offsetParent && el.type !== "submit" && !skip.test((el.innerText || "").trim())
+      );
+      function optionGroup(el) {
+        let p = el.parentElement;
+        while (p && p !== document.body) {
+          const sibs = [...p.querySelectorAll(":scope > button, :scope button")].filter(
+            (b) => b.offsetParent && b.type !== "submit" && !skip.test((b.innerText || "").trim())
+          );
+          if (sibs.length >= 2 && sibs.length <= 8) return p;
+          p = p.parentElement;
+        }
+        return el.parentElement || el;
+      }
+      let n = 0;
+      const groups = new Map();
+      for (const el of buttons) {
+        const parent = optionGroup(el);
+        if (!groups.has(parent)) groups.set(parent, []);
+        groups.get(parent).push(el);
+      }
+      for (const els of groups.values()) {
+        let picked = null;
+        for (const re of prefer) {
+          picked = els.find((el) => re.test((el.innerText || "").trim()));
+          if (picked) break;
+        }
+        if (!picked) picked = els[0];
+        if (picked) {
+          picked.click();
+          n += 1;
+        }
+      }
+      return n;
+    })
+    .catch(() => 0);
+
+  return filled + clicked;
 }
 
 async function clickNextOrSubmit(page) {
@@ -118,6 +191,8 @@ async function clickNextOrSubmit(page) {
       if (/sign in|log in|premium|save/i.test(label) && !/submit|next|apply/i.test(label)) {
         continue;
       }
+      const disabled = await b.isDisabled().catch(() => false);
+      if (disabled) continue;
       await b.click().catch(() => {});
       return true;
     }
