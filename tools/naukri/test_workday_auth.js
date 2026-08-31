@@ -5,6 +5,7 @@ const {
   authFailureReason,
   isCreateAccountConsentRequired,
   workdayQuestionAnswer,
+  needsIndiaCountryFix,
 } = require("./workday_apply");
 
 // Static checklist alone must NOT be treated as a policy error.
@@ -81,5 +82,10 @@ assert.strictEqual(
   "65 LPA"
 );
 assert.strictEqual(workdayQuestionAnswer("How did you hear about us?"), null);
+
+assert.strictEqual(needsIndiaCountryFix("India"), false);
+assert.strictEqual(needsIndiaCountryFix("Holy See (Vatican City State)"), true);
+assert.strictEqual(needsIndiaCountryFix("United States"), true);
+assert.strictEqual(needsIndiaCountryFix("Select One"), true);
 
 console.log("test_workday_auth: ok");

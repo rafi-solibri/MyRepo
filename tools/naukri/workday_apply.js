@@ -116,6 +116,13 @@ function isCreateAccountConsentRequired({
  * Map a Workday Application Questions prompt to an answer.
  * Blackbaud uses Select One listboxes (not visible Yes/No radios).
  */
+function needsIndiaCountryFix(countryText) {
+  const t = String(countryText || "").trim();
+  const first = (t.split("\n")[0] || "").trim();
+  if (/^india$/i.test(first)) return false;
+  return true;
+}
+
 function workdayQuestionAnswer(questionText) {
   const q = String(questionText || "");
   if (/over the age of 18|18 years of age/i.test(q)) {
@@ -709,15 +716,30 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
   }
 
   async function fillMyInformation() {
-    // Previously worked here? → No
-    const prev = page.locator(
-      "[data-automation-id='formField-candidateIsPreviousWorker']"
+    // Previously worked here? → No (Blackbaud copy is not candidateIsPreviousWorker).
+    const prevRoots = page.locator(
+      "[data-automation-id='formField-candidateIsPreviousWorker'], [data-automation-id^='formField-']"
     );
-    if (await prev.isVisible().catch(() => false)) {
-      await prev.getByText(/^No$/i).first().click({ force: true }).catch(() => {});
+    const prevCount = await prevRoots.count().catch(() => 0);
+    for (let i = 0; i < prevCount; i++) {
+      const root = prevRoots.nth(i);
+      if (!(await root.isVisible().catch(() => false))) continue;
+      const t = ((await root.innerText().catch(() => "")) || "").trim();
+      if (
+        !/previously worked|former employee|been contracted by|internal candidates/i.test(
+          t
+        )
+      ) {
+        continue;
+      }
+      const no = root.getByText(/^No$/i).first();
+      if (await no.isVisible().catch(() => false)) {
+        await no.click({ force: true }).catch(() => {});
+        await sleep(400);
+      }
     }
 
-    // Prefer India when Country shows United States / Select One.
+    // Prefer India. Holy See / US / Select One must all be corrected (not only US).
     const country = page
       .locator(
         "[data-automation-id='formField-country'] button, [data-automation-id='countryDropdown']"
@@ -725,15 +747,24 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
       .first();
     if (await country.isVisible().catch(() => false)) {
       const cText = ((await country.innerText().catch(() => "")) || "").trim();
-      if (/united states|select one|^$/i.test(cText) && !/india/i.test(cText)) {
+      if (needsIndiaCountryFix(cText)) {
         await country.click({ force: true }).catch(() => {});
         await sleep(600);
-        const india = page.getByText(/^India$/i).first();
-        if (await india.isVisible().catch(() => false)) {
-          await india.click({ force: true }).catch(() => {});
+        const indiaOpt = page
+          .locator("[role='option'], [data-automation-id='promptOption']")
+          .filter({ hasText: /^India$/i })
+          .first();
+        if (await indiaOpt.isVisible().catch(() => false)) {
+          await indiaOpt.click({ force: true }).catch(() => {});
           await sleep(800);
         } else {
-          await page.keyboard.press("Escape").catch(() => {});
+          const india = page.getByText(/^India$/i).first();
+          if (await india.isVisible().catch(() => false)) {
+            await india.click({ force: true }).catch(() => {});
+            await sleep(800);
+          } else {
+            await page.keyboard.press("Escape").catch(() => {});
+          }
         }
       }
     }
@@ -1149,5 +1180,6 @@ module.exports = {
   authFailureReason,
   isCreateAccountConsentRequired,
   workdayQuestionAnswer,
+  needsIndiaCountryFix,
   EMAIL,
 };
