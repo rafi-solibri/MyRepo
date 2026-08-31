@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-08-31 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Blackbaud Workday Create Account returned ats_password_policy and aborted without Sign In (missed existing tenant account) | workday_apply: on Create Account password_policy/login_wall fall through to Sign In; tighten authFailureReason to ignore static Password Requirements checklist |
+
+
 ## 2026-08-29 (cloud)
 
 | Issue | Fix |

@@ -64,6 +64,37 @@ function normalizeWorkdayPhone(raw) {
 
 const CREATE_PASS = workdayCompliantPassword(PASS);
 
+/**
+ * Classify Workday auth page text. Ignores static "Password Requirements"
+ * checklists that always mention "minimum of N characters".
+ */
+function authFailureReason(text) {
+  const t = text || "";
+  // Explicit live validation phrases — never the static requirements bullet list.
+  if (
+    /Password must include|password does not meet|doesn't meet the password|does not meet (the )?password requirements|password is (too short|invalid)|choose a (stronger|different) password|password.*(too weak|not strong)/i.test(
+      t
+    )
+  ) {
+    return "ats_password_policy";
+  }
+  // "Errors Found" banner + password must/does-not — still a live failure.
+  if (
+    /\berrors?(?:\s+and\s+alerts?)?\s+found\b/i.test(t) &&
+    /password.*(does not meet|must include|is required)/i.test(t)
+  ) {
+    return "ats_password_policy";
+  }
+  if (
+    /wrong email address or password|account might be locked|incorrect email or password|not recognize|invalid email or password/i.test(
+      t
+    )
+  ) {
+    return "ats_login_wall";
+  }
+  return null;
+}
+
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
@@ -321,27 +352,17 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
     await sleep(3500);
   }
 
-  function authFailureReason(text) {
-    const t = text || "";
-    // Only real validation errors — NOT the static "Password Requirements:" checklist
-    // (that list always contains "minimum of N characters" and false-triggered exits).
-    if (
-      /Password must include|password does not meet|doesn't meet the password|password is (too short|invalid)|choose a (stronger|different) password|password.*(too weak|not strong)/i.test(
-        t
-      ) ||
-      (/error/i.test(t) &&
-        /password.*(minimum|must include|requirements)/i.test(t))
-    ) {
-      return "ats_password_policy";
-    }
-    if (
-      /wrong email address or password|account might be locked|incorrect email or password|not recognize|invalid email or password/i.test(
-        t
+  async function goSignInFromCreate() {
+    const signInLink = page
+      .locator(
+        "[data-automation-id='signInLink'], button:has-text('Sign In'), a:has-text('Sign In')"
       )
-    ) {
-      return "ats_login_wall";
+      .first();
+    if (await signInLink.isVisible().catch(() => false)) {
+      await signInLink.click({ force: true }).catch(() => {});
+      await sleep(1200);
     }
-    return null;
+    await submitSignIn();
   }
 
   // Create Account (preferred) or Sign In — requires NAUKRI_WORKDAY_PASSWORD.
@@ -377,24 +398,19 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
       await submitCreateAccount();
       const createText = await pageAuthText();
       const createFail = authFailureReason(createText);
-      if (createFail === "ats_password_policy") {
-        return { ok: false, reason: createFail, url: page.url() };
-      }
-      // Account may already exist — fall back to Sign In.
+      // Password-policy on Create Account: still try Sign In (tenant account may
+      // already exist from a prior apply; static requirements text also used to
+      // false-trigger before errOnly scoping — never hard-stop the ATS path).
       if (
+        createFail === "ats_password_policy" ||
         createFail === "ats_login_wall" ||
         /already have an account|already exists|sign in instead/i.test(createText)
       ) {
-        const signInLink = page
-          .locator(
-            "[data-automation-id='signInLink'], button:has-text('Sign In'), a:has-text('Sign In')"
-          )
-          .first();
-        if (await signInLink.isVisible().catch(() => false)) {
-          await signInLink.click({ force: true }).catch(() => {});
-          await sleep(1200);
+        await goSignInFromCreate();
+        const afterSign = authFailureReason(await pageAuthText());
+        if (afterSign) {
+          return { ok: false, reason: afterSign, url: page.url() };
         }
-        await submitSignIn();
       }
     } else {
       await submitSignIn();
@@ -1028,5 +1044,6 @@ module.exports = {
   isSubmittedText,
   workdayCompliantPassword,
   normalizeWorkdayPhone,
+  authFailureReason,
   EMAIL,
 };
