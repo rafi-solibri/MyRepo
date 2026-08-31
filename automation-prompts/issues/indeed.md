@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| WSA expected CTC still empty: labelFor wrap truncated to Current CTC only | fieldBits uses placeholder/sibling/parent; pair-fill empty salary box after current 52 |
 | Crowe sponsorship-detail required after No; empty field blocked Continue | want N/A for sponsorship-status follow-up; fill empty required fields showing Answer this question to continue |
 | Resume-selection Continue 0x0/off-screen after cookie dismiss (LTM/UST/Archetype) | click_next_or_submit also targets Continue/Next/Submit with zero box size |
 | WSA questions-module expected CTC left blank after current 52; Continue blocked | scroll+fill leftover expected/current CTC inputs after main pass |

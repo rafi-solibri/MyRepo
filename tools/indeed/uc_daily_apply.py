@@ -1404,18 +1404,49 @@ def fill_common_questions(sb) -> None:
               try { el.scrollIntoView({block:'center'}); } catch (e) {}
               if (setNative(el, 'N/A')) answered += 1;
             }
-            // WSA 2026-08-31: current CTC 52 filled, expected CTC left blank (below fold).
+            // WSA 2026-08-31: current CTC 52 filled, expected CTC left blank.
+            // labelFor wrap is capped at 220 chars and often only sees "Current CTC".
+            const fieldBits = (el) => {
+              const prev = el.previousElementSibling;
+              const parent = el.parentElement;
+              return (
+                labelFor(el) + ' ' +
+                (el.getAttribute('placeholder') || '') + ' ' +
+                (el.getAttribute('name') || '') + ' ' +
+                (el.getAttribute('aria-label') || '') + ' ' +
+                (el.id || '') + ' ' +
+                (prev ? (prev.innerText || '') : '') + ' ' +
+                (parent ? (parent.innerText || '').slice(0, 80) : '')
+              ).toLowerCase();
+            };
             for (const el of document.querySelectorAll(
               'input:not([type=hidden]):not([type=file]):not([type=radio]):not([type=checkbox]), textarea'
             )) {
               if (el.disabled || el.readOnly || (el.value || '').trim()) continue;
-              const lab = labelFor(el);
+              const lab = fieldBits(el);
               if (/expected/.test(lab) && /ctc|salary|compensation|package|pay|lpa/.test(lab)) {
                 try { el.scrollIntoView({block:'center'}); } catch (e) {}
                 if (setNative(el, vals.expected)) answered += 1;
               } else if (/current/.test(lab) && /ctc|salary|compensation|package|pay|lpa/.test(lab)) {
                 try { el.scrollIntoView({block:'center'}); } catch (e) {}
                 if (setNative(el, vals.current)) answered += 1;
+              }
+            }
+            // Pair: a 52 current-CTC field with a still-empty sibling salary box → 65.
+            const hasCurrent52 = [...document.querySelectorAll('input, textarea')]
+              .some(el => (el.value || '').trim() === '52');
+            if (hasCurrent52) {
+              for (const el of document.querySelectorAll(
+                'input:not([type=hidden]):not([type=file]):not([type=radio]):not([type=checkbox]), textarea'
+              )) {
+                if (el.disabled || el.readOnly || (el.value || '').trim()) continue;
+                const lab = fieldBits(el);
+                if (/ctc|salary|compensation|package|pay|lpa|expected/.test(lab)
+                    || el.getAttribute('inputmode') === 'numeric'
+                    || (el.getAttribute('type') || '') === 'number') {
+                  try { el.scrollIntoView({block:'center'}); } catch (e) {}
+                  if (setNative(el, vals.expected)) answered += 1;
+                }
               }
             }
             return {answered, url: location.href};
