@@ -84,3 +84,15 @@ Live inspect of Blackbaud Create Account: email + password + verifyPassword + `c
 
 ### Code fix after re-run #4
 - `pickPromptAlreadySatisfied`: skip reopen when field text already matches an option.
+
+## Post-fix re-run #5 LAST (branch `58eb500` — cap reached)
+
+- profileUpdated: **true**
+- applied: **0** · blocked: **1** · skipped: 2825 · seen: 183
+- Blackbaud: Save and Continue fired (dropdown no longer reopened). Previous-worker Yes came back → work-email required → `external_incomplete_or_timeout`.
+- **Cap 5/5** — no further same-day re-run. Follow-up radio `value=false` + work-email fill is on the branch (`a05eaaa`) for tomorrow / owner merge.
+
+## Same-day totals (do not invent applies)
+- Morning cron: Accion Labs Technical Architect (Naukri Quick Apply)
+- Post-fix re-runs: 0 additional confirmed applies
+- Profile resume: Uploaded today (`Rafi_Resume.docx`) every run
