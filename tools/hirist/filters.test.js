@@ -46,6 +46,13 @@ assert.strictEqual(
   null
 );
 assert.strictEqual(
+  skipReason("Technical Architect - Conga CPQ/CLM", {
+    location: "Hyderabad",
+    skills: "Conga CPQ",
+  }),
+  "wrong_stack_title"
+);
+assert.strictEqual(
   skipReason("Full Stack Lead (Java)", { location: "Hyderabad", skills: "Java" }),
   "java_primary"
 );
