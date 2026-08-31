@@ -6,6 +6,7 @@ const {
   isCreateAccountConsentRequired,
   workdayQuestionAnswer,
   needsIndiaCountryFix,
+  pickPromptAlreadySatisfied,
 } = require("./workday_apply");
 
 // Static checklist alone must NOT be treated as a policy error.
@@ -87,5 +88,16 @@ assert.strictEqual(needsIndiaCountryFix("India"), false);
 assert.strictEqual(needsIndiaCountryFix("Holy See (Vatican City State)"), true);
 assert.strictEqual(needsIndiaCountryFix("United States"), true);
 assert.strictEqual(needsIndiaCountryFix("Select One"), true);
+
+assert.strictEqual(
+  pickPromptAlreadySatisfied("How Did You Hear About Us?* Other", [
+    /Other/i,
+  ]),
+  true
+);
+assert.strictEqual(
+  pickPromptAlreadySatisfied("Select One", [/Other/i]),
+  false
+);
 
 console.log("test_workday_auth: ok");

@@ -116,6 +116,19 @@ function isCreateAccountConsentRequired({
  * Map a Workday Application Questions prompt to an answer.
  * Blackbaud uses Select One listboxes (not visible Yes/No radios).
  */
+function pickPromptAlreadySatisfied(already, optionPatterns) {
+  const t = String(already || "");
+  if (/Select One/i.test(t)) return false;
+  if (
+    /\d+\s+item selected|1 item selected/i.test(t) &&
+    !/0 items selected/i.test(t)
+  ) {
+    return true;
+  }
+  if (/^(BA|BS|MA|MS|MBA|PhD|B\.?Tech)/im.test(t)) return true;
+  return (optionPatterns || []).some((re) => re.test(t));
+}
+
 function needsIndiaCountryFix(countryText) {
   const t = String(countryText || "").trim();
   const first = (t.split("\n")[0] || "").trim();
@@ -664,12 +677,7 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
     const root = page.locator(`[data-automation-id='${formFieldId}']`).first();
     if (!(await root.isVisible().catch(() => false))) return false;
     const already = ((await root.innerText().catch(() => "")) || "").trim();
-    if (
-      (/\d+\s+item selected|1 item selected/i.test(already) &&
-        !/0 items selected/i.test(already)) ||
-      (/^(BA|BS|MA|MS|MBA|PhD|B\.?Tech)/im.test(already) &&
-        !/Select One/i.test(already))
-    ) {
+    if (pickPromptAlreadySatisfied(already, optionPatterns)) {
       return true;
     }
     const listBtn = root.locator("button[aria-haspopup='listbox']").first();
@@ -1181,5 +1189,6 @@ module.exports = {
   isCreateAccountConsentRequired,
   workdayQuestionAnswer,
   needsIndiaCountryFix,
+  pickPromptAlreadySatisfied,
   EMAIL,
 };
