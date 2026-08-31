@@ -18,6 +18,7 @@ from tools.indeed.uc_daily_apply import (  # noqa: E402
     job_dedupe_key,
     looks_signed_in,
     skip_reason,
+    want_from_question_text,
 )
 
 
@@ -195,6 +196,48 @@ def test_cookie_banner_visible_from_text():
     )
 
 
+def test_want_from_crowe_conflict_and_client_questions():
+    # Crowe questions-module 2026-08-31 post-fix re-run: wrong Yes + current
+    # employer on "work at Crowe client" blocked Continue (empty N/A follow-up).
+    assert (
+        want_from_question_text(
+            "Do you have a familial (by blood or marriage), romantic, or "
+            "close personal relationship with a Crowe employee or applicant?"
+        )
+        == "no"
+    )
+    assert (
+        want_from_question_text(
+            "Identify the individual(s), their role (if known) and describe "
+            "the relationship (e.g., sibling, spouse, in-law, dating, roommate). "
+            "If none, write N/A."
+        )
+        == "N/A"
+    )
+    assert (
+        want_from_question_text(
+            "Do you currently work at Crowe client? If yes, provide the company "
+            "name. If no, reply No."
+        )
+        == "No"
+    )
+    assert (
+        want_from_question_text(
+            "Will you now or in the future require sponsorship to work? "
+            "(i.e. Work Permit - Employment Visa (E Visa))"
+        )
+        == "no"
+    )
+    assert (
+        want_from_question_text("Are you authorized to lawfully work in India?")
+        == "yes"
+    )
+    assert (
+        want_from_question_text("What is your current employer / company?")
+        == "Nemetschek / Solibri"
+    )
+
+
 def test_job_dedupe_key_from_jk():
     assert job_dedupe_key("https://in.indeed.com/pagead/clk?jk=abc123def456&from=serp", "") == "abc123def456"
     assert job_dedupe_key("https://in.indeed.com/viewjob?jk=abc123def456", "other") == "abc123def456"
@@ -229,5 +272,6 @@ if __name__ == "__main__":
     test_india_home_get_started_is_not_login_proof()
     test_account_settings_and_serp_are_signed_in()
     test_cookie_banner_visible_from_text()
+    test_want_from_crowe_conflict_and_client_questions()
     test_job_dedupe_key_from_jk()
     print("ok")

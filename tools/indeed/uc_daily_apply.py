@@ -874,6 +874,52 @@ def _switch_smartapply_frame(sb) -> None:
         pass
 
 
+def want_from_question_text(text: str) -> str | None:
+    """Map SmartApply employer-question text to a fill value.
+
+    Keep JS ``wantFromText`` inside ``fill_common_questions`` in sync for
+    these rules. Crowe 2026-08-31: relationship=Yes + client=current-employer
+    left a required follow-up empty and blocked Continue.
+    """
+    t = (text or "").lower()
+    if not t.strip():
+        return None
+    if re.search(
+        r"familial|romantic|close personal relationship|"
+        r"related to (a |an )?(current )?(employee|applicant)|"
+        r"conflict of interest|know anyone .{0,20}(who )?(works?|employ)",
+        t,
+    ):
+        return "no"
+    if re.search(r"identify the individual|describe the relationship|if none.{0,12}n/?a", t):
+        return "N/A"
+    if re.search(r"work at .{0,60}client", t) or (
+        re.search(r"do you (currently )?work at", t) and re.search(r"client|customer", t)
+    ):
+        return "No"
+    if re.search(r"if no,? reply no", t):
+        return "No"
+    if re.search(
+        r"require sponsorship|need sponsorship|"
+        r"require .{0,20}(work permit|visa|employment visa)|future require",
+        t,
+    ) and not re.search(r"authorized|lawfully work", t):
+        return "no"
+    if re.search(r"authorized to lawfully work|lawfully work in india", t):
+        return "yes"
+    if (
+        re.search(
+            r"current.*(employer|company|organization)|present.*(employer|company)|"
+            r"where.*(work|employed)",
+            t,
+        )
+        and not re.search(r"salary|ctc|compensation|pay|client|familial|relationship", t)
+        and not re.search(r"do you (currently )?work at", t)
+    ):
+        return "Nemetschek / Solibri"
+    return None
+
+
 def fill_common_questions(sb) -> None:
     """Best-effort form fill for smartapply.indeed.com / Easy Apply steps."""
     _switch_smartapply_frame(sb)
@@ -943,12 +989,30 @@ def fill_common_questions(sb) -> None:
             };
             const wantFromText = (text) => {
               const t = (text || '').toLowerCase();
+              // Crowe 2026-08-31: Yes on relationship opened a required empty follow-up.
+              if (/familial|romantic|close personal relationship|related to (a |an )?(current )?(employee|applicant)|conflict of interest|know anyone .{0,20}(who )?(works?|employ)/.test(t)) {
+                return 'no';
+              }
+              if (/identify the individual|describe the relationship|if none.{0,12}n\\/?a/.test(t)) {
+                return 'N/A';
+              }
+              if (/work at .{0,60}client/.test(t) || (/do you (currently )?work at/.test(t) && /client|customer/.test(t))) {
+                return 'No';
+              }
+              if (/if no,? reply no/.test(t)) {
+                return 'No';
+              }
+              if (/require sponsorship|need sponsorship|require .{0,20}(work permit|visa|employment visa)|future require/.test(t)
+                  && !/authorized|lawfully work/.test(t)) {
+                return 'no';
+              }
               if (/current.*(position|role|title|designation)|present.*(position|role|title)|job title/.test(t)
                   && !/salary|ctc|compensation|pay/.test(t)) {
                 return 'Solutions Architect';
               }
               if (/current.*(employer|company|organization)|present.*(employer|company)|where.*(work|employed)/.test(t)
-                  && !/salary|ctc|compensation|pay/.test(t)) {
+                  && !/salary|ctc|compensation|pay|client|familial|relationship/.test(t)
+                  && !/do you (currently )?work at/.test(t)) {
                 return 'Nemetschek / Solibri';
               }
               if (/linkedin(\\.com)?|profile url|portfolio url/.test(t)) {
@@ -1034,6 +1098,7 @@ def fill_common_questions(sb) -> None:
                 const lab = ((r.getAttribute('aria-label')||'') + ' ' + (r.parentElement?.innerText||'') + ' ' + (r.value||'')).toLowerCase().slice(0,160);
                 const hit =
                   (want === 'yes' && /\\byes\\b|yep|true|agree|available/.test(lab) && !/\\bno\\b/.test(lab)) ||
+                  (want === 'no' && /\\bno\\b/.test(lab) && !/\\byes\\b/.test(lab)) ||
                   (want === 'male' && /\\bmale\\b/.test(lab) && !/female/.test(lab)) ||
                   (want === 'Mr.' && (/^mr\\.?$/.test(lab.trim()) || (/\\bmr\\.?\\b/.test(lab) && !/mrs|miss|\\bms\\.?\\b/.test(lab)))) ||
                   (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than|currently serving|serving notice/.test(lab)) ||
@@ -1050,6 +1115,7 @@ def fill_common_questions(sb) -> None:
                   const t = (opt.text||'').toLowerCase();
                   if (
                     (want === 'yes' && /\\byes\\b/.test(t)) ||
+                    (want === 'no' && /\\bno\\b/.test(t) && !/\\byes\\b/.test(t)) ||
                     (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs/.test(t)) ||
                     (want === 'Immediate' && /immediate|0\\s*day|1-30|0-15|less than/.test(t)) ||
                     (want === '0' && /\\b0\\b|immediate|0\\s*day|0-15|less than/.test(t)) ||
@@ -1096,6 +1162,7 @@ def fill_common_questions(sb) -> None:
                 const t = ((el.innerText||'') + ' ' + (el.getAttribute('aria-label')||'')).trim().toLowerCase();
                 if (!t || t.length > 80) continue;
                 if (want === 'yes' && /\\byes\\b|i certify|yes, i certify/.test(t) && !/don'?t certify|\\bno,/.test(t)) { el.click(); return true; }
+                if (want === 'no' && /^no\\b/.test(t.trim()) && !/\\byes\\b/.test(t)) { el.click(); return true; }
                 // Prefer exact "Mr." / "Mr" nodes — avoid clicking a parent that contains both Mr. and Ms.
                 if (want === 'Mr.' && /^mr\\.?$/.test(t.trim())) { el.click(); return true; }
                 if (want === 'Mr.' && /\\bmr\\.?\\b/.test(t) && !/mrs|miss|\\bms\\.?\\b/.test(t) && t.length <= 12) { el.click(); return true; }
@@ -1289,7 +1356,8 @@ def fill_common_questions(sb) -> None:
               // Do NOT map bare "Date" → DOB (UST Available Date was poisoned by that).
               let w = wantFromText(lab);
               if (!w) {
-                if (/how many|years|experience/.test(lab)) w = '14';
+                if (/identify the individual|describe the relationship|if none/.test(lab)) w = 'N/A';
+                else if (/how many|years|experience/.test(lab)) w = '14';
                 else if (/salary|ctc|lpa|package/.test(lab)) w = '65';
                 else if (/birth|\\bdob\\b|birth date|birthday/.test(lab)) w = vals.dob;
                 else if (/start|join|avail|available date|date available/.test(lab)
