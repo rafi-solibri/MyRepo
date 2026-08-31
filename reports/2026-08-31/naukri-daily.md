@@ -57,3 +57,12 @@ Live inspect of Blackbaud Create Account: email + password + verifyPassword + `c
 
 ### Code fix after re-run #1
 - `tools/naukri/workday_apply.js`: treat missing consent checkbox/copy as optional so Create Account actually submits (Blackbaud). Wells Fargo-style pages still require the box.
+
+## Post-fix re-run #2 (branch `c79cbbd` — consent optional)
+
+- profileUpdated: **true**
+- applied: **0** · blocked: **1** · skipped: 2764 · seen: 182
+- Blackbaud: Create Account **succeeded** (signed in; Autofill + My Information completed). Then `external_incomplete_or_timeout` on Application Questions — required Select One dropdowns (age 18, sponsorship, start, salary, non-compete) never opened.
+
+### Code fix after re-run #2
+- `workdayQuestionAnswer` + Select One listbox / salary text fill on `formField-*` prompts.
