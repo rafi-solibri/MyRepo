@@ -1,7 +1,10 @@
 "use strict";
 
 const assert = require("assert");
-const { authFailureReason } = require("./workday_apply");
+const {
+  authFailureReason,
+  isCreateAccountConsentRequired,
+} = require("./workday_apply");
 
 // Static checklist alone must NOT be treated as a policy error.
 assert.strictEqual(
@@ -25,5 +28,29 @@ assert.strictEqual(
 );
 
 assert.strictEqual(authFailureReason(""), null);
+
+// Blackbaud-style Create Account: no consent control → allow submit.
+assert.strictEqual(
+  isCreateAccountConsentRequired({
+    checkboxPresent: false,
+    consentCopyPresent: false,
+  }),
+  false
+);
+// Wells Fargo-style: checkbox or consent copy is required.
+assert.strictEqual(
+  isCreateAccountConsentRequired({
+    checkboxPresent: true,
+    consentCopyPresent: false,
+  }),
+  true
+);
+assert.strictEqual(
+  isCreateAccountConsentRequired({
+    checkboxPresent: false,
+    consentCopyPresent: true,
+  }),
+  true
+);
 
 console.log("test_workday_auth: ok");

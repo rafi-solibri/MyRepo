@@ -35,3 +35,25 @@
 
 ## Code fix this run
 - `tools/naukri/workday_apply.js`: Create Account `ats_password_policy` / login_wall now falls through to Sign In; `authFailureReason` ignores static Password Requirements checklist; `test_workday_auth.js` added
+
+## Post-fix re-run #1 (main @ 688ff71 / PR #297)
+
+Ran `daily_apply.js` on merged main so today's applies used the Sign In fallback.
+
+### Counts
+- profileUpdated: **true** (`Rafi_Resume.docx`, Uploaded today)
+- applied: **0** (Accion Labs listing not in inventory this pass; no invented applies)
+- externalCompleted: **0**
+- blocked: **1**
+- skipped: 2757 (dup-heavy) · seen: 195 · tailoredApplies: 0
+- already_applied_detail: Clean Harbors .Net TEchnical Architect; Sidgs Digisol Apigee Architect
+
+### Blocked
+| Company | Role | Reason | Path |
+| --- | --- | --- | --- |
+| Blackbaud | Software Engineer, Principal - .NET DevOps | ats_login_wall (Sign In fallback ran; Create Account never submitted) | company_ATS Workday |
+
+Live inspect of Blackbaud Create Account: email + password + verifyPassword + `createAccountSubmitButton` + `signInLink`. **No** `createAccountCheckbox` / consent copy. `submitCreateAccount()` required a checked consent box, so it no-op'd; Sign In then walled because no tenant account exists.
+
+### Code fix after re-run #1
+- `tools/naukri/workday_apply.js`: treat missing consent checkbox/copy as optional so Create Account actually submits (Blackbaud). Wells Fargo-style pages still require the box.

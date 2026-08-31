@@ -99,6 +99,19 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+/**
+ * Blackbaud (and older tenants) have no consent checkbox / copy on Create
+ * Account. Requiring a checked box there no-ops submit and leaves Sign In
+ * as the only path — which then walls if the tenant account does not exist.
+ * Wells Fargo-style pages still require the checkbox/label to be present.
+ */
+function isCreateAccountConsentRequired({
+  checkboxPresent = false,
+  consentCopyPresent = false,
+} = {}) {
+  return Boolean(checkboxPresent || consentCopyPresent);
+}
+
 async function clickWorkdayControl(page, ariaOrText) {
   const filter = page
     .locator(`[data-automation-id='click_filter'][aria-label='${ariaOrText}']`)
@@ -287,15 +300,26 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
     const consentRe =
       /Yes, I have reviewed the above and consent|Yes, I have read and consent|I acknowledge|I agree|I have read|consent to the terms/i;
     const label = page.locator("label").filter({ hasText: consentRe }).first();
-    if (await label.isVisible().catch(() => false)) {
+    const labelVisible = await label.isVisible().catch(() => false);
+    if (labelVisible) {
       await label.click({ force: true }).catch(() => {});
       await sleep(200);
     } else {
-      await page.getByText(consentRe).first().click({ force: true }).catch(() => {});
-      await sleep(200);
+      const copy = page.getByText(consentRe).first();
+      if (await copy.isVisible().catch(() => false)) {
+        await copy.click({ force: true }).catch(() => {});
+        await sleep(200);
+      }
     }
     const cb = page.locator("[data-automation-id='createAccountCheckbox']").first();
-    if (await cb.count()) {
+    const checkboxPresent = (await cb.count().catch(() => 0)) > 0;
+    const consentCopyPresent =
+      labelVisible ||
+      (await page.getByText(consentRe).first().isVisible().catch(() => false));
+    if (!isCreateAccountConsentRequired({ checkboxPresent, consentCopyPresent })) {
+      return true;
+    }
+    if (checkboxPresent) {
       const checked = await cb.isChecked().catch(() => false);
       if (!checked) {
         await cb.click({ force: true }).catch(() => {});
@@ -305,12 +329,9 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
         await cb.check({ force: true }).catch(() => {});
         await sleep(200);
       }
+      return cb.isChecked().catch(() => false);
     }
-    return page
-      .locator("[data-automation-id='createAccountCheckbox']")
-      .first()
-      .isChecked()
-      .catch(() => false);
+    return false;
   }
 
   async function submitCreateAccount() {
@@ -1045,5 +1066,6 @@ module.exports = {
   workdayCompliantPassword,
   normalizeWorkdayPhone,
   authFailureReason,
+  isCreateAccountConsentRequired,
   EMAIL,
 };
