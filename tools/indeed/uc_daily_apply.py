@@ -900,10 +900,16 @@ def want_from_question_text(text: str) -> str | None:
     if re.search(r"if no,? reply no", t):
         return "No"
     if re.search(
+        r"if sponsorship|detail your current status|type of sponsorship needed|"
+        r"specify the type of sponsorship|sponsorship .{0,40}(status|detail|explain)",
+        t,
+    ) and not re.search(r"will you now|require sponsorship to work\?", t):
+        return "N/A"
+    if re.search(
         r"require sponsorship|need sponsorship|"
         r"require .{0,20}(work permit|visa|employment visa)|future require",
         t,
-    ) and not re.search(r"authorized|lawfully work", t):
+    ) and not re.search(r"authorized|lawfully work|detail your current status|type of sponsorship", t):
         return "no"
     if re.search(r"authorized to lawfully work|lawfully work in india", t):
         return "yes"
@@ -1006,8 +1012,12 @@ def fill_common_questions(sb) -> None:
               if (/if no,? reply no/.test(t)) {
                 return 'No';
               }
+              if (/if sponsorship|detail your current status|type of sponsorship needed|specify the type of sponsorship|sponsorship .{0,40}(status|detail|explain)/.test(t)
+                  && !/will you now|require sponsorship to work\\?/.test(t)) {
+                return 'N/A';
+              }
               if (/require sponsorship|need sponsorship|require .{0,20}(work permit|visa|employment visa)|future require/.test(t)
-                  && !/authorized|lawfully work/.test(t)) {
+                  && !/authorized|lawfully work|detail your current status|type of sponsorship/.test(t)) {
                 return 'no';
               }
               if (/current.*(position|role|title|designation)|present.*(position|role|title)|job title/.test(t)
@@ -1380,6 +1390,19 @@ def fill_common_questions(sb) -> None:
                   && (!(el.value || '').trim() || (el.value || '').trim().length < 10)) {
                 if (setNative(el, vals.phoneIntl)) answered += 1;
               }
+            }
+            // Crowe 2026-08-31: required follow-up left empty after No on sponsorship.
+            for (const err of document.querySelectorAll('[class*="error"], [role=alert], span, p, div')) {
+              const et = (err.innerText || '').trim();
+              if (!/answer this question to continue/i.test(et)) continue;
+              const root = err.closest('fieldset, [class*="question"], [class*="Question"], li, section, label, div') || err.parentElement;
+              if (!root) continue;
+              const el = root.querySelector('input:not([type=hidden]):not([type=file]):not([type=radio]):not([type=checkbox]), textarea');
+              if (!el || el.disabled || el.readOnly || (el.value || '').trim()) continue;
+              const lab = labelFor(el);
+              if (/\\bpan\\b|aadhaar|aadhar|passport number|national id/.test(lab)) continue;
+              try { el.scrollIntoView({block:'center'}); } catch (e) {}
+              if (setNative(el, 'N/A')) answered += 1;
             }
             // WSA 2026-08-31: current CTC 52 filled, expected CTC left blank (below fold).
             for (const el of document.querySelectorAll(

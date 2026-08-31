@@ -229,6 +229,13 @@ def test_want_from_crowe_conflict_and_client_questions():
         == "no"
     )
     assert (
+        want_from_question_text(
+            "If sponsorship for employment may be required in the future, "
+            "please detail your current status and specify the type of sponsorship needed."
+        )
+        == "N/A"
+    )
+    assert (
         want_from_question_text("Are you authorized to lawfully work in India?")
         == "yes"
     )
