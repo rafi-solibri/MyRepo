@@ -2023,7 +2023,10 @@ def click_next_or_submit(
               const t = textOf(el);
               const disabled = el.disabled || el.getAttribute('aria-disabled') === 'true';
               const onScreen = r.width > 0 && r.height > 0;
-              return t && !reject(t) && (onScreen || submitOnly)
+              // Resume-selection Continue can have 0x0 / off-screen box after
+              // cookie dismiss (LTM/UST/Archetype 2026-08-31 still stuck).
+              const looksContinue = /^(continue|next|submit)/.test(t);
+              return t && !reject(t) && (onScreen || submitOnly || looksContinue)
                 && (allowDisabled || !disabled);
             }).sort((a,b) => score(a)-score(b));
             let el = candidates.find(el => score(el) < 999);

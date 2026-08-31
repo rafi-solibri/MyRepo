@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Resume-selection Continue 0x0/off-screen after cookie dismiss (LTM/UST/Archetype) | click_next_or_submit also targets Continue/Next/Submit with zero box size |
 | WSA questions-module expected CTC left blank after current 52; Continue blocked | scroll+fill leftover expected/current CTC inputs after main pass |
 | Crowe SmartApply relationship=Yes and client=current-employer left required N/A empty; Continue blocked | want_from_question_text: relationship/client/sponsorship=No, identify=N/A; JS wantFromText + No radio click |
 | SmartApply Continue covered by OneTrust cookie strip (WSA/Crowe questions stuck; sample shows Accept All Cookies over CTA) | dismiss_indeed_cookie_banner before Continue/review; cookie_banner_visible_from_text gate + test |
