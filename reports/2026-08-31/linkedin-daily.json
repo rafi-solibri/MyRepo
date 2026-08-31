@@ -1,0 +1,30 @@
+{
+  "date": "2026-08-31",
+  "portal": "li",
+  "post_fix_rerun": 1,
+  "main_sha": "688ff7124afad4e6f39dae6ad6aa22557b59d464",
+  "merged_pr": "https://github.com/rafi-solibri/MyRepo/pull/298",
+  "status": "stopped_login_wrong_password",
+  "easy_apply_submitted": 0,
+  "external_completed": 0,
+  "skipped": [],
+  "blocked": [
+    "login_wrong_password_google_and_portal",
+    "captcha_checkpoint_after_wrong_password_retries"
+  ],
+  "login": {
+    "preflight_ok": true,
+    "live_li_at": false,
+    "auto_login_reason": "captcha_checkpoint",
+    "wrong_password": true,
+    "google_session": true,
+    "google_password_heal": "wrong_password",
+    "password_candidates_tried": 2,
+    "artifacts": [
+      "/opt/cursor/artifacts/li-auto-login-wrong-password.png",
+      "/opt/cursor/artifacts/li-auto-login-captcha.png"
+    ]
+  },
+  "code_fix": null,
+  "owner_action": "Refresh portal password and GOOGLE_PASSWORD Cursor secrets, then re-run"
+}
