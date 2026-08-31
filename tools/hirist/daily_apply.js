@@ -27,6 +27,8 @@ function loadChromium() {
 }
 const { skipReason, hasDotNet, hasTargetSeniority } = require("./filters");
 const { findResume, EXPECTED_CTC_LPA, CURRENT_CTC_LPA } = require("./resume");
+const { parseApplyMultiple, jobAlreadyAppliedFlag } = require("./apply_result");
+const { completeScreening } = require("./screening");
 const { completeExternalPage } = require("../ats/complete_page");
 const { tailorResumeForJob } = require("../resume_tailor");
 const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
@@ -278,6 +280,31 @@ async function applyInApp(page, jobIds) {
   return apiPost(page, `${API}/apply-multiple`, { jobIds });
 }
 
+async function loadAppliedJobIds(page) {
+  const ids = new Set();
+  for (let pageNo = 0; pageNo < 12; pageNo++) {
+    const res = await apiGet(page, `${API}/applied-jobs?page=${pageNo}&size=50`);
+    const batch = res.json?.data?.jobs || [];
+    for (const row of batch) {
+      const jid = row?.jobDetail?.id || row?.jobId || row?.jobDetail?.jobId;
+      if (jid) ids.add(Number(jid));
+    }
+    if (!batch.length || !res.json?.data?.hasMore) break;
+  }
+  return ids;
+}
+
+async function appliedJobsHasId(page, jobId) {
+  const want = Number(jobId);
+  for (let pageNo = 0; pageNo < 3; pageNo++) {
+    const res = await apiGet(page, `${API}/applied-jobs?page=${pageNo}&size=50`);
+    const batch = res.json?.data?.jobs || [];
+    if (batch.some((row) => Number(row?.jobDetail?.id || row?.jobId) === want)) return true;
+    if (!batch.length || !res.json?.data?.hasMore) break;
+  }
+  return false;
+}
+
 async function main() {
   const resume = findResume();
   const state = {
@@ -345,6 +372,8 @@ async function main() {
 
   const seenIds = new Set();
   const candidates = [];
+  const alreadyIds = await loadAppliedJobIds(page);
+  state.notes.push(`already_applied_ids=${alreadyIds.size}`);
 
   for (const query of QUERY_WAVES) {
     if (candidates.length >= MAX_APPLIES * 4) break;
@@ -380,7 +409,12 @@ async function main() {
           continue;
         }
 
-        // applyStatus: 0 often means already applied / closed for apply
+        if (alreadyIds.has(Number(id)) || jobAlreadyAppliedFlag(job)) {
+          state.skipped.push({ id, title, company, reason: "already_applied" });
+          continue;
+        }
+
+        // applyStatus: 0 often means closed for apply (not a reliable "already applied")
         if (Number(job.applyStatus) === 0 && !job.applyUrl) {
           state.skipped.push({ id, title, company, reason: "already_applied_or_closed" });
           continue;
@@ -407,6 +441,7 @@ async function main() {
           skills,
           applyUrl: job.applyUrl || "",
           jobDetailUrl: job.jobDetailUrl || `https://www.hirist.tech/j/job-${id}`,
+          assessmentFlags: Number(job.assessmentFlags || 0),
           score: preferScore(title, skills),
         });
       }
@@ -481,15 +516,62 @@ async function main() {
       continue;
     }
 
-    // In-app Hirist apply
-    const res = await applyInApp(page, [job.id]);
-    const okStatus = res.status >= 200 && res.status < 300;
-    const errName = res.json?.error?.name || res.json?.status?.message || "";
+    // In-app Hirist apply — HTTP 200 + [{success:false}] is not an apply.
+    let res = await applyInApp(page, [job.id]);
+    let parsed = parseApplyMultiple(res.json);
+    const errName = res.json?.error?.name || "";
     if (res.status === 401 || /UNAUTHORISED/i.test(String(errName))) {
       state.blocked.push({ reason: "hirist_login_required", detail: "apply_401" });
       break;
     }
-    if (okStatus && !res.json?.error) {
+
+    if (parsed.alreadyApplied) {
+      state.skipped.push({ id: job.id, title: job.title, company: job.company, reason: "already_applied" });
+      alreadyIds.add(Number(job.id));
+      await sleep(400);
+      continue;
+    }
+
+    const needsScreen =
+      parsed.assessmentRequired || (Number(job.assessmentFlags) === 1 && !parsed.applied);
+    if (needsScreen) {
+      const scrPage = await ctx.newPage();
+      try {
+        const scr = await completeScreening(scrPage, { jobId: job.id });
+        state.notes.push(`screening id=${job.id} ok=${!!scr.ok} ${scr.reason || ""} ${scr.url || ""}`);
+        if (!scr.ok) {
+          state.rejected.push({
+            id: job.id,
+            title: job.title,
+            company: job.company,
+            reason: scr.reason || "screening_incomplete",
+          });
+          continue;
+        }
+        // Screening Next/Submit already lands on /job/applied for many listings.
+        if (/\/job\/applied/i.test(String(scr.url || "")) || (await appliedJobsHasId(page, job.id))) {
+          parsed = { applied: true, alreadyApplied: false, assessmentRequired: false, message: "ok" };
+        } else {
+          res = await applyInApp(page, [job.id]);
+          parsed = parseApplyMultiple(res.json);
+        }
+      } catch (err) {
+        state.rejected.push({
+          id: job.id,
+          title: job.title,
+          company: job.company,
+          reason: `screening_error:${String(err.message || err).slice(0, 80)}`,
+        });
+        continue;
+      } finally {
+        await scrPage.close().catch(() => {});
+      }
+    }
+
+    if (parsed.alreadyApplied) {
+      state.skipped.push({ id: job.id, title: job.title, company: job.company, reason: "already_applied" });
+      alreadyIds.add(Number(job.id));
+    } else if (parsed.applied || (await appliedJobsHasId(page, job.id))) {
       state.applied.push({
         id: job.id,
         title: job.title,
@@ -497,22 +579,15 @@ async function main() {
         path: "hirist_apply",
         url: job.jobDetailUrl,
       });
+      alreadyIds.add(Number(job.id));
       applies += 1;
     } else {
-      const reason =
-        res.json?.error?.message ||
-        res.json?.status?.message ||
-        `apply_http_${res.status}`;
-      if (/already applied|duplicate/i.test(String(reason))) {
-        state.skipped.push({ id: job.id, title: job.title, company: job.company, reason: "already_applied" });
-      } else {
-        state.rejected.push({
-          id: job.id,
-          title: job.title,
-          company: job.company,
-          reason: String(reason).slice(0, 160),
-        });
-      }
+      state.rejected.push({
+        id: job.id,
+        title: job.title,
+        company: job.company,
+        reason: String(parsed.message || `apply_http_${res.status}`).slice(0, 160),
+      });
     }
     await sleep(700);
   }

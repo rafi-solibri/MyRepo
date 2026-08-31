@@ -36,7 +36,8 @@ Current 52 LPA | Expected 65 LPA | Immediate | +91 8790251698
 - Keep sweeping QUERY_WAVES while inventory remains.
 
 ## Apply paths
-- In-app Hirist apply via `POST /job/apply-multiple` when logged in.
+- In-app Hirist apply via `POST /job/apply-multiple` when logged in. Count only `success:true` (or `/job/applied` after recruiter screening). HTTP 200 + `success:false` is not an apply.
+- Jobs with `assessmentFlags` / "Assessment/screening is required": complete `/job/{id}/screening` then confirm in applied-jobs.
 - Company website / ATS `applyUrl` redirects: COMPLETE with Rafi_Resume.docx + 52→65. Do not skip.
 - Cap stuck external flows ~3–4 min; continue.
 
