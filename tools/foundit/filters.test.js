@@ -836,4 +836,32 @@ assert.strictEqual(
   "Engineering Manager, AI Product Development must skip Arch/Lead EM band (2026-08-30)"
 );
 
+assert.strictEqual(
+  classifyJob({
+    jobId: 64806749,
+    title: "CRM Lead",
+    companyName: "Jobgether",
+    locations: [{ text: "Remote" }],
+    skills: [{ text: ".NET" }, { text: "CRM" }, { text: "Salesforce" }],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "CRM without Dynamics/.NET on title",
+  "Bare CRM Lead must skip even with skills laundry .NET (2026-08-31)"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 62555451,
+    title: "Dynamics CRM Technical Lead",
+    companyName: "Accenture",
+    locations: [{ text: "Hyderabad / Secunderabad" }],
+    skills: [{ text: "Dynamics CRM" }, { text: ".NET" }],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 12 },
+  }).pass,
+  true,
+  "Dynamics CRM Technical Lead may still pass (Microsoft/.NET CRM stack)"
+);
+
 console.log("filters.test.js OK");

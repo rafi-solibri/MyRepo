@@ -1,5 +1,12 @@
 # Foundit — issues & fixes
 
+## 2026-08-31 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Jobgether CRM Lead passed via skills laundry .NET (Falcon LinkedIn redirect noise) | skipTitleReason: bare CRM without Dynamics\|.NET on TITLE → CRM without Dynamics/.NET on title |
+
+
 ## 2026-08-30 (cloud)
 
 | Issue | Fix |

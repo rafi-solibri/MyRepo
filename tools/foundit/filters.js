@@ -175,6 +175,10 @@ function skipTitleReason(title) {
   if (/\bduck\s*creek\b/i.test(t)) return "Duck Creek";
   // Naukri/LinkedIn/Instahyre parity — insurance P&C platforms are not .NET/cloud Arch targets.
   if (/\bguidewire\b/i.test(t)) return "Guidewire";
+  // Bare CRM Lead/Manager without Dynamics|.NET on TITLE — usually Salesforce/functional CRM
+  // (Jobgether "CRM Lead" 2026-08-31). Dynamics CRM is the Microsoft/.NET stack and may pass.
+  if (/\bcrm\b/i.test(t) && !/\bdynamics\b/i.test(t) && !hasDotNet(t, ""))
+    return "CRM without Dynamics/.NET on title";
   // Pure AI / data titles need .NET|C#|dotnet on the TITLE (skills laundry lists are noisy).
   // Naukri/Instahyre parity: AI Solution Architect, Agentic/Generative AI Lead, Data Engineering Manager,
   // and trailing "Solutions Architect - AI" (ResultsCX 2026-08-25).
