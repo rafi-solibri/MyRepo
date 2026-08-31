@@ -72,6 +72,14 @@ assert_true(
     "SoC / silicon hardware director must skip",
 )
 assert_true(
+    skip_reason("Staff Engineer, CAD", "Micron Technology", "") is not None,
+    "Micron CAD hardware title must skip",
+)
+assert_true(
+    skip_reason("Principal Engineer - STA/Synthesis", "Micron Technology", "") is not None,
+    "Micron STA/Synthesis hardware title must skip",
+)
+assert_true(
     skip_reason("Director, Data Engineering & Platforms", "Acme", "") is not None,
     "Data Engineering director without .NET must skip",
 )

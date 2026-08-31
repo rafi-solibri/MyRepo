@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Micron Staff CAD and Principal STA/Synthesis HW titles still matched TITLE_OK after #298 | Skip CAD / STA/Synthesis / static-timing titles in CAREERS_TITLE_SKIP, LI_TITLE_SKIP, TITLE_BLACKLIST |
 | Micron Staff/Principal HW titles (layout/DV/DRAM/HBM/NVM/data-science) burned careers overnight; soft incompletes never capped on careers tabs | Expand CAREERS_TITLE_SKIP/LI_TITLE_SKIP/TITLE_BLACKLIST for chip HW; honor HITECHCITY_MAX_SOFT_INCOMPLETE on careers_apply (owner-asleep=2) |
 
 

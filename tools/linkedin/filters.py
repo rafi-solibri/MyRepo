@@ -40,7 +40,8 @@ TITLE_BLACKLIST = re.compile(
     r"silicon|semiconductor|fpga|verilog|vhdl|"
     r"layout\s*design|scribe\s*layout|standard\s*cell|"
     r"design\s*verification|\bhbm\b|\bdram\b|power\s*integrity|"
-    r"\bnvm\b|\bnvmqra\b|circuit\s*design|mask\s*design",
+    r"\bnvm\b|\bnvmqra\b|circuit\s*design|mask\s*design|"
+    r"\bcad\b|sta\s*/\s*synthesis|static\s*timing|\bsynthesis\b",
     re.I,
 )
 
