@@ -42,7 +42,7 @@ TITLE_BLACKLIST = re.compile(
     r"design\s*verification|\bhbm\b|\bdram\b|power\s*integrity|"
     r"\bnvm\b|\bnvmqra\b|circuit\s*design|mask\s*design|"
     r"\bcad\b|sta\s*/\s*synthesis|static\s*timing|\bsynthesis\b|"
-    r"product\s*engineering",
+    r"product\s*engineering|device\s*characterization|\btd\s*device\b",
     re.I,
 )
 

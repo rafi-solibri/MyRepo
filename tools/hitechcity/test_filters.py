@@ -107,9 +107,13 @@ def test_title_ok():
     assert CAREERS_TITLE_SKIP.search(
         "Senior/Staff/Principal Engineer, Product Engineering Hyderabad, Telangana, India"
     )
+    assert CAREERS_TITLE_SKIP.search(
+        "Principal Engineer, TD Device Characterization Hyderabad, Telangana, India"
+    )
     assert LI_TITLE_SKIP.search("Staff Engineer, CAD")
     assert LI_TITLE_SKIP.search("Principal Engineer - STA/Synthesis")
     assert LI_TITLE_SKIP.search("Senior/Staff/Principal Engineer, Product Engineering")
+    assert LI_TITLE_SKIP.search("Principal Engineer, TD Device Characterization")
     assert skip_reason("Staff Engineer, CAD Hyderabad") is not None
     assert skip_reason("Principal Engineer - STA/Synthesis") is not None
     assert not CAREERS_TITLE_SKIP.search("Staff ENGINEER, Software Development, SMAI Hyderabad")
