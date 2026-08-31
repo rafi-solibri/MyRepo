@@ -75,3 +75,12 @@ Live inspect of Blackbaud Create Account: email + password + verifyPassword + `c
 
 ### Code fix after re-run #3
 - Click No on previously-worked/contracted copy; `needsIndiaCountryFix` resets any non-India country.
+
+## Post-fix re-run #4 (branch `8592ab1`)
+
+- profileUpdated: **true**
+- applied: **0** · blocked: **1** · skipped: 2821 · seen: 182
+- Blackbaud: India + previous-worker No + names/address/phone filled; `pickPromptOption` kept reopening How Did You Hear (already Other) so Save and Continue never advanced.
+
+### Code fix after re-run #4
+- `pickPromptAlreadySatisfied`: skip reopen when field text already matches an option.
