@@ -20,6 +20,10 @@ const already = parseApplyMultiple([{ success: false, message: "Already applied"
 assert.strictEqual(already.applied, false);
 assert.strictEqual(already.alreadyApplied, true);
 
+const already2 = parseApplyMultiple([{ success: false, message: "Successfully Applied to Job" }]);
+assert.strictEqual(already2.alreadyApplied, true);
+assert.strictEqual(already2.applied, false);
+
 const httpErr = parseApplyMultiple({ error: { name: "UNAUTHORISED_ACCESS", message: "login" } });
 assert.strictEqual(httpErr.applied, false);
 assert.match(httpErr.message, /login/i);

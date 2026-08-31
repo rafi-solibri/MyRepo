@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| screening Next stayed disabled on MCQ forms (hidden radios) | Click visible radio labels (yes/10/immediate) and re-fire numeric CTC so Next enables |
 | apply-multiple HTTP 200 + [{success:false Assessment/screening required}] counted as applies (none in applied-jobs) | Parse success:true only; complete /job/{id}/screening; skip applied-jobs IDs; verify apply |
 | Technical Architect - Conga CPQ/CLM passed skipReason (product CPQ/CLM, no .NET) | HARD-skip Conga/CPQ titles as wrong_stack_title (same family as Coupa/Salesforce) |
 

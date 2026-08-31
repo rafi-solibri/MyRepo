@@ -47,7 +47,7 @@ function parseApplyMultiple(json) {
     return {
       applied: false,
       assessmentRequired: /assessment|screening/i.test(message),
-      alreadyApplied: /already applied|duplicate/i.test(message),
+      alreadyApplied: /already applied|duplicate|successfully applied to job/i.test(message),
       message,
       results: [{ success: false, message }],
     };
@@ -70,7 +70,9 @@ function parseApplyMultiple(json) {
   return {
     applied,
     assessmentRequired: results.some((r) => /assessment|screening/i.test(r.message)),
-    alreadyApplied: results.some((r) => /already applied|duplicate/i.test(r.message)),
+    alreadyApplied: results.some((r) =>
+      /already applied|duplicate|successfully applied to job/i.test(r.message)
+    ),
     message: applied ? "ok" : firstFail?.message || joined || "apply_failed",
     results,
   };
