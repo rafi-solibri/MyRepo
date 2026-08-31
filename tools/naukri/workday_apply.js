@@ -740,10 +740,27 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
       ) {
         continue;
       }
+      const noRadio = root.locator("input[type='radio'][value='false']").first();
+      if (await noRadio.count()) {
+        await noRadio.check({ force: true }).catch(() => {});
+        await noRadio.click({ force: true }).catch(() => {});
+        await sleep(400);
+      }
       const no = root.getByText(/^No$/i).first();
       if (await no.isVisible().catch(() => false)) {
         await no.click({ force: true }).catch(() => {});
         await sleep(400);
+      }
+    }
+    // If Yes stayed selected, the follow-up work-email field is required.
+    const workEmail = page
+      .getByLabel(/work e-?mail address/i)
+      .first();
+    if (await workEmail.isVisible().catch(() => false)) {
+      const cur = ((await workEmail.inputValue().catch(() => "")) || "").trim();
+      if (!cur && EMAIL) {
+        await workEmail.fill(EMAIL).catch(() => {});
+        await sleep(200);
       }
     }
 

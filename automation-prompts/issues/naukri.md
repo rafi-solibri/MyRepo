@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Blackbaud Save and Continue re-selected previous-worker Yes so work-email required; label click did not stick on radio value=false | check input[type=radio][value=false]; if work-email still shown fill APPLY_EMAIL |
 | Blackbaud My Information filled but Save and Continue never advanced: pickPromptOption reopened How Did You Hear (already Other) every loop | pickPromptAlreadySatisfied: skip reopen when field text already matches an option (e.g. Other) |
 | Blackbaud My Information: previous-worker Yes left work-email required (nonstandard field); Country stuck on Holy See because India reset only ran for US/Select One | fillMyInformation: click No on previously-worked/contracted copy; needsIndiaCountryFix resets any non-India country including Holy See |
 | Blackbaud Workday Application Questions stayed Select One (age 18 / sponsorship / start / salary / non-compete); fillVoluntaryAndQuestions only clicked visible Yes/No radios | workday_apply: workdayQuestionAnswer + open Select One listboxes / fill salary text on formField-* prompts |
