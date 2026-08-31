@@ -66,3 +66,12 @@ Live inspect of Blackbaud Create Account: email + password + verifyPassword + `c
 
 ### Code fix after re-run #2
 - `workdayQuestionAnswer` + Select One listbox / salary text fill on `formField-*` prompts.
+
+## Post-fix re-run #3 (branch `474c294` — Select One filler)
+
+- profileUpdated: **true**
+- applied: **0** · blocked: **1** · skipped: 2810 · seen: 183
+- Blackbaud: signed in; stuck on My Information — previous-worker Yes left work-email required; Country = Holy See (Vatican). `external_incomplete_or_timeout`.
+
+### Code fix after re-run #3
+- Click No on previously-worked/contracted copy; `needsIndiaCountryFix` resets any non-India country.
