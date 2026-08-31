@@ -4,6 +4,7 @@ const assert = require("assert");
 const {
   authFailureReason,
   isCreateAccountConsentRequired,
+  workdayQuestionAnswer,
 } = require("./workday_apply");
 
 // Static checklist alone must NOT be treated as a policy error.
@@ -52,5 +53,33 @@ assert.strictEqual(
   }),
   true
 );
+
+assert.strictEqual(
+  workdayQuestionAnswer("Are you over the age of 18?").options[0].toString(),
+  "/^Yes$/i"
+);
+assert.strictEqual(
+  workdayQuestionAnswer(
+    "Will you require sponsorship now or in the future to be authorized to work"
+  ).options[0].toString(),
+  "/^No$/i"
+);
+assert.strictEqual(
+  workdayQuestionAnswer(
+    "Have you previously signed or are you subject to any non compete"
+  ).options[0].toString(),
+  "/^No$/i"
+);
+assert.strictEqual(
+  workdayQuestionAnswer("When are you available to start?").text,
+  "Immediate"
+);
+assert.strictEqual(
+  workdayQuestionAnswer(
+    "What is the desired salary and total compensation range that you are seeking"
+  ).text,
+  "65 LPA"
+);
+assert.strictEqual(workdayQuestionAnswer("How did you hear about us?"), null);
 
 console.log("test_workday_auth: ok");

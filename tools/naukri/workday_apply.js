@@ -112,6 +112,51 @@ function isCreateAccountConsentRequired({
   return Boolean(checkboxPresent || consentCopyPresent);
 }
 
+/**
+ * Map a Workday Application Questions prompt to an answer.
+ * Blackbaud uses Select One listboxes (not visible Yes/No radios).
+ */
+function workdayQuestionAnswer(questionText) {
+  const q = String(questionText || "");
+  if (/over the age of 18|18 years of age/i.test(q)) {
+    return { kind: "select", options: [/^Yes$/i] };
+  }
+  if (/require sponsorship|visa sponsorship/i.test(q)) {
+    return { kind: "select", options: [/^No$/i] };
+  }
+  if (/authorized to work|legally authorized/i.test(q)) {
+    return { kind: "select", options: [/^Yes$/i] };
+  }
+  if (/non[-\s]?compete|non[-\s]?solicitation|restrictive covenant/i.test(q)) {
+    return { kind: "select", options: [/^No$/i] };
+  }
+  if (/available to start|when can you start|notice period|start date/i.test(q)) {
+    return {
+      kind: "selectOrText",
+      options: [/Immediate/i, /Immediately/i, /ASAP/i, /2\s*weeks/i, /15\s*days/i],
+      text: "Immediate",
+    };
+  }
+  if (
+    /desired salary|total compensation|expected (ctc|salary|compensation)|salary range you are seeking/i.test(
+      q
+    )
+  ) {
+    return { kind: "text", text: "65 LPA" };
+  }
+  if (
+    /previously (worked|employed)|former employee|conflict of interest|relatives? (employed|work)/i.test(
+      q
+    )
+  ) {
+    return { kind: "select", options: [/^No$/i] };
+  }
+  if (/criminal|conviction|felony/i.test(q)) {
+    return { kind: "select", options: [/^No$/i] };
+  }
+  return null;
+}
+
 async function clickWorkdayControl(page, ariaOrText) {
   const filter = page
     .locator(`[data-automation-id='click_filter'][aria-label='${ariaOrText}']`)
@@ -969,6 +1014,8 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
       [/relatives? (employed|work)/i, /^No$/i],
       [/criminal|conviction|felony/i, /^No$/i],
       [/export control|ITAR/i, /^No$/i],
+      [/over the age of 18/i, /^Yes$/i],
+      [/non[-\s]?compete|restrictive covenant/i, /^No$/i],
     ];
     for (const [qRe, aRe] of pairs) {
       const block = page.locator("fieldset, div, li").filter({ hasText: qRe }).first();
@@ -977,6 +1024,40 @@ async function completeWorkdayApply(page, resumePath, { maxMs = 3.5 * 60 * 1000 
       if (await ans.isVisible().catch(() => false)) {
         await ans.click({ force: true }).catch(() => {});
         await sleep(200);
+      }
+    }
+
+    // Blackbaud-style Application Questions: required Select One listboxes + text.
+    const fields = page.locator("[data-automation-id^='formField-']");
+    const fieldCount = await fields.count().catch(() => 0);
+    for (let i = 0; i < fieldCount; i++) {
+      const root = fields.nth(i);
+      if (!(await root.isVisible().catch(() => false))) continue;
+      const qText = ((await root.innerText().catch(() => "")) || "").trim();
+      const ans = workdayQuestionAnswer(qText);
+      if (!ans) continue;
+      if (ans.kind === "text" || ans.kind === "selectOrText") {
+        const input = root.locator("input:not([type='hidden']), textarea").first();
+        if (await input.isVisible().catch(() => false)) {
+          const cur = ((await input.inputValue().catch(() => "")) || "").trim();
+          if (!cur) {
+            await input.fill(ans.text).catch(() => {});
+            await sleep(200);
+          }
+          if (ans.kind === "text") continue;
+        }
+      }
+      if (ans.kind === "select" || ans.kind === "selectOrText") {
+        if (!/Select One/i.test(qText) && ans.options.some((re) => re.test(qText))) {
+          continue;
+        }
+        const autoId = await root.getAttribute("data-automation-id").catch(() => "");
+        if (autoId) {
+          const ok = await selectListboxShort(autoId, "", ans.options[0], root);
+          if (!ok) {
+            await pickPromptOption(autoId, ans.options);
+          }
+        }
       }
     }
   }
@@ -1067,5 +1148,6 @@ module.exports = {
   normalizeWorkdayPhone,
   authFailureReason,
   isCreateAccountConsentRequired,
+  workdayQuestionAnswer,
   EMAIL,
 };

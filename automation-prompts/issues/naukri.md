@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Blackbaud Workday Application Questions stayed Select One (age 18 / sponsorship / start / salary / non-compete); fillVoluntaryAndQuestions only clicked visible Yes/No radios | workday_apply: workdayQuestionAnswer + open Select One listboxes / fill salary text on formField-* prompts |
 | Blackbaud Workday Create Account never submitted: no consent checkbox so submitCreateAccount no-op'd; Sign In then ats_login_wall (no tenant account) | workday_apply: isCreateAccountConsentRequired — missing checkbox/copy allows Create Account submit; Wells Fargo-style still requires the box |
 | Blackbaud Workday Create Account returned ats_password_policy and aborted without Sign In (missed existing tenant account) | workday_apply: on Create Account password_policy/login_wall fall through to Sign In; tighten authFailureReason to ignore static Password Requirements checklist |
 
