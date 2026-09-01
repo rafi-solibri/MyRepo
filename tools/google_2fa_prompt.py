@@ -70,7 +70,56 @@ def is_google_2fa_challenge(page: Any = None, *, url: str = "", body: str = "") 
     return False
 
 
-def prompt_google_2fa_in_chat(portal: str, *, wait_sec: int, detail: str = "") -> None:
+def extract_google_2fa_match_number(page: Any = None, *, body: str = "") -> str | None:
+    """Return the on-screen Google number-match digit(s) when present.
+
+    Google sometimes shows a large 1–3 digit number to pick on the phone prompt.
+    Push-only 'Tap Yes' challenges have no number — returns None.
+    """
+    text = body or ""
+    if page is not None and not text:
+        try:
+            text = page.locator("body").inner_text(timeout=2000)[:2500]
+        except Exception:
+            text = ""
+    # Explicit copy: "Enter the number … 42" / "number 42"
+    m = re.search(
+        r"(?:enter|choose|select|tap|match)?\s*(?:the\s+)?number\s*[#: ]?\s*(\d{1,3})\b",
+        text,
+        re.I,
+    )
+    if m:
+        return m.group(1)
+    if page is not None:
+        # Large numeric nodes on the challenge card (avoid tiny chrome digits).
+        for sel in (
+            "div[data-is-numeric='true']",
+            "div[jsname] span",
+            "div[role='heading']",
+            "h1",
+            "h2",
+            "strong",
+        ):
+            try:
+                locs = page.locator(sel)
+                n = min(locs.count(), 30)
+            except Exception:
+                continue
+            for i in range(n):
+                try:
+                    el = locs.nth(i)
+                    t = (el.inner_text(timeout=500) or "").strip()
+                    if not re.fullmatch(r"\d{1,3}", t):
+                        continue
+                    box = el.bounding_box()
+                    if box and box.get("height", 0) >= 28 and box.get("width", 0) >= 20:
+                        return t
+                except Exception:
+                    continue
+    return None
+
+
+def prompt_google_2fa_in_chat(portal: str, *, wait_sec: int, detail: str = "", match_number: str | None = None) -> None:
     """Loud transcript banner so the owner can enter the phone authenticator code."""
     lines = [
         "",
@@ -78,11 +127,17 @@ def prompt_google_2fa_in_chat(portal: str, *, wait_sec: int, detail: str = "") -
         f"ASK_OWNER_GOOGLE_2FA ({portal})",
         "=" * 64,
         "Google is asking for a 2-factor / authenticator / phone prompt code.",
-        "1) Open Google Authenticator (or the Google phone prompt) on your mobile NOW.",
-        "2) Type the 6-digit code into the focused Chrome tab (or tap Yes on the phone).",
-        "3) Leave this Cursor chat open — the agent is waiting and will continue after success.",
-        f"Waiting up to {wait_sec}s for the challenge to clear…",
     ]
+    if match_number:
+        lines.append(f"NUMBER TO SELECT ON YOUR PHONE: {match_number}")
+        lines.append("1) Open the Google prompt on your mobile NOW.")
+        lines.append(f"2) Tap the number {match_number} (not a different digit).")
+        lines.append("3) Leave this Cursor chat open — the agent is waiting.")
+    else:
+        lines.append("1) Open Google Authenticator (or the Google phone prompt) on your mobile NOW.")
+        lines.append("2) Type the 6-digit code into the focused Chrome tab (or tap Yes on the phone).")
+        lines.append("3) Leave this Cursor chat open — the agent is waiting and will continue after success.")
+    lines.append(f"Waiting up to {wait_sec}s for the challenge to clear…")
     if detail:
         lines.append(f"Detail: {detail[:200]}")
     lines.append("=" * 64)
@@ -117,7 +172,10 @@ def wait_owner_google_2fa(
         url = page.url or ""
     except Exception:
         url = ""
-    prompt_google_2fa_in_chat(portal, wait_sec=wait, detail=url)
+    match_number = extract_google_2fa_match_number(page)
+    prompt_google_2fa_in_chat(
+        portal, wait_sec=wait, detail=url, match_number=match_number
+    )
 
     # Keep tab focused for mobile-watching owner.
     try:
