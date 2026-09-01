@@ -1,5 +1,12 @@
 # Cutshort — issues & fixes
 
+## 2026-09-01 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| CDP launch skipped live login waiters for non-LinkedIn portals | launch-chrome-cdp live check for cutshort waiter; fail closed when CDP_REQUIRE_LIVE_LOGIN=1 |
+
+
 ## 2026-08-25 (cloud)
 
 | Issue | Fix |

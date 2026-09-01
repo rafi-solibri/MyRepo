@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| sync/verify/restore only checked token not hirist_seeker_enc | Align COOKIE_SETS + verify + restore with hirist_seeker_enc token; launch live check + google_login heal |
 | Technical Architect D365 F&O and Full Stack Developer Python/Groovy passed skipReason (ERP / non-.NET title) | HARD-skip Dynamics 365/D365/F&O as wrong_stack_title; title-first skip python/groovy/golang/node/php without .NET |
 
 

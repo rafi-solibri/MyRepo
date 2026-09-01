@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Preflight cookie-name hasAuth ignored Passport OauthExpires/JWT expiry across cloud cron | portal_auth_freshness.py + chrome_session checkAuthFreshness; indeed wait_for_cdp_login; launch-chrome-cdp live-checks all portals |
 | Google SSO heal hit challenge/pwd but is_google_2fa_challenge treated it as 2FA (300s wait); LINKEDIN_PASSWORD rejected by Google | Exclude challenge/pwd from google_2fa_prompt; detect google_wrong_password; window-switch Google popup in Indeed SSO heal |
 | Passport OauthExpires/JWT expired 2026-08-06 while cookie names still passed hasAuth → Sign In wall, 0 applies | Detect oauth expiry; on login wall try Continue with Google SSO (+2FA wait) before indeed_login_required; persist healed UC cookies back to seed |
 

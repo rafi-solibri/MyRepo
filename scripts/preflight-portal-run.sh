@@ -26,4 +26,6 @@ if [[ "$PY" == "py" ]]; then
 else
   "$PY" tools/resume_paths.py
 fi
+# Cookie-name check + Indeed/Foundit JWT/OauthExpires freshness (portal_auth_freshness.py).
+# Set PORTAL_AUTH_FRESHNESS=0 to skip the Chrome probe (faster, less accurate).
 node tools/chrome_session.js check "$portal"

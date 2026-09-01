@@ -88,6 +88,25 @@ function jwtFromMssoat(raw) {
   return jwt.split(".").length === 3 ? jwt : null;
 }
 
+function jwtExp(token) {
+  if (!token || String(token).split(".").length < 3) return null;
+  try {
+    let payload = String(token).split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const pad = "=".repeat((4 - (payload.length % 4)) % 4);
+    const claims = JSON.parse(Buffer.from(payload + pad, "base64").toString("utf8"));
+    return typeof claims.exp === "number" ? claims.exp : null;
+  } catch {
+    return null;
+  }
+}
+
+/** True when MSSOAT JWT exp is in the past (names alone are not enough). */
+function mssoatExpired(raw, nowSec = Date.now() / 1000) {
+  const jwt = jwtFromMssoat(raw);
+  const exp = jwtExp(jwt);
+  return exp != null && nowSec > exp;
+}
+
 function jobAgeDays(job) {
   const ts = Number(job.freshness || job.updatedAt || job.postedAt || 0);
   if (!ts) return null;
@@ -294,12 +313,17 @@ async function confirmLogin(page, context) {
       const auth = cookies.find((c) => c.name === "MSSOAT" && String(c.value || "").length > 0);
       last.hasAuthCookie = Boolean(auth);
       last.mssoatLen = auth ? String(auth.value).length : 0;
+      last.mssoatExpired = auth ? mssoatExpired(String(auth.value)) : false;
       const onApp =
         /seeker\/dashboard|\/home\/user|\/profile|\/seeker\//i.test(last.url) &&
         !/\/rio\//i.test(last.url);
       last.onApp = onApp;
       // Parity with wait_for_cdp_login: MSSOAT + app URL is enough when greeting stays "Hi, Seeker".
-      if ((last.hasRafi || (last.hasAuthCookie && onApp)) && !last.loginWall) {
+      // Reject expired JWT even if cookie name/value blob remains.
+      if (last.mssoatExpired) {
+        last.loginWall = true;
+        last.reason = "foundit_session_expired";
+      } else if ((last.hasRafi || (last.hasAuthCookie && onApp)) && !last.loginWall) {
         return last;
       }
       await sleep(800);

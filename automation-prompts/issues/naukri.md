@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| CDP launch skipped live login waiters for non-LinkedIn portals | launch-chrome-cdp live check for naukri waiter; fail closed when CDP_REQUIRE_LIVE_LOGIN=1 |
 | False Quick Applies: Oracle PaaS/HCM/ERP, Fusion HCM, IMDS, IT Shared Services; DFT/ATPG ATS burn; Data Architecture / Cloud Infra Architect not title-skipped | Expand NON_DOTNET_PRIMARY (oracle paas/hcm/erp/ebs, fusion hcm), SKIP_TITLE (imds, dft/atpg/jtag/mbist/tessent/testmax, it shared services), PURE_AI_DATA (data architecture, cloud infra architect) |
 
 

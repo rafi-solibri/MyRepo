@@ -372,23 +372,46 @@ PY
 
 echo "Chrome CDP ready for $portal using $profile (log: $log)"
 
-# LinkedIn on Windows ABE: SQLite cookie names can lie. Live-probe CDP when asked.
-if [[ "$portal" == "linkedin" || "$portal" == "hitechcity" ]]; then
-  if [[ "${CDP_LIVE_LOGIN_CHECK:-1}" == "1" ]] && command -v node >/dev/null 2>&1; then
-    export NODE_PATH="$ROOT/tools/node_modules${NODE_PATH:+:$NODE_PATH}"
-    wait_sec="${LINKEDIN_LOGIN_WAIT_SEC:-0}"
+# Live-verify session for every portal (cookie names can outlive JWT / server invalidation).
+# LinkedIn keeps Google SSO / password auto-heal; Hirist uses google_login.js; others fail closed.
+live_rc=0
+if [[ "${CDP_LIVE_LOGIN_CHECK:-1}" == "1" ]] && command -v node >/dev/null 2>&1; then
+  export NODE_PATH="$ROOT/tools/node_modules${NODE_PATH:+:$NODE_PATH}"
+  waiter=""
+  case "$portal" in
+    linkedin|hitechcity) waiter="$ROOT/tools/linkedin/wait_for_cdp_login.js" ;;
+    naukri) waiter="$ROOT/tools/naukri/wait_for_cdp_login.js" ;;
+    foundit) waiter="$ROOT/tools/foundit/wait_for_cdp_login.js" ;;
+    cutshort) waiter="$ROOT/tools/cutshort/wait_for_cdp_login.js" ;;
+    instahyre) waiter="$ROOT/tools/instahyre/wait_for_cdp_login.js" ;;
+    hirist) waiter="$ROOT/tools/hirist/wait_for_cdp_login.js" ;;
+    indeed) waiter="$ROOT/tools/indeed/wait_for_cdp_login.js" ;;
+  esac
+
+  if [[ -n "$waiter" && -f "$waiter" ]]; then
+    wait_sec=0
+    case "$portal" in
+      linkedin|hitechcity) wait_sec="${LINKEDIN_LOGIN_WAIT_SEC:-0}" ;;
+      naukri) wait_sec="${NAUKRI_LOGIN_WAIT_SEC:-0}" ;;
+      foundit) wait_sec="${FOUNDIT_LOGIN_WAIT_SEC:-0}" ;;
+      cutshort) wait_sec="${CUTSHORT_LOGIN_WAIT_SEC:-0}" ;;
+      instahyre) wait_sec="${INSTAHYRE_LOGIN_WAIT_SEC:-0}" ;;
+      hirist) wait_sec="${HIRIST_LOGIN_WAIT_SEC:-0}" ;;
+      indeed) wait_sec="${INDEED_LOGIN_WAIT_SEC:-0}" ;;
+    esac
     set +e
     if [[ "$wait_sec" -gt 0 ]]; then
-      node "$ROOT/tools/linkedin/wait_for_cdp_login.js" --open-login --wait "$wait_sec"
+      node "$waiter" --open-login --wait "$wait_sec"
       live_rc=$?
     else
-      node "$ROOT/tools/linkedin/wait_for_cdp_login.js" --open-login
+      node "$waiter" --open-login
       live_rc=$?
     fi
     set -e
-    if [[ "$live_rc" -ne 0 ]]; then
+
+    # --- Auto-heal hooks ---
+    if [[ "$live_rc" -ne 0 && ( "$portal" == "linkedin" || "$portal" == "hitechcity" ) ]]; then
       echo "WARNING: LinkedIn CDP not logged in (live check exit $live_rc)." >&2
-      # Unattended recovery: Google SSO / LINKEDIN_PASSWORD, then refresh seed on success.
       if [[ "${LINKEDIN_AUTO_LOGIN:-1}" == "1" && -f "$ROOT/tools/linkedin/auto_login.py" ]]; then
         echo "Attempting unattended LinkedIn auto-login…"
         PY="$(bash "$ROOT/scripts/resolve-python.sh")"
@@ -412,50 +435,68 @@ if [[ "$portal" == "linkedin" || "$portal" == "hitechcity" ]]; then
         else
           echo "NOTE: auto-login exit $auto_rc (5=login required, 6=CAPTCHA/checkpoint, 7=temporary restriction)." >&2
           if [[ "$auto_rc" -eq 7 ]]; then
-            echo "NOTE: Temporary LinkedIn restriction — runners will skip LI until lift time in /tmp/linkedin-restriction-until.json (do not hammer login)." >&2
+            echo "NOTE: Temporary LinkedIn restriction — runners will skip LI until lift time." >&2
           fi
         fi
       fi
     fi
+
+    if [[ "$live_rc" -ne 0 && "$portal" == "hirist" && "${HIRIST_AUTO_LOGIN:-1}" == "1" ]]; then
+      if [[ -f "$ROOT/tools/hirist/google_login.js" ]]; then
+        echo "Attempting Hirist Google SSO auto-login…"
+        set +e
+        node "$ROOT/tools/hirist/google_login.js"
+        auto_rc=$?
+        set -e
+        if [[ "$auto_rc" -eq 0 ]]; then
+          node "$ROOT/tools/hirist/wait_for_cdp_login.js"
+          live_rc=$?
+          if [[ "$live_rc" -eq 0 ]]; then
+            bash "$ROOT/scripts/refresh-portal-session-seed.sh" hirist || true
+          fi
+        fi
+      fi
+    fi
+
     if [[ "$live_rc" -eq 0 ]]; then
-      # Keep seed fresh whenever live session is good (survives next environment boot).
-      if [[ "${LINKEDIN_REFRESH_SEED:-1}" == "1" ]]; then
-        bash "$ROOT/scripts/refresh-portal-session-seed.sh" linkedin || true
+      seed_portal="$portal"
+      [[ "$portal" == "hitechcity" ]] && seed_portal="linkedin"
+      refresh_seed="${PORTAL_REFRESH_SEED:-1}"
+      if [[ "$seed_portal" == "linkedin" && -n "${LINKEDIN_REFRESH_SEED:-}" ]]; then
+        refresh_seed="${LINKEDIN_REFRESH_SEED}"
       fi
-    elif [[ "$live_rc" -ne 0 ]]; then
-      echo "WARNING: LinkedIn CDP still not logged in (live check exit $live_rc)." >&2
-      echo "         Sign in once: bash scripts/home-headed-login.sh linkedin" >&2
-      echo "         Or set secrets LINKEDIN_EMAIL + LINKEDIN_PASSWORD for password fallback." >&2
-      echo "         Or set LINKEDIN_LOGIN_WAIT_SEC=300 and re-launch while you sign in." >&2
-      # LinkedIn portal: hard-fail so Easy Apply does not burn inventory on login walls.
-      # Hitech City: warn only — careers portals can still run (prompt allows partial).
-      # Headed login scripts set CDP_REQUIRE_LIVE_LOGIN=0 (they wait separately).
-      if [[ "${CDP_REQUIRE_LIVE_LOGIN:-1}" == "1" && "$portal" == "linkedin" ]]; then
-        echo "ERROR: CDP_REQUIRE_LIVE_LOGIN=1 — refusing to continue without a live LinkedIn session." >&2
-        echo "       After a successful login, seed refresh is automatic; push .portal-sessions if needed." >&2
-        exit "$live_rc"
+      if [[ "$refresh_seed" == "1" ]]; then
+        case "$seed_portal" in
+          linkedin|naukri|foundit|cutshort|instahyre|indeed|hirist)
+            bash "$ROOT/scripts/refresh-portal-session-seed.sh" "$seed_portal" || true
+            ;;
+        esac
       fi
-      if [[ "$portal" == "hitechcity" ]]; then
-        echo "NOTE: Continuing hitechcity CDP for career-portal applies (LinkedIn blocked)." >&2
-        # WARP SOCKS is for LinkedIn AWS-IP checkpoints. Career ATS hosts often
-        # fail with ERR_SOCKS_CONNECTION_FAILED (Solera/Accenture/Cognizant).
-        if [[ "${HITECHCITY_CAREERS_NO_WARP:-1}" == "1" && ${#proxy_args[@]} -gt 0 ]]; then
-          echo "NOTE: Relaunching Chrome without WARP for career-portal applies." >&2
-          bash "$ROOT/scripts/kill-chrome-cdp.sh" cdp || true
-          sleep 1
-          nohup "$chrome" \
-            "${headless[@]}" \
-            --no-sandbox \
-            --disable-gpu \
-            --disable-dev-shm-usage \
-            --disable-extensions \
-            --remote-debugging-address=127.0.0.1 \
-            --remote-debugging-port=9222 \
-            --remote-allow-origins='*' \
-            --user-data-dir="$profile" \
-            "${profile_dir_args[@]}" \
-            about:blank >>"$log" 2>&1 &
-          run_py - <<'PY'
+    else
+      echo "WARNING: $portal CDP not logged in (live check exit $live_rc)." >&2
+      echo "         Sign in once: bash scripts/home-headed-login.sh ${portal}" >&2
+      echo "         Then: bash scripts/refresh-portal-session-seed.sh ${portal} && Save Snapshot" >&2
+      # Hard-fail when required (default for apply portals). Hitechcity careers may continue.
+      if [[ "${CDP_REQUIRE_LIVE_LOGIN:-1}" == "1" ]]; then
+        if [[ "$portal" == "hitechcity" ]]; then
+          echo "NOTE: Continuing hitechcity CDP for career-portal applies (LinkedIn blocked)." >&2
+          if [[ "${HITECHCITY_CAREERS_NO_WARP:-1}" == "1" && ${#proxy_args[@]} -gt 0 ]]; then
+            echo "NOTE: Relaunching Chrome without WARP for career-portal applies." >&2
+            bash "$ROOT/scripts/kill-chrome-cdp.sh" cdp || true
+            sleep 1
+            nohup "$chrome" \
+              "${headless[@]}" \
+              --no-sandbox \
+              --disable-gpu \
+              --disable-dev-shm-usage \
+              --disable-extensions \
+              --remote-debugging-address=127.0.0.1 \
+              --remote-debugging-port=9222 \
+              --remote-allow-origins='*' \
+              --user-data-dir="$profile" \
+              "${profile_dir_args[@]}" \
+              about:blank >>"$log" 2>&1 &
+            run_py - <<'PY'
 import sys, time, urllib.request
 url = "http://127.0.0.1:9222/json/version"
 last = None
@@ -469,6 +510,10 @@ for _ in range(40):
 print(f"ERROR: Chrome CDP did not become ready after no-WARP relaunch: {last}", file=sys.stderr)
 raise SystemExit(1)
 PY
+          fi
+        else
+          echo "ERROR: CDP_REQUIRE_LIVE_LOGIN=1 — refusing to continue without a live $portal session." >&2
+          exit "$live_rc"
         fi
       fi
     fi

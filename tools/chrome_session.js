@@ -240,66 +240,152 @@ const LIVE_CDP_WAITERS = {
   instahyre: path.join(__dirname, "instahyre", "wait_for_cdp_login.js"),
   naukri: path.join(__dirname, "naukri", "wait_for_cdp_login.js"),
   hirist: path.join(__dirname, "hirist", "wait_for_cdp_login.js"),
+  indeed: path.join(__dirname, "indeed", "wait_for_cdp_login.js"),
 };
+
+/**
+ * Cookie-name presence can outlive JWT/OauthExpires (Indeed 2026-09-01).
+ * Optional Chrome probe via tools/portal_auth_freshness.py.
+ */
+function checkAuthFreshness(portal) {
+  if (process.env.PORTAL_AUTH_FRESHNESS === "0") return null;
+  const script = path.join(__dirname, "portal_auth_freshness.py");
+  if (!fs.existsSync(script)) return null;
+  // Fast path: only Indeed/Foundit currently decode exp claims. Others skip chrome
+  // unless PORTAL_AUTH_FRESHNESS_ALL=1 (slower — launches headless Chrome).
+  const heavy = new Set(["indeed", "foundit"]);
+  if (!heavy.has(portal) && process.env.PORTAL_AUTH_FRESHNESS_ALL !== "1") {
+    return null;
+  }
+  try {
+    const py = resolvePython();
+    const args =
+      py === "py"
+        ? ["-3", script, "check", portal]
+        : [script, "check", portal];
+    const bin = py === "py" ? "py" : py;
+    const out = execFileSync(bin, args, {
+      encoding: "utf8",
+      timeout: Number(process.env.PORTAL_AUTH_FRESHNESS_TIMEOUT_MS || 90000),
+      env: { ...process.env },
+    });
+    const start = out.lastIndexOf("{");
+    if (start < 0) return { raw: out.slice(0, 300) };
+    return JSON.parse(out.slice(start));
+  } catch (err) {
+    const stdout = String((err && err.stdout) || "");
+    const stderr = String((err && err.stderr) || "");
+    const blob = `${stdout}\n${stderr}`;
+    const start = blob.lastIndexOf("{");
+    if (start >= 0) {
+      try {
+        return JSON.parse(blob.slice(start));
+      } catch {
+        /* fall through */
+      }
+    }
+    return {
+      ok: false,
+      portal,
+      reason: "freshness_check_error",
+      error: String((err && err.message) || err).slice(0, 240),
+    };
+  }
+}
+
+function runLiveCdpWaiter(portal, result) {
+  const waiter = LIVE_CDP_WAITERS[portal];
+  if (!waiter || !fs.existsSync(waiter)) return result;
+  // Only when CDP is already up — launching Chrome belongs to launch-chrome-cdp.sh.
+  try {
+    execFileSync("curl", ["-fsS", "http://127.0.0.1:9222/json/version"], {
+      stdio: "ignore",
+      timeout: 3000,
+    });
+  } catch {
+    result.liveSkipped = "cdp_not_up";
+    return result;
+  }
+  try {
+    execFileSync(process.execPath, [waiter], {
+      stdio: ["ignore", "pipe", "pipe"],
+      timeout: 45000,
+      env: { ...process.env, NODE_PATH: path.join(__dirname, "node_modules") },
+    });
+    result.ok = true;
+    result.destHasAuth = true;
+    result.reason = `live_cdp_${portal}_ok`;
+    result.liveVerified = true;
+  } catch (err) {
+    result.ok = false;
+    result.liveVerified = false;
+    const stdout = String((err && err.stdout) || "");
+    const stderr = String((err && err.stderr) || "");
+    const blob = `${stdout}\n${stderr}`;
+    result.liveError = blob.slice(0, 400);
+    let liveJson = null;
+    for (const line of blob.split(/\r?\n/).reverse()) {
+      const t = line.trim();
+      if (!t.startsWith("{") || !t.includes('"ok"')) continue;
+      try {
+        liveJson = JSON.parse(t);
+        break;
+      } catch {
+        /* keep scanning */
+      }
+    }
+    if (liveJson && liveJson.reason) {
+      result.reason = String(liveJson.reason);
+      if (liveJson.url) result.liveUrl = String(liveJson.url).slice(0, 240);
+    } else {
+      result.reason = `${portal}_login_required`;
+    }
+  }
+  return result;
+}
 
 function checkPortal(portal) {
   const result = portalStatus(portal);
   // Windows ABE / locked Cookies DB: SQLite names lie while Chrome is open.
   // Prefer a live CDP probe when the portal check would false-fail.
-  const waiter = LIVE_CDP_WAITERS[portal];
   if (
     !result.ok &&
-    waiter &&
     (result.sourcePossiblyLocked || result.isWindows)
   ) {
-    try {
-      if (fs.existsSync(waiter)) {
-        execFileSync(process.execPath, [waiter], {
-          stdio: ["ignore", "pipe", "pipe"],
-          timeout: 45000,
-          env: { ...process.env, NODE_PATH: path.join(__dirname, "node_modules") },
-        });
-        result.ok = true;
-        result.destHasAuth = true;
-        result.reason = `live_cdp_${portal}_ok`;
-        result.liveVerified = true;
-      }
-    } catch (err) {
-      result.liveVerified = false;
-      const stdout = String((err && err.stdout) || "");
-      const stderr = String((err && err.stderr) || "");
-      const blob = `${stdout}\n${stderr}\n${err && err.message ? err.message : err}`;
-      result.liveError = blob.slice(0, 400);
-      // Prefer live CDP reason over misleading "cookies locked" when Chrome is open
-      // on a login/checkpoint page (common on Windows ABE / system profile).
-      let liveJson = null;
-      for (const line of `${stdout}\n${stderr}`.split(/\r?\n/).reverse()) {
-        const t = line.trim();
-        if (!t.startsWith("{") || !t.includes('"ok"')) continue;
-        try {
-          liveJson = JSON.parse(t);
-          break;
-        } catch {
-          /* keep scanning */
+    runLiveCdpWaiter(portal, result);
+  }
+
+  // Every run: when names look OK, still verify JWT/OauthExpires for Indeed/Foundit.
+  if (result.ok || process.env.PORTAL_AUTH_FRESHNESS_FORCE === "1") {
+    const fresh = checkAuthFreshness(portal);
+    if (fresh) {
+      result.freshness = fresh;
+      if (fresh.expired || fresh.reason === "indeed_session_expired" || fresh.reason === "foundit_session_expired") {
+        result.ok = false;
+        result.reason = String(fresh.reason || `${portal}_session_expired`);
+        result.hint =
+          fresh.hint ||
+          `Session expired — bash scripts/home-headed-login.sh ${portal === "hitechcity" ? "linkedin" : portal} && bash scripts/refresh-portal-session-seed.sh ${portal === "hitechcity" ? "linkedin" : portal}`;
+      } else if (fresh.ok === false && fresh.reason && !String(fresh.reason).includes("unverified") && !String(fresh.reason).includes("skipped")) {
+        // Hard login_required from value probe
+        if (fresh.reason.endsWith("_login_required")) {
+          result.ok = false;
+          result.reason = fresh.reason;
         }
-      }
-      if (liveJson && liveJson.reason) {
-        result.reason = String(liveJson.reason);
-        if (liveJson.url) result.liveUrl = String(liveJson.url).slice(0, 240);
-        if (liveJson.onChallenge) result.liveChallenge = true;
-      } else if (/checkpoint|challenge|security.?verif/i.test(blob)) {
-        result.reason =
-          portal === "linkedin" || portal === "hitechcity"
-            ? "linkedin_security_challenge"
-            : `${portal}_login_or_challenge`;
-      } else if (/login_required|authwall|\/login/i.test(blob)) {
-        result.reason =
-          portal === "linkedin" || portal === "hitechcity"
-            ? "linkedin_login_required"
-            : `${portal}_login_required`;
       }
     }
   }
+
+  // Optional: when CDP already running, live-verify even if SQLite names passed
+  // (catches server-invalidated sessions). Default on for cron via env.
+  if (
+    result.ok &&
+    process.env.PORTAL_LIVE_LOGIN_CHECK === "1" &&
+    LIVE_CDP_WAITERS[portal]
+  ) {
+    runLiveCdpWaiter(portal, result);
+  }
+
   console.log(JSON.stringify(result, null, 2));
   if (result.reason === "unknown_portal") return 2;
   return result.ok ? 0 : 3;
@@ -334,11 +420,14 @@ function statusReport() {
 module.exports = {
   PROFILES,
   AUTH_COOKIES,
+  LIVE_CDP_WAITERS,
   cookiesDbPath,
   cookieNames,
   hasAuth,
   portalStatus,
   checkPortal,
+  checkAuthFreshness,
+  runLiveCdpWaiter,
   syncSessions,
   statusReport,
   resolvePython,
