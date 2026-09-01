@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| TITLE_OK matched Business Development Manager via development manager; Junior/BIM Architect not blacklisted | Drop standalone development manager from TITLE_OK; blacklist junior/intern/fresher, BIM, business development |
 | Google /challenge/pwd treated as ASK_OWNER_GOOGLE_2FA (300s); load-job-secrets aliased LINKEDIN_PASSWORD into GOOGLE_PASSWORD | Exclude pwd/identifier from 2FA; heal password first; stop LINKEDIN_PASSWORD→GOOGLE_PASSWORD alias |
 | Easy Apply NameError: record_restriction_from_page not defined in process_search | Import restriction helpers at module scope so process_search can call them |
 | ASK_OWNER_GOOGLE_2FA failed with No module named tools; 2FA number not printed | Ensure repo root on sys.path + PYTHONPATH in launch-chrome-cdp; extract/print Google match number when present |

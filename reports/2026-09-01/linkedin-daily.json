@@ -1,27 +1,55 @@
 {
   "date": "2026-09-01",
   "portal": "linkedin",
-  "status": "stopped_login_required",
-  "reason": "captcha_checkpoint_after_2fa_false_positive",
+  "status": "completed_with_easy_apply_daily_limit",
   "post_fix_rerun": 1,
-  "merged_code": "6c3961b",
-  "google_password_injected": false,
-  "easy_apply_submitted": 0,
+  "merged_code_at_start": "6c3961b",
+  "session": "restored_#306_seed_live_on_feed",
+  "easy_apply_submitted": 23,
   "external_completed": 0,
-  "skipped": [],
-  "blocked": [
-    {
-      "reason": "google_challenge_pwd_classified_as_2fa",
-      "detail": "accounts.google.com/v3/signin/challenge/pwd treated as ASK_OWNER_GOOGLE_2FA; waited 300s; never filled GOOGLE_PASSWORD"
-    },
-    {
-      "reason": "captcha_checkpoint",
-      "detail": "LinkedIn password fallback hit Security Verification / reCAPTCHA after 2FA timeout"
-    }
+  "external_blocked": 23,
+  "external_skipped": 17,
+  "skipped": 661,
+  "blocked_easy_apply": 6,
+  "easy_apply_daily_limit": true,
+  "submitted": [
+    {"company": "Kandou AI", "role": "Customer Platform, SDK & Interoperability Architect", "job_id": "4461040544", "location": "Greater Hyderabad Area", "path": "Easy Apply"},
+    {"company": "ValueLabs", "role": "Solutions Architect", "job_id": "4460020137", "location": "Hyderabad, Telangana, India", "path": "Easy Apply"},
+    {"company": "Tata Consultancy Services", "role": "Walk in - Azure Solution Architect - Hyderabad", "job_id": "4461061351", "location": "Hyderabad, Telangana, India", "path": "Easy Apply"},
+    {"company": "Tata Consultancy Services", "role": "LeanIx Technical Architect", "job_id": "4459794172", "location": "Hyderabad, Telangana, India", "path": "Easy Apply"},
+    {"company": "OvalEdge", "role": "Senior Technical Architect", "job_id": "4458076988", "location": "Hyderabad, Telangana, India", "path": "Easy Apply"},
+    {"company": "Getrosoft", "role": "Senior Full Stack Developer (Tech Lead)", "job_id": "4460236058", "location": "Hyderabad, Telangana, India", "path": "Easy Apply"},
+    {"company": "Marriott Tech Accelerator", "role": "Engineering Manager [T500-29023]", "job_id": "4461067965", "location": "Hyderabad, Telangana, India", "path": "Easy Apply"},
+    {"company": "FMR Enterprises", "role": "Senior Software Engineer, AI Training & Evaluation (Remote, Contract)", "job_id": "4458457964", "location": "Remote / India", "path": "Easy Apply"},
+    {"company": "Synthires", "role": "Senior Software Engineer (Remote | $100–$150/hr)", "job_id": "4456511072", "location": "Remote / India", "path": "Easy Apply"},
+    {"company": "SkillDzire", "role": "Business Development Manager", "job_id": "4459285052", "location": "Hyderabad, Telangana, India", "path": "Easy Apply", "false_apply": true},
+    {"company": "W Design Studio", "role": "Business Development Manager", "job_id": "4459275798", "location": "Hyderabad, Telangana, India", "path": "Easy Apply", "false_apply": true},
+    {"company": "AAA Global", "role": "Principal Manager, (Portfolio Data Services) – Core Tech", "job_id": "4461571543", "location": "Hyderabad, Telangana, India", "path": "Easy Apply"},
+    {"company": "Religent Systems", "role": "Technology Architect – Axway API Management", "job_id": "4457229887", "location": "Hyderabad, Telangana, India", "path": "Easy Apply"},
+    {"company": "Kandou AI", "role": "Customer Platform, SDK & Interoperability Architect", "job_id": "4461065835", "location": "Greater Hyderabad Area", "path": "Easy Apply"},
+    {"company": "Kandou AI", "role": "Program Director", "job_id": "4457837168", "location": "Greater Hyderabad Area", "path": "Easy Apply"},
+    {"company": "Realpage", "role": "Architect", "job_id": "4459282509", "location": "Hyderabad, Telangana, India", "path": "Easy Apply"},
+    {"company": "Marriott Tech Accelerator", "role": "Senior Software Engineer I [T500-29058]", "job_id": "4461563982", "location": "Hyderabad, Telangana, India", "path": "Easy Apply"},
+    {"company": "Playroom Early Learning Systems", "role": "Architect", "job_id": "4458498244", "location": "Hyderabad, Telangana, India", "path": "Easy Apply", "false_apply_suspect": true},
+    {"company": "Flow Interio Private Limited", "role": "Junior Architect", "job_id": "4450592955", "location": "Hyderabad, Telangana, India", "path": "Easy Apply", "false_apply": true},
+    {"company": "Waterleaf Architects", "role": "Junior Architect", "job_id": "4456594297", "location": "Hyderabad, Telangana, India", "path": "Easy Apply", "false_apply": true},
+    {"company": "Grid Dynamics", "role": "Dotnet Developer", "job_id": "4460245446", "location": "Hyderabad, Telangana, India", "path": "Easy Apply"},
+    {"company": "Arth", "role": "Senior BIM Architect - Arch", "job_id": "4457905817", "location": "Hyderabad, Telangana, India", "path": "Easy Apply", "false_apply": true},
+    {"company": "Olympus Corporation", "role": "IT Infrastructure Solution Architect, Cloud & Datacenter, Global", "job_id": "4460240582", "location": "Hyderabad, Telangana, India", "path": "Easy Apply"}
   ],
-  "artifact": "/opt/cursor/artifacts/linkedin-auto-login-captcha.png",
+  "blocked": [
+    {"company": "XFactor Talent", "role": "Azure Cloud Engineer & Architect", "reason": "exceeded Easy Apply steps"},
+    {"company": "Quess Corp Limited", "role": "Databricks Technical lead", "reason": "exceeded Easy Apply steps"},
+    {"company": "Prosoma", "role": "Project Management Consultant — PMO Architect", "reason": "exceeded Easy Apply steps"},
+    {"company": "HighRadius", "role": "Associate Architect - Site Reliability", "reason": "exceeded Easy Apply steps"},
+    {"company": "Capgemini", "role": "FBS Domain Architect", "reason": "exceeded Easy Apply steps"},
+    {"company": "Olympus Corporation", "role": "IT Infrastructure Solution Architect, Cloud & Datacenter, Global", "reason": "easy_apply_daily_limit"}
+  ],
+  "artifact": "/opt/cursor/artifacts/apply-report.json",
+  "external_artifact": "/opt/cursor/artifacts/external-apply-report.json",
   "code_fix": {
-    "issue": "Google /challenge/pwd treated as 2FA; load-job-secrets aliased LINKEDIN_PASSWORD into GOOGLE_PASSWORD",
-    "fix": "Exclude password forms from 2FA detector; heal password first; do not copy LINKEDIN_PASSWORD to GOOGLE_PASSWORD"
+    "issue": "Google /challenge/pwd treated as 2FA; load-job-secrets aliased LINKEDIN_PASSWORD; TITLE_OK matched BDM/Junior/BIM",
+    "fix": "Exclude pwd from 2FA; heal password first; stop LINKEDIN→GOOGLE alias; blacklist junior/BIM/BDM",
+    "branch": "cursor/linkedin-fix-google-pwd-not-2fa-a239"
   }
 }
