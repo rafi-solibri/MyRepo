@@ -27,12 +27,23 @@ import sys
 import time
 from typing import Any
 
+# Password / identifier forms are NOT 2FA. /challenge/pwd is "Enter your password".
+_PASSWORD_CHALLENGE_RE = re.compile(
+    r"/signin/identifier|/challenge/pwd|"
+    r"enter your password|forgot (your )?password|show password",
+    re.I,
+)
 _CHALLENGE_RE = re.compile(
     r"2[- ]step|two[- ]step|authenticator|verification code|"
     r"enter (the |your )?(code|pin)|google prompt|"
     r"check your phone|tap yes|confirm it.?s you|"
-    r"account recovery|verify it.?s you|signin/challenge|"
-    r"challenge/totp|challenge/ipp|challenge/sk|/challenge/",
+    r"account recovery|verify it.?s you|"
+    r"challenge/totp|challenge/ipp|challenge/sk|challenge/az|"
+    r"/challenge/(totp|ipp|sk|az|kpe|selection)",
+    re.I,
+)
+_REAL_2FA_URL_RE = re.compile(
+    r"accounts\.google\.com/.*/challenge/(totp|ipp|sk|az|kpe|selection|dp)",
     re.I,
 )
 
@@ -59,9 +70,18 @@ def is_google_2fa_challenge(page: Any = None, *, url: str = "", body: str = "") 
             except Exception:
                 text = ""
     blob = f"{u}\n{text}"
+    # /challenge/pwd and identifier are password forms — heal with GOOGLE_PASSWORD.
+    if _PASSWORD_CHALLENGE_RE.search(blob) and not _REAL_2FA_URL_RE.search(u):
+        if not re.search(
+            r"authenticator|2[- ]step|two[- ]step|tap yes|check your phone|"
+            r"verification code|google prompt",
+            text,
+            re.I,
+        ):
+            return False
     if "accounts.google.com" in u.lower() and _CHALLENGE_RE.search(blob):
         return True
-    if re.search(r"accounts\.google\.com/.*/challenge", u, re.I):
+    if _REAL_2FA_URL_RE.search(u):
         return True
     if _CHALLENGE_RE.search(text) and re.search(
         r"google|g-?suite|rafi\.success@gmail", text, re.I

@@ -63,13 +63,11 @@ if [[ -z "${NAUKRI_APPLY_EMAIL:-}" && -n "${APPLY_EMAIL:-}" ]]; then
   export NAUKRI_APPLY_EMAIL
 fi
 # Google account password (Gmail SSO) — alias into LINKEDIN_PASSWORD when unset.
+# HARD: do not copy LINKEDIN_PASSWORD → GOOGLE_PASSWORD. That cross-feed burns
+# Gmail with the LinkedIn secret (see auto_login google_password_candidates).
 if [[ -z "${LINKEDIN_PASSWORD:-}" && -n "${GOOGLE_PASSWORD:-}" ]]; then
   LINKEDIN_PASSWORD="$GOOGLE_PASSWORD"
   export LINKEDIN_PASSWORD
-fi
-if [[ -z "${GOOGLE_PASSWORD:-}" && -n "${LINKEDIN_PASSWORD:-}" ]]; then
-  GOOGLE_PASSWORD="$LINKEDIN_PASSWORD"
-  export GOOGLE_PASSWORD
 fi
 if [[ -z "${LINKEDIN_EMAIL:-}" && -n "${GOOGLE_EMAIL:-}" ]]; then
   LINKEDIN_EMAIL="$GOOGLE_EMAIL"

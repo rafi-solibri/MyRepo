@@ -84,6 +84,9 @@ def test_is_google_identifier_url():
     assert _mod.is_google_identifier_url(
         "https://accounts.google.com/v3/signin/challenge/pwd?TL=abc"
     )
+    assert not _mod.is_google_identifier_url(
+        "https://accounts.google.com/v3/signin/challenge/totp?TL=abc"
+    )
     assert not _mod.is_google_identifier_url("https://accounts.google.com/gsi/select")
     assert not _mod.is_google_identifier_url("https://www.example.com/login")
 
@@ -115,6 +118,9 @@ def test_page_needs_google_password_url_and_body():
         )
         assert not _mod._page_needs_google_password(
             FakePage("https://accounts.google.com/gsi/select", "Choose an account")
+        )
+        assert not _mod._page_needs_google_password(
+            FakePage("https://accounts.google.com/v3/signin/challenge/totp?TL=x")
         )
     finally:
         _mod._page_body = orig
