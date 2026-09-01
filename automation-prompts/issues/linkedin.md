@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| ASK_OWNER_GOOGLE_2FA failed with No module named tools; 2FA number not printed | Ensure repo root on sys.path + PYTHONPATH in launch-chrome-cdp; extract/print Google match number when present |
 | ASK_OWNER_GOOGLE_2FA failed with No module named tools; Google number-match digit not printed in chat | Insert repo root on sys.path in auto_login + PYTHONPATH in launch-chrome-cdp; extract/print Google match number in google_2fa_prompt |
 | Google SSO heal used LINKEDIN_PASSWORD (and stopped on first wrong_password), burning Gmail with the LinkedIn secret | Route GOOGLE_PASSWORD-only to Google forms and LINKEDIN_PASSWORD-only to LinkedIn forms; never cross-feed |
 
