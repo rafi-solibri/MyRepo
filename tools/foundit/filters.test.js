@@ -864,4 +864,57 @@ assert.strictEqual(
   "Dynamics CRM Technical Lead may still pass (Microsoft/.NET CRM stack)"
 );
 
+assert.strictEqual(
+  classifyJob({
+    jobId: 64990149,
+    title: "Manager AI & Data Solutions Engineer - Multistate Tax - Hyderabad",
+    companyName: "Deloitte",
+    locations: [{ text: "Hyderabad / Secunderabad, Telangana" }],
+    skills: [
+      { text: "Power Apps" },
+      { text: ".Net 10" },
+      { text: "LLM model" },
+      { text: "Azure services" },
+      { text: "Microsoft Power Platform" },
+    ],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 10 },
+  }).reason,
+  "pure AI/data without .NET on title",
+  "Deloitte Manager AI & Data Solutions must skip even with skills laundry .NET (2026-09-01)"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 64974919,
+    title: "Application Architect",
+    companyName: "RealPage",
+    locations: [{ text: "Hyderabad / Secunderabad, Telangana" }],
+    skills: [
+      { text: "Oracle ERP Applications" },
+      { text: "Oracle Fusion Pricing" },
+      { text: "Oracle Subscriptions Cloud" },
+      { text: "Groovy Algorithms" },
+    ],
+    minimumExperience: { years: 12 },
+    maximumExperience: { years: 14 },
+  }).reason,
+  "Oracle Fusion/ERP without .NET on title",
+  "RealPage Application Architect with Oracle ERP/Fusion skills must skip Arch/Lead band (2026-09-01)"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 64996568,
+    title: "Atlassian Solution Architect",
+    companyName: "Algoworks Technologies",
+    locations: [{ text: "Remote" }],
+    skills: [{ text: "Jira Cloud" }, { text: "Tempo" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 12 },
+  }).reason,
+  "Atlassian without .NET on title",
+  "Atlassian Solution Architect must skip without .NET on title (2026-09-01)"
+);
+
 console.log("filters.test.js OK");
