@@ -49,3 +49,13 @@
 
 ## Artifact
 `/opt/cursor/artifacts/foundit-apply-report.json`
+
+## Post-fix re-run (#301)
+- Applied tab: **453 → 453** (+0)
+- Intentional applies: **0**
+- Deloitte Manager AI & Data Solutions → skipped (`pure AI/data without .NET on title`)
+- RealPage Application Architect → skipped (`Oracle Fusion/ERP without .NET on title`)
+- Atlassian Solution Architect → skipped (`Atlassian without .NET on title`)
+- Skips: 1185 | duplicates: 70 | blocked: 0
+- Age window: 3650d
+- Artifact: `reports/2026-09-01/foundit-apply-report-postfix.json`
