@@ -86,6 +86,13 @@ def test_is_google_identifier_url():
     )
     assert not _mod.is_google_identifier_url("https://accounts.google.com/gsi/select")
     assert not _mod.is_google_identifier_url("https://www.example.com/login")
+    # TOTP / phone challenges are not password-identifier URLs.
+    assert not _mod.is_google_identifier_url(
+        "https://accounts.google.com/v3/signin/challenge/totp?TL=abc"
+    )
+    assert not _mod.is_google_identifier_url(
+        "https://accounts.google.com/signin/challenge/ipp"
+    )
 
 
 def test_page_needs_google_password_url_and_body():
@@ -138,3 +145,54 @@ def test_google_auth_pages_filters():
     assert len(pages) == 2
     assert "identifier" in pages[0].url
     assert "gsi/select" in pages[1].url
+
+
+def test_heal_password_page_does_not_wait_2fa_when_google_password_missing(monkeypatch=None):
+    """challenge/pwd must fail fast (missing GOOGLE_PASSWORD), not wait 300s as 2FA."""
+
+    class FakePage:
+        def __init__(self, url: str):
+            self.url = url
+
+        def locator(self, sel):
+            raise AssertionError("heal should not scrape when URL is challenge/pwd")
+
+        def screenshot(self, **kwargs):
+            return None
+
+        def get_by_role(self, *a, **k):
+            class Empty:
+                def count(self):
+                    return 0
+
+            return Empty()
+
+    class FakeCtx:
+        pages = [
+            FakePage("https://accounts.google.com/v3/signin/challenge/pwd?TL=x")
+        ]
+
+    waited = []
+
+    def _boom(*a, **k):
+        waited.append(True)
+        raise AssertionError("must not wait for 2FA on password challenge")
+
+    import tools.google_2fa_prompt as g2
+
+    orig_wait = g2.wait_owner_google_2fa
+    g2.wait_owner_google_2fa = _boom
+    orig_cands = _mod.google_password_candidates
+    _mod.google_password_candidates = lambda env=None: []
+    try:
+        out = {"attempts": []}
+        result = _mod._heal_google_auth_pages(FakeCtx(), out)
+        assert result == "wrong_password"
+        assert any(
+            a.get("google_password_heal") == "missing_google_password"
+            for a in out["attempts"]
+        )
+        assert not waited
+    finally:
+        g2.wait_owner_google_2fa = orig_wait
+        _mod.google_password_candidates = orig_cands

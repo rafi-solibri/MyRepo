@@ -31,8 +31,21 @@ _CHALLENGE_RE = re.compile(
     r"2[- ]step|two[- ]step|authenticator|verification code|"
     r"enter (the |your )?(code|pin)|google prompt|"
     r"check your phone|tap yes|confirm it.?s you|"
-    r"account recovery|verify it.?s you|signin/challenge|"
-    r"challenge/totp|challenge/ipp|challenge/sk|/challenge/",
+    r"account recovery|verify it.?s you|"
+    r"challenge/totp|challenge/ipp|challenge/sk|challenge/kpe|"
+    r"challenge/az|challenge/iap",
+    re.I,
+)
+
+# Password re-auth is not 2FA. /challenge/pwd shows "Enter your password".
+_PASSWORD_CHALLENGE_URL_RE = re.compile(r"/challenge/pwd(?:\?|/|$)", re.I)
+_PASSWORD_BODY_RE = re.compile(
+    r"enter your password|forgot password|show password|wrong password",
+    re.I,
+)
+_AUTHENTICATOR_BODY_RE = re.compile(
+    r"2[- ]step|authenticator|verification code|check your phone|tap yes|"
+    r"google prompt",
     re.I,
 )
 
@@ -42,6 +55,28 @@ _DONE_URL_RE = re.compile(
     r"accounts\.google\.com/(?:b/0/)?(?:ManageAccount|SignOutOptions)",
     re.I,
 )
+
+
+def is_google_password_challenge(page: Any = None, *, url: str = "", body: str = "") -> bool:
+    """True when Google is asking for the account password (not TOTP/phone 2FA)."""
+    u = url or ""
+    text = body or ""
+    if page is not None:
+        try:
+            u = u or (page.url or "")
+        except Exception:
+            pass
+        if not text:
+            try:
+                text = page.locator("body").inner_text(timeout=2000)[:2500]
+            except Exception:
+                text = ""
+    if _PASSWORD_CHALLENGE_URL_RE.search(u):
+        return True
+    if "accounts.google.com" in u.lower() and _PASSWORD_BODY_RE.search(text):
+        if not _AUTHENTICATOR_BODY_RE.search(text):
+            return True
+    return False
 
 
 def is_google_2fa_challenge(page: Any = None, *, url: str = "", body: str = "") -> bool:
@@ -58,6 +93,8 @@ def is_google_2fa_challenge(page: Any = None, *, url: str = "", body: str = "") 
                 text = page.locator("body").inner_text(timeout=2000)[:2500]
             except Exception:
                 text = ""
+    if is_google_password_challenge(url=u, body=text):
+        return False
     blob = f"{u}\n{text}"
     if "accounts.google.com" in u.lower() and _CHALLENGE_RE.search(blob):
         return True
