@@ -580,6 +580,293 @@ def skip_reason(title: str, company: str, location: str, snippet: str) -> str | 
 
 
 ACCOUNT_SETTINGS_URL = "https://secure.indeed.com/settings/account"
+AUTH_CONTINUE_URL = (
+    "https://secure.indeed.com/auth?hl=en_IN&co=IN"
+    "&continue=https%3A%2F%2Fin.indeed.com%2F"
+)
+
+
+def sb_cookie_map(sb) -> dict[str, str]:
+    """Name→value for cookies visible to the UC driver (decrypted)."""
+    out: dict[str, str] = {}
+    try:
+        raw = sb.get_cookies() or []
+    except Exception:
+        try:
+            raw = sb.driver.get_cookies() or []
+        except Exception:
+            raw = []
+    for c in raw:
+        try:
+            name = str(c.get("name") or "")
+            if name:
+                out[name] = str(c.get("value") or "")
+        except Exception:
+            continue
+    return out
+
+
+def passport_oauth_meta(cookies: dict[str, str] | None = None, *, now: float | None = None) -> dict:
+    """Inspect Passport bearer / OauthExpires — cookie *names* can outlive the JWT."""
+    cookies = cookies or {}
+    now_ts = float(now if now is not None else time.time())
+    exp_raw = (cookies.get("__Secure-PassportAuthProxy-OauthExpires") or "").strip()
+    exp: int | None = None
+    if exp_raw.isdigit():
+        exp = int(exp_raw)
+    bearer = cookies.get("__Secure-PassportAuthProxy-BearerToken") or ""
+    jwt_exp: int | None = None
+    if bearer.count(".") >= 2:
+        try:
+            import base64
+
+            payload = bearer.split(".")[1]
+            payload += "=" * (-len(payload) % 4)
+            claims = json.loads(base64.urlsafe_b64decode(payload))
+            if isinstance(claims.get("exp"), (int, float)):
+                jwt_exp = int(claims["exp"])
+        except Exception:
+            jwt_exp = None
+    effective = jwt_exp if jwt_exp is not None else exp
+    expired = bool(effective is not None and now_ts > effective)
+    return {
+        "oauthExpires": exp,
+        "jwtExp": jwt_exp,
+        "expired": expired,
+        "hasBearer": bool(bearer),
+        "hasRefresh": bool(cookies.get("__Secure-PassportAuthProxy-RefreshToken")),
+        "hasRememberMe": bool(cookies.get("rememberMe")),
+    }
+
+
+def _owner_google_email() -> str:
+    return (
+        os.environ.get("GOOGLE_EMAIL")
+        or os.environ.get("LINKEDIN_EMAIL")
+        or os.environ.get("APPLY_EMAIL")
+        or ""
+    ).strip()
+
+
+class _SbPageAdapter:
+    """Minimal Playwright-like surface for tools.google_2fa_prompt."""
+
+    def __init__(self, sb):
+        self._sb = sb
+
+    @property
+    def url(self) -> str:
+        try:
+            return self._sb.get_current_url() or ""
+        except Exception:
+            return ""
+
+    def bring_to_front(self) -> None:
+        try:
+            self._sb.bring_to_front()
+        except Exception:
+            pass
+
+    def locator(self, _sel: str):
+        sb = self._sb
+
+        class _Body:
+            def inner_text(self, timeout: int = 1500) -> str:
+                try:
+                    return (sb.get_text("body") or "")[:2500]
+                except Exception:
+                    return ""
+
+        return _Body()
+
+
+def _click_first_visible(sb, selectors: list[str]) -> str | None:
+    for sel in selectors:
+        try:
+            if sb.is_element_visible(sel):
+                sb.click(sel)
+                return sel
+        except Exception:
+            continue
+    return None
+
+
+def try_indeed_google_sso(sb) -> dict:
+    """Heal expired Passport via Continue with Google (GOOGLE_AUTH.md).
+
+    Cookie *names* often remain after OauthExpires/JWT exp — hasAuth stays true
+    while Indeed paints Sign In. Prefer Gmail SSO already on the UC profile.
+    """
+    info: dict = {"ok": False, "tried": [], "method": "google_sso"}
+    email = _owner_google_email()
+    info["email"] = email[:3] + "***" if email else ""
+
+    def _snap() -> tuple[str, str, str]:
+        try:
+            return (
+                (sb.get_text("body") or "")[:2500],
+                sb.get_title() or "",
+                sb.get_current_url() or "",
+            )
+        except Exception:
+            return "", "", ""
+
+    try:
+        body, title, url = _snap()
+        if not looks_login_wall(body, url) and "accounts.google.com" not in (url or "").lower():
+            sb.uc_open_with_reconnect(AUTH_CONTINUE_URL, 5)
+            time.sleep(2)
+            clear_cf(sb)
+            body, title, url = _snap()
+        info["start"] = {"title": title[:80], "url": (url or "")[:160]}
+
+        clicked = _click_first_visible(
+            sb,
+            [
+                "button:contains('Continue with Google')",
+                "a:contains('Continue with Google')",
+                "[data-tn-element='google-auth']",
+                "button[data-provider='google']",
+                "#login-google-button",
+                "div[role='button']:contains('Google')",
+            ],
+        )
+        if not clicked:
+            # Fallback: link text helpers
+            try:
+                sb.click_link("Continue with Google")
+                clicked = "click_link:Continue with Google"
+            except Exception as exc:
+                info["tried"].append({"google_btn": "missing", "error": str(exc)[:120]})
+                return info
+        info["tried"].append({"google_btn": clicked})
+        time.sleep(3)
+
+        body, title, url = _snap()
+        # Account chooser
+        if email and "accounts.google.com" in (url or "").lower():
+            chooser_sels = [
+                f"div[data-identifier='{email}']",
+                f"div[data-email='{email}']",
+                f"*[data-identifier='{email}']",
+                f"div:contains('{email}')",
+            ]
+            picked = _click_first_visible(sb, chooser_sels)
+            info["tried"].append({"account_chooser": picked or "not_clicked"})
+            if picked:
+                time.sleep(3)
+                body, title, url = _snap()
+
+        # Password challenge — only if secrets present
+        blob = f"{url}\n{body}"
+        if re.search(r"signin/challenge/pwd|enter your password", blob, re.I):
+            pw = (
+                os.environ.get("GOOGLE_PASSWORD")
+                or os.environ.get("LINKEDIN_PASSWORD")
+                or ""
+            ).strip()
+            if pw:
+                try:
+                    if sb.is_element_visible("input[type='password']"):
+                        sb.type("input[type='password']", pw + "\n")
+                        info["tried"].append({"password": "submitted"})
+                        time.sleep(4)
+                        body, title, url = _snap()
+                except Exception as exc:
+                    info["tried"].append({"password_error": str(exc)[:120]})
+            else:
+                info["tried"].append({"password": "missing_secret"})
+
+        # 2FA / phone prompt
+        adapter = _SbPageAdapter(sb)
+        if is_google_2fa_challenge_url_body(url, body):
+            try:
+                from tools.google_2fa_prompt import wait_owner_google_2fa
+
+                ok_2fa = wait_owner_google_2fa(adapter, portal="indeed")
+                info["tried"].append({"google_2fa": ok_2fa})
+                time.sleep(2)
+                body, title, url = _snap()
+            except Exception as exc:
+                info["tried"].append({"google_2fa_error": str(exc)[:120]})
+
+        clear_cf(sb)
+        # Land on account / home and confirm
+        for dest in (ACCOUNT_SETTINGS_URL, "https://in.indeed.com/myjobs", "https://in.indeed.com/"):
+            try:
+                sb.uc_open_with_reconnect(dest, 4)
+                time.sleep(2)
+                clear_cf(sb)
+                body, title, url = _snap()
+                if looks_signed_in(body, url):
+                    info["ok"] = True
+                    info["via"] = dest
+                    info["oauth"] = passport_oauth_meta(sb_cookie_map(sb))
+                    persist_indeed_uc_session()
+                    return info
+            except Exception as exc:
+                info["tried"].append({"dest": dest, "error": str(exc)[:100]})
+        info["final"] = {"title": title[:80], "url": (url or "")[:160], "loginWall": looks_login_wall(body, url)}
+        info["oauth"] = passport_oauth_meta(sb_cookie_map(sb))
+    except Exception as exc:
+        info["error"] = str(exc)[:200]
+    return info
+
+
+def is_google_2fa_challenge_url_body(url: str, body: str) -> bool:
+    try:
+        from tools.google_2fa_prompt import is_google_2fa_challenge
+
+        return bool(is_google_2fa_challenge(url=url or "", body=body or ""))
+    except Exception:
+        return bool(
+            re.search(r"accounts\.google\.com/.*/challenge", url or "", re.I)
+            or re.search(r"2[- ]step|authenticator|tap yes|check your phone", body or "", re.I)
+        )
+
+
+def persist_indeed_uc_session() -> dict:
+    """Copy healed UC hybrid Cookies back into the seed profile + portal seed."""
+    out: dict = {"copied": False}
+    src = Path(PROFILE)
+    dst = Path(SEED_PROFILE)
+    try:
+        src_c = src / "Default" / "Cookies"
+        if not src_c.is_file():
+            out["error"] = "missing_uc_cookies"
+            return out
+        dst.mkdir(parents=True, exist_ok=True)
+        (dst / "Default").mkdir(parents=True, exist_ok=True)
+        import shutil
+
+        for rel in (
+            "Local State",
+            "Default/Cookies",
+            "Default/Cookies-journal",
+        ):
+            s = src / rel
+            if s.exists():
+                d = dst / rel
+                d.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(s, d)
+        out["copied"] = True
+        out["dst"] = str(dst)
+        # Best-effort seed refresh for next cloud boot.
+        try:
+            subprocess.run(
+                ["bash", str(ROOT / "scripts" / "refresh-portal-session-seed.sh"), "indeed"],
+                cwd=str(ROOT),
+                timeout=120,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            out["seedRefresh"] = True
+        except Exception as exc:
+            out["seedRefreshError"] = str(exc)[:120]
+    except Exception as exc:
+        out["error"] = str(exc)[:200]
+    return out
 
 
 def job_dedupe_key(href: str, jk: str = "") -> str:
@@ -665,8 +952,15 @@ def restore_signed_in(sb) -> dict:
 
     A homepage reload alone is not enough: Turnstile clearance on a new WARP
     IP often keeps "Get Started" until we hit Sign-in / account / myjobs.
+
+    When OauthExpires/JWT is past, cookie *names* still look authed but Indeed
+    shows Sign In — try Google SSO before declaring login_required.
     """
     info: dict = {"tried": [], "ok": False}
+    try:
+        info["oauth"] = passport_oauth_meta(sb_cookie_map(sb))
+    except Exception:
+        info["oauth"] = {}
 
     def _snap() -> tuple[str, str, str]:
         try:
@@ -682,8 +976,25 @@ def restore_signed_in(sb) -> dict:
         if looks_signed_in(body, url):
             info["ok"] = True
             info["via"] = via
+            try:
+                info["oauth"] = passport_oauth_meta(sb_cookie_map(sb))
+            except Exception:
+                pass
             return True
         return False
+
+    def _heal_login_wall(via: str) -> dict:
+        info["loginWall"] = True
+        info["via"] = via
+        # Expired Passport: heal via Gmail SSO before giving up.
+        sso = try_indeed_google_sso(sb)
+        info["googleSso"] = sso
+        if sso.get("ok"):
+            info["ok"] = True
+            info["loginWall"] = False
+            info["via"] = f"google_sso:{sso.get('via') or via}"
+            info["oauth"] = sso.get("oauth") or info.get("oauth")
+        return info
 
     for sel in (
         "a[data-gnav-element-name='SignIn']",
@@ -700,6 +1011,8 @@ def restore_signed_in(sb) -> dict:
                 info["tried"].append({"click": sel, "signedIn": looks_signed_in(body, url)})
                 if _done(body, url, f"click:{sel}"):
                     return info
+                if looks_login_wall(body, url):
+                    return _heal_login_wall(f"click:{sel}")
         except Exception as exc:
             info["tried"].append({"click": sel, "error": str(exc)[:120]})
 
@@ -707,8 +1020,7 @@ def restore_signed_in(sb) -> dict:
         ACCOUNT_SETTINGS_URL,
         "https://secure.indeed.com/settings",
         "https://in.indeed.com/myjobs",
-        "https://secure.indeed.com/auth?hl=en_IN&co=IN"
-        "&continue=https%3A%2F%2Fin.indeed.com%2F",
+        AUTH_CONTINUE_URL,
         "https://www.indeed.com/account/login"
         "?continue=https%3A%2F%2Fin.indeed.com%2F",
         "https://in.indeed.com/",
@@ -735,9 +1047,7 @@ def restore_signed_in(sb) -> dict:
                     pass
                 return info
             if looks_login_wall(body, cur):
-                info["loginWall"] = True
-                info["via"] = url
-                return info
+                return _heal_login_wall(url)
         except Exception as exc:
             info["tried"].append({"url": url, "error": str(exc)[:120]})
     return info
@@ -3394,16 +3704,37 @@ def main() -> int:
             if warmed.get("ok") or looks_signed_in(home_body, home_url):
                 session_ok = True
             elif warmed.get("loginWall") or looks_login_wall(home_body, home_url):
+                oauth = warmed.get("oauth") or {}
+                sso = warmed.get("googleSso") or {}
+                reason = (
+                    "indeed_session_expired"
+                    if oauth.get("expired")
+                    else "indeed_login_required"
+                )
+                hint = (
+                    "Passport OauthExpires/JWT past — Google SSO heal failed; "
+                    "headed login + refresh-portal-session-seed.sh indeed + Save Snapshot"
+                    if oauth.get("expired")
+                    else "Account/auth is a Sign-in wall — refresh Indeed cookies via headed login / home CDP"
+                )
+                if sso and not sso.get("ok"):
+                    hint += f"; googleSso={sso.get('tried') or sso.get('error') or 'failed'}"
                 report["blocked"].append(
                     {
-                        "reason": "indeed_login_required",
+                        "reason": reason,
                         "title": home_title[:120],
                         "bodySample": home_body[:400],
-                        "hint": "Account/auth is a Sign-in wall — refresh Indeed cookies via headed login / home CDP",
+                        "oauth": oauth,
+                        "googleSso": {
+                            k: sso.get(k)
+                            for k in ("ok", "via", "tried", "error", "email")
+                            if k in sso
+                        },
+                        "hint": hint[:500],
                     }
                 )
                 report["counts"]["blocked"] = 1
-                report["blockerSummary"] = "indeed_login_required"
+                report["blockerSummary"] = reason
                 OUT.parent.mkdir(parents=True, exist_ok=True)
                 OUT.write_text(json.dumps(report, indent=2))
                 _emit(report)

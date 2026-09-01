@@ -1,5 +1,12 @@
 # Indeed — issues & fixes
 
+## 2026-09-01 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Passport OauthExpires/JWT expired 2026-08-06 while cookie names still passed hasAuth → Sign In wall, 0 applies | Detect oauth expiry; on login wall try Continue with Google SSO (+2FA wait) before indeed_login_required; persist healed UC cookies back to seed |
+
+
 ## 2026-08-31 (cloud)
 
 | Issue | Fix |

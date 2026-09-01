@@ -17,6 +17,7 @@ from tools.indeed.uc_daily_apply import (  # noqa: E402
     looks_login_wall,
     job_dedupe_key,
     looks_signed_in,
+    passport_oauth_meta,
     skip_reason,
 )
 
@@ -171,6 +172,26 @@ def test_account_settings_and_serp_are_signed_in():
     assert not looks_signed_in(wall)
 
 
+def test_passport_oauth_meta_detects_expired_jwt():
+    # Regression 2026-09-01: cookie names still present after OauthExpires 2026-08-06
+    # → false hasAuth while Sign In wall blocks applies.
+    expired = passport_oauth_meta(
+        {"__Secure-PassportAuthProxy-OauthExpires": "1786004609", "__Secure-PassportAuthProxy-BearerToken": "x"},
+        now=1788240995.0,  # 2026-09-01
+    )
+    assert expired["expired"] is True
+    assert expired["oauthExpires"] == 1786004609
+    assert expired["hasBearer"] is True
+    fresh = passport_oauth_meta(
+        {"__Secure-PassportAuthProxy-OauthExpires": "1893456000"},
+        now=1788240995.0,
+    )
+    assert fresh["expired"] is False
+    empty = passport_oauth_meta({}, now=1788240995.0)
+    assert empty["expired"] is False
+    assert empty["hasBearer"] is False
+
+
 def test_company_ats_email_gate_is_not_indeed_login():
     """SAP / HCLTech careers cookie+email copy must not become indeed_login_required."""
     sap = (
@@ -228,6 +249,8 @@ if __name__ == "__main__":
     test_hybrid_profile_copies_local_state()
     test_india_home_get_started_is_not_login_proof()
     test_account_settings_and_serp_are_signed_in()
+    test_passport_oauth_meta_detects_expired_jwt()
     test_cookie_banner_visible_from_text()
     test_job_dedupe_key_from_jk()
+    test_company_ats_email_gate_is_not_indeed_login()
     print("ok")
