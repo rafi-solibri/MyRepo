@@ -101,6 +101,17 @@ def test_title_ok():
         "STAFF ENGINEER, SSD NVMQRA TEST DEV ENG Hyderabad, Telangana, India"
     )
     assert CAREERS_TITLE_SKIP.search("Staff Data Science Engineer, SMAI Hyderabad")
+    # Micron HW / ops titles that still matched Staff/Principal via TITLE_OK (2026-09-01).
+    assert CAREERS_TITLE_SKIP.search("Staff Engineer, CAD Hyderabad, Telangana, India")
+    assert CAREERS_TITLE_SKIP.search(
+        "Principal Engineer - STA/Synthesis Hyderabad, Telangana, India"
+    )
+    assert CAREERS_TITLE_SKIP.search(
+        "Staff Analyst - IT EA EPS Hyderabad, Telangana, India"
+    )
+    assert LI_TITLE_SKIP.search("Staff Engineer, CAD")
+    assert LI_TITLE_SKIP.search("Principal Engineer - STA/Synthesis")
+    assert LI_TITLE_SKIP.search("Staff Analyst - IT EA EPS")
     assert LI_TITLE_SKIP.search("Staff Engineer, Scribe Layout Design")
     assert LI_TITLE_SKIP.search("Lead Principal Engineer, Design Verification")
     assert skip_reason("Staff Engineer, Scribe Layout Design") is not None
