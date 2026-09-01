@@ -53,6 +53,31 @@ assert.strictEqual(
   "wrong_stack_title"
 );
 assert.strictEqual(
+  skipReason("Technical Architect - Microsoft Dynamics 365 Finance & Operations", {
+    location: "Hyderabad",
+    skills: "D365 F&O Azure",
+  }),
+  "wrong_stack_title"
+);
+assert.strictEqual(
+  skipReason("Senior Technical Consultant D365", {
+    location: "Hyderabad",
+    skills: ".NET",
+  }),
+  "wrong_stack_title"
+);
+assert.strictEqual(
+  skipReason("Full Stack Developer - Python/Groovy", {
+    location: "Hyderabad",
+    skills: "Python Groovy Azure",
+  }),
+  "non_dotnet_primary"
+);
+assert.strictEqual(
+  skipReason("Tech Lead .NET / Python", { location: "Hyderabad", skills: "C# Python" }),
+  null
+);
+assert.strictEqual(
   skipReason("Full Stack Lead (Java)", { location: "Hyderabad", skills: "Java" }),
   "java_primary"
 );
