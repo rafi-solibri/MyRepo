@@ -44,6 +44,27 @@ except Exception:
         skip_reason,
     )
 
+try:
+    from tools.linkedin.restriction import (
+        clear_restriction_memory,
+        pace_between_linkedin_applies,
+        record_restriction_from_page,
+        should_skip_linkedin_for_restriction,
+    )
+except Exception:
+    try:
+        from restriction import (  # type: ignore
+            clear_restriction_memory,
+            pace_between_linkedin_applies,
+            record_restriction_from_page,
+            should_skip_linkedin_for_restriction,
+        )
+    except Exception:
+        clear_restriction_memory = None  # type: ignore
+        pace_between_linkedin_applies = None  # type: ignore
+        record_restriction_from_page = None  # type: ignore
+        should_skip_linkedin_for_restriction = None  # type: ignore
+
 CDP = os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222")
 _ROOT = Path(__file__).resolve().parents[2]
 
@@ -2139,14 +2160,11 @@ def process_search(
 def main() -> None:
     results: list[JobResult] = []
     try:
-        from tools.linkedin.restriction import (
-            clear_restriction_memory,
-            pace_between_linkedin_applies,
-            record_restriction_from_page,
-            should_skip_linkedin_for_restriction,
+        skip_restr = (
+            should_skip_linkedin_for_restriction()
+            if should_skip_linkedin_for_restriction
+            else None
         )
-
-        skip_restr = should_skip_linkedin_for_restriction()
         if skip_restr:
             results.append(
                 JobResult(
@@ -2167,9 +2185,7 @@ def main() -> None:
     except SystemExit:
         raise
     except Exception:
-        pace_between_linkedin_applies = None  # type: ignore
-        record_restriction_from_page = None  # type: ignore
-        clear_restriction_memory = None  # type: ignore
+        pass
 
     # Bootstrap seed (legacy hardcodes) + artifact-driven IDs from prior reports
     seed_seen: set[str] = {
