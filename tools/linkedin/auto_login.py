@@ -160,24 +160,24 @@ def _url_loginish(url: str) -> bool:
 
 
 def _close_stale_auth_tabs(ctx) -> None:
-    """Close leftover challenge/Google chooser tabs, but never the last tab."""
-    pages = list(ctx.pages or [])
-    if len(pages) <= 1:
-        return
-    for p in pages:
-        if len(list(ctx.pages or [])) <= 1:
-            break
-        u = p.url or ""
-        if re.search(r"checkpoint|challenge|accounts\.google\.com/gsi/select", u, re.I):
-            try:
-                p.close()
-            except Exception:
-                pass
+    """Never close Gmail or LinkedIn login / checkpoint tabs.
+
+    Older builds closed any tab whose URL matched checkpoint|challenge|GSI
+    select. That killed in-progress Google password/2FA and LinkedIn CAPTCHA
+    when the other login method started. Leave those tabs alone.
+    """
+    return
 
 
 def _is_signed_in(ctx, page) -> bool:
     if not _cookies_has_li_at(ctx):
         return False
+    # Never navigate a Gmail tab to LinkedIn — that blocks Google login.
+    try:
+        if "accounts.google.com" in ((page.url or "")).lower():
+            return False
+    except Exception:
+        pass
     # Prefer verifying via feed navigation; leftover challenge tabs are OK if li_at works.
     try:
         page.goto("https://www.linkedin.com/feed/", wait_until="domcontentloaded", timeout=60000)
@@ -198,14 +198,27 @@ def _is_signed_in(ctx, page) -> bool:
 
 
 def _on_captcha(page) -> bool:
+    """True only for an interactive LinkedIn security-puzzle / CAPTCHA.
+
+    Do not treat Google identifier/password/2FA as CAPTCHA (those URLs contain
+    /challenge/). Do not treat LinkedIn /login or Welcome-back as CAPTCHA just
+    because a prior hop used /checkpoint/challenge/.
+    """
     url = (page.url or "").lower()
-    if "/checkpoint" in url or "challenge" in url:
-        return True
+    if "accounts.google.com" in url:
+        return False
     try:
         body = page.locator("body").inner_text()[:1500]
     except Exception:
         body = ""
-    if re.search(r"quick security check|not a robot|captcha|security verification", body, re.I):
+    # Login form after a failed password is not a CAPTCHA.
+    if re.search(
+        r"incorrect credentials|welcome back|email or phone|sign in using another account",
+        body,
+        re.I,
+    ) and not re.search(r"quick security check|not a robot", body, re.I):
+        return False
+    if re.search(r"quick security check|not a robot|captcha", body, re.I):
         return True
     try:
         if page.locator(
@@ -214,8 +227,9 @@ def _on_captcha(page) -> bool:
             return True
     except Exception:
         pass
+    if "/checkpoint" in url and re.search(r"security verification|verify it.?s you", body, re.I):
+        return True
     return False
-
 
 
 def parse_restriction_lift(text: str) -> datetime | None:
@@ -320,8 +334,12 @@ def _pick_linkedin_page(ctx):
     for p in pages:
         if "linkedin.com" in (p.url or ""):
             return p
-    if pages:
-        return pages[0]
+    # Never hijack a Google login tab — opening LinkedIn there blocks Gmail.
+    for p in pages:
+        u = (p.url or "").lower()
+        if "accounts.google.com" in u:
+            continue
+        return p
     try:
         return ctx.new_page()
     except Exception:
@@ -405,9 +423,9 @@ def _heal_google_auth_pages(ctx, out: dict | None = None) -> str | None:
                             "google_password_heal": "missing_google_password",
                         }
                     )
-                # Cannot complete Google pwd form without GOOGLE_PASSWORD — do not
-                # burn LINKEDIN_PASSWORD against Gmail (wrong-password lock risk).
-                return "wrong_password"
+                # Leave the Google tab open for the owner. Do not mark
+                # wrong_password (that aborted SSO and used to close Gmail).
+                return "missing_google_password"
             for pw in google_pws:
                 ident_result = _complete_google_password_login(popup, email, pw)
                 if ident_result in ("ok", "need_human"):
@@ -798,8 +816,8 @@ def _password_login(page, email: str, password: str) -> bool:
 
 
 def _goto_login_clean(ctx, page):
-    """Leave checkpoint/Google tabs and open a fresh /login form."""
-    _close_stale_auth_tabs(ctx)
+    """Open LinkedIn /login on a LinkedIn (or new) tab — never a Google tab."""
+    # Do not close Gmail / LinkedIn checkpoint tabs.
     page = _pick_linkedin_page(ctx)
     try:
         page.goto(
@@ -853,7 +871,13 @@ def _wait_signed_in(ctx, page, deadline: float, via: str, out: dict) -> int | No
                     {"step": via, "wrong_password": True, "via_google": True}
                 )
                 return 8
-            # need_human / ok: keep polling — owner 2FA or consent may finish SSO.
+            if heal == "missing_google_password":
+                # Gmail password tab stays open; keep polling + still allow
+                # LinkedIn password on a different tab after this method times out.
+                out["attempts"].append(
+                    {"step": via, "google_password_heal": "missing_google_password"}
+                )
+            # need_human / ok / missing_google_password: keep polling.
         info = _temp_restriction_info(page)
         if info and not _cookies_has_li_at(ctx):
             out.update(ok=False, reason="account_temporarily_restricted", via=via, **info)

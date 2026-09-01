@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| auto_login/wait_for_cdp_login closed Gmail identifier and LinkedIn checkpoint tabs; /challenge treated as CAPTCHA | Never close Google/LinkedIn login tabs; never navigate Gmail away; CAPTCHA detector ignores Google and Welcome-back login |
 | Google SSO /challenge/pwd misclassified as 2FA; sat 300s instead of filling GOOGLE_PASSWORD or falling back to LinkedIn password | Exclude challenge/pwd from is_google_2fa_challenge; heal password form first; fail fast when GOOGLE_PASSWORD unset |
 | Easy Apply NameError: record_restriction_from_page not defined in process_search | Import restriction helpers at module scope so process_search can call them |
 | ASK_OWNER_GOOGLE_2FA failed with No module named tools; 2FA number not printed | Ensure repo root on sys.path + PYTHONPATH in launch-chrome-cdp; extract/print Google match number when present |

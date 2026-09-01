@@ -102,20 +102,16 @@ async function main() {
       url = page.url() || "";
     }
     if (has_li_at) {
-      // Close stale challenge/GSI tabs so they don't confuse later probes.
-      for (const p of ctx.pages() || []) {
-        const u = p.url() || "";
-        if (/checkpoint|challenge|accounts\.google\.com\/gsi\/select/i.test(u)) {
-          await p.close().catch(() => {});
-        }
-      }
+      // Do not close Gmail or LinkedIn login/checkpoint tabs.
       page = pickLinkedInPage(false) || page || (await ctx.newPage());
-      await page
-        .goto("https://www.linkedin.com/feed/", {
-          waitUntil: "domcontentloaded",
-          timeout: 60000,
-        })
-        .catch(() => {});
+      if (!/accounts\.google\.com/i.test(page.url() || "")) {
+        await page
+          .goto("https://www.linkedin.com/feed/", {
+            waitUntil: "domcontentloaded",
+            timeout: 60000,
+          })
+          .catch(() => {});
+      }
       url = page.url() || "";
     }
     const loginish = /\/login|authwall|checkpoint|challenge/i.test(url);

@@ -187,7 +187,7 @@ def test_heal_password_page_does_not_wait_2fa_when_google_password_missing(monke
     try:
         out = {"attempts": []}
         result = _mod._heal_google_auth_pages(FakeCtx(), out)
-        assert result == "wrong_password"
+        assert result == "missing_google_password"
         assert any(
             a.get("google_password_heal") == "missing_google_password"
             for a in out["attempts"]
@@ -196,3 +196,63 @@ def test_heal_password_page_does_not_wait_2fa_when_google_password_missing(monke
     finally:
         g2.wait_owner_google_2fa = orig_wait
         _mod.google_password_candidates = orig_cands
+
+
+def test_on_captcha_ignores_google_and_linkedin_login():
+    class FakePage:
+        def __init__(self, url: str, body: str = ""):
+            self.url = url
+            self._body = body
+
+        def locator(self, sel):
+            body = self._body
+
+            class Handle:
+                def inner_text(self, timeout=None):
+                    return body
+
+                def count(self):
+                    return 0
+
+            return Handle()
+
+    assert not _mod._on_captcha(
+        FakePage(
+            "https://accounts.google.com/v3/signin/challenge/pwd?TL=x",
+            "Enter your password",
+        )
+    )
+    assert not _mod._on_captcha(
+        FakePage(
+            "https://www.linkedin.com/login/",
+            "Incorrect credentials. Please try again.\nWelcome back\nPassword",
+        )
+    )
+    assert _mod._on_captcha(
+        FakePage(
+            "https://www.linkedin.com/checkpoint/challenge/abc",
+            "Quick security check\nPlease verify you are not a robot",
+        )
+    )
+
+
+def test_close_stale_auth_tabs_is_noop():
+    closed = []
+
+    class FakePage:
+        def __init__(self, url):
+            self.url = url
+
+        def close(self):
+            closed.append(self.url)
+
+    class FakeCtx:
+        def __init__(self):
+            self.pages = [
+                FakePage("https://accounts.google.com/v3/signin/identifier"),
+                FakePage("https://www.linkedin.com/checkpoint/challenge/x"),
+                FakePage("https://www.linkedin.com/feed/"),
+            ]
+
+    _mod._close_stale_auth_tabs(FakeCtx())
+    assert closed == []
