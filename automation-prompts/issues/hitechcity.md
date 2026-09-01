@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Micron Product Engineering / TD Device Characterization matched TITLE_OK and burned worker8 after CAD/STA skip | CAREERS_TITLE_SKIP + LI_TITLE_SKIP for comma Product Engineering and TD device characterization; tests keep SMAI software + Director of Product Engineering |
 | Micron Staff Engineer CAD / STA-Synthesis / Staff Analyst matched TITLE_OK and burned worker0 on reCAPTCHA soft incompletes | Extend CAREERS_TITLE_SKIP + LI_TITLE_SKIP for CAD, STA/synthesis, timing analysis, Staff Analyst; tests in test_filters.py |
 
 

@@ -109,6 +109,18 @@ def test_title_ok():
     assert CAREERS_TITLE_SKIP.search(
         "Staff Analyst - IT EA EPS Hyderabad, Telangana, India"
     )
+    # Micron PE / TD device titles that still matched Staff/Principal (2026-09-01 re-run).
+    assert CAREERS_TITLE_SKIP.search(
+        "Senior/Staff/Principal Engineer, Product Engineering Hyderabad, Telangana, India"
+    )
+    assert CAREERS_TITLE_SKIP.search(
+        "Principal Engineer, TD Device Characterization Hyderabad, Telangana, India"
+    )
+    assert LI_TITLE_SKIP.search("Senior/Staff/Principal Engineer, Product Engineering")
+    assert LI_TITLE_SKIP.search("Principal Engineer, TD Device Characterization")
+    # Software PE leadership must still apply.
+    assert not CAREERS_TITLE_SKIP.search("Director of Product Engineering")
+    assert not LI_TITLE_SKIP.search("Director of Product Engineering")
     assert LI_TITLE_SKIP.search("Staff Engineer, CAD")
     assert LI_TITLE_SKIP.search("Principal Engineer - STA/Synthesis")
     assert LI_TITLE_SKIP.search("Staff Analyst - IT EA EPS")
