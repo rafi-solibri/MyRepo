@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| False Quick Apply TCS Azure Infra Architect - S (AWS/GCP/Cloud Infra already skipped) | Title-skip azure infra(structure)? architect in SKIP_TITLE (with aws) and PURE_AI_DATA (with aws/gcp/cloud); Azure Architect .NET still applies |
 | False Quick Applies: Oracle PaaS/HCM/ERP, Fusion HCM, IMDS, IT Shared Services; DFT/ATPG ATS burn; Data Architecture / Cloud Infra Architect not title-skipped | Expand NON_DOTNET_PRIMARY (oracle paas/hcm/erp/ebs, fusion hcm), SKIP_TITLE (imds, dft/atpg/jtag/mbist/tessent/testmax, it shared services), PURE_AI_DATA (data architecture, cloud infra architect) |
 
 

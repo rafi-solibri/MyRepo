@@ -493,6 +493,21 @@ assert.strictEqual(
   "AWS Infra Architect must skip (false Quick Apply 2026-08-29)"
 );
 assert.strictEqual(
+  shouldSkipTitle("Azure Infra Architect - S"),
+  true,
+  "Azure Infra Architect must skip (false Quick Apply 2026-09-01 post-fix)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Azure Infrastructure Architect"),
+  true,
+  "Azure Infrastructure Architect must skip (parity with AWS/GCP/Cloud Infra)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Azure Architect .NET"),
+  false,
+  "Azure Architect with .NET must still apply"
+);
+assert.strictEqual(
   shouldSkipTitle("PLM Solution Architect"),
   true,
   "PLM-primary Solution Architect must skip"
