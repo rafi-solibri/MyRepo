@@ -154,11 +154,14 @@ CAREERS_TITLE_SKIP = re.compile(
     r"chiplet|\basic\b|\bvlsi\b|rtl\s*design|dft\s*engineer|"
     r"analog\s*design|digital\s*design\s*engineer|verification\s*engineer|"
     # Micron/AMD-style HW titles that match Staff/Principal via TITLE_OK:
-    # layout / DV / DRAM / standard-cell / power integrity / NVM test / data science IC.
+    # layout / DV / DRAM / standard-cell / power integrity / NVM test / data science IC /
+    # CAD / STA-synthesis / Staff Analyst (IT ops — not .NET SW).
     r"layout\s*design|scribe\s*layout|standard\s*cell|"
     r"design\s*verification|\bhbm\b|\bdram\b|power\s*integrity|"
     r"\bnvm\b|\bnvmqra\b|ssd\s*.*test|memory\s*verification|"
     r"circuit\s*design|mask\s*design|place\s*and\s*route|\bp&r\b|"
+    r"\bcad\b|sta\s*/\s*synthesis|\bsta\b.*\bsynthesis\b|\bsynthesis\b|"
+    r"timing\s*analysis|\bstaff\s*analyst\b|"
     r"data\s*science\s*engineer|"
     r"sales\s*specialist|especialista|"
     r"program\s*manager|technical\s*program\s*manager|\btpm\b|"
