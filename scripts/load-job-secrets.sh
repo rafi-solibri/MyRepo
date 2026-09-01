@@ -17,8 +17,8 @@
 #   Oracle/Greenhouse email verification; else Gmail tab in CDP Chrome is used.
 #   CAPSOLVER_API_KEY or TWOCAPTCHA_API_KEY — optional paid solvers.
 #   Free path: bash scripts/home-headed-careers-apply.sh (you click hCaptcha).
-# GOOGLE_PASSWORD is the Gmail/Google account password used for SSO; when set it
-# also fills LINKEDIN_PASSWORD if that key is empty (same account for many owners).
+# GOOGLE_PASSWORD is Gmail SSO only. LINKEDIN_PASSWORD is LinkedIn email login
+# only. Do not copy one into the other.
 set -uo pipefail
 
 _ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -62,15 +62,10 @@ if [[ -z "${NAUKRI_APPLY_EMAIL:-}" && -n "${APPLY_EMAIL:-}" ]]; then
   NAUKRI_APPLY_EMAIL="$APPLY_EMAIL"
   export NAUKRI_APPLY_EMAIL
 fi
-# Google account password (Gmail SSO) — alias into LINKEDIN_PASSWORD when unset.
-if [[ -z "${LINKEDIN_PASSWORD:-}" && -n "${GOOGLE_PASSWORD:-}" ]]; then
-  LINKEDIN_PASSWORD="$GOOGLE_PASSWORD"
-  export LINKEDIN_PASSWORD
-fi
-if [[ -z "${GOOGLE_PASSWORD:-}" && -n "${LINKEDIN_PASSWORD:-}" ]]; then
-  GOOGLE_PASSWORD="$LINKEDIN_PASSWORD"
-  export GOOGLE_PASSWORD
-fi
+# HARD: do not cross-feed LinkedIn vs Gmail passwords.
+# auto_login.py uses GOOGLE_PASSWORD only on Google forms and LINKEDIN_PASSWORD
+# only on LinkedIn forms. Aliasing here would burn Gmail with the LinkedIn secret
+# (or the reverse) and lock the account.
 if [[ -z "${LINKEDIN_EMAIL:-}" && -n "${GOOGLE_EMAIL:-}" ]]; then
   LINKEDIN_EMAIL="$GOOGLE_EMAIL"
   export LINKEDIN_EMAIL
