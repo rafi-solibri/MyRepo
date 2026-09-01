@@ -1,0 +1,163 @@
+{
+  "date": "2026-09-01",
+  "run": "post-fix-rerun-2",
+  "gitHeadAtRun": "6c3961b",
+  "startedAt": "2026-09-01T05:42:02.522Z",
+  "finishedAt": "2026-09-01T06:04:26.185Z",
+  "counts": {
+    "profileUpdated": true,
+    "applied": 1,
+    "externalCompleted": 0,
+    "blocked": 2,
+    "skipped": 3162,
+    "seen": 206,
+    "tailoredApplies": 1
+  },
+  "profileResumeRefresh": {
+    "ok": true,
+    "profileUpdated": true,
+    "verify": {
+      "todayHit": true,
+      "resumePresent": true,
+      "matchedToken": "Uploaded today",
+      "updateOn": "",
+      "updatedLines": [
+        "Uploaded today"
+      ],
+      "resumeName": "Resume\nUpdate\n\nRafi_Resume.docx\n\nUploaded today",
+      "tokensTried": [
+        "Updated today",
+        "updated today",
+        "Uploaded today",
+        "uploaded today",
+        "Today"
+      ]
+    },
+    "resume": "/workspace/resumes/Rafi_Resume.docx"
+  },
+  "profileResumeRestored": {
+    "ok": true,
+    "resume": "/workspace/resumes/Rafi_Resume.docx"
+  },
+  "earlyExpandedAges": [
+    3,
+    7
+  ],
+  "expandedAges": [
+    15,
+    30,
+    60
+  ],
+  "applied": [
+    {
+      "company": "Tata Consultancy Services",
+      "role": "Azure Infra Architect - S",
+      "location": "Hyderabad, Chennai, Bengaluru",
+      "naukriUrl": "https://www.naukri.com/solution-architect-azure-jobs-in-hyderabad-secunderabad?k=solution%20architect%20azure&l=hyderabad&experience=12&jobAge=15",
+      "query": "solution architect azure",
+      "age": 15,
+      "loc": "hyderabad",
+      "resume": "/tmp/naukri-tailored/640f027df171/Rafi_Resume.docx",
+      "tailored": true,
+      "tailorSkills": [
+        ".NET Core / C#",
+        "Azure",
+        "Kubernetes",
+        "Docker",
+        "CI/CD / Jenkins",
+        "Cloud Architecture"
+      ],
+      "tailorHeadline": "Solutions Architect | Technical Lead \u2014 .NET Core / C# \u00b7 Azure \u00b7 Kubernetes \u00b7 Docker",
+      "profileTailorUpload": {
+        "ok": true,
+        "profileUpdated": true
+      },
+      "path": "Naukri",
+      "cta": "chatbot:responses_thanks",
+      "recruiterNote": false,
+      "naukriJobUrl": "https://www.naukri.com/job-listings-azure-infra-architect-s-tata-consultancy-services-hyderabad-chennai-bengaluru-10-to-15-years-280826006118?src=directSearch"
+    }
+  ],
+  "external": [],
+  "blocked": [
+    {
+      "company": "Blackbaud",
+      "role": "Software Engineer, Principal - .NET DevOps",
+      "location": "Hyderabad",
+      "naukriUrl": "https://www.naukri.com/principal-engineer-net-jobs-in-hyderabad-secunderabad?k=principal%20engineer%20.net&l=hyderabad&experience=12&jobAge=60",
+      "query": "principal engineer .net",
+      "age": 60,
+      "loc": "hyderabad",
+      "resume": "/tmp/naukri-tailored/9d4edfaec558/Rafi_Resume.docx",
+      "tailored": true,
+      "tailorSkills": [
+        ".NET Core / C#",
+        "Azure",
+        "AWS",
+        "Kubernetes",
+        "Angular",
+        "SQL Server / PostgreSQL",
+        "Distributed Systems",
+        "Cloud Architecture",
+        "Mentoring / Code Reviews"
+      ],
+      "tailorHeadline": "Principal Engineer | Solutions Architect \u2014 .NET Core / C# \u00b7 Azure \u00b7 AWS \u00b7 Kubernetes",
+      "reason": "ats_login_wall",
+      "url": "https://blackbaud.wd1.myworkdayjobs.com/en-US/ExternalCareers/job/Hyderabad---India-(Skyview)/Software-Engineer--Principal---NET-DevOps_R0014448/apply/autofillWithResume",
+      "path": "company_ATS"
+    },
+    {
+      "company": "Optum",
+      "role": "Senior Azure Cloud Architect",
+      "location": "Hyderabad",
+      "naukriUrl": "https://www.naukri.com/solution-architect-azure-jobs-in-hyderabad-secunderabad?k=solution%20architect%20azure&l=hyderabad&experience=12&jobAge=15",
+      "query": "solution architect azure",
+      "age": 15,
+      "loc": "hyderabad",
+      "resume": "/tmp/naukri-tailored/dd5e7e7b72e8/Rafi_Resume.docx",
+      "tailored": true,
+      "tailorSkills": [
+        ".NET Core / C#",
+        "Azure",
+        "REST APIs",
+        "CI/CD / Jenkins",
+        "Cloud Architecture",
+        "Agile / Scrum"
+      ],
+      "tailorHeadline": "Solutions Architect | Technical Lead \u2014 .NET Core / C# \u00b7 Azure \u00b7 REST APIs \u00b7 CI/CD / Jenkins",
+      "reason": "external_incomplete_or_timeout",
+      "url": "https://careers.unitedhealthgroup.com/job/hyderabad/senior-azure-cloud-architect/34088/98871265200?src=JB-22668&utm_source=naukri.com&utm_medium=job_posting&utm_campaign=India&utm_content=job_board&utm_term=436954234&ss=paid&gad_source=7&dclid=CI_N6ePZzJYDFVYOaAgdimAyNQ",
+      "path": "company_ATS"
+    }
+  ],
+  "alreadyApplied": [
+    {
+      "company": "Clean Harbors",
+      "role": ".Net TEchnical Architect",
+      "location": "Hyderabad",
+      "naukriUrl": "https://www.naukri.com/technical-architect-net-jobs-in-hyderabad-secunderabad?k=technical%20architect%20.net&l=hyderabad&experience=12&jobAge=7",
+      "query": "technical architect .net",
+      "age": 7,
+      "loc": "hyderabad",
+      "resume": "/workspace/resumes/Rafi_Resume.docx",
+      "reason": "already_applied_detail",
+      "naukriJobUrl": "https://www.naukri.com/job-listings-net-technical-architect-clean-harbors-hyderabad-12-to-18-years-110526034747?src=directSearch",
+      "cta": "Applied",
+      "ctaState": "applied"
+    },
+    {
+      "company": "Sidgs Digisol",
+      "role": "Apigee Architect",
+      "location": "Hyderabad, Mumbai, Mumbai (All Areas)",
+      "naukriUrl": "https://www.naukri.com/solution-architect-jobs-in-hyderabad-secunderabad?k=solution%20architect&l=hyderabad&experience=12&jobAge=7",
+      "query": "solution architect",
+      "age": 7,
+      "loc": "hyderabad",
+      "resume": "/workspace/resumes/Rafi_Resume.docx",
+      "reason": "already_applied_detail",
+      "naukriJobUrl": "https://www.naukri.com/job-listings-apigee-architect-sidgs-digisol-mumbai-hyderabad-mumbai-all-areas-10-to-20-years-250626007032?src=directSearch",
+      "cta": "Applied",
+      "ctaState": "applied"
+    }
+  ]
+}
