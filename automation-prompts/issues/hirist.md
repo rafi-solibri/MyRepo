@@ -1,5 +1,12 @@
 # Hirist issues log
 
+## 2026-09-01 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Technical Architect D365 F&O and Full Stack Developer Python/Groovy passed skipReason (ERP / non-.NET title) | HARD-skip Dynamics 365/D365/F&O as wrong_stack_title; title-first skip python/groovy/golang/node/php without .NET |
+
+
 ## 2026-08-31 (cloud)
 
 | Issue | Fix |

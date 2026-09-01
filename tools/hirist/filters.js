@@ -65,7 +65,7 @@ function skipReason(
   }
 
   if (
-    /\b(salesforce|servicenow|\bsap\b|coupa|conga|cpq|pega|guidewire|hubspot|revit|\bbarch\b|anaplan|kinaxis|shopify)\b/i.test(
+    /\b(salesforce|servicenow|\bsap\b|coupa|conga|cpq|pega|guidewire|hubspot|revit|\bbarch\b|anaplan|kinaxis|shopify|dynamics\s*365|\bd365\b|dynamics\s+f&o|\bf&o\b|finance\s*&\s*operations)\b/i.test(
       t
     )
   ) {
@@ -90,6 +90,15 @@ function skipReason(
 
   if (/\bjava\b/i.test(t) && !hasDotNet(t, "")) {
     return "java_primary";
+  }
+
+  // Title-first: Python/Groovy (and close cousins) without .NET on the TITLE —
+  // skills laundry often lists Azure/AWS and previously leaked these through.
+  if (
+    /\b(python|groovy|golang|go\s+lang|node\.?js|ruby on rails|php)\b/i.test(t) &&
+    !hasDotNet(t, "")
+  ) {
+    return "non_dotnet_primary";
   }
 
   if (
