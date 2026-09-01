@@ -1,5 +1,8 @@
 # LinkedIn daily — 2026-09-01
 
+## Post-fix re-run
+Same-day re-run after #306 still **0 applies**. Stale `li_at`; Google `/challenge/pwd` was misclassified as 2FA (code-fixed on `cursor/linkedin-daily-post-fix-re-run-2026-09-01-9e46`); `GOOGLE_PASSWORD` unset; LinkedIn password rejected. See `linkedin-daily-postfix.md`.
+
 ## Status
 **STOPPED** — LinkedIn login required. **0** confirmed applies (none invented).
 

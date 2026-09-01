@@ -1,0 +1,36 @@
+{
+  "date": "2026-09-01",
+  "portal": "linkedin",
+  "run": "post-fix-rerun",
+  "post_fix_rerun": 1,
+  "merged_pr_used": "https://github.com/rafi-solibri/MyRepo/pull/306",
+  "status": "stopped_login_required",
+  "reason": "google_password_missing_then_linkedin_wrong_password",
+  "easy_apply_submitted": 0,
+  "external_completed": 0,
+  "skipped": [],
+  "blocked": [
+    {
+      "reason": "stale_session",
+      "detail": "SQLite li_at present; live CDP opened /uas/login then /login"
+    },
+    {
+      "reason": "google_challenge_pwd_misclassified_as_2fa",
+      "detail": "accounts.google.com/v3/signin/challenge/pwd — 2FA waiter sat 300s; GOOGLE_PASSWORD unset so form was never filled"
+    },
+    {
+      "reason": "wrong_password",
+      "detail": "LinkedIn password fallback: Incorrect credentials / Welcome back. Secrets injected: LINKEDIN_EMAIL, LINKEDIN_PASSWORD. GOOGLE_PASSWORD unset."
+    }
+  ],
+  "artifacts": [
+    "/opt/cursor/artifacts/linkedin-security-checkpoint.png",
+    "/opt/cursor/artifacts/linkedin-auto-login-captcha.png",
+    "/opt/cursor/artifacts/apply-report.json"
+  ],
+  "code_fix": {
+    "issue": "Google SSO /challenge/pwd misclassified as 2FA",
+    "fix": "Exclude challenge/pwd from is_google_2fa_challenge; heal password first; fail fast when GOOGLE_PASSWORD unset",
+    "branch": "cursor/linkedin-daily-post-fix-re-run-2026-09-01-9e46"
+  }
+}
