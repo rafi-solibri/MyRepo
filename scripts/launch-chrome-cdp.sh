@@ -392,6 +392,7 @@ if [[ "$portal" == "linkedin" || "$portal" == "hitechcity" ]]; then
       if [[ "${LINKEDIN_AUTO_LOGIN:-1}" == "1" && -f "$ROOT/tools/linkedin/auto_login.py" ]]; then
         echo "Attempting unattended LinkedIn auto-login…"
         PY="$(bash "$ROOT/scripts/resolve-python.sh")"
+        export PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}"
         set +e
         if [[ "$PY" == "py" ]]; then
           py -3 "$ROOT/tools/linkedin/auto_login.py"

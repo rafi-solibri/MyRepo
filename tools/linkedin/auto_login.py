@@ -29,6 +29,12 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+# When launched as `python3 tools/linkedin/auto_login.py`, repo root is not on
+# sys.path — Google 2FA helper import would fail with "No module named 'tools'".
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 from playwright.sync_api import sync_playwright
 
 CDP = os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222")
