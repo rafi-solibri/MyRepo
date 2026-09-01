@@ -142,6 +142,14 @@ function isJavaOrSalesforcePrimary(title, skills) {
   if (/\b(salesforce|agentforce|sfdc)\b/i.test(t)) return true;
   // Skills-only Salesforce without .NET on TITLE (Hitachi CPQ / Agentforce-adjacent).
   if (/\b(salesforce|agentforce|sfdc)\b/i.test(skills || "") && !hasDotNetProof(t)) return true;
+  // Skills-only Oracle Fusion/ERP/Cloud without .NET on TITLE (RealPage Application Architect 2026-09-01).
+  if (
+    /\b(oracle\s+fusion|oracle\s+apps|oracle\s+erp|oracle\s+cloud|oracle\s+subscriptions)\b/i.test(
+      skills || ""
+    ) &&
+    !hasDotNetProof(t)
+  )
+    return true;
   if (/\bjava\b(?!\s*script)/i.test(blob) && !hasDotNet(title, skills)) return true;
   // Python/Go/MEAN/… on TITLE without .NET — same as Java for Arch/Lead exception.
   if (isNonDotNetPrimaryTitle(title)) return true;
@@ -186,8 +194,9 @@ function skipTitleReason(title) {
   // Do NOT match bare "Architecture … AI" (Microsoft "Solution Architecture Apps & AI" may still pass).
   // "Data Governance … Lead/Architect" (Macquarie 2026-08-28) — Arch/Lead must not waive .NET.
   // "Engineering Manager, AI Product Development" (Jobgether 2026-08-30) — EM + trailing AI Product.
+  // "Manager AI & Data Solutions Engineer" (Deloitte 2026-09-01) — Manager + AI & Data (not contiguous AI Engineer).
   if (
-    /\b(ai\s+(?:specialist\s+)?(?:solution\s+)?architect|ai\s+engineer(?:ing)?(?:\s+manager|\s+lead)?|engineering\s+manager[,\s:/|-]+ai|ai\s+product|ai\s+agent|ml\s+engineer|gen\s*-?\s*ai|genai|generative\s+ai|agentic\s+ai|\bgemini\b|\bllm\b|data\s+scientist|data\s+engineer(?:ing)?|data\s+architect|data\s+governance|architect\s*[-–:]?\s*ai|ai\s*[-–:]?\s*architect)\b/i.test(
+    /\b(ai\s+(?:specialist\s+)?(?:solution\s+)?architect|ai\s+engineer(?:ing)?(?:\s+manager|\s+lead)?|engineering\s+manager[,\s:/|-]+ai|manager\s+ai|ai\s*&\s*data|ai\s+product|ai\s+agent|ml\s+engineer|gen\s*-?\s*ai|genai|generative\s+ai|agentic\s+ai|\bgemini\b|\bllm\b|data\s+scientist|data\s+engineer(?:ing)?|data\s+architect|data\s+governance|data\s+solutions|architect\s*[-–:]?\s*ai|ai\s*[-–:]?\s*architect)\b/i.test(
       t
     ) &&
     !hasDotNet(t, "")
@@ -228,8 +237,13 @@ function skipTitleReason(title) {
   )
     return "non-software engineering without .NET on title";
   // Naukri NON_DOTNET_PRIMARY_RE parity — Oracle Fusion/Apps/ERP is not .NET.
+  // Title-only here; skills-only Oracle is handled in classifyJob / isJavaOrSalesforcePrimary
+  // (RealPage "Application Architect" + Oracle ERP/Fusion skills 2026-09-01).
   if (/\b(oracle\s+fusion|oracle\s+apps|oracle\s+erp)\b/i.test(t) && !hasDotNet(t, ""))
     return "Oracle Fusion/ERP without .NET on title";
+  // Atlassian/Jira Solution Architect without .NET on TITLE (Algoworks 2026-09-01).
+  if (/\batlassian\b/i.test(t) && !hasDotNet(t, ""))
+    return "Atlassian without .NET on title";
   // Data-platform primary titles (Snowflake/Databricks) — Arch/Lead exception must not apply.
   if (/\b(snowflake|databricks)\b/i.test(t) && !hasDotNet(t, ""))
     return "Snowflake/Databricks without .NET on title";
@@ -280,6 +294,16 @@ function classifyJob(job) {
   const jobId = String(job.jobId || job.id || "");
 
   const archLead = isArchLeadTitle(title);
+  // Skills-primary Oracle Fusion/ERP/Cloud + no .NET on TITLE (RealPage Application Architect 2026-09-01).
+  // Check before Arch/Lead exception so the skip reason is explicit (not generic no-.NET).
+  if (
+    /\b(oracle\s+fusion|oracle\s+apps|oracle\s+erp|oracle\s+cloud|oracle\s+subscriptions)\b/i.test(
+      skills
+    ) &&
+    !hasDotNet(title, "")
+  ) {
+    return { pass: false, reason: "Oracle Fusion/ERP without .NET on title" };
+  }
   // Naukri parity: Arch/Lead/EM Hyd/remote may pass without .NET on skills when not Java/SF-primary.
   if (!hasDotNet(title, skills)) {
     if (!(archLead && !isJavaOrSalesforcePrimary(title, skills))) {

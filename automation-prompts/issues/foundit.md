@@ -1,5 +1,12 @@
 # Foundit — issues & fixes
 
+## 2026-09-01 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| False applies: Deloitte Manager AI & Data Solutions Engineer (skills laundry .NET); RealPage Application Architect (Oracle ERP/Fusion skills, Arch/Lead band) | Expand pure AI/data title skip for manager AI / ai & data / data solutions; skip Oracle Fusion/ERP/Cloud/Subscriptions in skills without .NET on title; skip Atlassian titles without .NET |
+
+
 ## 2026-08-31 (cloud)
 
 | Issue | Fix |
