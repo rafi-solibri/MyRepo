@@ -1,0 +1,57 @@
+{
+  "portal": "Cutshort",
+  "date": "2026-09-01",
+  "source": "cloud-postfix-rerun",
+  "head": "6c3961bb1c2a2819508586209dbd3201633b144b",
+  "mergedPr": "https://github.com/rafi-solibri/MyRepo/pull/305",
+  "ok": true,
+  "loginRequired": false,
+  "postfix": {
+    "scanned": 3273,
+    "qualifying": 0,
+    "applied": 0,
+    "already": 0,
+    "failed": 0,
+    "external": 0,
+    "questionnairesAnswered": 0,
+    "questionnairesLockedEmpty": 0,
+    "skipReasons": {
+      "skip_title": 771,
+      "location": 229,
+      "ctc_under_35": 1219,
+      "exp_max_low": 1010,
+      "no_tier_match": 44
+    }
+  },
+  "morning": {
+    "agent": "bc-8dd2deae-e77c-43a0-bb1c-fcfed2a6b6b6",
+    "finishedAt": "2026-09-01T03:51:47.801Z",
+    "scanned": 3317,
+    "qualifying": 1,
+    "applied": 1,
+    "jobs": [
+      {
+        "id": "6a951e62699281e85e5a56a1",
+        "title": "Full Stack Software Developer",
+        "company": "Ande.ai",
+        "tier": 2,
+        "ctc": 60,
+        "via": "api_no_ui_button"
+      }
+    ]
+  },
+  "counts": {
+    "appliedToday": 1,
+    "appliedThisSession": 0,
+    "blocked": 0
+  },
+  "applied": [],
+  "blocked": [],
+  "blockerSummary": null,
+  "codeFix": null,
+  "notes": [
+    "postfix qualifying=0 applied=0",
+    "morning applied Ande.ai 6a951e62699281e85e5a56a1 — skipped",
+    "no new code-fixable blocker"
+  ]
+}

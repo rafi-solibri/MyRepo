@@ -1,0 +1,33 @@
+{
+  "portal": "Cutshort",
+  "source": "cloud-postfix-rerun",
+  "date": "2026-09-01",
+  "finishedAt": "2026-09-01T05:52:40.501Z",
+  "ok": true,
+  "counts": {
+    "applied": 0,
+    "external": 0,
+    "rejected": 0,
+    "blocked": 0,
+    "skipped": 0,
+    "seen": 3273,
+    "questionnairesAnswered": 0,
+    "questionnairesLockedEmpty": 0
+  },
+  "applied": [],
+  "external": [],
+  "rejected": [],
+  "blocked": [],
+  "skipped": [],
+  "seen": [],
+  "blockerSummary": null,
+  "notes": [
+    "qualifying=0",
+    "q_answered=0",
+    "q_locked_empty=0",
+    "q_already_submitted=0",
+    "tailored_built=0",
+    "tailored_uploaded=0",
+    "morning_already_applied=Ande.ai 6a951e62699281e85e5a56a1"
+  ]
+}
