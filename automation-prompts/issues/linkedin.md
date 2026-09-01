@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-09-01 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Google SSO heal used LINKEDIN_PASSWORD (and stopped on first wrong_password), burning Gmail with the LinkedIn secret | Route GOOGLE_PASSWORD-only to Google forms and LINKEDIN_PASSWORD-only to LinkedIn forms; never cross-feed |
+
+
 ## 2026-08-30 (cloud)
 
 | Issue | Fix |

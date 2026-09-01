@@ -51,14 +51,30 @@ def test_wrong_password_text_portal_and_google():
 def test_password_candidates_unique_and_ordered():
     env = {
         "LINKEDIN_PASSWORD": "short9xx",  # pragma: allowlist secret
-        "GOOGLE_PASSWORD": "short9xx",
+        "GOOGLE_PASSWORD": "gmail-only-pwd",
         "NAUKRI_WORKDAY_PASSWORD": "longer-workday-18",
         "ATS_PASSWORD": "longer-workday-18",
         "WORKDAY_PASSWORD": "",
     }
+    # LinkedIn path must never include GOOGLE_PASSWORD.
     got = _mod.password_candidates(env)
     assert got == ["short9xx", "longer-workday-18"]
+    assert _mod.linkedin_password_candidates(env) == got
     assert _mod.password_candidates({}) == []
+
+
+def test_google_vs_linkedin_password_routing():
+    env = {
+        "LINKEDIN_PASSWORD": "li-secret-9",  # pragma: allowlist secret
+        "GOOGLE_PASSWORD": "gmail-secret-19xx",
+        "NAUKRI_WORKDAY_PASSWORD": "workday-fallback-18",
+    }
+    assert _mod.google_password_candidates(env) == ["gmail-secret-19xx"]
+    assert "li-secret-9" not in _mod.google_password_candidates(env)
+    li = _mod.linkedin_password_candidates(env)
+    assert li[0] == "li-secret-9"
+    assert "gmail-secret-19xx" not in li
+    assert _mod.google_password_candidates({}) == []
 
 
 def test_is_google_identifier_url():

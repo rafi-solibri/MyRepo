@@ -50,14 +50,20 @@ RESTRICTION_WAIT_MAX_S = int(os.environ.get("LINKEDIN_RESTRICTION_WAIT_MAX_S", "
 RESTRICTION_BUFFER_S = int(os.environ.get("LINKEDIN_RESTRICTION_BUFFER_S", "90"))
 
 # Cookie names can be present while Google/portal sessions are dead.
-PASSWORD_ENV_KEYS = (
+# HARD: do not cross-feed LinkedIn vs Gmail passwords — Google forms must use
+# GOOGLE_PASSWORD; LinkedIn email/password must use LINKEDIN_PASSWORD.
+LINKEDIN_PASSWORD_ENV_KEYS = (
     "LINKEDIN_PASSWORD",  # pragma: allowlist secret
-    "GOOGLE_PASSWORD",
     "NAUKRI_WORKDAY_PASSWORD",
     "ATS_PASSWORD",
     "WORKDAY_PASSWORD",
     "NAUKRI_ATS_PASSWORD",
 )
+GOOGLE_PASSWORD_ENV_KEYS = (
+    "GOOGLE_PASSWORD",
+)
+# Back-compat alias used by older tests / callers (LinkedIn-first, no Google).
+PASSWORD_ENV_KEYS = LINKEDIN_PASSWORD_ENV_KEYS
 WRONG_PASSWORD_RE = re.compile(
     r"that.?s not the right password|wrong email or password|wrong password|"
     r"incorrect password|couldn.?t sign you in|enter a valid password|"
@@ -86,17 +92,32 @@ def wrong_password_text(text: str) -> bool:
     return bool(text and WRONG_PASSWORD_RE.search(text))
 
 
-def password_candidates(env: dict | None = None) -> list[str]:
-    """Unique non-empty passwords from owner secret aliases (values never logged)."""
+def _unique_passwords_from_keys(keys: tuple[str, ...], env: dict | None = None) -> list[str]:
+    """Unique non-empty passwords from env keys (values never logged)."""
     src = env if env is not None else os.environ
     seen: set[str] = set()
     out: list[str] = []
-    for key in PASSWORD_ENV_KEYS:
+    for key in keys:
         val = (src.get(key) or "").strip()
         if val and val not in seen:
             seen.add(val)
             out.append(val)
     return out
+
+
+def linkedin_password_candidates(env: dict | None = None) -> list[str]:
+    """Passwords for LinkedIn email/password login — never GOOGLE_PASSWORD."""
+    return _unique_passwords_from_keys(LINKEDIN_PASSWORD_ENV_KEYS, env)
+
+
+def google_password_candidates(env: dict | None = None) -> list[str]:
+    """Passwords for Google SSO heal — GOOGLE_PASSWORD only (never LinkedIn pwd)."""
+    return _unique_passwords_from_keys(GOOGLE_PASSWORD_ENV_KEYS, env)
+
+
+def password_candidates(env: dict | None = None) -> list[str]:
+    """Back-compat: LinkedIn-form candidates (excludes GOOGLE_PASSWORD)."""
+    return linkedin_password_candidates(env)
 
 
 def is_google_identifier_url(url: str) -> bool:
@@ -391,10 +412,24 @@ def _heal_google_auth_pages(ctx, out: dict | None = None) -> str | None:
                     continue
             continue
         ident_result = "no_form"
-        for pw in password_candidates():
+        google_pws = google_password_candidates()
+        if not google_pws:
+            if out is not None:
+                out["attempts"].append(
+                    {
+                        "step": "google_sso",
+                        "google_password_heal": "missing_google_password",
+                    }
+                )
+            # Cannot complete Google pwd form without GOOGLE_PASSWORD — do not
+            # burn LINKEDIN_PASSWORD against Gmail (wrong-password lock risk).
+            return "wrong_password"
+        for pw in google_pws:
             ident_result = _complete_google_password_login(popup, email, pw)
-            if ident_result in ("ok", "need_human", "wrong_password"):
+            if ident_result in ("ok", "need_human"):
                 break
+            # wrong_password / no_form → try next Google candidate
+            continue
         if out is not None:
             out["attempts"].append(
                 {"step": "google_sso", "google_password_heal": ident_result}
@@ -875,7 +910,7 @@ def main() -> int:
         pass
     deadline = time.time() + TIMEOUT_S
     email = EMAIL or DEFAULT_EMAIL
-    pw_list = password_candidates()
+    pw_list = linkedin_password_candidates()
     # Cloud datacenter IPs often CAPTCHA Google SSO; prefer password when set.
     prefer_password = bool(pw_list) and os.environ.get(
         "LINKEDIN_PREFER_PASSWORD", "1"
@@ -1072,10 +1107,11 @@ def main() -> int:
         if wrong_pw:
             out["reason"] = "wrong_password"
             out["password_candidates"] = len(pw_list)
+            out["google_password_candidates"] = len(google_password_candidates())
             out["hint"] = (
                 "Portal/Google rejected the configured password secret(s). "
-                "Update Cursor secret LINKEDIN_PASSWORD (and optionally GOOGLE_PASSWORD) "  # pragma: allowlist secret
-                "or run: bash scripts/home-headed-login.sh linkedin"  # pragma: allowlist secret
+                "Set LINKEDIN_PASSWORD for LinkedIn email login and GOOGLE_PASSWORD "
+                "for Gmail SSO (do not cross-use). Or run: bash scripts/home-headed-login.sh linkedin"  # pragma: allowlist secret
             )
         print(json.dumps(out))
         return 5
