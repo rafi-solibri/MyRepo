@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-09-01 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| False Quick Applies: Oracle PaaS/HCM/ERP, Fusion HCM, IMDS, IT Shared Services; DFT/ATPG ATS burn; Data Architecture / Cloud Infra Architect not title-skipped | Expand NON_DOTNET_PRIMARY (oracle paas/hcm/erp/ebs, fusion hcm), SKIP_TITLE (imds, dft/atpg/jtag/mbist/tessent/testmax, it shared services), PURE_AI_DATA (data architecture, cloud infra architect) |
+
+
 ## 2026-08-31 (cloud)
 
 | Issue | Fix |

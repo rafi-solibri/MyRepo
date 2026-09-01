@@ -497,6 +497,58 @@ assert.strictEqual(
   true,
   "PLM-primary Solution Architect must skip"
 );
+assert.strictEqual(
+  shouldSkipTitle("Oracle PaaS Solution Architect"),
+  true,
+  "Oracle PaaS SA must skip (false Quick Apply 2026-09-01)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Fusion HCM Solution Architect"),
+  true,
+  "Fusion HCM SA (no Oracle prefix) must skip (false Quick Apply 2026-09-01)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Senior Oracle HCM Technical Director"),
+  true,
+  "Oracle HCM Technical Director must skip (false Quick Apply 2026-09-01)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Oracle ERP Technical Architect- Associate Director"),
+  true,
+  "Oracle ERP Technical Architect must skip (false Quick Apply 2026-09-01)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Technical Lead, IMDS (Deputy)"),
+  true,
+  "IMDS materials-compliance lead must skip (false Quick Apply 2026-09-01)"
+);
+assert.strictEqual(
+  shouldSkipTitle(
+    "DFT Engineering Technical Lead || ATPG, SCAN, JTAG, MBIST"
+  ),
+  true,
+  "DFT / ATPG / JTAG / MBIST hardware lead must skip (ATS burn 2026-09-01)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Deputy Director - Data Architecture & Governance"),
+  true,
+  "Data Architecture director without .NET must skip (blocked 2026-09-01)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Senior Manager, IT Shared Services"),
+  true,
+  "IT Shared Services manager must skip (false Quick Apply 2026-09-01)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Cloud Infrastructure Architect"),
+  true,
+  "Cloud Infrastructure Architect without .NET must skip (parity with AWS/GCP Infra)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Solution Architect - .Net with Azure, React and AI Native"),
+  false,
+  ".NET Azure SA must still apply"
+);
 const { workdayCompliantPassword } = require("./workday_apply");
 assert.strictEqual(workdayCompliantPassword("GoodPass123!"), "GoodPass123!");
 const weak = workdayCompliantPassword("short");
