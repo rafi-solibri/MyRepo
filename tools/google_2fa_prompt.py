@@ -59,9 +59,16 @@ def is_google_2fa_challenge(page: Any = None, *, url: str = "", body: str = "") 
             except Exception:
                 text = ""
     blob = f"{u}\n{text}"
+    # Password entry is NOT 2FA — /challenge/pwd must not block on owner wait.
+    if re.search(r"signin/challenge/pwd|challenge/pwd", u, re.I):
+        return False
+    if re.search(r"enter your password|wrong password", text, re.I) and not re.search(
+        r"2[- ]step|authenticator|tap yes|check your phone", text, re.I
+    ):
+        return False
     if "accounts.google.com" in u.lower() and _CHALLENGE_RE.search(blob):
         return True
-    if re.search(r"accounts\.google\.com/.*/challenge", u, re.I):
+    if re.search(r"accounts\.google\.com/.*/challenge/(?!pwd)", u, re.I):
         return True
     if _CHALLENGE_RE.search(text) and re.search(
         r"google|g-?suite|rafi\.success@gmail", text, re.I

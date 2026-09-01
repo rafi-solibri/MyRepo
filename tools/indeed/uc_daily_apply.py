@@ -696,6 +696,7 @@ def try_indeed_google_sso(sb) -> dict:
 
     Cookie *names* often remain after OauthExpires/JWT exp — hasAuth stays true
     while Indeed paints Sign In. Prefer Gmail SSO already on the UC profile.
+    Google often opens a popup — switch to the newest window after click.
     """
     info: dict = {"ok": False, "tried": [], "method": "google_sso"}
     email = _owner_google_email()
@@ -711,6 +712,42 @@ def try_indeed_google_sso(sb) -> dict:
         except Exception:
             return "", "", ""
 
+    def _switch_google_window(handles_before: list[str]) -> str | None:
+        try:
+            handles = list(sb.driver.window_handles)
+        except Exception:
+            return None
+        new_h = [h for h in handles if h not in handles_before]
+        candidates = new_h or handles
+        for h in reversed(candidates):
+            try:
+                sb.switch_to_window(h)
+                cur = (sb.get_current_url() or "").lower()
+                if "accounts.google.com" in cur or "google.com" in cur:
+                    return h
+            except Exception:
+                continue
+        # Newest tab fallback
+        try:
+            sb.switch_to_newest_window()
+            return sb.driver.current_window_handle
+        except Exception:
+            return None
+
+    def _dismiss_cookies() -> None:
+        for sel in (
+            "button:contains('Accept All Cookies')",
+            "button:contains('Accept all')",
+            "#onetrust-accept-btn-handler",
+        ):
+            try:
+                if sb.is_element_visible(sel):
+                    sb.click(sel)
+                    time.sleep(1)
+                    return
+            except Exception:
+                continue
+
     try:
         body, title, url = _snap()
         if not looks_login_wall(body, url) and "accounts.google.com" not in (url or "").lower():
@@ -718,7 +755,14 @@ def try_indeed_google_sso(sb) -> dict:
             time.sleep(2)
             clear_cf(sb)
             body, title, url = _snap()
+        _dismiss_cookies()
+        body, title, url = _snap()
         info["start"] = {"title": title[:80], "url": (url or "")[:160]}
+
+        try:
+            handles_before = list(sb.driver.window_handles)
+        except Exception:
+            handles_before = []
 
         clicked = _click_first_visible(
             sb,
@@ -732,7 +776,6 @@ def try_indeed_google_sso(sb) -> dict:
             ],
         )
         if not clicked:
-            # Fallback: link text helpers
             try:
                 sb.click_link("Continue with Google")
                 clicked = "click_link:Continue with Google"
@@ -740,9 +783,29 @@ def try_indeed_google_sso(sb) -> dict:
                 info["tried"].append({"google_btn": "missing", "error": str(exc)[:120]})
                 return info
         info["tried"].append({"google_btn": clicked})
-        time.sleep(3)
+        time.sleep(2)
+        switched = _switch_google_window(handles_before)
+        info["tried"].append({"window": switched or "same"})
 
-        body, title, url = _snap()
+        # Poll until Google auth UI or Indeed signed-in redirect.
+        google_seen = False
+        deadline = time.time() + 45
+        while time.time() < deadline:
+            _switch_google_window(handles_before)
+            body, title, url = _snap()
+            low = (url or "").lower()
+            if "accounts.google.com" in low:
+                google_seen = True
+                break
+            if looks_signed_in(body, url):
+                info["ok"] = True
+                info["via"] = "redirect_signed_in"
+                info["oauth"] = passport_oauth_meta(sb_cookie_map(sb))
+                persist_indeed_uc_session()
+                return info
+            time.sleep(1.2)
+        info["tried"].append({"google_seen": google_seen, "url": (url or "")[:160]})
+
         # Account chooser
         if email and "accounts.google.com" in (url or "").lower():
             chooser_sels = [
@@ -770,15 +833,30 @@ def try_indeed_google_sso(sb) -> dict:
                     if sb.is_element_visible("input[type='password']"):
                         sb.type("input[type='password']", pw + "\n")
                         info["tried"].append({"password": "submitted"})
-                        time.sleep(4)
-                        body, title, url = _snap()
+                        # Wait for leave-pwd / wrong-password / real 2FA
+                        pwd_deadline = time.time() + 25
+                        while time.time() < pwd_deadline:
+                            time.sleep(1.2)
+                            body, title, url = _snap()
+                            low = (url or "").lower()
+                            text_l = (body or "").lower()
+                            if re.search(r"wrong password|incorrect password|couldn't find your google account", text_l):
+                                info["tried"].append({"password": "rejected"})
+                                info["error"] = "google_wrong_password"
+                                break
+                            if "challenge/pwd" not in low:
+                                info["tried"].append({"password": "accepted_or_next"})
+                                break
+                        else:
+                            body, title, url = _snap()
                 except Exception as exc:
                     info["tried"].append({"password_error": str(exc)[:120]})
             else:
                 info["tried"].append({"password": "missing_secret"})
 
-        # 2FA / phone prompt
+        # 2FA / phone prompt (never treat /challenge/pwd as 2FA)
         adapter = _SbPageAdapter(sb)
+        body, title, url = _snap()
         if is_google_2fa_challenge_url_body(url, body):
             try:
                 from tools.google_2fa_prompt import wait_owner_google_2fa
@@ -789,19 +867,39 @@ def try_indeed_google_sso(sb) -> dict:
                 body, title, url = _snap()
             except Exception as exc:
                 info["tried"].append({"google_2fa_error": str(exc)[:120]})
+        elif re.search(r"challenge/pwd", url or "", re.I):
+            info["tried"].append({"still_on_password": True})
+
+        # Wait for return to Indeed after Google
+        ret_deadline = time.time() + 60
+        while time.time() < ret_deadline:
+            try:
+                for h in list(sb.driver.window_handles):
+                    sb.switch_to_window(h)
+                    body, title, url = _snap()
+                    if "indeed.com" in (url or "").lower() and looks_signed_in(body, url):
+                        info["ok"] = True
+                        info["via"] = url[:120]
+                        info["oauth"] = passport_oauth_meta(sb_cookie_map(sb))
+                        persist_indeed_uc_session()
+                        return info
+            except Exception:
+                pass
+            time.sleep(1.5)
 
         clear_cf(sb)
-        # Land on account / home and confirm
+        # Land on account / home and confirm (fresh OauthExpires = healed)
         for dest in (ACCOUNT_SETTINGS_URL, "https://in.indeed.com/myjobs", "https://in.indeed.com/"):
             try:
                 sb.uc_open_with_reconnect(dest, 4)
                 time.sleep(2)
                 clear_cf(sb)
                 body, title, url = _snap()
-                if looks_signed_in(body, url):
+                oauth = passport_oauth_meta(sb_cookie_map(sb))
+                if looks_signed_in(body, url) or (oauth.get("hasBearer") and not oauth.get("expired")):
                     info["ok"] = True
                     info["via"] = dest
-                    info["oauth"] = passport_oauth_meta(sb_cookie_map(sb))
+                    info["oauth"] = oauth
                     persist_indeed_uc_session()
                     return info
             except Exception as exc:
@@ -819,8 +917,10 @@ def is_google_2fa_challenge_url_body(url: str, body: str) -> bool:
 
         return bool(is_google_2fa_challenge(url=url or "", body=body or ""))
     except Exception:
+        if re.search(r"signin/challenge/pwd|challenge/pwd", url or "", re.I):
+            return False
         return bool(
-            re.search(r"accounts\.google\.com/.*/challenge", url or "", re.I)
+            re.search(r"accounts\.google\.com/.*/challenge/(?!pwd)", url or "", re.I)
             or re.search(r"2[- ]step|authenticator|tap yes|check your phone", body or "", re.I)
         )
 
@@ -3718,7 +3818,16 @@ def main() -> int:
                     else "Account/auth is a Sign-in wall — refresh Indeed cookies via headed login / home CDP"
                 )
                 if sso and not sso.get("ok"):
-                    hint += f"; googleSso={sso.get('tried') or sso.get('error') or 'failed'}"
+                    if sso.get("error") == "google_wrong_password":
+                        hint = (
+                            "Passport OauthExpires/JWT past; Google SSO rejected LINKEDIN_PASSWORD — "
+                            "set Cursor secret GOOGLE_PASSWORD (or update LINKEDIN_PASSWORD) "
+                            "or headed login: bash scripts/home-headed-login.sh indeed && "
+                            "bash scripts/refresh-portal-session-seed.sh indeed && Save Snapshot"
+                        )
+                        reason = "indeed_google_wrong_password"
+                    else:
+                        hint += f"; googleSso={sso.get('tried') or sso.get('error') or 'failed'}"
                 report["blocked"].append(
                     {
                         "reason": reason,
