@@ -244,6 +244,15 @@ function skipTitleReason(title) {
   // Atlassian/Jira Solution Architect without .NET on TITLE (Algoworks 2026-09-01).
   if (/\batlassian\b/i.test(t) && !hasDotNet(t, ""))
     return "Atlassian without .NET on title";
+  // Semiconductor / EDA Principal titles (Renesas STA & Synthesis, Virtual Prototype 2026-09-01).
+  // Hitech/Naukri/LinkedIn parity — Arch/Lead must not waive .NET for chip/STA/RTL/FPGA.
+  if (
+    /\b(sta\s*[&/,+-]+\s*synthesis|sta\s+and\s+synthesis|static\s+timing|\bvlsi\b|\brtl\b|\bfpga\b|\basic\b|physical\s+design|virtual\s+prototype|timing\s+closure)\b/i.test(
+      t
+    ) &&
+    !hasDotNet(t, "")
+  )
+    return "semiconductor/EDA without .NET on title";
   // Data-platform primary titles (Snowflake/Databricks) — Arch/Lead exception must not apply.
   if (/\b(snowflake|databricks)\b/i.test(t) && !hasDotNet(t, ""))
     return "Snowflake/Databricks without .NET on title";

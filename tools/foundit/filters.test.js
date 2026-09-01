@@ -917,4 +917,32 @@ assert.strictEqual(
   "Atlassian Solution Architect must skip without .NET on title (2026-09-01)"
 );
 
+assert.strictEqual(
+  classifyJob({
+    jobId: 65005157,
+    title: "Principal Engineer, STA & Synthesis",
+    companyName: "Renesas Electronics",
+    locations: [{ text: "Hyderabad / Secunderabad" }],
+    skills: [{ text: "Timing closure" }, { text: "Synthesis" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "semiconductor/EDA without .NET on title",
+  "Renesas Principal Engineer STA & Synthesis must skip Arch/Lead band (2026-09-01)"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 65005158,
+    title: "Principal Engineer, Virtual Prototype Modelling",
+    companyName: "Renesas Electronics",
+    locations: [{ text: "Hyderabad / Secunderabad" }],
+    skills: [{ text: "SystemC" }],
+    minimumExperience: { years: 12 },
+    maximumExperience: { years: 16 },
+  }).reason,
+  "semiconductor/EDA without .NET on title",
+  "Renesas Virtual Prototype Modelling must skip without .NET on title (2026-09-01)"
+);
+
 console.log("filters.test.js OK");

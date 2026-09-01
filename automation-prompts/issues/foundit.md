@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Renesas Principal Engineer STA & Synthesis / Virtual Prototype passed via Arch/Lead without .NET (Falcon LinkedIn redirect; not counted) | filters.js: skip semiconductor/EDA titles (STA & Synthesis, virtual prototype, VLSI/RTL/FPGA/ASIC) without .NET on title; test jobId 65005157 |
 | False applies: Deloitte Manager AI & Data Solutions Engineer (skills laundry .NET); RealPage Application Architect (Oracle ERP/Fusion skills, Arch/Lead band) | Expand pure AI/data title skip for manager AI / ai & data / data solutions; skip Oracle Fusion/ERP/Cloud/Subscriptions in skills without .NET on title; skip Atlassian titles without .NET |
 
 

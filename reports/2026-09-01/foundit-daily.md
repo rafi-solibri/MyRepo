@@ -59,3 +59,17 @@
 - Skips: 1185 | duplicates: 70 | blocked: 0
 - Age window: 3650d
 - Artifact: `reports/2026-09-01/foundit-apply-report-postfix.json`
+
+## Post-fix re-run (#305 — LinkedIn vs Gmail password routing)
+- Ran on merged `main` (`6c3961b`) with `POST_FIX_RERUN=1`
+- Login: MSSOAT + jwtOk; onApp (greeting Hi, Seeker — accepted)
+- Applied tab: **452 → 453** (+1 Falcon redirect bump — **not counted**)
+- Intentional applies: **0** (do not invent applies; 70 already-applied skipped)
+- Age window: **3650d**
+- Candidates: d1=108 / d3=251 / d7=159 / d14=271 / d30=256 / d90=152 / d3650=46
+- Skips: 1172 | duplicates: 70 | blocked: 1
+- Blocked (not counted): **Renesas Electronics** — Principal Engineer, STA & Synthesis — `external_ats_incomplete` (`linkedin_no_easy_apply`) → https://www.linkedin.com/jobs/view/4343694056/
+- Filter miss (fix in this PR): STA & Synthesis / Virtual Prototype Principal titles passed Arch/Lead without .NET — skip as `semiconductor/EDA without .NET on title`
+- Top skip reasons: 324× no .NET on title+skills; 206× Bengaluru; 93× no seniority; 58× Pune; 46× SAP; 42× pure AI/data
+- Referral draft: Renesas Electronics — Principal Engineer, STA & Synthesis — https://www.linkedin.com/jobs/view/4343694056/
+- Artifact: `reports/2026-09-01/foundit-apply-report-postfix-305.json`
