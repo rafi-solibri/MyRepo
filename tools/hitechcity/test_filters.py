@@ -26,6 +26,7 @@ from tools.hitechcity.careers_apply import (
     url_loc_hint,
 )
 from tools.hitechcity.filters import (
+    campus_company_matches,
     company_name_match,
     location_or_campus_ok,
     skip_reason,
@@ -380,6 +381,15 @@ def test_company_match():
     assert company_name_match("JPMorgan Chase", "J.P. Morgan")
     assert company_name_match("Meta", "Facebook")
     assert not company_name_match("Microsoft", "Oracle")
+    # 2026-09-02: Oracle f_C leak — title stack "Oracle/BI/.Net" is not Oracle the company.
+    assert not company_name_match("Oracle", "insightsoftware")
+    assert not campus_company_matches(
+        "Oracle",
+        "insightsoftware",
+        "Lead Software Engineer (Oracle/BI/.Net–Financial Reporting) Hyderabad",
+    )
+    assert campus_company_matches("Oracle", "Oracle")
+    assert not campus_company_matches("Oracle", "")
 
 
 def test_captcha_frame_ignores_hidden_badge():

@@ -129,5 +129,20 @@ def company_name_match(target: str, found: str) -> bool:
     return len(t_tokens & f_tokens) >= max(1, min(2, len(t_tokens)))
 
 
+def campus_company_matches(target: str, found: str, body_head: str = "") -> bool:
+    """Match the LinkedIn company pill to a campus tenant.
+
+    Never treat JD/title `bodyHead` as the company when a distinct pill is
+    present — e.g. insightsoftware "Lead Software Engineer (Oracle/BI/.Net)"
+    must not match campus target Oracle.
+    """
+    pill = (found or "").strip()
+    if pill:
+        return company_name_match(target, pill)
+    # Empty pill: do not scrape stack words out of the title/JD blob.
+    _ = body_head
+    return False
+
+
 def prefer_dotnet(role: str, jd: str = "") -> bool:
     return bool(DOTNETISH.search(f"{role} {jd}"))

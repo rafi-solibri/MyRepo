@@ -1034,15 +1034,14 @@ def run(companies: list[dict[str, Any]] | None = None) -> LiReport:
                 time.sleep(2.0)
                 dismiss(page)
                 meta = card_meta(page) or {}
-                company_found = meta.get("company") or name
+                pill = (meta.get("company") or "").strip()
+                company_found = pill or name
                 role = meta.get("role") or ""
                 loc = meta.get("location") or ""
                 meta["job_id"] = jid
                 meta["url"] = view
 
-                if not company_name_match(name, company_found) and not company_name_match(
-                    name, meta.get("bodyHead") or ""
-                ):
+                if pill and not company_name_match(name, pill):
                     print(f"LI SKIP company_mismatch {company_found!r} | {role[:60]}", flush=True)
                     report.skipped.append(
                         {
