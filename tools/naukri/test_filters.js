@@ -545,6 +545,50 @@ assert.strictEqual(
   "Cloud Infrastructure Architect without .NET must skip (parity with AWS/GCP Infra)"
 );
 assert.strictEqual(
+  shouldSkipTitle("Network Solution Architect"),
+  true,
+  "Network Solution Architect must skip (false Quick Apply 2026-09-02)"
+);
+assert.strictEqual(
+  shouldSkipTitle(
+    "Infrastructure Data Center Transformation Solution Architect"
+  ),
+  true,
+  "Data Center Infrastructure SA must skip (false Quick Apply 2026-09-02)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Technical Lead- iOS dev"),
+  true,
+  "iOS Technical Lead must skip (false Quick Apply 2026-09-02)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Quantaco - Technical Lead Accounting Services"),
+  true,
+  "Accounting Services Technical Lead must skip (false Quick Apply 2026-09-02)"
+);
+assert.strictEqual(
+  shouldSkipTitle(
+    "Industrial Iot Engineer/IIoT Architect - Immediate Joiner -max 10 Days"
+  ),
+  true,
+  "Industrial IoT / IIoT Architect must skip (false Quick Apply 2026-09-02)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Full Stack Tech Lead (Telecom Billing)"),
+  true,
+  "Telecom Billing Full Stack Tech Lead must skip (false Quick Apply 2026-09-02)"
+);
+assert.strictEqual(
+  shouldSkipTitle("AVP of Sales, NEP & Security"),
+  true,
+  "AVP of Sales must skip (external burn 2026-09-02)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Internet of Things Lead"),
+  false,
+  "intern must still not match internet (IoT Lead without industrial/iiot stays)"
+);
+assert.strictEqual(
   shouldSkipTitle("Solution Architect - .Net with Azure, React and AI Native"),
   false,
   ".NET Azure SA must still apply"
