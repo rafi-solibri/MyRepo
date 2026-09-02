@@ -159,4 +159,74 @@ function job(partial) {
   assert.ok(classify(j)?.tier === 1);
 }
 
+{
+  const j = job({
+    title: "placeholder",
+    skills: ["TypeScript", "Python"],
+    extra: {
+      headline: "Full Stack AI Engineer",
+      aiGeneratedData: { jobHeadline: "AI Engineer" },
+    },
+  });
+  assert.match(titleOf(j), /Full Stack AI Engineer/i);
+  assert.ok(
+    classify(j) && classify(j).tier <= 3,
+    `AI-stripped fullstack should still qualify, got ${JSON.stringify(classify(j))}`
+  );
+}
+
+{
+  const j = job({
+    title: "placeholder",
+    skills: ["React.js"],
+    extra: {
+      headline: "Full Stack Developer - React",
+      aiGeneratedData: { jobHeadline: "Sr. Dev Engg" },
+    },
+    locations: [],
+    remoteType: "remote_only",
+  });
+  assert.ok(
+    classify(j) && classify(j).tier <= 3,
+    `remote fullstack + React (AI title stripped) should qualify, got ${JSON.stringify(classify(j))}`
+  );
+}
+
+{
+  const j = job({
+    title: "placeholder",
+    skills: ["AWS"],
+    extra: {
+      headline: "Associate DevOps/Platform Engineer (AWS)",
+      aiGeneratedData: { jobHeadline: "Platform Engineering Lead" },
+    },
+  });
+  assert.strictEqual(classify(j), null, "AI-upgraded associate title must still skip");
+}
+
+{
+  const j = job({
+    title: "Solutions Architect",
+    locations: ["Remote"],
+    remoteType: "remote_not_okay",
+    skills: ["AWS"],
+  });
+  assert.ok(isHydOrRemote(j), "location string Remote should count as remote");
+  assert.ok(classify(j)?.tier === 1);
+}
+
+{
+  const j = job({
+    title: "Senior AI Engineer",
+    skills: ["Software Development"],
+    locations: [],
+    remoteType: "remote_only",
+    salaryRange: { max: 5500000, maxVanity: 5500000 },
+  });
+  assert.ok(
+    classify(j)?.tier === 3,
+    `Senior AI Engineer remote 55L should stretch-qualify, got ${JSON.stringify(classify(j))}`
+  );
+}
+
 console.log("cutshort test_filters: ok");

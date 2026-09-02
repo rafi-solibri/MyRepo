@@ -153,7 +153,7 @@ const SKIP_RE =
 /** C# / .NET need non-\b patterns: `\bc#\b` never matches "C#" (# is non-word). */
 const NET_STACK_RE = /(\.net|\bdotnet\b|asp\.?\s*net|c#|\bcsharp\b|\bazure\b)/i;
 const STACK_SIGNAL_RE =
-  /(\.net|\bdotnet\b|asp\.?\s*net|c#|\bcsharp\b|\bazure\b|\baws\b|\breact\b|microservices|\bnode\.?js\b|\bnodejs\b|\btypescript\b|\bjava\b|genai|gen\s*ai|generative\s*ai|\bllm\b|platform engineer)/i;
+  /(\.net|\bdotnet\b|asp\.?\s*net|c#|\bcsharp\b|\bazure\b|\baws\b|\breact\b|microservices|\bnode\.?js\b|\bnodejs\b|\btypescript\b|\bjavascript\b|\bjava\b|genai|gen\s*ai|generative\s*ai|\bllm\b|ai engineer|platform engineer)/i;
 const TIER1_TITLE_RE =
   /\b(solutions?\s*architect|technical\s*architect|cloud\s*architect|platform\s*architect|enterprise\s*architect|application\s*architect|tech(?:nical)?\s*lead|engineering\s*manager|engineering\s*leader|principal|staff|head of eng(?:ineering)?|director of eng(?:ineering)?|delivery lead|engineering lead|architect)\b/i;
 
@@ -162,7 +162,15 @@ function sleep(ms) {
 }
 
 function titleOf(job) {
-  return (job?.aiGeneratedData?.jobHeadline || job?.headline || "").trim();
+  // Recruiter headline often has Senior/Lead/Full Stack; AI headline is a
+  // shortened generic ("AI Engineer", "Software Engineer") that drops those
+  // tokens and zeroed qualifying inventory. Classify against both.
+  const raw = String(job?.headline || "").trim();
+  const ai = String(job?.aiGeneratedData?.jobHeadline || "").trim();
+  if (raw && ai && raw.toLowerCase() !== ai.toLowerCase()) {
+    return `${raw} ${ai}`.trim();
+  }
+  return raw || ai;
 }
 
 function maxCtcLpa(job) {
@@ -182,8 +190,11 @@ function isHydOrRemote(job) {
       l.includes("madhapur") ||
       /\bhyd\b/.test(l)
   );
+  const remoteLoc = locs.some((l) =>
+    /\b(remote|wfh|work[\s-]?from[\s-]?home)\b/i.test(l)
+  );
   const rt = String(job?.remoteType || "").toLowerCase();
-  if (hyd || rt === "remote_okay" || rt === "remote_only") return true;
+  if (hyd || remoteLoc || rt === "remote_okay" || rt === "remote_only") return true;
   // Country-only / empty location cards often hide Hyd/remote in headline.
   const title = titleOf(job).toLowerCase();
   if (/hyderabad|\bhyd\b|telangana|remote|wfh|work from home/.test(title)) return true;
@@ -786,7 +797,8 @@ async function scan(pageOrSession) {
   await pull({ locations: "India", remoteType: "remote_okay" }, 40, "india-remote");
   await pull({ remoteType: "remote_okay" }, 40, "remote_okay");
   await pull({ remoteType: "remote_only" }, 25, "remote_only");
-  for (const skills of ["00001", "00075", "00486", "00054", "00368", "00002", "00115"]) {
+  // 00001=.NET 00075=C# 00486=Azure 00054=AWS 00368=React 00306=NodeJS 00668=TypeScript
+  for (const skills of ["00001", "00075", "00486", "00054", "00368", "00306", "00668"]) {
     await pull({ skills }, 35, skills);
   }
   return [...byId.values()];

@@ -1,5 +1,12 @@
 # Cutshort — issues & fixes
 
+## 2026-09-02 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| classify used AI jobHeadline first, stripping Senior/Lead/Full Stack so Hyd/remote 35L+ inventory classified 0 for weeks; location Remote ignored when remoteType=remote_not_okay; skill 00115 returned 0 | titleOf unions recruiter headline + AI headline; treat location Remote as remote; STACK_SIGNAL +javascript +ai engineer; replace dead skill 00115 with Node/TS ids |
+
+
 ## 2026-08-25 (cloud)
 
 | Issue | Fix |
