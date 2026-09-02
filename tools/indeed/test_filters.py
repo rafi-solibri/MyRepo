@@ -268,6 +268,24 @@ def test_indeed_google_sso_uses_google_password_only():
     assert not is_google_2fa_challenge(url=pwd, body="Enter your password")
 
 
+def test_indeed_google_sso_control_match():
+    """Cookie-banner / icon-only Google CTA must still count as the SSO button."""
+    from tools.indeed.google_sso import looks_like_google_sso_control
+
+    assert looks_like_google_sso_control(text="Continue with Google")
+    assert looks_like_google_sso_control(aria="Sign in with Google")
+    assert looks_like_google_sso_control(
+        data_tn="login-google-auth",
+        aria="Google",
+    )
+    assert looks_like_google_sso_control(href="https://accounts.google.com/o/oauth2")
+    assert not looks_like_google_sso_control(text="We use cookies")
+    assert not looks_like_google_sso_control(text="Google reviews")
+    assert cookie_banner_visible_from_text(
+        "Accept All Cookies\nReady to take the next step?\nCreate an account"
+    )
+
+
 if __name__ == "__main__":
     test_skip_hyd_remote_ok()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
@@ -283,4 +301,5 @@ if __name__ == "__main__":
     test_job_dedupe_key_from_jk()
     test_passport_expiry_from_oauth_and_jwt()
     test_indeed_google_sso_uses_google_password_only()
+    test_indeed_google_sso_control_match()
     print("ok")
