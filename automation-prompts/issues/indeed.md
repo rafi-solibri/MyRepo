@@ -1,5 +1,12 @@
 # Indeed — issues & fixes
 
+## 2026-09-02 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Preflight hasAuth true while Passport JWT/OauthExpires expired ~27d → UC indeed_login_required | passport_auth_check.py decrypts OauthExpires/Bearer JWT exp; chrome_session + prepare_uc_profile gate hasAuth on expiry |
+
+
 ## 2026-08-31 (cloud)
 
 | Issue | Fix |

@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from tools.indeed.passport_auth_check import status_from_plaintext  # noqa: E402
 from tools.indeed.prepare_uc_profile import COPY_PATHS  # noqa: E402
 from tools.indeed.uc_daily_apply import (  # noqa: E402
     already_applied,
@@ -217,6 +218,36 @@ def test_job_dedupe_key_from_jk():
     )
 
 
+def test_passport_expiry_from_oauth_and_jwt():
+    # Regression 2026-09-02: cookie *names* lingered ~27d after JWT expiry →
+    # preflight hasAuth true + UC indeed_login_required. Expiry must gate auth.
+    now = 1788624000.0  # ~2026-09-02
+    expired = status_from_plaintext(b"x" * 32 + b"1786004609", None, now=now)
+    assert expired["ok"] is False
+    assert expired["expired"] is True
+    assert expired["reason"] == "indeed_passport_expired"
+    assert expired["exp"] == 1786004609
+
+    live = status_from_plaintext(b"pad" + b"1893456000", None, now=now)  # ~2029-12
+    assert live["ok"] is True
+    assert live["expired"] is False
+    assert live["source"] == "OauthExpires"
+
+    # Minimal JWT with exp claim (header.payload.sig) — payload={"exp":1786004609}
+    import base64
+    import json
+
+    def b64(obj: dict) -> str:
+        raw = json.dumps(obj, separators=(",", ":")).encode()
+        return base64.urlsafe_b64encode(raw).decode().rstrip("=")
+
+    jwt = f"{b64({'alg':'none'})}.{b64({'exp':1786004609})}.sig"
+    from_jwt = status_from_plaintext(None, b"hdr" + jwt.encode(), now=now)
+    assert from_jwt["ok"] is False
+    assert from_jwt["source"] == "BearerToken.jwt"
+    assert from_jwt["reason"] == "indeed_passport_expired"
+
+
 if __name__ == "__main__":
     test_skip_hyd_remote_ok()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
@@ -230,4 +261,5 @@ if __name__ == "__main__":
     test_account_settings_and_serp_are_signed_in()
     test_cookie_banner_visible_from_text()
     test_job_dedupe_key_from_jk()
+    test_passport_expiry_from_oauth_and_jwt()
     print("ok")
