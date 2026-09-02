@@ -15,6 +15,7 @@ from tools.ats.complete import (
     ats_password,
     auth_wall_reason,
     classify_ats_host,
+    submit_cta_is_noise,
     extract_hop_destination_from_url,
     extract_offsite_from_text,
     frame_url_is_captcha_challenge,
@@ -47,6 +48,13 @@ def assert_true(cond, msg):
     if not cond:
         raise AssertionError(msg)
 
+
+assert_true(submit_cta_is_noise("Read more"), "Phenom Read more must not advance")
+assert_true(submit_cta_is_noise("I Agree"), "Phenom I Agree is resume-modal only")
+assert_true(submit_cta_is_noise("Cancel"), "Cancel must not advance")
+assert_true(submit_cta_is_noise("Clear form"), "Clear form must not advance")
+assert_true(not submit_cta_is_noise("Submit application"), "real submit must advance")
+assert_true(not submit_cta_is_noise("Next"), "Next must advance")
 
 assert_true(is_submitted_text("Thank you for applying to Acme"), "thank-you must count")
 assert_true(is_submitted_text("Your application was sent"), "sent must count")

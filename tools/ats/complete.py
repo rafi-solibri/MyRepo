@@ -1066,6 +1066,93 @@ def blocked_wall(page) -> str | None:
     )
 
 
+_SUBMIT_CTA_NOISE_RE = re.compile(
+    r"read more|clear form|^cancel$|^\s*close\s*$|i agree|download file|"
+    r"confirmUploadResume|cancelUploadResume",
+    re.I,
+)
+
+
+def submit_cta_is_noise(label: str | None) -> bool:
+    """True for Phenom/legal chrome that must not steal Advance/Submit clicks.
+
+    Micron Phenom marks ``Read more`` / ``I Agree`` / ``Cancel`` as
+    ``button[type=submit]`` — clicking ``.first`` never reaches Submit application.
+    """
+    return bool(_SUBMIT_CTA_NOISE_RE.search((label or "").strip()))
+
+
+def confirm_resume_upload_modal(page) -> bool:
+    """Phenom (careers.micron.com) shows I Agree after set_input_files."""
+    for sel in (
+        "#confirmUploadResume",
+        "button#confirmUploadResume",
+    ):
+        try:
+            el = page.locator(sel).first
+            if el.count() and el.is_visible():
+                el.click(timeout=3000, force=True)
+                _sleep(0.6)
+                return True
+        except Exception:
+            continue
+    try:
+        btn = page.get_by_role("button", name=re.compile(r"^I Agree$", re.I)).first
+        if btn.count() and btn.is_visible():
+            btn.click(timeout=3000, force=True)
+            _sleep(0.6)
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def fill_phenom_contact(page) -> None:
+    """Fill Phenom Contact_Information_* ids when label-for mapping misses."""
+    email = ats_email()
+    mapping = {
+        "Contact_Information_email": email,
+        "Contact_Information_firstname": PROFILE["first"],
+        "Contact_Information_lastname": PROFILE["last"],
+        "Contact_Information_phone": PROFILE["phone"],
+        "Contact_Information_city": PROFILE["city"],
+    }
+    for fid, val in mapping.items():
+        if not val:
+            continue
+        try:
+            ctrl = page.locator(f"#{fid}").first
+            if not ctrl.count() or not ctrl.is_visible():
+                continue
+            current = ""
+            try:
+                current = (ctrl.input_value(timeout=400) or "").strip()
+            except Exception:
+                current = ""
+            if current:
+                continue
+            ctrl.fill(str(val), timeout=2500)
+        except Exception:
+            continue
+    try:
+        cc = page.locator("input[placeholder*='country code' i]").first
+        if cc.count() and cc.is_visible():
+            cur = ""
+            try:
+                cur = (cc.input_value(timeout=400) or "").strip()
+            except Exception:
+                cur = ""
+            if not cur:
+                cc.click(force=True)
+                _sleep(0.2)
+                cc.fill("+91")
+                _sleep(0.25)
+                page.keyboard.press("Enter")
+                _sleep(0.2)
+    except Exception:
+        pass
+
+
 def upload_resume(page) -> bool:
     path = resume_upload_path()
     print(f"  ats_resume={path}", flush=True)
@@ -1082,6 +1169,8 @@ def upload_resume(page) -> bool:
                     continue
         except Exception:
             continue
+    if uploaded:
+        confirm_resume_upload_modal(page)
     return uploaded
 
 
@@ -1311,10 +1400,19 @@ def click_advance(page) -> bool:
         "input[type='submit']",
     ):
         try:
-            el = page.locator(sel).first
-            if el.count() and el.is_visible() and el.is_enabled():
+            buttons = page.locator(sel)
+            n = min(buttons.count(), 8)
+        except Exception:
+            continue
+        for i in range(n):
+            try:
+                el = buttons.nth(i)
+                if not (el.count() and el.is_visible() and el.is_enabled()):
+                    continue
                 label = ((el.inner_text() or "") + " " + (el.get_attribute("aria-label") or "")).lower()
                 if re.search(r"sign in with (google|microsoft|linkedin|apple)", label):
+                    continue
+                if submit_cta_is_noise(label):
                     continue
                 # Password-rule reject: do not keep submitting Create Account.
                 if "createAccountSubmit" in sel and workday_password_alert(page):
@@ -1322,8 +1420,8 @@ def click_advance(page) -> bool:
                 el.click(timeout=3000, force=True)
                 _sleep(1.6)
                 return True
-        except Exception:
-            continue
+            except Exception:
+                continue
     return _click_text(
         page,
         (
@@ -2419,6 +2517,7 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
         except Exception:
             pass
         fill_labeled_fields(page)
+        fill_phenom_contact(page)
         fill_yes_no(page)
         fill_greenhouse_combos(page)
         fill_source_fields(page)
@@ -2465,6 +2564,7 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
             try:
                 upload_resume(page)
                 fill_labeled_fields(page)
+                fill_phenom_contact(page)
                 fill_source_fields(page)
                 fill_validation_gaps(page)
                 fill_yes_no(page)

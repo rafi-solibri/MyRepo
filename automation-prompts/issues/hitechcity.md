@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-09-02 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Micron Phenom: Read more/I Agree type=submit stole Advance; HW Device Characterization + Product Engineering burned workers on incomplete forms | Skip those HW titles; confirm Phenom I Agree after resume upload; fill Contact_Information_* ids; ignore noise submit CTAs |
+
+
 ## 2026-09-01 (cloud)
 
 | Issue | Fix |
