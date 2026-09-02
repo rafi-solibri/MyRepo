@@ -45,3 +45,16 @@
   - Aconex Solution Architect → `Aconex without .NET on title`
   - Principal Engineer Static Timing Analysis (STA) → `semiconductor/EDA without .NET on title`
   - Principal Engineer - AI → `pure AI/data without .NET on title`
+
+## Afternoon cloud run (bc-9c1102ac, 13:48 IST)
+Scheduled Foundit Daily agent after #308 was already on `main`.
+- Preflight: ok (MSSOAT dest+source; `Rafi_Resume.docx` rebuilt from master, 20945B)
+- CDP login: ok (`wait_for_cdp_login.js` hiRafi + MSSOAT)
+- Applied tab: **443 → 443** (+0)
+- Intentional applies: **0** (do not invent)
+- Age window: **3650d**
+- Candidates: d1=73 / d3=257 / d7=208 / d14=237 / d30=295 / d90=146 / d3650=54
+- Skipped: 1206 | duplicates: 64 | blocked: 0
+- #308 skips still hold: Aconex / STA-EDA / Principal Engineer - AI
+- Eligible inventory already on Applied tab (incl. VeriPark `65143135`)
+- Artifact: `/opt/cursor/artifacts/foundit-apply-report.json` (copy: `reports/2026-09-02/foundit-apply-report.json`)
