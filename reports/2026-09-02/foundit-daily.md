@@ -36,3 +36,12 @@
 - **tylsemi** / Principal Engineer Static Timing Analysis (STA)
   - Hi — I'm applying for Principal Engineer Static Timing Analysis (STA) at tylsemi. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)
 
+
+## Post-fix re-run (#308)
+- Applied tab: **443 → 443** (+0)
+- Intentional applies: **0**
+- Skipped: 1207 | duplicates: 65 | blocked: 0
+- Confirmed skips:
+  - Aconex Solution Architect → `Aconex without .NET on title`
+  - Principal Engineer Static Timing Analysis (STA) → `semiconductor/EDA without .NET on title`
+  - Principal Engineer - AI → `pure AI/data without .NET on title`
