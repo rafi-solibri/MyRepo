@@ -47,6 +47,29 @@ const MAX_APPLIES = Number(process.env.HIRIST_MAX_APPLIES || 40);
 const DRY_RUN = process.env.HIRIST_DRY_RUN === "1";
 const TAILOR = process.env.HIRIST_TAILOR !== "0";
 const TODAY = new Date().toISOString().slice(0, 10);
+const APPLIED_TODAY_FILE =
+  process.env.HIRIST_APPLIED_TODAY ||
+  (fs.existsSync("/opt/cursor/artifacts")
+    ? "/opt/cursor/artifacts/hirist-applied-ids.json"
+    : path.join(process.cwd(), "artifacts", "hirist-applied-ids.json"));
+
+function loadAppliedToday() {
+  try {
+    const j = JSON.parse(fs.readFileSync(APPLIED_TODAY_FILE, "utf8"));
+    if (j && j.date === TODAY && Array.isArray(j.ids)) return new Set(j.ids.map(String));
+  } catch {
+    /* missing or corrupt */
+  }
+  return new Set();
+}
+
+function saveAppliedToday(ids) {
+  fs.mkdirSync(path.dirname(APPLIED_TODAY_FILE), { recursive: true });
+  fs.writeFileSync(
+    APPLIED_TODAY_FILE,
+    JSON.stringify({ date: TODAY, ids: [...ids] }, null, 2) + "\n"
+  );
+}
 
 /** Hyderabad location id from Hirist extract-param API. */
 const HYD_LOC = JSON.stringify([{ id: 4, name: "hyderabad" }]);
@@ -345,6 +368,10 @@ async function main() {
 
   const seenIds = new Set();
   const candidates = [];
+  const appliedToday = loadAppliedToday();
+  if (appliedToday.size) {
+    state.notes.push(`applied_today_cache=${appliedToday.size} file=${APPLIED_TODAY_FILE}`);
+  }
 
   for (const query of QUERY_WAVES) {
     if (candidates.length >= MAX_APPLIES * 4) break;
@@ -383,6 +410,10 @@ async function main() {
         // applyStatus: 0 often means already applied / closed for apply
         if (Number(job.applyStatus) === 0 && !job.applyUrl) {
           state.skipped.push({ id, title, company, reason: "already_applied_or_closed" });
+          continue;
+        }
+        if (appliedToday.has(String(id))) {
+          state.skipped.push({ id, title, company, reason: "already_applied_today" });
           continue;
         }
 
@@ -458,6 +489,8 @@ async function main() {
             reason: "external_ats",
           });
           applies += 1;
+          appliedToday.add(String(job.id));
+          saveAppliedToday(appliedToday);
         } else {
           state.rejected.push({
             id: job.id,
@@ -498,6 +531,8 @@ async function main() {
         url: job.jobDetailUrl,
       });
       applies += 1;
+      appliedToday.add(String(job.id));
+      saveAppliedToday(appliedToday);
     } else {
       const reason =
         res.json?.error?.message ||
