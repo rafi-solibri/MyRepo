@@ -1,0 +1,134 @@
+{
+  "date": "2026-09-02",
+  "portal": "easy_apply",
+  "status": "completed_partial",
+  "reason": "easy_apply_daily_limit",
+  "google_password_injected": true,
+  "login_ok": true,
+  "easy_apply_submitted": 12,
+  "external_completed": 1,
+  "total_submitted": 13,
+  "target_easy_apply": "40-50",
+  "people_referrals": false,
+  "resume": "resumes/Rafi_Resume.docx",
+  "submitted": [
+    {
+      "company": "Turing",
+      "role": "Remote Software Engineer – C#",
+      "job_id": "4460957468",
+      "location": "India (Remote)",
+      "path": "easy_apply"
+    },
+    {
+      "company": "HighRadius",
+      "role": "Senior Product Solutions Architect",
+      "job_id": "4449848134",
+      "location": "Hyderabad",
+      "path": "easy_apply"
+    },
+    {
+      "company": "Talent500",
+      "role": "FullStack Developer .net/ Angular (Lead) [T500-28850]",
+      "job_id": "4458723595",
+      "location": "Hyderabad",
+      "path": "easy_apply"
+    },
+    {
+      "company": "First American (India)",
+      "role": "Staff Platform Engineer",
+      "job_id": "4459931286",
+      "location": "India",
+      "path": "easy_apply"
+    },
+    {
+      "company": "Hutchison Limited, India",
+      "role": "Odoo System Architect And Product Owner",
+      "job_id": "4459937246",
+      "location": "Hyderabad",
+      "path": "easy_apply"
+    },
+    {
+      "company": "Tata Consultancy Services",
+      "role": "Dot net with Angular",
+      "job_id": "4460950699",
+      "location": "Hyderabad",
+      "path": "easy_apply"
+    },
+    {
+      "company": "Launch India",
+      "role": ".Net Full Stack Engineer",
+      "job_id": "4458205183",
+      "location": "Hyderabad",
+      "path": "easy_apply"
+    },
+    {
+      "company": "E-Solutions",
+      "role": "Senior Software Engineer – C++",
+      "job_id": "4462158526",
+      "location": "India",
+      "path": "easy_apply"
+    },
+    {
+      "company": "CareerXperts Consulting",
+      "role": "Technical Lead — .NET, C#, Global SaaS Platform",
+      "job_id": "4459925722",
+      "location": "Hyderabad",
+      "path": "easy_apply"
+    },
+    {
+      "company": "Allied Globetech",
+      "role": "Integration Specialist (.Net)",
+      "job_id": "4459915436",
+      "location": "Hyderabad",
+      "path": "easy_apply"
+    },
+    {
+      "company": "Jobgether",
+      "role": "Databricks Solution Architect-Databricks Champion",
+      "job_id": "4460214913",
+      "location": "India",
+      "path": "easy_apply"
+    },
+    {
+      "company": "Stackzy Technologies Pvt Ltd",
+      "role": "Windchill Solution Architect",
+      "job_id": "4460070279",
+      "location": "India",
+      "path": "easy_apply"
+    },
+    {
+      "company": "Clean Harbors",
+      "role": "Technical Architect",
+      "job_id": "4454006996",
+      "location": "Hyderabad",
+      "path": "external_ats",
+      "note": "Google Form alreadyresponded; helper recorded confirmation"
+    }
+  ],
+  "blocked": [
+    {
+      "reason": "easy_apply_daily_limit",
+      "detail": "Easy Apply daily limit after 12 confirmed submits"
+    },
+    {
+      "reason": "external_ats_walls",
+      "detail": "21 blocked (Workday login, captcha, timeouts); 18 skipped no ATS form"
+    }
+  ],
+  "artifacts": {
+    "easy_apply_waves": [
+      "/opt/cursor/artifacts/apply-report-wave1.json",
+      "/opt/cursor/artifacts/apply-report-wave2.json",
+      "/opt/cursor/artifacts/apply-report-wave3.json"
+    ],
+    "external": "/opt/cursor/artifacts/external-apply-report.json",
+    "seen_ids": "/opt/cursor/artifacts/seen-ids.json"
+  },
+  "code_fixes": [
+    "fda8cd9 session cookies only",
+    "21db5bd remote_search through view location + TITLE_OK dot net",
+    "6cc94ce looks_like_job_location company chrome",
+    "3255d9d TITLE_OK hyphen manager-software-engineering",
+    "8ddce66 skip QA Architect and Interior/B.Arch"
+  ]
+}
