@@ -1,5 +1,12 @@
 # Foundit — issues & fixes
 
+## 2026-09-02 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| False Falcon redirects: Egnyte Principal Engineer - AI; tylsemi Principal Engineer STA; muller's Aconex SA (Technical Lead) | filters.js: engineer-AI pure-AI title skip; semiconductor/EDA STA\|RTL\|SoC\|ASIC\|VLSI skip; Aconex without .NET on title + tests |
+
+
 ## 2026-09-01 (cloud)
 
 | Issue | Fix |
