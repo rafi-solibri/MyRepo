@@ -45,3 +45,18 @@
   - Aconex Solution Architect → `Aconex without .NET on title`
   - Principal Engineer Static Timing Analysis (STA) → `semiconductor/EDA without .NET on title`
   - Principal Engineer - AI → `pure AI/data without .NET on title`
+
+## Post-fix re-run (#312 / merged main @ b34a0ac)
+- Login: ok (MSSOAT + jwtOk; onApp; greeting briefly Hi, Seeker)
+- Applied tab: **443 → 443** (+0)
+- Intentional applies: **0** (VeriPark `65143135` skipped as already applied — `userJobInfo`)
+- Age window used: 3650d
+- Candidates: d1=98 / d3=277 / d7=180 / d14=233 / d30=285 / d90=154 / d3650=52
+- Skipped: 1214 | duplicates: 65 | blocked: 0
+- Confirmed #308 skips still hold:
+  - muller's Aconex Solution Architect → `Aconex without .NET on title`
+  - tylsemi Principal Engineer Static Timing Analysis (STA) → `semiconductor/EDA without .NET on title`
+  - Egnyte Principal Engineer - AI → `pure AI/data without .NET on title`
+- No new code-fixable blocker; no further same-day re-run launched
+- Resume: `/workspace/resumes/Rafi_Resume.docx` | Expected CTC 65 LPA
+- Artifact: `reports/2026-09-02/foundit-apply-report-postfix.json`
