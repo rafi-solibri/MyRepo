@@ -12,6 +12,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import time
 import urllib.error
 import urllib.request
@@ -19,10 +20,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from tools.hitechcity.campus_allowlist import write_allowlist_artifact
 from tools.hitechcity.careers_apply import load_companies
-
-ROOT = Path(__file__).resolve().parents[2]
 REPORT = Path(
     os.environ.get(
         "HITECHCITY_BOARDS_REPORT",

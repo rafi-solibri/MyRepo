@@ -6,12 +6,17 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote
+
+_root = Path(__file__).resolve().parents[2]
+if str(_root) not in sys.path:
+    sys.path.insert(0, str(_root))
 
 from playwright.sync_api import Page, sync_playwright
 
