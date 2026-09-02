@@ -81,11 +81,14 @@ LI_TITLE_SKIP = re.compile(
     r"circuit\s*design|mask\s*design|place\s*and\s*route|\bp&r\b|"
     r"\bcad\b|sta\s*/\s*synthesis|\bsta\b.*\bsynthesis\b|\bsynthesis\b|"
     r"timing\s*analysis|\bstaff\s*analyst\b|"
+    r"(?<!software\s)product\s*engineering|"
     r"data\s*science\s*engineer|"
     r"\bai\s*/\s*ml\b|\bai\s*&\s*ml\b|\baiml\b|\bai-ml\b|"
     r"\bdeep\s*learning\b|\bgen(?:erative)?\s*ai\b|\bllm\b|"
-    r"\bai\s*engineer\b|\bml\s*engineer\b|\bai\s*architect\b|\bml\s*architect\b|"
+    r"\bai\s*engineer(?:ing)?\b|\bml\s*engineer(?:ing)?\b|\bai\s*architect\b|\bml\s*architect\b|"
     r"\bartificial\s*intelligence\b|\bcuda\b|\brocm\b|"
+    r"\bux\s*research\b|\buser\s*experience\s*research\b|\bux\s*/\s*ui\b|"
+    r"share\s+on\s+wechat|"
     r"\bdata\s*scientist\b|\bcomputer\s*vision\b",
     re.I,
 )

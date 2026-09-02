@@ -109,11 +109,28 @@ def test_title_ok():
     assert CAREERS_TITLE_SKIP.search(
         "Staff Analyst - IT EA EPS Hyderabad, Telangana, India"
     )
+    # 2026-09-02 cron: Micron PE / Experian UX / JPMC AI Engineering burned walls.
+    assert CAREERS_TITLE_SKIP.search(
+        "Senior/Staff/Principal Engineer, Product Engineering Hyderabad, Telangana, India"
+    )
+    assert CAREERS_TITLE_SKIP.search(
+        "UX Research, Design & Engineering Lead (Remote)"
+    )
+    assert CAREERS_TITLE_SKIP.search(
+        "Share on WeChat · UX Research, Design & Engineering Lead (Remote)"
+    )
+    assert CAREERS_TITLE_SKIP.search(
+        "Predictive Science - AI Engineering & Prompt Architecture Lead - Vice President"
+    )
+    assert not CAREERS_TITLE_SKIP.search("Software Product Engineering Lead Hyderabad")
     assert LI_TITLE_SKIP.search("Staff Engineer, CAD")
     assert LI_TITLE_SKIP.search("Principal Engineer - STA/Synthesis")
     assert LI_TITLE_SKIP.search("Staff Analyst - IT EA EPS")
     assert LI_TITLE_SKIP.search("Staff Engineer, Scribe Layout Design")
     assert LI_TITLE_SKIP.search("Lead Principal Engineer, Design Verification")
+    assert LI_TITLE_SKIP.search("Product Engineering Staff Engineer")
+    assert LI_TITLE_SKIP.search("UX Research Lead")
+    assert LI_TITLE_SKIP.search("AI Engineering Lead")
     assert skip_reason("Staff Engineer, Scribe Layout Design") is not None
     assert LI_TITLE_SKIP.search("Principal Silicon Design Engineer")
     assert JD_WRONG_STACK.search("We need a Mobile Architect for Ionic Capacitor and Zscaler")

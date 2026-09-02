@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-09-02 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Micron Product Engineering + Experian UX Research + JPMC AI Engineering titles burned CAPTCHA/soft walls; Flutter/Providence/LTIM careers URLs NXDOMAIN/bad-TLS | CAREERS/LI title-skip Product Engineering (non-software), UX Research/WeChat junk, AI Engineering; scrub dead careers hosts and point Flutter→fluttergroup, Providence→providence.jobs, LTIM→ltm.com |
+
+
 ## 2026-09-01 (cloud)
 
 | Issue | Fix |

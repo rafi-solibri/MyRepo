@@ -214,14 +214,45 @@ def test_openings_preference_and_hints():
     assert openings_preference_rank({}) == 1
     assert "Electronic Arts" in CAREERS_URL_HINTS
     assert "CGI" in CAREERS_URL_HINTS
+    assert "fluttergroup.com" in CAREERS_URL_HINTS["Flutter Entertainment"][0]
+    assert "ltm.com" in CAREERS_URL_HINTS["LTIMindtree"][0]
+    assert "providence.jobs" in CAREERS_URL_HINTS["Providence"][0]
     companies = [
         {"name": "Electronic Arts", "campuses": ["rmz-nexity"], "careersUrls": []},
         {"name": "Someone Else", "campuses": ["dlf-cyber-city"], "careersUrls": []},
+        {
+            "name": "Flutter Entertainment",
+            "campuses": ["rmz-nexity"],
+            "careersUrls": [
+                "https://careers.flutter.com/search/?q=Engineering+Manager&locationsearch=Hyderabad"
+            ],
+        },
+        {
+            "name": "Providence",
+            "campuses": ["rmz-nexity"],
+            "careersUrls": [
+                "https://www.providenceindia.com/careers",
+                "https://careers.providence.org/us/en/search-results?keywords=Engineering%20Manager",
+            ],
+        },
+        {
+            "name": "LTIMindtree",
+            "campuses": ["mindspace-madhapur"],
+            "careersUrls": [
+                "https://careers.ltimindtree.com/search/?q=Engineering+Manager&locationsearch=Hyderabad"
+            ],
+        },
     ]
     touched = ensure_careers_url_hints(companies)
     assert "Electronic Arts" in touched
     assert companies[0]["careersUrls"]
     assert not companies[1].get("careersUrls")
+    assert all("flutter.com/" not in u for u in companies[2]["careersUrls"])
+    assert any("fluttergroup.com" in u for u in companies[2]["careersUrls"])
+    assert all("careers.providence.org" not in u and "providenceindia.com" not in u for u in companies[3]["careersUrls"])
+    assert any("providence.jobs" in u for u in companies[3]["careersUrls"])
+    assert all("careers.ltimindtree.com" not in u for u in companies[4]["careersUrls"])
+    assert any("ltm.com" in u for u in companies[4]["careersUrls"])
 
 
 if __name__ == "__main__":
