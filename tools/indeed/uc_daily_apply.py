@@ -737,7 +737,13 @@ def restore_signed_in(sb) -> dict:
             if looks_login_wall(body, cur):
                 info["loginWall"] = True
                 info["via"] = url
-                return info
+                # Settings/account shows Sign-in but not the GSI iframe.
+                # Keep walking to /auth so google_sso can click Continue with Google.
+                if "secure.indeed.com/auth" in (cur or "").lower() or "account/login" in (
+                    (cur or url).lower()
+                ):
+                    return info
+                continue
         except Exception as exc:
             info["tried"].append({"url": url, "error": str(exc)[:120]})
     return info

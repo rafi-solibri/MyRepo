@@ -27,6 +27,38 @@ WRONG_PASSWORD_RE = re.compile(
     re.I,
 )
 
+# Dedicated Passport auth (GSI iframe lives here). Settings/account Sign-in
+# wall is the same host but often lacks the Google button until /auth.
+INDEED_AUTH_URL = (
+    "https://secure.indeed.com/auth?hl=en_IN&co=IN"
+    "&continue=https%3A%2F%2Fin.indeed.com%2F"
+)
+
+GSI_IFRAME_CSS = (
+    "iframe[src*='accounts.google.com/gsi/button']",
+    "iframe[src*='accounts.google.com/gsi/']",
+    "iframe[src*='accounts.google.com/gsi/select']",
+)
+
+
+def should_open_indeed_auth(url: str) -> bool:
+    """True when we must navigate to INDEED_AUTH_URL before looking for GSI.
+
+    Any secure.indeed.com URL used to skip this — that left SSO on
+    /settings/account (Create an account) with no clickable Google button.
+    """
+    u = (url or "").lower()
+    if "accounts.google.com" in u:
+        return False
+    if "secure.indeed.com/auth" in u or "/account/login" in u:
+        return False
+    return True
+
+
+def is_gsi_button_iframe(src: str) -> bool:
+    s = (src or "").lower()
+    return "accounts.google.com/gsi/" in s
+
 
 def google_email() -> str:
     return (
@@ -78,7 +110,171 @@ def _switch_to_google_window(sb: Any) -> bool:
     return False
 
 
-def _click_google_sso(sb: Any) -> bool:
+def _dismiss_cookie_banner(sb: Any) -> str:
+    """Cookie strip covers the GSI iframe on /auth (Accept All Cookies)."""
+    try:
+        from tools.indeed.uc_daily_apply import dismiss_indeed_cookie_banner
+
+        return dismiss_indeed_cookie_banner(sb) or ""
+    except Exception:
+        pass
+    try:
+        clicked = sb.execute_script(
+            """
+            const labels = [
+              'accept all cookies', 'accept all', 'reject all cookies', 'reject all'
+            ];
+            const els = [...document.querySelectorAll('button, a[role=button], [role=button]')];
+            for (const el of els) {
+              const t = ((el.innerText || el.getAttribute('aria-label') || '') + '').trim().toLowerCase();
+              if (!labels.some(l => t === l || t.startsWith(l))) continue;
+              const r = el.getBoundingClientRect();
+              if (r.width < 1 || r.height < 1) continue;
+              try { el.click(); } catch (e) {}
+              return (el.innerText || '').trim().slice(0, 80);
+            }
+            return null;
+            """
+        )
+        return str(clicked or "")
+    except Exception:
+        return ""
+
+
+def _google_surface_open(sb: Any) -> bool:
+    try:
+        handles = list(sb.driver.window_handles)
+    except Exception:
+        handles = []
+    cur = ""
+    try:
+        cur = sb.get_current_url() or ""
+    except Exception:
+        pass
+    urls = [cur]
+    for h in handles:
+        try:
+            sb.driver.switch_to.window(h)
+            urls.append(sb.get_current_url() or "")
+        except Exception:
+            continue
+    blob = " ".join(urls).lower()
+    if "accounts.google.com" in blob:
+        return True
+    try:
+        sb.driver.switch_to.default_content()
+        frames = sb.driver.find_elements(
+            "css selector", "iframe[src*='accounts.google.com/gsi/select']"
+        )
+        if any(_visible_iframe(el) for el in frames):
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def _visible_iframe(el: Any) -> bool:
+    try:
+        if el.is_displayed():
+            return True
+    except Exception:
+        pass
+    try:
+        size = el.size or {}
+        return float(size.get("width") or 0) > 20 and float(size.get("height") or 0) > 20
+    except Exception:
+        return False
+
+
+def _find_gsi_iframes(sb: Any) -> list[Any]:
+    try:
+        sb.driver.switch_to.default_content()
+    except Exception:
+        pass
+    found: list[Any] = []
+    seen: set[str] = set()
+    for css in GSI_IFRAME_CSS:
+        try:
+            els = sb.driver.find_elements("css selector", css)
+        except Exception:
+            continue
+        for el in els:
+            try:
+                src = el.get_attribute("src") or ""
+            except Exception:
+                src = ""
+            if not is_gsi_button_iframe(src) and "gsi/select" not in src.lower():
+                continue
+            key = src or str(id(el))
+            if key in seen:
+                continue
+            seen.add(key)
+            found.append(el)
+    return found
+
+
+def _click_gsi_iframe(sb: Any) -> bool:
+    """Click Google Identity Services iframe (Continue with Google).
+
+    Indeed Passport renders GSI as iframe#gsi_* src=accounts.google.com/gsi/button
+    — there is no host-page button with the word Google.
+    """
+    iframes = _find_gsi_iframes(sb)
+    for iframe in iframes[:4]:
+        # 1) Click the host iframe element (center).
+        try:
+            from selenium.webdriver.common.action_chains import ActionChains
+
+            ActionChains(sb.driver).move_to_element(iframe).pause(0.2).click().perform()
+            time.sleep(2.2)
+            if _google_surface_open(sb):
+                return True
+        except Exception:
+            pass
+        # 2) Switch into the GSI frame and click role=button.
+        try:
+            sb.driver.switch_to.default_content()
+            sb.driver.switch_to.frame(iframe)
+            clicked = False
+            for sel in ("div[role='button']", "div[role=button]", "#container"):
+                try:
+                    btn = sb.driver.find_element("css selector", sel)
+                    if btn:
+                        btn.click()
+                        clicked = True
+                        break
+                except Exception:
+                    continue
+            try:
+                sb.driver.switch_to.default_content()
+            except Exception:
+                pass
+            if clicked:
+                time.sleep(2.2)
+                if _google_surface_open(sb):
+                    return True
+        except Exception:
+            try:
+                sb.driver.switch_to.default_content()
+            except Exception:
+                pass
+        # 3) UC GUI click at iframe center (headed / Xvfb).
+        try:
+            loc = iframe.location
+            size = iframe.size
+            x = int(loc["x"] + float(size.get("width") or 0) / 2)
+            y = int(loc["y"] + float(size.get("height") or 0) / 2)
+            if x > 0 and y > 0 and hasattr(sb, "uc_gui_click_x_y"):
+                sb.uc_gui_click_x_y(x, y)
+                time.sleep(2.2)
+                if _google_surface_open(sb):
+                    return True
+        except Exception:
+            pass
+    return False
+
+
+def _click_google_sso_dom(sb: Any) -> bool:
     patterns = (
         "//button[contains(translate(., 'GOOGLE', 'google'), 'google')]",
         "//a[contains(translate(., 'GOOGLE', 'google'), 'google')]",
@@ -86,6 +282,7 @@ def _click_google_sso(sb: Any) -> bool:
         "//*[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'sign in with google')]",
         "button[data-tn-element='google-auth']",
         "a[href*='accounts.google.com']",
+        "iframe[src*='accounts.google.com/gsi/button']",
     )
     for sel in patterns:
         try:
@@ -95,6 +292,21 @@ def _click_google_sso(sb: Any) -> bool:
                 return True
         except Exception:
             continue
+    return False
+
+
+def _click_google_sso(sb: Any) -> bool:
+    deadline = time.time() + 8
+    while time.time() < deadline:
+        if _click_gsi_iframe(sb):
+            return True
+        if _click_google_sso_dom(sb):
+            time.sleep(1.5)
+            if _google_surface_open(sb):
+                return True
+            # Host-page click on the iframe element still counts.
+            return True
+        time.sleep(0.45)
     return False
 
 
@@ -224,22 +436,23 @@ def try_google_sso(sb: Any, *, wait_2fa_sec: int | None = None) -> dict:
         )
         return info
 
-    # Ensure we are on Indeed auth / login surface.
+    # Ensure we are on Indeed /auth (GSI iframe). Settings/account is not enough.
     try:
         cur = sb.get_current_url() or ""
     except Exception:
         cur = ""
     if "accounts.google.com" not in cur.lower():
-        if "secure.indeed.com" not in cur.lower() and "account/login" not in cur.lower():
+        if should_open_indeed_auth(cur):
             try:
-                sb.uc_open_with_reconnect(
-                    "https://secure.indeed.com/auth?hl=en_IN&co=IN"
-                    "&continue=https%3A%2F%2Fin.indeed.com%2F",
-                    5,
-                )
+                sb.uc_open_with_reconnect(INDEED_AUTH_URL, 5)
                 time.sleep(2)
+                info["tried"].append({"open_auth": INDEED_AUTH_URL})
             except Exception as exc:
                 info["tried"].append({"open_auth": str(exc)[:120]})
+        dismissed = _dismiss_cookie_banner(sb)
+        if dismissed:
+            info["tried"].append({"cookie_banner": dismissed})
+            time.sleep(0.6)
 
         clicked = _click_google_sso(sb)
         info["tried"].append({"google_sso_click": clicked})

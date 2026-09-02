@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Google SSO missed Continue with Google — GSI iframe on /auth; helper skipped /auth when already on secure.indeed.com/settings and only looked for host-page Google buttons | google_sso opens dedicated /auth, dismisses cookie strip, clicks accounts.google.com/gsi/button iframe; restore_signed_in keeps walking to /auth |
 | Passport expired + Google SSO treated challenge/pwd as 2FA and aliased LINKEDIN_PASSWORD into GOOGLE_PASSWORD → indeed_login_required | google_sso.py (GOOGLE_PASSWORD-only) wired on Sign-in wall; google_2fa_prompt excludes challenge/pwd; load-job-secrets stops password cross-alias |
 | Preflight hasAuth true while Passport JWT/OauthExpires expired ~27d → UC indeed_login_required | passport_auth_check.py decrypts OauthExpires/Bearer JWT exp; chrome_session + prepare_uc_profile gate hasAuth on expiry |
 

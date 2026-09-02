@@ -248,6 +248,28 @@ def test_passport_expiry_from_oauth_and_jwt():
     assert from_jwt["reason"] == "indeed_passport_expired"
 
 
+def test_indeed_google_sso_opens_auth_and_clicks_gsi_iframe():
+    """Passport Sign-in is a GSI iframe, not a host-page Google button."""
+    from tools.indeed.google_sso import (
+        INDEED_AUTH_URL,
+        is_gsi_button_iframe,
+        should_open_indeed_auth,
+    )
+
+    assert should_open_indeed_auth("https://secure.indeed.com/settings/account")
+    assert should_open_indeed_auth("https://in.indeed.com/")
+    assert not should_open_indeed_auth(INDEED_AUTH_URL)
+    assert not should_open_indeed_auth(
+        "https://secure.indeed.com/auth?hl=en_IN&co=IN&continue=https://in.indeed.com/"
+    )
+    assert not should_open_indeed_auth("https://accounts.google.com/v3/signin/identifier")
+    assert is_gsi_button_iframe(
+        "https://accounts.google.com/gsi/button?type=standard&theme=filled_blue"
+        "&size=large&text=continue_with&shape=pill"
+    )
+    assert not is_gsi_button_iframe("https://secure.indeed.com/auth")
+
+
 def test_indeed_google_sso_uses_google_password_only():
     """Never fill Gmail forms with LINKEDIN_PASSWORD (day-10 burn)."""
     from tools.indeed.google_sso import google_password_candidates
@@ -282,5 +304,6 @@ if __name__ == "__main__":
     test_cookie_banner_visible_from_text()
     test_job_dedupe_key_from_jk()
     test_passport_expiry_from_oauth_and_jwt()
+    test_indeed_google_sso_opens_auth_and_clicks_gsi_iframe()
     test_indeed_google_sso_uses_google_password_only()
     print("ok")
