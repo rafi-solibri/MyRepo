@@ -1068,7 +1068,10 @@ def blocked_wall(page) -> str | None:
 
 _SUBMIT_CTA_NOISE_RE = re.compile(
     r"read more|clear form|^cancel$|^\s*close\s*$|i agree|download file|"
-    r"confirmUploadResume|cancelUploadResume",
+    r"confirmUploadResume|cancelUploadResume|"
+    r"search jobs|add to cart|job cart|sort:|share position|"
+    r"job description|company and benefits|previous jobs|next jobs|"
+    r"include eligible remote",
     re.I,
 )
 
@@ -1151,6 +1154,78 @@ def fill_phenom_contact(page) -> None:
                 _sleep(0.2)
     except Exception:
         pass
+    # Phenom required <Select> comboboxes (Country of Residence, EEO, years, etc.).
+    _phenom_fill_selects(page)
+
+
+def _phenom_fill_selects(page) -> None:
+    pairs = (
+        (r"country of residence|current country|^country$", "India"),
+        (r"citizenship", "Indian"),
+        (r"ethnicity|race", "Decline"),
+        (r"disability", "No"),
+        (r"gender", "Male"),
+        (r"previously been employed|ever been employed", "No"),
+        (r"how did you hear|source", "LinkedIn"),
+        (r"notice|joining", "0"),
+        (r"year.?s of experience|total experience|relevant experience", "15"),
+        (r"expected|desired|ctc|compensation", "65"),
+        (r"current (ctc|salary)", "52"),
+        (r"authorized to work", "Yes"),
+        (r"sponsorship", "No"),
+        (r"relocate", "Yes"),
+        (r"education|highest (degree|qualification)", "Bachelor"),
+    )
+    try:
+        boxes = page.locator("input[placeholder='Select'], input[placeholder*='Select' i]")
+        n = min(boxes.count(), 24)
+    except Exception:
+        return
+    for i in range(n):
+        try:
+            box = boxes.nth(i)
+            if not box.count() or not box.is_visible():
+                continue
+            cur = ""
+            try:
+                cur = (box.input_value(timeout=300) or "").strip()
+            except Exception:
+                cur = ""
+            if cur:
+                continue
+            nearby = ""
+            try:
+                nearby = box.evaluate(
+                    """el => {
+                      const lab = el.closest('label') || el.getAttribute('aria-label') || '';
+                      let n = el.parentElement;
+                      for (let i = 0; i < 5 && n; i++) {
+                        const t = (n.innerText || '').trim().replace(/\\s+/g, ' ');
+                        if (t && t.length > 2 && t.length < 160) return t;
+                        n = n.parentElement;
+                      }
+                      return String(lab || '');
+                    }"""
+                ) or ""
+            except Exception:
+                nearby = ""
+            answer = "India"
+            for pat, val in pairs:
+                if re.search(pat, nearby, re.I):
+                    answer = val
+                    break
+            else:
+                # Unknown required select — prefer first safe option via ArrowDown.
+                answer = ""
+            box.click(force=True)
+            _sleep(0.2)
+            if answer:
+                page.keyboard.type(str(answer), delay=12)
+                _sleep(0.3)
+            page.keyboard.press("Enter")
+            _sleep(0.2)
+        except Exception:
+            continue
 
 
 def upload_resume(page) -> bool:
@@ -1391,6 +1466,15 @@ def tick_consents(page) -> None:
 
 
 def click_advance(page) -> bool:
+    # Prefer an explicit apply submit before any leftover type=submit chrome.
+    try:
+        named = page.get_by_role("button", name=re.compile(r"^Submit application$", re.I))
+        if named.count() and named.first.is_visible() and named.first.is_enabled():
+            named.first.click(timeout=3000, force=True)
+            _sleep(1.6)
+            return True
+    except Exception:
+        pass
     for sel in (
         "[data-automation-id='pageFooterNextButton']",
         "button[data-automation-id='bottom-navigation-next-button']",

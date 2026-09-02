@@ -55,6 +55,8 @@ assert_true(submit_cta_is_noise("Cancel"), "Cancel must not advance")
 assert_true(submit_cta_is_noise("Clear form"), "Clear form must not advance")
 assert_true(not submit_cta_is_noise("Submit application"), "real submit must advance")
 assert_true(not submit_cta_is_noise("Next"), "Next must advance")
+assert_true(submit_cta_is_noise("Search jobs"), "Phenom search submit must not advance")
+assert_true(submit_cta_is_noise("Add to cart"), "Phenom cart must not advance")
 
 assert_true(is_submitted_text("Thank you for applying to Acme"), "thank-you must count")
 assert_true(is_submitted_text("Your application was sent"), "sent must count")
