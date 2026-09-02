@@ -917,4 +917,46 @@ assert.strictEqual(
   "Atlassian Solution Architect must skip without .NET on title (2026-09-01)"
 );
 
+assert.strictEqual(
+  classifyJob({
+    jobId: 65144291,
+    title: "Principal Engineer - AI",
+    companyName: "Egnyte",
+    locations: [{ text: "Remote" }],
+    skills: [{ text: ".NET" }, { text: "Python" }, { text: "AI" }],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "pure AI/data without .NET on title",
+  "Principal Engineer - AI must skip even with skills laundry .NET (2026-09-02)"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 65047715,
+    title: "Principal Engineer Static Timing Analysis (STA)",
+    companyName: "tylsemi",
+    locations: [{ text: "Hyderabad / Secunderabad" }],
+    skills: [{ text: "STA" }, { text: "Verilog" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "semiconductor/EDA without .NET on title",
+  "STA semiconductor Principal must skip Arch/Lead band (2026-09-02)"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 65048713,
+    title: "Aconex Solution Architect (Technical Lead) / Part - Time (Remote)",
+    companyName: "muller's solutions",
+    locations: [{ text: "Remote" }],
+    skills: [{ text: "Aconex" }, { text: "Oracle" }],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 12 },
+  }).reason,
+  "Aconex without .NET on title",
+  "Aconex Solution Architect must skip without .NET on title (2026-09-02)"
+);
+
 console.log("filters.test.js OK");
