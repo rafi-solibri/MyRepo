@@ -18,6 +18,7 @@ TITLE_BLACKLIST = re.compile(
     r"\bjava\b(?!.*(?:\.net|dotnet|c#))|"  # Java primary titles (allow if .NET also on title)
     r"node\.?js[- ]?(mandatory|only)|"
     r"python[- ]?(mandatory|only)|principal engineer\s*\(\s*python|"
+    r"\bpython\b(?!.*(?:\.net|dotnet|c#))|"  # Python-primary titles (allow if .NET also)
     # Data Engineer / Data Engineering* without .NET on the same title
     r"\bdata engineer(?:ing)?\b(?!.*(?:\.net|dotnet|c#))|"
     r"\bmachine learning engineer\b|"
@@ -30,7 +31,7 @@ TITLE_BLACKLIST = re.compile(
     r"non-?it staffing|us non-?it|staffing recruiter|talent acquisition|"
     r"\brevit\b|\bbarch\b|hubspot|m365 architect|microsoft 365 architect|"
     r"solutions engineer|presales|pre-sales|"
-    r"\binfor\b|\berp\b.?primary|dft architect|\beda\b|"
+    r"\binfor\b|\berp\b.?primary|\bdft\b|\beda\b|"
     r"ai compiler|gen[- ]?ai architect|ai/?\s*ml architect|ai architect(?!.*\.net)|"
     r"ai technical (lead|architect)|"
     r"quality engineering|quality assurance|qa engineer|\bsdet\b|"
@@ -62,9 +63,11 @@ TITLE_OK = re.compile(
     r"architect|technical lead|tech lead|technology lead|engineering manager|engineering lead|"
     r"principal|staff|solution architect|software architect|application architect|"
     r"cloud architect|azure architect|platform architect|technical architect|"
-    r"\.net|dotnet|c#|software (development )?manager|"
+    r"\.net|dotnet|dot\s*net|c#|software (development )?manager|"
     # "Manager of Software Engineering" / "Director of Engineering" (JPMC-style titles)
+    # Also "Manager, Software Development & Engineering" (comma-led)
     r"manager of (software|engineering)|director of (software|engineering)|"
+    r"manager[,:]?\s+software (development|engineering)|"
     r"software engineering manager|development manager|"
     r"lead (software|development|engineer)|director|head of eng|"
     r"senior engineering|engineering director|"

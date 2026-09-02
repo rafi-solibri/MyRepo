@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-09-02 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Easy Apply view recheck dropped remote_search so Remote India cards (location India) were false-skipped after card pass | Pass remote_search into easy_apply_flow location_allowed; TITLE_OK Manager/Dot net; skip DFT and Python-primary titles |
+
+
 ## 2026-09-01 (cloud)
 
 | Issue | Fix |

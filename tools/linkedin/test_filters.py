@@ -51,6 +51,14 @@ assert_true(
     "Java primary title must skip",
 )
 assert_true(
+    skip_reason("Senior Software Engineer – Python", "Curvia AI", "") is not None,
+    "Python-primary senior engineer title must skip",
+)
+assert_true(
+    skip_reason("Python / .NET Senior Engineer", "Acme", "") is None,
+    "Python mention with .NET later on title must allow",
+)
+assert_true(
     skip_reason("Lead System Architect", "Pegasystems", "") is not None,
     "Pegasystems company must skip",
 )
@@ -103,6 +111,8 @@ for title in [
     "Lead Software Engineer",
     "Technology Lead",
     "Application Architect",
+    "Manager, Software Development & Engineering",
+    "Dot net with Angular - Walk In - Hyderabad",
 ]:
     assert_true(TITLE_OK.search(title), f"TITLE_OK should match: {title}")
 
@@ -136,6 +146,18 @@ assert_true(
 assert_true(
     location_allowed("India · 7 minutes ago · 0 applicants", "Remote", remote_search=True),
     "India + remote_search must allow",
+)
+assert_true(
+    not location_allowed("India · 10 minutes ago · 1 applicant", "On-site"),
+    "bare India without Remote pills / remote_search must reject (view default)",
+)
+assert_true(
+    location_allowed("India · 10 minutes ago · 1 applicant", "On-site", remote_search=True),
+    "bare India on remote-search wave must allow (view must pass remote_search)",
+)
+assert_true(
+    skip_reason("Senior Staff DFT Engineer", "Mulya Technologies", "") is not None,
+    "DFT / hardware staff title must skip",
 )
 assert_true(
     not location_allowed("", "Remote Hyderabad", remote_search=True),
