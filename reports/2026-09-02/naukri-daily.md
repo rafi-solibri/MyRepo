@@ -1,7 +1,7 @@
 # Naukri daily — 2026-09-02 (post-fix re-run)
 
-Same-day re-run on merged `main` (`ddec99e`, PR #309). `POST_FIX_RERUN=1`.
-Agent: https://cursor.com/agents/bc-f2e2e66c-a004-421d-a7f8-e15de1d8923c
+Same-day re-run on merged `main` (started at `ddec99e` / #309; morning cron later landed #312). `POST_FIX_RERUN=1`.
+Morning cron (`bc-d840e486`) reported applied 9 / blocked 4 and merged network/IoT/iOS/sales + B2C MFA skips (#312) while this re-run was still applying.
 
 ## Counts
 - profileUpdated: **true** (`Rafi_Resume.docx`, Uploaded today)
