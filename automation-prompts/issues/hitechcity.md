@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Micron System Architect Advanced Memory / DMTS burned LinkedIn ATS persist_retry | CAREERS/LI title-skip memory system architecture, advanced memory, DMTS |
 | Oracle email OTP gmail_hit but still_on_gate reused stale list-view code | Gmail scrape newest thread first; skip reused OTP; fill/submit in iframes |
 | Oracle f_C leaked insightsoftware because title contained Oracle/BI/.Net | Require LinkedIn company pill match; ignore bodyHead stack words |
 | Storable www.storable.com/careers 404 missed Hyderabad Technical Architect | Point Storable at greenhouse.io/storableindia + about-us/culture/careers; scrub dead /careers/ path |

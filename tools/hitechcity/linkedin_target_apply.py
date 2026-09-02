@@ -87,6 +87,7 @@ LI_TITLE_SKIP = re.compile(
     r"\bcad\b|sta\s*/\s*synthesis|\bsta\b.*\bsynthesis\b|\bsynthesis\b|"
     r"timing\s*analysis|\bstaff\s*analyst\b|"
     r"device\s*characterization|\btd\s+device\b|characterization\s*engineer|"
+    r"memory\s*system\s*architecture|advanced\s*memory|\bdmts\b|"
     r"(?<!software\s)product\s*engineering|"
     r"data\s*science\s*engineer|"
     r"\bai\s*/\s*ml\b|\bai\s*&\s*ml\b|\baiml\b|\bai-ml\b|"

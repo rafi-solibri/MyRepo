@@ -128,6 +128,12 @@ def test_title_ok():
         "Principal Engineer, TD Device Characterization Hyderabad, Telangana, India"
     )
     assert LI_TITLE_SKIP.search("Principal Engineer, TD Device Characterization")
+    assert CAREERS_TITLE_SKIP.search(
+        "System Architect for Advanced Memory System Architecture- DMTS"
+    )
+    assert LI_TITLE_SKIP.search(
+        "System Architect for Advanced Memory System Architecture- DMTS"
+    )
     assert not CAREERS_TITLE_SKIP.search("Software Product Engineering Lead Hyderabad")
     assert LI_TITLE_SKIP.search("Staff Engineer, CAD")
     assert LI_TITLE_SKIP.search("Principal Engineer - STA/Synthesis")
