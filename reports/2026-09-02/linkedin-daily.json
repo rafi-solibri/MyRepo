@@ -1,0 +1,38 @@
+{
+  "date": "2026-09-02",
+  "portal": "linkedin",
+  "status": "STOPPED",
+  "reason": "login_required_wrong_password_then_captcha",
+  "submitted": [],
+  "skipped": [],
+  "blocked": [
+    {
+      "stage": "auto_login",
+      "detail": "Google challenge/pwd healed (fix applied) but GOOGLE_PASSWORD rejected; LinkedIn password candidates rejected; Security Verification CAPTCHA (exit 6)",
+      "artifacts": [
+        "/opt/cursor/artifacts/linkedin-auto-login-wrong-password.png",
+        "/opt/cursor/artifacts/linkedin-auto-login-captcha.png"
+      ]
+    }
+  ],
+  "totals": {
+    "easy_apply_submitted": 0,
+    "external_ats_completed": 0,
+    "skipped": 0,
+    "blocked": 1
+  },
+  "code_fix": {
+    "branch": "cursor/linkedin-fix-challenge-pwd-not-2fa-a239",
+    "commit": "9603821",
+    "summary": "Exclude challenge/pwd from is_google_2fa_challenge; password heal before 2FA wait",
+    "pr": null,
+    "pr_blocker": "CallDynamicTool MCP broken (namespace gets trailing paren); gh pr create 403 Resource not accessible by integration"
+  },
+  "owner_action": [
+    "Refresh Cursor secrets LINKEDIN_PASSWORD and GOOGLE_PASSWORD (both rejected this run; lengths 9)",
+    "Complete Security Verification CAPTCHA / headed login: bash scripts/home-headed-login.sh linkedin",
+    "Open/merge PR from branch cursor/linkedin-fix-challenge-pwd-not-2fa-a239 (push already done)",
+    "Re-run LinkedIn daily after session is live"
+  ],
+  "generated_at": "2026-09-02T03:40:23.622541+00:00"
+}
