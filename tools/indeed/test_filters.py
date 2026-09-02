@@ -309,6 +309,17 @@ def test_indeed_sso_auth_email_form_is_not_signed_in():
     )
 
 
+def test_google_empty_password_error_is_not_ok():
+    """Red 'Enter a password' must not be treated as a successful fill."""
+    from tools.indeed.google_sso import EMPTY_PASSWORD_RE, WRONG_PASSWORD_RE
+
+    empty_body = "Welcome\nEnter your password\nEnter a password\nShow password\nNext"
+    assert EMPTY_PASSWORD_RE.search(empty_body)
+    assert not WRONG_PASSWORD_RE.search(empty_body)
+    # Label-only copy is not the empty-field error.
+    assert not EMPTY_PASSWORD_RE.search("Welcome\nEnter your password\nShow password\nNext")
+
+
 if __name__ == "__main__":
     test_skip_hyd_remote_ok()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
@@ -326,4 +337,5 @@ if __name__ == "__main__":
     test_indeed_google_sso_uses_google_password_only()
     test_indeed_google_sso_control_match()
     test_indeed_sso_auth_email_form_is_not_signed_in()
+    test_google_empty_password_error_is_not_ok()
     print("ok")

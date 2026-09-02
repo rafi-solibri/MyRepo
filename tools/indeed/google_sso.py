@@ -27,6 +27,10 @@ WRONG_PASSWORD_RE = re.compile(
     r"couldn.?t sign you in|wrong email or password",
     re.I,
 )
+EMPTY_PASSWORD_RE = re.compile(
+    r"enter a password|password is required|please enter.+password",
+    re.I,
+)
 
 
 def google_email() -> str:
@@ -305,45 +309,102 @@ def _fill_identifier(sb: Any, email: str) -> bool:
     return False
 
 
-def _fill_password(sb: Any, password: str) -> str:
-    """Fill Google password. Returns ok|wrong_password|no_field."""
-    box = None
-    for sel in (
-        "input[name='Passwd']",
-        "input[type='password']",
-        "input[autocomplete*='current-password']",
+def _js_set_password(sb: Any, password: str) -> dict:
+    """Set the visible Google password input via the native value setter.
+
+    SeleniumBase ``type`` often leaves the v3 FedCM field empty (screenshot:
+    red "Enter a password" after Next). Native setter + input events works.
+    """
+    try:
+        return (
+            sb.execute_script(
+                """
+                const pw = arguments[0];
+                const els = [...document.querySelectorAll(
+                  "input[type='password'], input[name='Passwd'], input[autocomplete*='current-password']"
+                )];
+                const el = els.find(e => {
+                  const r = e.getBoundingClientRect();
+                  return r.width > 40 && r.height > 10;
+                }) || els[0];
+                if (!el) return {ok: false, reason: 'no_field'};
+                try { el.scrollIntoView({block:'center'}); } catch (e) {}
+                try { el.focus(); el.click(); } catch (e) {}
+                const proto = Object.getOwnPropertyDescriptor(
+                  window.HTMLInputElement.prototype, 'value');
+                if (proto && proto.set) proto.set.call(el, pw);
+                else el.value = pw;
+                el.dispatchEvent(new Event('input', {bubbles: true}));
+                el.dispatchEvent(new Event('change', {bubbles: true}));
+                el.dispatchEvent(new KeyboardEvent('keyup', {bubbles: true}));
+                return {ok: !!(el.value && el.value.length), len: (el.value || '').length};
+                """,
+                password,
+            )
+            or {"ok": False, "reason": "no_field"}
+        )
+    except Exception as exc:
+        return {"ok": False, "reason": str(exc)[:80]}
+
+
+def _click_google_next(sb: Any) -> bool:
+    for nxt in (
+        "#passwordNext",
+        "//button[normalize-space()='Next']",
+        "//div[@role='button' and normalize-space()='Next']",
+        "button:contains('Next')",
     ):
         try:
-            if sb.is_element_visible(sel):
-                box = sel
-                break
+            if sb.is_element_visible(nxt) or sb.is_element_present(nxt):
+                sb.click(nxt)
+                return True
         except Exception:
             continue
-    if not box:
+    return False
+
+
+def _fill_password(sb: Any, password: str) -> str:
+    """Fill Google password. Returns ok|wrong_password|empty|no_field."""
+    if not password:
         return "no_field"
-    try:
-        sb.type(box, password)
-        time.sleep(0.3)
-        for nxt in ("#passwordNext", "button:contains('Next')", "//button[.='Next']"):
+    filled = _js_set_password(sb, password)
+    if not filled.get("ok"):
+        # Fallback: Selenium type into a visible box.
+        box = None
+        for sel in (
+            "input[name='Passwd']",
+            "input[type='password']",
+            "input[autocomplete*='current-password']",
+        ):
             try:
-                if sb.is_element_visible(nxt):
-                    sb.click(nxt)
+                if sb.is_element_visible(sel):
+                    box = sel
                     break
             except Exception:
                 continue
-        else:
-            try:
-                sb.press_keys(box, "\n")
-            except Exception:
-                pass
-        time.sleep(2.5)
-    except Exception:
-        return "no_field"
+        if not box:
+            return "no_field"
+        try:
+            sb.click(box)
+            sb.type(box, password)
+        except Exception:
+            return "no_field"
+        filled = _js_set_password(sb, password)
+        if not filled.get("ok"):
+            return "empty"
+    time.sleep(0.4)
+    if not _click_google_next(sb):
+        try:
+            sb.press_keys("input[type='password']", "\n")
+        except Exception:
+            pass
+    time.sleep(2.5)
     body, _title, url = _snap(sb)
     if WRONG_PASSWORD_RE.search(body):
         return "wrong_password"
-    if is_google_password_challenge(url=url, body=body) and WRONG_PASSWORD_RE.search(body):
-        return "wrong_password"
+    if EMPTY_PASSWORD_RE.search(body) and is_google_password_challenge(url=url, body=body):
+        # Still on pwd with empty-field error — Next fired without a value.
+        return "empty"
     return "ok"
 
 
@@ -492,14 +553,13 @@ def try_google_sso(sb: Any, *, wait_2fa_sec: int | None = None) -> dict:
         if is_google_2fa_challenge(url=url, body=body):
             break
         if is_google_password_challenge(url=url, body=body):
-            for nxt in ("#passwordNext", "button:contains('Next')", "//button[.='Next']"):
-                try:
-                    if sb.is_element_visible(nxt):
-                        sb.click(nxt)
-                        info["tried"].append({"password_next_retry": True})
-                        break
-                except Exception:
-                    continue
+            # Only re-submit if JS can see a non-empty password value.
+            again = _js_set_password(sb, pws[0])
+            if again.get("ok"):
+                _click_google_next(sb)
+                info["tried"].append({"password_next_retry": True})
+            else:
+                info["tried"].append({"password_next_retry": "empty_field"})
         time.sleep(1.5)
     else:
         body, title, url = _snap(sb)
