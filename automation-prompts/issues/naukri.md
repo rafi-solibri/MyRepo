@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Virtusa Quick Apply landed but apply_unconfirmed (disabled dual-layer still read as quick); HCA Dontet Technical AI Architect title-skipped; Darwinbox jobDetails misread as brochure | readVisibleApplyCta treats disabled Quick apply Applied as applied before overlay transforms; reload listing on confirm miss; DOTNET_RE accepts Dontet typo; Darwinbox jobDetails + /auth/login classified correctly |
 | False Quick Applies 2026-09-02: Network SA, Data Center Infra SA, iOS Tech Lead, Accounting Services TL, IIoT Architect, Telecom Billing Full Stack TL, AVP of Sales; Accenture B2C MFA tabs piled up as external_incomplete_or_timeout | Title-skip network/(solution) architect, data center, iOS, accounting, IIoT/industrial IoT, telecom billing, AVP/sales roles in resume_and_filters.js; fail-fast Accenture/B2C/SSO MFA in complete_page.js + daily_apply.js and prune stale b2clogin tabs |
 
 

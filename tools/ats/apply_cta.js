@@ -12,7 +12,7 @@ const BROCHURE_URL_RE =
   /\/careers\.html(?:$|[?#])|\/about(?:-us)?(?:\/|$)|\/life-at|\/why[- ]join|\/join[- ]us(?:\.html)?(?:$|[?#])|\/our[- ]team|\/culture(?:\/|$)|\/careers\/?$|\/careers\/?[?#]|\/jobs\/?$|\/job-openings\/?$/i;
 
 const JOB_DETAIL_URL_RE =
-  /\/job\/|\/jobs\/\d|gh_jid=|requisition|reqid=|pid=\d|myworkdayjobs|greenhouse\.io|lever\.co|smartrecruiters|ashbyhq|icims|eightfold/i;
+  /\/job\/|\/jobs\/\d|\/jobdetails\/|gh_jid=|requisition|reqid=|pid=\d|myworkdayjobs|greenhouse\.io|lever\.co|smartrecruiters|ashbyhq|icims|eightfold|darwinbox/i;
 
 const BROCHURE_TEXT_RE =
   /join our (growing )?team|life at |why (work|join) (at|us)|we('re| are) hiring|see (all )?(open )?(roles|positions|jobs)|explore (our )?(careers|opportunities)|view (all )?openings/i;

@@ -107,7 +107,7 @@ async function completeExternalPage(page, resumePath, { maxMs = 6.5 * 60 * 1000 
   }
   // PreferGuestApply may navigate straight into SSO / B2C before the loop.
   if (
-    /b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|secure\.indeed\.com\/(?:auth|oauth)|oneclick\.smartrecruiters|login\.cognizant|talent\.cognizant\.com\/\S*login|eightfold\.ai\/(?:login|signin|auth)|candidate\.accenture\.com/i.test(
+    /b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|secure\.indeed\.com\/(?:auth|oauth)|oneclick\.smartrecruiters|login\.cognizant|talent\.cognizant\.com\/\S*login|eightfold\.ai\/(?:login|signin|auth)|candidate\.accenture\.com|darwinbox\.[^/\s]+\/.*\/auth\/login/i.test(
       afterClick.url || ""
     )
   ) {
@@ -122,7 +122,7 @@ async function completeExternalPage(page, resumePath, { maxMs = 6.5 * 60 * 1000 
   }
   while (Date.now() - start < maxMs && noAdvance < 6) {
     const url = page.url() || "";
-    if (/b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|secure\.indeed\.com\/(?:auth|oauth)|oneclick\.smartrecruiters|login\.cognizant|talent\.cognizant\.com\/\S*login|eightfold\.ai\/(?:login|signin|auth)|candidate\.accenture\.com/i.test(url)) {
+    if (/b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|secure\.indeed\.com\/(?:auth|oauth)|oneclick\.smartrecruiters|login\.cognizant|talent\.cognizant\.com\/\S*login|eightfold\.ai\/(?:login|signin|auth)|candidate\.accenture\.com|darwinbox\.[^/\s]+\/.*\/auth\/login/i.test(url)) {
       return { ok: false, reason: "ats_login_wall", url };
     }
     const text = await page

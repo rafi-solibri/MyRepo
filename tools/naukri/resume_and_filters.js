@@ -91,7 +91,7 @@ function shouldSkipNonDotNetPrimaryJd(role, detailText) {
   return false;
 }
 
-const DOTNET_RE = /(\.net|dotnet|asp\.?\s*net|c#|csharp)/i;
+const DOTNET_RE = /(\.net|dotnet|dontet|asp\.?\s*net|c#|csharp)/i;
 
 /** Architect / Lead / EM / Principal / Staff / Director — apply even if card omits .NET. */
 const ARCH_LEAD_RE =

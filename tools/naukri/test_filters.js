@@ -310,6 +310,16 @@ assert.strictEqual(
   false,
   "non-Pega employer must not company-skip"
 );
+assert.strictEqual(
+  hasDotNet("Dontet Technical AI Architect", ""),
+  true,
+  "Naukri Dontet typo is .NET"
+);
+assert.strictEqual(
+  shouldSkipTitle("Dontet Technical AI Architect"),
+  false,
+  "Dontet Technical AI Architect must not title-skip (HCA false skip 2026-09-02)"
+);
 assert.strictEqual(shouldSkipTitle("Senior .NET Architect"), false);
 assert.strictEqual(isArchLeadTitle("Dot Net Fullstack Developer"), false);
 assert.strictEqual(

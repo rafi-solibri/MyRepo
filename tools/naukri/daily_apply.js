@@ -420,6 +420,16 @@ async function readVisibleApplyCta(page) {
       if (!/Quick apply|Applied/i.test(raw)) continue;
       if (/company site|hirist/i.test(raw)) continue;
 
+      // Disabled dual-layer ("Quick apply Applied") wins over overlay transforms.
+      // Virtusa 2026-09-02: Quick-apply layer still looked on-screen after submit,
+      // so quickOn && !appliedOn returned "quick" and confirmApplied missed Applied.
+      if (
+        (btn.disabled || btn.getAttribute("aria-disabled") === "true") &&
+        /Applied/i.test(raw)
+      ) {
+        return { state: "applied", label: "Applied", raw };
+      }
+
       // Only the absolute slide overlays decide state (nested text spans are always "on").
       const overlays = [...btn.querySelectorAll("span")].filter((s) => {
         const st = window.getComputedStyle(s);
@@ -1566,6 +1576,38 @@ async function confirmApplied(page, chatHint = null) {
       })
       .catch(() => "");
     if (disabledAgain) return { ok: true, cta: `disabled:${disabledAgain}` };
+  }
+  // TopTier sometimes flips disabled "Quick apply Applied" after the first poll
+  // (Virtusa Information/Integration Architect 2026-09-02). Reload the listing.
+  const jobUrl = page.url();
+  if (/naukri\.com\/job-listings/i.test(jobUrl)) {
+    await page
+      .goto(jobUrl, { waitUntil: "domcontentloaded", timeout: 45000 })
+      .catch(() => {});
+    await sleep(2500);
+    const afterReload = await readVisibleApplyCta(page).catch(() => null);
+    if (afterReload?.state === "applied") {
+      return { ok: true, cta: afterReload.label || "Applied" };
+    }
+    const disabledReload = await page
+      .evaluate(() => {
+        const buttons = [
+          ...document.querySelectorAll("button, a, [role='button']"),
+        ];
+        for (const btn of buttons) {
+          const raw = (btn.innerText || btn.getAttribute("aria-label") || "")
+            .replace(/\s+/g, " ")
+            .trim();
+          if (!/Quick apply|Applied/i.test(raw)) continue;
+          if (/company site|hirist|view applied/i.test(raw)) continue;
+          if (btn.disabled || btn.getAttribute("aria-disabled") === "true") {
+            return raw || "disabled_cta";
+          }
+        }
+        return "";
+      })
+      .catch(() => "");
+    if (disabledReload) return { ok: true, cta: `reload_disabled:${disabledReload}` };
   }
   const detail = await readDetail(page);
   return { ok: false, cta: detail.cta || visible?.label || "" };

@@ -32,6 +32,19 @@ assert.strictEqual(
   false
 );
 assert.strictEqual(
+  isBrochureOrDeadEnd({
+    url: "https://hcahr.darwinbox.in/ms/candidatev2/main/careers/jobDetails/a6a85ac9c362c9",
+    text: ".Net Technical AI Architect\nHyderabad\nApply Now\nJob Description",
+    hasApplyCta: true,
+  }),
+  false,
+  "Darwinbox jobDetails + Apply Now is not a brochure"
+);
+assert.strictEqual(
+  looksLikeApplyCta("Apply Now"),
+  true
+);
+assert.strictEqual(
   extractHopDestinationFromUrl(
     "https://www.indeed.com/applystart?jk=abc&continueUrl=https%3A%2F%2Facme.wd1.myworkdayjobs.com%2Fen-US%2Fjob"
   ),
