@@ -151,6 +151,7 @@ CAREERS_TITLE_SKIP = re.compile(
     r"memory\s*subsystem|foundry\s*solutions|"
     # Silicon / chip design (Principal Physical Design matched TITLE_HINT via Principal).
     r"physical\s*design|silicon\s*design|silicon\s*engineer|product\s*design\s*manager|"
+    r"staff\s*engineer,?\s*design|"
     r"chiplet|\basic\b|\bvlsi\b|rtl\s*design|dft\s*engineer|"
     r"analog\s*design|digital\s*design\s*engineer|verification\s*engineer|"
     # Micron/AMD-style HW titles that match Staff/Principal via TITLE_OK:

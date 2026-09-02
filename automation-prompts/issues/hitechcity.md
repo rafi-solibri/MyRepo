@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Micron Staff Engineer Design burned LinkedIn persist_retry | CAREERS/LI title-skip Staff Engineer Design |
 | Micron Staff Engineer IP Dev Layout leaked past layout-design skip | CAREERS/LI title-skip IP Dev Layout / layout engineer |
 | Micron System Architect Advanced Memory / DMTS burned LinkedIn ATS persist_retry | CAREERS/LI title-skip memory system architecture, advanced memory, DMTS |
 | Oracle email OTP gmail_hit but still_on_gate reused stale list-view code | Gmail scrape newest thread first; skip reused OTP; fill/submit in iframes |
