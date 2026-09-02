@@ -279,11 +279,10 @@ def fetch_otp_via_gmail_tab(page, *, after_epoch: float | None = None, timeout_s
                     mark_gmail_login_required()
                     print("email_otp=gmail_login_required", flush=True)
                     return None
-                codes = extract_otp_candidates(blob)
-                if codes:
-                    print(f"email_otp=gmail_hit len={len(codes[0])} via=list", flush=True)
-                    return codes[0]
-                # Try opening the first result row.
+                list_codes = extract_otp_candidates(blob)
+                # Prefer the newest thread over list-view snippets. List view
+                # often still shows a stale Oracle "Confirm Your Identity" code
+                # from the previous requisition, which then fails still_on_gate.
                 clicked = False
                 for sel in (
                     "table.th tr.zA",
@@ -311,6 +310,9 @@ def fetch_otp_via_gmail_tab(page, *, after_epoch: float | None = None, timeout_s
                     if codes:
                         print(f"email_otp=gmail_hit len={len(codes[0])} via=thread", flush=True)
                         return codes[0]
+                if list_codes:
+                    print(f"email_otp=gmail_hit len={len(list_codes[0])} via=list", flush=True)
+                    return list_codes[0]
             print("email_otp=gmail_miss", flush=True)
             return None
         finally:
@@ -336,6 +338,22 @@ def fetch_email_otp(page=None, *, after_epoch: float | None = None, timeout_s: f
     return fetch_otp_via_gmail_tab(page, after_epoch=after_epoch, timeout_s=timeout_s)
 
 
+def _otp_targets(page):
+    """Main page plus child frames (Oracle / Greenhouse often nest the OTP)."""
+    out = [page]
+    try:
+        for fr in list(page.frames or []):
+            if fr is page or fr in out:
+                continue
+            u = (getattr(fr, "url", "") or "").lower()
+            if u.startswith("about:") or not u:
+                continue
+            out.append(fr)
+    except Exception:
+        pass
+    return out
+
+
 def fill_otp_fields(page, code: str) -> bool:
     """Type the OTP into visible code inputs on the ATS page."""
     if not code:
@@ -356,58 +374,61 @@ def fill_otp_fields(page, code: str) -> bool:
         'input[type="number"]',
     )
     filled = False
-    for sel in selectors:
-        try:
-            loc = page.locator(sel)
-            n = min(loc.count(), 6)
-            for i in range(n):
-                el = loc.nth(i)
-                try:
-                    if not el.is_visible():
-                        continue
-                    name = (
-                        (el.get_attribute("name") or "")
-                        + " "
-                        + (el.get_attribute("id") or "")
-                        + " "
-                        + (el.get_attribute("aria-label") or "")
-                        + " "
-                        + (el.get_attribute("placeholder") or "")
-                        + " "
-                        + (el.get_attribute("autocomplete") or "")
-                    ).lower()
-                    # Skip password / email / phone unless clearly an OTP field.
-                    if re.search(r"password|email|phone|mobile|search", name) and not re.search(
-                        r"otp|code|one-time|verification", name
-                    ):
-                        continue
-                    if sel in ('input[type="text"]', 'input[type="tel"]', 'input[type="number"]'):
-                        if not re.search(
-                            r"otp|code|one-time|verification|passcode|confirm",
-                            name,
-                        ) and "one-time-code" not in (el.get_attribute("autocomplete") or ""):
-                            # On Oracle Confirm Your Identity the lone text box is the code.
-                            body = ""
-                            try:
-                                body = page.locator("body").inner_text(timeout=1500) or ""
-                            except Exception:
-                                pass
-                            if not re.search(r"confirm your identity|verification code", body, re.I):
-                                continue
-                    el.click(timeout=2000)
+    for target in _otp_targets(page):
+        for sel in selectors:
+            try:
+                loc = target.locator(sel)
+                n = min(loc.count(), 6)
+                for i in range(n):
+                    el = loc.nth(i)
                     try:
-                        el.fill(code)
+                        if not el.is_visible():
+                            continue
+                        name = (
+                            (el.get_attribute("name") or "")
+                            + " "
+                            + (el.get_attribute("id") or "")
+                            + " "
+                            + (el.get_attribute("aria-label") or "")
+                            + " "
+                            + (el.get_attribute("placeholder") or "")
+                            + " "
+                            + (el.get_attribute("autocomplete") or "")
+                        ).lower()
+                        # Skip password / email / phone unless clearly an OTP field.
+                        if re.search(r"password|email|phone|mobile|search", name) and not re.search(
+                            r"otp|code|one-time|verification", name
+                        ):
+                            continue
+                        if sel in ('input[type="text"]', 'input[type="tel"]', 'input[type="number"]'):
+                            if not re.search(
+                                r"otp|code|one-time|verification|passcode|confirm",
+                                name,
+                            ) and "one-time-code" not in (el.get_attribute("autocomplete") or ""):
+                                # On Oracle Confirm Your Identity the lone text box is the code.
+                                body = ""
+                                try:
+                                    body = target.locator("body").inner_text(timeout=1500) or ""
+                                except Exception:
+                                    pass
+                                if not re.search(r"confirm your identity|verification code", body, re.I):
+                                    continue
+                        el.click(timeout=2000)
+                        try:
+                            el.fill(code)
+                        except Exception:
+                            el.fill("")
+                            el.type(code, delay=40)
+                        filled = True
+                        break
                     except Exception:
-                        el.fill("")
-                        el.type(code, delay=40)
-                    filled = True
+                        continue
+                if filled:
                     break
-                except Exception:
-                    continue
-            if filled:
-                break
-        except Exception:
-            continue
+            except Exception:
+                continue
+        if filled:
+            break
     return filled
 
 
@@ -421,23 +442,24 @@ def submit_otp_form(page) -> bool:
         "Next",
         "Validate",
     )
-    for name in labels:
-        try:
-            btn = page.get_by_role("button", name=re.compile(rf"^{re.escape(name)}$", re.I))
-            for i in range(min(btn.count(), 3)):
-                b = btn.nth(i)
-                if b.is_visible() and b.is_enabled():
-                    b.click(timeout=3000, force=True)
+    for target in _otp_targets(page):
+        for name in labels:
+            try:
+                btn = target.get_by_role("button", name=re.compile(rf"^{re.escape(name)}$", re.I))
+                for i in range(min(btn.count(), 3)):
+                    b = btn.nth(i)
+                    if b.is_visible() and b.is_enabled():
+                        b.click(timeout=3000, force=True)
+                        return True
+            except Exception:
+                continue
+            try:
+                loc = target.locator(f"button:has-text('{name}'), input[type='submit'][value*='{name}' i]")
+                if loc.count() and loc.first.is_visible():
+                    loc.first.click(timeout=3000, force=True)
                     return True
-        except Exception:
-            continue
-        try:
-            loc = page.locator(f"button:has-text('{name}'), input[type='submit'][value*='{name}' i]")
-            if loc.count() and loc.first.is_visible():
-                loc.first.click(timeout=3000, force=True)
-                return True
-        except Exception:
-            continue
+            except Exception:
+                continue
     try:
         page.keyboard.press("Enter")
         return True
@@ -502,6 +524,7 @@ def try_clear_email_otp(page, *, wait_s: float | None = None) -> bool:
         return False
 
     sent_after = time.time() - 30
+    tried_codes: set[str] = set()
     print(f"email_otp=start wait={int(budget)}s", flush=True)
     deadline = time.time() + max(8.0, budget)
     attempt = 0
@@ -514,6 +537,10 @@ def try_clear_email_otp(page, *, wait_s: float | None = None) -> bool:
                 return False
             time.sleep(3.0)
             continue
+        if code in tried_codes:
+            print("email_otp=stale_code_skip", flush=True)
+            time.sleep(3.0)
+            continue
         if not fill_otp_fields(page, code):
             print("email_otp=fill_miss", flush=True)
             time.sleep(2.0)
@@ -523,6 +550,7 @@ def try_clear_email_otp(page, *, wait_s: float | None = None) -> bool:
         if not otp_wall_still_present(page):
             print(f"email_otp=cleared attempt={attempt}", flush=True)
             return True
+        tried_codes.add(code)
         print(f"email_otp=still_on_gate attempt={attempt}", flush=True)
         time.sleep(2.5)
     print("email_otp=timeout", flush=True)
