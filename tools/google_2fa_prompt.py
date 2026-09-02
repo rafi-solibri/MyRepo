@@ -31,8 +31,19 @@ _CHALLENGE_RE = re.compile(
     r"2[- ]step|two[- ]step|authenticator|verification code|"
     r"enter (the |your )?(code|pin)|google prompt|"
     r"check your phone|tap yes|confirm it.?s you|"
-    r"account recovery|verify it.?s you|signin/challenge|"
-    r"challenge/totp|challenge/ipp|challenge/sk|/challenge/",
+    r"account recovery|verify it.?s you|"
+    r"challenge/totp|challenge/ipp|challenge/sk|challenge/az|"
+    r"challenge/iap|challenge/selection",
+    re.I,
+)
+
+# Password form (challenge/pwd) is NOT 2FA — fill GOOGLE_PASSWORD first.
+_PASSWORD_CHALLENGE_URL_RE = re.compile(
+    r"accounts\.google\.com/.*/challenge/pwd|/signin/challenge/pwd",
+    re.I,
+)
+_PASSWORD_BODY_RE = re.compile(
+    r"enter your password|wrong password|show password|forgot password\?",
     re.I,
 )
 
@@ -44,8 +55,10 @@ _DONE_URL_RE = re.compile(
 )
 
 
-def is_google_2fa_challenge(page: Any = None, *, url: str = "", body: str = "") -> bool:
-    """True when the page looks like a Google 2FA / challenge screen."""
+def is_google_password_challenge(
+    page: Any = None, *, url: str = "", body: str = ""
+) -> bool:
+    """True when Google is asking for the account password (not 2FA)."""
     u = url or ""
     text = body or ""
     if page is not None:
@@ -58,10 +71,42 @@ def is_google_2fa_challenge(page: Any = None, *, url: str = "", body: str = "") 
                 text = page.locator("body").inner_text(timeout=2000)[:2500]
             except Exception:
                 text = ""
+    if _PASSWORD_CHALLENGE_URL_RE.search(u):
+        return True
+    if "accounts.google.com" in u.lower() and _PASSWORD_BODY_RE.search(text):
+        return True
+    return False
+
+
+def is_google_2fa_challenge(page: Any = None, *, url: str = "", body: str = "") -> bool:
+    """True when the page looks like a Google 2FA / challenge screen.
+
+    Hard: `/signin/challenge/pwd` (Enter your password) is a password form —
+    never treat it as 2FA / ASK_OWNER_GOOGLE_2FA.
+    """
+    u = url or ""
+    text = body or ""
+    if page is not None:
+        try:
+            u = u or (page.url or "")
+        except Exception:
+            pass
+        if not text:
+            try:
+                text = page.locator("body").inner_text(timeout=2000)[:2500]
+            except Exception:
+                text = ""
+    if is_google_password_challenge(url=u, body=text):
+        return False
     blob = f"{u}\n{text}"
     if "accounts.google.com" in u.lower() and _CHALLENGE_RE.search(blob):
         return True
-    if re.search(r"accounts\.google\.com/.*/challenge", u, re.I):
+    # Real 2FA challenge paths only (pwd already excluded above).
+    if re.search(
+        r"accounts\.google\.com/.*/challenge/(?!pwd(?:/|$|\?))",
+        u,
+        re.I,
+    ):
         return True
     if _CHALLENGE_RE.search(text) and re.search(
         r"google|g-?suite|rafi\.success@gmail", text, re.I

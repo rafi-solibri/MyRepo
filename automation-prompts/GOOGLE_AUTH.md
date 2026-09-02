@@ -16,5 +16,8 @@ Use this on **every** LinkedIn, Foundit, Naukri, Cutshort, Instahyre, Indeed, Hi
 | --- | --- |
 | LinkedIn | `tools/linkedin/auto_login.py` (Google SSO + 2FA chat wait) |
 | Hirist | `node tools/hirist/google_login.js` then `daily_apply.js` |
+| Indeed | `tools/indeed/google_sso.py` (wired from `uc_daily_apply` on Sign-in wall; `GOOGLE_PASSWORD` only) |
 | ATS email OTP | `tools/ats/email_otp.py` |
-| Shared 2FA banner | `tools/google_2fa_prompt.py` |
+| Shared 2FA banner | `tools/google_2fa_prompt.py` (`/challenge/pwd` is password, not 2FA) |
+
+**HARD:** set `GOOGLE_PASSWORD` (Gmail) separately from `LINKEDIN_PASSWORD`. Never cross-feed.

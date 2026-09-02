@@ -3394,20 +3394,52 @@ def main() -> int:
             if warmed.get("ok") or looks_signed_in(home_body, home_url):
                 session_ok = True
             elif warmed.get("loginWall") or looks_login_wall(home_body, home_url):
-                report["blocked"].append(
-                    {
-                        "reason": "indeed_login_required",
-                        "title": home_title[:120],
-                        "bodySample": home_body[:400],
-                        "hint": "Account/auth is a Sign-in wall — refresh Indeed cookies via headed login / home CDP",
+                # Passport expired / Sign-in wall: try Gmail SSO before hard stop.
+                try:
+                    from tools.indeed.google_sso import try_google_sso
+
+                    sso = try_google_sso(sb)
+                except Exception as exc:
+                    sso = {
+                        "ok": False,
+                        "reason": "google_sso_error",
+                        "error": str(exc)[:200],
                     }
-                )
-                report["counts"]["blocked"] = 1
-                report["blockerSummary"] = "indeed_login_required"
-                OUT.parent.mkdir(parents=True, exist_ok=True)
-                OUT.write_text(json.dumps(report, indent=2))
-                _emit(report)
-                return 5
+                report["googleSso"] = sso
+                try:
+                    home_body = (sb.get_text("body") or "")[:2500]
+                    home_title = sb.get_title() or ""
+                    home_url = sb.get_current_url() or ""
+                except Exception:
+                    pass
+                if sso.get("ok") or looks_signed_in(home_body, home_url):
+                    session_ok = True
+                    report["sessionRestore"] = {
+                        **(warmed if isinstance(warmed, dict) else {}),
+                        "via": "google_sso",
+                        "ok": True,
+                    }
+                else:
+                    hint = sso.get("hint") or (
+                        "Account/auth is a Sign-in wall — set GOOGLE_PASSWORD "
+                        "(Gmail, not LINKEDIN_PASSWORD) or refresh Indeed "
+                        "Passport via Desktop Chrome + sync-chrome-sessions"
+                    )
+                    report["blocked"].append(
+                        {
+                            "reason": "indeed_login_required",
+                            "title": home_title[:120],
+                            "bodySample": home_body[:400],
+                            "googleSsoReason": sso.get("reason"),
+                            "hint": hint,
+                        }
+                    )
+                    report["counts"]["blocked"] = 1
+                    report["blockerSummary"] = "indeed_login_required"
+                    OUT.parent.mkdir(parents=True, exist_ok=True)
+                    OUT.write_text(json.dumps(report, indent=2))
+                    _emit(report)
+                    return 5
             else:
                 # Marketing home alone is not proof of logout. Continue;
                 # search/apply paths still skip already-applied and login walls.
