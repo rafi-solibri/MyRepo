@@ -2,7 +2,7 @@
 """Unit checks for LinkedIn title/JD skip logic (no browser)."""
 from __future__ import annotations
 
-from filters import TITLE_OK, location_allowed, skip_reason
+from filters import TITLE_OK, location_allowed, looks_like_job_location, skip_reason
 
 
 def assert_true(cond, msg):
@@ -154,6 +154,22 @@ assert_true(
 assert_true(
     location_allowed("India · 10 minutes ago · 1 applicant", "On-site", remote_search=True),
     "bare India on remote-search wave must allow (view must pass remote_search)",
+)
+assert_true(
+    looks_like_job_location("Hyderabad, Telangana, India · 18 hours ago", "Accenture in India"),
+    "Hyd workplace line must look like a job location",
+)
+assert_true(
+    not looks_like_job_location("Accenture in India", "Accenture in India"),
+    "company chrome must not look like a job location",
+)
+assert_true(
+    looks_like_job_location("Bengaluru, Karnataka, India · 1 day ago", "Acme"),
+    "bad-city line must still look like a location (view bait-and-switch)",
+)
+assert_true(
+    looks_like_job_location("India · 10 minutes ago", "First American (India)"),
+    "bare India must look like a location vs company that contains India",
 )
 assert_true(
     skip_reason("Senior Staff DFT Engineer", "Mulya Technologies", "") is not None,

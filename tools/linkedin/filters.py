@@ -114,6 +114,23 @@ def _primary_location_line(loc: str) -> str:
     return primary[:160]
 
 
+def looks_like_job_location(loc: str, company: str = "") -> bool:
+    """True when loc is a workplace line, not company chrome (e.g. 'Accenture in India')."""
+    primary = _primary_location_line(loc)
+    if not primary:
+        return False
+    if company:
+        c = re.sub(r"\s+", " ", company).strip().lower()
+        p = primary.lower()
+        if c and (p == c or p.startswith(c) or c.startswith(p)):
+            return False
+    if HYD_OK.search(primary) or BAD_CITY.search(primary) or REMOTE_OK.search(primary):
+        return True
+    if INDIA_ONLY.search(primary) or re.fullmatch(r"india", primary, re.I):
+        return True
+    return False
+
+
 def location_allowed(loc: str, workplace: str = "", *, remote_search: bool = False) -> bool:
     """HARD filter: primary job location line + short workplace pills.
 

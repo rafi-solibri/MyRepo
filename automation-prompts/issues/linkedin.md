@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| View recheck treated company chrome (Accenture in India) as location and false-skipped Hyd Cloud Technical Architect | looks_like_job_location rejects company-name location parses; keep card Hyd/India location unless view shows a real city |
 | Easy Apply view recheck dropped remote_search so Remote India cards (location India) were false-skipped after card pass | Pass remote_search into easy_apply_flow location_allowed; TITLE_OK Manager/Dot net; skip DFT and Python-primary titles |
 
 

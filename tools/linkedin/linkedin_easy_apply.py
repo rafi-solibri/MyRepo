@@ -26,6 +26,7 @@ try:
         INDIA_ONLY,
         BAD_CITY,
         location_allowed,
+        looks_like_job_location,
         jd_blacklist,
         skip_reason,
     )
@@ -40,6 +41,7 @@ except Exception:
         INDIA_ONLY,
         BAD_CITY,
         location_allowed,
+        looks_like_job_location,
         jd_blacklist,
         skip_reason,
     )
@@ -1304,7 +1306,7 @@ def easy_apply_flow(
             job.role = role2
         if company2:
             job.company = company2
-        if loc2:
+        if loc2 and looks_like_job_location(loc2, company2 or job.company):
             job.location = loc2
         workplace2 = top_card_workplace_text(page, "")
         # Must keep remote_search from the search wave. Card pass already allowed
@@ -1714,6 +1716,8 @@ def parse_card_meta(page: Page) -> tuple[str, str, str]:
             ".jobs-unified-top-card__primary-description"
         ).first.inner_text(timeout=3000).strip()
         location = re.sub(r"\s+", " ", location)[:200]
+        if location and company and not looks_like_job_location(location, company):
+            location = ""
     except Exception:
         pass
     # AI job-search detail pane: parse from bounded detail text when classic nodes missing
@@ -1746,11 +1750,16 @@ def parse_card_meta(page: Page) -> tuple[str, str, str]:
                         break
             if not location:
                 for ln in lines[:15]:
+                    if looks_like_job_location(ln, company):
+                        location = re.sub(r"\s+", " ", ln)[:200]
+                        break
                     if "·" in ln or re.search(
                         r"hyderabad|telangana|india|remote|hybrid|on-site", ln, re.I
                     ):
-                        location = re.sub(r"\s+", " ", ln)[:200]
-                        break
+                        cleaned = re.sub(r"\s+", " ", ln)[:200]
+                        if looks_like_job_location(cleaned, company):
+                            location = cleaned
+                            break
     return role, company, location
 
 
