@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Micron Principal Engineer TD Device Characterization burned persist_retry/ASK_OWNER after #313 PE skip | CAREERS/LI title-skip device characterization and TD device; keep SMAI Software Development |
 | Micron Product Engineering + Experian UX Research + JPMC AI Engineering titles burned CAPTCHA/soft walls; Flutter/Providence/LTIM careers URLs NXDOMAIN/bad-TLS | CAREERS/LI title-skip Product Engineering (non-software), UX Research/WeChat junk, AI Engineering; scrub dead careers hosts and point Flutter→fluttergroup, Providence→providence.jobs, LTIM→ltm.com |
 
 

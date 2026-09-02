@@ -122,7 +122,12 @@ def test_title_ok():
     assert CAREERS_TITLE_SKIP.search(
         "Predictive Science - AI Engineering & Prompt Architecture Lead - Vice President"
     )
+    assert CAREERS_TITLE_SKIP.search(
+        "Principal Engineer, TD Device Characterization Hyderabad, Telangana, India"
+    )
+    assert CAREERS_TITLE_SKIP.search("Staff Engineer Device Characterisation Hyderabad")
     assert not CAREERS_TITLE_SKIP.search("Software Product Engineering Lead Hyderabad")
+    assert not CAREERS_TITLE_SKIP.search("Staff ENGINEER, Software Development, SMAI Hyderabad")
     assert LI_TITLE_SKIP.search("Staff Engineer, CAD")
     assert LI_TITLE_SKIP.search("Principal Engineer - STA/Synthesis")
     assert LI_TITLE_SKIP.search("Staff Analyst - IT EA EPS")
@@ -131,6 +136,7 @@ def test_title_ok():
     assert LI_TITLE_SKIP.search("Product Engineering Staff Engineer")
     assert LI_TITLE_SKIP.search("UX Research Lead")
     assert LI_TITLE_SKIP.search("AI Engineering Lead")
+    assert LI_TITLE_SKIP.search("Principal Engineer, TD Device Characterization")
     assert skip_reason("Staff Engineer, Scribe Layout Design") is not None
     assert LI_TITLE_SKIP.search("Principal Silicon Design Engineer")
     assert JD_WRONG_STACK.search("We need a Mobile Architect for Ionic Capacitor and Zscaler")
