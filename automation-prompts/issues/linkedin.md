@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-09-02 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Google challenge/pwd misclassified as 2FA — waited 300s ASK_OWNER_GOOGLE_2FA and never filled GOOGLE_PASSWORD | Exclude challenge/pwd from is_google_2fa_challenge; heal password form before 2FA wait in _heal_google_auth_pages |
+
+
 ## 2026-09-01 (cloud)
 
 | Issue | Fix |

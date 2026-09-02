@@ -46,5 +46,26 @@ assert_true(
     ),
     "identifier alone is not 2FA",
 )
+assert_true(
+    not is_google_2fa_challenge(
+        url="https://accounts.google.com/v3/signin/challenge/pwd?TL=abc",
+        body="Enter your password\nForgot password",
+    ),
+    "challenge/pwd password re-auth is not 2FA",
+)
+assert_true(
+    not is_google_2fa_challenge(
+        url="https://accounts.google.com/v3/signin/challenge/pwd?TL=abc",
+        body="",
+    ),
+    "challenge/pwd url alone is not 2FA",
+)
+assert_true(
+    is_google_2fa_challenge(
+        url="https://accounts.google.com/v3/signin/challenge/pwd?TL=abc",
+        body="Enter the code from your authenticator app",
+    ),
+    "pwd url + authenticator body still 2FA",
+)
 
 print("google_2fa_prompt tests OK")

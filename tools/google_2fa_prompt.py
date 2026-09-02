@@ -27,12 +27,26 @@ import sys
 import time
 from typing import Any
 
+# Password re-auth (challenge/pwd) is NOT 2FA — callers must fill GOOGLE_PASSWORD.
+_PASSWORD_CHALLENGE_URL_RE = re.compile(
+    r"challenge/pwd|/signin/password|ServiceLogin",
+    re.I,
+)
+
 _CHALLENGE_RE = re.compile(
     r"2[- ]step|two[- ]step|authenticator|verification code|"
     r"enter (the |your )?(code|pin)|google prompt|"
     r"check your phone|tap yes|confirm it.?s you|"
-    r"account recovery|verify it.?s you|signin/challenge|"
-    r"challenge/totp|challenge/ipp|challenge/sk|/challenge/",
+    r"account recovery|verify it.?s you|"
+    r"challenge/totp|challenge/ipp|challenge/sk|challenge/sms|"
+    r"challenge/selection|challenge/iap|signin/challenge/(?!pwd)",
+    re.I,
+)
+
+_2FA_BODY_RE = re.compile(
+    r"2[- ]step|two[- ]step|authenticator|verification code|"
+    r"google prompt|check your phone|tap yes|confirm it.?s you|"
+    r"enter (the |your )?(code|pin)|get a verification code",
     re.I,
 )
 
@@ -45,7 +59,11 @@ _DONE_URL_RE = re.compile(
 
 
 def is_google_2fa_challenge(page: Any = None, *, url: str = "", body: str = "") -> bool:
-    """True when the page looks like a Google 2FA / challenge screen."""
+    """True when the page looks like a Google 2FA / challenge screen.
+
+    ``challenge/pwd`` (re-enter password) is intentionally False so auto-login
+    can fill GOOGLE_PASSWORD instead of waiting 300s for a fake authenticator.
+    """
     u = url or ""
     text = body or ""
     if page is not None:
@@ -58,10 +76,15 @@ def is_google_2fa_challenge(page: Any = None, *, url: str = "", body: str = "") 
                 text = page.locator("body").inner_text(timeout=2000)[:2500]
             except Exception:
                 text = ""
+    # Password gate is not 2FA unless the body also shows authenticator/phone copy.
+    if _PASSWORD_CHALLENGE_URL_RE.search(u) and not _2FA_BODY_RE.search(text):
+        return False
     blob = f"{u}\n{text}"
     if "accounts.google.com" in u.lower() and _CHALLENGE_RE.search(blob):
         return True
     if re.search(r"accounts\.google\.com/.*/challenge", u, re.I):
+        if _PASSWORD_CHALLENGE_URL_RE.search(u) and not _2FA_BODY_RE.search(text):
+            return False
         return True
     if _CHALLENGE_RE.search(text) and re.search(
         r"google|g-?suite|rafi\.success@gmail", text, re.I

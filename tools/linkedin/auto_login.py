@@ -387,7 +387,61 @@ def _heal_google_auth_pages(ctx, out: dict | None = None) -> str | None:
     if not pages:
         return None
     for popup in pages:
-        # Post-chooser 2FA first (warm Google session).
+        # Password re-auth (challenge/pwd) BEFORE any 2FA wait. Misclassifying
+        # pwd as authenticator burned 300s and skipped GOOGLE_PASSWORD fills.
+        if _page_needs_google_password(popup):
+            ident_result = "no_form"
+            google_pws = google_password_candidates()
+            if not google_pws:
+                if out is not None:
+                    out["attempts"].append(
+                        {
+                            "step": "google_sso",
+                            "google_password_heal": "missing_google_password",
+                        }
+                    )
+                # Cannot complete Google pwd form without GOOGLE_PASSWORD — do not
+                # burn LINKEDIN_PASSWORD against Gmail (wrong-password lock risk).
+                return "wrong_password"
+            for pw in google_pws:
+                ident_result = _complete_google_password_login(popup, email, pw)
+                if ident_result in ("ok", "need_human"):
+                    break
+                # wrong_password / no_form → try next Google candidate
+                continue
+            if out is not None:
+                out["attempts"].append(
+                    {"step": "google_sso", "google_password_heal": ident_result}
+                )
+            if ident_result == "wrong_password":
+                try:
+                    popup.screenshot(
+                        path=str(_art() / "linkedin-auto-login-wrong-password.png"),
+                        timeout=8000,
+                    )
+                except Exception:
+                    pass
+                return "wrong_password"
+            if ident_result == "need_human":
+                try:
+                    from tools.google_2fa_prompt import (
+                        is_google_2fa_challenge,
+                        wait_owner_google_2fa,
+                    )
+
+                    if is_google_2fa_challenge(popup):
+                        wait_owner_google_2fa(popup, portal="linkedin")
+                except Exception as e:
+                    print(
+                        f"ASK_OWNER_GOOGLE_2FA (linkedin) helper error: {e}",
+                        flush=True,
+                    )
+                return "need_human"
+            if ident_result == "ok":
+                return "ok"
+            continue
+
+        # Post-password 2FA / phone prompt (warm Google session).
         try:
             from tools.google_2fa_prompt import (
                 is_google_2fa_challenge,
@@ -401,71 +455,21 @@ def _heal_google_auth_pages(ctx, out: dict | None = None) -> str | None:
                 return "need_human"
         except Exception:
             pass
-        if not _page_needs_google_password(popup):
-            # Consent / Continue screens after successful Google auth.
-            for name in ("Continue", "Allow", "Next", "Confirm"):
-                try:
-                    b = popup.get_by_role("button", name=re.compile(rf"^{name}$", re.I))
-                    if b.count() and b.first.is_visible():
-                        b.first.click(timeout=5000)
-                        time.sleep(1)
-                        if out is not None:
-                            out["attempts"].append(
-                                {"step": "google_sso", "consent_click": name}
-                            )
-                        return "ok"
-                except Exception:
-                    continue
-            continue
-        ident_result = "no_form"
-        google_pws = google_password_candidates()
-        if not google_pws:
-            if out is not None:
-                out["attempts"].append(
-                    {
-                        "step": "google_sso",
-                        "google_password_heal": "missing_google_password",
-                    }
-                )
-            # Cannot complete Google pwd form without GOOGLE_PASSWORD — do not
-            # burn LINKEDIN_PASSWORD against Gmail (wrong-password lock risk).
-            return "wrong_password"
-        for pw in google_pws:
-            ident_result = _complete_google_password_login(popup, email, pw)
-            if ident_result in ("ok", "need_human"):
-                break
-            # wrong_password / no_form → try next Google candidate
-            continue
-        if out is not None:
-            out["attempts"].append(
-                {"step": "google_sso", "google_password_heal": ident_result}
-            )
-        if ident_result == "wrong_password":
-            try:
-                popup.screenshot(
-                    path=str(_art() / "linkedin-auto-login-wrong-password.png"),
-                    timeout=8000,
-                )
-            except Exception:
-                pass
-            return "wrong_password"
-        if ident_result == "need_human":
-            try:
-                from tools.google_2fa_prompt import (
-                    is_google_2fa_challenge,
-                    wait_owner_google_2fa,
-                )
 
-                if is_google_2fa_challenge(popup):
-                    wait_owner_google_2fa(popup, portal="linkedin")
-            except Exception as e:
-                print(
-                    f"ASK_OWNER_GOOGLE_2FA (linkedin) helper error: {e}",
-                    flush=True,
-                )
-            return "need_human"
-        if ident_result == "ok":
-            return "ok"
+        # Consent / Continue screens after successful Google auth.
+        for name in ("Continue", "Allow", "Next", "Confirm"):
+            try:
+                b = popup.get_by_role("button", name=re.compile(rf"^{name}$", re.I))
+                if b.count() and b.first.is_visible():
+                    b.first.click(timeout=5000)
+                    time.sleep(1)
+                    if out is not None:
+                        out["attempts"].append(
+                            {"step": "google_sso", "consent_click": name}
+                        )
+                    return "ok"
+            except Exception:
+                continue
     return None
 
 
