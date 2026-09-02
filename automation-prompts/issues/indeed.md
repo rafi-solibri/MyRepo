@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| FedCM pwd ignored JS value; unconfirmed snap left Continue with Google unclicked | Human keystrokes + native setter; second Google click on bounced /auth page |
 | Google v3 pwd Next fired empty (Enter a password); password_fill reported ok | JS native value setter + verify length before Next; empty-field error != ok |
 | google_sso ok on /auth email form → anonymous did_not_leave_indeed streak | Strict signed-in (no email-address match); stay on Google pwd/2FA; never click Indeed Next as consent |
 | Sign-in wall Google CTA missed (cookie banner + SB visibility) → google_sso_button_missing | Dismiss OneTrust; JS click aria/data-tn Google SSO; retry canonical /auth + debug shot |

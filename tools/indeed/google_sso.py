@@ -363,31 +363,44 @@ def _click_google_next(sb: Any) -> bool:
     return False
 
 
+def _human_type_password(sb: Any, password: str) -> bool:
+    """Click the visible box and send real keystrokes (FedCM ignores JS value)."""
+    box = None
+    for sel in (
+        "input[name='Passwd']",
+        "input[type='password']",
+        "input[autocomplete*='current-password']",
+    ):
+        try:
+            if sb.is_element_visible(sel) or sb.is_element_present(sel):
+                box = sel
+                break
+        except Exception:
+            continue
+    if not box:
+        return False
+    try:
+        sb.click(box)
+        time.sleep(0.2)
+        try:
+            sb.press_keys(box, "\ue009" + "a")  # CONTROL+a
+        except Exception:
+            pass
+        sb.press_keys(box, password)
+        time.sleep(0.3)
+        return True
+    except Exception:
+        return False
+
+
 def _fill_password(sb: Any, password: str) -> str:
     """Fill Google password. Returns ok|wrong_password|empty|no_field."""
     if not password:
         return "no_field"
+    _human_type_password(sb, password)
     filled = _js_set_password(sb, password)
     if not filled.get("ok"):
-        # Fallback: Selenium type into a visible box.
-        box = None
-        for sel in (
-            "input[name='Passwd']",
-            "input[type='password']",
-            "input[autocomplete*='current-password']",
-        ):
-            try:
-                if sb.is_element_visible(sel):
-                    box = sel
-                    break
-            except Exception:
-                continue
-        if not box:
-            return "no_field"
-        try:
-            sb.click(box)
-            sb.type(box, password)
-        except Exception:
+        if not _human_type_password(sb, password):
             return "no_field"
         filled = _js_set_password(sb, password)
         if not filled.get("ok"):
@@ -545,7 +558,7 @@ def try_google_sso(sb: Any, *, wait_2fa_sec: int | None = None) -> dict:
     # 2026-09-02 re-run while challenge/pwd was still open in another tab.
     _switch_to_google_window(sb)
     left_pwd = False
-    for _ in range(8):
+    for _ in range(3):
         body, title, url = _snap(sb)
         if "accounts.google.com" not in url.lower():
             left_pwd = True
@@ -637,6 +650,34 @@ def try_google_sso(sb: Any, *, wait_2fa_sec: int | None = None) -> dict:
         pass
     body, title, url = _snap(sb)
     signed = indeed_session_looks_signed_in(body, url)
+    # Final Indeed auth page still shows Continue with Google — click once more
+    # (FedCM first hop often returns here with a warm Google session).
+    if not signed and "secure.indeed.com/auth" in (url or "").lower():
+        info["tried"].append({"second_google_click": True})
+        if _click_google_sso(sb):
+            time.sleep(2)
+            _switch_to_google_window(sb)
+            body, title, url = _snap(sb)
+            if is_google_password_challenge(url=url, body=body):
+                result = _fill_password(sb, pws[0])
+                info["tried"].append({"password_fill_2": result})
+            elif "accountchooser" in url.lower():
+                _pick_account_chooser(sb, info["email"])
+                time.sleep(1.5)
+                body, title, url = _snap(sb)
+                if is_google_password_challenge(url=url, body=body):
+                    result = _fill_password(sb, pws[0])
+                    info["tried"].append({"password_fill_2": result})
+            time.sleep(3)
+            try:
+                sb.uc_open_with_reconnect(
+                    "https://secure.indeed.com/settings/account", 5
+                )
+                time.sleep(2)
+            except Exception:
+                pass
+            body, title, url = _snap(sb)
+            signed = indeed_session_looks_signed_in(body, url)
     info["ok"] = signed
     info["url"] = url[:160]
     info["leftGooglePwd"] = left_pwd
