@@ -28,7 +28,7 @@ function locationOk(loc, title = "", skills = "", workFromHome = 0) {
     return true;
   }
   if (
-    /\b(pan[\s-]?india|anywhere(\s+in\s+india)?|work\s*from\s*anywhere|multiple\s+locations?|india\s*\(?\s*remote\s*\)?|remote[\s-]?india|locations?\s+across\s+india)\b/i.test(
+    /\b(pan[\s-]?india|anywhere(\s+in\s+india)?|any[\s-]?location|work\s*from\s*anywhere|multiple\s+locations?|metros?\b|india\s*\(?\s*remote\s*\)?|remote[\s-]?india|locations?\s+across\s+india)\b/i.test(
       l
     ) &&
     (hasDotNet(title, skills) || hasTargetSeniority(title) || hasCloudPlatform(title, skills))

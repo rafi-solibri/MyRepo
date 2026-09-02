@@ -103,6 +103,32 @@ assert.strictEqual(
   skipReason("Solutions Architect", { location: "Bangalore", skills: ".NET" }),
   "location_not_hyd_remote"
 );
+assert.strictEqual(
+  skipReason(".Net Tech Lead - Azure/Javascript", {
+    location: "Any Location, Bangalore, Chennai, Pune",
+    skills: ".Net Azure",
+  }),
+  null
+);
+assert.strictEqual(
+  skipReason("Senior Engineering Manager - WealthTech", {
+    location: "Any Location",
+    skills: "",
+  }),
+  null
+);
+assert.strictEqual(
+  skipReason(".Net Technical Lead", { location: "Metros", skills: ".Net" }),
+  null
+);
+assert.strictEqual(
+  skipReason("Cloud Architect - AWS/Azure/GCP", { location: "Metros", skills: "AWS Azure" }),
+  null
+);
+assert.strictEqual(
+  skipReason("Product Manager", { location: "Metros", skills: "" }),
+  "location_not_hyd_remote"
+);
 assert.ok(locationOk("Remote - India", "Staff Engineer", "Azure", 0));
 assert.ok(locationOk("Pune", "Architect", ".NET", 1));
 assert.ok(hasDotNet("Cloud SA", "C# ASP.NET"));

@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Any Location / Metros .NET Tech Lead and Cloud Architect skipped as location_not_hyd_remote | Treat any-location and metros as pan-India/remote when title is .NET, senior, or cloud (same family as multiple locations) |
 | Principal/Senior SAS Programmer and Jira/Atlassian Solution Architect passed skipReason (wrong stack titles) | HARD-skip SAS titles as non_dotnet_primary; Jira/Atlassian as wrong_stack_title (same family as Salesforce/Conga) |
 
 

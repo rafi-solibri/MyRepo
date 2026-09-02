@@ -395,7 +395,7 @@ async function main() {
           workFromHome: wfh,
         });
         if (reason) {
-          state.skipped.push({ id, title, company, reason });
+          state.skipped.push({ id, title, company, location, reason });
           continue;
         }
 
