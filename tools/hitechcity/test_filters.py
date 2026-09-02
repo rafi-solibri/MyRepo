@@ -134,6 +134,8 @@ def test_title_ok():
     assert LI_TITLE_SKIP.search(
         "System Architect for Advanced Memory System Architecture- DMTS"
     )
+    assert CAREERS_TITLE_SKIP.search("Staff Engineer, IP Dev Layout")
+    assert LI_TITLE_SKIP.search("Staff Engineer, IP Dev Layout")
     assert not CAREERS_TITLE_SKIP.search("Software Product Engineering Lead Hyderabad")
     assert LI_TITLE_SKIP.search("Staff Engineer, CAD")
     assert LI_TITLE_SKIP.search("Principal Engineer - STA/Synthesis")

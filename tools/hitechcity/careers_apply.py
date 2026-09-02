@@ -157,6 +157,7 @@ CAREERS_TITLE_SKIP = re.compile(
     # layout / DV / DRAM / standard-cell / power integrity / NVM test / data science IC /
     # CAD / STA-synthesis / Staff Analyst (IT ops — not .NET SW).
     r"layout\s*design|scribe\s*layout|standard\s*cell|"
+    r"ip\s*dev\s*layout|\bdev\s*layout\b|layout\s*engineer|"
     r"design\s*verification|\bhbm\b|\bdram\b|power\s*integrity|"
     r"\bnvm\b|\bnvmqra\b|ssd\s*.*test|memory\s*verification|"
     r"circuit\s*design|mask\s*design|place\s*and\s*route|\bp&r\b|"
