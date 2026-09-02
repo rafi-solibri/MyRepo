@@ -17,8 +17,9 @@
 #   Oracle/Greenhouse email verification; else Gmail tab in CDP Chrome is used.
 #   CAPSOLVER_API_KEY or TWOCAPTCHA_API_KEY — optional paid solvers.
 #   Free path: bash scripts/home-headed-careers-apply.sh (you click hCaptcha).
-# GOOGLE_PASSWORD is the Gmail/Google account password used for SSO; when set it
-# also fills LINKEDIN_PASSWORD if that key is empty (same account for many owners).
+# GOOGLE_PASSWORD is the Gmail/Google account password used for SSO.
+# Do NOT alias it with LINKEDIN_PASSWORD — they often differ; cross-feed burns
+# Gmail SSO (Indeed/LinkedIn) with the wrong secret.
 set -uo pipefail
 
 _ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -62,15 +63,11 @@ if [[ -z "${NAUKRI_APPLY_EMAIL:-}" && -n "${APPLY_EMAIL:-}" ]]; then
   NAUKRI_APPLY_EMAIL="$APPLY_EMAIL"
   export NAUKRI_APPLY_EMAIL
 fi
-# Google account password (Gmail SSO) — alias into LINKEDIN_PASSWORD when unset.
-if [[ -z "${LINKEDIN_PASSWORD:-}" && -n "${GOOGLE_PASSWORD:-}" ]]; then
-  LINKEDIN_PASSWORD="$GOOGLE_PASSWORD"
-  export LINKEDIN_PASSWORD
-fi
-if [[ -z "${GOOGLE_PASSWORD:-}" && -n "${LINKEDIN_PASSWORD:-}" ]]; then
-  GOOGLE_PASSWORD="$LINKEDIN_PASSWORD"
-  export GOOGLE_PASSWORD
-fi
+# HARD: do NOT alias LINKEDIN_PASSWORD ↔ GOOGLE_PASSWORD.
+# They are often different secrets; cross-feeding burns Gmail with the LinkedIn
+# password (Indeed/LinkedIn Google SSO → wrong_password) and vice versa.
+# Portal helpers read GOOGLE_PASSWORD-only for Google forms and
+# LINKEDIN_PASSWORD-only for LinkedIn forms. Owner must set both when they differ.
 if [[ -z "${LINKEDIN_EMAIL:-}" && -n "${GOOGLE_EMAIL:-}" ]]; then
   LINKEDIN_EMAIL="$GOOGLE_EMAIL"
   export LINKEDIN_EMAIL

@@ -248,6 +248,26 @@ def test_passport_expiry_from_oauth_and_jwt():
     assert from_jwt["reason"] == "indeed_passport_expired"
 
 
+def test_indeed_google_sso_uses_google_password_only():
+    """Never fill Gmail forms with LINKEDIN_PASSWORD (day-10 burn)."""
+    from tools.indeed.google_sso import google_password_candidates
+    from tools.google_2fa_prompt import (
+        is_google_2fa_challenge,
+        is_google_password_challenge,
+    )
+
+    env = {
+        "GOOGLE_PASSWORD": "gmail-only-secret",
+        "LINKEDIN_PASSWORD": "linkedin-different",
+    }
+    assert google_password_candidates(env) == ["gmail-only-secret"]
+    assert google_password_candidates({"LINKEDIN_PASSWORD": "only-li"}) == []
+
+    pwd = "https://accounts.google.com/v3/signin/challenge/pwd?TL=x"
+    assert is_google_password_challenge(url=pwd, body="Enter your password")
+    assert not is_google_2fa_challenge(url=pwd, body="Enter your password")
+
+
 if __name__ == "__main__":
     test_skip_hyd_remote_ok()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
@@ -262,4 +282,5 @@ if __name__ == "__main__":
     test_cookie_banner_visible_from_text()
     test_job_dedupe_key_from_jk()
     test_passport_expiry_from_oauth_and_jwt()
+    test_indeed_google_sso_uses_google_password_only()
     print("ok")
