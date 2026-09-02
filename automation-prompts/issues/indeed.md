@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| google_sso ok on /auth email form → anonymous did_not_leave_indeed streak | Strict signed-in (no email-address match); stay on Google pwd/2FA; never click Indeed Next as consent |
 | Sign-in wall Google CTA missed (cookie banner + SB visibility) → google_sso_button_missing | Dismiss OneTrust; JS click aria/data-tn Google SSO; retry canonical /auth + debug shot |
 | Passport expired + Google SSO treated challenge/pwd as 2FA and aliased LINKEDIN_PASSWORD into GOOGLE_PASSWORD → indeed_login_required | google_sso.py (GOOGLE_PASSWORD-only) wired on Sign-in wall; google_2fa_prompt excludes challenge/pwd; load-job-secrets stops password cross-alias |
 | Preflight hasAuth true while Passport JWT/OauthExpires expired ~27d → UC indeed_login_required | passport_auth_check.py decrypts OauthExpires/Bearer JWT exp; chrome_session + prepare_uc_profile gate hasAuth on expiry |

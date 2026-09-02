@@ -286,6 +286,29 @@ def test_indeed_google_sso_control_match():
     )
 
 
+def test_indeed_sso_auth_email_form_is_not_signed_in():
+    """Auth page 'Email address' must not count as a live Passport session."""
+    from tools.indeed.google_sso import indeed_session_looks_signed_in
+
+    auth_body = (
+        "Ready to take the next step?\nCreate an account\n"
+        "Continue with Google\nEmail address *"
+    )
+    auth_url = (
+        "https://secure.indeed.com/auth?oauth_client_id=abc&from=oauth"
+        "&continue=https://secure.indeed.com/oauth"
+    )
+    assert not indeed_session_looks_signed_in(auth_body, auth_url)
+    assert not indeed_session_looks_signed_in(
+        "Welcome\nEnter your password",
+        "https://accounts.google.com/v3/signin/challenge/pwd?TL=x",
+    )
+    assert indeed_session_looks_signed_in(
+        "Account settings\nManage your account security\nSign out of Indeed",
+        "https://secure.indeed.com/settings/account",
+    )
+
+
 if __name__ == "__main__":
     test_skip_hyd_remote_ok()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
@@ -302,4 +325,5 @@ if __name__ == "__main__":
     test_passport_expiry_from_oauth_and_jwt()
     test_indeed_google_sso_uses_google_password_only()
     test_indeed_google_sso_control_match()
+    test_indeed_sso_auth_email_form_is_not_signed_in()
     print("ok")

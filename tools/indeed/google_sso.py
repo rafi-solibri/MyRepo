@@ -107,6 +107,31 @@ def looks_like_google_sso_control(
     return False
 
 
+def indeed_session_looks_signed_in(body: str, url: str = "") -> bool:
+    """Strict Indeed jobseeker session — never treat auth email form as signed-in.
+
+    Regression 2026-09-02: ``email address`` on secure.indeed.com/auth matched
+    and uc_daily_apply continued anonymously (did_not_leave_indeed streak).
+    """
+    u = (url or "").lower()
+    if "accounts.google.com" in u:
+        return False
+    if re.search(r"secure\.indeed\.com/auth|/account/login|signin/challenge", u):
+        return False
+    blob = f"{url}\n{body}"
+    if re.search(r"create an account or sign in|ready to take the next step", blob, re.I):
+        return False
+    return bool(
+        re.search(
+            r"account settings|messages unread|manage your account security|"
+            r"change account type|device management|privacy settings|"
+            r"welcome,\s*\w+|sign out of indeed|unread count",
+            blob,
+            re.I,
+        )
+    )
+
+
 def _dismiss_cookie_banner(sb: Any) -> str:
     """OneTrust strip covers Indeed auth Google CTA (2026-09-02 re-run)."""
     try:
@@ -454,6 +479,31 @@ def try_google_sso(sb: Any, *, wait_2fa_sec: int | None = None) -> dict:
             return info
         body, title, url = _snap(sb)
 
+    # Stay on Google until pwd/2FA actually navigates away. Do not click
+    # Indeed auth "Next" (email form) — that was a false "consent" in the
+    # 2026-09-02 re-run while challenge/pwd was still open in another tab.
+    _switch_to_google_window(sb)
+    left_pwd = False
+    for _ in range(8):
+        body, title, url = _snap(sb)
+        if "accounts.google.com" not in url.lower():
+            left_pwd = True
+            break
+        if is_google_2fa_challenge(url=url, body=body):
+            break
+        if is_google_password_challenge(url=url, body=body):
+            for nxt in ("#passwordNext", "button:contains('Next')", "//button[.='Next']"):
+                try:
+                    if sb.is_element_visible(nxt):
+                        sb.click(nxt)
+                        info["tried"].append({"password_next_retry": True})
+                        break
+                except Exception:
+                    continue
+        time.sleep(1.5)
+    else:
+        body, title, url = _snap(sb)
+
     # Real 2FA only after password clears
     if is_google_2fa_challenge(url=url, body=body):
         wait = int(
@@ -496,16 +546,17 @@ def try_google_sso(sb: Any, *, wait_2fa_sec: int | None = None) -> dict:
             return info
         body, title, url = _snap(sb)
 
-    # Consent / Continue back to Indeed
-    for label in ("Continue", "Allow", "Confirm", "Next"):
-        try:
-            sel = f"//button[normalize-space()='{label}']"
-            if sb.is_element_visible(sel):
-                sb.click(sel)
-                time.sleep(1.5)
-                info["tried"].append({"consent": label})
-        except Exception:
-            continue
+    # Google consent only (never Indeed email-form Next).
+    if "accounts.google.com" in (url or "").lower():
+        for label in ("Continue", "Allow", "Confirm"):
+            try:
+                sel = f"//button[normalize-space()='{label}']"
+                if sb.is_element_visible(sel):
+                    sb.click(sel)
+                    time.sleep(1.5)
+                    info["tried"].append({"consent": label})
+            except Exception:
+                continue
 
     # Prefer Indeed window
     try:
@@ -525,17 +576,16 @@ def try_google_sso(sb: Any, *, wait_2fa_sec: int | None = None) -> dict:
     except Exception:
         pass
     body, title, url = _snap(sb)
-    signed = bool(
-        re.search(r"welcome|sign out|account settings|email address", body, re.I)
-        and "sign in |" not in body.lower()
-    )
-    if not signed:
-        # Messages nav / myjobs as soft proof
-        signed = bool(
-            re.search(r"my jobs|messages|profile", body, re.I)
-            and "create an account or sign in" not in body.lower()
-        )
+    signed = indeed_session_looks_signed_in(body, url)
     info["ok"] = signed
     info["url"] = url[:160]
+    info["leftGooglePwd"] = left_pwd
     info["reason"] = "signed_in" if signed else "sso_unconfirmed"
+    if not signed:
+        _save_sso_debug(sb, "unconfirmed")
+        info["hint"] = (
+            "Google SSO did not reach Indeed account settings — "
+            "approve ASK_OWNER_GOOGLE_2FA if prompted, or refresh Passport "
+            "via Desktop Chrome + sync-chrome-sessions"
+        )
     return info
