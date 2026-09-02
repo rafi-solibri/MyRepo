@@ -27,12 +27,23 @@ import sys
 import time
 from typing import Any
 
+# Real 2FA / device challenges only — NOT /challenge/pwd (Google password form).
 _CHALLENGE_RE = re.compile(
     r"2[- ]step|two[- ]step|authenticator|verification code|"
     r"enter (the |your )?(code|pin)|google prompt|"
     r"check your phone|tap yes|confirm it.?s you|"
-    r"account recovery|verify it.?s you|signin/challenge|"
-    r"challenge/totp|challenge/ipp|challenge/sk|/challenge/",
+    r"account recovery|verify it.?s you|"
+    r"challenge/(?:totp|ipp|sk|iap|az|dp|selection|kpe)",
+    re.I,
+)
+
+# Google password re-prompt after account chooser (SSO heal must fill GOOGLE_PASSWORD).
+_PASSWORD_CHALLENGE_URL_RE = re.compile(
+    r"accounts\.google\.com/.*/challenge/pwd(?:[/?#]|$)",
+    re.I,
+)
+_PASSWORD_BODY_RE = re.compile(
+    r"enter your password|forgot password|show password|wrong password",
     re.I,
 )
 
@@ -44,8 +55,8 @@ _DONE_URL_RE = re.compile(
 )
 
 
-def is_google_2fa_challenge(page: Any = None, *, url: str = "", body: str = "") -> bool:
-    """True when the page looks like a Google 2FA / challenge screen."""
+def is_google_password_challenge(page: Any = None, *, url: str = "", body: str = "") -> bool:
+    """True when Google is asking for the account password (not TOTP/phone 2FA)."""
     u = url or ""
     text = body or ""
     if page is not None:
@@ -58,10 +69,38 @@ def is_google_2fa_challenge(page: Any = None, *, url: str = "", body: str = "") 
                 text = page.locator("body").inner_text(timeout=2000)[:2500]
             except Exception:
                 text = ""
+    if _PASSWORD_CHALLENGE_URL_RE.search(u or ""):
+        return True
+    if "accounts.google.com" in (u or "").lower() and _PASSWORD_BODY_RE.search(text or ""):
+        if not _CHALLENGE_RE.search(text or ""):
+            return True
+    return False
+
+
+def is_google_2fa_challenge(page: Any = None, *, url: str = "", body: str = "") -> bool:
+    """True when the page looks like a Google 2FA / challenge screen.
+
+    `/signin/challenge/pwd` is a password form — callers must heal GOOGLE_PASSWORD
+    there, not wait 300s for an authenticator code.
+    """
+    u = url or ""
+    text = body or ""
+    if page is not None:
+        try:
+            u = u or (page.url or "")
+        except Exception:
+            pass
+        if not text:
+            try:
+                text = page.locator("body").inner_text(timeout=2000)[:2500]
+            except Exception:
+                text = ""
+    if is_google_password_challenge(url=u, body=text):
+        return False
     blob = f"{u}\n{text}"
     if "accounts.google.com" in u.lower() and _CHALLENGE_RE.search(blob):
         return True
-    if re.search(r"accounts\.google\.com/.*/challenge", u, re.I):
+    if re.search(r"accounts\.google\.com/.*/challenge/(?!pwd)", u, re.I):
         return True
     if _CHALLENGE_RE.search(text) and re.search(
         r"google|g-?suite|rafi\.success@gmail", text, re.I

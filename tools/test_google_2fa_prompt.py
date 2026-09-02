@@ -10,7 +10,10 @@ _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from tools.google_2fa_prompt import is_google_2fa_challenge  # noqa: E402
+from tools.google_2fa_prompt import (  # noqa: E402
+    is_google_2fa_challenge,
+    is_google_password_challenge,
+)
 
 
 def assert_true(cond: bool, msg: str) -> None:
@@ -45,6 +48,32 @@ assert_true(
         body="Email or phone",
     ),
     "identifier alone is not 2FA",
+)
+PWD_URL = (
+    "https://accounts.google.com/v3/signin/challenge/pwd?TL=ACv9tzEwiYMt"
+    "&checkConnection=youtube%3A66"
+)
+assert_true(
+    is_google_password_challenge(url=PWD_URL, body="Enter your password"),
+    "challenge/pwd is a password form",
+)
+assert_true(
+    not is_google_2fa_challenge(url=PWD_URL, body="Enter your password"),
+    "challenge/pwd must not wait as 2FA",
+)
+assert_true(
+    not is_google_2fa_challenge(
+        url="https://accounts.google.com/v3/signin/challenge/pwd?continue=https://www.example.com/",
+        body="Show password\nForgot password?",
+    ),
+    "challenge/pwd with forgot-password copy is not 2FA",
+)
+assert_true(
+    is_google_2fa_challenge(
+        url="https://accounts.google.com/v3/signin/challenge/totp?TL=abc",
+        body="Get a verification code from the Google Authenticator app",
+    ),
+    "totp after password still 2FA",
 )
 
 print("google_2fa_prompt tests OK")

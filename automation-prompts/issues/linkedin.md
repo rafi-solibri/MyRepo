@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-09-02 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Google challenge/pwd treated as 2FA (300s wait) and load-job-secrets aliased the portal password into GOOGLE_PASSWORD, burning CAPTCHA | Classify challenge/pwd as password; stop portal→GOOGLE_PASSWORD alias; skip portal-password fallback when GOOGLE_PASSWORD is missing |
+
+
 ## 2026-09-01 (cloud)
 
 | Issue | Fix |

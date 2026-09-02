@@ -84,6 +84,12 @@ def test_is_google_identifier_url():
     assert _mod.is_google_identifier_url(
         "https://accounts.google.com/v3/signin/challenge/pwd?TL=abc"
     )
+    assert not _mod.is_google_identifier_url(
+        "https://accounts.google.com/v3/signin/challenge/totp?TL=abc"
+    )
+    assert not _mod.is_google_identifier_url(
+        "https://accounts.google.com/signin/challenge/ipp"
+    )
     assert not _mod.is_google_identifier_url("https://accounts.google.com/gsi/select")
     assert not _mod.is_google_identifier_url("https://www.example.com/login")
 

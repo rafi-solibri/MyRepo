@@ -62,14 +62,12 @@ if [[ -z "${NAUKRI_APPLY_EMAIL:-}" && -n "${APPLY_EMAIL:-}" ]]; then
   NAUKRI_APPLY_EMAIL="$APPLY_EMAIL"
   export NAUKRI_APPLY_EMAIL
 fi
-# Google account password (Gmail SSO) — alias into LINKEDIN_PASSWORD when unset.
+# Google account password (Gmail SSO) — alias into the portal password when unset.
+# HARD: do not copy the portal password into GOOGLE_PASSWORD. That cross-feed
+# burns Gmail (see auto_login google_password_candidates).
 if [[ -z "${LINKEDIN_PASSWORD:-}" && -n "${GOOGLE_PASSWORD:-}" ]]; then
   LINKEDIN_PASSWORD="$GOOGLE_PASSWORD"
   export LINKEDIN_PASSWORD
-fi
-if [[ -z "${GOOGLE_PASSWORD:-}" && -n "${LINKEDIN_PASSWORD:-}" ]]; then
-  GOOGLE_PASSWORD="$LINKEDIN_PASSWORD"
-  export GOOGLE_PASSWORD
 fi
 if [[ -z "${LINKEDIN_EMAIL:-}" && -n "${GOOGLE_EMAIL:-}" ]]; then
   LINKEDIN_EMAIL="$GOOGLE_EMAIL"
