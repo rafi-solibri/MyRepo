@@ -162,14 +162,20 @@ CAREERS_TITLE_SKIP = re.compile(
     r"circuit\s*design|mask\s*design|place\s*and\s*route|\bp&r\b|"
     r"\bcad\b|sta\s*/\s*synthesis|\bsta\b.*\bsynthesis\b|\bsynthesis\b|"
     r"timing\s*analysis|\bstaff\s*analyst\b|"
+    # Micron/AMD "Product Engineering" is semiconductor PE (not software product eng).
+    r"(?<!software\s)product\s*engineering|"
     r"data\s*science\s*engineer|"
     r"sales\s*specialist|especialista|"
     r"program\s*manager|technical\s*program\s*manager|\btpm\b|"
     r"\bai\s*native\b|\bdata\s*&\s*ai\b|staff\s*engineer\s*\(\s*ai|"
     r"\bai\s*/\s*ml\b|\bai\s*&\s*ml\b|\baiml\b|\bai-ml\b|"
     r"\bdeep\s*learning\b|\bgen(?:erative)?\s*ai\b|\bllm\b|"
-    r"\bai\s*engineer\b|\bml\s*engineer\b|\bai\s*architect\b|\bml\s*architect\b|"
+    # Match "AI Engineer" and "AI Engineering" (JPMC Prompt Architecture Lead).
+    r"\bai\s*engineer(?:ing)?\b|\bml\s*engineer(?:ing)?\b|\bai\s*architect\b|\bml\s*architect\b|"
     r"\bartificial\s*intelligence\b|\bcuda\b|\brocm\b|"
+    # UX / design research (Experian) — burns CAPTCHA walls, not .NET campus fit.
+    r"\bux\s*research\b|\buser\s*experience\s*research\b|\bux\s*/\s*ui\b|"
+    r"share\s+on\s+wechat|"
     r"engineer in test|\bsdet\b|cyber\s*security|cybersecurity|"
     r"performance\s*test|load\s*test|fusion\s*load\s*testing|"
     r"database engineer",

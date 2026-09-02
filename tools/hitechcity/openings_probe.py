@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -55,15 +56,17 @@ CAREERS_URL_HINTS: dict[str, list[str]] = {
         "?keyword=Engineering+Manager&location=Hyderabad%2C+Telangana%2C+India",
     ],
     "Providence": [
-        "https://www.providenceindia.com/careers",
-        "https://careers.providence.org/us/en/search-results?keywords=Engineering%20Manager",
+        # providenceindia.com/careers → 404; careers.providence.org NXDOMAIN from cloud.
+        "https://providence.jobs/",
+        "https://www.providence.org/careers",
     ],
     "Zenoti": [
         "https://job-boards.greenhouse.io/zenoti",
         "https://boards.greenhouse.io/zenoti",
     ],
     "Flutter Entertainment": [
-        "https://careers.flutter.com/search/?q=Engineering+Manager&locationsearch=Hyderabad"
+        # careers.flutter.com NXDOMAIN — official portal is Flutter Group Careers.
+        "https://careers.fluttergroup.com/jobs/"
     ],
     "Darwinbox": [
         "https://darwinbox.darwinbox.in/ms/candidate/careers",
@@ -77,7 +80,8 @@ CAREERS_URL_HINTS: dict[str, list[str]] = {
         "https://careers.micron.com/careers?query=Engineering%20Manager&location=Hyderabad"
     ],
     "LTIMindtree": [
-        "https://careers.ltimindtree.com/search/?q=Engineering+Manager&locationsearch=Hyderabad"
+        # careers.ltimindtree.com has hostname-mismatched TLS; brand site redirects to ltm.com.
+        "https://www.ltm.com/careers"
     ],
     "Mphasis": [
         "https://careers.mphasis.com/home/careers/jobsearch.html?q=Engineering+Manager&loc=Hyderabad"
@@ -101,6 +105,14 @@ CAREERS_URL_HINTS: dict[str, list[str]] = {
 }
 
 
+# Dead / NXDOMAIN / bad-TLS careers hosts seen in 2026-09 cron — strip before merge.
+DEAD_CAREERS_HOST_RE = re.compile(
+    r"careers\.flutter\.com|careers\.providence\.org|providenceindia\.com/careers|"
+    r"careers\.ltimindtree\.com",
+    re.I,
+)
+
+
 def openings_preference_rank(company: dict[str, Any]) -> int:
     """0 = known live openings (apply first within campus tier); 1 = unknown/none."""
     if company.get("hasOpenings") or int(company.get("openingsCount") or 0) > 0:
@@ -109,23 +121,22 @@ def openings_preference_rank(company: dict[str, Any]) -> int:
 
 
 def ensure_careers_url_hints(companies: list[dict[str, Any]]) -> list[str]:
-    """Attach curated careers URLs to preferred companies missing them."""
+    """Attach curated careers URLs to preferred companies; scrub known-dead hosts."""
     touched: list[str] = []
     for c in companies:
         name = (c.get("name") or "").strip()
-        hints = CAREERS_URL_HINTS.get(name)
-        if not hints:
-            continue
         camps = set(c.get("campuses") or [])
-        if not (camps & PREFERRED_HOME_CAMPUSES):
-            continue
         urls = list(c.get("careersUrls") or [])
-        added = False
-        for u in hints:
-            if u and u not in urls:
-                urls.append(u)
-                added = True
-        if added:
+        scrubbed = [u for u in urls if u and not DEAD_CAREERS_HOST_RE.search(u)]
+        changed = scrubbed != urls
+        urls = scrubbed
+        hints = CAREERS_URL_HINTS.get(name)
+        if hints and (camps & PREFERRED_HOME_CAMPUSES):
+            for u in hints:
+                if u and u not in urls:
+                    urls.append(u)
+                    changed = True
+        if changed:
             c["careersUrls"] = urls
             touched.append(name)
     return touched

@@ -26,7 +26,7 @@
       "Azure Architect",
       "Cloud Architect"
     ],
-    "lastDiscoveryAt": "2026-08-30T14:10:54.178667+00:00",
+    "lastDiscoveryAt": "2026-09-02T03:36:55.416585+00:00",
     "discoveryMode": "campus_catalog+web_directories+seeds+linkedin_optional+board_hints",
     "preferredHomeCampuses": [
       "sattva-knowledge-city",
@@ -36,7 +36,7 @@
       "rmz-skyview",
       "rmz-futura"
     ],
-    "lastOpeningsProbeAt": "2026-08-30T14:23:49.076163+00:00"
+    "lastOpeningsProbeAt": "2026-09-02T03:41:48.567958+00:00"
   },
   "campuses": [
     {
@@ -147,7 +147,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:22:11.272290+00:00"
+      "openingsProbedAt": "2026-09-02T03:40:31.189481+00:00"
     },
     {
       "name": "AMD",
@@ -165,7 +165,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:22:27.485588+00:00"
+      "openingsProbedAt": "2026-09-02T03:40:48.445613+00:00"
     },
     {
       "name": "Apple",
@@ -182,7 +182,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:19:02.910836+00:00"
+      "openingsProbedAt": "2026-09-02T03:37:08.264680+00:00"
     },
     {
       "name": "Blackbaud",
@@ -199,7 +199,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:22:34.762319+00:00"
+      "openingsProbedAt": "2026-09-02T03:40:55.760291+00:00"
     },
     {
       "name": "Blue Yonder",
@@ -214,7 +214,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:22:46.434629+00:00"
+      "openingsProbedAt": "2026-09-02T03:41:07.666021+00:00"
     },
     {
       "name": "CGI",
@@ -233,7 +233,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:19:09.465154+00:00"
+      "openingsProbedAt": "2026-09-02T03:37:16.811821+00:00"
     },
     {
       "name": "Cotelligent",
@@ -250,7 +250,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:19:16.017636+00:00"
+      "openingsProbedAt": "2026-09-02T03:37:24.398816+00:00"
     },
     {
       "name": "Electronic Arts",
@@ -267,7 +267,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:19:40.030612+00:00"
+      "openingsProbedAt": "2026-09-02T03:37:50.303002+00:00"
     },
     {
       "name": "Experian",
@@ -300,17 +300,17 @@
           "location": ""
         },
         {
-          "role": "Director of Engineering Hyderabad, India Full-time",
-          "url": "https://jobs.smartrecruiters.com/Experian/744000141222695-director-of-engineering",
-          "location": ""
-        },
-        {
           "role": "Senior Staff Software Engineer Hyderabad, India Full-time",
           "url": "https://jobs.smartrecruiters.com/Experian/744000140435649-senior-staff-software-engineer",
           "location": ""
+        },
+        {
+          "role": "Solution Architect (Microsoft .NET/Azure Cloud) Hyderabad, India Full-time",
+          "url": "https://jobs.smartrecruiters.com/Experian/744000139938479-solution-architect-microsoft-net-azure-cloud-",
+          "location": ""
         }
       ],
-      "openingsProbedAt": "2026-08-30T14:23:14.378501+00:00"
+      "openingsProbedAt": "2026-09-02T03:41:36.638453+00:00"
     },
     {
       "name": "EY",
@@ -327,7 +327,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:19:52.028171+00:00"
+      "openingsProbedAt": "2026-09-02T03:38:03.201664+00:00"
     },
     {
       "name": "GE Vernova",
@@ -446,7 +446,25 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:20:37.894789+00:00"
+      "openingsProbedAt": "2026-09-02T03:38:48.195441+00:00"
+    },
+    {
+      "name": "Micron Technology",
+      "campuses": [
+        "sattva-knowledge-city",
+        "rmz-skyview"
+      ],
+      "linkedinSlug": "micron-technology",
+      "careersUrls": [
+        "https://careers.micron.com/careers?query=Engineering%20Manager&location=Hyderabad"
+      ],
+      "priority": 1,
+      "source": "seed",
+      "discoveredAt": "2026-08-13",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-09-02T03:38:59.920965+00:00"
     },
     {
       "name": "Microsoft",
@@ -574,8 +592,8 @@
       ],
       "linkedinSlug": "providence",
       "careersUrls": [
-        "https://www.providenceindia.com/careers",
-        "https://careers.providence.org/us/en/search-results?keywords=Engineering%20Manager"
+        "https://providence.jobs/",
+        "https://www.providence.org/careers"
       ],
       "priority": 1,
       "source": "campus_catalog",
@@ -583,7 +601,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:20:56.655798+00:00"
+      "openingsProbedAt": "2026-09-02T03:39:14.203117+00:00"
     },
     {
       "name": "Qualcomm",
@@ -621,12 +639,12 @@
           "location": ""
         },
         {
-          "role": "Senior Lead Engineer - Linux Kernel Development Hyderabad, Telang\u0101na, India Software Engineering Posted 14 days ago",
+          "role": "Senior Lead Engineer - Linux Kernel Development Hyderabad, Telang\u0101na, India Software Engineering Posted 16 days ago",
           "url": "https://careers.qualcomm.com/careers/job/446720449165",
           "location": ""
         }
       ],
-      "openingsProbedAt": "2026-08-30T14:21:02.280501+00:00"
+      "openingsProbedAt": "2026-09-02T03:39:20.407301+00:00"
     },
     {
       "name": "Solera",
@@ -676,7 +694,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:21:59.957318+00:00"
+      "openingsProbedAt": "2026-09-02T03:40:19.720997+00:00"
     },
     {
       "name": "ADP",
@@ -786,7 +804,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:22:57.690325+00:00"
+      "openingsProbedAt": "2026-09-02T03:41:18.630581+00:00"
     },
     {
       "name": "Cyient",
@@ -816,7 +834,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:19:24.506381+00:00"
+      "openingsProbedAt": "2026-09-02T03:37:34.774249+00:00"
     },
     {
       "name": "Deloitte",
@@ -833,7 +851,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:19:30.945440+00:00"
+      "openingsProbedAt": "2026-09-02T03:37:41.214304+00:00"
     },
     {
       "name": "Fiserv",
@@ -848,7 +866,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:23:25.830403+00:00"
+      "openingsProbedAt": "2026-09-02T03:41:48.555139+00:00"
     },
     {
       "name": "Flutter Entertainment",
@@ -857,7 +875,7 @@
       ],
       "linkedinSlug": "flutter-entertainment",
       "careersUrls": [
-        "https://careers.flutter.com/search/?q=Engineering+Manager&locationsearch=Hyderabad"
+        "https://careers.fluttergroup.com/jobs/"
       ],
       "priority": 2,
       "source": "campus_catalog",
@@ -865,7 +883,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:19:58.362431+00:00"
+      "openingsProbedAt": "2026-09-02T03:38:09.551754+00:00"
     },
     {
       "name": "Gartner",
@@ -936,7 +954,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:20:05.373679+00:00"
+      "openingsProbedAt": "2026-09-02T03:38:16.563029+00:00"
     },
     {
       "name": "Invesco",
@@ -975,7 +993,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:20:16.875227+00:00"
+      "openingsProbedAt": "2026-09-02T03:38:29.375784+00:00"
     },
     {
       "name": "LTIMindtree",
@@ -985,7 +1003,7 @@
       ],
       "linkedinSlug": "ltimindtree",
       "careersUrls": [
-        "https://careers.ltimindtree.com/search/?q=Engineering+Manager&locationsearch=Hyderabad"
+        "https://www.ltm.com/careers"
       ],
       "priority": 2,
       "source": "seed",
@@ -993,7 +1011,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:20:26.791323+00:00"
+      "openingsProbedAt": "2026-09-02T03:38:36.367099+00:00"
     },
     {
       "name": "Macquarie",
@@ -1037,30 +1055,6 @@
       "openingsProbedAt": "2026-08-30T14:27:19.850954+00:00"
     },
     {
-      "name": "Micron Technology",
-      "campuses": [
-        "sattva-knowledge-city",
-        "rmz-skyview"
-      ],
-      "linkedinSlug": "micron-technology",
-      "careersUrls": [
-        "https://careers.micron.com/careers?query=Engineering%20Manager&location=Hyderabad"
-      ],
-      "priority": 1,
-      "source": "seed",
-      "discoveredAt": "2026-08-13",
-      "hasOpenings": true,
-      "openingsCount": 1,
-      "sampleOpenings": [
-        {
-          "role": "Staff Engineer, Scribe Layout Design Hyderabad, Telangana, India Posted 2 months ago",
-          "url": "https://careers.micron.com/careers/job/42481366",
-          "location": ""
-        }
-      ],
-      "openingsProbedAt": "2026-08-30T14:20:43.439056+00:00"
-    },
-    {
       "name": "Mphasis",
       "campuses": [
         "mindspace-madhapur",
@@ -1076,7 +1070,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:20:50.236368+00:00"
+      "openingsProbedAt": "2026-09-02T03:39:07.685912+00:00"
     },
     {
       "name": "MTX Group",
@@ -1272,7 +1266,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:21:29.846035+00:00"
+      "openingsProbedAt": "2026-09-02T03:39:45.610530+00:00"
     },
     {
       "name": "Salesforce",
@@ -1382,7 +1376,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:21:41.788213+00:00"
+      "openingsProbedAt": "2026-09-02T03:39:57.789765+00:00"
     },
     {
       "name": "Uber",
@@ -1475,7 +1469,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:21:48.355935+00:00"
+      "openingsProbedAt": "2026-09-02T03:40:07.437056+00:00"
     },
     {
       "name": "DXC Technology",
@@ -1491,7 +1485,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:23:10.818434+00:00"
+      "openingsProbedAt": "2026-09-02T03:41:32.902618+00:00"
     },
     {
       "name": "HCLTech",
