@@ -122,6 +122,11 @@ def test_title_ok():
     assert CAREERS_TITLE_SKIP.search(
         "Predictive Science - AI Engineering & Prompt Architecture Lead - Vice President"
     )
+    # 2026-09-02 afternoon: Micron TD Device Characterization burned careers ATS time.
+    assert CAREERS_TITLE_SKIP.search(
+        "Principal Engineer, TD Device Characterization Hyderabad, Telangana, India"
+    )
+    assert LI_TITLE_SKIP.search("Principal Engineer, TD Device Characterization")
     assert not CAREERS_TITLE_SKIP.search("Software Product Engineering Lead Hyderabad")
     assert LI_TITLE_SKIP.search("Staff Engineer, CAD")
     assert LI_TITLE_SKIP.search("Principal Engineer - STA/Synthesis")
@@ -131,6 +136,7 @@ def test_title_ok():
     assert LI_TITLE_SKIP.search("Product Engineering Staff Engineer")
     assert LI_TITLE_SKIP.search("UX Research Lead")
     assert LI_TITLE_SKIP.search("AI Engineering Lead")
+    assert LI_TITLE_SKIP.search("Principal Engineer, TD Device Characterization")
     assert skip_reason("Staff Engineer, Scribe Layout Design") is not None
     assert LI_TITLE_SKIP.search("Principal Silicon Design Engineer")
     assert JD_WRONG_STACK.search("We need a Mobile Architect for Ionic Capacitor and Zscaler")

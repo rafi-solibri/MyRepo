@@ -162,6 +162,8 @@ CAREERS_TITLE_SKIP = re.compile(
     r"circuit\s*design|mask\s*design|place\s*and\s*route|\bp&r\b|"
     r"\bcad\b|sta\s*/\s*synthesis|\bsta\b.*\bsynthesis\b|\bsynthesis\b|"
     r"timing\s*analysis|\bstaff\s*analyst\b|"
+    # Micron TD / process HW (Principal Engineer, TD Device Characterization).
+    r"device\s*characterization|\btd\s+device\b|characterization\s*engineer|"
     # Micron/AMD "Product Engineering" is semiconductor PE (not software product eng).
     r"(?<!software\s)product\s*engineering|"
     r"data\s*science\s*engineer|"
