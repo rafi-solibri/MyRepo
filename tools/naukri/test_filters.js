@@ -593,6 +593,50 @@ assert.strictEqual(
   false,
   ".NET Azure SA must still apply"
 );
+assert.strictEqual(
+  shouldSkipTitle("R&D Senior Member of Technical Staff, Cloud DevOps"),
+  true,
+  "Cloud DevOps staff title must skip (Aveva false-apply 2026-09-02)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Architect - Cloud Platform Engineering"),
+  true,
+  "Cloud Platform Engineering architect must skip (TechBlocks false-apply 2026-09-02)"
+);
+assert.strictEqual(
+  shouldSkipNonDotNetPrimaryJd(
+    "Azure Architect",
+    [
+      "Hiring for a Recruitment / Staffing company",
+      "Azure Architect",
+      "Hyderabad, Chennai, Bengaluru",
+      "Azure Databricks, generative ai, Databricks Engineer",
+      "Roles and Responsibilities",
+      "Required Skills:",
+      "Hands-on experience building modern data platforms on Azure using",
+      "Azure Databricks, Azure Data Factory, ADLS Gen2, Microsoft Fabric.",
+      "Deep expertise in the Databricks ecosystem including PySpark and Unity Catalog.",
+      "Strong programming in Python and SQL. Good Exposure to LLM/GenAI applications.",
+    ].join("\n")
+  ),
+  true,
+  "Azure Architect + Databricks/Fabric/GenAI JD without .NET must skip (Redbox 2026-09-02)"
+);
+assert.strictEqual(
+  shouldSkipNonDotNetPrimaryJd(
+    "Azure Architect",
+    [
+      "Acme",
+      "Azure Architect",
+      "Hyderabad",
+      "Azure, App Service, AKS, .NET Core, C#, microservices, Kafka",
+      "Role Overview",
+      "Lead Azure solution architecture for cloud-native .NET platforms.",
+    ].join("\n")
+  ),
+  false,
+  ".NET Azure Architect JD must still apply"
+);
 const { workdayCompliantPassword } = require("./workday_apply");
 assert.strictEqual(workdayCompliantPassword("GoodPass123!"), "GoodPass123!");
 const weak = workdayCompliantPassword("short");

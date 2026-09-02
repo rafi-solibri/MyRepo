@@ -1921,7 +1921,7 @@ async function processCard(context, page, card, i, jobMeta, report) {
   const detailSkip = decideSkip(
     {
       ...card,
-      text: `${card.role}\n${card.location}\n${detail.blob.slice(0, 1200)}`,
+      text: `${card.role}\n${card.location}\n${detail.blob.slice(0, 4000)}`,
       role: card.role,
       location: card.location,
     },

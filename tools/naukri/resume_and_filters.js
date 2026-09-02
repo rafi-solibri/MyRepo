@@ -33,7 +33,7 @@ function findResume() {
  * Only skip when title itself is a QA/SDET role.
  */
 const SKIP_TITLE_RE =
-  /\b(qa engineer|quality assurance|quality engineer|quality engineering|quality architect|quality solution architect|\bqe architect\b|sdet|tosca|test automation architect|embedded\b|firmware|intern(?!et)|fresher|salesforce|agentforce|servicenow|coupa|pega|lead system architect|\blsa\b|appian|anaplan|celonis|power platform|guidewire|sap\b|dynamics|\bd365\b|workday hms|revit|\bbarch\b|hubspot|\bsre\b|site reliability|devops engineer|devops lead|devops architect|platform sre|network operations|network ops|network support|network cisco|network\s+(?:solution\s+)?architect|cisco\s+meraki|\bmeraki\b|sd-?\s*wan|l2\s*\/\s*l3|data\s*center|civil\b|structural|substation|attack surface|cyber\s*security|cybersecurity|cyber architecture|infosec|penetration|red team|soc analyst|security operations|threat hunter|\bmdr\b|\bedr\b|security\s+engineer|security\s+architecture|observability|\bdatadog\b|infrastructure engineer|analog\s*ic|\bvlsi\b|digital verification|\basic\b|\bfpga\b|\bdft\b|\batpg\b|\bjtag\b|\bmbist\b|\btessent\b|\btestmax\b|mulesoft|mule\s*soft|ms\s*fabric|microsoft\s*fabric|\bsynapse\b|\bdatabricks\b|datalake|data\s*lake|\bnetcool\b|big\s*data|bigdata|oracle\s+epm|\bepm\b|\bpbcs\b|\bepbcs\b|sharepoint|\btableau\b|\bcopilot\s+architect\b|ms\s+copilot|\bui\s+architect\b|teamcenter|windchill|\bplm\b|\bimds\b|it\s+shared\s+services|aws\s+infra(?:structure)?(?:\s+architect)?|\bios\b|\baccounting\b|\biiot\b|industrial\s+i+ot|\biot\s+(?:engineer|architect)|telecom\s+billing|avp\s+of\s+sales|(?:vp|avp|director|head)\s+(?:of\s+)?sales|sales\s+(?:director|manager|lead|executive|avp|vp))\b/i;
+  /\b(qa engineer|quality assurance|quality engineer|quality engineering|quality architect|quality solution architect|\bqe architect\b|sdet|tosca|test automation architect|embedded\b|firmware|intern(?!et)|fresher|salesforce|agentforce|servicenow|coupa|pega|lead system architect|\blsa\b|appian|anaplan|celonis|power platform|guidewire|sap\b|dynamics|\bd365\b|workday hms|revit|\bbarch\b|hubspot|\bsre\b|site reliability|devops engineer|devops lead|devops architect|cloud devops|cloud platform engineering|platform sre|network operations|network ops|network support|network cisco|network\s+(?:solution\s+)?architect|cisco\s+meraki|\bmeraki\b|sd-?\s*wan|l2\s*\/\s*l3|data\s*center|civil\b|structural|substation|attack surface|cyber\s*security|cybersecurity|cyber architecture|infosec|penetration|red team|soc analyst|security operations|threat hunter|\bmdr\b|\bedr\b|security\s+engineer|security\s+architecture|observability|\bdatadog\b|infrastructure engineer|analog\s*ic|\bvlsi\b|digital verification|\basic\b|\bfpga\b|\bdft\b|\batpg\b|\bjtag\b|\bmbist\b|\btessent\b|\btestmax\b|mulesoft|mule\s*soft|ms\s*fabric|microsoft\s*fabric|\bsynapse\b|\bdatabricks\b|datalake|data\s*lake|\bnetcool\b|big\s*data|bigdata|oracle\s+epm|\bepm\b|\bpbcs\b|\bepbcs\b|sharepoint|\btableau\b|\bcopilot\s+architect\b|ms\s+copilot|\bui\s+architect\b|teamcenter|windchill|\bplm\b|\bimds\b|it\s+shared\s+services|aws\s+infra(?:structure)?(?:\s+architect)?|\bios\b|\baccounting\b|\biiot\b|industrial\s+i+ot|\biot\s+(?:engineer|architect)|telecom\s+billing|avp\s+of\s+sales|(?:vp|avp|director|head)\s+(?:of\s+)?sales|sales\s+(?:director|manager|lead|executive|avp|vp))\b/i;
 
 /**
  * Employer names that are Coupa/Pega/Salesforce/SAP-primary even when the
@@ -74,20 +74,27 @@ function shouldSkipNonDotNetPrimaryJd(role, detailText) {
   if (!isArchLeadTitle(title)) return false;
   // Title already caught by PURE_AI_DATA / NON_DOTNET_PRIMARY — no need.
   if (shouldSkipTitle(title)) return false;
-  const head = blob.slice(0, 2200);
+  const head = blob.slice(0, 4000);
   if (hasDotNet("", head)) return false;
   const low = head.toLowerCase();
   const aiHits = (
     low.match(
-      /\b(tensorflow|pytorch|deep learning|machine learning|\bml\b|gen\s*-?\s*ai|genai|agentic|llm|artificial intelligence|large language)\b/g
+      /\b(tensorflow|pytorch|deep learning|machine learning|\bml\b|gen\s*-?\s*ai|genai|generative\s+ai|agentic|llm|artificial intelligence|large language)\b/g
     ) || []
   ).length;
   const javaPyHits = (
     low.match(/\b(java|spring boot|python|node\.?js|mean\b|mern\b)\b/g) || []
   ).length;
-  // Multiple AI/ML signals in skills/overview → not a .NET arch role.
+  const dataPlatformHits = (
+    low.match(
+      /\b(databricks|microsoft\s*fabric|\bsynapse\b|pyspark|delta\s*lake|azure\s+data\s+factory|unity\s+catalog|adls\s*gen2)\b/g
+    ) || []
+  ).length;
+  // Multiple AI/ML or data-platform signals in skills/overview → not a .NET arch role.
   if (aiHits >= 2) return true;
   if (aiHits >= 1 && javaPyHits >= 2) return true;
+  if (dataPlatformHits >= 2) return true;
+  if (dataPlatformHits >= 1 && (aiHits >= 1 || javaPyHits >= 1)) return true;
   return false;
 }
 
