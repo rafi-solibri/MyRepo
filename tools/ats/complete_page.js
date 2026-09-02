@@ -105,9 +105,24 @@ async function completeExternalPage(page, resumePath, { maxMs = 6.5 * 60 * 1000 
   if (isBrochureOrDeadEnd(afterClick)) {
     return { ok: false, reason: "no_ats_form", url: afterClick.url };
   }
+  // PreferGuestApply may navigate straight into SSO / B2C before the loop.
+  if (
+    /b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|secure\.indeed\.com\/(?:auth|oauth)|oneclick\.smartrecruiters|login\.cognizant|talent\.cognizant\.com\/\S*login|eightfold\.ai\/(?:login|signin|auth)|candidate\.accenture\.com/i.test(
+      afterClick.url || ""
+    )
+  ) {
+    return { ok: false, reason: "ats_login_wall", url: afterClick.url };
+  }
+  if (
+    /multi\s*factor\s*authentication|\bmfa\b|enter (?:the |your )?code|verify (?:your )?identity|one-?time (?:passcode|password|code)/i.test(
+      afterClick.text || ""
+    )
+  ) {
+    return { ok: false, reason: "ats_login_wall", url: afterClick.url };
+  }
   while (Date.now() - start < maxMs && noAdvance < 6) {
     const url = page.url() || "";
-    if (/b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|secure\.indeed\.com\/(?:auth|oauth)|oneclick\.smartrecruiters|login\.cognizant|talent\.cognizant\.com\/\S*login|eightfold\.ai\/(?:login|signin|auth)/i.test(url)) {
+    if (/b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|secure\.indeed\.com\/(?:auth|oauth)|oneclick\.smartrecruiters|login\.cognizant|talent\.cognizant\.com\/\S*login|eightfold\.ai\/(?:login|signin|auth)|candidate\.accenture\.com/i.test(url)) {
       return { ok: false, reason: "ats_login_wall", url };
     }
     const text = await page
@@ -124,6 +139,13 @@ async function completeExternalPage(page, resumePath, { maxMs = 6.5 * 60 * 1000 
     if (challenge) return { ok: false, reason: "captcha_wall", url };
 
     if (isUnavailable(url, text)) return { ok: false, reason: "job_unavailable", url };
+    if (
+      /multi\s*factor\s*authentication|\bmfa\b|enter (?:the |your )?code|verify (?:your )?identity|one-?time (?:passcode|password|code)/i.test(
+        text
+      )
+    ) {
+      return { ok: false, reason: "ats_login_wall", url };
+    }
     // Microsoft/Eightfold SSO chooser has no password field — fail fast.
     if (
       /select a method below to sign in|sign in using (microsoft|google|linkedin|facebook|apple)|if you are a microsoft employee|employees must sign in/i.test(

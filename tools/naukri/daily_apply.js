@@ -608,6 +608,10 @@ function pruneStaleApplyTabs(context, keepPages = []) {
       /naukri\.com\/job-listings/i.test(u) ||
       /myworkdayjobs|myworkdaysite|greenhouse|lever\.co|smartrecruiters|successfactors|icims|ashbyhq/i.test(
         u
+      ) ||
+      // Accenture B2C / SSO MFA popups pile up across external attempts.
+      /b2clogin\.com|login\.microsoftonline\.com|accounts\.google\.com\/(?:v3\/)?signin|okta\.com\/(?:oauth|login)/i.test(
+        u
       )
     ) {
       safeClose(p);
@@ -1727,6 +1731,23 @@ async function handleExternal(context, page, detail, jobMeta, report) {
   }
 
   atsUrl = newPage.url();
+
+  // Accenture B2C / Microsoft SSO / Google sign-in — fail fast (do not burn maxMs).
+  if (
+    /b2clogin\.com|login\.microsoftonline\.com|accounts\.google\.com\/(?:v3\/)?signin|okta\.com\/(?:oauth|login)|candidate\.accenture\.com/i.test(
+      atsUrl
+    )
+  ) {
+    report.blocked.push({
+      ...jobMeta,
+      reason: "ats_login_wall",
+      url: atsUrl,
+      path: "company_ATS",
+    });
+    if (newPage !== page) safeClose(newPage);
+    pruneStaleApplyTabs(context, [page]);
+    return;
+  }
 
   // Hirist is a secondary board — skip login walls instead of hard-blocking the day.
   if (/hirist\.tech|hirist\.com|\/hirist/i.test(atsUrl)) {
