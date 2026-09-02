@@ -4,6 +4,8 @@
 
 | Issue | Fix |
 | --- | --- |
+| TITLE_OK matched BDM via development manager; junior/BIM titles applied | Drop bare development manager; blacklist junior/intern/fresher, BIM, business development |
+| load-job-secrets aliased portal password into GOOGLE_PASSWORD (#305 undo) | Remove that alias so Gmail SSO only uses GOOGLE_PASSWORD |
 | Google SSO /challenge/pwd treated as 2FA: waited 300s then portal password burned CAPTCHA | Exclude challenge/pwd from is_google_2fa_challenge; heal GOOGLE_PASSWORD first; skip portal password fallback when GOOGLE_PASSWORD unset |
 
 

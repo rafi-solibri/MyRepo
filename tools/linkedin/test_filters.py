@@ -160,4 +160,25 @@ assert_true(
     "Azure Data Engineer title without .NET must skip (view bait-and-switch)",
 )
 
+assert_true(
+    skip_reason("Business Development Manager", "SkillDzire", "") is not None,
+    "BDM must skip (not software development manager)",
+)
+assert_true(
+    TITLE_OK.search("Software Development Manager") is not None,
+    "Software Development Manager must stay TITLE_OK",
+)
+assert_true(
+    TITLE_OK.search("Business Development Manager") is None,
+    "BDM must not match TITLE_OK via development manager",
+)
+assert_true(
+    skip_reason("Junior Architect", "Waterleaf Architects", "") is not None,
+    "Junior Architect must skip",
+)
+assert_true(
+    skip_reason("Senior BIM Architect - Arch", "Arth", "") is not None,
+    "BIM / building-architect title must skip",
+)
+
 print("filters self-test OK")
