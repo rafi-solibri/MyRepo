@@ -112,6 +112,7 @@ for title in [
     "Technology Lead",
     "Application Architect",
     "Manager, Software Development & Engineering",
+    "Senior Manager - Software Engineering",
     "Dot net with Angular - Walk In - Hyderabad",
 ]:
     assert_true(TITLE_OK.search(title), f"TITLE_OK should match: {title}")

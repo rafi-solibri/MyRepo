@@ -67,7 +67,7 @@ TITLE_OK = re.compile(
     # "Manager of Software Engineering" / "Director of Engineering" (JPMC-style titles)
     # Also "Manager, Software Development & Engineering" (comma-led)
     r"manager of (software|engineering)|director of (software|engineering)|"
-    r"manager[,:]?\s+software (development|engineering)|"
+    r"manager\s*[-–—,:]?\s+software (development|engineering)|"
     r"software engineering manager|development manager|"
     r"lead (software|development|engineer)|director|head of eng|"
     r"senior engineering|engineering director|"
