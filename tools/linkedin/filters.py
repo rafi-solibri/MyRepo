@@ -34,7 +34,8 @@ TITLE_BLACKLIST = re.compile(
     r"\binfor\b|\berp\b.?primary|\bdft\b|\beda\b|"
     r"ai compiler|gen[- ]?ai architect|ai/?\s*ml architect|ai architect(?!.*\.net)|"
     r"ai technical (lead|architect)|"
-    r"quality engineering|quality assurance|qa engineer|\bsdet\b|"
+    r"quality engineering|quality assurance|qa engineer|\bsdet\b|\bqa architect\b|"
+    r"interior architect|b\.?\s*arch\b|"
     r"netsuite|nice cxone|"
     # Hardware / chip (not software architect/director)
     r"\bsoc\b|system[- ]?on[- ]?chip|\basic\b|rtl design|physical design|"

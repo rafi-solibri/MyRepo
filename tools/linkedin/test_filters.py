@@ -30,6 +30,14 @@ assert_true(
     "QE title must skip",
 )
 assert_true(
+    skip_reason("QA Architect", "Wipro", "") is not None,
+    "QA Architect title must skip",
+)
+assert_true(
+    skip_reason("Interior Architect (B.Arch / M.Arch)", "Netsmore", "") is not None,
+    "B.Arch interior architect must skip",
+)
+assert_true(
     skip_reason("Principal Engineer (Python)", "DevRabbit", "") is not None,
     "Python principal title must skip",
 )
