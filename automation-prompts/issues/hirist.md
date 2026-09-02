@@ -1,5 +1,12 @@
 # Hirist issues log
 
+## 2026-09-02 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Principal/Senior SAS Programmer and Jira/Atlassian Solution Architect passed skipReason (wrong stack titles) | HARD-skip SAS titles as non_dotnet_primary; Jira/Atlassian as wrong_stack_title (same family as Salesforce/Conga) |
+
+
 ## 2026-09-01 (cloud)
 
 | Issue | Fix |

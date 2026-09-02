@@ -74,6 +74,24 @@ assert.strictEqual(
   "non_dotnet_primary"
 );
 assert.strictEqual(
+  skipReason("Principal/Senior SAS Programmer", {
+    location: "Hyderabad",
+    skills: "SAS Azure",
+  }),
+  "non_dotnet_primary"
+);
+assert.strictEqual(
+  skipReason("Jira Architect/Atlassian Solution Architect", {
+    location: "Hyderabad",
+    skills: "Jira Atlassian",
+  }),
+  "wrong_stack_title"
+);
+assert.strictEqual(
+  skipReason("Tech Lead .NET / SAS", { location: "Hyderabad", skills: "C# SAS" }),
+  null
+);
+assert.strictEqual(
   skipReason("Tech Lead .NET / Python", { location: "Hyderabad", skills: "C# Python" }),
   null
 );
