@@ -30,9 +30,23 @@
 
 ## Top referral drafts
 - **VeriPark** / Software Development Manager
-  - Hi — I'm applying for Software Development Manager at VeriPark. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)
-- **muller's solutions** / Aconex Solution Architect (Technical Lead) / Part - Time (Remote)
-  - Hi — I'm applying for Aconex Solution Architect (Technical Lead) / Part - Time (Remote) at muller's solutions. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)
-- **tylsemi** / Principal Engineer Static Timing Analysis (STA)
-  - Hi — I'm applying for Principal Engineer Static Timing Analysis (STA) at tylsemi. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)
+  - Hi — I'm applying for Software Development Manager at VeriPark. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed ([REDACTED] / +91 8790251698)
 
+## Artifact
+`/opt/cursor/artifacts/foundit-apply-report.json`
+
+## Post-fix re-run (#309 on main; filters from #308)
+Ran `daily_apply.js` on `ddec99e` after `git checkout -f main && git pull --ff-only`. POST_FIX_RERUN=1. Resume: `/workspace/resumes/Rafi_Resume.docx`. Login: MSSOAT + jwtOk + onApp (greeting briefly Hi, Seeker).
+
+- Applied tab: **443 → 443** (+0)
+- Intentional applies: **0** (do not invent applies)
+- VeriPark Software Development Manager (`65143135`) → skipped (`userJobInfo` already applied today)
+- Egnyte Principal Engineer - AI → skipped (`pure AI/data without .NET on title`)
+- tylsemi Principal Engineer Static Timing Analysis (STA) → skipped (`semiconductor/EDA without .NET on title`)
+- muller's Aconex Solution Architect (Technical Lead) → skipped (`Aconex without .NET on title`)
+- Skips: 1208 | duplicates: 65 | blocked: 0
+- Age window: 3650d
+- Candidates: d1=103 / d3=276 / d7=179 / d14=226 / d30=274 / d90=163 / d3650=52
+- No leftover classifyJob-pass inventory that was not already applied
+- No new code-fixable blocker (1/5 same-day Foundit post-fix re-runs)
+- Artifact: `reports/2026-09-02/foundit-apply-report-postfix.json`
