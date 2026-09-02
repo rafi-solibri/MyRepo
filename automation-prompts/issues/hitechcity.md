@@ -1,5 +1,13 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-09-02 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Flutter careers.flutter.com NXDOMAIN; LTIMindtree careers.ltimindtree.com cert CN invalid; Providence US careers.providence.org NXDOMAIN + providenceindia.com/careers 404 | Point Flutter to careers.fluttergroup.com; LTIMindtree to careers.ltm.com; Providence India to careers.providence.in/search. Update companies.json + openings_probe.py |
+| Micron Product Engineering / TD Device Characterization + Experian UX Research matched TITLE_OK and burned worker8 persist_retry (~15 min, 0 submits) | CAREERS_TITLE_SKIP + LI_TITLE_SKIP: engineer, product engineering; device characterization; td device; ux research. Keep Director of Product Engineering / SMAI Software Development. Tests in test_filters.py |
+
+
 ## 2026-09-01 (cloud)
 
 | Issue | Fix |

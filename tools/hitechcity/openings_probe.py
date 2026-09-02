@@ -55,15 +55,14 @@ CAREERS_URL_HINTS: dict[str, list[str]] = {
         "?keyword=Engineering+Manager&location=Hyderabad%2C+Telangana%2C+India",
     ],
     "Providence": [
-        "https://www.providenceindia.com/careers",
-        "https://careers.providence.org/us/en/search-results?keywords=Engineering%20Manager",
+        "https://careers.providence.in/search/?q=Engineering+Manager&location=Hyderabad",
     ],
     "Zenoti": [
         "https://job-boards.greenhouse.io/zenoti",
         "https://boards.greenhouse.io/zenoti",
     ],
     "Flutter Entertainment": [
-        "https://careers.flutter.com/search/?q=Engineering+Manager&locationsearch=Hyderabad"
+        "https://careers.fluttergroup.com/jobs?location=Hyderabad&q=Engineering+Manager"
     ],
     "Darwinbox": [
         "https://darwinbox.darwinbox.in/ms/candidate/careers",
@@ -77,7 +76,7 @@ CAREERS_URL_HINTS: dict[str, list[str]] = {
         "https://careers.micron.com/careers?query=Engineering%20Manager&location=Hyderabad"
     ],
     "LTIMindtree": [
-        "https://careers.ltimindtree.com/search/?q=Engineering+Manager&locationsearch=Hyderabad"
+        "https://careers.ltm.com/search/?q=Engineering+Manager&locationsearch=Hyderabad"
     ],
     "Mphasis": [
         "https://careers.mphasis.com/home/careers/jobsearch.html?q=Engineering+Manager&loc=Hyderabad"

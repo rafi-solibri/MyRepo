@@ -163,6 +163,10 @@ CAREERS_TITLE_SKIP = re.compile(
     r"\bcad\b|sta\s*/\s*synthesis|\bsta\b.*\bsynthesis\b|\bsynthesis\b|"
     r"timing\s*analysis|\bstaff\s*analyst\b|"
     r"data\s*science\s*engineer|"
+    # Micron process/product HW (Engineer, Product Engineering / TD Device Characterization)
+    # — do not use bare "product engineering" (would skip software Directors of Product Engineering).
+    r"engineer,?\s*product\s*engineering|device\s*characterization|\btd\s*device\b|"
+    r"ux\s*research|"
     r"sales\s*specialist|especialista|"
     r"program\s*manager|technical\s*program\s*manager|\btpm\b|"
     r"\bai\s*native\b|\bdata\s*&\s*ai\b|staff\s*engineer\s*\(\s*ai|"

@@ -574,8 +574,7 @@
       ],
       "linkedinSlug": "providence",
       "careersUrls": [
-        "https://www.providenceindia.com/careers",
-        "https://careers.providence.org/us/en/search-results?keywords=Engineering%20Manager"
+        "https://careers.providence.in/search/?q=Engineering+Manager&location=Hyderabad"
       ],
       "priority": 1,
       "source": "campus_catalog",
@@ -857,7 +856,7 @@
       ],
       "linkedinSlug": "flutter-entertainment",
       "careersUrls": [
-        "https://careers.flutter.com/search/?q=Engineering+Manager&locationsearch=Hyderabad"
+        "https://careers.fluttergroup.com/jobs?location=Hyderabad&q=Engineering+Manager"
       ],
       "priority": 2,
       "source": "campus_catalog",
@@ -985,7 +984,7 @@
       ],
       "linkedinSlug": "ltimindtree",
       "careersUrls": [
-        "https://careers.ltimindtree.com/search/?q=Engineering+Manager&locationsearch=Hyderabad"
+        "https://careers.ltm.com/search/?q=Engineering+Manager&locationsearch=Hyderabad"
       ],
       "priority": 2,
       "source": "seed",

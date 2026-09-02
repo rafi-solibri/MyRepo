@@ -109,6 +109,19 @@ def test_title_ok():
     assert CAREERS_TITLE_SKIP.search(
         "Staff Analyst - IT EA EPS Hyderabad, Telangana, India"
     )
+    # Micron HW / Experian UX that still matched Staff/Principal via TITLE_OK (2026-09-02).
+    assert CAREERS_TITLE_SKIP.search(
+        "Senior/Staff/Principal Engineer, Product Engineering Hyderabad, Telangana, India"
+    )
+    assert CAREERS_TITLE_SKIP.search(
+        "Principal Engineer, TD Device Characterization Hyderabad, Telangana, India"
+    )
+    assert CAREERS_TITLE_SKIP.search("UX Research, Design & Engineering Lead (Remote)")
+    assert LI_TITLE_SKIP.search("Senior/Staff/Principal Engineer, Product Engineering")
+    assert LI_TITLE_SKIP.search("Principal Engineer, TD Device Characterization")
+    assert LI_TITLE_SKIP.search("UX Research, Design & Engineering Lead")
+    assert not CAREERS_TITLE_SKIP.search("Director of Product Engineering")
+    assert not CAREERS_TITLE_SKIP.search("Software Product Engineer")
     assert LI_TITLE_SKIP.search("Staff Engineer, CAD")
     assert LI_TITLE_SKIP.search("Principal Engineer - STA/Synthesis")
     assert LI_TITLE_SKIP.search("Staff Analyst - IT EA EPS")
