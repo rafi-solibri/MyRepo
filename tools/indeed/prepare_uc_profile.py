@@ -83,23 +83,41 @@ def prepare(src: Path, dst: Path) -> dict:
         )
         con.close()
 
+    name_auth = any(
+        n in remaining
+        for n in (
+            "CTK",
+            "PPID",
+            "__Secure-PassportAuthProxy-BearerToken",
+            "rememberMe",
+        )
+    )
+    passport = None
+    has_auth = name_auth
+    if name_auth:
+        try:
+            _here = Path(__file__).resolve().parent
+            if str(_here) not in sys.path:
+                sys.path.insert(0, str(_here))
+            from passport_auth_check import check_passport
+
+            passport = check_passport(dst)
+            if passport.get("expired") is True or (
+                passport.get("hasCookies") and not passport.get("ok")
+            ):
+                has_auth = False
+        except Exception as exc:  # pragma: no cover
+            passport = {"ok": False, "error": str(exc)[:160]}
+
     return {
         "src": str(src),
         "dst": str(dst),
         "copied": copied,
         "cfCookiesDeleted": deleted,
         "indeedCookieNames": remaining,
-        "hasAuth": any(
-            n in remaining
-            for n in (
-                "CTK",
-                "PPID",
-                "__Secure-PassportAuthProxy-BearerToken",
-                "rememberMe",
-            )
-        ),
+        "hasAuth": has_auth,
+        "passport": passport,
     }
-
 
 def main() -> int:
     ap = argparse.ArgumentParser()

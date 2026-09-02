@@ -177,10 +177,53 @@ function cookieNames(profileRoot) {
   }
 }
 
+function indeedPassportCheck(profileRoot) {
+  const script = path.join(__dirname, "indeed", "passport_auth_check.py");
+  if (!fs.existsSync(script)) return null;
+  try {
+    const py = resolvePython();
+    const args =
+      py === "py"
+        ? ["-3", script, "--profile", profileRoot]
+        : [script, "--profile", profileRoot];
+    const out = execFileSync(py, args, {
+      encoding: "utf8",
+      timeout: 20000,
+    });
+    const start = out.lastIndexOf("{");
+    if (start < 0) return null;
+    return JSON.parse(out.slice(start));
+  } catch (err) {
+    // Exit 3 = expired/missing; stdout may still have JSON.
+    const blob = `${(err && err.stdout) || ""}\n${(err && err.stderr) || ""}`;
+    const start = blob.lastIndexOf("{");
+    if (start >= 0) {
+      try {
+        return JSON.parse(blob.slice(start));
+      } catch {
+        /* fall through */
+      }
+    }
+    return {
+      ok: false,
+      reason: "passport_check_error",
+      error: String((err && err.message) || err).slice(0, 200),
+    };
+  }
+}
+
 function hasAuth(portal, profileRoot = PROFILES[portal] || PROFILES.source) {
   const need = AUTH_COOKIES[portal] || [];
   const names = new Set(cookieNames(profileRoot));
-  return need.some((n) => names.has(n));
+  const nameOk = need.some((n) => names.has(n));
+  if (!nameOk) return false;
+  // Indeed: cookie names can linger after Passport JWT expiry.
+  if (portal === "indeed" && !IS_WIN) {
+    const passport = indeedPassportCheck(profileRoot);
+    if (passport && passport.expired === true) return false;
+    if (passport && passport.ok === false && passport.hasCookies) return false;
+  }
+  return true;
 }
 
 function portalStatus(portal) {
@@ -196,17 +239,31 @@ function portalStatus(portal) {
   const dest = PROFILES[portal];
   const destNames = new Set(cookieNames(dest));
   const need = AUTH_COOKIES[portal];
-  const sourceHasAuth = need.some((n) => sourceNames.has(n));
-  const destHasAuth = need.some((n) => destNames.has(n));
+  let sourceHasAuth = need.some((n) => sourceNames.has(n));
+  let destHasAuth = need.some((n) => destNames.has(n));
   const sourceDb = cookiesDbPath(PROFILES.source);
   const sourceLocked =
     fs.existsSync(sourceDb) && sourceNames.size === 0 && !destHasAuth;
   let reason = "login_required_sync_desktop_chrome_and_save_snapshot";
+  let passport = null;
+  if (portal === "indeed" && destHasAuth && !IS_WIN) {
+    passport = indeedPassportCheck(dest);
+    if (passport && passport.expired === true) {
+      destHasAuth = false;
+      sourceHasAuth = false;
+      reason = "indeed_passport_expired";
+    } else if (passport && passport.ok === false && passport.hasCookies) {
+      destHasAuth = false;
+      reason = passport.reason || "indeed_passport_invalid";
+    }
+  }
   if (destHasAuth) {
     // Name presence in SQLite ≠ live decryptable session on Windows ABE.
     reason = IS_WIN
       ? "sqlite_auth_cookie_present_verify_live_cdp"
       : "ok";
+  } else if (reason === "indeed_passport_expired") {
+    /* keep */
   } else if (sourceLocked) reason = "chrome_cookies_locked_close_chrome_and_resync";
   else if (IS_WIN)
     reason =
@@ -223,14 +280,16 @@ function portalStatus(portal) {
     need,
     isWindows: IS_WIN,
     reason,
+    passport: passport || undefined,
     liveHint: IS_WIN
       ? "bash scripts/home-headed-login.sh " +
         (portal === "hitechcity" ? "linkedin" : portal) +
         (portal === "hitechcity" ? "  # or: bash scripts/home-headed-login.sh hitechcity" : "")
-      : undefined,
+      : reason === "indeed_passport_expired"
+        ? "Desktop Chrome Default: log into in.indeed.com, then sync-chrome-sessions.sh + Save Snapshot"
+        : undefined,
   };
 }
-
 /** Live CDP waiters — SQLite cookie names are unreliable on Windows ABE / locked DB. */
 const LIVE_CDP_WAITERS = {
   linkedin: path.join(__dirname, "linkedin", "wait_for_cdp_login.js"),
