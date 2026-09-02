@@ -1,0 +1,36 @@
+{
+  "date": "2026-09-02",
+  "status": "STOPPED",
+  "reason": "login_required_missing_google_password",
+  "post_fix_rerun": true,
+  "submitted": [],
+  "skipped": [],
+  "blocked": [
+    {
+      "stage": "auto_login",
+      "detail": "Live li_at stale. Google SSO opened challenge/pwd; classified as password (not 2FA). GOOGLE_PASSWORD unset so heal returned missing_google_password and portal-password fallback was skipped. Exit 5, no CAPTCHA.",
+      "artifacts": [
+        "/opt/cursor/artifacts/auto-login-missing-google-password.png"
+      ]
+    }
+  ],
+  "totals": {
+    "easy_apply_submitted": 0,
+    "external_ats_completed": 0,
+    "skipped": 0,
+    "blocked": 1
+  },
+  "code_fix": {
+    "commit": "14f369b",
+    "summary": "challenge/pwd is password not 2FA; stop portal\u2192GOOGLE_PASSWORD alias; skip portal-password fallback when GOOGLE_PASSWORD missing",
+    "pr": null,
+    "pr_blocker": "gh pr create and REST pulls API return 403 Resource not accessible by integration; ManagePullRequest awaiting owner approval"
+  },
+  "owner_action": [
+    "Set Cursor secret GOOGLE_PASSWORD (Gmail; do not reuse the portal password)",
+    "Refresh the portal password secret if still the rejected 9-character value",
+    "Merge commit 14f369b (push already done)",
+    "Re-run the daily job after session is live"
+  ],
+  "generated_at": "2026-09-02T04:02:59.809273+00:00"
+}
