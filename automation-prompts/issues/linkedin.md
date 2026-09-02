@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-09-02 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Google SSO /challenge/pwd treated as 2FA: waited 300s then portal password burned CAPTCHA | Exclude challenge/pwd from is_google_2fa_challenge; heal GOOGLE_PASSWORD first; skip portal password fallback when GOOGLE_PASSWORD unset |
+
+
 ## 2026-09-01 (cloud)
 
 | Issue | Fix |

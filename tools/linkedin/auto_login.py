@@ -127,10 +127,13 @@ def password_candidates(env: dict | None = None) -> list[str]:
 
 
 def is_google_identifier_url(url: str) -> bool:
-    """GSI popup fell through to email/password sign-in (stale Google cookies)."""
+    """GSI popup fell through to email/password sign-in (stale Google cookies).
+
+    Match identifier + /challenge/pwd only — TOTP/phone /signin/challenge/* is 2FA.
+    """
     u = (url or "").lower()
     return "accounts.google.com" in u and bool(
-        re.search(r"/signin/identifier|/challenge/pwd|/signin/challenge", u)
+        re.search(r"/signin/identifier|/challenge/pwd(?:[/?#]|$)", u)
     )
 
 
@@ -387,21 +390,27 @@ def _heal_google_auth_pages(ctx, out: dict | None = None) -> str | None:
     if not pages:
         return None
     for popup in pages:
-        # Post-chooser 2FA first (warm Google session).
-        try:
-            from tools.google_2fa_prompt import (
-                is_google_2fa_challenge,
-                wait_owner_google_2fa,
-            )
+        # Password form first: /challenge/pwd used to match is_google_2fa_challenge
+        # and burn 300s + portal CAPTCHA instead of filling GOOGLE_PASSWORD.
+        needs_pwd = _page_needs_google_password(popup)
+        if not needs_pwd:
+            try:
+                from tools.google_2fa_prompt import (
+                    is_google_2fa_challenge,
+                    is_google_password_challenge,
+                    wait_owner_google_2fa,
+                )
 
-            if is_google_2fa_challenge(popup):
-                if out is not None:
-                    out["attempts"].append({"step": "google_sso", "google_2fa": True})
-                wait_owner_google_2fa(popup, portal="linkedin")
-                return "need_human"
-        except Exception:
-            pass
-        if not _page_needs_google_password(popup):
+                if is_google_password_challenge(popup):
+                    needs_pwd = True
+                elif is_google_2fa_challenge(popup):
+                    if out is not None:
+                        out["attempts"].append({"step": "google_sso", "google_2fa": True})
+                    wait_owner_google_2fa(popup, portal="linkedin")  # pragma: allowlist secret
+                    return "need_human"
+            except Exception:
+                pass
+        if not needs_pwd:
             # Consent / Continue screens after successful Google auth.
             for name in ("Continue", "Allow", "Next", "Confirm"):
                 try:
@@ -1028,6 +1037,15 @@ def main() -> int:
                 continue
             if rc == 8:
                 out["wrong_password"] = True
+                missing_g = any(
+                    isinstance(a, dict)
+                    and a.get("google_password_heal") == "missing_google_password"
+                    for a in (out.get("attempts") or [])
+                )
+                if missing_g and step == "google_sso":
+                    # Google pwd form is already open. Portal email/password
+                    # after SSO burns Security Verification CAPTCHA.
+                    break
                 continue
 
         # Temporary restriction: wait until lift (within budget) then retry once.
