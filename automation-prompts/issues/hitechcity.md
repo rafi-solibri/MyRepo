@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Storable www.storable.com/careers 404 missed Hyderabad Technical Architect | Point Storable at greenhouse.io/storableindia + about-us/culture/careers; scrub dead /careers/ path |
 | Micron Principal Engineer TD Device Characterization burned careers ATS/ASK_OWNER time | CAREERS/LI title-skip device characterization / TD Device; tests in test_filters.py |
 | Micron Product Engineering + Experian UX Research + JPMC AI Engineering titles burned CAPTCHA/soft walls; Flutter/Providence/LTIM careers URLs NXDOMAIN/bad-TLS | CAREERS/LI title-skip Product Engineering (non-software), UX Research/WeChat junk, AI Engineering; scrub dead careers hosts and point Flutter→fluttergroup, Providence→providence.jobs, LTIM→ltm.com |
 

@@ -102,13 +102,19 @@ CAREERS_URL_HINTS: dict[str, list[str]] = {
     "Cotelligent": [
         "https://www.cotelligent.com/careers/",
     ],
+    "Storable": [
+        # www.storable.com/careers/ is a 404; India jobs live on Greenhouse.
+        "https://job-boards.greenhouse.io/storableindia",
+        "https://www.storable.com/about-us/culture/careers/",
+    ],
 }
 
 
 # Dead / NXDOMAIN / bad-TLS careers hosts seen in 2026-09 cron — strip before merge.
 DEAD_CAREERS_HOST_RE = re.compile(
     r"careers\.flutter\.com|careers\.providence\.org|providenceindia\.com/careers|"
-    r"careers\.ltimindtree\.com",
+    r"careers\.ltimindtree\.com|"
+    r"storable\.com/careers/?(\?|$)",
     re.I,
 )
 

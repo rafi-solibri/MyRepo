@@ -26,7 +26,7 @@
       "Azure Architect",
       "Cloud Architect"
     ],
-    "lastDiscoveryAt": "2026-09-02T03:36:55.416585+00:00",
+    "lastDiscoveryAt": "2026-09-02T08:21:55.144025+00:00",
     "discoveryMode": "campus_catalog+web_directories+seeds+linkedin_optional+board_hints",
     "preferredHomeCampuses": [
       "sattva-knowledge-city",
@@ -36,7 +36,7 @@
       "rmz-skyview",
       "rmz-futura"
     ],
-    "lastOpeningsProbeAt": "2026-09-02T03:41:48.567958+00:00"
+    "lastOpeningsProbeAt": "2026-09-02T08:27:34.050631+00:00"
   },
   "campuses": [
     {
@@ -147,7 +147,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:40:31.189481+00:00"
+      "openingsProbedAt": "2026-09-02T08:26:05.641678+00:00"
     },
     {
       "name": "AMD",
@@ -165,7 +165,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:40:48.445613+00:00"
+      "openingsProbedAt": "2026-09-02T08:26:26.431044+00:00"
     },
     {
       "name": "Apple",
@@ -182,7 +182,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:37:08.264680+00:00"
+      "openingsProbedAt": "2026-09-02T08:22:08.839618+00:00"
     },
     {
       "name": "Blackbaud",
@@ -199,7 +199,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:40:55.760291+00:00"
+      "openingsProbedAt": "2026-09-02T08:26:38.666820+00:00"
     },
     {
       "name": "Blue Yonder",
@@ -214,7 +214,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:41:07.666021+00:00"
+      "openingsProbedAt": "2026-09-02T08:26:51.639216+00:00"
     },
     {
       "name": "CGI",
@@ -233,7 +233,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:37:16.811821+00:00"
+      "openingsProbedAt": "2026-09-02T08:22:27.912139+00:00"
     },
     {
       "name": "Cotelligent",
@@ -250,7 +250,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:37:24.398816+00:00"
+      "openingsProbedAt": "2026-09-02T08:22:35.823629+00:00"
     },
     {
       "name": "Electronic Arts",
@@ -267,7 +267,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:37:50.303002+00:00"
+      "openingsProbedAt": "2026-09-02T08:23:06.167855+00:00"
     },
     {
       "name": "Experian",
@@ -310,7 +310,7 @@
           "location": ""
         }
       ],
-      "openingsProbedAt": "2026-09-02T03:41:36.638453+00:00"
+      "openingsProbedAt": "2026-09-02T08:27:23.514161+00:00"
     },
     {
       "name": "EY",
@@ -327,7 +327,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:38:03.201664+00:00"
+      "openingsProbedAt": "2026-09-02T08:23:20.153183+00:00"
     },
     {
       "name": "GE Vernova",
@@ -446,7 +446,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:38:48.195441+00:00"
+      "openingsProbedAt": "2026-09-02T08:24:14.131435+00:00"
     },
     {
       "name": "Micron Technology",
@@ -464,7 +464,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:38:59.920965+00:00"
+      "openingsProbedAt": "2026-09-02T08:24:27.492123+00:00"
     },
     {
       "name": "Microsoft",
@@ -601,7 +601,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:39:14.203117+00:00"
+      "openingsProbedAt": "2026-09-02T08:24:46.410233+00:00"
     },
     {
       "name": "Qualcomm",
@@ -644,7 +644,7 @@
           "location": ""
         }
       ],
-      "openingsProbedAt": "2026-09-02T03:39:20.407301+00:00"
+      "openingsProbedAt": "2026-09-02T08:24:53.563371+00:00"
     },
     {
       "name": "Solera",
@@ -694,7 +694,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:40:19.720997+00:00"
+      "openingsProbedAt": "2026-09-02T08:25:53.532944+00:00"
     },
     {
       "name": "ADP",
@@ -804,7 +804,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:41:18.630581+00:00"
+      "openingsProbedAt": "2026-09-02T08:27:02.583022+00:00"
     },
     {
       "name": "Cyient",
@@ -834,7 +834,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:37:34.774249+00:00"
+      "openingsProbedAt": "2026-09-02T08:22:49.429152+00:00"
     },
     {
       "name": "Deloitte",
@@ -851,7 +851,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:37:41.214304+00:00"
+      "openingsProbedAt": "2026-09-02T08:22:56.096996+00:00"
     },
     {
       "name": "Fiserv",
@@ -866,7 +866,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:41:48.555139+00:00"
+      "openingsProbedAt": "2026-09-02T08:27:34.039607+00:00"
     },
     {
       "name": "Flutter Entertainment",
@@ -883,7 +883,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:38:09.551754+00:00"
+      "openingsProbedAt": "2026-09-02T08:23:29.685813+00:00"
     },
     {
       "name": "Gartner",
@@ -954,7 +954,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:38:16.563029+00:00"
+      "openingsProbedAt": "2026-09-02T08:23:36.943851+00:00"
     },
     {
       "name": "Invesco",
@@ -993,7 +993,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:38:29.375784+00:00"
+      "openingsProbedAt": "2026-09-02T08:23:50.611960+00:00"
     },
     {
       "name": "LTIMindtree",
@@ -1011,7 +1011,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:38:36.367099+00:00"
+      "openingsProbedAt": "2026-09-02T08:24:01.847237+00:00"
     },
     {
       "name": "Macquarie",
@@ -1070,7 +1070,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:39:07.685912+00:00"
+      "openingsProbedAt": "2026-09-02T08:24:34.996522+00:00"
     },
     {
       "name": "MTX Group",
@@ -1266,7 +1266,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:39:45.610530+00:00"
+      "openingsProbedAt": "2026-09-02T08:25:19.305909+00:00"
     },
     {
       "name": "Salesforce",
@@ -1318,7 +1318,8 @@
       ],
       "linkedinSlug": "storable",
       "careersUrls": [
-        "https://www.storable.com/careers/"
+        "https://job-boards.greenhouse.io/storableindia",
+        "https://www.storable.com/about-us/culture/careers/"
       ],
       "priority": 2,
       "hasOpenings": false,
@@ -1376,7 +1377,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:39:57.789765+00:00"
+      "openingsProbedAt": "2026-09-02T08:25:32.964697+00:00"
     },
     {
       "name": "Uber",
@@ -1469,7 +1470,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:40:07.437056+00:00"
+      "openingsProbedAt": "2026-09-02T08:25:40.662400+00:00"
     },
     {
       "name": "DXC Technology",
@@ -1485,7 +1486,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:41:32.902618+00:00"
+      "openingsProbedAt": "2026-09-02T08:27:18.997884+00:00"
     },
     {
       "name": "HCLTech",

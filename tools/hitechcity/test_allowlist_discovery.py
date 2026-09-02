@@ -217,6 +217,7 @@ def test_openings_preference_and_hints():
     assert "fluttergroup.com" in CAREERS_URL_HINTS["Flutter Entertainment"][0]
     assert "ltm.com" in CAREERS_URL_HINTS["LTIMindtree"][0]
     assert "providence.jobs" in CAREERS_URL_HINTS["Providence"][0]
+    assert "greenhouse.io/storableindia" in CAREERS_URL_HINTS["Storable"][0]
     companies = [
         {"name": "Electronic Arts", "campuses": ["rmz-nexity"], "careersUrls": []},
         {"name": "Someone Else", "campuses": ["dlf-cyber-city"], "careersUrls": []},
@@ -242,6 +243,11 @@ def test_openings_preference_and_hints():
                 "https://careers.ltimindtree.com/search/?q=Engineering+Manager&locationsearch=Hyderabad"
             ],
         },
+        {
+            "name": "Storable",
+            "campuses": ["mindspace-madhapur"],
+            "careersUrls": ["https://www.storable.com/careers/"],
+        },
     ]
     touched = ensure_careers_url_hints(companies)
     assert "Electronic Arts" in touched
@@ -253,6 +259,8 @@ def test_openings_preference_and_hints():
     assert any("providence.jobs" in u for u in companies[3]["careersUrls"])
     assert all("careers.ltimindtree.com" not in u for u in companies[4]["careersUrls"])
     assert any("ltm.com" in u for u in companies[4]["careersUrls"])
+    assert all("storable.com/careers/" not in u for u in companies[5]["careersUrls"])
+    assert any("greenhouse.io/storableindia" in u for u in companies[5]["careersUrls"])
 
 
 if __name__ == "__main__":
