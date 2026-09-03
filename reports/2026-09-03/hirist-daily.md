@@ -49,6 +49,23 @@ Fix in this branch:
 - 21× generic_engineering_without_dotnet_cloud
 - 2× assessment_required (Digitalcubez, Workplace)
 
+## In-session verify (after parser fix)
+
+Re-ran `node tools/hirist/daily_apply.js` on this pod (could not auto-merge/launch another cloud agent — `gh pr create` is integration-blocked).
+
+| applied | external | rejected | blocked | skipped | seen | applied-jobs IDs |
+| --- | --- | --- | --- | --- | --- | --- |
+| **0** | 0 | 0 | 0 | 445 | 445 | 248 |
+
+Confirmed skips:
+
+- DIgitalcubez `1667999` → `assessment_required`
+- Workplace `1667966` → `assessment_required`
+- E2Open GTM Architect `1668034` → `wrong_stack_title`
+- Talkdesk Solution Architect `1662739` → `already_applied`
+
+No remaining eligible in-app candidates without assessment.
+
 ## Artifacts
 
 - `/opt/cursor/artifacts/hirist-apply-report.json`
