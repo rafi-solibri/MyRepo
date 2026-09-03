@@ -99,12 +99,9 @@ CAREERS_URL_HINTS: dict[str, list[str]] = {
         "https://www.vanguardjobs.com/job-search-results/?keyword=Engineering+Manager"
         "&location=Hyderabad"
     ],
-    "Storable": [
-        # www.storable.com/careers/ → 404 Page not found (2026-09-03 cron).
-        "https://www.storable.com/about-us/culture/careers/"
-    ],
-    # Cotelligent careers path 403/404; brand folded into TechDemocracy with no guest ATS.
-    # Do not re-add cotelligent.com/careers — scrub only via DEAD_CAREERS_HOST_RE.
+    # Storable /careers/ 404 and /about-us/culture/careers/ "Site is offline"
+    # (2026-09-03 post-fix re-run). Cotelligent careers 403/404 — brand folded
+    # into TechDemocracy with no guest ATS. Do not re-add either host.
 }
 
 
@@ -112,7 +109,7 @@ CAREERS_URL_HINTS: dict[str, list[str]] = {
 DEAD_CAREERS_HOST_RE = re.compile(
     r"careers\.flutter\.com|careers\.providence\.org|providenceindia\.com/careers|"
     r"careers\.ltimindtree\.com|"
-    r"storable\.com/careers/?(\?|#|$)|cotelligent\.com/careers",
+    r"storable\.com/(?:about-us/culture/)?careers|cotelligent\.com/careers",
     re.I,
 )
 

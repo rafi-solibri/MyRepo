@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Storable about-us/culture/careers is Site is offline (post-fix re-run burned 4 scans) | Scrub all storable.com careers paths via DEAD_CAREERS_HOST_RE; drop Storable CAREERS_URL_HINTS |
 | Storable /careers/ 404 + Cotelligent careers 403 burned scans; EY Testing-Automation-Staff matched Staff TITLE_OK | Scrub dead storable.com/careers + cotelligent.com/careers; hint Storable about-us/culture/careers; CAREERS/LI title-skip Testing-Automation/QA automation |
 
 
