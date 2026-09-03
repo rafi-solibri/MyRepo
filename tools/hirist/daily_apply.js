@@ -27,6 +27,11 @@ function loadChromium() {
 }
 const { skipReason, hasDotNet, hasTargetSeniority } = require("./filters");
 const { findResume, EXPECTED_CTC_LPA, CURRENT_CTC_LPA } = require("./resume");
+const {
+  parseApplyMultipleResponse,
+  extractAppliedJobIds,
+  searchHitAlreadyApplied,
+} = require("./apply_response");
 const { completeExternalPage } = require("../ats/complete_page");
 const { tailorResumeForJob } = require("../resume_tailor");
 const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
@@ -278,6 +283,20 @@ async function applyInApp(page, jobIds) {
   return apiPost(page, `${API}/apply-multiple`, { jobIds });
 }
 
+async function loadAppliedJobIds(page) {
+  const ids = new Set();
+  for (let pageNo = 0; pageNo < 12; pageNo++) {
+    const res = await apiGet(page, `${API}/applied-jobs?page=${pageNo}&status=`);
+    if (res.status === 401) break;
+    const batch = extractAppliedJobIds(res.json);
+    if (!batch.size) break;
+    for (const id of batch) ids.add(id);
+    const jobs = res.json?.data?.jobs || [];
+    if (!Array.isArray(jobs) || jobs.length < 10) break;
+  }
+  return ids;
+}
+
 async function main() {
   const resume = findResume();
   const state = {
@@ -345,6 +364,8 @@ async function main() {
 
   const seenIds = new Set();
   const candidates = [];
+  const appliedIds = await loadAppliedJobIds(page);
+  state.notes.push(`applied_ids=${appliedIds.size}`);
 
   for (const query of QUERY_WAVES) {
     if (candidates.length >= MAX_APPLIES * 4) break;
@@ -380,9 +401,8 @@ async function main() {
           continue;
         }
 
-        // applyStatus: 0 often means already applied / closed for apply
-        if (Number(job.applyStatus) === 0 && !job.applyUrl) {
-          state.skipped.push({ id, title, company, reason: "already_applied_or_closed" });
+        if (appliedIds.has(Number(id)) || searchHitAlreadyApplied(job)) {
+          state.skipped.push({ id, title, company, reason: "already_applied" });
           continue;
         }
 
@@ -481,15 +501,14 @@ async function main() {
       continue;
     }
 
-    // In-app Hirist apply
+    // In-app Hirist apply — HTTP 200 can still be success:false (already / assessment).
     const res = await applyInApp(page, [job.id]);
-    const okStatus = res.status >= 200 && res.status < 300;
-    const errName = res.json?.error?.name || res.json?.status?.message || "";
-    if (res.status === 401 || /UNAUTHORISED/i.test(String(errName))) {
+    const parsed = parseApplyMultipleResponse(res);
+    if (parsed.reason === "apply_401") {
       state.blocked.push({ reason: "hirist_login_required", detail: "apply_401" });
       break;
     }
-    if (okStatus && !res.json?.error) {
+    if (parsed.ok) {
       state.applied.push({
         id: job.id,
         title: job.title,
@@ -497,22 +516,30 @@ async function main() {
         path: "hirist_apply",
         url: job.jobDetailUrl,
       });
+      appliedIds.add(Number(job.id));
       applies += 1;
+    } else if (parsed.alreadyApplied) {
+      state.skipped.push({
+        id: job.id,
+        title: job.title,
+        company: job.company,
+        reason: "already_applied",
+      });
+      appliedIds.add(Number(job.id));
+    } else if (parsed.assessmentRequired) {
+      state.skipped.push({
+        id: job.id,
+        title: job.title,
+        company: job.company,
+        reason: "assessment_required",
+      });
     } else {
-      const reason =
-        res.json?.error?.message ||
-        res.json?.status?.message ||
-        `apply_http_${res.status}`;
-      if (/already applied|duplicate/i.test(String(reason))) {
-        state.skipped.push({ id: job.id, title: job.title, company: job.company, reason: "already_applied" });
-      } else {
-        state.rejected.push({
-          id: job.id,
-          title: job.title,
-          company: job.company,
-          reason: String(reason).slice(0, 160),
-        });
-      }
+      state.rejected.push({
+        id: job.id,
+        title: job.title,
+        company: job.company,
+        reason: parsed.reason,
+      });
     }
     await sleep(700);
   }

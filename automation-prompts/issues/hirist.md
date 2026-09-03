@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| apply-multiple HTTP 200 + success:false counted as apply (assessment required / already applied) | Parse apply-multiple array; skip applied-jobs IDs; do not count assessment_required as apply |
 | E2Open GTM Architect passed skipReason (product GTM title, no .NET) | HARD-skip E2Open/GTM titles as wrong_stack_title (same family as Conga/Coupa/Salesforce) |
 
 
