@@ -89,6 +89,8 @@ LI_TITLE_SKIP = re.compile(
     r"\bartificial\s*intelligence\b|\bcuda\b|\brocm\b|"
     r"\bux\s*research\b|\buser\s*experience\s*research\b|\bux\s*/\s*ui\b|"
     r"share\s+on\s+wechat|"
+    r"testing\s*[-–]\s*automation|\bautomation[- ]staff\b|"
+    r"\bqa\s*automation\b|\btest(?:ing)?\s*automation\b|"
     r"\bdata\s*scientist\b|\bcomputer\s*vision\b",
     re.I,
 )

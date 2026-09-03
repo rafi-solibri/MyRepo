@@ -241,9 +241,7 @@
         "rmz-skyview"
       ],
       "linkedinSlug": "cotelligent",
-      "careersUrls": [
-        "https://www.cotelligent.com/careers/"
-      ],
+      "careersUrls": [],
       "priority": 1,
       "source": "web_directory",
       "discoveredAt": "2026-08-30",
@@ -1318,7 +1316,7 @@
       ],
       "linkedinSlug": "storable",
       "careersUrls": [
-        "https://www.storable.com/careers/"
+        "https://www.storable.com/about-us/culture/careers/"
       ],
       "priority": 2,
       "hasOpenings": false,

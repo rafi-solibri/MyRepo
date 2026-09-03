@@ -122,6 +122,10 @@ def test_title_ok():
     assert CAREERS_TITLE_SKIP.search(
         "Predictive Science - AI Engineering & Prompt Architecture Lead - Vice President"
     )
+    # 2026-09-03 cron: EY Testing - Automation-Staff matched Staff via TITLE_OK.
+    assert CAREERS_TITLE_SKIP.search("Testing - Automation-Staff")
+    assert CAREERS_TITLE_SKIP.search("QA Automation Lead Hyderabad")
+    assert LI_TITLE_SKIP.search("Testing - Automation-Staff")
     assert not CAREERS_TITLE_SKIP.search("Software Product Engineering Lead Hyderabad")
     assert LI_TITLE_SKIP.search("Staff Engineer, CAD")
     assert LI_TITLE_SKIP.search("Principal Engineer - STA/Synthesis")

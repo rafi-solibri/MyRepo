@@ -1,0 +1,101 @@
+{
+  "startedAt": "2026-09-03T03:38:17.679462+00:00",
+  "focus": "Knowledge City / Knowledge Park / Mindspace Madhapur / premium HITEC buildings",
+  "parallelTabs": 10,
+  "discovery": {
+    "added": 0,
+    "updated": 103,
+    "total": 101,
+    "prunedJunk": [],
+    "campusCatalogAdded": 0,
+    "webDirectoryAdded": 0,
+    "webDirectoryErrors": 0,
+    "linkedinError": null,
+    "report": "/opt/cursor/artifacts/hitechcity-discovery.json",
+    "addedNames": []
+  },
+  "openings": {
+    "probed": 28,
+    "withOpenings": [
+      "Experian",
+      "Qualcomm"
+    ],
+    "hintsAttached": [],
+    "report": "/opt/cursor/artifacts/hitechcity-openings.json",
+    "skipped": null
+  },
+  "careers": {
+    "applied": 0,
+    "blocked": 10,
+    "skipped": 22,
+    "scanned": 170,
+    "report": "/opt/cursor/artifacts/hitechcity-careers.json"
+  },
+  "linkedin": {
+    "skippedPhase": "linkedin_temporarily_restricted",
+    "reason": "linkedin_temporarily_restricted",
+    "lift_utc": "2026-09-10T03:37:00+00:00",
+    "seconds_until_lift": 602877,
+    "hint": "Wait until lift_utc; do not retry login/apply (profile-data volume ban)."
+  },
+  "boards": {
+    "applied": 0,
+    "blocked": 1,
+    "skipped": 0,
+    "portals": [
+      {
+        "portal": "naukri",
+        "status": "timeout",
+        "applied": 0,
+        "reason": "timeout_900s",
+        "rc": null
+      },
+      {
+        "portal": "foundit",
+        "status": "ok",
+        "applied": 0,
+        "reason": null,
+        "rc": 0
+      },
+      {
+        "portal": "cutshort",
+        "status": "ok",
+        "applied": 0,
+        "reason": null,
+        "rc": 0
+      },
+      {
+        "portal": "instahyre",
+        "status": "ok",
+        "applied": 0,
+        "reason": null,
+        "rc": 0
+      },
+      {
+        "portal": "indeed",
+        "status": "skipped",
+        "applied": 0,
+        "reason": "indeed_login_required",
+        "rc": 5
+      }
+    ],
+    "report": "/opt/cursor/artifacts/hitechcity-boards.json",
+    "skippedPhase": null
+  },
+  "totals": {
+    "applied": 0,
+    "referralsSent": 0,
+    "blocked": 11,
+    "skipped": 22,
+    "discoveryAdded": 0
+  },
+  "errors": [],
+  "counts": {
+    "applied": 0,
+    "blocked": 11,
+    "skipped": 22,
+    "seen": 33
+  },
+  "ok": true,
+  "finishedAt": "2026-09-03T04:38:25.549412+00:00"
+}
