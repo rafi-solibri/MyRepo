@@ -1,0 +1,269 @@
+{
+  "portal": "hirist",
+  "ts": "2026-09-03T03:47:34.249Z",
+  "source": "cloud-postfix-rerun",
+  "date": "2026-09-03",
+  "ok": true,
+  "counts": {
+    "applied": 0,
+    "external": 0,
+    "rejected": 0,
+    "blocked": 0,
+    "skipped": 447,
+    "seen": 447
+  },
+  "applied": [],
+  "external": [],
+  "rejected": [],
+  "blocked": [],
+  "skipped_sample": [
+    {
+      "id": 1663103,
+      "title": "Solution Architect - .Net/Java",
+      "company": "Inypeople Technology",
+      "reason": "location_not_hyd_remote"
+    },
+    {
+      "id": 1661035,
+      "title": "McLaren Strategic Solutions - Solution Architect - .Net Frameworks",
+      "company": "MCLAREN STRATEGIC VENTURES INDIA PRIVATE LIMITED",
+      "reason": "location_not_hyd_remote"
+    },
+    {
+      "id": 1655678,
+      "title": "Happiest Minds Technologies - .Net Solution Architect",
+      "company": "Happiest Minds Technologies",
+      "reason": "location_not_hyd_remote"
+    },
+    {
+      "id": 1649979,
+      "title": "Solution Architect - .Net/Sharepoint",
+      "company": "Coe Solutions",
+      "reason": "location_not_hyd_remote"
+    },
+    {
+      "id": 1650661,
+      "title": "Soliton Technologies - Software Solution Architect - C#/.Net",
+      "company": "Soliton Technologies",
+      "reason": "location_not_hyd_remote"
+    },
+    {
+      "id": 1644239,
+      "title": "Happiest Minds - Technical Presales Solution Architect - Java/.Net",
+      "company": "Happiest Minds Technologies",
+      "reason": "location_not_hyd_remote"
+    },
+    {
+      "id": 1646627,
+      "title": "McLaren Strategic Solutions - Solution Architect - .Net Technologies",
+      "company": "MCLAREN STRATEGIC VENTURES INDIA PRIVATE LIMITED",
+      "reason": "location_not_hyd_remote"
+    },
+    {
+      "id": 1660058,
+      "title": ".Net Solution Architect - C#/Entity Framework",
+      "company": "People Creation",
+      "reason": "location_not_hyd_remote"
+    },
+    {
+      "id": 1667955,
+      "title": "Solution Architect - Baggage Handling Systems",
+      "company": "Evoke HR Solutions",
+      "reason": "location_not_hyd_remote"
+    },
+    {
+      "id": 1666215,
+      "title": "Solution Architect - Data Engineering",
+      "company": "Avisoft",
+      "reason": "pure_ai_data_without_dotnet"
+    },
+    {
+      "id": 1667075,
+      "title": "Enterprise Solution Architect",
+      "company": "Live Connections",
+      "reason": "location_not_hyd_remote"
+    },
+    {
+      "id": 1667068,
+      "title": "Solution Architect - Datacenter",
+      "company": "Infinium Associates",
+      "reason": "location_not_hyd_remote"
+    },
+    {
+      "id": 1664699,
+      "title": "Solution Architect - Java/Python",
+      "company": "Tidyhire",
+      "reason": "java_primary"
+    },
+    {
+      "id": 1666672,
+      "title": "Salesforce Solution Architect",
+      "company": "Career Infosystem",
+      "reason": "wrong_stack_title"
+    },
+    {
+      "id": 1666591,
+      "title": "Salesforce Solution Architect",
+      "company": "SK HR Consultants",
+      "reason": "wrong_stack_title"
+    },
+    {
+      "id": 1666360,
+      "title": "Azure Solution Architect",
+      "company": "Job Delights",
+      "reason": "location_not_hyd_remote"
+    },
+    {
+      "id": 1667242,
+      "title": "Solution & Technical Architect - ADM Services",
+      "company": "Live Connections",
+      "reason": "location_not_hyd_remote"
+    },
+    {
+      "id": 1664620,
+      "title": "Salesforce Solution Architect",
+      "company": "INFINITES HR SERVICES     ",
+      "reason": "wrong_stack_title"
+    },
+    {
+      "id": 1666867,
+      "title": "Enterprise Solution Architect - Digital Transformation",
+      "company": "Tez Recruit",
+      "reason": "location_not_hyd_remote"
+    },
+    {
+      "id": 1661971,
+      "title": "Solution Architect - AI Security",
+      "company": "People First Consultants",
+      "reason": "pure_ai_data_without_dotnet"
+    },
+    {
+      "id": 1664742,
+      "title": "MDM Data Architect/Solution Architect",
+      "company": "Hawk Sense Business Solution pvt. ltd.",
+      "reason": "pure_ai_data_without_dotnet"
+    },
+    {
+      "id": 1666669,
+      "title": "Salesforce Solution Architect - LWC/Apex",
+      "company": "Strategic HR Solutions",
+      "reason": "wrong_stack_title"
+    },
+    {
+      "id": 1665928,
+      "title": "Loginsoft - Solution Architect - Salesforce ETM",
+      "company": "Loginsoft",
+      "reason": "wrong_stack_title"
+    },
+    {
+      "id": 1667019,
+      "title": "Solution Architect - Cloud Computing",
+      "company": "HiPos Consulting",
+      "reason": "location_not_hyd_remote"
+    },
+    {
+      "id": 1662739,
+      "title": "Talkdesk Solution Architect",
+      "company": "Hurix Digital",
+      "reason": "already_applied_or_closed"
+    },
+    {
+      "id": 1662739,
+      "title": "Talkdesk Solution Architect",
+      "company": "Hurix Digital",
+      "reason": "already_applied_or_closed"
+    },
+    {
+      "id": 1668034,
+      "title": "E2Open GTM Architect",
+      "company": "ARA Resources",
+      "reason": "wrong_stack_title"
+    },
+    {
+      "id": 1667999,
+      "title": "Full Stack Developer - .Net/AngularJS",
+      "company": "DIgitalcubez",
+      "reason": "assessment_required",
+      "note": "apply-multiple HTTP 200 success:false \u2014 not submitted; do not count as apply"
+    },
+    {
+      "id": 1667966,
+      "title": "Full Stack Developer - .Net Core & AngularJS",
+      "company": "Workplace",
+      "reason": "assessment_required",
+      "note": "apply-multiple HTTP 200 success:false \u2014 not submitted; do not count as apply"
+    }
+  ],
+  "e2openGtm": [
+    {
+      "id": 1668034,
+      "title": "E2Open GTM Architect",
+      "company": "ARA Resources",
+      "reason": "wrong_stack_title"
+    }
+  ],
+  "assessmentRequired": [
+    {
+      "id": 1667999,
+      "title": "Full Stack Developer - .Net/AngularJS",
+      "company": "DIgitalcubez",
+      "reason": "assessment_required",
+      "note": "apply-multiple HTTP 200 success:false \u2014 not submitted; do not count as apply"
+    },
+    {
+      "id": 1667966,
+      "title": "Full Stack Developer - .Net Core & AngularJS",
+      "company": "Workplace",
+      "reason": "assessment_required",
+      "note": "apply-multiple HTTP 200 success:false \u2014 not submitted; do not count as apply"
+    }
+  ],
+  "morningRealApplies": [
+    {
+      "id": 1661575,
+      "title": "Full Stack Developer - .Net/Azure",
+      "company": "MOURI Tech"
+    },
+    {
+      "id": 1668077,
+      "title": ".Net Azure Engineer - Microservices Architecture",
+      "company": "Volto Consulting"
+    },
+    {
+      "id": 1661418,
+      "title": "Senior .Net Full Stack Developer",
+      "company": "MOURI Tech"
+    }
+  ],
+  "morningFalseApplies": [
+    {
+      "id": 1668034,
+      "title": "E2Open GTM Architect",
+      "company": "ARA Resources",
+      "reason": "wrong_stack_title (filter miss; now skipped)"
+    },
+    {
+      "id": 1667999,
+      "title": "Full Stack Developer - .Net/AngularJS",
+      "company": "DIgitalcubez",
+      "reason": "assessment_required"
+    },
+    {
+      "id": 1667966,
+      "title": "Full Stack Developer - .Net Core & AngularJS",
+      "company": "Workplace",
+      "reason": "assessment_required"
+    }
+  ],
+  "notes": [
+    "resume=/workspace/resumes/Rafi_Resume.docx",
+    "ctc=52->65",
+    "login_ok url=https://www.hirist.tech/jobfeed",
+    "POST_FIX_RERUN=1 after #315 E2Open/GTM skip",
+    "E2Open GTM Architect id=1668034 skipped wrong_stack_title",
+    "apply-multiple HTTP 200 + success:false was previously counted as apply \u2014 corrected to 0 new applies",
+    "applied/count=196 lastAppliedJobId=1661575 (MOURI Tech .Net/Azure)",
+    "candidates_raw=2 were both assessment_required (Digitalcubez, Workplace) \u2014 already attempted this morning"
+  ],
+  "blockerSummary": null
+}
