@@ -65,7 +65,7 @@ function skipReason(
   }
 
   if (
-    /\b(salesforce|servicenow|\bsap\b|coupa|conga|cpq|pega|guidewire|hubspot|revit|\bbarch\b|anaplan|kinaxis|shopify|dynamics\s*365|\bd365\b|dynamics\s+f&o|\bf&o\b|finance\s*&\s*operations|jira|atlassian)\b/i.test(
+    /\b(salesforce|servicenow|\bsap\b|coupa|conga|cpq|pega|guidewire|hubspot|revit|\bbarch\b|anaplan|kinaxis|shopify|dynamics\s*365|\bd365\b|dynamics\s+f&o|\bf&o\b|finance\s*&\s*operations|jira|atlassian|e2open|gtm)\b/i.test(
       t
     )
   ) {

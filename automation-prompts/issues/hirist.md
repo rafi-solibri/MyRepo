@@ -1,5 +1,12 @@
 # Hirist issues log
 
+## 2026-09-03 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| E2Open GTM Architect passed skipReason (product GTM title, no .NET) | HARD-skip E2Open/GTM titles as wrong_stack_title (same family as Conga/Coupa/Salesforce) |
+
+
 ## 2026-09-02 (cloud)
 
 | Issue | Fix |

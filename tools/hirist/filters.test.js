@@ -88,6 +88,17 @@ assert.strictEqual(
   "wrong_stack_title"
 );
 assert.strictEqual(
+  skipReason("E2Open GTM Architect", {
+    location: "Hyderabad",
+    skills: "E2Open GTM",
+  }),
+  "wrong_stack_title"
+);
+assert.strictEqual(
+  skipReason("GTM Architect", { location: "Hyderabad", skills: "Go-To-Market" }),
+  "wrong_stack_title"
+);
+assert.strictEqual(
   skipReason("Tech Lead .NET / SAS", { location: "Hyderabad", skills: "C# SAS" }),
   null
 );
