@@ -21,3 +21,9 @@
 ## Filter fix (same-day)
 - Jobgether Technical Lead - Business Automation & AI Development incorrectly passed Arch/Lead without .NET on title → add `ai development` to pure AI/data title skip.
 
+## Post-fix re-run (#317)
+- Applied tab: **437 → 437** (+0)
+- Intentional applies: **0**
+- Skips: 1216 | duplicates: 65 | blocked: 0
+- Jobgether `65264221` Technical Lead - Business Automation & AI Development → correctly skipped (`pure AI/data without .NET on title`)
+- SimCorp `65259758` → duplicate via userJobInfo (prior Falcon redirect)
