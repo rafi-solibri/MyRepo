@@ -959,4 +959,18 @@ assert.strictEqual(
   "Aconex Solution Architect must skip without .NET on title (2026-09-02)"
 );
 
+assert.strictEqual(
+  classifyJob({
+    jobId: 65264221,
+    title: "Technical Lead - Business Automation & AI Development",
+    companyName: "Jobgether",
+    locations: [{ text: "Remote" }],
+    skills: [{ text: "Python" }, { text: "AI" }, { text: ".NET" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "pure AI/data without .NET on title",
+  "Technical Lead AI Development must skip Arch/Lead band (2026-09-03 Falcon redirect noise)"
+);
+
 console.log("filters.test.js OK");

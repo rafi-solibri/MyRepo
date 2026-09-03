@@ -196,8 +196,10 @@ function skipTitleReason(title) {
   // "Engineering Manager, AI Product Development" (Jobgether 2026-08-30) — EM + trailing AI Product.
   // "Manager AI & Data Solutions Engineer" (Deloitte 2026-09-01) — Manager + AI & Data (not contiguous AI Engineer).
   // "Principal Engineer - AI" (Egnyte 2026-09-02) — trailing Engineer - AI (not only Architect - AI).
+  // "Technical Lead - Business Automation & AI Development" (Jobgether 2026-09-03) — AI Development
+  // (ai product alone did not match; Arch/Lead must not waive .NET).
   if (
-    /\b(ai\s+(?:specialist\s+)?(?:solution\s+)?architect|ai\s+engineer(?:ing)?(?:\s+manager|\s+lead)?|engineering\s+manager[,\s:/|-]+ai|manager\s+ai|ai\s*&\s*data|ai\s+product|ai\s+agent|ml\s+engineer|gen\s*-?\s*ai|genai|generative\s+ai|agentic\s+ai|\bgemini\b|\bllm\b|data\s+scientist|data\s+engineer(?:ing)?|data\s+architect|data\s+governance|data\s+solutions|architect\s*[-–:]?\s*ai|engineer(?:ing)?\s*[-–:,/|]+\s*ai|ai\s*[-–:]?\s*architect)\b/i.test(
+    /\b(ai\s+(?:specialist\s+)?(?:solution\s+)?architect|ai\s+engineer(?:ing)?(?:\s+manager|\s+lead)?|engineering\s+manager[,\s:/|-]+ai|manager\s+ai|ai\s*&\s*data|ai\s+product|ai\s+development|ai\s+agent|ml\s+engineer|gen\s*-?\s*ai|genai|generative\s+ai|agentic\s+ai|\bgemini\b|\bllm\b|data\s+scientist|data\s+engineer(?:ing)?|data\s+architect|data\s+governance|data\s+solutions|architect\s*[-–:]?\s*ai|engineer(?:ing)?\s*[-–:,/|]+\s*ai|ai\s*[-–:]?\s*architect)\b/i.test(
       t
     ) &&
     !hasDotNet(t, "")
