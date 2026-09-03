@@ -1732,9 +1732,9 @@ async function handleExternal(context, page, detail, jobMeta, report) {
 
   atsUrl = newPage.url();
 
-  // Accenture B2C / Microsoft SSO / Google sign-in — fail fast (do not burn maxMs).
+  // Accenture B2C / public careers MFA / Microsoft SSO / Google sign-in — fail fast.
   if (
-    /b2clogin\.com|login\.microsoftonline\.com|accounts\.google\.com\/(?:v3\/)?signin|okta\.com\/(?:oauth|login)|candidate\.accenture\.com/i.test(
+    /b2clogin\.com|login\.microsoftonline\.com|accounts\.google\.com\/(?:v3\/)?signin|okta\.com\/(?:oauth|login)|candidate\.accenture\.com|accenture\.com\/(?:[\w-]+\/)*careers/i.test(
       atsUrl
     )
   ) {

@@ -584,6 +584,21 @@ assert.strictEqual(
   "AVP of Sales must skip (external burn 2026-09-02)"
 );
 assert.strictEqual(
+  shouldSkipTitle("Oracle Apex Solution Architect"),
+  true,
+  "Oracle APEX Solution Architect must skip (false Quick Apply 2026-09-03)"
+);
+assert.strictEqual(
+  shouldSkipTitle("NetSuite Principal Consultant"),
+  true,
+  "NetSuite Principal Consultant must skip (false Quick Apply 2026-09-03)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Global DevOps CoE Technical Lead"),
+  true,
+  "DevOps CoE Technical Lead must skip (false Quick Apply 2026-09-03)"
+);
+assert.strictEqual(
   shouldSkipTitle("Internet of Things Lead"),
   false,
   "intern must still not match internet (IoT Lead without industrial/iiot stays)"

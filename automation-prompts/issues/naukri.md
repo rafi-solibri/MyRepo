@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-09-03 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| False Quick Applies: Oracle Apex SA, NetSuite Principal Consultant, Global DevOps CoE TL; Accenture careers URL burned as external timeout | Title-skip Oracle APEX / NetSuite; broaden DevOps skip to any DevOps title; fail-fast accenture.com/.../careers as ats_login_wall |
+
+
 ## 2026-09-02 (cloud)
 
 | Issue | Fix |
