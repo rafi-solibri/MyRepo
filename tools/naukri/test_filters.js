@@ -608,6 +608,21 @@ assert.strictEqual(
   false,
   ".NET Azure SA must still apply"
 );
+assert.strictEqual(
+  shouldSkipTitle("Technical Lead - Test Engineer"),
+  true,
+  "Technical Lead - Test Engineer must skip (false Quick Apply 2026-09-03 post-fix)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Director, Commercial Analytics - Obesity"),
+  true,
+  "Commercial Analytics Director must skip (ATS burn 2026-09-03 post-fix)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Technical Lead .NET"),
+  false,
+  "plain Technical Lead .NET must still apply"
+);
 const { workdayCompliantPassword } = require("./workday_apply");
 assert.strictEqual(workdayCompliantPassword("GoodPass123!"), "GoodPass123!");
 const weak = workdayCompliantPassword("short");

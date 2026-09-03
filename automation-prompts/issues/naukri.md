@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| False Quick Apply Technical Lead - Test Engineer (Axiscades); Amgen Director Commercial Analytics Obesity burned ATS timeout | Title-skip test engineer / test lead / qa lead and commercial analytics in resume_and_filters.js |
 | False Quick Applies: Oracle Apex SA, NetSuite Principal Consultant, Global DevOps CoE TL; Accenture careers URL burned as external timeout | Title-skip Oracle APEX / NetSuite; broaden DevOps skip to any DevOps title; fail-fast accenture.com/.../careers as ats_login_wall |
 
 
