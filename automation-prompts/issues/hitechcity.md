@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-09-03 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Storable /careers/ 404 + Cotelligent careers 403 burned scans; EY Testing-Automation-Staff matched Staff TITLE_OK | Scrub dead storable.com/careers + cotelligent.com/careers; hint Storable about-us/culture/careers; CAREERS/LI title-skip Testing-Automation/QA automation |
+
+
 ## 2026-09-02 (cloud)
 
 | Issue | Fix |

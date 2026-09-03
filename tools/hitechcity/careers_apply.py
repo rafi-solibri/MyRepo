@@ -178,6 +178,9 @@ CAREERS_TITLE_SKIP = re.compile(
     r"share\s+on\s+wechat|"
     r"engineer in test|\bsdet\b|cyber\s*security|cybersecurity|"
     r"performance\s*test|load\s*test|fusion\s*load\s*testing|"
+    # EY / Big-4 QA titles that match Staff via TITLE_OK (2026-09-03).
+    r"testing\s*[-–]\s*automation|\bautomation[- ]staff\b|"
+    r"\bqa\s*automation\b|\btest(?:ing)?\s*automation\b|"
     r"database engineer",
     re.I,
 )
