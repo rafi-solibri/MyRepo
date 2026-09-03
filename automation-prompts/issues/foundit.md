@@ -1,5 +1,12 @@
 # Foundit — issues & fixes
 
+## 2026-09-03 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Jobgether Technical Lead - Business Automation & AI Development passed via Arch/Lead without .NET on title (Falcon APPLY_REDIRECT + Applied tab bump; LinkedIn no Easy Apply) | filters.js: add ai development to pure AI/data title skip (Arch/Lead must not waive .NET); test jobId 65264221 |
+
+
 ## 2026-09-02 (cloud)
 
 | Issue | Fix |
