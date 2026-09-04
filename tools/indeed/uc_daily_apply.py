@@ -696,6 +696,7 @@ def restore_signed_in(sb) -> dict:
                 sb.click(sel)
                 time.sleep(3)
                 clear_cf(sb)
+                dismiss_indeed_cookie_banner(sb)
                 body, _title, url = _snap()
                 info["tried"].append({"click": sel, "signedIn": looks_signed_in(body, url)})
                 if _done(body, url, f"click:{sel}"):
@@ -717,6 +718,7 @@ def restore_signed_in(sb) -> dict:
             sb.uc_open_with_reconnect(url, 5)
             time.sleep(3)
             clear_cf(sb)
+            dismiss_indeed_cookie_banner(sb)
             body, title, cur = _snap()
             info["tried"].append(
                 {

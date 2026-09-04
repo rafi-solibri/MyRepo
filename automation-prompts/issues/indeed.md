@@ -1,5 +1,12 @@
 # Indeed — issues & fixes
 
+## 2026-09-04 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Sign In \| Indeed Accounts cookie strip hid Continue with Google (google_sso_button_missing / indeed_login_required) | Dismiss OneTrust before SSO; try homepage Google modal first; JS+broader selectors; screenshot on miss |
+
+
 ## 2026-09-02 (cloud)
 
 | Issue | Fix |

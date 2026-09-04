@@ -248,6 +248,25 @@ def test_passport_expiry_from_oauth_and_jwt():
     assert from_jwt["reason"] == "indeed_passport_expired"
 
 
+def test_google_sso_cta_visible_from_text():
+    """Homepage Google modal + auth-wall CTA; cookie-only Sign In is not a CTA."""
+    from tools.indeed.google_sso import google_sso_cta_visible_from_text
+
+    assert google_sso_cta_visible_from_text(
+        "Sign in to Indeed with Google\nContinue with Google"
+    )
+    assert google_sso_cta_visible_from_text("Continue with Apple\nContinue with Google")
+    # 2026-09-04 cloud: Sign In | Indeed Accounts body was cookie strip only —
+    # helper must dismiss cookies before concluding the Google button is missing.
+    signin_cookies = (
+        "Cookies Settings\nReject All\nAccept All Cookies\n"
+        "Ready to take the next step?\nCreate an account "
+    )
+    assert cookie_banner_visible_from_text(signin_cookies)
+    assert looks_login_wall(signin_cookies, "https://secure.indeed.com/settings/account")
+    assert not google_sso_cta_visible_from_text(signin_cookies)
+
+
 def test_indeed_google_sso_uses_google_password_only():
     """Never fill Gmail forms with LINKEDIN_PASSWORD (day-10 burn)."""
     from tools.indeed.google_sso import google_password_candidates
@@ -282,5 +301,6 @@ if __name__ == "__main__":
     test_cookie_banner_visible_from_text()
     test_job_dedupe_key_from_jk()
     test_passport_expiry_from_oauth_and_jwt()
+    test_google_sso_cta_visible_from_text()
     test_indeed_google_sso_uses_google_password_only()
     print("ok")
