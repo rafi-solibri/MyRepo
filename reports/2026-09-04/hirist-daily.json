@@ -1,0 +1,37 @@
+{
+  "portal": "hirist",
+  "source": "cloud",
+  "date": "2026-09-04",
+  "kind": "post-fix-rerun",
+  "finishedAt": "2026-09-04T03:52:23.042Z",
+  "ok": true,
+  "mainSha": "a385176f265a61f4dacf6b4b2a7ed0d43d393ba7",
+  "counts": {
+    "applied": 0,
+    "external": 0,
+    "rejected": 1,
+    "blocked": 0,
+    "skipped": 445,
+    "seen": 446
+  },
+  "applied": [],
+  "external": [],
+  "rejected": [
+    {
+      "id": 1667999,
+      "title": "Full Stack Developer - .Net/AngularJS",
+      "company": "DIgitalcubez",
+      "reason": "assessment_required"
+    }
+  ],
+  "blocked": [],
+  "alreadyAppliedToday": [
+    1668422,
+    1668444,
+    1668162,
+    1668350,
+    1665372,
+    1668325
+  ],
+  "alreadyAppliedIdsLoaded": 254
+}
