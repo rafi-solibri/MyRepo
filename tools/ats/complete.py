@@ -2356,6 +2356,7 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
                 if not re.search(r"icims\.com", getattr(page, "url", "") or "", re.I):
                     fill_labeled_fields(target)
                     fill_yes_no(target)
+                    fill_greenhouse_combos(target)
                 tick_consents(target)
                 try:
                     fill_icims_questions(page)
@@ -2403,39 +2404,71 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
         return None
 
 
+def _pick_react_select(page, combo, typed: str, prefer_re: str, fallback_re: str | None = None) -> bool:
+    """Type into a Greenhouse react-select and click the best matching option."""
+    try:
+        combo.click(force=True)
+        _sleep(0.25)
+        try:
+            combo.fill("")
+            combo.type(str(typed), delay=20)
+        except Exception:
+            page.keyboard.type(str(typed), delay=15)
+        _sleep(0.45)
+        opts = page.locator("[role='option']:visible")
+        n = min(opts.count(), 12)
+        chosen = None
+        for i in range(n):
+            t = (opts.nth(i).inner_text() or "").strip()
+            if re.search(prefer_re, t, re.I):
+                chosen = opts.nth(i)
+                break
+        if chosen is None and fallback_re:
+            for i in range(n):
+                t = (opts.nth(i).inner_text() or "").strip()
+                if re.search(fallback_re, t, re.I):
+                    chosen = opts.nth(i)
+                    break
+        if chosen is None and n:
+            chosen = opts.first
+        if chosen is not None:
+            chosen.click(force=True)
+            _sleep(0.2)
+            return True
+        page.keyboard.press("Enter")
+        return False
+    except Exception:
+        return False
+
+
 def fill_greenhouse_combos(page) -> None:
     """Greenhouse / Lever / SmartRecruiters react-select required answers."""
     pairs = [
-        (r"country of residence|current country|^country\\b", "India"),
-        (r"location \\(city\\)|current location|^location\\b", "Hyderabad"),
-        (r"^state", "N/A"),
-        (r"authorized to work|legally authori[sz]ed", "Yes"),
-        (r"require sponsorship|visa sponsorship", "No"),
-        (r"ever been employed|previously employed", "No"),
-        (r"gender", "Male"),
-        (r"how did you hear|source|where did you hear", "LinkedIn"),
-        (r"willing to relocate", "Yes"),
-        (r"candidate source|application source", "LinkedIn"),
+        (r"country of residence|current country|^country\b", "India", r"^India$", r"India\s*\+91"),
+        (r"location \(city\)|candidate-location|^location\b", "Hyderabad, Telangana", r"Hyderabad,\s*Telangana", r"Hyderabad"),
+        (r"^state", "N/A", r"N/A|Telangana", None),
+        (r"authorized to work|legally authori[sz]ed", "Yes", r"^Yes$", None),
+        (r"require sponsorship|visa sponsorship", "No", r"^No$", None),
+        (r"family members|relatives working|ever been employed|previously employed", "No", r"^No$", None),
+        (r"notice period|^notice\b", "Immediate", r"Immediate|0\s*day|Serving", None),
+        (r"gender", "Male", r"^Male$", None),
+        (r"how did you hear|source|where did you hear", "LinkedIn", r"LinkedIn", None),
+        (r"willing to relocate", "Yes", r"^Yes$", None),
+        (r"candidate source|application source", "LinkedIn", r"LinkedIn", None),
     ]
-    for label_re, answer in pairs:
+    for row in pairs:
+        label_re, typed, prefer_re, fallback_re = row[0], row[1], row[2], row[3]
         try:
             lab = page.locator("label").filter(has_text=re.compile(label_re, re.I)).first
             if not lab.count() or not lab.is_visible():
                 continue
             for_id = lab.get_attribute("for")
-            combo = page.locator(f'[id="{for_id}"]').first if for_id else lab.locator("xpath=following::*[@role='combobox'][1]").first
+            combo = page.locator(f'[id="{for_id}"]').first if for_id else None
+            if combo is None or not combo.count():
+                combo = lab.locator("xpath=following::*[@role='combobox' or self::input][1]").first
             if not combo.count():
                 continue
-            combo.click(force=True)
-            _sleep(0.25)
-            page.keyboard.type(str(answer), delay=15)
-            _sleep(0.35)
-            opt = page.locator("[role='option']:visible").filter(has_text=re.compile(rf"^{re.escape(answer)}", re.I)).first
-            if opt.count() and opt.is_visible():
-                opt.click(force=True)
-            else:
-                page.keyboard.press("Enter")
-            _sleep(0.2)
+            _pick_react_select(page, combo, typed, prefer_re, fallback_re)
         except Exception:
             continue
     fill_source_fields(page)
