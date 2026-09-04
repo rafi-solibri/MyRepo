@@ -3406,6 +3406,33 @@ def main() -> int:
     if proxy:
         sb_kwargs["proxy"] = proxy if proxy.startswith("socks5") else proxy
 
+    # Leftover UC Chrome from a killed run holds the profile → SessionNotCreated.
+    try:
+        import signal
+
+        for rel in ("SingletonLock", "SingletonSocket", "SingletonCookie"):
+            p = Path(PROFILE) / rel
+            if p.exists() or p.is_symlink():
+                p.unlink(missing_ok=True)
+        killed = 0
+        needle = str(PROFILE)
+        for line in subprocess.check_output(["ps", "-eo", "pid,cmd"], text=True).splitlines():
+            if needle not in line and "uc_driver" not in line:
+                continue
+            if "ps -eo" in line:
+                continue
+            pid_s = line.strip().split(None, 1)[0]
+            try:
+                os.kill(int(pid_s), signal.SIGTERM)
+                killed += 1
+            except Exception:
+                pass
+        if killed:
+            time.sleep(1.5)
+            print(f"  leftover_chrome_killed={killed}", flush=True)
+    except Exception as exc:
+        print(f"  leftover_chrome_err={exc!s}"[:160], flush=True)
+
     with _stdout_to_stderr():
       with SB(**sb_kwargs) as sb:
         try:
