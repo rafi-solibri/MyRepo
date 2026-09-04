@@ -293,20 +293,79 @@ def finish_company_site(sb, item, report, handles_before=None) -> None:
                     break
         if ats_url and "indeed.com" in ats_url.lower():
             # Click stayed on viewjob — dest is often in applystart href / JSON.
+            dest = ""
             try:
-                from tools.ats.complete import extract_indeed_company_dest_from_html
-
-                html = _sb_call_timeout(
-                    lambda: sb.get_page_source() or sb.get_text("body") or "",
+                dest = _sb_call_timeout(
+                    lambda: sb.execute_script(
+                        """
+                        const html = document.documentElement.innerHTML || '';
+                        const offIndeed = (u) => u && /^https?:/i.test(u) && !/indeed\\.com/i.test(u);
+                        const fromHop = (h) => {
+                          try {
+                            const u = new URL(h, location.origin);
+                            for (const k of ['continueUrl','continue_url','dest','destination','redirectUrl','url']) {
+                              const v = u.searchParams.get(k);
+                              if (offIndeed(v)) return v;
+                            }
+                          } catch (e) {}
+                          return null;
+                        };
+                        for (const a of document.querySelectorAll('a[href], [data-href], [data-url]')) {
+                          const h = a.href || a.getAttribute('href') || a.getAttribute('data-href') || a.getAttribute('data-url') || '';
+                          const d = fromHop(h);
+                          if (d) return d;
+                        }
+                        const keys = [
+                          'companyApplyUrl','companyApplyURL','thirdPartyApplyUrl',
+                          'externalApplyUrl','offsiteApplyUrl','applyUrl'
+                        ];
+                        for (const k of keys) {
+                          const re = new RegExp('"' + k + '"\\\\s*:\\\\s*"(https?:[^"]+)"', 'i');
+                          const m = html.match(re);
+                          if (m) {
+                            const u = m[1].replace(/\\\\u002f/g,'/').replace(/\\\\\\//g,'/');
+                            if (offIndeed(u)) return u;
+                          }
+                        }
+                        const enc = html.match(/continueUrl=([^&"'\\s]+)/i);
+                        if (enc) {
+                          try {
+                            const u = decodeURIComponent(enc[1]);
+                            if (offIndeed(u)) return u;
+                          } catch (e) {}
+                        }
+                        return '';
+                        """
+                    ),
                     15,
                     "",
                 ) or ""
-                dest = extract_indeed_company_dest_from_html(html)
-                if dest:
-                    print(f"EXTERNAL viewjob_dest={dest[:160]!r}", flush=True)
-                    ats_url = dest
             except Exception as exc:
-                print(f"EXTERNAL viewjob_dest_err={exc!s}"[:160], flush=True)
+                print(f"EXTERNAL viewjob_js_err={exc!s}"[:160], flush=True)
+            if not dest:
+                try:
+                    from tools.ats.complete import extract_indeed_company_dest_from_html
+
+                    page_html = _sb_call_timeout(
+                        lambda: sb.get_page_source() or "",
+                        15,
+                        "",
+                    ) or ""
+                    dest = extract_indeed_company_dest_from_html(page_html)
+                    print(
+                        f"EXTERNAL viewjob_html_len={len(page_html)} "
+                        f"applystart={('applystart' in page_html.lower())} "
+                        f"continueUrl={('continueurl' in page_html.lower())}",
+                        flush=True,
+                    )
+                    if page_html and not dest:
+                        dump = Path("/opt/cursor/artifacts/indeed-viewjob-sample.html")
+                        dump.write_text(page_html[:80000], encoding="utf-8", errors="replace")
+                except Exception as exc:
+                    print(f"EXTERNAL viewjob_dest_err={exc!s}"[:160], flush=True)
+            if dest:
+                print(f"EXTERNAL viewjob_dest={dest[:160]!r}", flush=True)
+                ats_url = dest
     print(f"EXTERNAL ats_url={ats_url[:160]!r}", flush=True)
     status, reason, final_url = complete_external_ats(ats_url)
     _record_external_result(item, report, status, reason, final_url, ats_url)
