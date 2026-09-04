@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Storable Greenhouse embed hit CAPTCHA and aborted before ASK_OWNER wait | Let greenhouse.io/taleo/iCIMS captcha reach complete_ats ASK_OWNER wait instead of fail-fast |
 | IBM careers burned ATS timeout on login.ibm.com IBMid; Storable Technical Architect gh_jid marketing page counted as no_ats_form | Python ATS fail-fast login.ibm.com/IBMid (parity with #323 JS); rewrite ?gh_jid= to Greenhouse embed apply URL |
 
 

@@ -22,6 +22,7 @@ from tools.hitechcity.careers_apply import (
     is_sso_only_careers_url,
     is_uhg_skip_url,
     location_ui_input_meta_ok,
+    captcha_wait_in_completer,
     rewrite_embedded_ats_url,
     role_has_foreign_location,
     url_loc_hint,
@@ -603,6 +604,13 @@ def test_rewrite_storable_greenhouse_embed():
         "https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site/job/Hyderabad/x",
         "Solera",
     ).startswith("https://solera.wd5.myworkdayjobs.com")
+    assert captcha_wait_in_completer(
+        "https://boards.greenhouse.io/embed/job_app?for=storable&token=1"
+    )
+    assert captcha_wait_in_completer("https://careers-hyland.icims.com/jobs/1234/job")
+    assert not captcha_wait_in_completer(
+        "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/job/1"
+    )
 
 
 if __name__ == "__main__":

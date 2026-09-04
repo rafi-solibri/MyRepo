@@ -719,6 +719,17 @@ def skip_company_name_set() -> set[str]:
     return names
 
 
+def captcha_wait_in_completer(url: str) -> bool:
+    """True when complete_ats (ASK_OWNER / solver) should handle the captcha."""
+    return bool(
+        re.search(
+            r"icims\.com/jobs/\d+|greenhouse\.io|taleo\.net|smartrecruiters\.com",
+            url or "",
+            re.I,
+        )
+    )
+
+
 def is_uhg_skip_url(url: str) -> bool:
     if not url or not _env_flag("HITECHCITY_SKIP_UHG", "1"):
         return False
@@ -1305,8 +1316,8 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         _close_auth_popups(page)
         return row
     wall = blocked_wall(page)
-    icims_job = bool(re.search(r"icims\.com/jobs/\d+", page.url or "", re.I))
-    # iCIMS hCaptcha is solved inside complete_ats — do not abort before the solver runs.
+    # iCIMS / Greenhouse / Taleo captcha is handled inside complete_ats (ASK_OWNER
+    # wait + optional solver). Do not abort before that wait runs.
     if wall == "job_closed" and not looks_workday_page(page):
         row["reason"] = wall
         row["status"] = "skipped"
@@ -1316,7 +1327,7 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
     if (
         wall == "CAPTCHA/bot wall"
         and not looks_workday_page(page)
-        and not icims_job
+        and not captcha_wait_in_completer(page.url or "")
     ):
         row["reason"] = wall
         row["status"] = "blocked"
