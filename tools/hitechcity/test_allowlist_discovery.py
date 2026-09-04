@@ -217,7 +217,8 @@ def test_openings_preference_and_hints():
     assert "fluttergroup.com" in CAREERS_URL_HINTS["Flutter Entertainment"][0]
     assert "ltm.com" in CAREERS_URL_HINTS["LTIMindtree"][0]
     assert "providence.jobs" in CAREERS_URL_HINTS["Providence"][0]
-    assert "about-us/culture/careers" in CAREERS_URL_HINTS["Storable"][0]
+    assert "about-us/culture/careers" in " ".join(CAREERS_URL_HINTS["Storable"])
+    assert "greenhouse.io/storable" in CAREERS_URL_HINTS["Storable"][0]
     assert "Cotelligent" not in CAREERS_URL_HINTS
     companies = [
         {"name": "Electronic Arts", "campuses": ["rmz-nexity"], "careersUrls": []},

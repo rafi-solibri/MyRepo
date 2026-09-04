@@ -127,6 +127,19 @@ def test_title_ok():
     assert CAREERS_TITLE_SKIP.search("QA Automation Lead Hyderabad")
     assert LI_TITLE_SKIP.search("Testing - Automation-Staff")
     assert not CAREERS_TITLE_SKIP.search("Software Product Engineering Lead Hyderabad")
+    # 2026-09-04 cron: systems/OS + analytics/storage infra titles burned soft/no_ats walls.
+    assert CAREERS_TITLE_SKIP.search("Systems Software Principal Engineer Hyderabad,India")
+    assert CAREERS_TITLE_SKIP.search("System Software Principal Engineer Hyderabad,India")
+    assert CAREERS_TITLE_SKIP.search(
+        "Staff Engineer, Workload Analytics Hyderabad, Telangana, India"
+    )
+    assert CAREERS_TITLE_SKIP.search(
+        "Software Engineering Senior Staff Software Engineer - Confluent Kafka Storage"
+    )
+    assert CAREERS_TITLE_SKIP.search("Lead Software Engineer - Mainframe Hyderabad")
+    assert LI_TITLE_SKIP.search("Systems Software Principal Engineer")
+    assert LI_TITLE_SKIP.search("Workload Analytics")
+    assert not CAREERS_TITLE_SKIP.search("Software Systems Architect Hyderabad")
     assert LI_TITLE_SKIP.search("Staff Engineer, CAD")
     assert LI_TITLE_SKIP.search("Principal Engineer - STA/Synthesis")
     assert LI_TITLE_SKIP.search("Staff Analyst - IT EA EPS")
@@ -169,14 +182,47 @@ def test_title_ok():
     from tools.hitechcity.careers_apply import (
         CAREERS_SEARCH_KEYWORDS,
         expand_careers_scan_urls,
+        jobs_from_sample_openings,
         pin_careers_hyderabad_location,
         rewrite_careers_search_keyword,
+        rewrite_embedded_ats_url,
     )
 
     assert CAREERS_SEARCH_KEYWORDS[0] == "Engineering Manager"
     assert CAREERS_SEARCH_KEYWORDS.index("Engineering Manager") < CAREERS_SEARCH_KEYWORDS.index(
         "Solution Architect"
     )
+    # Brochure Greenhouse embeds → boards.greenhouse.io job URL.
+    storable_gh = rewrite_embedded_ats_url(
+        "https://www.storable.com/about-us/culture/careers/?gh_jid=5564835004",
+        "Storable",
+    )
+    assert storable_gh == "https://boards.greenhouse.io/storable/jobs/5564835004"
+    assert rewrite_embedded_ats_url(
+        "https://boards.greenhouse.io/storable/jobs/1", "Storable"
+    ).endswith("/jobs/1")
+    # Openings-probe seeds must keep .NET campus fits and drop mainframe/wrong-stack.
+    seeded = jobs_from_sample_openings(
+        {
+            "name": "Experian",
+            "sampleOpenings": [
+                {
+                    "role": "Solution Architect (Microsoft .NET/Azure Cloud) Hyderabad, India Full-time",
+                    "url": "https://jobs.smartrecruiters.com/Experian/744000139938479-solution-architect-microsoft-net-azure-cloud-",
+                },
+                {
+                    "role": "Lead Software Engineer - Mainframe Hyderabad, India Full-time",
+                    "url": "https://jobs.smartrecruiters.com/Experian/744000142144341-lead-software-engineer-mainframe",
+                },
+                {
+                    "role": "Staff Engineer (Python/AWS) Hyderabad, India Full-time",
+                    "url": "https://jobs.smartrecruiters.com/Experian/744000127131989-staff-engineer-python-aws-",
+                },
+            ],
+        }
+    )
+    assert len(seeded) == 1
+    assert "NET" in seeded[0]["role"] or ".NET" in seeded[0]["role"] or "Azure" in seeded[0]["role"]
     by = "https://careers.blueyonder.com/us/en/search-results?keywords=architect&location=Bengaluru"
     assert "Engineering%20Manager" in rewrite_careers_search_keyword(by, "Engineering Manager") or (
         "Engineering+Manager" in rewrite_careers_search_keyword(by, "Engineering Manager")

@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-09-04 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Experian openings-probe listed .NET SA but careers keyword scan jobCount=0; Storable gh_jid brochure no_ats_form; TTEC Systems Software + Micron Workload Analytics + IBM Kafka Storage burned soft/no_ats walls | Seed careers applies from sampleOpenings; rewrite gh_jid embeds to boards.greenhouse.io; CAREERS/LI title-skip systems software / workload analytics / kafka storage / mainframe; Storable Greenhouse URL hints |
+
+
 ## 2026-09-03 (cloud)
 
 | Issue | Fix |

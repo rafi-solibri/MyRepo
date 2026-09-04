@@ -181,9 +181,20 @@ CAREERS_TITLE_SKIP = re.compile(
     # EY / Big-4 QA titles that match Staff via TITLE_OK (2026-09-03).
     r"testing\s*[-–]\s*automation|\bautomation[- ]staff\b|"
     r"\bqa\s*automation\b|\btest(?:ing)?\s*automation\b|"
-    r"database engineer",
+    r"database engineer|"
+    # 2026-09-04 cron: TTEC Systems Software / Micron Workload Analytics /
+    # IBM Confluent Kafka Storage / Experian Mainframe burned soft walls or no_ats_form.
+    r"\bsystems?\s+software\b|workload\s*analytics|"
+    r"kafka\s*storage|confluent\s*kafka\s*storage|"
+    r"\bmainframe\b|linux\s*kernel|\byocto\b",
     re.I,
 )
+
+# Company → Greenhouse board slug when careers pages embed `?gh_jid=` without a form.
+GREENHOUSE_BOARD_SLUGS: dict[str, str] = {
+    "Storable": "storable",
+    "Zenoti": "zenoti",
+}
 # JD snippets that mean the role is wrong-stack even when the TITLE is generic Architect.
 JD_WRONG_STACK = re.compile(
     r"salesforce solutions|sfdc development|sfdc lightning|omnistudio|"
@@ -319,6 +330,83 @@ def rewrite_careers_search_keyword(url: str, keyword: str) -> str:
         for v in vals:
             flat.append((k, v))
     return urlunparse(parts._replace(query=urlencode(flat, doseq=True)))
+
+
+def rewrite_embedded_ats_url(url: str, company: str = "") -> str:
+    """Map brochure `?gh_jid=` embeds to Greenhouse job URLs (Storable culture/careers)."""
+    raw = (url or "").strip()
+    if not raw:
+        return raw
+    if re.search(r"greenhouse\.io", raw, re.I):
+        return raw
+    m = re.search(r"[?&]gh_jid=(\d+)", raw, re.I)
+    if not m:
+        return raw
+    jid = m.group(1)
+    slug = GREENHOUSE_BOARD_SLUGS.get(company or "")
+    if not slug:
+        slug = re.sub(r"[^a-z0-9]+", "", (company or "").lower())
+    if not slug:
+        return raw
+    return f"https://boards.greenhouse.io/{slug}/jobs/{jid}"
+
+
+def _accept_job_candidate(text: str, href: str, company: str) -> bool:
+    """Shared title/location gate used by listing extract + openings-probe seeds."""
+    text = re.sub(r"^job title\s+", "", text or "", flags=re.I)
+    if re.search(r"^\d+\s+jobs?\b|turn on job alerts", text, re.I):
+        return False
+    if NAV_CHROME_RE.search(text.strip()):
+        return False
+    if not TITLE_HINT.search(text):
+        return False
+    if skip_reason(text, company):
+        return False
+    if CAREERS_TITLE_SKIP.search(text):
+        return False
+    # Title names a non-.NET primary stack (Python/Java/Node) without .NET/Azure/.
+    if (
+        re.search(
+            r"\bpython\b|\bjava\b(?!\s*script)|\bnode\.?js\b|\bgolang\b|\bnext\.?js\b",
+            text,
+            re.I,
+        )
+        and not prefer_dotnet(text)
+    ):
+        return False
+    if not title_matches_senior_stack(text) and not prefer_dotnet(text):
+        return False
+    hint = url_loc_hint(href)
+    hydish = re.compile(
+        r"hyderabad|telangana|madhapur|hitec\s*city|hitech\s*city|gachibowli|raidurg|"
+        r"\bremote\b|\bwfh\b|work from home|india remote|fully remote",
+        re.I,
+    )
+    if hint and BAD_LOC_HINT.search(hint) and not hydish.search(hint):
+        return False
+    if not card_location_ok(text, hint):
+        return False
+    return True
+
+
+def jobs_from_sample_openings(company: dict[str, Any]) -> list[dict[str, str]]:
+    """Seed apply list from openings_probe samples when keyword scans return empty."""
+    name = company.get("name") or ""
+    out: list[dict[str, str]] = []
+    for sample in company.get("sampleOpenings") or []:
+        if not isinstance(sample, dict):
+            continue
+        role = (sample.get("role") or sample.get("title") or "").strip()
+        href = (sample.get("url") or "").strip()
+        if not href or not role:
+            continue
+        href = rewrite_embedded_ats_url(href, name)
+        if is_sso_only_careers_url(href) or is_uhg_skip_url(href):
+            continue
+        if not _accept_job_candidate(role, href, name):
+            continue
+        out.append({"role": role, "url": href, "company": name})
+    return out
 
 
 def pin_careers_hyderabad_location(url: str) -> str:
@@ -1107,6 +1195,8 @@ def scan_goto(page: Page, url: str, *, timeout: int = 75000, attempts: int = 3) 
 
 
 def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
+    job = dict(job)
+    job["url"] = rewrite_embedded_ats_url(job.get("url") or "", job.get("company") or "")
     row = {
         "company": job["company"],
         "role": job["role"],
@@ -1627,6 +1717,80 @@ def run(companies: list[dict[str, Any]] | None = None) -> CareersReport:
                 else:
                     continue
                 break
+
+            # Openings-probe samples: SmartRecruiters often empties keyword scans
+            # (CAPTCHA) after the probe already listed Hyd senior roles — apply direct URLs.
+            if (
+                not cdp_fatal
+                and company_applied < MAX_PER_COMPANY
+                and company_walls < MAX_WALLS_PER_COMPANY
+                and (
+                    MAX_SOFT_INCOMPLETE_PER_COMPANY <= 0
+                    or company_soft_incompletes < MAX_SOFT_INCOMPLETE_PER_COMPANY
+                )
+                and company_attempts < MAX_ATTEMPTS_PER_COMPANY
+            ):
+                probe_jobs = jobs_from_sample_openings(company)
+                if probe_jobs:
+                    _safe_print(
+                        f"CAREERS PROBE_SEED {name} | samples={len(probe_jobs)} "
+                        f"(keyword scans may have been empty/CAPTCHA)"
+                    )
+                    report.scanned.append(
+                        {
+                            "company": name,
+                            "url": "sampleOpenings",
+                            "jobCount": len(probe_jobs),
+                        }
+                    )
+                for job in probe_jobs:
+                    if job["url"] in seen_urls:
+                        continue
+                    seen_urls.add(job["url"])
+                    if company_applied >= MAX_PER_COMPANY:
+                        break
+                    if company_walls >= MAX_WALLS_PER_COMPANY:
+                        break
+                    if (
+                        MAX_SOFT_INCOMPLETE_PER_COMPANY > 0
+                        and company_soft_incompletes >= MAX_SOFT_INCOMPLETE_PER_COMPANY
+                    ):
+                        break
+                    if company_attempts >= MAX_ATTEMPTS_PER_COMPANY:
+                        break
+                    result = apply_job(page, job, campuses)
+                    _safe_print(
+                        f"CAREERS {result.get('status', '?').upper()} {name} | "
+                        f"{(result.get('reason') or '')[:60]}"
+                    )
+                    notify_application_result(
+                        status=str(result.get("status") or ""),
+                        company=str(result.get("company") or name),
+                        role=str(result.get("role") or job.get("role") or ""),
+                        reason=str(result.get("reason") or ""),
+                        path=str(result.get("path") or "company-careers"),
+                        url=str(result.get("url") or job.get("url") or ""),
+                    )
+                    if result["status"] == "applied":
+                        report.applied.append(result)
+                        company_applied += 1
+                        company_attempts += 1
+                    elif result["status"] == "skipped":
+                        report.skipped.append(result)
+                    else:
+                        report.blocked.append(result)
+                        why = result.get("reason") or ""
+                        try:
+                            from tools.ats.complete import is_hard_ats_wall
+                        except Exception:
+                            from ats.complete import is_hard_ats_wall  # type: ignore
+                        if is_hard_ats_wall(why):
+                            company_walls += 1
+                            company_attempts += 1
+                        elif "incomplete" in (why or "").lower():
+                            company_soft_incompletes += 1
+                        else:
+                            company_attempts += 1
 
     report.finishedAt = datetime.now(timezone.utc).isoformat()
     out_path = REPORT
