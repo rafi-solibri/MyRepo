@@ -100,7 +100,7 @@ daily_prompt_for() {
       extra="FIRST: node tools/indeed/preflight.js (WARP+UC Turnstile clear + filelock patch + IP rotate). If it still exits 5 after that, stop and report — do not invent applies. Otherwise: bash scripts/preflight-portal-run.sh indeed, then node tools/indeed/daily_apply.js (preferred) or python3 tools/indeed/uc_daily_apply.py. Use resumes/Rafi_Resume.docx. Report submitted/skipped/blocked."
       ;;
     hitechcity)
-      extra="Run bash scripts/preflight-portal-run.sh hitechcity then bash scripts/launch-chrome-cdp.sh hitechcity. Use resumes/Rafi_Resume.docx. Execute via python3 tools/hitechcity/daily_apply.py (HITECHCITY_PARALLEL_TABS=10 by default — do not set tabs=1)."
+      extra="Run bash scripts/preflight-portal-run.sh hitechcity then bash scripts/launch-chrome-cdp.sh hitechcity. Use resumes/Rafi_Resume.docx. Execute via python3 tools/hitechcity/daily_apply.py (HITECHCITY_PARALLEL_TABS=10 by default — do not set tabs=1). If LinkedIn temporary restriction is active (see .portal-sessions/linkedin-restriction-until.json), keep HITECHCITY_SKIP_LINKEDIN=1 / careers+boards only — do NOT open linkedin.com or run auto_login until lift_utc."
       ;;
   esac
   cat <<EOF
@@ -269,6 +269,18 @@ if [[ -z "${CURSOR_API_KEY:-}" ]]; then
   exit 1
 fi
 
+# Never launch LinkedIn Daily while a temporary restriction is still active
+# (unless LINKEDIN_IGNORE_RESTRICTION_FLAG=1). Hitech City continues (careers-only).
+linkedin_restriction_active() {
+  local out
+  out="$(
+    PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}" python3 -c \
+      "from tools.linkedin.restriction import should_skip_linkedin_for_restriction; import json; s=should_skip_linkedin_for_restriction(); print(json.dumps(s) if s else '')" \
+      2>/dev/null || true
+  )"
+  [[ -n "$out" ]]
+}
+
 # Restore seeded sessions before launching (helps Indeed/LinkedIn when dest was wiped).
 if [[ "$DRY_RUN" -eq 0 && -x "$ROOT/scripts/restore-portal-sessions.sh" ]]; then
   FORCE_RESTORE_SESSIONS="${FORCE_RESTORE_SESSIONS:-0}" bash "$ROOT/scripts/restore-portal-sessions.sh" \
@@ -282,6 +294,11 @@ for raw in "${want[@]}"; do
   p="$(printf '%s' "$raw" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')"
   [[ -n "$p" ]] || continue
   echo "=== daily-launch: $p ==="
+  if [[ "$p" == "linkedin" && "${LINKEDIN_IGNORE_RESTRICTION_FLAG:-}" != "1" ]] && linkedin_restriction_active; then
+    echo "SKIP linkedin: temporary account restriction still active (lift in .portal-sessions/linkedin-restriction-until.json). Do not re-launch until lift."
+    skipped=$((skipped + 1))
+    continue
+  fi
   if [[ "$FORCE" -eq 0 ]] && same_day_agent_exists "$p"; then
     echo "SKIP $p: same-day cloud agent already exists"
     skipped=$((skipped + 1))

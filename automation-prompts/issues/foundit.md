@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Foundit opened linkedin.com Easy Apply redirects even when LinkedIn account temporarily restricted | daily_apply.js: shouldSkipLinkedinForRestriction before page.goto; block as linkedin_temporarily_restricted |
 | TCS Oracle Apex Solution Architect false Falcon NORMAL (Arch/Lead waived .NET; Apex not covered by Fusion/ERP patterns) | filters.js: skip oracle apex / APEX Solution Architect on title+skills (Naukri #318 parity); tests for TCS case |
 
 
