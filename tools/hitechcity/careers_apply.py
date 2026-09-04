@@ -730,6 +730,14 @@ def captcha_wait_in_completer(url: str) -> bool:
     )
 
 
+def listing_wall_blocks_ats(wall: str | None) -> bool:
+    """True when apply_job should return before complete_ats.
+
+    CAPTCHA/bot wall is not a hard stop — complete_ats parks ASK_OWNER / solver.
+    """
+    return wall == "job_closed"
+
+
 def is_uhg_skip_url(url: str) -> bool:
     if not url or not _env_flag("HITECHCITY_SKIP_UHG", "1"):
         return False
@@ -1183,14 +1191,16 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         row["reason"] = "login/account wall"
         row["finalUrl"] = page.url
         return row
-    # JD chrome ("Sign in" / "Create an account") is not a wall. Only CAPTCHA /
-    # closed reqs fail here — Workday Create Account must reach complete_ats.
+    # JD chrome ("Sign in" / "Create an account") is not a wall. CAPTCHA goes
+    # through complete_ats (ASK_OWNER wait). Closed reqs fail here.
     wall = blocked_wall(page)
-    if wall in ("CAPTCHA/bot wall", "job_closed") and not looks_workday_page(page):
+    if listing_wall_blocks_ats(wall) and not looks_workday_page(page):
         row["reason"] = wall
-        row["status"] = "skipped" if wall == "job_closed" else "blocked"
+        row["status"] = "skipped"
         row["finalUrl"] = page.url
         return row
+    if wall == "CAPTCHA/bot wall":
+        _safe_print(f"CAREERS CAPTCHA continue_to_ats | {page.url}")
 
     # Location from TOP CARD / workplace pills only — never full page body/footers.
     try:
@@ -1318,22 +1328,15 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
     wall = blocked_wall(page)
     # iCIMS / Greenhouse / Taleo captcha is handled inside complete_ats (ASK_OWNER
     # wait + optional solver). Do not abort before that wait runs.
-    if wall == "job_closed" and not looks_workday_page(page):
+    if listing_wall_blocks_ats(wall) and not looks_workday_page(page):
         row["reason"] = wall
         row["status"] = "skipped"
         row["finalUrl"] = page.url
         _close_auth_popups(page)
         return row
-    if (
-        wall == "CAPTCHA/bot wall"
-        and not looks_workday_page(page)
-        and not captcha_wait_in_completer(page.url or "")
-    ):
-        row["reason"] = wall
-        row["status"] = "blocked"
-        row["finalUrl"] = page.url
-        _close_auth_popups(page)
-        return row
+    if wall == "CAPTCHA/bot wall":
+        _safe_print(f"CAREERS CAPTCHA continue_to_ats | {page.url}")
+        # complete_ats parks ASK_OWNER / solver — do not fail-fast here.
     status, reason = attempt_ats_apply(
         page,
         time_cap_s=TIME_CAP_S,

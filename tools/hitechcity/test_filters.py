@@ -23,6 +23,7 @@ from tools.hitechcity.careers_apply import (
     is_uhg_skip_url,
     location_ui_input_meta_ok,
     captcha_wait_in_completer,
+    listing_wall_blocks_ats,
     rewrite_embedded_ats_url,
     role_has_foreign_location,
     url_loc_hint,
@@ -613,6 +614,13 @@ def test_rewrite_storable_greenhouse_embed():
     )
 
 
+def test_listing_wall_does_not_block_captcha():
+    assert listing_wall_blocks_ats("job_closed")
+    assert not listing_wall_blocks_ats("CAPTCHA/bot wall")
+    assert not listing_wall_blocks_ats(None)
+    assert not listing_wall_blocks_ats("login/account wall")
+
+
 if __name__ == "__main__":
     test_title_ok()
     test_campus_location()
@@ -627,4 +635,5 @@ if __name__ == "__main__":
     test_skip_uhg_default()
     test_location_ui_skips_agentforce()
     test_rewrite_storable_greenhouse_embed()
+    test_listing_wall_does_not_block_captcha()
     print("ok")
