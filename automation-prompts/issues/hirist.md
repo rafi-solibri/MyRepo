@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| apply-multiple HTTP 200 + success:false counted as applied (assessment required; Digitalcubez 1667999 not on applied-jobs) | Parse apply-multiple array (success:false / Successfully Applied); complete /job/{id}/screening for notice+CTC+Hyd then count only submitted confirmation |
 | DFT Architect passed skipReason (semiconductor Design-for-Test, no .NET) | HARD-skip DFT/ATPG/JTAG/MBIST/VLSI/ASIC/FPGA/SystemVerilog/UVM titles as wrong_stack_title |
 
 

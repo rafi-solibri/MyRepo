@@ -27,6 +27,8 @@ function loadChromium() {
 }
 const { skipReason, hasDotNet, hasTargetSeniority } = require("./filters");
 const { findResume, EXPECTED_CTC_LPA, CURRENT_CTC_LPA } = require("./resume");
+const { interpretApplyResponse } = require("./apply_response");
+const { completeScreening } = require("./screening");
 const { completeExternalPage } = require("../ats/complete_page");
 const { tailorResumeForJob } = require("../resume_tailor");
 const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
@@ -481,15 +483,53 @@ async function main() {
       continue;
     }
 
-    // In-app Hirist apply
+    // In-app Hirist apply — HTTP 200 + success:false is NOT an apply
     const res = await applyInApp(page, [job.id]);
-    const okStatus = res.status >= 200 && res.status < 300;
-    const errName = res.json?.error?.name || res.json?.status?.message || "";
-    if (res.status === 401 || /UNAUTHORISED/i.test(String(errName))) {
-      state.blocked.push({ reason: "hirist_login_required", detail: "apply_401" });
+    const verdict = interpretApplyResponse(res);
+    if (verdict.kind === "login") {
+      state.blocked.push({ reason: "hirist_login_required", detail: verdict.message || "apply_401" });
       break;
     }
-    if (okStatus && !res.json?.error) {
+    if (verdict.kind === "already") {
+      state.skipped.push({ id: job.id, title: job.title, company: job.company, reason: "already_applied" });
+      await sleep(400);
+      continue;
+    }
+    if (verdict.kind === "assessment") {
+      const screenPage = await ctx.newPage();
+      try {
+        const scr = await completeScreening(screenPage, job.id);
+        if (scr.ok) {
+          state.applied.push({
+            id: job.id,
+            title: job.title,
+            company: job.company,
+            path: "hirist_screening",
+            url: scr.url || `https://www.hirist.tech/job/applied?jobId=${job.id}`,
+          });
+          applies += 1;
+        } else {
+          state.rejected.push({
+            id: job.id,
+            title: job.title,
+            company: job.company,
+            reason: String(scr.reason || verdict.message || "screening_incomplete").slice(0, 160),
+          });
+        }
+      } catch (err) {
+        state.rejected.push({
+          id: job.id,
+          title: job.title,
+          company: job.company,
+          reason: `screening_error:${String(err.message || err).slice(0, 80)}`,
+        });
+      } finally {
+        await screenPage.close().catch(() => {});
+      }
+      await sleep(700);
+      continue;
+    }
+    if (verdict.kind === "ok") {
       state.applied.push({
         id: job.id,
         title: job.title,
@@ -499,20 +539,12 @@ async function main() {
       });
       applies += 1;
     } else {
-      const reason =
-        res.json?.error?.message ||
-        res.json?.status?.message ||
-        `apply_http_${res.status}`;
-      if (/already applied|duplicate/i.test(String(reason))) {
-        state.skipped.push({ id: job.id, title: job.title, company: job.company, reason: "already_applied" });
-      } else {
-        state.rejected.push({
-          id: job.id,
-          title: job.title,
-          company: job.company,
-          reason: String(reason).slice(0, 160),
-        });
-      }
+      state.rejected.push({
+        id: job.id,
+        title: job.title,
+        company: job.company,
+        reason: String(verdict.message || "apply_failed").slice(0, 160),
+      });
     }
     await sleep(700);
   }
