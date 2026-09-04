@@ -101,6 +101,17 @@ def looks_indeed_auth_surface(url: str = "", title: str = "", body: str = "") ->
     )
 
 
+def looks_google_gsi_continue(url: str = "", title: str = "", body: str = "") -> bool:
+    """FedCM / Google Identity Services continue after password (2026-09-04)."""
+    blob = f"{url}\n{title}\n{body}".lower()
+    return bool(
+        re.search(
+            r"accounts\.google\.com/gsi|fedcm/signincontinue|google identity services",
+            blob,
+        )
+    )
+
+
 def sso_looks_signed_in(body: str, title: str = "", url: str = "") -> bool:
     """Confirm Indeed Passport session after Google SSO.
 
@@ -501,6 +512,47 @@ def try_google_sso(sb: Any, *, wait_2fa_sec: int | None = None) -> dict:
             return info
         body, title, url = _snap(sb)
 
+    def _click_gsi_continue() -> str:
+        for sel in (
+            "//button[normalize-space()='Continue']",
+            "//button[contains(., 'Continue as')]",
+            "//button[normalize-space()='Allow']",
+            "//button[normalize-space()='Confirm']",
+            "//button[normalize-space()='Next']",
+            "//*[@role='button' and contains(., 'Continue')]",
+            "button[jsname]",
+        ):
+            try:
+                if sb.is_element_visible(sel):
+                    sb.click(sel)
+                    time.sleep(1.2)
+                    return sel
+            except Exception:
+                continue
+        try:
+            hit = sb.execute_script(
+                """
+                const labels = ['continue as', 'continue', 'allow', 'confirm', 'next'];
+                const els = [...document.querySelectorAll('button, [role=button], div[role=button]')];
+                const textOf = (el) => ((el.innerText || el.getAttribute('aria-label') || '')).trim().toLowerCase();
+                const scored = els.map(el => {
+                  const t = textOf(el);
+                  const idx = labels.findIndex(l => t === l || t.startsWith(l));
+                  const r = el.getBoundingClientRect();
+                  return {el, t, idx, onScreen: r.width > 8 && r.height > 8};
+                }).filter(x => x.idx >= 0 && x.onScreen).sort((a,b) => a.idx - b.idx);
+                if (!scored[0]) return null;
+                scored[0].el.click();
+                return scored[0].t.slice(0, 80);
+                """
+            )
+            if hit:
+                time.sleep(1.2)
+                return str(hit)
+        except Exception:
+            pass
+        return ""
+
     # Real 2FA only after password clears
     if is_google_2fa_challenge(url=url, body=body):
         wait = int(
@@ -543,18 +595,69 @@ def try_google_sso(sb: Any, *, wait_2fa_sec: int | None = None) -> dict:
             return info
         body, title, url = _snap(sb)
 
-    # Consent / Continue back to Indeed
-    for label in ("Continue", "Allow", "Confirm", "Next"):
-        try:
-            sel = f"//button[normalize-space()='{label}']"
-            if sb.is_element_visible(sel):
-                sb.click(sel)
-                time.sleep(1.5)
-                info["tried"].append({"consent": label})
-        except Exception:
-            continue
+    # Stay on Google until FedCM/GSI continue + 2FA finish. Jumping to Indeed
+    # settings mid-GSI left 2026-09-04 on gsi/fedcm/signincontinue unconfirmed.
+    for i in range(12):
+        _switch_to_google_window(sb)
+        body, title, url = _snap(sb)
+        info["tried"].append(
+            {"settle": i, "url": url[:160], "title": title[:80]}
+        )
+        if looks_indeed_auth_surface(url, title, body):
+            break
+        if sso_looks_signed_in(body, title, url):
+            break
+        if "indeed.com" in (url or "").lower() and "accounts.google.com" not in (
+            url or ""
+        ).lower():
+            break
+        if is_google_2fa_challenge(url=url, body=body):
+            wait = int(
+                wait_2fa_sec
+                if wait_2fa_sec is not None
+                else os.environ.get("GOOGLE_2FA_WAIT_SEC", "300")
+            )
+            info["tried"].append({"google_2fa": True, "wait_sec": wait, "when": "settle"})
+            class _SbPage2:
+                def __init__(self, driver_sb: Any):
+                    self._sb = driver_sb
 
-    # Prefer Indeed window
+                @property
+                def url(self) -> str:
+                    try:
+                        return self._sb.get_current_url() or ""
+                    except Exception:
+                        return ""
+
+                def bring_to_front(self) -> None:
+                    return None
+
+                def locator(self, sel: str):  # noqa: ANN001
+                    class _Loc:
+                        def __init__(self, s: Any):
+                            self._sb = s
+
+                        def inner_text(self, timeout: int = 2000) -> str:  # noqa: ARG002
+                            try:
+                                return (self._sb.get_text("body") or "")[:2500]
+                            except Exception:
+                                return ""
+
+                    return _Loc(self._sb)
+
+            if not wait_owner_google_2fa(_SbPage2(sb), portal="indeed", wait_sec=wait):
+                info["reason"] = "google_2fa_timeout"
+                return info
+            continue
+        if looks_google_gsi_continue(url, title, body) or "accounts.google.com" in (
+            url or ""
+        ).lower():
+            hit = _click_gsi_continue()
+            if hit:
+                info["tried"].append({"gsi_continue": hit})
+        time.sleep(1.4)
+
+    # Prefer Indeed window once Google is done
     try:
         for h in list(sb.driver.window_handles):
             sb.driver.switch_to.window(h)
@@ -564,14 +667,54 @@ def try_google_sso(sb: Any, *, wait_2fa_sec: int | None = None) -> dict:
     except Exception:
         pass
 
-    try:
-        sb.uc_open_with_reconnect(
-            "https://secure.indeed.com/settings/account", 5
-        )
-        time.sleep(2)
-    except Exception:
-        pass
     body, title, url = _snap(sb)
+    if looks_google_gsi_continue(url, title, body) or (
+        "accounts.google.com" in (url or "").lower()
+        and not sso_looks_signed_in(body, title, url)
+    ):
+        # FedCM / phone prompt: owner must tap Continue or Yes.
+        wait = int(
+            wait_2fa_sec
+            if wait_2fa_sec is not None
+            else os.environ.get("GOOGLE_2FA_WAIT_SEC", "300")
+        )
+        info["tried"].append({"gsi_owner_wait": True, "wait_sec": wait})
+        from tools.google_2fa_prompt import prompt_google_2fa_in_chat
+
+        prompt_google_2fa_in_chat(
+            "indeed",
+            wait_sec=wait,
+            detail="Google Identity Services / FedCM — tap Continue or approve the phone prompt",
+        )
+        deadline = time.time() + wait
+        while time.time() < deadline:
+            _switch_to_google_window(sb)
+            hit = _click_gsi_continue()
+            if hit:
+                info["tried"].append({"gsi_continue": hit, "when": "owner_wait"})
+            body, title, url = _snap(sb)
+            if sso_looks_signed_in(body, title, url):
+                break
+            if "indeed.com" in (url or "").lower() and "accounts.google.com" not in (
+                url or ""
+            ).lower():
+                break
+            time.sleep(3)
+        info["tried"].append(
+            {"after_gsi_wait": {"url": url[:160], "title": title[:80]}}
+        )
+
+    if not sso_looks_signed_in(body, title, url) and not looks_google_gsi_continue(
+        url, title, body
+    ):
+        try:
+            sb.uc_open_with_reconnect(
+                "https://secure.indeed.com/settings/account", 5
+            )
+            time.sleep(2)
+        except Exception:
+            pass
+        body, title, url = _snap(sb)
     signed = sso_looks_signed_in(body, title, url)
     info["ok"] = signed
     info["url"] = url[:160]

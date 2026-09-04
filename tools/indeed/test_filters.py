@@ -285,6 +285,19 @@ def test_google_sso_cta_visible_from_text():
         "https://secure.indeed.com/settings/account",
     )
 
+    from tools.indeed.google_sso import looks_google_gsi_continue
+
+    assert looks_google_gsi_continue(
+        "https://accounts.google.com/gsi/fedcm/signincontinue",
+        "Google Identity Services",
+        "",
+    )
+    assert not looks_google_gsi_continue(
+        "https://secure.indeed.com/settings/account",
+        "Account | Indeed",
+        "",
+    )
+
 
 def test_indeed_google_sso_uses_google_password_only():
     """Never fill Gmail forms with LINKEDIN_PASSWORD (day-10 burn)."""
