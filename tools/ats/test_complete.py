@@ -16,6 +16,7 @@ from tools.ats.complete import (
     auth_wall_reason,
     classify_ats_host,
     extract_hop_destination_from_url,
+    extract_indeed_applystart_href,
     extract_indeed_company_dest_from_html,
     extract_offsite_from_text,
     frame_url_is_captcha_challenge,
@@ -230,6 +231,13 @@ assert_true(
     )
     == "https://careers.hyland.com/careers/job/123",
     "mosaic continueUrl json dest",
+)
+assert_true(
+    extract_indeed_applystart_href(
+        'href="https://in.indeed.com/applystart?jk=abc&amp;from=vj&amp;pos=bottom"'
+    )
+    == "https://in.indeed.com/applystart?jk=abc&from=vj&pos=bottom",
+    "applystart href without continueUrl",
 )
 assert_true(
     extract_offsite_from_text(

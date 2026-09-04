@@ -294,6 +294,7 @@ def finish_company_site(sb, item, report, handles_before=None) -> None:
         if ats_url and "indeed.com" in ats_url.lower():
             # Click stayed on viewjob — dest is often in applystart href / JSON.
             dest = ""
+            page_html = ""
             try:
                 dest = _sb_call_timeout(
                     lambda: sb.execute_script(
@@ -386,6 +387,65 @@ def finish_company_site(sb, item, report, handles_before=None) -> None:
             if dest:
                 print(f"EXTERNAL viewjob_dest={dest[:160]!r}", flush=True)
                 ats_url = dest
+            else:
+                # applystart has no continueUrl — Indeed 302s after a session click.
+                hop = ""
+                try:
+                    hop = _sb_call_timeout(
+                        lambda: sb.execute_script(
+                            """
+                            const a = document.querySelector('a[href*="applystart"]');
+                            return (a && a.href) || '';
+                            """
+                        ),
+                        10,
+                        "",
+                    ) or ""
+                except Exception:
+                    hop = ""
+                if not hop:
+                    try:
+                        from tools.ats.complete import extract_indeed_applystart_href
+
+                        hop = extract_indeed_applystart_href(page_html)
+                    except Exception:
+                        hop = ""
+                if hop:
+                    print(f"EXTERNAL open_applystart={hop[:160]!r}", flush=True)
+                    before = []
+                    try:
+                        before = list(sb.driver.window_handles)
+                    except Exception:
+                        before = []
+                    try:
+                        sb.execute_script("window.open(arguments[0], '_blank')", hop)
+                    except Exception as exc:
+                        print(f"EXTERNAL applystart_open_err={exc!s}"[:160], flush=True)
+                    landed = ""
+                    for _ in range(16):
+                        time.sleep(0.8)
+
+                        def _offsite() -> str:
+                            for h in list(sb.driver.window_handles):
+                                try:
+                                    if before and h in before and len(sb.driver.window_handles) > 1:
+                                        continue
+                                    sb.switch_to_window(h)
+                                    u = sb.get_current_url() or ""
+                                    if u.startswith("http") and "indeed.com" not in u.lower():
+                                        return u
+                                except Exception:
+                                    continue
+                            return ""
+
+                        landed = _sb_call_timeout(_offsite, 8, "") or ""
+                        if landed:
+                            break
+                    if landed:
+                        print(f"EXTERNAL applystart_landed={landed[:160]!r}", flush=True)
+                        ats_url = landed
+                    else:
+                        print("EXTERNAL applystart_still_indeed", flush=True)
     print(f"EXTERNAL ats_url={ats_url[:160]!r}", flush=True)
     status, reason, final_url = complete_external_ats(ats_url)
     _record_external_result(item, report, status, reason, final_url, ats_url)

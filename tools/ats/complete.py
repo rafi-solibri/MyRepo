@@ -453,6 +453,28 @@ _HREF_RE = re.compile(
 )
 
 
+def extract_indeed_applystart_href(page_html: str | None) -> str:
+    """Return the viewjob Apply-on-company-site applystart href (no dest query)."""
+    text = page_html or ""
+    if not text:
+        return ""
+    m = re.search(
+        r"https?:\\u002F\\u002F(?:www\.|in\.)?indeed\.com\\u002Fapplystart\?[^\"'\\s<]+",
+        text,
+        re.I,
+    )
+    if m:
+        return html.unescape(unescape_json_url(m.group(0).replace("\\u002F", "/")))
+    m = re.search(
+        r"https?://(?:www\.|in\.)?indeed\.com/applystart\?[^\"'\s<]+",
+        text,
+        re.I,
+    )
+    if m:
+        return html.unescape(m.group(0))
+    return ""
+
+
 def extract_indeed_company_dest_from_html(page_html: str | None) -> str:
     """Pull employer ATS dest from a viewjob page when the click never hops.
 
