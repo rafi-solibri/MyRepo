@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| External ATS helper connected to CDP while restriction memory was active | Exit 7 from restriction_skip_payload before Playwright, matching Easy Apply |
 | Fresh cloud VMs lost /tmp+artifacts restriction flag and could re-hit LinkedIn before lift | Persist restriction also to .portal-sessions/linkedin-restriction-until.json (repo seed) and read it when ephemeral flags missing |
 
 

@@ -11,12 +11,15 @@
     {
       "kind": "account_temporarily_restricted",
       "lift_utc": "2026-09-10T03:37:00+00:00",
-      "detail": "CDP launch refused exit 7; flag restored from 2026-09-03 memory"
+      "detail": "POST_FIX_RERUN on #320: CDP launch refused exit 7; Easy Apply exit 7; external helper now also exits 7"
     }
   ],
   "code_fix": true,
-  "code_fix_summary": "Persist LinkedIn restriction lift to .portal-sessions/linkedin-restriction-until.json for fresh VMs",
+  "code_fix_summary": "linkedin_external_apply.py honors restriction memory and exits 7 before CDP connect",
   "preflight_ok": true,
   "cdp_launched": false,
+  "post_fix_rerun": true,
+  "merged_main": "34c296f9754fc6a5bb0bcba91bf46a83090ba743",
+  "merged_pr": "https://github.com/rafi-solibri/MyRepo/pull/320",
   "resume": "resumes/Rafi_Resume.docx"
 }

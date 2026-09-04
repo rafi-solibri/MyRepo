@@ -44,6 +44,18 @@ CDP = os.environ.get("LINKEDIN_CDP", "http://127.0.0.1:9222")
 _ROOT = Path(__file__).resolve().parents[2]
 
 
+def restriction_skip_payload() -> dict | None:
+    """Honor persisted temporary-restriction memory before opening CDP."""
+    try:
+        from tools.linkedin.restriction import should_skip_linkedin_for_restriction
+    except Exception:
+        try:
+            from restriction import should_skip_linkedin_for_restriction  # type: ignore
+        except Exception:
+            return None
+    return should_skip_linkedin_for_restriction()
+
+
 def _artifacts_dir() -> Path:
     if os.environ.get("LINKEDIN_ARTIFACTS"):
         return Path(os.environ["LINKEDIN_ARTIFACTS"])
@@ -560,6 +572,24 @@ def process_external(page: Page, job: dict) -> ExtResult:
 
 
 def main() -> None:
+    skip_restr = restriction_skip_payload()
+    if skip_restr:
+        res = ExtResult(
+            status="blocked",
+            reason=f"linkedin_temporarily_restricted until {skip_restr.get('lift_utc')}",
+        )
+        out = {
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "submitted": [],
+            "blocked": [asdict(res)],
+            "skipped": [],
+            "all": [asdict(res)],
+            "restriction": skip_restr,
+        }
+        REPORT_OUT.write_text(json.dumps(out, indent=2))
+        print(json.dumps({"error": "linkedin_temporarily_restricted", **skip_restr}), flush=True)
+        raise SystemExit(7)
+
     if REPORT_IN.is_file():
         data = json.loads(REPORT_IN.read_text())
     else:
