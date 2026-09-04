@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-09-04 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Fresh cloud VMs lost /tmp+artifacts restriction flag and could re-hit LinkedIn before lift | Persist restriction also to .portal-sessions/linkedin-restriction-until.json (repo seed) and read it when ephemeral flags missing |
+
+
 ## 2026-09-01 (cloud)
 
 | Issue | Fix |
