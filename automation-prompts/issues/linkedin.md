@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| post-fix re-run of linkedin-tagged PR still launched LinkedIn cloud agent during active restriction | rerun-daily-after-fix.sh: skip linkedin portal when should_skip_linkedin_for_restriction is set |
 | Foundit Falcon LinkedIn redirects + Hitech LI auto-login could re-hit LinkedIn during active restriction (extends ban) | Node restriction.js + Foundit skip LI navigate before goto; launch-daily-portals skips LinkedIn while restriction active; Hitech launch prompt forces skip-LI |
 | Fresh cloud VMs lost /tmp+artifacts restriction flag and could re-hit LinkedIn before lift | Persist restriction also to .portal-sessions/linkedin-restriction-until.json (repo seed) and read it when ephemeral flags missing |
 
