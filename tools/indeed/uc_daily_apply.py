@@ -822,6 +822,52 @@ def run_homepage_search(sb, query: str, location: str) -> bool:
     return clear_cf(sb)
 
 
+def smartapply_surface_ready(url: str = "", body: str = "") -> bool:
+    """True only on a real SmartApply module — not the job-view listing.
+
+    2026-09-04: waiting for bare "continue" matched cookie/JD copy on viewjob,
+    so Easy Apply filled the listing (no file input) and never opened SmartApply.
+    """
+    u = (url or "").lower()
+    b = (body or "").lower()
+    if "smartapply.indeed.com" in u or "indeedapply" in u:
+        return True
+    if re.search(
+        r"resume-selection|review-module|questions-module|contact-info",
+        u,
+    ):
+        return True
+    if re.search(
+        r"contact information|add a resume|upload (your )?resume|"
+        r"review your application|answer these questions from the employer",
+        b,
+    ):
+        return True
+    return False
+
+
+def wait_for_smartapply_surface(sb, seconds: float = 12.0) -> bool:
+    """After Apply with Indeed, wait for SmartApply URL/iframe — not viewjob."""
+    deadline = time.time() + seconds
+    while time.time() < deadline:
+        _switch_smartapply_frame(sb)
+        try:
+            cur = sb.get_current_url() or ""
+            txt = sb.get_text("body") or ""
+        except Exception:
+            cur, txt = "", ""
+        if smartapply_surface_ready(cur, txt):
+            print(f"  smartapply_ready url={cur[:120]}", flush=True)
+            return True
+        time.sleep(0.6)
+    try:
+        cur = sb.get_current_url() or ""
+        print(f"  smartapply_not_ready url={cur[:120]}", flush=True)
+    except Exception:
+        pass
+    return False
+
+
 def _switch_smartapply_frame(sb) -> None:
     """SmartApply occasionally mounts the form inside an iframe."""
     try:
@@ -3058,6 +3104,9 @@ def easy_apply_flow(sb, max_steps: int = 24, deadline: float | None = None) -> s
     review_submit_attempts = 0
     same_cta_streak = 0
     last_cta_key = ""
+    if not wait_for_smartapply_surface(sb, seconds=4):
+        print("  easy_apply_no_smartapply_surface", flush=True)
+        return "failed"
     for step in range(max_steps):
         if deadline and time.time() > deadline:
             return "failed"
@@ -3706,16 +3755,25 @@ def main() -> int:
                         applied = True
                         continue
 
-                    # Wait for SmartApply module navigation / modal hydration.
-                    for _ in range(10):
+                    # Wait for SmartApply module — do not treat job-view "Continue" as ready.
+                    if not wait_for_smartapply_surface(sb, seconds=14):
+                        # One more Apply-with-Indeed click, then wait again.
                         try:
-                            cur = sb.get_current_url() or ""
-                            txt = (sb.get_text("body") or "").lower()
+                            sb.execute_script(
+                                """
+                                const cands=[...document.querySelectorAll(
+                                  'button, a, [role=button], [data-indeed-apply-button]'
+                                )];
+                                const textOf = (e) => ((e.innerText||'') + ' ' + (e.getAttribute('aria-label')||'')).trim();
+                                const el=cands.find(e => /apply with indeed|indeed apply|easily apply|easy apply/i.test(textOf(e))
+                                  && !/company site|company website/i.test(textOf(e)));
+                                if (el) el.click();
+                                return el ? textOf(el).slice(0,80) : null;
+                                """
+                            )
                         except Exception:
-                            cur, txt = "", ""
-                        if "smartapply.indeed.com" in cur or "indeedapply" in cur or "contact information" in txt or "continue" in txt:
-                            break
-                        time.sleep(0.5)
+                            pass
+                        wait_for_smartapply_surface(sb, seconds=10)
                     result = easy_apply_flow(sb, deadline=job_deadline)
                     item["path"] = "easy_apply"
                     item["result"] = result

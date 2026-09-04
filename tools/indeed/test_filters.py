@@ -19,6 +19,7 @@ from tools.indeed.uc_daily_apply import (  # noqa: E402
     job_dedupe_key,
     looks_signed_in,
     skip_reason,
+    smartapply_surface_ready,
 )
 
 
@@ -299,6 +300,27 @@ def test_google_sso_cta_visible_from_text():
     )
 
 
+def test_smartapply_surface_ready_not_job_view():
+    """Job-view cookie/JD 'Continue' is not a SmartApply module."""
+    view = (
+        "Apply with Indeed\nApply on company site\n"
+        "Cookies Settings\nReject All\nAccept All Cookies\n"
+        "12+ years of experience\n₹12,00,000 - ₹20,00,000 a year"
+    )
+    assert not smartapply_surface_ready(
+        "https://in.indeed.com/viewjob?jk=aa373e9cacaf58ca&from=serp",
+        view,
+    )
+    assert smartapply_surface_ready(
+        "https://smartapply.indeed.com/beta/indeedapply/form/resume-selection",
+        "Add a resume",
+    )
+    assert smartapply_surface_ready(
+        "https://in.indeed.com/viewjob?jk=x",
+        "Contact information\nContinue",
+    )
+
+
 def test_indeed_google_sso_uses_google_password_only():
     """Never fill Gmail forms with LINKEDIN_PASSWORD (day-10 burn)."""
     from tools.indeed.google_sso import google_password_candidates
@@ -334,5 +356,6 @@ if __name__ == "__main__":
     test_job_dedupe_key_from_jk()
     test_passport_expiry_from_oauth_and_jwt()
     test_google_sso_cta_visible_from_text()
+    test_smartapply_surface_ready_not_job_view()
     test_indeed_google_sso_uses_google_password_only()
     print("ok")
