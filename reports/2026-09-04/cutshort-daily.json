@@ -1,0 +1,53 @@
+{
+  "portal": "portal-daily",
+  "source": "cloud-postfix-rerun",
+  "date": "2026-09-04",
+  "finishedAt": "2026-09-04T03:53:51.325Z",
+  "head": "a385176f265a61f4dacf6b4b2a7ed0d43d393ba7",
+  "mergedPr": "https://github.com/rafi-solibri/MyRepo/pull/323",
+  "ok": true,
+  "counts": {
+    "applied": 0,
+    "external": 0,
+    "rejected": 0,
+    "blocked": 0,
+    "skipped": 0,
+    "seen": 3319,
+    "qualifying": 0,
+    "questionnairesAnswered": 0,
+    "questionnairesLockedEmpty": 0
+  },
+  "skipReasons": {
+    "location": 238,
+    "skip_title": 768,
+    "no_tier_match": 43,
+    "exp_max_low": 1026,
+    "ctc_under_35": 1244
+  },
+  "applied": [],
+  "alreadyAppliedByMorningCron": [
+    {
+      "id": "6a993ad1e4d58098f2c3a33a",
+      "title": "Lead Engineer / Architect",
+      "company": "BetaCrew Labs",
+      "tier": 1,
+      "ctc": 60,
+      "via": "api_no_ui_button",
+      "source": "https://github.com/rafi-solibri/MyRepo/pull/325"
+    },
+    {
+      "id": "6a992a67bfb9887e82d6c38b",
+      "title": "Full Stack AI Engineer",
+      "company": "Lightning",
+      "tier": 2,
+      "ctc": 50,
+      "via": "api_no_ui_button",
+      "source": "https://github.com/rafi-solibri/MyRepo/pull/325"
+    }
+  ],
+  "notes": [
+    "POST_FIX_RERUN=1 on main a385176",
+    "qualifying=0 in this session; morning cron already applied the only 2 qualifying cards",
+    "do_not_invent_applies=true"
+  ]
+}
