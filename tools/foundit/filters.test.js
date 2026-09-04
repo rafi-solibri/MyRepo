@@ -437,6 +437,34 @@ assert.strictEqual(
 
 assert.strictEqual(
   classifyJob({
+    jobId: 26.05,
+    title: "Oracle Apex Solution Architect",
+    companyName: "Tata Consultancy Services",
+    locations: [{ text: "Hyderabad / Secunderabad, Telangana | India" }],
+    skills: [{ text: "Oracle Apex" }, { text: "PL/SQL" }, { text: "Solution Architecture" }],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 12 },
+  }).reason,
+  "Oracle Fusion/ERP without .NET on title",
+  "TCS Oracle Apex Solution Architect must skip Arch/Lead band (false Falcon NORMAL 2026-09-04)"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 26.06,
+    title: "APEX Solution Architect",
+    companyName: "Example",
+    locations: [{ text: "Hyderabad | Remote" }],
+    skills: [{ text: "Oracle" }, { text: "APEX" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "Oracle Fusion/ERP without .NET on title",
+  "bare APEX Solution Architect title must skip without .NET (Naukri #318 parity)"
+);
+
+assert.strictEqual(
+  classifyJob({
     jobId: 26.1,
     title: "Snowflake Solutions Architect",
     companyName: "INFOTRON",
