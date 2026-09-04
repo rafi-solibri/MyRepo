@@ -26,6 +26,14 @@ FLAG_PATH = Path(
     os.environ.get("LINKEDIN_RESTRICTION_FLAG", "/tmp/linkedin-restriction-until.json")
 )
 ARTIFACT_FLAG = Path("/opt/cursor/artifacts/linkedin-restriction-until.json")
+# Repo-seeded flag survives fresh cloud VMs ( /tmp + artifacts are ephemeral ).
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_FLAG = Path(
+    os.environ.get(
+        "LINKEDIN_RESTRICTION_REPO_FLAG",
+        str(_REPO_ROOT / ".portal-sessions" / "linkedin-restriction-until.json"),
+    )
+)
 
 _TZ_ALIASES = {
     "PDT": "America/Los_Angeles",
@@ -113,7 +121,7 @@ def write_restriction_memory(info: dict[str, Any]) -> None:
         ),
     }
     raw = json.dumps(payload, indent=2)
-    for path in (FLAG_PATH, ARTIFACT_FLAG):
+    for path in (FLAG_PATH, ARTIFACT_FLAG, REPO_FLAG):
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(raw, encoding="utf-8")
@@ -123,7 +131,7 @@ def write_restriction_memory(info: dict[str, Any]) -> None:
 
 
 def clear_restriction_memory() -> None:
-    for path in (FLAG_PATH, ARTIFACT_FLAG):
+    for path in (FLAG_PATH, ARTIFACT_FLAG, REPO_FLAG):
         try:
             if path.is_file():
                 path.unlink()
@@ -131,8 +139,13 @@ def clear_restriction_memory() -> None:
             pass
 
 
+def _restriction_flag_paths() -> tuple[Path, ...]:
+    """Prefer ephemeral live flags, then durable repo seed for new cloud VMs."""
+    return (FLAG_PATH, ARTIFACT_FLAG, REPO_FLAG)
+
+
 def read_restriction_memory() -> dict[str, Any] | None:
-    for path in (FLAG_PATH, ARTIFACT_FLAG):
+    for path in _restriction_flag_paths():
         try:
             if not path.is_file():
                 continue

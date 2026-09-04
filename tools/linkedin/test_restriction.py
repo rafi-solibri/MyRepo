@@ -48,6 +48,7 @@ def test_restriction_memory_roundtrip(tmp_path: Path, monkeypatch):
     flag = tmp_path / "restr.json"
     monkeypatch.setattr("tools.linkedin.restriction.FLAG_PATH", flag)
     monkeypatch.setattr("tools.linkedin.restriction.ARTIFACT_FLAG", tmp_path / "art.json")
+    monkeypatch.setattr("tools.linkedin.restriction.REPO_FLAG", tmp_path / "repo.json")
     clear_restriction_memory()
     future = datetime.now(timezone.utc) + timedelta(hours=2)
     write_restriction_memory(
@@ -59,6 +60,7 @@ def test_restriction_memory_roundtrip(tmp_path: Path, monkeypatch):
         }
     )
     assert flag.is_file()
+    assert (tmp_path / "repo.json").is_file()
     blocked = linkedin_blocked_until()
     assert blocked is not None
     skip = should_skip_linkedin_for_restriction()
@@ -67,6 +69,27 @@ def test_restriction_memory_roundtrip(tmp_path: Path, monkeypatch):
     past = datetime.now(timezone.utc) - timedelta(minutes=5)
     write_restriction_memory({"lift_utc": past.isoformat(), "seconds_until_lift": 0})
     assert linkedin_blocked_until() is None
+
+
+def test_restriction_memory_reads_repo_seed_when_tmp_missing(tmp_path: Path, monkeypatch):
+    """Fresh cloud VMs lose /tmp + artifacts; repo seed must still block until lift."""
+    monkeypatch.setattr("tools.linkedin.restriction.FLAG_PATH", tmp_path / "missing-tmp.json")
+    monkeypatch.setattr("tools.linkedin.restriction.ARTIFACT_FLAG", tmp_path / "missing-art.json")
+    repo = tmp_path / "repo-seed.json"
+    monkeypatch.setattr("tools.linkedin.restriction.REPO_FLAG", repo)
+    future = datetime.now(timezone.utc) + timedelta(days=3)
+    repo.write_text(
+        json.dumps(
+            {
+                "lift_utc": future.isoformat(),
+                "kind": "account_temporarily_restricted",
+            }
+        ),
+        encoding="utf-8",
+    )
+    skip = should_skip_linkedin_for_restriction()
+    assert skip is not None
+    assert skip["reason"] == "linkedin_temporarily_restricted"
 
 
 def test_people_referrals_default_off(monkeypatch):
@@ -86,9 +109,10 @@ if __name__ == "__main__":
     from tools.linkedin import restriction as r
 
     with tempfile.TemporaryDirectory() as d:
-        old_f, old_a = r.FLAG_PATH, r.ARTIFACT_FLAG
+        old_f, old_a, old_r = r.FLAG_PATH, r.ARTIFACT_FLAG, r.REPO_FLAG
         r.FLAG_PATH = Path(d) / "restr.json"
         r.ARTIFACT_FLAG = Path(d) / "art.json"
+        r.REPO_FLAG = Path(d) / "repo.json"
         try:
             clear_restriction_memory()
             future = datetime.now(timezone.utc) + timedelta(hours=2)
@@ -97,11 +121,21 @@ if __name__ == "__main__":
             )
             assert linkedin_blocked_until() is not None
             assert should_skip_linkedin_for_restriction() is not None
+            assert r.REPO_FLAG.is_file()
             past = datetime.now(timezone.utc) - timedelta(minutes=5)
             write_restriction_memory({"lift_utc": past.isoformat(), "seconds_until_lift": 0})
             assert linkedin_blocked_until() is None
+            # Repo-only seed (fresh VM: no /tmp or artifacts)
+            r.FLAG_PATH = Path(d) / "gone-tmp.json"
+            r.ARTIFACT_FLAG = Path(d) / "gone-art.json"
+            r.REPO_FLAG = Path(d) / "seed-only.json"
+            future2 = datetime.now(timezone.utc) + timedelta(days=2)
+            r.REPO_FLAG.write_text(
+                json.dumps({"lift_utc": future2.isoformat()}), encoding="utf-8"
+            )
+            assert should_skip_linkedin_for_restriction() is not None
         finally:
-            r.FLAG_PATH, r.ARTIFACT_FLAG = old_f, old_a
+            r.FLAG_PATH, r.ARTIFACT_FLAG, r.REPO_FLAG = old_f, old_a, old_r
     os.environ.pop("LINKEDIN_PEOPLE_REFERRALS", None)
     os.environ.pop("HITECHCITY_LI_PEOPLE_REFERRALS", None)
     assert people_referrals_enabled() is False

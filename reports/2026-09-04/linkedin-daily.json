@@ -1,0 +1,22 @@
+{
+  "date": "2026-09-04",
+  "portal": "linkedin",
+  "status": "STOPPED",
+  "reason": "linkedin_temporarily_restricted",
+  "lift_utc": "2026-09-10T03:37:00+00:00",
+  "easy_apply_submitted": 0,
+  "external_completed": 0,
+  "skipped": [],
+  "blocked": [
+    {
+      "kind": "account_temporarily_restricted",
+      "lift_utc": "2026-09-10T03:37:00+00:00",
+      "detail": "CDP launch refused exit 7; flag restored from 2026-09-03 memory"
+    }
+  ],
+  "code_fix": true,
+  "code_fix_summary": "Persist LinkedIn restriction lift to .portal-sessions/linkedin-restriction-until.json for fresh VMs",
+  "preflight_ok": true,
+  "cdp_launched": false,
+  "resume": "resumes/Rafi_Resume.docx"
+}
