@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Preferred-campus seeds (Capgemini/Hexaware/ADP/ServiceNow/PayPal/Cyient/…) scanned urls=0; unattended Solera Workday persist_retry looped soft incompletes (∞) and starved worker8 + boards | CAREERS_URL_HINTS for verified guest portals; headless cloud uses owner-asleep soft-incomplete cap=2 so one ATS cannot starve a parallel worker |
 | Experian openings-probe listed .NET SA but careers keyword scan jobCount=0; Storable gh_jid brochure no_ats_form; TTEC Systems Software + Micron Workload Analytics + IBM Kafka Storage burned soft/no_ats walls | Seed careers applies from sampleOpenings; rewrite gh_jid embeds to boards.greenhouse.io; CAREERS/LI title-skip systems software / workload analytics / kafka storage / mainframe; Storable Greenhouse URL hints |
 
 

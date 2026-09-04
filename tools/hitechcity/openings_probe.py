@@ -105,6 +105,55 @@ CAREERS_URL_HINTS: dict[str, list[str]] = {
         "https://boards.greenhouse.io/storable",
         "https://www.storable.com/about-us/culture/careers/",
     ],
+    # 2026-09-04: seed tenants on preferred home campuses had empty careersUrls
+    # (SCAN urls=0). Official guest-search portals verified HTTP 200 from cloud.
+    "Capgemini": [
+        "https://www.capgemini.com/jobs/?keyword=Engineering%20Manager&country_code=IN",
+        "https://jobs.capgemini.com/",
+    ],
+    "Hexaware": ["https://jobs.hexaware.com/"],
+    "ServiceNow": [
+        "https://careers.smartrecruiters.com/ServiceNow/?search=Engineering%20Manager&location=Hyderabad"
+    ],
+    "PayPal": [
+        "https://paypal.eightfold.ai/careers?query=Engineering%20Manager&location=Hyderabad"
+    ],
+    "OpenText": ["https://careers.opentext.com/us/en"],
+    "Tech Mahindra": ["https://careers.techmahindra.com/"],
+    "Persistent Systems": ["https://careers.persistent.com/"],
+    "Thomson Reuters": [
+        "https://thomsonreuters.wd5.myworkdayjobs.com/en-US/External_Career_Site"
+    ],
+    "Invesco": ["https://invesco.wd1.myworkdayjobs.com/IVZ"],
+    "ValueLabs": ["https://www.valuelabs.com/careers/"],
+    "Celonis": ["https://careers.celonis.com/join-us/open-positions"],
+    "Chubb": [
+        "https://careers.chubb.com/global/en/search-results?keywords=Engineering%20Manager"
+    ],
+    "Novartis": [
+        "https://www.novartis.com/careers/career-search"
+        "?search_api_fulltext=Engineering%20Manager&country%5B%5D=IN"
+    ],
+    "Silicon Labs": ["https://silabs.wd1.myworkdayjobs.com/SiliconlabsCareers"],
+    "Parexel": ["https://jobs.parexel.com/en"],
+    "BA Continuum": ["https://careers.bankofamerica.com/en-us/job-search"],
+    "Infosys": ["https://career.infosys.com/jobsearch"],
+    "Wipro": [
+        "https://careers.wipro.com/search/?createNewAlert=false&q=&locationsearch=Hyderabad"
+    ],
+    "HCLTech": ["https://careers.hcltech.com/"],
+    "ADP": [
+        "https://myjobs.adp.com/public/staffing/v1/recruiting-job-search?location=Hyderabad"
+    ],
+    "Cyient": ["https://www.cyient.com/careers"],
+    "NCR Voyix": ["https://www.ncrvoyix.com/about/careers"],
+    "Progress Software": ["https://www.progress.com/company/careers"],
+    "Wells Fargo": ["https://www.wellsfargojobs.com/"],
+    "Bayer": ["https://jobs.bayer.com/jobsearch"],
+    "Homes.com": ["https://costar.wd1.myworkdayjobs.com/CoStarCareers"],
+    "Rackspace": ["https://rackspace.wd1.myworkdayjobs.com/External"],
+    "Postman": ["https://www.postman.com/company/careers/"],
+    "InvoiceCloud": ["https://www.invoicecloud.com/careers"],
     # Cotelligent careers path 403/404; brand folded into TechDemocracy with no guest ATS.
     # Do not re-add cotelligent.com/careers — scrub only via DEAD_CAREERS_HOST_RE.
 }

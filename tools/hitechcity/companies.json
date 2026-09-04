@@ -26,7 +26,7 @@
       "Azure Architect",
       "Cloud Architect"
     ],
-    "lastDiscoveryAt": "2026-09-02T03:36:55.416585+00:00",
+    "lastDiscoveryAt": "2026-09-04T06:05:08.058781+00:00",
     "discoveryMode": "campus_catalog+web_directories+seeds+linkedin_optional+board_hints",
     "preferredHomeCampuses": [
       "sattva-knowledge-city",
@@ -36,7 +36,7 @@
       "rmz-skyview",
       "rmz-futura"
     ],
-    "lastOpeningsProbeAt": "2026-09-02T03:41:48.567958+00:00"
+    "lastOpeningsProbeAt": "2026-09-04T06:10:40.694627+00:00"
   },
   "campuses": [
     {
@@ -147,7 +147,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:40:31.189481+00:00"
+      "openingsProbedAt": "2026-09-04T06:09:14.919538+00:00"
     },
     {
       "name": "AMD",
@@ -165,7 +165,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:40:48.445613+00:00"
+      "openingsProbedAt": "2026-09-04T06:09:32.068639+00:00"
     },
     {
       "name": "Apple",
@@ -182,7 +182,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:37:08.264680+00:00"
+      "openingsProbedAt": "2026-09-04T06:05:21.072472+00:00"
     },
     {
       "name": "Blackbaud",
@@ -199,7 +199,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:40:55.760291+00:00"
+      "openingsProbedAt": "2026-09-04T06:09:39.598187+00:00"
     },
     {
       "name": "Blue Yonder",
@@ -214,7 +214,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:41:07.666021+00:00"
+      "openingsProbedAt": "2026-09-04T06:09:51.766001+00:00"
     },
     {
       "name": "CGI",
@@ -233,7 +233,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:37:16.811821+00:00"
+      "openingsProbedAt": "2026-09-04T06:05:27.703564+00:00"
     },
     {
       "name": "Cotelligent",
@@ -265,7 +265,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:37:50.303002+00:00"
+      "openingsProbedAt": "2026-09-04T06:06:19.804206+00:00"
     },
     {
       "name": "Experian",
@@ -280,7 +280,7 @@
       "priority": 1,
       "linkedinCompanyId": "2534",
       "hasOpenings": true,
-      "openingsCount": 7,
+      "openingsCount": 6,
       "sampleOpenings": [
         {
           "role": "Senior Staff Engineer (Full Stack-Next.js/React, Node.js, Python, AWS) Hyderabad, India Full-time",
@@ -293,11 +293,6 @@
           "location": ""
         },
         {
-          "role": "Lead Software Engineer - Mainframe Hyderabad, India Full-time",
-          "url": "https://jobs.smartrecruiters.com/Experian/744000142144341-lead-software-engineer-mainframe",
-          "location": ""
-        },
-        {
           "role": "Senior Staff Software Engineer Hyderabad, India Full-time",
           "url": "https://jobs.smartrecruiters.com/Experian/744000140435649-senior-staff-software-engineer",
           "location": ""
@@ -306,9 +301,14 @@
           "role": "Solution Architect (Microsoft .NET/Azure Cloud) Hyderabad, India Full-time",
           "url": "https://jobs.smartrecruiters.com/Experian/744000139938479-solution-architect-microsoft-net-azure-cloud-",
           "location": ""
+        },
+        {
+          "role": "Engineering Manager Hyderabad, India Full-time",
+          "url": "https://jobs.smartrecruiters.com/Experian/744000138099780-engineering-manager",
+          "location": ""
         }
       ],
-      "openingsProbedAt": "2026-09-02T03:41:36.638453+00:00"
+      "openingsProbedAt": "2026-09-04T06:10:16.936849+00:00"
     },
     {
       "name": "EY",
@@ -325,7 +325,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:38:03.201664+00:00"
+      "openingsProbedAt": "2026-09-04T06:06:40.740975+00:00"
     },
     {
       "name": "GE Vernova",
@@ -444,7 +444,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:38:48.195441+00:00"
+      "openingsProbedAt": "2026-09-04T06:07:30.870900+00:00"
     },
     {
       "name": "Micron Technology",
@@ -462,7 +462,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:38:59.920965+00:00"
+      "openingsProbedAt": "2026-09-04T06:07:42.714792+00:00"
     },
     {
       "name": "Microsoft",
@@ -599,7 +599,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:39:14.203117+00:00"
+      "openingsProbedAt": "2026-09-04T06:08:00.291889+00:00"
     },
     {
       "name": "Qualcomm",
@@ -614,7 +614,7 @@
       "priority": 1,
       "linkedinCompanyId": "2017",
       "hasOpenings": true,
-      "openingsCount": 6,
+      "openingsCount": 3,
       "sampleOpenings": [
         {
           "role": "Director Engineering - Project Engineer Linux IOT Projects Hyderabad",
@@ -627,22 +627,12 @@
           "location": ""
         },
         {
-          "role": "Engineer, Principal/Manager - Linux Distros Architecture(Yocto, Ubuntu, Debian) Hyderabad",
-          "url": "https://careers.qualcomm.com/careers/job/446714783909",
-          "location": ""
-        },
-        {
           "role": "Engineer, Senior Staff - Software PE IOT Projects Hyderabad, Telang\u0101na, India Software Engineering Posted 6 months ago",
           "url": "https://careers.qualcomm.com/careers/job/446717059641",
           "location": ""
-        },
-        {
-          "role": "Senior Lead Engineer - Linux Kernel Development Hyderabad, Telang\u0101na, India Software Engineering Posted 16 days ago",
-          "url": "https://careers.qualcomm.com/careers/job/446720449165",
-          "location": ""
         }
       ],
-      "openingsProbedAt": "2026-09-02T03:39:20.407301+00:00"
+      "openingsProbedAt": "2026-09-04T06:08:06.540627+00:00"
     },
     {
       "name": "Solera",
@@ -692,7 +682,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:40:19.720997+00:00"
+      "openingsProbedAt": "2026-09-04T06:09:03.205156+00:00"
     },
     {
       "name": "ADP",
@@ -802,7 +792,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:41:18.630581+00:00"
+      "openingsProbedAt": "2026-09-04T06:10:02.705838+00:00"
     },
     {
       "name": "Cyient",
@@ -832,7 +822,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:37:34.774249+00:00"
+      "openingsProbedAt": "2026-09-04T06:06:03.898277+00:00"
     },
     {
       "name": "Deloitte",
@@ -849,7 +839,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:37:41.214304+00:00"
+      "openingsProbedAt": "2026-09-04T06:06:10.331919+00:00"
     },
     {
       "name": "Fiserv",
@@ -864,7 +854,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:41:48.555139+00:00"
+      "openingsProbedAt": "2026-09-04T06:10:28.563407+00:00"
     },
     {
       "name": "Flutter Entertainment",
@@ -881,7 +871,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:38:09.551754+00:00"
+      "openingsProbedAt": "2026-09-04T06:06:49.868360+00:00"
     },
     {
       "name": "Gartner",
@@ -896,7 +886,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-08-30T14:23:37.781583+00:00"
+      "openingsProbedAt": "2026-09-04T06:10:40.682229+00:00"
     },
     {
       "name": "Hexaware",
@@ -952,7 +942,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:38:16.563029+00:00"
+      "openingsProbedAt": "2026-09-04T06:06:56.912714+00:00"
     },
     {
       "name": "Invesco",
@@ -991,7 +981,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:38:29.375784+00:00"
+      "openingsProbedAt": "2026-09-04T06:07:09.251402+00:00"
     },
     {
       "name": "LTIMindtree",
@@ -1009,7 +999,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:38:36.367099+00:00"
+      "openingsProbedAt": "2026-09-04T06:07:19.271497+00:00"
     },
     {
       "name": "Macquarie",
@@ -1068,7 +1058,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:39:07.685912+00:00"
+      "openingsProbedAt": "2026-09-04T06:07:49.512505+00:00"
     },
     {
       "name": "MTX Group",
@@ -1264,7 +1254,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:39:45.610530+00:00"
+      "openingsProbedAt": "2026-09-04T06:08:31.792901+00:00"
     },
     {
       "name": "Salesforce",
@@ -1316,7 +1306,9 @@
       ],
       "linkedinSlug": "storable",
       "careersUrls": [
-        "https://www.storable.com/about-us/culture/careers/"
+        "https://www.storable.com/about-us/culture/careers/",
+        "https://job-boards.greenhouse.io/storable",
+        "https://boards.greenhouse.io/storable"
       ],
       "priority": 2,
       "hasOpenings": false,
@@ -1374,7 +1366,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:39:57.789765+00:00"
+      "openingsProbedAt": "2026-09-04T06:08:44.100798+00:00"
     },
     {
       "name": "Uber",
@@ -1467,7 +1459,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:40:07.437056+00:00"
+      "openingsProbedAt": "2026-09-04T06:08:50.734189+00:00"
     },
     {
       "name": "DXC Technology",
@@ -1483,7 +1475,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-02T03:41:32.902618+00:00"
+      "openingsProbedAt": "2026-09-04T06:10:13.172571+00:00"
     },
     {
       "name": "HCLTech",

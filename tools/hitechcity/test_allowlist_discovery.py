@@ -220,6 +220,14 @@ def test_openings_preference_and_hints():
     assert "about-us/culture/careers" in " ".join(CAREERS_URL_HINTS["Storable"])
     assert "greenhouse.io/storable" in CAREERS_URL_HINTS["Storable"][0]
     assert "Cotelligent" not in CAREERS_URL_HINTS
+    # Preferred-campus seeds that previously scanned urls=0.
+    assert "jobs.hexaware.com" in CAREERS_URL_HINTS["Hexaware"][0]
+    assert "capgemini.com" in CAREERS_URL_HINTS["Capgemini"][0]
+    assert "smartrecruiters.com/ServiceNow" in CAREERS_URL_HINTS["ServiceNow"][0]
+    assert "paypal.eightfold.ai" in CAREERS_URL_HINTS["PayPal"][0]
+    assert "myjobs.adp.com" in CAREERS_URL_HINTS["ADP"][0]
+    assert "cyient.com/careers" in CAREERS_URL_HINTS["Cyient"][0]
+    assert "costar.wd1.myworkdayjobs.com" in CAREERS_URL_HINTS["Homes.com"][0]
     companies = [
         {"name": "Electronic Arts", "campuses": ["rmz-nexity"], "careersUrls": []},
         {"name": "Someone Else", "campuses": ["dlf-cyber-city"], "careersUrls": []},
@@ -255,6 +263,8 @@ def test_openings_preference_and_hints():
             "campuses": ["rmz-skyview"],
             "careersUrls": ["https://www.cotelligent.com/careers/"],
         },
+        {"name": "Capgemini", "campuses": ["mindspace-madhapur"], "careersUrls": []},
+        {"name": "Hexaware", "campuses": ["sattva-knowledge-park"], "careersUrls": []},
     ]
     touched = ensure_careers_url_hints(companies)
     assert "Electronic Arts" in touched
@@ -270,6 +280,8 @@ def test_openings_preference_and_hints():
     assert any("about-us/culture/careers" in u for u in companies[5]["careersUrls"])
     assert companies[6]["careersUrls"] == []
     assert "Storable" in touched and "Cotelligent" in touched
+    assert "Capgemini" in touched and companies[7]["careersUrls"]
+    assert "Hexaware" in touched and any("jobs.hexaware.com" in u for u in companies[8]["careersUrls"])
 
 
 if __name__ == "__main__":

@@ -31,6 +31,11 @@ def _owner_asleep_bootstrap() -> bool:
         return True
     if Path("/tmp/hitechcity-owner-asleep").exists():
         return True
+    # Headless cloud (no HOME_LOCAL): owner cannot finish Workday persist_retry.
+    home = (os.environ.get("HOME_LOCAL") or "").strip().lower() in ("1", "true", "yes")
+    headed = (os.environ.get("CHROME_HEADLESS") or "1").strip() in ("0", "false", "no")
+    if not home and not headed:
+        return True
     return False
 
 
@@ -68,7 +73,6 @@ if _owner_asleep_bootstrap():
         "soft-incomplete cap=2/company",
         flush=True,
     )
-
 
 from tools.hitechcity.board_campus_apply import run as run_boards
 from tools.hitechcity.careers_apply import load_companies, run as run_careers
