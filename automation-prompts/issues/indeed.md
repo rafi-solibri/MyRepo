@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Apply-on-company-site applystart has no continueUrl; click stayed on viewjob | Open applystart in UC session and wait for employer ATS URL before Playwright complete |
 | Apply on company site stayed on viewjob; ATS helper got indeed URL → did_not_leave_indeed | Scrape applystart/continueUrl and companyApplyUrl from viewjob DOM when click does not hop |
 | Sign-in wall cookie banner hid Continue with Google (google_sso_button_missing); chrome_session exit 3 skipped SSO heal | Dismiss OneTrust then JS-click Indeed Google CTA; passport-expired + GOOGLE_PASSWORD continues to daily_apply; inherit UC stdio for 2FA |
 
