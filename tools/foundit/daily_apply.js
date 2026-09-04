@@ -28,6 +28,9 @@ const { completeWorkdayApply } = require("../naukri/workday_apply");
 const { completeExternalPage } = require("../ats/complete_page");
 const { tailorResumeForJob } = require("../resume_tailor");
 const { updateFounditProfileResume } = require("./update_profile_resume");
+const {
+  shouldSkipLinkedinForRestriction,
+} = require("../linkedin/restriction");
 
 const CDP = process.env.FOUNDIT_CDP || "http://127.0.0.1:9222";
 const OUT =
@@ -349,6 +352,18 @@ function atsSubmitClicked(status) {
 async function handleExternalAts(context, resumePath, job, report) {
   const url = job.redirectUrl;
   if (!url) return { status: "no_redirect" };
+  // Skip LinkedIn redirects entirely while account restriction is active —
+  // do not even navigate (LinkedIn Daily + Hitech share this account).
+  if (/linkedin\.com/i.test(url)) {
+    const liSkip = shouldSkipLinkedinForRestriction();
+    if (liSkip) {
+      return {
+        status: "linkedin_temporarily_restricted",
+        url,
+        lift_utc: liSkip.lift_utc,
+      };
+    }
+  }
   const page = await context.newPage();
   const started = Date.now();
   try {
@@ -878,6 +893,8 @@ async function main() {
             company: verdict.company,
             reason: atsSoft
               ? "ats_submit_unconfirmed"
+              : ats && /linkedin_temporarily_restricted/i.test(ats.status)
+                ? "linkedin_temporarily_restricted"
               : ats && /login_wall|captcha/i.test(ats.status)
                 ? ats.status
                 : "external_ats_incomplete",
@@ -890,7 +907,13 @@ async function main() {
             ats,
           });
           // LinkedIn redirects without Easy Apply still need referral outreach drafts.
-          if (/linkedin\.com/i.test(String(redirectUrl || ""))) pushReferralDraft();
+          // Skip drafts while LI is restricted — we never opened the job.
+          if (
+            /linkedin\.com/i.test(String(redirectUrl || "")) &&
+            !(ats && /linkedin_temporarily_restricted/i.test(ats.status))
+          ) {
+            pushReferralDraft();
+          }
           console.error(
             `[foundit] NOT counting apply — need ATS submit; Falcon ok=${!!falconOk} ATS=${ats && ats.status}`
           );
