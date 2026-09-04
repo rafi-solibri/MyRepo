@@ -36,8 +36,22 @@ Hi — I'm applying for Lead Software Engineer - .NET at EPAM. 15+ yrs Solutions
 - Skips: 1211 | duplicates: 69 | blocked: 0.
 - Candidates: d1=51 / d3=108 / d7=352 / d14=248 / d30=295 / d90=175 / d3650=51.
 
+## Post-fix re-run (#327) — 2026-09-04 11:34 IST
+- Ran on `main` @ `32fda46` after merge of https://github.com/rafi-solibri/MyRepo/pull/327 (`shouldSkipLinkedinForRestriction` before LinkedIn redirect navigation).
+- Login: MSSOAT + jwtOk; onApp (Hi, Seeker placeholder accepted). Resume: `resumes/Rafi_Resume.docx`.
+- Applied tab: **401 → 401** (+0). Intentional logged: **0**. No invented applies.
+- Already-applied today skipped via `userJobInfo` (69), including EPAM Lead Software Engineer - .NET and this morning's LinkedIn-redirect jobs (integers.ai, relq technologies, HighRadius).
+- TCS Oracle Apex Solution Architect still skipped (`Oracle Fusion/ERP without .NET on title`).
+- LinkedIn restriction honored (lift 2026-09-10T03:37:00Z): no `linkedin.com` navigations; blocked: **0**.
+- Skips: 1201 | duplicates: 69 | blocked: 0 | referral drafts: 0 (no new applies; LI drafts still the morning three above).
+- Candidates: d1=56 / d3=97 / d7=357 / d14=257 / d30=300 / d90=163 / d3650=40.
+- Age window used: 3650d. Hyd/.NET Arch-Lead inventory still exhausted.
+- No new code-fixable blocker — did not launch another post-fix re-run (cap 5).
+- Artifact: `reports/2026-09-04/foundit-apply-report-postfix.json`
+
 ## Notes
 - Artifact: `/opt/cursor/artifacts/foundit-apply-report.json`
 - Resume: `resumes/Rafi_Resume.docx` (JD-tailored per apply + profile upload).
 - Filter fix: https://github.com/rafi-solibri/MyRepo/pull/322
-- Inventory: Hyd/.NET Arch-Lead still largely exhausted at 3650d; most eligible hits are LinkedIn SCRAPPING without Easy Apply or already Applied.
+- LinkedIn restriction skip: https://github.com/rafi-solibri/MyRepo/pull/327
+- Inventory: Hyd/.NET Arch-Lead still largely exhausted at 3650d; most eligible hits are already Applied. LinkedIn Easy Apply redirects are skipped until restriction lift.

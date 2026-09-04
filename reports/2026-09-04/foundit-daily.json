@@ -1,0 +1,38 @@
+{
+  "date": "2026-09-04",
+  "portal": "foundit",
+  "status": "COMPLETED",
+  "post_fix_rerun": true,
+  "merged_pr": "https://github.com/rafi-solibri/MyRepo/pull/327",
+  "head": "32fda469e1bac4354d73acd55cc9bbb35b4d921f",
+  "intentional_applies": 0,
+  "applied_tab_before": 401,
+  "applied_tab_after": 401,
+  "applied_delta": 0,
+  "skipped": 1201,
+  "duplicates": 69,
+  "blocked": 0,
+  "age_window_days": 3650,
+  "candidates": {
+    "candidates_d1": 56,
+    "candidates_d3": 97,
+    "candidates_d7": 357,
+    "candidates_d14": 257,
+    "candidates_d30": 300,
+    "candidates_d90": 163,
+    "candidates_d3650": 40
+  },
+  "resume": "/workspace/resumes/Rafi_Resume.docx",
+  "logged_in": true,
+  "jwt_ok": true,
+  "linkedin_restriction_honored": true,
+  "lift_utc": "2026-09-10T03:37:00+00:00",
+  "notes": [
+    "Ran on main after #327 (shouldSkipLinkedinForRestriction). No invented applies.",
+    "Already-applied today skipped via userJobInfo (EPAM .NET Lead; integers.ai / relq / HighRadius LinkedIn redirects).",
+    "TCS Oracle Apex Solution Architect still skipped (Oracle Fusion/ERP without .NET on title).",
+    "Hyd/.NET Arch-Lead inventory exhausted at 3650d; no new native Falcon applies.",
+    "No new code-fixable blocker; did not launch another post-fix re-run."
+  ],
+  "artifact": "/opt/cursor/artifacts/foundit-apply-report.json"
+}
