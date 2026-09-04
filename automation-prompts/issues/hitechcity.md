@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Solera Workday /login matched apply_form_still_open so persist_retry looped forever and starved remaining worker companies | apply_form_still_open returns false for standalone /login\|/signin so login walls fail-fast instead of incomplete retry |
 | Storable boards.greenhouse.io/storable/jobs/ID still no_ats_form after #326 gh_jid rewrite; IBM login.ibm.com can burn ATS timeout | Rewrite gh_jid and /jobs/{id} to embed/job_app?for=&token=; IBMid SSO fail-fast; CTC before phone; Greenhouse country/city/notice combos |
 | Experian openings-probe listed .NET SA but careers keyword scan jobCount=0; Storable gh_jid brochure no_ats_form; TTEC Systems Software + Micron Workload Analytics + IBM Kafka Storage burned soft/no_ats walls | Seed careers applies from sampleOpenings; rewrite gh_jid embeds to boards.greenhouse.io; CAREERS/LI title-skip systems software / workload analytics / kafka storage / mainframe; Storable Greenhouse URL hints |
 

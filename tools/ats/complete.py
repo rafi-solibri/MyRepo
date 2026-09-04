@@ -2182,8 +2182,14 @@ def apply_form_still_open(page) -> bool:
         url = getattr(page, "url", "") or ""
     except Exception:
         url = ""
+    # Standalone Sign In /login is a wall, not an unfinished guest form.
+    # Matching /login here made Solera Workday persist_retry forever.
+    if re.search(r"(?:/|^)(?:login|signin)(?:[/?#]|$)", url, re.I) and not re.search(
+        r"mode=apply|create.?account|/apply", url, re.I
+    ):
+        return False
     if re.search(
-        r"/apply|/candidate|/questions|/login|mode=apply|mode=submit|"
+        r"/apply|/candidate|/questions|mode=apply|mode=submit|"
         r"oraclecloud\.com/.*/(?:job|apply)|greenhouse\.io/.*/application|"
         r"myworkdayjobs\.com/.*/apply",
         url,

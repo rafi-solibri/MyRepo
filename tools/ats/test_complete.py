@@ -266,6 +266,14 @@ assert_true(frame_url_is_captcha_challenge("https://www.google.com/recaptcha/api
 assert_true(not frame_url_is_captcha_challenge("https://www.google.com/recaptcha/api2/anchor"), "hidden badge")
 assert_true(iframe_box_is_onscreen({"width": 300, "height": 140}), "onscreen box")
 assert_true(not iframe_box_is_onscreen({"width": 0, "height": 0}), "hidden 0x0")
+assert_true(
+    not apply_form_still_open(_FpPage("https://solera.wd5.myworkdayjobs.com/en-US/login", "Sign In")),
+    "Workday /login is not an open apply form",
+)
+assert_true(
+    apply_form_still_open(_FpPage("https://solera.wd5.myworkdayjobs.com/en-US/apply", "Submit application")),
+    "Workday /apply is still open",
+)
 
 # The one owner secret (NAUKRI_WORKDAY_PASSWORD) must satisfy ats_password().
 for k in ("WORKDAY_PASSWORD", "ATS_PASSWORD", "NAUKRI_ATS_PASSWORD", "LINKEDIN_PASSWORD"):
