@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-09-04 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| False Quick Applies / ATS burn: Service Now (spaced) ITOM, SuccessFactors, KDB Lead, FP&A Associate Director, Platform Engineering Lead; IBM login.ibm.com burned full external timeout | Title-skip service\s*now/ITOM/SuccessFactors/KDB/FP&A/platform engineering; fail-fast login.ibm.com + IBMid in daily_apply + complete_page |
+
+
 ## 2026-09-03 (cloud)
 
 | Issue | Fix |
