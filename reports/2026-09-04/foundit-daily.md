@@ -30,7 +30,14 @@ Hi — I'm applying for Sr .NET Full Stack Developer- India Remote at relq techn
 
 Hi — I'm applying for Lead Software Engineer - .NET at EPAM. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed (rafi.success@gmail.com / +91 8790251698)
 
+## Post-fix re-run (#322)
+- Applied tab: **400 → 400** (+0). Intentional logged: **0**.
+- TCS Oracle Apex Solution Architect correctly skipped (`Oracle Fusion/ERP without .NET on title`).
+- Skips: 1211 | duplicates: 69 | blocked: 0.
+- Candidates: d1=51 / d3=108 / d7=352 / d14=248 / d30=295 / d90=175 / d3650=51.
+
 ## Notes
 - Artifact: `/opt/cursor/artifacts/foundit-apply-report.json`
 - Resume: `resumes/Rafi_Resume.docx` (JD-tailored per apply + profile upload).
+- Filter fix: https://github.com/rafi-solibri/MyRepo/pull/322
 - Inventory: Hyd/.NET Arch-Lead still largely exhausted at 3650d; most eligible hits are LinkedIn SCRAPPING without Easy Apply or already Applied.
