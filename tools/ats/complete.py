@@ -7,6 +7,7 @@ an employer ATS. Never invents success — confirmation text only.
 
 from __future__ import annotations
 
+import html
 import json
 import os
 import re
@@ -443,6 +444,49 @@ def extract_offsite_from_text(
         if any(h in low for h in reject_hosts):
             continue
         return url
+    return ""
+
+
+_HREF_RE = re.compile(
+    r"""(?:href|data-href|data-url)\s*=\s*["']([^"']+)["']""",
+    re.I,
+)
+
+
+def extract_indeed_company_dest_from_html(html: str | None) -> str:
+    """Pull employer ATS dest from a viewjob page when the click never hops.
+
+    Indeed "Apply on company site" is often ``<a href="/applystart?...&continueUrl=...">``
+    (or JSON ``companyApplyUrl``). If Selenium stays on viewjob, we still have
+    the dest in the DOM.
+    """
+    text = html or ""
+    if not text:
+        return ""
+    from_json = extract_offsite_from_text(
+        text, reject_hosts=("linkedin.com", "indeed.com", "naukri.com")
+    )
+    if from_json:
+        return from_json
+    for raw in _HREF_RE.findall(text):
+        href = html.unescape(unescape_json_url(raw))
+        if href.startswith("/"):
+            href = "https://in.indeed.com" + href
+        if not href.startswith("http"):
+            continue
+        dest = extract_hop_destination_from_url(href)
+        if dest:
+            return dest
+    # Bare applystart in JS strings
+    for m in re.finditer(
+        r"https?:\\?/\\?/[^\"'\s]+?(?:applystart|rc/clk)[^\"'\s]*",
+        text,
+        re.I,
+    ):
+        href = unescape_json_url(m.group(0).replace("\\/", "/"))
+        dest = extract_hop_destination_from_url(href)
+        if dest:
+            return dest
     return ""
 
 

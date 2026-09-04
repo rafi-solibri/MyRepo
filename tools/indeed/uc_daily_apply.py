@@ -291,6 +291,22 @@ def finish_company_site(sb, item, report, handles_before=None) -> None:
                 if dest:
                     ats_url = dest
                     break
+        if ats_url and "indeed.com" in ats_url.lower():
+            # Click stayed on viewjob — dest is often in applystart href / JSON.
+            try:
+                from tools.ats.complete import extract_indeed_company_dest_from_html
+
+                html = _sb_call_timeout(
+                    lambda: sb.get_page_source() or sb.get_text("body") or "",
+                    15,
+                    "",
+                ) or ""
+                dest = extract_indeed_company_dest_from_html(html)
+                if dest:
+                    print(f"EXTERNAL viewjob_dest={dest[:160]!r}", flush=True)
+                    ats_url = dest
+            except Exception as exc:
+                print(f"EXTERNAL viewjob_dest_err={exc!s}"[:160], flush=True)
     print(f"EXTERNAL ats_url={ats_url[:160]!r}", flush=True)
     status, reason, final_url = complete_external_ats(ats_url)
     _record_external_result(item, report, status, reason, final_url, ats_url)

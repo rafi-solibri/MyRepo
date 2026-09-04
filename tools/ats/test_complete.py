@@ -16,6 +16,7 @@ from tools.ats.complete import (
     auth_wall_reason,
     classify_ats_host,
     extract_hop_destination_from_url,
+    extract_indeed_company_dest_from_html,
     extract_offsite_from_text,
     frame_url_is_captcha_challenge,
     complete_icims,
@@ -202,6 +203,26 @@ assert_true(
     )
     == "https://acme.wd1.myworkdayjobs.com/en-US/job",
     "Indeed applystart dest",
+)
+assert_true(
+    extract_indeed_company_dest_from_html(
+        '<a href="/applystart?jk=abc&amp;continueUrl=https%3A%2F%2Facme.wd1.myworkdayjobs.com%2Fen-US%2Fjob">Apply on company site</a>'
+    )
+    == "https://acme.wd1.myworkdayjobs.com/en-US/job",
+    "viewjob applystart href dest",
+)
+assert_true(
+    extract_indeed_company_dest_from_html(
+        '{"companyApplyUrl":"https://boards.greenhouse.io/acme/jobs/1"}'
+    )
+    == "https://boards.greenhouse.io/acme/jobs/1",
+    "viewjob companyApplyUrl dest",
+)
+assert_true(
+    not extract_indeed_company_dest_from_html(
+        '<a href="https://in.indeed.com/viewjob?jk=abc">view</a>'
+    ),
+    "plain viewjob has no dest",
 )
 assert_true(
     extract_offsite_from_text(
