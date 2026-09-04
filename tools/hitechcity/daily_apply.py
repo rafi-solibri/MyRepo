@@ -50,6 +50,9 @@ os.environ.setdefault("HITECHCITY_DISCOVERY_LINKEDIN", "0")
 os.environ.setdefault("HITECHCITY_DISCOVERY_WEB", "1")
 os.environ.setdefault("ATS_CAPTCHA_POLL_SEC", "0.4")
 os.environ.setdefault("ATS_OWNER_FOCUS_EVERY_SEC", "2")
+# Headed/cloud CDP: park on captcha so the owner can click (no paid solver).
+if not _owner_asleep_bootstrap():
+    os.environ.setdefault("ATS_CAPTCHA_WAIT_SEC", "180")
 # Per-JD truthful resume rewrite (headline/summary/skill order) before ATS upload.
 os.environ.setdefault("RESUME_TAILOR", "1")
 

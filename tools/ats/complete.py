@@ -2851,7 +2851,19 @@ def complete_ats(page, time_cap_s: int | None = None) -> tuple[str, str]:
     if icims_url:
         return complete_icims(page, cap)
     if visible_captcha_challenge(page):
-        return "blocked", "CAPTCHA/bot wall"
+        try:
+            from tools.ats.captcha_solve import try_clear_hcaptcha
+
+            if try_clear_hcaptcha(page):
+                print("ats=post_captcha_continue — captcha cleared, filling", flush=True)
+            elif looks_submitted(page):
+                return "applied", "confirmation"
+            elif looks_already_applied(page):
+                return "skipped", "already_applied"
+            else:
+                return "blocked", "CAPTCHA/bot wall"
+        except Exception:
+            return "blocked", "CAPTCHA/bot wall"
     if host == "unavailable" or is_unavailable_text(f"{flags['url']}\n{flags['text']}"):
         return "skipped", "job_unavailable"
     if host == "sso":
