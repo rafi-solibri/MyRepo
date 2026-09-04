@@ -34,3 +34,18 @@ Hi — I'm applying for Lead Software Engineer - .NET at EPAM. 15+ yrs Solutions
 - Artifact: `/opt/cursor/artifacts/foundit-apply-report.json`
 - Resume: `resumes/Rafi_Resume.docx` (JD-tailored per apply + profile upload).
 - Inventory: Hyd/.NET Arch-Lead still largely exhausted at 3650d; most eligible hits are LinkedIn SCRAPPING without Easy Apply or already Applied.
+
+## Post-fix re-run (merged main a385176 / #323; Foundit Apex filter from #322)
+
+Ran `daily_apply.js` on tip-of-main after `git fetch/checkout/pull --ff-only origin main`. Resume: `resumes/Rafi_Resume.docx`. Did not invent applies. Skipped jobs already applied today.
+
+- Login: MSSOAT + jwtOk; onApp (greeting Hi, Seeker — cookie+app accepted).
+- Applied tab: **400 → 400** (+0). Intentional logged: **0**.
+- Candidates: d1=46 / d3=112 / d7=358 / d14=252 / d30=304 / d90=164 / d3650=45
+- Skips: 1212 | duplicates: 69 | blocked: 0
+- Age window used: 3650d
+- **TCS Oracle Apex Solution Architect** (jobId 65422784) → skipped `Oracle Fusion/ERP without .NET on title` (filter from #322 held; no re-apply).
+- **EPAM Lead Software Engineer - .NET** (jobId 65422797) → duplicate via `userJobInfo` (already applied this morning).
+- integers.ai / relq / HighRadius LinkedIn redirects → already in Applied (`userJobInfo`); still not counted as new applies.
+- No new code-fixable blocker. Inventory still exhausted at 3650d.
+- Artifact: `/opt/cursor/artifacts/foundit-apply-report-postfix.json` (copy: `reports/2026-09-04/foundit-apply-report-postfix.json`)
