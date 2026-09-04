@@ -350,6 +350,12 @@ function classifyJob(job) {
   if (/\bsalesforce\b/i.test(company) && !hasDotNet(title, "")) {
     return { pass: false, reason: "Salesforce" };
   }
+  // Employer Atlassian + no .NET on TITLE (jobId 65474522 Senior Principal
+  // engineer 2026-09-04). Title-only /\batlassian\b/ missed company-only cards;
+  // Arch/Lead then waived .NET and Falcon APPLY_REDIRECT fired (Applied-tab bump).
+  if (/\batlassian\b/i.test(company) && !hasDotNet(title, "")) {
+    return { pass: false, reason: "Atlassian without .NET on title" };
+  }
   if (!hasSeniority(title))
     return { pass: false, reason: "no seniority keyword on title" };
   if (!locationOk(loc, title)) {

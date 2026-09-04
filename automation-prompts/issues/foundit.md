@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Atlassian Senior Principal engineer (company-only, no Atlassian in title) passed Arch/Lead without .NET; Falcon APPLY_REDIRECT + Applied-tab bump; iCIMS ATS incomplete | filters.js: skip Atlassian employer without .NET on title (Salesforce company-skip parity); test jobId 65474522 |
 | Foundit opened linkedin.com Easy Apply redirects even when LinkedIn account temporarily restricted | daily_apply.js: shouldSkipLinkedinForRestriction before page.goto; block as linkedin_temporarily_restricted |
 | TCS Oracle Apex Solution Architect false Falcon NORMAL (Arch/Lead waived .NET; Apex not covered by Fusion/ERP patterns) | filters.js: skip oracle apex / APEX Solution Architect on title+skills (Naukri #318 parity); tests for TCS case |
 

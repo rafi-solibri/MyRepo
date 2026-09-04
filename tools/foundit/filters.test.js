@@ -947,6 +947,34 @@ assert.strictEqual(
 
 assert.strictEqual(
   classifyJob({
+    jobId: 65474522,
+    title: "Senior Principal engineer",
+    companyName: "Atlassian",
+    locations: [{ text: "Remote" }],
+    skills: [{ text: "Distributed Systems" }, { text: "Kotlin" }],
+    minimumExperience: { years: 12 },
+    maximumExperience: { years: 18 },
+  }).reason,
+  "Atlassian without .NET on title",
+  "Atlassian employer + Arch/Lead title without .NET must skip (2026-09-04 Falcon APPLY_REDIRECT)"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: "atlassian-dotnet-ok",
+    title: "Principal .NET Engineer",
+    companyName: "Atlassian",
+    locations: [{ text: "Hyderabad" }],
+    skills: [{ text: ".NET" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).pass,
+  true,
+  "explicit .NET title at Atlassian employer may still pass"
+);
+
+assert.strictEqual(
+  classifyJob({
     jobId: 65144291,
     title: "Principal Engineer - AI",
     companyName: "Egnyte",
