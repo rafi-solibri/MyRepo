@@ -362,16 +362,25 @@ def finish_company_site(sb, item, report, handles_before=None) -> None:
                     )
                     if page_html and not dest:
                         low = page_html.lower()
-                        idx = low.find("continueurl")
-                        if idx < 0:
-                            idx = low.find("applystart")
-                        snippet = (
-                            page_html[max(0, idx - 400) : idx + 2500]
-                            if idx >= 0
-                            else page_html[:8000]
-                        )
+                        windows = []
+                        start = 0
+                        while True:
+                            idx = low.find("applystart", start)
+                            if idx < 0:
+                                break
+                            windows.append(page_html[max(0, idx - 200) : idx + 500])
+                            start = idx + 10
+                            if len(windows) >= 8:
+                                break
                         dump = Path("/opt/cursor/artifacts/indeed-viewjob-sample.html")
-                        dump.write_text(snippet, encoding="utf-8", errors="replace")
+                        dump.write_text(
+                            "\n\n----\n\n".join(windows) or page_html[:12000],
+                            encoding="utf-8",
+                            errors="replace",
+                        )
+                        Path("/opt/cursor/artifacts/indeed-viewjob-full.html").write_text(
+                            page_html, encoding="utf-8", errors="replace"
+                        )
                 except Exception as exc:
                     print(f"EXTERNAL viewjob_dest_err={exc!s}"[:160], flush=True)
             if dest:
