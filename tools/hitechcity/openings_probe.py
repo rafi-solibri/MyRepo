@@ -100,8 +100,10 @@ CAREERS_URL_HINTS: dict[str, list[str]] = {
         "&location=Hyderabad"
     ],
     "Storable": [
-        # www.storable.com/careers/ → 404 Page not found (2026-09-03 cron).
-        "https://www.storable.com/about-us/culture/careers/"
+        # www.storable.com/careers/ → 404; brochure embed often no_ats_form — prefer Greenhouse.
+        "https://job-boards.greenhouse.io/storable",
+        "https://boards.greenhouse.io/storable",
+        "https://www.storable.com/about-us/culture/careers/",
     ],
     # Cotelligent careers path 403/404; brand folded into TechDemocracy with no guest ATS.
     # Do not re-add cotelligent.com/careers — scrub only via DEAD_CAREERS_HOST_RE.
