@@ -27,6 +27,7 @@ function loadChromium() {
 }
 const { skipReason, hasDotNet, hasTargetSeniority } = require("./filters");
 const { findResume, EXPECTED_CTC_LPA, CURRENT_CTC_LPA } = require("./resume");
+const { interpretApplyMultiple, appliedJobIdFromRow } = require("./apply_result");
 const { completeExternalPage } = require("../ats/complete_page");
 const { tailorResumeForJob } = require("../resume_tailor");
 const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
@@ -278,6 +279,20 @@ async function applyInApp(page, jobIds) {
   return apiPost(page, `${API}/apply-multiple`, { jobIds });
 }
 
+async function loadAppliedJobIds(page, maxPages = 6) {
+  const ids = new Set();
+  for (let p = 0; p < maxPages; p++) {
+    const res = await apiGet(page, `${API}/applied-jobs?size=50&page=${p}`);
+    const jobs = res.json?.data?.jobs || [];
+    for (const row of jobs) {
+      const id = appliedJobIdFromRow(row);
+      if (id) ids.add(id);
+    }
+    if (!jobs.length || jobs.length < 50) break;
+  }
+  return ids;
+}
+
 async function main() {
   const resume = findResume();
   const state = {
@@ -345,6 +360,8 @@ async function main() {
 
   const seenIds = new Set();
   const candidates = [];
+  const alreadyApplied = await loadAppliedJobIds(page);
+  state.notes.push(`already_applied_ids=${alreadyApplied.size}`);
 
   for (const query of QUERY_WAVES) {
     if (candidates.length >= MAX_APPLIES * 4) break;
@@ -377,6 +394,11 @@ async function main() {
 
         if (allowlistActive() && !companyAllowed(company)) {
           state.skipped.push({ id, title, company, reason: "campus_allowlist" });
+          continue;
+        }
+
+        if (alreadyApplied.has(Number(id))) {
+          state.skipped.push({ id, title, company, reason: "already_applied" });
           continue;
         }
 
@@ -483,36 +505,41 @@ async function main() {
 
     // In-app Hirist apply
     const res = await applyInApp(page, [job.id]);
-    const okStatus = res.status >= 200 && res.status < 300;
-    const errName = res.json?.error?.name || res.json?.status?.message || "";
-    if (res.status === 401 || /UNAUTHORISED/i.test(String(errName))) {
+    const verdict = interpretApplyMultiple(res);
+    if (verdict.kind === "login") {
       state.blocked.push({ reason: "hirist_login_required", detail: "apply_401" });
       break;
     }
-    if (okStatus && !res.json?.error) {
-      state.applied.push({
-        id: job.id,
-        title: job.title,
-        company: job.company,
-        path: "hirist_apply",
-        url: job.jobDetailUrl,
-      });
-      applies += 1;
-    } else {
-      const reason =
-        res.json?.error?.message ||
-        res.json?.status?.message ||
-        `apply_http_${res.status}`;
-      if (/already applied|duplicate/i.test(String(reason))) {
-        state.skipped.push({ id: job.id, title: job.title, company: job.company, reason: "already_applied" });
-      } else {
+    if (verdict.kind === "applied") {
+      alreadyApplied.add(Number(job.id));
+      const confirm = await loadAppliedJobIds(page, 1);
+      if (!confirm.has(Number(job.id))) {
         state.rejected.push({
           id: job.id,
           title: job.title,
           company: job.company,
-          reason: String(reason).slice(0, 160),
+          reason: "apply_unconfirmed",
         });
+      } else {
+        state.applied.push({
+          id: job.id,
+          title: job.title,
+          company: job.company,
+          path: "hirist_apply",
+          url: job.jobDetailUrl,
+        });
+        applies += 1;
       }
+    } else if (verdict.kind === "already") {
+      alreadyApplied.add(Number(job.id));
+      state.skipped.push({ id: job.id, title: job.title, company: job.company, reason: "already_applied" });
+    } else {
+      state.rejected.push({
+        id: job.id,
+        title: job.title,
+        company: job.company,
+        reason: String(verdict.reason || "apply_failed").slice(0, 160),
+      });
     }
     await sleep(700);
   }

@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| apply-multiple HTTP 200 + [{success:false assessment required}] counted as applied | Parse apply-multiple array success; skip /job/applied-jobs IDs; confirm apply landed |
 | DFT Architect passed skipReason (semiconductor Design-for-Test, no .NET) | HARD-skip DFT/ATPG/JTAG/MBIST/VLSI/ASIC/FPGA/SystemVerilog/UVM titles as wrong_stack_title |
 
 
