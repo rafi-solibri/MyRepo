@@ -453,14 +453,14 @@ _HREF_RE = re.compile(
 )
 
 
-def extract_indeed_company_dest_from_html(html: str | None) -> str:
+def extract_indeed_company_dest_from_html(page_html: str | None) -> str:
     """Pull employer ATS dest from a viewjob page when the click never hops.
 
     Indeed "Apply on company site" is often ``<a href="/applystart?...&continueUrl=...">``
     (or JSON ``companyApplyUrl``). If Selenium stays on viewjob, we still have
     the dest in the DOM.
     """
-    text = html or ""
+    text = page_html or ""
     if not text:
         return ""
     from_json = extract_offsite_from_text(
