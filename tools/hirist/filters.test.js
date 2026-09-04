@@ -99,6 +99,17 @@ assert.strictEqual(
   "wrong_stack_title"
 );
 assert.strictEqual(
+  skipReason("DFT Architect", { location: "Hyderabad", skills: "DFT ATPG" }),
+  "wrong_stack_title"
+);
+assert.strictEqual(
+  skipReason(
+    "Architect/Lead - Design and Verification - SOC/IP, SystemVerilog/UVM",
+    { location: "Hyderabad", skills: "SystemVerilog UVM" }
+  ),
+  "wrong_stack_title"
+);
+assert.strictEqual(
   skipReason("Tech Lead .NET / SAS", { location: "Hyderabad", skills: "C# SAS" }),
   null
 );

@@ -1,5 +1,12 @@
 # Hirist issues log
 
+## 2026-09-04 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| DFT Architect passed skipReason (semiconductor Design-for-Test, no .NET) | HARD-skip DFT/ATPG/JTAG/MBIST/VLSI/ASIC/FPGA/SystemVerilog/UVM titles as wrong_stack_title |
+
+
 ## 2026-09-03 (cloud)
 
 | Issue | Fix |
