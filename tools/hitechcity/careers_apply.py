@@ -222,7 +222,7 @@ AUTH_HOST = re.compile(
     r"secure\.indeed\.com|indeed\.com/auth|okta\.com|login\.microsoft|"
     r"auth\.|signin\.|sso\.|login\.cognizant|cognizant\.okta|"
     r"talent\.cognizant\.com/[^?\s]*(?:login|login2)|"
-    r"eightfold\.ai/(?:login|signin|auth)|"
+    r"eightfold\.ai/(?:login|signin|auth)|login\.ibm\.com|"
     r"uhg\.taleo\.net/.*/(login|accessmanagement)",
     re.I,
 )
@@ -393,6 +393,32 @@ def pin_careers_hyderabad_location(url: str) -> str:
         for v in vals:
             flat.append((k, v))
     return urlunparse(parts._replace(query=urlencode(flat, doseq=True)))
+
+
+# Marketing career pages embed Greenhouse via ?gh_jid= — parent chrome is brochure
+# (no file input). Rewrite to the guest Greenhouse embed so complete_ats can submit.
+GH_EMBED_SLUGS = {
+    "storable.com": "storable",
+    "www.storable.com": "storable",
+}
+
+
+def rewrite_embedded_ats_url(url: str, company: str = "") -> str:
+    """Turn ?gh_jid= marketing URLs into boards.greenhouse.io embed apply pages."""
+    if not url:
+        return url
+    parts = urlparse(url)
+    host = (parts.netloc or "").lower()
+    if "greenhouse.io" in host:
+        return url
+    qs = parse_qs(parts.query, keep_blank_values=True)
+    jid = (qs.get("gh_jid") or [""])[0].strip()
+    if not jid.isdigit():
+        return url
+    slug = GH_EMBED_SLUGS.get(host) or re.sub(r"[^a-z0-9]+", "", (company or "").lower())
+    if not slug:
+        return url
+    return f"https://boards.greenhouse.io/embed/job_app?for={slug}&token={jid}"
 
 
 def select_hyderabad_in_native_select(page: Page) -> dict[str, Any] | None:
@@ -1131,6 +1157,11 @@ def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
         row["status"] = "skipped"
         row["reason"] = "location_foreign_in_title"
         return row
+    target_url = rewrite_embedded_ats_url(job.get("url") or "", job.get("company") or "")
+    if target_url != (job.get("url") or ""):
+        _safe_print(f"CAREERS REWRITE {job['company']} | greenhouse_embed {target_url}")
+        row["url"] = target_url
+        job["url"] = target_url
     try:
         page.goto(job["url"], wait_until="domcontentloaded", timeout=60000)
     except Exception as e:

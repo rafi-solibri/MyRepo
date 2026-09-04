@@ -142,7 +142,7 @@ AUTH_WALL_URL = re.compile(
     r"/checkpoint/challenge|linkedin\.com/uas/login|"
     r"smartrecruiters\.com/[^/]+/login|"
     r"login\.cognizant|cognizant\.okta|talent\.cognizant\.com/[^?\s]*(?:login|login2)|"
-    r"eightfold\.ai/(?:login|signin|auth)",
+    r"eightfold\.ai/(?:login|signin|auth)|login\.ibm\.com",
     re.I,
 )
 

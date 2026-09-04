@@ -111,7 +111,7 @@ SSO_HOST_RE = re.compile(
     r"auth0\.com|passport\.amazon\.jobs|secure\.indeed\.com/(?:auth|account|oauth)|"
     r"signin\.aws|login\.microsoft|oneclick\.smartrecruiters|"
     r"login\.cognizant|cognizant\.okta|talent\.cognizant\.com/[^?\s]*(?:login|login2)|"
-    r"eightfold\.ai/(?:login|signin|auth)",
+    r"eightfold\.ai/(?:login|signin|auth)|login\.ibm\.com",
     re.I,
 )
 
@@ -398,7 +398,9 @@ def is_brochure_or_dead_end(
         return False
     u = url or ""
     t = text or ""
-    if JOB_DETAIL_URL_RE.search(u) and ATS_FORM_HINT_RE.search(t):
+    if JOB_DETAIL_URL_RE.search(u) and (
+        ATS_FORM_HINT_RE.search(t) or re.search(r"[?&]gh_jid=", u, re.I)
+    ):
         return False
     if BROCHURE_URL_RE.search(u):
         return True
@@ -609,7 +611,8 @@ def auth_wall_reason(
         r"if you are a microsoft employee|"
         r"employees must sign in|"
         r"current \w+ employees must sign in|"
-        r"we don't recognize this email",
+        r"we don't recognize this email|"
+        r"sign in or create an ibmid|\bibmid\b",
         text or "",
         re.I,
     ):

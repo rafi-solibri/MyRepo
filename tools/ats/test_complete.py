@@ -225,6 +225,17 @@ assert_true(classify_ats_host("https://boards.greenhouse.io/acme/jobs/1") == "gr
 assert_true(classify_ats_host("https://jobs.lever.co/acme/abc") == "greenhouse", "lever grouped")
 assert_true(classify_ats_host("https://acme.icims.com/jobs/1") == "greenhouse", "icims grouped")
 assert_true(classify_ats_host("https://login.microsoftonline.com/xyz") == "sso", "sso host")
+assert_true(
+    classify_ats_host("https://login.ibm.com/authsvc/mtfim/sps/authsvc?PolicyId=x") == "sso",
+    "IBMid login.ibm.com is SSO fail-fast",
+)
+assert_true(
+    not is_brochure_or_dead_end(
+        "https://www.storable.com/about-us/culture/careers/?gh_jid=5564835004",
+        "Explore Storable Careers. View Current Openings.",
+    ),
+    "gh_jid marketing embed is a job detail, not brochure",
+)
 assert_true(classify_ats_host("https://www.linkedin.com/jobs/view/1") == "linkedin", "li host")
 assert_true(classify_ats_host("https://careers.acme.com/apply") == "generic", "generic host")
 assert_true(
@@ -297,6 +308,16 @@ assert_true(
     )
     == "ats_login_wall",
     "Azure B2C / Microsoft SSO is a hard wall",
+)
+assert_true(
+    auth_wall_reason(
+        "https://login.ibm.com/authsvc/mtfim/sps/authsvc",
+        "Sign in or create an IBMid",
+        has_password=True,
+        has_file=False,
+    )
+    == "ats_login_wall",
+    "IBMid login.ibm.com is a hard wall",
 )
 
 assert_true(

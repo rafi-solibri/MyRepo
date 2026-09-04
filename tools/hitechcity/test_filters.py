@@ -22,6 +22,7 @@ from tools.hitechcity.careers_apply import (
     is_sso_only_careers_url,
     is_uhg_skip_url,
     location_ui_input_meta_ok,
+    rewrite_embedded_ats_url,
     role_has_foreign_location,
     url_loc_hint,
 )
@@ -462,6 +463,9 @@ def test_indeed_oauth_url_is_login_wall():
     assert auth_wall_url("https://app.eightfold.ai/login?next=/careers")
     assert auth_wall_url("https://login.cognizant.com/oauth2")
     assert auth_wall_url("https://talent.cognizant.com/en_US/careers/Login2")
+    assert auth_wall_url(
+        "https://login.ibm.com/oidc/endpoint/default/authorize?client_id=x"
+    )
     assert not auth_wall_url("https://jobs.smartrecruiters.com/Experian/123-Solution-Architect")
     assert not auth_wall_url("https://app.eightfold.ai/careers/job?pid=123")
     page = _FakePage("Sign In | Indeed Accounts\nContinue with Google", file_inputs=0)
@@ -589,6 +593,18 @@ def test_location_ui_skips_agentforce():
     assert location_ui_input_meta_ok("Search jobs by city")
 
 
+def test_rewrite_storable_greenhouse_embed():
+    src = "https://www.storable.com/about-us/culture/careers/?gh_jid=5564835004"
+    out = rewrite_embedded_ats_url(src, "Storable")
+    assert out == "https://boards.greenhouse.io/embed/job_app?for=storable&token=5564835004"
+    already = "https://boards.greenhouse.io/embed/job_app?for=storable&token=5564835004"
+    assert rewrite_embedded_ats_url(already, "Storable") == already
+    assert rewrite_embedded_ats_url(
+        "https://solera.wd5.myworkdayjobs.com/en-US/Global_Career_Site/job/Hyderabad/x",
+        "Solera",
+    ).startswith("https://solera.wd5.myworkdayjobs.com")
+
+
 if __name__ == "__main__":
     test_title_ok()
     test_campus_location()
@@ -602,4 +618,5 @@ if __name__ == "__main__":
     test_attempt_ats_apply_persist_env_no_nameerror()
     test_skip_uhg_default()
     test_location_ui_skips_agentforce()
+    test_rewrite_storable_greenhouse_embed()
     print("ok")

@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-09-04 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| IBM careers burned ATS timeout on login.ibm.com IBMid; Storable Technical Architect gh_jid marketing page counted as no_ats_form | Python ATS fail-fast login.ibm.com/IBMid (parity with #323 JS); rewrite ?gh_jid= to Greenhouse embed apply URL |
+
+
 ## 2026-09-03 (cloud)
 
 | Issue | Fix |
