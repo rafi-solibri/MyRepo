@@ -225,6 +225,13 @@ assert_true(
     "plain viewjob has no dest",
 )
 assert_true(
+    extract_indeed_company_dest_from_html(
+        '{"continueUrl":"https://careers.hyland.com/careers/job/123"}'
+    )
+    == "https://careers.hyland.com/careers/job/123",
+    "mosaic continueUrl json dest",
+)
+assert_true(
     extract_offsite_from_text(
         '{"companyApplyUrl":"https://acme.wd5.myworkdayjobs.com/en-US/Apply"}'
     )

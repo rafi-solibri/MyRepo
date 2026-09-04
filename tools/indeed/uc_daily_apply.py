@@ -334,6 +334,8 @@ def finish_company_site(sb, item, report, handles_before=None) -> None:
                             if (offIndeed(u)) return u;
                           } catch (e) {}
                         }
+                        const jsonC = html.match(/["']continueUrl["']\\s*:\\s*["'](https?:[^"']+)["']/i);
+                        if (jsonC && offIndeed(jsonC[1])) return jsonC[1];
                         return '';
                         """
                     ),
@@ -359,8 +361,17 @@ def finish_company_site(sb, item, report, handles_before=None) -> None:
                         flush=True,
                     )
                     if page_html and not dest:
+                        low = page_html.lower()
+                        idx = low.find("continueurl")
+                        if idx < 0:
+                            idx = low.find("applystart")
+                        snippet = (
+                            page_html[max(0, idx - 400) : idx + 2500]
+                            if idx >= 0
+                            else page_html[:8000]
+                        )
                         dump = Path("/opt/cursor/artifacts/indeed-viewjob-sample.html")
-                        dump.write_text(page_html[:80000], encoding="utf-8", errors="replace")
+                        dump.write_text(snippet, encoding="utf-8", errors="replace")
                 except Exception as exc:
                     print(f"EXTERNAL viewjob_dest_err={exc!s}"[:160], flush=True)
             if dest:

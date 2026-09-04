@@ -468,6 +468,28 @@ def extract_indeed_company_dest_from_html(page_html: str | None) -> str:
     )
     if from_json:
         return from_json
+    # Mosaic JSON: "continueUrl":"https://employer..."
+    m = re.search(
+        r'["\']continueUrl["\']\s*:\s*["\'](https?:[^"\']+)["\']',
+        text,
+        re.I,
+    )
+    if m:
+        dest = html.unescape(unescape_json_url(m.group(1)))
+        if dest.startswith("http") and "indeed.com" not in dest.lower():
+            return dest
+    # Query-string continueUrl=https%3A%2F%2F… (possibly &amp; or \u0026)
+    m = re.search(
+        r"continueUrl\\?u003d|continueUrl=",
+        text,
+        re.I,
+    )
+    if m:
+        tail = text[m.end() : m.end() + 800]
+        raw = re.split(r'[&\\"\'\s]', tail, maxsplit=1)[0]
+        dest = html.unescape(unescape_json_url(unquote(raw.replace("\\u0026", "&"))))
+        if dest.startswith("http") and "indeed.com" not in dest.lower():
+            return dest
     for raw in _HREF_RE.findall(text):
         href = html.unescape(unescape_json_url(raw))
         if href.startswith("/"):
