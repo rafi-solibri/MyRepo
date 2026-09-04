@@ -851,19 +851,36 @@ def wait_for_smartapply_surface(sb, seconds: float = 12.0) -> bool:
     """After Apply with Indeed, wait for SmartApply URL/iframe — not viewjob."""
     deadline = time.time() + seconds
     while time.time() < deadline:
+        iframe_src = ""
+        try:
+            sb.driver.switch_to.default_content()
+            for fr in sb.driver.find_elements("css selector", "iframe"):
+                src = (fr.get_attribute("src") or "").lower()
+                if "smartapply" in src or "indeedapply" in src:
+                    iframe_src = src
+                    break
+        except Exception:
+            iframe_src = ""
         _switch_smartapply_frame(sb)
         try:
             cur = sb.get_current_url() or ""
             txt = sb.get_text("body") or ""
         except Exception:
             cur, txt = "", ""
-        if smartapply_surface_ready(cur, txt):
-            print(f"  smartapply_ready url={cur[:120]}", flush=True)
+        if iframe_src or smartapply_surface_ready(cur, txt):
+            print(
+                f"  smartapply_ready url={cur[:100]} iframe={iframe_src[:80]}",
+                flush=True,
+            )
             return True
         time.sleep(0.6)
     try:
+        sb.driver.switch_to.default_content()
+        srcs = []
+        for fr in sb.driver.find_elements("css selector", "iframe")[:8]:
+            srcs.append((fr.get_attribute("src") or "")[:80])
         cur = sb.get_current_url() or ""
-        print(f"  smartapply_not_ready url={cur[:120]}", flush=True)
+        print(f"  smartapply_not_ready url={cur[:120]} iframes={srcs}", flush=True)
     except Exception:
         pass
     return False
@@ -3660,6 +3677,25 @@ def main() -> int:
                     report["counts"]["skipped"] += 1
                     print("SKIP already_applied", page_title[:80], flush=True)
                     continue
+                try:
+                    badge = sb.execute_script(
+                        """
+                        const els=[...document.querySelectorAll('button, a, [role=button], span')];
+                        const el=els.find(e => {
+                          const s=((e.innerText||'')+' '+(e.getAttribute('aria-label')||'')).trim();
+                          return /^applied$/i.test(s) || /^applied on /i.test(s);
+                        });
+                        return el ? ((el.innerText||el.getAttribute('aria-label')||'applied').slice(0,80)) : null;
+                        """
+                    )
+                    if badge:
+                        item["reason"] = "already_applied"
+                        report["skipped"].append(item)
+                        report["counts"]["skipped"] += 1
+                        print("SKIP already_applied", page_title[:80], flush=True)
+                        continue
+                except Exception:
+                    pass
 
                 reason = skip_reason(page_title, company, location, body[:1500])
                 if reason:

@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Apply with Indeed click never opened SmartApply; Applied badge skipped only after failed EA | Detect smartapply iframe src; skip Applied badge before click |
 | UC restart SessionNotCreated: leftover chrome/uc_driver held hybrid profile | Before SB() start, drop SingletonLock and SIGTERM leftover hybrid/uc_driver PIDs |
 | prepare_uc_profile wiped live hybrid Passport by recopying expired seed after Google SSO | Keep dst when passport ok; sync hybrid Cookies/Local State back to chrome-indeed-profile |
 | Easy Apply filled job-view after Apply with Indeed (bare continue matched cookie/JD; no file input) | smartapply_surface_ready requires smartapply URL/form copy; wait+retry click; abort if still on viewjob |
