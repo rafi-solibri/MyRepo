@@ -26,7 +26,7 @@
       "Azure Architect",
       "Cloud Architect"
     ],
-    "lastDiscoveryAt": "2026-09-04T06:05:08.058781+00:00",
+    "lastDiscoveryAt": "2026-09-04T07:36:18.568848+00:00",
     "discoveryMode": "campus_catalog+web_directories+seeds+linkedin_optional+board_hints",
     "preferredHomeCampuses": [
       "sattva-knowledge-city",
@@ -36,7 +36,7 @@
       "rmz-skyview",
       "rmz-futura"
     ],
-    "lastOpeningsProbeAt": "2026-09-04T06:10:40.694627+00:00"
+    "lastOpeningsProbeAt": "2026-09-04T07:41:07.908878+00:00"
   },
   "campuses": [
     {
@@ -147,7 +147,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-04T06:09:14.919538+00:00"
+      "openingsProbedAt": "2026-09-04T07:39:52.791415+00:00"
     },
     {
       "name": "AMD",
@@ -165,7 +165,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-04T06:09:32.068639+00:00"
+      "openingsProbedAt": "2026-09-04T07:40:09.821990+00:00"
     },
     {
       "name": "Apple",
@@ -182,7 +182,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-04T06:05:21.072472+00:00"
+      "openingsProbedAt": "2026-09-04T07:36:31.436738+00:00"
     },
     {
       "name": "Blackbaud",
@@ -199,7 +199,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-04T06:09:39.598187+00:00"
+      "openingsProbedAt": "2026-09-04T07:40:36.590094+00:00"
     },
     {
       "name": "Blue Yonder",
@@ -214,7 +214,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-04T06:09:51.766001+00:00"
+      "openingsProbedAt": "2026-09-04T07:40:48.677986+00:00"
     },
     {
       "name": "CGI",
@@ -233,7 +233,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-04T06:05:27.703564+00:00"
+      "openingsProbedAt": "2026-09-04T07:36:38.123023+00:00"
     },
     {
       "name": "Cotelligent",
@@ -265,7 +265,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-04T06:06:19.804206+00:00"
+      "openingsProbedAt": "2026-09-04T07:37:02.540225+00:00"
     },
     {
       "name": "Experian",
@@ -325,7 +325,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-04T06:06:40.740975+00:00"
+      "openingsProbedAt": "2026-09-04T07:37:14.784492+00:00"
     },
     {
       "name": "GE Vernova",
@@ -444,7 +444,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-04T06:07:30.870900+00:00"
+      "openingsProbedAt": "2026-09-04T07:38:03.326854+00:00"
     },
     {
       "name": "Micron Technology",
@@ -462,7 +462,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-04T06:07:42.714792+00:00"
+      "openingsProbedAt": "2026-09-04T07:38:14.777141+00:00"
     },
     {
       "name": "Microsoft",
@@ -599,7 +599,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-04T06:08:00.291889+00:00"
+      "openingsProbedAt": "2026-09-04T07:38:32.847958+00:00"
     },
     {
       "name": "Qualcomm",
@@ -632,7 +632,7 @@
           "location": ""
         }
       ],
-      "openingsProbedAt": "2026-09-04T06:08:06.540627+00:00"
+      "openingsProbedAt": "2026-09-04T07:38:38.959341+00:00"
     },
     {
       "name": "Solera",
@@ -682,7 +682,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-04T06:09:03.205156+00:00"
+      "openingsProbedAt": "2026-09-04T07:39:33.811736+00:00"
     },
     {
       "name": "ADP",
@@ -690,11 +690,17 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "adp",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://myjobs.adp.com/public/staffing/v1/recruiting-job-search?location=Hyderabad"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13",
-      "linkedinCompanyId": "1463"
+      "linkedinCompanyId": "1463",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-09-04T07:39:41.258821+00:00"
     },
     {
       "name": "BA Continuum",
@@ -702,10 +708,16 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "bank-of-america",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://careers.bankofamerica.com/en-us/job-search"
+      ],
       "priority": 2,
       "source": "campus_catalog",
-      "discoveredAt": "2026-08-16"
+      "discoveredAt": "2026-08-16",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-09-04T07:40:20.819086+00:00"
     },
     {
       "name": "Bayer",
@@ -713,11 +725,17 @@
         "sattva-knowledge-city"
       ],
       "linkedinSlug": "bayer",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://jobs.bayer.com/jobsearch"
+      ],
       "priority": 2,
       "source": "campus_catalog",
       "discoveredAt": "2026-08-16",
-      "linkedinCompanyId": "1893"
+      "linkedinCompanyId": "1893",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-09-04T07:40:29.134711+00:00"
     },
     {
       "name": "BluJay Solutions",
@@ -748,11 +766,18 @@
         "the-v"
       ],
       "linkedinSlug": "capgemini",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://www.capgemini.com/jobs/?keyword=Engineering%20Manager&country_code=IN",
+        "https://jobs.capgemini.com/"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13",
-      "linkedinCompanyId": "1075"
+      "linkedinCompanyId": "1075",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-09-04T07:40:58.339778+00:00"
     },
     {
       "name": "Celonis",
@@ -760,11 +785,17 @@
         "sattva-knowledge-city"
       ],
       "linkedinSlug": "celonis",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://careers.celonis.com/join-us/open-positions"
+      ],
       "priority": 2,
       "source": "linkedin_search",
       "discoveredAt": "2026-08-14",
-      "linkedinCompanyId": "3118913"
+      "linkedinCompanyId": "3118913",
+      "hasOpenings": false,
+      "openingsCount": 0,
+      "sampleOpenings": [],
+      "openingsProbedAt": "2026-09-04T07:41:07.897326+00:00"
     },
     {
       "name": "Chubb",
@@ -772,7 +803,9 @@
         "sattva-knowledge-city"
       ],
       "linkedinSlug": "chubb",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://careers.chubb.com/global/en/search-results?keywords=Engineering%20Manager"
+      ],
       "priority": 2,
       "source": "campus_catalog",
       "discoveredAt": "2026-08-16",
@@ -800,7 +833,9 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "cyient",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://www.cyient.com/careers"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-16"
@@ -822,7 +857,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-04T06:06:03.898277+00:00"
+      "openingsProbedAt": "2026-09-04T07:36:47.051590+00:00"
     },
     {
       "name": "Deloitte",
@@ -839,7 +874,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-04T06:06:10.331919+00:00"
+      "openingsProbedAt": "2026-09-04T07:36:53.510756+00:00"
     },
     {
       "name": "Fiserv",
@@ -871,7 +906,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-04T06:06:49.868360+00:00"
+      "openingsProbedAt": "2026-09-04T07:37:24.272436+00:00"
     },
     {
       "name": "Gartner",
@@ -894,7 +929,9 @@
         "sattva-knowledge-park"
       ],
       "linkedinSlug": "hexaware-technologies",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://jobs.hexaware.com/"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -905,7 +942,9 @@
         "sattva-knowledge-city"
       ],
       "linkedinSlug": "homes-com",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://costar.wd1.myworkdayjobs.com/CoStarCareers"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-16"
@@ -942,7 +981,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-04T06:06:56.912714+00:00"
+      "openingsProbedAt": "2026-09-04T07:37:31.235221+00:00"
     },
     {
       "name": "Invesco",
@@ -950,7 +989,9 @@
         "sattva-knowledge-city"
       ],
       "linkedinSlug": "invesco",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://invesco.wd1.myworkdayjobs.com/IVZ"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -961,7 +1002,9 @@
         "sattva-knowledge-park"
       ],
       "linkedinSlug": "invoicecloud",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://www.invoicecloud.com/careers"
+      ],
       "priority": 2,
       "source": "campus_catalog",
       "discoveredAt": "2026-08-16"
@@ -981,7 +1024,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-04T06:07:09.251402+00:00"
+      "openingsProbedAt": "2026-09-04T07:37:43.000397+00:00"
     },
     {
       "name": "LTIMindtree",
@@ -999,7 +1042,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-04T06:07:19.271497+00:00"
+      "openingsProbedAt": "2026-09-04T07:37:51.326614+00:00"
     },
     {
       "name": "Macquarie",
@@ -1058,7 +1101,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-04T06:07:49.512505+00:00"
+      "openingsProbedAt": "2026-09-04T07:38:22.530900+00:00"
     },
     {
       "name": "MTX Group",
@@ -1077,7 +1120,9 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "ncr-voyix",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://www.ncrvoyix.com/about/careers"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -1089,7 +1134,9 @@
         "sattva-knowledge-city"
       ],
       "linkedinSlug": "novartis",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://www.novartis.com/careers/career-search?search_api_fulltext=Engineering%20Manager&country%5B%5D=IN"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -1111,7 +1158,9 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "opentext",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://careers.opentext.com/us/en"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -1122,7 +1171,9 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "parexel",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://jobs.parexel.com/en"
+      ],
       "priority": 2,
       "source": "campus_catalog",
       "discoveredAt": "2026-08-16"
@@ -1133,7 +1184,9 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "paypal",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://paypal.eightfold.ai/careers?query=Engineering%20Manager&location=Hyderabad"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13",
@@ -1159,7 +1212,9 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "persistent-systems",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://careers.persistent.com/"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-16"
@@ -1170,7 +1225,9 @@
         "sattva-knowledge-city"
       ],
       "linkedinSlug": "postman",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://www.postman.com/company/careers/"
+      ],
       "priority": 2,
       "source": "campus_catalog",
       "discoveredAt": "2026-08-16"
@@ -1181,7 +1238,9 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "progress-software",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://www.progress.com/company/careers"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -1222,7 +1281,9 @@
         "sattva-knowledge-city"
       ],
       "linkedinSlug": "rackspace",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://rackspace.wd1.myworkdayjobs.com/External"
+      ],
       "priority": 2,
       "source": "campus_catalog",
       "discoveredAt": "2026-08-16"
@@ -1254,7 +1315,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-04T06:08:31.792901+00:00"
+      "openingsProbedAt": "2026-09-04T07:39:03.918362+00:00"
     },
     {
       "name": "Salesforce",
@@ -1279,7 +1340,9 @@
         "sattva-knowledge-city"
       ],
       "linkedinSlug": "servicenow",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://careers.smartrecruiters.com/ServiceNow/?search=Engineering%20Manager&location=Hyderabad"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13",
@@ -1294,7 +1357,9 @@
         "sattva-knowledge-city"
       ],
       "linkedinSlug": "silicon-laboratories",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://silabs.wd1.myworkdayjobs.com/SiliconlabsCareers"
+      ],
       "priority": 2,
       "source": "campus_catalog",
       "discoveredAt": "2026-08-16"
@@ -1324,7 +1389,9 @@
         "cyber-pearl"
       ],
       "linkedinSlug": "tech-mahindra",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://careers.techmahindra.com/"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -1346,7 +1413,9 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "thomson-reuters",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://thomsonreuters.wd5.myworkdayjobs.com/en-US/External_Career_Site"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -1366,7 +1435,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-04T06:08:44.100798+00:00"
+      "openingsProbedAt": "2026-09-04T07:39:16.144456+00:00"
     },
     {
       "name": "Uber",
@@ -1402,7 +1471,9 @@
         "sattva-knowledge-city"
       ],
       "linkedinSlug": "valuelabs",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://www.valuelabs.com/careers/"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -1438,7 +1509,9 @@
         "sattva-knowledge-city"
       ],
       "linkedinSlug": "wells-fargo",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://www.wellsfargojobs.com/"
+      ],
       "priority": 2,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -1459,7 +1532,7 @@
       "hasOpenings": false,
       "openingsCount": 0,
       "sampleOpenings": [],
-      "openingsProbedAt": "2026-09-04T06:08:50.734189+00:00"
+      "openingsProbedAt": "2026-09-04T07:39:22.677706+00:00"
     },
     {
       "name": "DXC Technology",
@@ -1483,7 +1556,9 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "hcltech",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://careers.hcltech.com/"
+      ],
       "priority": 3,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -1494,7 +1569,9 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "infosys",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://career.infosys.com/jobsearch"
+      ],
       "priority": 3,
       "source": "seed",
       "discoveredAt": "2026-08-13"
@@ -1615,7 +1692,9 @@
         "mindspace-madhapur"
       ],
       "linkedinSlug": "wipro",
-      "careersUrls": [],
+      "careersUrls": [
+        "https://careers.wipro.com/search/?createNewAlert=false&q=&locationsearch=Hyderabad"
+      ],
       "priority": 3,
       "source": "seed",
       "discoveredAt": "2026-08-13"
