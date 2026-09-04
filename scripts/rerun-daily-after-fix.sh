@@ -632,6 +632,20 @@ echo "post-fix re-run: date=$TODAY portals=${PORTALS[*]} dry_run=$DRY_RUN home=$
 overall=0
 for portal in "${PORTALS[@]}"; do
   echo "-------- $portal --------"
+  # Never re-launch LinkedIn while temporary restriction is active — a
+  # linkedin-tagged fix must not open linkedin.com until lift_utc.
+  if [[ "$portal" == "linkedin" && "${LINKEDIN_IGNORE_RESTRICTION_FLAG:-}" != "1" ]]; then
+    restr_out="$(
+      PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}" python3 -c \
+        "from tools.linkedin.restriction import should_skip_linkedin_for_restriction; import json; s=should_skip_linkedin_for_restriction(); print(json.dumps(s) if s else '')" \
+        2>/dev/null || true
+    )"
+    if [[ -n "$restr_out" ]]; then
+      echo "SKIP linkedin: temporary account restriction still active — $restr_out"
+      echo "Do not re-launch LinkedIn until lift_utc (Foundit/Hitech also skip LI)."
+      continue
+    fi
+  fi
   marker="$(marker_path "$portal")"
   local_count="$(marker_count "$marker")"
   cloud_count=0
