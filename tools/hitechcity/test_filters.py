@@ -23,6 +23,7 @@ from tools.hitechcity.careers_apply import (
     is_uhg_skip_url,
     location_ui_input_meta_ok,
     captcha_wait_in_completer,
+    expand_careers_scan_urls,
     listing_wall_blocks_ats,
     rewrite_embedded_ats_url,
     role_has_foreign_location,
@@ -621,6 +622,15 @@ def test_listing_wall_does_not_block_captcha():
     assert not listing_wall_blocks_ats("login/account wall")
 
 
+def test_expand_keeps_base_listing_before_keywords():
+    src = "https://www.storable.com/about-us/culture/careers/"
+    out = expand_careers_scan_urls([src])
+    assert out, "expected at least the Hyd-pinned base listing"
+    assert "keywords=" not in out[0]
+    assert "location=Hyderabad" in out[0] or "Hyderabad" in out[0]
+    assert any("keywords=" in u for u in out[1:])
+
+
 if __name__ == "__main__":
     test_title_ok()
     test_campus_location()
@@ -636,4 +646,5 @@ if __name__ == "__main__":
     test_location_ui_skips_agentforce()
     test_rewrite_storable_greenhouse_embed()
     test_listing_wall_does_not_block_captcha()
+    test_expand_keeps_base_listing_before_keywords()
     print("ok")

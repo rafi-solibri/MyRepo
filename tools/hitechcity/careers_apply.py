@@ -662,13 +662,22 @@ def workday_card_location_blob(role: str, url: str) -> str:
 
 
 def expand_careers_scan_urls(urls: list[str]) -> list[str]:
-    """Emit role-diverse Hyd-scoped scan URLs (EM/Lead/Staff first) per careers link."""
+    """Emit role-diverse Hyd-scoped scan URLs (EM/Lead/Staff first) per careers link.
+
+    Always keep the Hyd-pinned base listing (no invented keywords) so Greenhouse
+    brochure boards that ignore ?keywords= still surface gh_jid cards.
+    """
     base = [u for u in (urls or []) if u]
     if not base:
         return []
     keywords = CAREERS_SEARCH_KEYWORDS[:MAX_CAREERS_KEYWORD_SEARCHES]
     out: list[str] = []
     seen: set[str] = set()
+    for url in base:
+        pinned = pin_careers_hyderabad_location(url)
+        if pinned not in seen:
+            seen.add(pinned)
+            out.append(pinned)
     for kw in keywords:
         for url in base:
             rewritten = pin_careers_hyderabad_location(rewrite_careers_search_keyword(url, kw))

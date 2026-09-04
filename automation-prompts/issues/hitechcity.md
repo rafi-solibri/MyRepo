@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Keyword-only careers scan hid Greenhouse gh_jid listing (0 jobs on retry) | Keep Hyd-pinned base listing URL before inventing ?keywords= variants |
 | Greenhouse CAPTCHA after goto aborted apply_job before ASK_OWNER wait | Do not treat CAPTCHA as a listing hard-stop; continue to complete_ats owner wait |
 | Storable Greenhouse embed hit CAPTCHA and aborted before ASK_OWNER wait | Let greenhouse.io/taleo/iCIMS captcha reach complete_ats ASK_OWNER wait instead of fail-fast |
 | IBM careers burned ATS timeout on login.ibm.com IBMid; Storable Technical Architect gh_jid marketing page counted as no_ats_form | Python ATS fail-fast login.ibm.com/IBMid (parity with #323 JS); rewrite ?gh_jid= to Greenhouse embed apply URL |
