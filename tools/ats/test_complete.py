@@ -225,6 +225,7 @@ assert_true(classify_ats_host("https://boards.greenhouse.io/acme/jobs/1") == "gr
 assert_true(classify_ats_host("https://jobs.lever.co/acme/abc") == "greenhouse", "lever grouped")
 assert_true(classify_ats_host("https://acme.icims.com/jobs/1") == "greenhouse", "icims grouped")
 assert_true(classify_ats_host("https://login.microsoftonline.com/xyz") == "sso", "sso host")
+assert_true(classify_ats_host("https://login.ibm.com/") == "sso", "IBMid host is SSO")
 assert_true(classify_ats_host("https://www.linkedin.com/jobs/view/1") == "linkedin", "li host")
 assert_true(classify_ats_host("https://careers.acme.com/apply") == "generic", "generic host")
 assert_true(
@@ -518,6 +519,17 @@ assert_true(
     )
     is None,
     "Resume upload means guest apply can continue",
+)
+assert_true(
+    auth_wall_reason(
+        "https://login.ibm.com/",
+        "Sign in or create an IBMid\nEmail",
+        has_password=False,
+        has_file=False,
+        has_email_field=True,
+    )
+    == "ats_login_wall",
+    "IBMid SSO is a hard wall",
 )
 
 assert_true(

@@ -192,15 +192,21 @@ def test_title_ok():
     assert CAREERS_SEARCH_KEYWORDS.index("Engineering Manager") < CAREERS_SEARCH_KEYWORDS.index(
         "Solution Architect"
     )
-    # Brochure Greenhouse embeds → boards.greenhouse.io job URL.
+    # Brochure Greenhouse embeds /jobs/{id} → embed/job_app form (not brochure).
     storable_gh = rewrite_embedded_ats_url(
         "https://www.storable.com/about-us/culture/careers/?gh_jid=5564835004",
         "Storable",
     )
-    assert storable_gh == "https://boards.greenhouse.io/storable/jobs/5564835004"
+    assert storable_gh == "https://boards.greenhouse.io/embed/job_app?for=storable&token=5564835004"
+    assert (
+        rewrite_embedded_ats_url(
+            "https://boards.greenhouse.io/storable/jobs/5564835004", "Storable"
+        )
+        == "https://boards.greenhouse.io/embed/job_app?for=storable&token=5564835004"
+    )
     assert rewrite_embedded_ats_url(
-        "https://boards.greenhouse.io/storable/jobs/1", "Storable"
-    ).endswith("/jobs/1")
+        "https://boards.greenhouse.io/embed/job_app?for=storable&token=1", "Storable"
+    ).endswith("token=1")
     # Openings-probe seeds must keep .NET campus fits and drop mainframe/wrong-stack.
     seeded = jobs_from_sample_openings(
         {

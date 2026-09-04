@@ -111,7 +111,7 @@ SSO_HOST_RE = re.compile(
     r"auth0\.com|passport\.amazon\.jobs|secure\.indeed\.com/(?:auth|account|oauth)|"
     r"signin\.aws|login\.microsoft|oneclick\.smartrecruiters|"
     r"login\.cognizant|cognizant\.okta|talent\.cognizant\.com/[^?\s]*(?:login|login2)|"
-    r"eightfold\.ai/(?:login|signin|auth)",
+    r"eightfold\.ai/(?:login|signin|auth)|login\.ibm\.com",
     re.I,
 )
 
@@ -398,7 +398,9 @@ def is_brochure_or_dead_end(
         return False
     u = url or ""
     t = text or ""
-    if JOB_DETAIL_URL_RE.search(u) and ATS_FORM_HINT_RE.search(t):
+    if JOB_DETAIL_URL_RE.search(u) and (
+        ATS_FORM_HINT_RE.search(t) or re.search(r"[?&]gh_jid=", u, re.I)
+    ):
         return False
     if BROCHURE_URL_RE.search(u):
         return True
@@ -609,7 +611,8 @@ def auth_wall_reason(
         r"if you are a microsoft employee|"
         r"employees must sign in|"
         r"current \w+ employees must sign in|"
-        r"we don't recognize this email",
+        r"we don't recognize this email|"
+        r"sign in or create an ibmid|\bibmid\b",
         text or "",
         re.I,
     ):
@@ -1159,14 +1162,15 @@ def fill_labeled_fields(page) -> None:
         (r"last name|surname|family name", PROFILE["last"]),
         (r"^full name$|legal name|your name", PROFILE["full"]),
         (r"email|e-mail", email),
-        (r"phone|mobile|tel", PROFILE["phone"]),
+        # CTC before phone: `tel` is a substring of "Tell us your current CTC".
+        (r"current (ctc|salary|compensation)|present ctc", PROFILE["current_ctc"]),
+        (r"expected (ctc|salary|compensation)|desired salary", PROFILE["expected_ctc"]),
+        (r"\b(phone|mobile|telephone)\b|\btel\b", PROFILE["phone"]),
         (r"linkedin|profile url", PROFILE["linkedin"]),
         (r"city|current city", PROFILE["city"]),
         (r"state|province|region", PROFILE["state"]),
         (r"country", PROFILE["country"]),
         (r"postal|zip", PROFILE["postal"]),
-        (r"current (ctc|salary|compensation)|present ctc", PROFILE["current_ctc"]),
-        (r"expected (ctc|salary|compensation)|desired salary", PROFILE["expected_ctc"]),
         (r"notice", PROFILE["notice"]),
         (r"years of experience|total experience", PROFILE["experience_years"]),
     ]
@@ -2323,8 +2327,9 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
 def fill_greenhouse_combos(page) -> None:
     """Greenhouse / Lever / SmartRecruiters react-select required answers."""
     pairs = [
-        (r"country of residence|current country", "India"),
-        (r"^state", "N/A"),
+        (r"country of residence|current country|^country\b", "India"),
+        (r"location \(city\)|current location|^location\b|^city\b", "Hyderabad"),
+        (r"^state", "Telangana"),
         (r"authorized to work|legally authori[sz]ed", "Yes"),
         (r"require sponsorship|visa sponsorship", "No"),
         (r"ever been employed|previously employed", "No"),
@@ -2332,6 +2337,8 @@ def fill_greenhouse_combos(page) -> None:
         (r"how did you hear|source|where did you hear", "LinkedIn"),
         (r"willing to relocate", "Yes"),
         (r"candidate source|application source", "LinkedIn"),
+        (r"notice|joining", "Immediate"),
+        (r"family|spouse|dependen", "No"),
     ]
     for label_re, answer in pairs:
         try:

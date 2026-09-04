@@ -233,7 +233,7 @@ AUTH_HOST = re.compile(
     r"secure\.indeed\.com|indeed\.com/auth|okta\.com|login\.microsoft|"
     r"auth\.|signin\.|sso\.|login\.cognizant|cognizant\.okta|"
     r"talent\.cognizant\.com/[^?\s]*(?:login|login2)|"
-    r"eightfold\.ai/(?:login|signin|auth)|"
+    r"eightfold\.ai/(?:login|signin|auth)|login\.ibm\.com|"
     r"uhg\.taleo\.net/.*/(login|accessmanagement)",
     re.I,
 )
@@ -333,22 +333,39 @@ def rewrite_careers_search_keyword(url: str, keyword: str) -> str:
 
 
 def rewrite_embedded_ats_url(url: str, company: str = "") -> str:
-    """Map brochure `?gh_jid=` embeds to Greenhouse job URLs (Storable culture/careers)."""
+    """Map brochure `?gh_jid=` / `/jobs/{id}` pages to the Greenhouse embed form.
+
+    `boards.greenhouse.io/{slug}/jobs/{id}` is still a brochure/no_ats_form on
+    Storable; the guest apply form lives at embed/job_app?for=&token=.
+    """
     raw = (url or "").strip()
     if not raw:
         return raw
-    if re.search(r"greenhouse\.io", raw, re.I):
+    if re.search(r"greenhouse\.io/embed/job_app", raw, re.I):
         return raw
-    m = re.search(r"[?&]gh_jid=(\d+)", raw, re.I)
-    if not m:
-        return raw
-    jid = m.group(1)
     slug = GREENHOUSE_BOARD_SLUGS.get(company or "")
     if not slug:
         slug = re.sub(r"[^a-z0-9]+", "", (company or "").lower())
-    if not slug:
+    m = re.search(r"[?&]gh_jid=(\d+)", raw, re.I)
+    if not m:
+        m = re.search(
+            r"(?:job-boards|boards)\.greenhouse\.io/([^/?#]+)/jobs/(\d+)",
+            raw,
+            re.I,
+        )
+        if m:
+            slug = slug or m.group(1)
+            jid = m.group(2)
+        else:
+            return raw
+    else:
+        jid = m.group(1)
+        if not slug:
+            host = (urlparse(raw).hostname or "").lower().lstrip("www.")
+            slug = GREENHOUSE_BOARD_SLUGS.get(host) or re.sub(r"[^a-z0-9]+", "", host.split(".")[0] or "")
+    if not slug or not jid:
         return raw
-    return f"https://boards.greenhouse.io/{slug}/jobs/{jid}"
+    return f"https://boards.greenhouse.io/embed/job_app?for={slug}&token={jid}"
 
 
 def _accept_job_candidate(text: str, href: str, company: str) -> bool:
@@ -1196,7 +1213,10 @@ def scan_goto(page: Page, url: str, *, timeout: int = 75000, attempts: int = 3) 
 
 def apply_job(page: Page, job: dict[str, str], campus: str) -> dict[str, Any]:
     job = dict(job)
-    job["url"] = rewrite_embedded_ats_url(job.get("url") or "", job.get("company") or "")
+    raw_url = job.get("url") or ""
+    job["url"] = rewrite_embedded_ats_url(raw_url, job.get("company") or "")
+    if job["url"] != raw_url:
+        _safe_print(f"CAREERS REWRITE {job.get('company') or '?'} | greenhouse_embed {job['url']}")
     row = {
         "company": job["company"],
         "role": job["role"],
