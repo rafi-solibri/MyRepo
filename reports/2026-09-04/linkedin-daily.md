@@ -18,7 +18,7 @@
 | Blocked | temporary profile-data restriction until 2026-09-10T03:37:00Z |
 
 ## Code fix (this run)
-None — owner restriction blocker; not code-fixable. People referrals remain off.
+Persisted restriction lift to **`.portal-sessions/linkedin-restriction-until.json`** (repo seed) in addition to `/tmp` + artifacts, so fresh cloud VMs still refuse CDP (exit 7) until lift. People referrals remain off.
 
 ## Owner / next cron
 1. Do not re-run LinkedIn apply until **2026-09-10 ~03:37 UTC** (plus small buffer)
