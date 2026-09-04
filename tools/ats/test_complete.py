@@ -12,6 +12,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.ats.complete import (
+    answer_for_ats_label,
     ats_password,
     auth_wall_reason,
     classify_ats_host,
@@ -681,5 +682,39 @@ class _CandPage:
                 return 0
         return _Empty()
 assert_true(apply_form_still_open(_CandPage()), "candidate profile must count as open form")
+
+assert_true(
+    answer_for_ats_label("Current CTC (Fixed and Variable) separately *") == "5200000",
+    "current CTC must not take the phone number",
+)
+assert_true(
+    answer_for_ats_label("Expected CTC (Fixed and Variable separately)*") == "6500000",
+    "expected CTC must be 65L",
+)
+assert_true(
+    answer_for_ats_label("Phone*") == "8790251698",
+    "phone label still maps to mobile",
+)
+assert_true(
+    answer_for_ats_label("Total Relevant Experience (in years)*") == "15",
+    "relevant experience is 15",
+)
+assert_true(
+    answer_for_ats_label("Your primary skills*") is not None,
+    "primary skills must be filled",
+)
+assert_true(
+    answer_for_ats_label("Do you currently have any family members or relatives working at Storable?*")
+    == "No",
+    "family/relatives question is No",
+)
+assert_true(
+    answer_for_ats_label("Notice period*") == "0",
+    "notice is immediate 0",
+)
+assert_true(
+    "Hyderabad" in (answer_for_ats_label("Location (City)*") or ""),
+    "city location is Hyderabad",
+)
 
 print("tools/ats/test_complete.py OK")

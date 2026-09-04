@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Greenhouse custom questions left blank; CTC fields filled with phone | answer_for_ats_label maps CTC/skills/notice/location before phone; fill empty required text |
 | Keyword-only careers scan hid Greenhouse gh_jid listing (0 jobs on retry) | Keep Hyd-pinned base listing URL before inventing ?keywords= variants |
 | Greenhouse CAPTCHA after goto aborted apply_job before ASK_OWNER wait | Do not treat CAPTCHA as a listing hard-stop; continue to complete_ats owner wait |
 | Storable Greenhouse embed hit CAPTCHA and aborted before ASK_OWNER wait | Let greenhouse.io/taleo/iCIMS captcha reach complete_ats ASK_OWNER wait instead of fail-fast |

@@ -1155,64 +1155,110 @@ def dismiss_cookies(page) -> None:
             continue
 
 
+# Truthful Greenhouse / generic custom-question answers (campus profile).
+PRIMARY_SKILLS = (
+    ".NET Core, microservices, AWS, Azure, Kafka, RabbitMQ, Kubernetes, Angular, React"
+)
+AWS_SERVICES = "EC2, ECS/EKS, S3, Lambda, RDS, CloudWatch, IAM, API Gateway"
+OTHER_SKILLS = "Docker, CI/CD, Agile, REST APIs, system design, mentoring"
+
+
+def answer_for_ats_label(text: str) -> str | None:
+    """Map a form label to a profile answer. CTC/experience beat phone (tel substring)."""
+    t = (text or "").strip().lower()
+    if not t or len(t) > 220:
+        return None
+    if re.search(r"robots only|beecatcher|do not enter if you.re human", t, re.I):
+        return None
+    if re.search(r"expected (ctc|salary|compensation)|desired (ctc|salary)", t):
+        return PROFILE["expected_ctc"]
+    if re.search(r"current (ctc|salary|compensation)|present (ctc|salary)|ctc \(fixed", t):
+        return PROFILE["current_ctc"]
+    if re.search(r"\bctc\b|compensation|salary", t) and re.search(r"expect|desired|proposed", t):
+        return PROFILE["expected_ctc"]
+    if re.search(r"\bctc\b|compensation|salary", t) and re.search(r"current|present|fixed", t):
+        return PROFILE["current_ctc"]
+    if re.search(r"notice", t):
+        return PROFILE["notice"]
+    if re.search(r"relevant experience", t):
+        return PROFILE["experience_years"]
+    if re.search(r"years of experience|total experience|experience \(in years\)", t):
+        return PROFILE["experience_years"]
+    if re.search(r"primary skills", t):
+        return PRIMARY_SKILLS
+    if re.search(r"tech stack used|present product", t):
+        return PRIMARY_SKILLS
+    if re.search(r"expertise in aws|aws \(please", t):
+        return AWS_SERVICES
+    if re.search(r"other skills|familiar with", t):
+        return OTHER_SKILLS
+    if re.search(r"family members|relatives working", t):
+        return "No"
+    if re.search(r"current location|location \(city\)", t):
+        return f"{PROFILE['city']}, {PROFILE['state']}, {PROFILE['country']}"
+    if re.search(r"first name|given name", t) and "preferred" not in t:
+        return PROFILE["first"]
+    if re.search(r"preferred first name|preferred name", t):
+        return PROFILE["first"]
+    if re.search(r"last name|surname|family name", t) and "relative" not in t:
+        return PROFILE["last"]
+    if re.search(r"^full name$|legal name|your name", t):
+        return PROFILE["full"]
+    if re.search(r"email|e-mail", t):
+        return ats_email()
+    if re.search(r"linkedin|profile url", t):
+        return PROFILE["linkedin"]
+    if re.search(r"city|current city", t) and "ctc" not in t:
+        return PROFILE["city"]
+    if re.search(r"state|province|region", t):
+        return PROFILE["state"]
+    if re.search(r"\bcountry\b", t):
+        return PROFILE["country"]
+    if re.search(r"postal|zip", t):
+        return PROFILE["postal"]
+    if re.search(r"\b(phone|mobile|telephone)\b|\btel\b", t) and not re.search(
+        r"ctc|salary|compensation|experience", t
+    ):
+        return PROFILE["phone"]
+    return None
+
+
 def fill_labeled_fields(page) -> None:
-    email = ats_email()
-    pairs = [
-        (r"first name|given name", PROFILE["first"]),
-        (r"last name|surname|family name", PROFILE["last"]),
-        (r"^full name$|legal name|your name", PROFILE["full"]),
-        (r"email|e-mail", email),
-        (r"phone|mobile|tel", PROFILE["phone"]),
-        (r"linkedin|profile url", PROFILE["linkedin"]),
-        (r"city|current city", PROFILE["city"]),
-        (r"state|province|region", PROFILE["state"]),
-        (r"country", PROFILE["country"]),
-        (r"postal|zip", PROFILE["postal"]),
-        (r"current (ctc|salary|compensation)|present ctc", PROFILE["current_ctc"]),
-        (r"expected (ctc|salary|compensation)|desired salary", PROFILE["expected_ctc"]),
-        (r"notice", PROFILE["notice"]),
-        (r"years of experience|total experience", PROFILE["experience_years"]),
-    ]
     try:
         labels = page.locator("label, [data-automation-id], .form-group label")
-        n = min(labels.count(), 70)
+        n = min(labels.count(), 120)
     except Exception:
         return
     for i in range(n):
         lab = labels.nth(i)
         try:
-            text = (lab.inner_text(timeout=350) or "").strip().lower()
+            text = (lab.inner_text(timeout=350) or "").strip()
         except Exception:
             continue
-        if not text or len(text) > 90:
+        val = answer_for_ats_label(text)
+        if not val:
             continue
-        if re.search(r"robots only|beecatcher|do not enter if you.re human", text, re.I):
-            continue
-        for pat, val in pairs:
-            if not re.search(pat, text, re.I):
+        try:
+            for_id = lab.get_attribute("for")
+            ctrl = (
+                page.locator(f'[id="{for_id}"]').first
+                if for_id
+                else lab.locator(
+                    "xpath=following::*[self::input or self::textarea or self::select][1]"
+                ).first
+            )
+            if not ctrl.count():
                 continue
-            try:
-                for_id = lab.get_attribute("for")
-                ctrl = (
-                    page.locator(f'[id="{for_id}"]').first
-                    if for_id
-                    else lab.locator(
-                        "xpath=following::*[self::input or self::textarea or self::select][1]"
-                    ).first
-                )
-                if not ctrl.count():
-                    continue
-                tag = ctrl.evaluate("e => e.tagName.toLowerCase()")
-                if tag == "select":
-                    try:
-                        ctrl.select_option(label=re.compile(re.escape(val), re.I))
-                    except Exception:
-                        pass
-                else:
-                    ctrl.fill(val)
-            except Exception:
-                pass
-            break
+            tag = ctrl.evaluate("e => e.tagName.toLowerCase()")
+            if tag == "select":
+                try:
+                    ctrl.select_option(label=re.compile(re.escape(val), re.I))
+                except Exception:
+                    pass
+            else:
+                ctrl.fill(val)
+        except Exception:
+            pass
 
 
 def fill_yes_no(page) -> None:
@@ -1942,6 +1988,40 @@ def fill_validation_gaps(page) -> bool:
                     progressed = True
         except Exception:
             continue
+    # Empty required text / textarea (Greenhouse custom questions).
+    try:
+        blanks = page.evaluate(
+            """() => {
+              const out = [];
+              const els = document.querySelectorAll('input[type=text],input:not([type]),textarea');
+              for (const e of els) {
+                const req = e.required || e.getAttribute('aria-required') === 'true';
+                const bad = e.getAttribute('aria-invalid') === 'true';
+                const val = (e.value || '').trim();
+                if (!e.offsetParent) continue;
+                if (!(req || bad || !val)) continue;
+                if (val && !bad) continue;
+                const lab = (e.labels && e.labels[0] && e.labels[0].innerText)
+                  || e.getAttribute('aria-label') || e.name || e.id || '';
+                out.push({id: e.id||'', name: e.name||'', label: (lab||'').slice(0,200), tag: e.tagName});
+              }
+              return out.slice(0, 30);
+            }"""
+        )
+    except Exception:
+        blanks = []
+    for row in blanks or []:
+        val = answer_for_ats_label(row.get("label") or "")
+        if not val:
+            continue
+        sid = row.get("id") or ""
+        try:
+            ctrl = page.locator(f"#{sid}").first if sid else None
+            if ctrl and ctrl.count():
+                ctrl.fill(val)
+                progressed = True
+        except Exception:
+            continue
     return progressed
 
 
@@ -2326,7 +2406,8 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
 def fill_greenhouse_combos(page) -> None:
     """Greenhouse / Lever / SmartRecruiters react-select required answers."""
     pairs = [
-        (r"country of residence|current country", "India"),
+        (r"country of residence|current country|^country\\b", "India"),
+        (r"location \\(city\\)|current location|^location\\b", "Hyderabad"),
         (r"^state", "N/A"),
         (r"authorized to work|legally authori[sz]ed", "Yes"),
         (r"require sponsorship|visa sponsorship", "No"),
