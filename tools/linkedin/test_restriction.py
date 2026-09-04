@@ -100,6 +100,32 @@ def test_people_referrals_default_off(monkeypatch):
     assert people_referrals_enabled() is True
 
 
+def test_external_apply_skips_cdp_when_restricted(tmp_path: Path, monkeypatch):
+    """External helper must exit 7 on restriction memory — do not open CDP."""
+    from tools.linkedin import linkedin_external_apply as ext  # pragma: allowlist secret
+
+    out = tmp_path / "external-apply-report.json"
+    monkeypatch.setattr(ext, "REPORT_OUT", out)
+    monkeypatch.setattr(
+        ext,
+        "restriction_skip_payload",
+        lambda: {
+            "reason": "linkedin_temporarily_restricted",  # pragma: allowlist secret
+            "lift_utc": "2026-09-10T03:37:00+00:00",
+            "seconds_until_lift": 100,
+        },
+    )
+    try:
+        ext.main()
+        raise AssertionError("expected SystemExit 7")
+    except SystemExit as exc:
+        assert exc.code == 7
+    data = json.loads(out.read_text(encoding="utf-8"))
+    assert data["submitted"] == []
+    assert data["blocked"][0]["status"] == "blocked"
+    assert "linkedin_temporarily_restricted" in data["blocked"][0]["reason"]  # pragma: allowlist secret
+
+
 if __name__ == "__main__":
     import os
     import tempfile
@@ -141,4 +167,10 @@ if __name__ == "__main__":
     assert people_referrals_enabled() is False
     os.environ["HITECHCITY_LI_PEOPLE_REFERRALS"] = "1"
     assert people_referrals_enabled() is True
+
+    class _Patch:
+        def setattr(self, obj, name, value):
+            setattr(obj, name, value)
+
+    test_external_apply_skips_cdp_when_restricted(Path(tempfile.mkdtemp()), _Patch())
     print("ok")
