@@ -599,6 +599,38 @@ assert.strictEqual(
   "DevOps CoE Technical Lead must skip (false Quick Apply 2026-09-03)"
 );
 assert.strictEqual(
+  shouldSkipTitle("Solution Architect Service Now - ITOM"),
+  true,
+  "Service Now (spaced) / ITOM SA must skip (false Quick Apply 2026-09-04)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Solution Architect-Successfactors"),
+  true,
+  "SuccessFactors SA must skip (IBM ATS burn 2026-09-04)"
+);
+assert.strictEqual(
+  shouldSkipTitle("KDB Lead Developer"),
+  true,
+  "KDB Lead Developer must skip (false Quick Apply 2026-09-04)"
+);
+assert.strictEqual(
+  shouldSkipTitle(
+    "Associate Director-Financial Planning And Analysis"
+  ),
+  true,
+  "FP&A Associate Director must skip (false Quick Apply 2026-09-04)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Platform Engineering Lead"),
+  true,
+  "Platform Engineering Lead must skip (infra/SRE-adjacent 2026-09-04)"
+);
+assert.strictEqual(
+  shouldSkipTitle("ServiceNow Technical Architect"),
+  true,
+  "compact ServiceNow spelling must still skip"
+);
+assert.strictEqual(
   shouldSkipTitle("Internet of Things Lead"),
   false,
   "intern must still not match internet (IoT Lead without industrial/iiot stays)"

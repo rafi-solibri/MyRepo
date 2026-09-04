@@ -105,16 +105,16 @@ async function completeExternalPage(page, resumePath, { maxMs = 6.5 * 60 * 1000 
   if (isBrochureOrDeadEnd(afterClick)) {
     return { ok: false, reason: "no_ats_form", url: afterClick.url };
   }
-  // PreferGuestApply may navigate straight into SSO / B2C before the loop.
+  // PreferGuestApply may navigate straight into SSO / B2C / IBMid before the loop.
   if (
-    /b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|secure\.indeed\.com\/(?:auth|oauth)|oneclick\.smartrecruiters|login\.cognizant|talent\.cognizant\.com\/\S*login|eightfold\.ai\/(?:login|signin|auth)|candidate\.accenture\.com/i.test(
+    /b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|secure\.indeed\.com\/(?:auth|oauth)|oneclick\.smartrecruiters|login\.cognizant|talent\.cognizant\.com\/\S*login|eightfold\.ai\/(?:login|signin|auth)|login\.ibm\.com|candidate\.accenture\.com/i.test(
       afterClick.url || ""
     )
   ) {
     return { ok: false, reason: "ats_login_wall", url: afterClick.url };
   }
   if (
-    /multi\s*factor\s*authentication|\bmfa\b|enter (?:the |your )?code|verify (?:your )?identity|one-?time (?:passcode|password|code)/i.test(
+    /multi\s*factor\s*authentication|\bmfa\b|enter (?:the |your )?code|verify (?:your )?identity|one-?time (?:passcode|password|code)|sign in or create an ibmid|\bibmid\b/i.test(
       afterClick.text || ""
     )
   ) {
@@ -122,7 +122,7 @@ async function completeExternalPage(page, resumePath, { maxMs = 6.5 * 60 * 1000 
   }
   while (Date.now() - start < maxMs && noAdvance < 6) {
     const url = page.url() || "";
-    if (/b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|secure\.indeed\.com\/(?:auth|oauth)|oneclick\.smartrecruiters|login\.cognizant|talent\.cognizant\.com\/\S*login|eightfold\.ai\/(?:login|signin|auth)|candidate\.accenture\.com/i.test(url)) {
+    if (/b2clogin\.com|login\.microsoftonline|accounts\.google\.com|okta\.com|secure\.indeed\.com\/(?:auth|oauth)|oneclick\.smartrecruiters|login\.cognizant|talent\.cognizant\.com\/\S*login|eightfold\.ai\/(?:login|signin|auth)|login\.ibm\.com|candidate\.accenture\.com/i.test(url)) {
       return { ok: false, reason: "ats_login_wall", url };
     }
     const text = await page
@@ -140,7 +140,7 @@ async function completeExternalPage(page, resumePath, { maxMs = 6.5 * 60 * 1000 
 
     if (isUnavailable(url, text)) return { ok: false, reason: "job_unavailable", url };
     if (
-      /multi\s*factor\s*authentication|\bmfa\b|enter (?:the |your )?code|verify (?:your )?identity|one-?time (?:passcode|password|code)/i.test(
+      /multi\s*factor\s*authentication|\bmfa\b|enter (?:the |your )?code|verify (?:your )?identity|one-?time (?:passcode|password|code)|sign in or create an ibmid|\bibmid\b/i.test(
         text
       )
     ) {
