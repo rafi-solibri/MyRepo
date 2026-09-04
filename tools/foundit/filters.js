@@ -129,7 +129,7 @@ function isArchLeadTitle(title) {
  * Blocks Arch/Lead exception and forces skip when .NET|C# is absent from the title.
  */
 const NON_DOTNET_PRIMARY_RE =
-  /\b(java|j2ee|spring\s*boot|golang|go\s*lang|python|mean\b|mern\b|ruby\s+on\s+rails|\bphp\b|oracle\s+apps|oracle\s+fusion|oracle\s+dba|oracle\s+cloud|abap|mainframe|cobol|\bas400\b|ibm\s*i|c\s*\+\+|c\s*plus(?:\s*plus)?)\b/i;
+  /\b(java|j2ee|spring\s*boot|golang|go\s*lang|python|mean\b|mern\b|ruby\s+on\s+rails|\bphp\b|oracle\s+apps|oracle\s+fusion|oracle\s+dba|oracle\s+cloud|oracle\s+apex|\bapex\s+(?:solution\s+)?architect|abap|mainframe|cobol|\bas400\b|ibm\s*i|c\s*\+\+|c\s*plus(?:\s*plus)?)\b/i;
 
 function isNonDotNetPrimaryTitle(title) {
   const t = titleForMatch(title);
@@ -142,9 +142,10 @@ function isJavaOrSalesforcePrimary(title, skills) {
   if (/\b(salesforce|agentforce|sfdc)\b/i.test(t)) return true;
   // Skills-only Salesforce without .NET on TITLE (Hitachi CPQ / Agentforce-adjacent).
   if (/\b(salesforce|agentforce|sfdc)\b/i.test(skills || "") && !hasDotNetProof(t)) return true;
-  // Skills-only Oracle Fusion/ERP/Cloud without .NET on TITLE (RealPage Application Architect 2026-09-01).
+  // Skills-only Oracle Fusion/ERP/Cloud/APEX without .NET on TITLE
+  // (RealPage Application Architect 2026-09-01; TCS Oracle Apex SA 2026-09-04).
   if (
-    /\b(oracle\s+fusion|oracle\s+apps|oracle\s+erp|oracle\s+cloud|oracle\s+subscriptions)\b/i.test(
+    /\b(oracle\s+fusion|oracle\s+apps|oracle\s+erp|oracle\s+cloud|oracle\s+subscriptions|oracle\s+apex)\b/i.test(
       skills || ""
     ) &&
     !hasDotNetProof(t)
@@ -248,10 +249,16 @@ function skipTitleReason(title) {
     !hasDotNet(t, "")
   )
     return "semiconductor/EDA without .NET on title";
-  // Naukri NON_DOTNET_PRIMARY_RE parity — Oracle Fusion/Apps/ERP is not .NET.
+  // Naukri NON_DOTNET_PRIMARY_RE parity — Oracle Fusion/Apps/ERP/APEX is not .NET.
   // Title-only here; skills-only Oracle is handled in classifyJob / isJavaOrSalesforcePrimary
-  // (RealPage "Application Architect" + Oracle ERP/Fusion skills 2026-09-01).
-  if (/\b(oracle\s+fusion|oracle\s+apps|oracle\s+erp)\b/i.test(t) && !hasDotNet(t, ""))
+  // (RealPage "Application Architect" + Oracle ERP/Fusion skills 2026-09-01;
+  // TCS "Oracle Apex Solution Architect" false Falcon NORMAL 2026-09-04).
+  if (
+    /\b(oracle\s+fusion|oracle\s+apps|oracle\s+erp|oracle\s+apex|\bapex\s+(?:solution\s+)?architect)\b/i.test(
+      t
+    ) &&
+    !hasDotNet(t, "")
+  )
     return "Oracle Fusion/ERP without .NET on title";
   // Atlassian/Jira Solution Architect without .NET on TITLE (Algoworks 2026-09-01).
   if (/\batlassian\b/i.test(t) && !hasDotNet(t, ""))
@@ -309,10 +316,11 @@ function classifyJob(job) {
   const jobId = String(job.jobId || job.id || "");
 
   const archLead = isArchLeadTitle(title);
-  // Skills-primary Oracle Fusion/ERP/Cloud + no .NET on TITLE (RealPage Application Architect 2026-09-01).
+  // Skills-primary Oracle Fusion/ERP/Cloud/APEX + no .NET on TITLE
+  // (RealPage Application Architect 2026-09-01; TCS Oracle Apex SA 2026-09-04).
   // Check before Arch/Lead exception so the skip reason is explicit (not generic no-.NET).
   if (
-    /\b(oracle\s+fusion|oracle\s+apps|oracle\s+erp|oracle\s+cloud|oracle\s+subscriptions)\b/i.test(
+    /\b(oracle\s+fusion|oracle\s+apps|oracle\s+erp|oracle\s+cloud|oracle\s+subscriptions|oracle\s+apex)\b/i.test(
       skills
     ) &&
     !hasDotNet(title, "")

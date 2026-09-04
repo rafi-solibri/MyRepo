@@ -1,5 +1,12 @@
 # Foundit — issues & fixes
 
+## 2026-09-04 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| TCS Oracle Apex Solution Architect false Falcon NORMAL (Arch/Lead waived .NET; Apex not covered by Fusion/ERP patterns) | filters.js: skip oracle apex / APEX Solution Architect on title+skills (Naukri #318 parity); tests for TCS case |
+
+
 ## 2026-09-03 (cloud)
 
 | Issue | Fix |
