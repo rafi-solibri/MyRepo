@@ -248,6 +248,29 @@ def test_passport_expiry_from_oauth_and_jwt():
     assert from_jwt["reason"] == "indeed_passport_expired"
 
 
+def test_sign_in_wall_cookie_banner_covers_google_cta():
+    """2026-09-04: Sign In | Indeed Accounts body had OneTrust over Google SSO."""
+    from tools.indeed.google_sso import html_has_google_sso_target
+
+    wall = (
+        "We use cookies to personalize content and ads\n"
+        "Accept All Cookies\nReject All\n"
+        "Ready to take the next step?\nCreate an account\n"
+        "Sign In | Indeed Accounts"
+    )
+    assert cookie_banner_visible_from_text(wall)
+    assert html_has_google_sso_target(
+        '<button id="login-google-button">Continue with Google</button>'
+    )
+    assert html_has_google_sso_target(
+        '<button data-tn-element="google-auth">Sign in with Google</button>'
+    )
+    assert html_has_google_sso_target(
+        "Sign in to Indeed with Google\nContinue with Google"
+    )
+    assert not html_has_google_sso_target("Create an account or sign in")
+
+
 def test_indeed_google_sso_uses_google_password_only():
     """Never fill Gmail forms with LINKEDIN_PASSWORD (day-10 burn)."""
     from tools.indeed.google_sso import google_password_candidates
@@ -283,4 +306,5 @@ if __name__ == "__main__":
     test_job_dedupe_key_from_jk()
     test_passport_expiry_from_oauth_and_jwt()
     test_indeed_google_sso_uses_google_password_only()
+    test_sign_in_wall_cookie_banner_covers_google_cta()
     print("ok")

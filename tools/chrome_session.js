@@ -361,6 +361,25 @@ function checkPortal(portal) {
   }
   console.log(JSON.stringify(result, null, 2));
   if (result.reason === "unknown_portal") return 2;
+  // Expired Indeed Passport is still healable via Gmail SSO in uc_daily_apply.
+  // Hard-exit 3 here skipped daily_apply (2026-09-02/03/04) so SSO never ran.
+  if (
+    !result.ok &&
+    result.reason === "indeed_passport_expired" &&
+    (process.env.GOOGLE_PASSWORD || process.env.GMAIL_PASSWORD)
+  ) {
+    result.ssoHealAvailable = true;
+    result.reason = "indeed_passport_expired_try_google_sso";
+    console.error(
+      JSON.stringify({
+        ok: false,
+        continueApply: true,
+        reason: result.reason,
+        hint: "Passport expired; daily_apply will try GOOGLE_PASSWORD SSO",
+      }),
+    );
+    return 0;
+  }
   return result.ok ? 0 : 3;
 }
 

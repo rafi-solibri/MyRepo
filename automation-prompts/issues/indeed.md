@@ -1,5 +1,12 @@
 # Indeed — issues & fixes
 
+## 2026-09-04 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Sign-in wall cookie banner hid Continue with Google (google_sso_button_missing); chrome_session exit 3 skipped SSO heal | Dismiss OneTrust then JS-click Indeed Google CTA; passport-expired + GOOGLE_PASSWORD continues to daily_apply; inherit UC stdio for 2FA |
+
+
 ## 2026-09-02 (cloud)
 
 | Issue | Fix |
