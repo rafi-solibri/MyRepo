@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| False Quick Applies 2026-09-04 re-run: Senior IT Resources H1B, Data Platform Architect, Blockchain Architect | Title-skip H1B/IT Resources/blockchain; PURE_AI_DATA data platform without .NET on title |
 | False Quick Applies / ATS burn: Service Now (spaced) ITOM, SuccessFactors, KDB Lead, FP&A Associate Director, Platform Engineering Lead; IBM login.ibm.com burned full external timeout | Title-skip service\s*now/ITOM/SuccessFactors/KDB/FP&A/platform engineering; fail-fast login.ibm.com + IBMid in daily_apply + complete_page |
 
 

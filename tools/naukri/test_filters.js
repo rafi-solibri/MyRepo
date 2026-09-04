@@ -640,6 +640,26 @@ assert.strictEqual(
   false,
   ".NET Azure SA must still apply"
 );
+assert.strictEqual(
+  shouldSkipTitle("Senior IT Resources - Accepting H1B Transfers"),
+  true,
+  "H1B / IT Resources staffing title must skip (false Quick Apply 2026-09-04)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Sr Blockchain Engg / Blockchain Architect"),
+  true,
+  "Blockchain Architect must skip (false Quick Apply 2026-09-04)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Data Platform Architect"),
+  true,
+  "Data Platform Architect without .NET must skip (false Quick Apply 2026-09-04)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Data Platform Architect .NET"),
+  false,
+  "Data Platform Architect with .NET on title OK"
+);
 const { workdayCompliantPassword } = require("./workday_apply");
 assert.strictEqual(workdayCompliantPassword("GoodPass123!"), "GoodPass123!");
 const weak = workdayCompliantPassword("short");
