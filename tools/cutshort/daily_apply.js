@@ -119,6 +119,7 @@ function writeHomeReport(partial) {
       : null,
     notes: [
       `qualifying=${(partial.qualifying || []).length}`,
+      `skips=${JSON.stringify(partial.skipReasons || {})}`,
       `q_answered=${q.answered || 0}`,
       `q_locked_empty=${q.lockedEmpty || 0}`,
       `q_already_submitted=${q.alreadySubmitted || 0}`,
@@ -779,14 +780,17 @@ async function scan(pageOrSession) {
   }
   // Cap pages so daily runs finish in-session; classify() decides quality.
   // Note: bare `q=`/`query=` params are ignored by /findjobs/q (same total as newest).
+  // `matchesfor` (lowercase) is treated as a filter and returns 0. `matchesFor`
+  // is ignored and returns the same newest inventory — do not waste a wave on it.
   await pull({}, 120, "newest");
-  await pull({ matchesfor: SEEKER_ID }, 40, "matchesfor");
   await pull({ locations: "Hyderabad" }, 50, "hyd");
   await pull({ locations: "Telangana" }, 25, "telangana");
   await pull({ locations: "India", remoteType: "remote_okay" }, 40, "india-remote");
   await pull({ remoteType: "remote_okay" }, 40, "remote_okay");
   await pull({ remoteType: "remote_only" }, 25, "remote_only");
-  for (const skills of ["00001", "00075", "00486", "00054", "00368", "00002", "00115"]) {
+  // Skill ids: 00001=.NET 00075=C# 00486=Windows Azure 00054=AWS 00368=React.js
+  // 00002=Java (broad). 00115 is empty on /findjobs/q — omit.
+  for (const skills of ["00001", "00075", "00486", "00054", "00368", "00002"]) {
     await pull({ skills }, 35, skills);
   }
   return [...byId.values()];
@@ -1055,6 +1059,7 @@ async function main() {
 - Awaiting listed: ${stats.q.awaitingListed}
 - Failures (apply + locked-empty + verify-empty): **${failedTotal}**
 - Tailored resumes: built **${stats.tailored?.built || 0}** | profile uploaded **${stats.tailored?.uploaded || 0}** | upload failed ${stats.tailored?.uploadFailed || 0}
+- Skip reasons: ${JSON.stringify(stats.skipReasons || {})}
 ${stats.q.error ? `- Q audit note: ${stats.q.error}\n` : ""}
 ## Applied
 ${stats.applied.map((a) => `- T${a.tier} ${a.title} @ ${a.company} (${a.ctc}L) \`${a.id}\` via=${a.result?.via || a.result?.path || "?"}`).join("\n") || "_None_"}

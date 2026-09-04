@@ -1,5 +1,12 @@
 # Cutshort — issues & fixes
 
+## 2026-09-04 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| matchesfor lowercase + skill 00115 waves returned 0 on /findjobs/q (matchesFor ignored=newest); 3345 scanned / 0 qualifying after CTC/title/exp/location skips | Drop dead matchesfor + 00115 waves; print skipReasons on daily report; do not invent applies when Hyd/remote Architect/.NET cards are listed under 35L |
+
+
 ## 2026-08-25 (cloud)
 
 | Issue | Fix |

@@ -159,4 +159,16 @@ function job(partial) {
   assert.ok(classify(j)?.tier === 1);
 }
 
+{
+  const src = require("fs").readFileSync(require("path").join(__dirname, "daily_apply.js"), "utf8");
+  assert.ok(
+    !/matchesfor:\s*SEEKER_ID/.test(src),
+    "do not pass lowercase matchesfor — /findjobs/q returns 0"
+  );
+  assert.ok(
+    !/"00115"/.test(src),
+    "skill 00115 is empty on /findjobs/q — omit the dead wave"
+  );
+}
+
 console.log("cutshort test_filters: ok");
