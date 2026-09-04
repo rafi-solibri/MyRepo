@@ -3414,7 +3414,9 @@ def main() -> int:
                     home_url = sb.get_current_url() or ""
                 except Exception:
                     pass
-                if sso.get("ok") or looks_signed_in(home_body, home_url):
+                if looks_signed_in(home_body, home_url) or (
+                    sso.get("ok") and not looks_login_wall(home_body, home_url)
+                ):
                     session_ok = True
                     report["sessionRestore"] = {
                         **(warmed if isinstance(warmed, dict) else {}),
@@ -3423,9 +3425,10 @@ def main() -> int:
                     }
                 else:
                     hint = sso.get("hint") or (
-                        "Account/auth is a Sign-in wall — set GOOGLE_PASSWORD "
-                        "(Gmail, not LINKEDIN_PASSWORD) or refresh Indeed "
-                        "Passport via Desktop Chrome + sync-chrome-sessions"
+                        "Account/auth is a Sign-in wall — Google SSO did not "
+                        "open accounts.google.com. Set GOOGLE_PASSWORD (Gmail, "
+                        "not LINKEDIN_PASSWORD) or refresh Indeed Passport via "
+                        "Desktop Chrome + sync-chrome-sessions + Save Snapshot"
                     )
                     report["blocked"].append(
                         {

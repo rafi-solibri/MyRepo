@@ -89,6 +89,41 @@ def google_sso_cta_visible_from_text(body: str) -> bool:
     return bool(_GOOGLE_SSO_CTA_RE.search(body or ""))
 
 
+def looks_indeed_auth_surface(url: str = "", title: str = "", body: str = "") -> bool:
+    """True on Sign In | Indeed Accounts /auth — not a signed-in session."""
+    blob = f"{url}\n{title}\n{body}".lower()
+    return bool(
+        re.search(
+            r"sign in \| indeed|secure\.indeed\.com/auth|/account/login|"
+            r"ready to take the next step",
+            blob,
+        )
+    )
+
+
+def sso_looks_signed_in(body: str, title: str = "", url: str = "") -> bool:
+    """Confirm Indeed Passport session after Google SSO.
+
+    Do not treat Sign-in-wall copy (email address / profile / messages) as
+    signed-in — that false-ok'd the 2026-09-04 cloud run while still on /auth.
+    """
+    if looks_indeed_auth_surface(url, title, body):
+        return False
+    blob = f"{url}\n{title}\n{body}"
+    if re.search(
+        r"account settings|sign out of indeed|manage your account security|"
+        r"change account type|device management|welcome,\s*\w+",
+        blob,
+        re.I,
+    ):
+        return True
+    # Soft: signed-in SERP/account chrome, never on an auth URL.
+    return bool(
+        re.search(r"messages unread|sign out\b", blob, re.I)
+        and "create an account or sign in" not in blob.lower()
+    )
+
+
 def _dismiss_cookies(sb: Any) -> str:
     """OneTrust strip covers Continue-with-Google on Sign In | Indeed Accounts."""
     try:
@@ -153,10 +188,8 @@ def _click_google_sso(sb: Any) -> bool:
               const t = textOf(el);
               const r = el.getBoundingClientRect();
               let idx = labels.findIndex(l => t.includes(l));
-              if (idx < 0 && (
-                    /google/.test(t) &&
-                    (/continue|sign in|auth|accounts\\.google/.test(t))
-                  )) {
+              // Require a real Google OAuth control — not "Sign in" near a Google logo.
+              if (idx < 0 && /accounts\\.google\\.com|data-tn-element.*google|data-provider=.?google/.test(t)) {
                 idx = 10;
               }
               return {el, t, idx, onScreen: r.width > 8 && r.height > 8};
@@ -175,7 +208,16 @@ def _click_google_sso(sb: Any) -> bool:
         )
         if hit:
             time.sleep(2.5)
-            return True
+            if _switch_to_google_window(sb):
+                return True
+            try:
+                cur = (sb.get_current_url() or "").lower()
+            except Exception:
+                cur = ""
+            if "accounts.google.com" in cur:
+                return True
+            # Click registered but OAuth did not open — keep trying other nodes.
+            return False
     except Exception:
         pass
     patterns = (
@@ -385,8 +427,29 @@ def try_google_sso(sb: Any, *, wait_2fa_sec: int | None = None) -> dict:
             except Exception:
                 pass
             return info
-        time.sleep(2)
-        _switch_to_google_window(sb)
+        # Click is not enough — wait for accounts.google.com (popup or same tab).
+        opened = False
+        for _ in range(8):
+            if _switch_to_google_window(sb):
+                opened = True
+                break
+            try:
+                if "accounts.google.com" in (sb.get_current_url() or "").lower():
+                    opened = True
+                    break
+            except Exception:
+                pass
+            time.sleep(0.6)
+        info["tried"].append({"google_window": opened})
+        if not opened:
+            info["reason"] = "google_sso_did_not_open"
+            try:
+                shot = "/opt/cursor/artifacts/indeed-google-sso-missing.png"
+                sb.save_screenshot(shot)
+                info["screenshot"] = shot
+            except Exception:
+                pass
+            return info
 
     body, title, url = _snap(sb)
     info["tried"].append({"after_click": {"url": url[:120], "title": title[:80]}})
@@ -509,17 +572,9 @@ def try_google_sso(sb: Any, *, wait_2fa_sec: int | None = None) -> dict:
     except Exception:
         pass
     body, title, url = _snap(sb)
-    signed = bool(
-        re.search(r"welcome|sign out|account settings|email address", body, re.I)
-        and "sign in |" not in body.lower()
-    )
-    if not signed:
-        # Messages nav / myjobs as soft proof
-        signed = bool(
-            re.search(r"my jobs|messages|profile", body, re.I)
-            and "create an account or sign in" not in body.lower()
-        )
+    signed = sso_looks_signed_in(body, title, url)
     info["ok"] = signed
     info["url"] = url[:160]
+    info["title"] = title[:80]
     info["reason"] = "signed_in" if signed else "sso_unconfirmed"
     return info

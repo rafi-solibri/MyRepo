@@ -266,6 +266,25 @@ def test_google_sso_cta_visible_from_text():
     assert looks_login_wall(signin_cookies, "https://secure.indeed.com/settings/account")
     assert not google_sso_cta_visible_from_text(signin_cookies)
 
+    from tools.indeed.google_sso import looks_indeed_auth_surface, sso_looks_signed_in
+
+    assert looks_indeed_auth_surface(
+        "https://secure.indeed.com/auth?oauth_client_id=abc",
+        "Sign In | Indeed Accounts",
+        "Enter your email address",
+    )
+    # 2026-09-04: "email address" / "profile" on the auth wall is NOT signed-in.
+    assert not sso_looks_signed_in(
+        "Enter your email address\nCreate an account\nprofile",
+        "Sign In | Indeed Accounts",
+        "https://secure.indeed.com/auth?from=oauth",
+    )
+    assert sso_looks_signed_in(
+        "Account settings\nSign out of Indeed\nemail address",
+        "Account | Indeed",
+        "https://secure.indeed.com/settings/account",
+    )
+
 
 def test_indeed_google_sso_uses_google_password_only():
     """Never fill Gmail forms with LINKEDIN_PASSWORD (day-10 burn)."""
