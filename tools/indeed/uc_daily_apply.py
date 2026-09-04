@@ -9,6 +9,7 @@ import contextlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -3335,6 +3336,24 @@ def main() -> int:
         print(f"  filelock_rebind={exc!s}"[:160], flush=True)
 
     prep = prepare_profile()
+    # Persist a just-healed hybrid Passport back to the seed profile so the
+    # next prepare() does not copy expired Desktop cookies over a live session.
+    try:
+        if (prep or {}).get("hasAuth") and Path(PROFILE).exists():
+            seed = Path(SEED_PROFILE)
+            hyb = Path(PROFILE)
+            for rel in (
+                "Default/Cookies",
+                "Default/Cookies-journal",
+                "Local State",
+            ):
+                s, d = hyb / rel, seed / rel
+                if s.exists():
+                    d.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(s, d)
+            print("  seed_passport_synced_from_hybrid=1", flush=True)
+    except Exception as exc:
+        print(f"  seed_passport_sync_err={exc!s}"[:160], flush=True)
     report = {
         "portal": "indeed",
         "source": "home-local" if os.environ.get("INDEED_SKIP_WARP") == "1" else "cloud-warp-uc",

@@ -37,7 +37,28 @@ COPY_PATHS = [
 
 
 def prepare(src: Path, dst: Path) -> dict:
+    # Keep a live Passport already on dst (Google SSO this run). Wiping dst
+    # from an expired seed profile was dropping a just-healed session.
     if dst.exists():
+        try:
+            _here = Path(__file__).resolve().parent
+            if str(_here) not in sys.path:
+                sys.path.insert(0, str(_here))
+            from passport_auth_check import check_passport
+
+            live = check_passport(dst)
+            if live.get("ok") and not live.get("expired"):
+                return {
+                    "src": str(src),
+                    "dst": str(dst),
+                    "copied": [],
+                    "keptLiveDst": True,
+                    "cfCookiesDeleted": 0,
+                    "hasAuth": True,
+                    "passport": live,
+                }
+        except Exception:
+            pass
         shutil.rmtree(dst)
     (dst / "Default").mkdir(parents=True)
 

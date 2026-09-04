@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| prepare_uc_profile wiped live hybrid Passport by recopying expired seed after Google SSO | Keep dst when passport ok; sync hybrid Cookies/Local State back to chrome-indeed-profile |
 | Easy Apply filled job-view after Apply with Indeed (bare continue matched cookie/JD; no file input) | smartapply_surface_ready requires smartapply URL/form copy; wait+retry click; abort if still on viewjob |
 | Google password ok then helper left FedCM gsi/signincontinue (sso_unconfirmed) | Stay on Google; click GSI Continue; owner-wait ASK_OWNER_GOOGLE_2FA; do not jump to Indeed settings mid-GSI |
 | google_sso ok:true while still on Sign In \| Indeed Accounts (email address/profile false match) | Reject auth-wall as signed-in; require accounts.google.com after click; drop loose profile/email heuristics |

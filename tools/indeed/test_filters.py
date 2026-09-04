@@ -139,6 +139,7 @@ def test_already_applied_job_view_only():
 
 def test_hybrid_profile_copies_local_state():
     assert "Local State" in COPY_PATHS
+    assert "Default/Cookies" in COPY_PATHS
 
 
 def test_india_home_get_started_is_not_login_proof():
