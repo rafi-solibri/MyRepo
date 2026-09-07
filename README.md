@@ -57,6 +57,14 @@ See [`automation-prompts/HOME_AUTOMATIONS.md`](automation-prompts/HOME_AUTOMATIO
 powershell -ExecutionPolicy Bypass -File scripts\install-all-home-tasks.ps1
 ```
 
+### Disable home-local schedules
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\disable-all-home-tasks.ps1
+```
+
+WSL/Linux cron: `bash scripts/disable-all-home-cron.sh`
+
 ## Windows private worker (My Machines)
 
 Native Windows `agent worker start` currently crashes with `better-sqlite3`

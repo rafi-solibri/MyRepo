@@ -37,4 +37,5 @@ echo "  # optional for headless cron:"
 echo "  export CURSOR_API_KEY=...   # from https://cursor.com/dashboard/api → put in ~/.bashrc or cron env"
 echo
 echo "Test now: bash $SCRIPT"
-echo "Remove: crontab -l | grep -v indeed-home-daily | crontab -"
+echo "Disable/remove: bash scripts/disable-all-home-cron.sh"
+echo "Manual remove: crontab -l | grep -v indeed-home-daily | crontab -"
