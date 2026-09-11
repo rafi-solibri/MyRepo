@@ -66,6 +66,8 @@ def test_title_ok():
     assert CAREERS_TITLE_SKIP.search("Principal Solution Architect – Agentic AI")
     assert CAREERS_TITLE_SKIP.search("Senior /Staff Data & Cloud Platform Engineer")
     assert CAREERS_TITLE_SKIP.search("Principal, Sales Engineering Hyderabad, India")
+    assert CAREERS_TITLE_SKIP.search("Staff Engineer Design")
+    assert LI_TITLE_SKIP.search("Staff Engineer Design")
     assert LI_TITLE_SKIP.search("Principal Solution Architect – Agentic AI")
     assert LI_TITLE_SKIP.search("Senior /Staff Data & Cloud Platform Engineer")
     assert LI_TITLE_SKIP.search("Principal, Sales Engineering")
