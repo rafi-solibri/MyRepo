@@ -27,6 +27,15 @@ assert_true(
 )
 assert_true(
     skip_reason(
+        "Restaurant Architect / Designer – Architectural Visualization",
+        "Office Beacon ASPL",
+        "",
+    )
+    is not None,
+    "building-design Restaurant Architect must skip",
+)
+assert_true(
+    skip_reason(
         "Dell Boomi Architect- 9+ Years of experience - ONLY immediate to 15 days joiner",
         "Tek Grove",
         "",
