@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Cyara Easy Apply still exceeded steps after field mapping: Apply chrome had no modal class so Next was never clicked | If Apply to heading is visible, recover the ancestor that contains Next/Review/Submit instead of treating the form as lost |
 | View recheck called location_allowed without remote_search so India Remote Easy Applies were skipped | Pass remote_search from the India remote search wave into easy_apply_flow view recheck |
 | View location leaked job title via pipes so Remote India Cloud Architect was skipped | If first \| segment looks like a title, use later Remote/India/city segment |
 | TITLE_OK allowed Senior Project Architect High-Rise/Mivan/BIM (AEC) | Blacklist project architect, high-rise, Mivan |

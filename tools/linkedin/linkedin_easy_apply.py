@@ -1529,8 +1529,27 @@ def easy_apply_flow(page: Page, job: JobResult, *, remote_search: bool = False) 
                 job.path = "Easy Apply"
                 shot(page, f"submitted-{job.job_id}.png")
                 return job
-            time.sleep(0.6)
-            continue
+            # 2026 Apply chrome often lacks role=dialog / jobs-easy-apply-modal
+            # (Cyara SEM retried twice → exceeded steps with Next never clicked).
+            try:
+                heading = page.get_by_role("heading", name=re.compile(r"Apply to ", re.I))
+                if heading.count() and heading.first.is_visible():
+                    recovered = heading.first.locator(
+                        "xpath=ancestor::div[.//button[normalize-space()='Next' "
+                        "or normalize-space()='Review' or normalize-space()='Submit' "
+                        "or normalize-space()='Submit application' "
+                        "or normalize-space()='Continue']][1]"
+                    )
+                    if recovered.count():
+                        form = recovered.first
+                        form_ok = True
+                        last_err = "recovered apply chrome"
+                        print("  WARN: recovered Apply chrome without modal class", flush=True)
+            except Exception:
+                pass
+            if not form_ok:
+                time.sleep(0.6)
+                continue
 
         advanced = False
         for name in ("Submit application", "Submit", "Review", "Next", "Continue"):
