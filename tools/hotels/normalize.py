@@ -100,6 +100,54 @@ def merge_offers(
     return merged
 
 
+def sanitize_google_contaminated_offers(offers: list[HotelOffer]) -> list[HotelOffer]:
+    """Drop Google $12-style crumbs and UI-chip names from merged inventory."""
+    from .providers.google_hotels import MIN_INR, _is_ui_chip
+
+    out: list[HotelOffer] = []
+    for o in offers:
+        if _is_ui_chip(o.hotel):
+            continue
+        providers: list[ProviderPrice] = []
+        for p in o.providers:
+            pname = (p.provider or "").lower()
+            is_google = pname == "google hotels" or pname.startswith("google/")
+            if is_google and p.price_inr < MIN_INR:
+                continue
+            providers.append(p)
+        if not providers:
+            # Google-only offer whose prices were all crumbs
+            if o.source == "google" or (o.lowest_provider or "").lower() in {
+                "google hotels",
+                "google/google hotels",
+            }:
+                continue
+            if o.lowest_price_inr < MIN_INR and "google" in (o.source or "").lower():
+                continue
+            continue
+        providers = sorted(providers, key=lambda p: p.price_inr)
+        lowest = providers[0]
+        out.append(
+            HotelOffer(
+                hotel=o.hotel,
+                area=o.area,
+                check_in=o.check_in,
+                stars=o.stars,
+                lowest_price_inr=lowest.price_inr,
+                lowest_provider=lowest.provider,
+                providers=providers,
+                source=o.source,
+                rating=o.rating,
+                review_count=o.review_count,
+                hotel_id=o.hotel_id,
+                details_url=o.details_url,
+                neighborhood=o.neighborhood,
+            )
+        )
+    out.sort(key=lambda o: (o.check_in.isoformat(), o.lowest_price_inr, o.hotel.lower()))
+    return out
+
+
 def summarize_by_provider(offers: list[HotelOffer]) -> dict[str, int]:
     counts: dict[str, int] = defaultdict(int)
     for o in offers:

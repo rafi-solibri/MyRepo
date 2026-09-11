@@ -116,7 +116,36 @@ def run_nightly(
                 headless=not headed,
             )
 
-    from .normalize import summarize_by_provider
+    from .calendar_google import strip_untrusted_google_from_calendar
+    from .calendar_prices import HotelCalendar, DayPrice
+    from .normalize import sanitize_google_contaminated_offers, summarize_by_provider
+
+    if calendars_payload:
+        rebuilt: list[HotelCalendar] = []
+        for raw in calendars_payload:
+            rebuilt.append(
+                strip_untrusted_google_from_calendar(
+                    HotelCalendar(
+                        hotel=raw["hotel"],
+                        hid=raw.get("hid") or "",
+                        months=list(raw.get("months") or []),
+                        days=[
+                            DayPrice(
+                                date=d["date"],
+                                lowest_price_inr=d.get("lowest_price_inr"),
+                                lowest_provider=d.get("lowest_provider"),
+                                providers=d.get("providers") or {},
+                            )
+                            for d in raw.get("days") or []
+                        ],
+                        details_base_url=raw.get("details_base_url") or "",
+                    )
+                )
+            )
+        calendars_payload = [c.to_dict() for c in rebuilt]
+
+    if offers:
+        offers = sanitize_google_contaminated_offers(offers)
 
     payload = {
         "generated_at": datetime.utcnow().isoformat() + "Z",
