@@ -11,7 +11,7 @@ TITLE_BLACKLIST = re.compile(
     r"salesforce|servicenow|guidewire|splunk|\bpega\b|oracle\s*erp|sitecore|"
     r"oracle\s*cloud\s*(scm|erp|hcm|financials|ebs)|oracle\s*scm|"
     r"finance functional|functional\s*[-–—]?\s*solution architect|"
-    r"\bmean\b|devops engineer|sre engineer|site reliability engineer|gcp.?presales|workato|mulesoft|"
+    r"\bmean\b|devops engineer|sre engineer|site reliability engineer|gcp.?presales|workato|mulesoft|\bboomi\b|"
     r"blockchain|mandarin|biztalk|firmware|\bmes\b|\bror\b|ruby on rails|"
     r"\bsap\b|dynamics\s*365|\bd365\b|esri|\bgis\b|"
     r"java full[- ]?stack|java[- ]?(mandatory|only|required|backend)|"

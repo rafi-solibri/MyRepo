@@ -26,6 +26,15 @@ assert_true(
     "Salesforce title must skip",
 )
 assert_true(
+    skip_reason(
+        "Dell Boomi Architect- 9+ Years of experience - ONLY immediate to 15 days joiner",
+        "Tek Grove",
+        "",
+    )
+    is not None,
+    "Boomi-primary architect title must skip",
+)
+assert_true(
     skip_reason("Quality Engineering Lead", "Acme", "") is not None,
     "QE title must skip",
 )
