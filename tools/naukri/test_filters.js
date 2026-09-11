@@ -720,6 +720,28 @@ assert.strictEqual(
   true,
   "AWS Platform Architect must skip (unconfirmed apply 2026-09-11)"
 );
+assert.strictEqual(
+  shouldSkipTitle("Principal Engineer - Offshore (Piping)"),
+  true,
+  "Offshore piping Principal Engineer must skip (Oracle ATS burn 2026-09-11 postfix)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Principal Engineer - Electrical (Offshore)"),
+  true,
+  "Offshore electrical Principal Engineer must skip (Oracle ATS burn 2026-09-11 postfix)"
+);
+assert.strictEqual(
+  shouldSkipTitle(
+    "Principal Engineer - Offshore (Control & Instrumentation)"
+  ),
+  true,
+  "Offshore C&I Principal Engineer must skip (Oracle ATS burn 2026-09-11 postfix)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Sr. Engineering Manager-AI"),
+  true,
+  "Engineering Manager-AI without .NET must skip (postfix 2026-09-11)"
+);
 const { workdayCompliantPassword } = require("./workday_apply");
 assert.strictEqual(workdayCompliantPassword("GoodPass123!"), "GoodPass123!");
 const weak = workdayCompliantPassword("short");
