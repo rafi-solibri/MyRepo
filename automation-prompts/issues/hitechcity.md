@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| Micron Staff Engineer IP Dev Layout leaked past layout-engineer skip | Title-skip ip dev layout / dev layout on CAREERS + LI |
 | Micron TD Device Characterization + Microsoft Apps AI + Oracle Health titles burned LI EXT; Oracle OTP /apply URL persist_retry looped ASK_OWNER | Title-skip device characterization / Apps AI / Oracle Health; OTP pages are hard walls (not open forms); ats_fill persist_retry no nested ASK_OWNER |
 | Cutshort board scan died on page.evaluate Execution context was destroyed (navigation) | Retry Cutshort API evaluate after context-destroyed / closed page and re-land dashboard |
 | Micron Staff Engineer Design / AMS LPDDR / AMAIS / memory-systems workload architect burned LI EXT persist_retry | Title-skip those HW/process titles in CAREERS_TITLE_SKIP + LI_TITLE_SKIP + tests |

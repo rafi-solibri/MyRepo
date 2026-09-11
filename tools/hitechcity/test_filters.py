@@ -164,6 +164,8 @@ def test_title_ok():
     assert LI_TITLE_SKIP.search("STAFF ENGINEER, DDEG Design Methodology")
     assert CAREERS_TITLE_SKIP.search("Staff Memory Design Engineer")
     assert LI_TITLE_SKIP.search("Staff Memory Design Engineer")
+    assert CAREERS_TITLE_SKIP.search("Staff Engineer, IP Dev Layout")
+    assert LI_TITLE_SKIP.search("Staff Engineer, IP Dev Layout")
     assert CAREERS_TITLE_SKIP.search("Senior/Staff Engineer, TD Device Characterization")
     assert LI_TITLE_SKIP.search("Senior/Staff Engineer, TD Device Characterization")
     assert CAREERS_TITLE_SKIP.search("Principal Oracle Health Millennium Support & Migration Engineer")
