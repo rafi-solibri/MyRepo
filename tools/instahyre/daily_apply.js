@@ -24,6 +24,15 @@ const { uploadProfileResume } = require("./update_profile_resume");
 const { tailorResumeForJob } = require("../resume_tailor");
 const { completeExternalPage } = require("../ats/complete_page");
 const { companyAllowed, allowlistActive } = require("../hitechcity/campus_allowlist");
+const {
+  filterCountsUrl,
+  undecidedMatchingUrl,
+  jobSearchUrl,
+  applyUrl,
+  applyPayload,
+  parseStatusCounts,
+  applySucceeded,
+} = require("./api");
 
 const CDP = process.env.INSTAHYRE_CDP || "http://127.0.0.1:9222";
 const OUT =
@@ -118,9 +127,18 @@ function isBrowserClosedError(e) {
 async function apiGet(page, url) {
   try {
     return await page.evaluate(async (u) => {
+      const csrf = document.cookie
+        .split(";")
+        .map((x) => x.trim())
+        .find((x) => x.startsWith("csrftoken="))
+        ?.split("=")[1];
       const r = await fetch(u, {
         credentials: "include",
-        headers: { "X-Requested-With": "XMLHttpRequest", Accept: "application/json" },
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          Accept: "application/json, text/plain, */*",
+          ...(csrf ? { "X-CSRFToken": csrf } : {}),
+        },
       });
       const text = await r.text();
       let json = null;
@@ -153,7 +171,7 @@ async function apiPost(page, url, body) {
         headers: {
           "Content-Type": "application/json",
           "X-Requested-With": "XMLHttpRequest",
-          Accept: "application/json",
+          Accept: "application/json, text/plain, */*",
           ...(csrf ? { "X-CSRFToken": csrf } : {}),
         },
         body: JSON.stringify(body),
@@ -172,14 +190,12 @@ async function apiPost(page, url, body) {
 }
 
 async function fetchFilterCounts(page) {
-  const url =
-    "https://www.instahyre.com/api/v1/candidate_opportunities/candidate_opportunity/fetch_filter_counts/";
-  const res = await apiGet(page, url);
-  return res.json?.status_counts || res.json || null;
+  const res = await apiGet(page, filterCountsUrl());
+  return parseStatusCounts(res.json) || (res.status === 200 ? res.json : null);
 }
 
 /**
- * Recommended / undecided opportunities (status=0) are NOT always in job_search.
+ * Recommended / undecided opportunities (interest_facet=0 on candidate_matching) are NOT always in job_search.
  * e.g. Uber Hyd Senior Staff Engineer only appeared on /candidate/opportunities/.
  */
 function normalizeOpportunity(opp) {
@@ -213,9 +229,7 @@ async function fetchUndecidedOpportunities(page, report) {
   const limit = 50;
   let pages = 0;
   while (pages < 6) {
-    const url =
-      `https://www.instahyre.com/api/v1/candidate_opportunities/candidate_opportunity/` +
-      `?status=0&limit=${limit}&offset=${offset}`;
+    const url = undecidedMatchingUrl(limit, offset);
     let res;
     for (let attempt = 0; attempt < 4; attempt++) {
       res = await apiGet(page, url);
@@ -335,9 +349,7 @@ async function searchSkill(page, skill, location, report) {
   const limit = 50;
   let pages = 0;
   while (pages < 8) {
-    const url =
-      `https://www.instahyre.com/api/v1/job_search/?skills=${encodeURIComponent(skill)}` +
-      `&location=${encodeURIComponent(location)}&limit=${limit}&offset=${offset}`;
+    const url = jobSearchUrl(skill, location, limit, offset);
     let res;
     for (let attempt = 0; attempt < 4; attempt++) {
       res = await apiGet(page, url);
@@ -365,12 +377,8 @@ async function searchSkill(page, skill, location, report) {
   return jobs;
 }
 
-async function applyJob(page, jobId) {
-  return apiPost(
-    page,
-    "https://www.instahyre.com/api/v1/candidate_opportunities/candidate_opportunity/apply",
-    { id: null, job_id: jobId, is_interested: true }
-  );
+async function applyJob(page, jobId, { nonMatching = false } = {}) {
+  return apiPost(page, applyUrl(), applyPayload(jobId, { nonMatching }));
 }
 
 /** Scrape public job page for JD text (API job_search detail has no description). */
@@ -701,7 +709,7 @@ async function main() {
       blocked: report.blocked.length,
       uniqueJobsSeen: seen.size,
       opportunitiesUndecided: report.opportunitiesUndecided || 0,
-      path: "Instahyre opportunities feed + job_search API (candidate_opportunity/apply)",
+      path: "matching feed + job_search API (candidate_matching/apply)", // pragma: allowlist secret
       partial: browserDied || undefined,
     };
 
@@ -745,10 +753,13 @@ async function maybeApply(page, c, report) {
 
   await sleep(800);
   console.error(`[instahyre] apply ${c.company} — ${c.title}`);
-  const res = await applyJob(page, c.id);
-  const ok =
-    res.status === 200 &&
-    (res.json?.success === true || res.json?.opp_id || /success/i.test(JSON.stringify(res.json)));
+  const fromMatching = c.job?._source === "opportunities";
+  let res = await applyJob(page, c.id, { nonMatching: !fromMatching });
+  if (!applySucceeded(res) && !fromMatching && res.status !== 429) {
+    // Matching apply without the public-job flag (in-app search shape).
+    res = await applyJob(page, c.id, { nonMatching: false });
+  }
+  const ok = applySucceeded(res);
   if (ok) {
     report.applied.push({
       id: c.id,

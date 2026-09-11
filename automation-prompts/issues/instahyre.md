@@ -1,5 +1,12 @@
 # Instahyre — issues & fixes
 
+## 2026-09-11 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| candidate_opportunity apply/list/filter_counts returned HTML 404 after enableCandidateESOpps; 9 Hyd/remote applies failed, 0 submitted | Switch daily_apply to candidate_matching list/counts/apply with job_id + is_activity_page_job (+ is_non_matching_application for job_search); add api.js + test |
+
+
 ## 2026-08-25 (cloud)
 
 | Issue | Fix |
