@@ -120,6 +120,39 @@ return (hit.el.innerText || hit.el.getAttribute('aria-label') || hit.el.id || hi
 """
 
 
+SIGNED_IN_RE = re.compile(
+    r"account settings|messages unread|manage your account security|"
+    r"change account type|device management|privacy settings|"
+    r"welcome,\s*\w+|sign out|unread count|sign out of indeed",
+    re.I,
+)
+AUTH_WALL_RE = re.compile(
+    r"sign in \| indeed|ready to take the next step|continue with google|"
+    r"continue with apple|create an account or sign in",
+    re.I,
+)
+
+
+def indeed_auth_still_open(url: str, title: str, body: str) -> bool:
+    """True when we are still on Indeed Sign-in / OAuth — not a live session."""
+    u = (url or "").lower()
+    blob = f"{url}\n{title}\n{body}"
+    if "accounts.google.com" in u:
+        return False
+    if AUTH_WALL_RE.search(blob):
+        return True
+    if "secure.indeed.com/auth" in u or "account/login" in u:
+        return True
+    return False
+
+
+def indeed_session_live(url: str, title: str, body: str) -> bool:
+    """Passport/account chrome only — never treat Email address* as signed-in."""
+    if indeed_auth_still_open(url, title, body):
+        return False
+    return bool(SIGNED_IN_RE.search(f"{url}\n{title}\n{body}"))
+
+
 def score_google_sso_candidate(text: str, attrs: dict | None = None) -> int | None:
     """Lower score is a better Google SSO control. None = not a candidate."""
     attrs = {str(k).lower(): str(v or "") for k, v in (attrs or {}).items()}
@@ -224,46 +257,84 @@ def _js_click_google_sso(sb: Any) -> str:
         return ""
 
 
-def _click_google_sso(sb: Any) -> bool:
-    """Click Continue-with-Google even when a cookie overlay covers the CTA."""
-    _dismiss_cookie_banner(sb)
-    for _ in range(8):
-        hit = _js_click_google_sso(sb)
-        if hit:
-            time.sleep(2.5)
+def google_accounts_open(sb: Any) -> bool:
+    """True when a Google accounts tab/URL is focused."""
+    if _switch_to_google_window(sb):
+        return True
+    try:
+        url = (sb.get_current_url() or "").lower()
+    except Exception:
+        url = ""
+    return "accounts.google.com" in url
+
+
+def _wait_google_accounts(sb: Any, seconds: float = 6.0) -> bool:
+    deadline = time.time() + seconds
+    while time.time() < deadline:
+        if google_accounts_open(sb):
             return True
-        for sel in GOOGLE_SSO_SELECTORS:
+        time.sleep(0.6)
+    return google_accounts_open(sb)
+
+
+def _wd_click_google_sso(sb: Any) -> bool:
+    """WebDriver / ActionChains click — Indeed often ignores programmatic JS clicks."""
+    for sel in GOOGLE_SSO_SELECTORS:
+        try:
+            present = False
             try:
-                present = False
+                present = bool(sb.is_element_present(sel))
+            except Exception:
+                present = bool(sb.is_element_visible(sel))
+            if not present:
+                continue
+            el = None
+            try:
+                el = sb.find_element(sel)
+            except Exception:
+                el = None
+            if el is not None:
                 try:
-                    present = bool(sb.is_element_present(sel))
-                except Exception:
-                    present = bool(sb.is_element_visible(sel))
-                if not present:
-                    continue
-                clicked = False
-                try:
-                    el = sb.find_element(sel)
                     sb.execute_script(
-                        "const e=arguments[0];"
-                        "try{e.scrollIntoView({block:'center'});}catch(x){}"
-                        "e.click();",
+                        "try{arguments[0].scrollIntoView({block:'center'});}catch(x){}",
                         el,
                     )
-                    clicked = True
+                except Exception:
+                    pass
+                try:
+                    from selenium.webdriver.common.action_chains import ActionChains
+
+                    ActionChains(sb.driver).move_to_element(el).pause(0.15).click().perform()
+                    return True
                 except Exception:
                     try:
-                        sb.click(sel)
-                        clicked = True
+                        el.click()
+                        return True
                     except Exception:
-                        clicked = False
-                if clicked:
-                    time.sleep(2.5)
-                    return True
+                        pass
+            try:
+                sb.click(sel)
+                return True
             except Exception:
                 continue
-        time.sleep(1.0)
+        except Exception:
+            continue
     return False
+
+
+def _click_google_sso(sb: Any) -> bool:
+    """Click Continue-with-Google and require accounts.google.com to open."""
+    _dismiss_cookie_banner(sb)
+    for _ in range(8):
+        if google_accounts_open(sb):
+            return True
+        _js_click_google_sso(sb)
+        if _wait_google_accounts(sb, 3.0):
+            return True
+        if _wd_click_google_sso(sb) and _wait_google_accounts(sb, 5.0):
+            return True
+        time.sleep(0.8)
+    return google_accounts_open(sb)
 
 
 def _fill_identifier(sb: Any, email: str) -> bool:
@@ -415,12 +486,15 @@ def try_google_sso(sb: Any, *, wait_2fa_sec: int | None = None) -> dict:
         clicked = _click_google_sso(sb)
         info["tried"].append({"google_sso_click": clicked})
         if not clicked:
+            body, title, url = _snap(sb)
             info["reason"] = "google_sso_button_missing"
             info["hint"] = (
-                "Sign-in wall loaded but Continue with Google was not clickable "
-                "(cookie strip / selector). Refresh Indeed Passport via Desktop "
-                "Chrome + sync-chrome-sessions if this persists."
+                "Sign-in wall loaded but Continue with Google did not open "
+                "accounts.google.com (cookie strip / untrusted JS click). "
+                "Refresh Indeed Passport via Desktop Chrome + sync-chrome-sessions "
+                "if this persists."
             )
+            info["afterClick"] = {"url": url[:160], "title": title[:80]}
             try:
                 shot = "/opt/cursor/artifacts/indeed-google-sso-missing.png"
                 sb.save_screenshot(shot)
@@ -428,11 +502,17 @@ def try_google_sso(sb: Any, *, wait_2fa_sec: int | None = None) -> dict:
             except Exception:
                 pass
             return info
-        time.sleep(2)
         _switch_to_google_window(sb)
 
     body, title, url = _snap(sb)
-    info["tried"].append({"after_click": {"url": url[:120], "title": title[:80]}})
+    info["tried"].append({"after_click": {"url": url[:160], "title": title[:80]}})
+    if "accounts.google.com" not in url.lower() and not google_accounts_open(sb):
+        info["reason"] = "google_sso_no_google_window"
+        info["hint"] = (
+            "Continue with Google did not reach accounts.google.com — "
+            "retry or refresh Indeed Passport via Desktop Chrome"
+        )
+        return info
 
     # Account chooser
     if "accountchooser" in url.lower() or "Choose an account" in body:
@@ -441,8 +521,10 @@ def try_google_sso(sb: Any, *, wait_2fa_sec: int | None = None) -> dict:
         time.sleep(1.5)
         body, title, url = _snap(sb)
 
-    # Identifier
-    if re.search(r"/signin/identifier|Email or phone", f"{url}\n{body}", re.I):
+    # Identifier — Google only (Indeed auth also has Email address*).
+    if "accounts.google.com" in url.lower() and re.search(
+        r"/signin/identifier|Email or phone", f"{url}\n{body}", re.I
+    ):
         filled = _fill_identifier(sb, info["email"])
         info["tried"].append({"identifier": filled})
         time.sleep(1.5)
@@ -552,17 +634,15 @@ def try_google_sso(sb: Any, *, wait_2fa_sec: int | None = None) -> dict:
     except Exception:
         pass
     body, title, url = _snap(sb)
-    signed = bool(
-        re.search(r"welcome|sign out|account settings|email address", body, re.I)
-        and "sign in |" not in body.lower()
-    )
-    if not signed:
-        # Messages nav / myjobs as soft proof
-        signed = bool(
-            re.search(r"my jobs|messages|profile", body, re.I)
-            and "create an account or sign in" not in body.lower()
-        )
+    signed = indeed_session_live(url, title, body)
     info["ok"] = signed
     info["url"] = url[:160]
+    info["title"] = title[:80]
     info["reason"] = "signed_in" if signed else "sso_unconfirmed"
+    if not signed:
+        info["hint"] = (
+            "Google SSO did not produce a live Indeed Passport session. "
+            "Desktop Chrome Default: log into in.indeed.com, then "
+            "sync-chrome-sessions.sh + Save Snapshot."
+        )
     return info

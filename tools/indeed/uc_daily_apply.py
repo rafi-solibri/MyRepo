@@ -3417,7 +3417,9 @@ def main() -> int:
                     home_url = sb.get_current_url() or ""
                 except Exception:
                     pass
-                if sso.get("ok") or looks_signed_in(home_body, home_url):
+                if looks_signed_in(home_body, home_url) and not looks_login_wall(
+                    home_body, home_url
+                ):
                     session_ok = True
                     report["sessionRestore"] = {
                         **(warmed if isinstance(warmed, dict) else {}),

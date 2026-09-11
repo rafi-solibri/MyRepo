@@ -11,7 +11,11 @@ if str(ROOT) not in sys.path:
 
 from tools.indeed.passport_auth_check import status_from_plaintext  # noqa: E402
 from tools.indeed.prepare_uc_profile import COPY_PATHS  # noqa: E402
-from tools.indeed.google_sso import score_google_sso_candidate  # noqa: E402
+from tools.indeed.google_sso import (  # noqa: E402
+    indeed_auth_still_open,
+    indeed_session_live,
+    score_google_sso_candidate,
+)
 from tools.indeed.uc_daily_apply import (  # noqa: E402
     already_applied,
     cookie_banner_visible_from_text,
@@ -301,6 +305,26 @@ def test_google_sso_candidate_scores_indeed_auth_button():
     )
 
 
+def test_indeed_sso_does_not_treat_email_field_as_signed_in():
+    """Auth page 'Email address*' must not look like a live Passport session."""
+    url = (
+        "https://secure.indeed.com/auth?oauth_client_id=abc&from=oauth"
+        "&continue=https://secure.indeed.com/oa"
+    )
+    title = "Sign In | Indeed Accounts"
+    body = (
+        "Ready to take the next step?\nCreate an account or sign in\n"
+        "Continue with Google\nContinue with Apple\nEmail address*"
+    )
+    assert indeed_auth_still_open(url, title, body) is True
+    assert indeed_session_live(url, title, body) is False
+    assert indeed_session_live(
+        "https://secure.indeed.com/settings/account",
+        "Account settings",
+        "Account settings\nSign out of Indeed\nManage your account security",
+    )
+
+
 if __name__ == "__main__":
     test_skip_hyd_remote_ok()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
@@ -317,4 +341,5 @@ if __name__ == "__main__":
     test_passport_expiry_from_oauth_and_jwt()
     test_indeed_google_sso_uses_google_password_only()
     test_google_sso_candidate_scores_indeed_auth_button()
+    test_indeed_sso_does_not_treat_email_field_as_signed_in()
     print("ok")

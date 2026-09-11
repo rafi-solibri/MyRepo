@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| google_sso ok:true on Sign In \| Indeed Accounts because Email address* matched signed_in; 0 seen | Require accounts.google.com after Continue with Google; indeed_session_live rejects auth wall; uc_daily_apply trusts looks_signed_in not sso.ok alone |
 | Sign-in wall google_sso_button_missing: OneTrust cookie strip + visibility-only Google CTA click | Dismiss cookie banner then JS-click Continue with Google (data-tn/GSI iframe); inherit UC stderr for 2FA |
 
 
