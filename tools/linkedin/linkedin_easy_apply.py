@@ -135,6 +135,28 @@ PROFILE = {
     "title": "Principal Analyst",
 }
 
+try:
+    from apply_answers import (  # type: ignore
+        answer_for_apply_field as _answer_for_apply_field,
+        submitted_ids_from_report,
+    )
+except Exception:
+    import importlib.util as _ilu
+
+    _ans_spec = _ilu.spec_from_file_location(
+        "apply_answers", Path(__file__).with_name("apply_answers.py")
+    )
+    _ans_mod = _ilu.module_from_spec(_ans_spec)
+    assert _ans_spec and _ans_spec.loader
+    _ans_spec.loader.exec_module(_ans_mod)
+    _answer_for_apply_field = _ans_mod.answer_for_apply_field
+    submitted_ids_from_report = _ans_mod.submitted_ids_from_report
+
+
+def answer_for_apply_field(blob: str, *, tag: str = "input") -> str | None:
+    return _answer_for_apply_field(blob, tag=tag, profile=PROFILE)
+
+
 TITLES = [
     "Solution Architect",
     "Technical Architect",
@@ -647,13 +669,18 @@ def fill_inputs(page: Page, deadline: float | None = None) -> None:
                 if tag == "select":
                     control.select_option(label=v)
                 else:
-                    control.fill(v)
+                    control.fill(v, timeout=2500)
             except Exception:
                 try:
-                    control.click()
-                    control.fill(v)
+                    control.click(timeout=1500)
+                    control.fill(v, timeout=2500)
                 except Exception:
                     pass
+
+        mapped = answer_for_apply_field(blob, tag=tag)
+        if mapped is not None:
+            set_val(mapped)
+            continue
 
         if any(k in blob for k in ("phone", "mobile", "contact number")) and "country" not in blob:
             set_val(PROFILE["phone"])
@@ -907,24 +934,10 @@ def fill_inputs(page: Page, deadline: float | None = None) -> None:
                     inp.fill(PROFILE["education_field"])
                 elif re.search(r"manage directly|engineers managed|direct reports|team size|people managed", near):
                     inp.fill(PROFILE["engineers_managed"])
-                elif re.search(r"(current|present).*(ctc|salary)|annual salary|salary\s*\(?fixed\)?", near) and "expect" not in near:
-                    inp.fill(PROFILE["current_ctc_lakhs"] if "lakh" in near else PROFILE["current_ctc"])
-                elif re.search(r"(expected|desired).*(ctc|salary)|expected annual", near):
-                    inp.fill(PROFILE["expected_ctc_lakhs"] if "lakh" in near else PROFILE["expected_ctc"])
-                elif "ctc" in near and "lakh" in near and "current" in near:
-                    inp.fill(PROFILE["current_ctc_lakhs"])
-                elif "ctc" in near and "lakh" in near and "expect" in near:
-                    inp.fill(PROFILE["expected_ctc_lakhs"])
-                elif "lakh" in near and "salary" in near and "expect" not in near:
-                    inp.fill(PROFILE["current_ctc_lakhs"])
-                elif "notice" in near:
-                    inp.fill("1")
-                elif ("years" in near or "experience" in near) and "php" not in near:
-                    inp.fill("15")
-                elif re.search(r"\bphone\b|\bmobile\b", near) and "country" not in near:
-                    inp.fill(PROFILE["phone"])
-                elif "email" in near:
-                    inp.fill(PROFILE["email"])
+                else:
+                    mapped = answer_for_apply_field(near, tag="input")
+                    if mapped:
+                        inp.fill(mapped, timeout=2500)
             except Exception:
                 pass
     except Exception:
@@ -1749,34 +1762,8 @@ def parse_card_meta(page: Page) -> tuple[str, str, str]:
 
 
 def _ids_from_report_obj(data: Any) -> set[str]:
-    out: set[str] = set()
-    if isinstance(data, list):
-        for row in data:
-            if isinstance(row, dict):
-                jid = str(row.get("job_id") or row.get("jobId") or "").strip()
-                if jid.isdigit():
-                    out.add(jid)
-        return out
-    if not isinstance(data, dict):
-        return out
-    for key in ("submitted", "applied", "all", "blocked", "skipped", "external_candidates"):
-        rows = data.get(key)
-        if not isinstance(rows, list):
-            continue
-        for row in rows:
-            if not isinstance(row, dict):
-                continue
-            jid = str(row.get("job_id") or row.get("jobId") or "").strip()
-            if jid.isdigit():
-                out.add(jid)
-            # Only treat submitted/applied as hard-seen when scanning "all"
-            if key in ("submitted", "applied") and jid.isdigit():
-                out.add(jid)
-    for jid in data.get("ids") or data.get("jobIds") or []:
-        s = str(jid).strip()
-        if s.isdigit():
-            out.add(s)
-    return out
+    """Hard-seen IDs are submitted applies only (fill-step blocks stay retryable)."""
+    return submitted_ids_from_report(data)
 
 
 def load_prior_seen_ids(seed: set[str] | None = None) -> set[str]:
@@ -1811,19 +1798,26 @@ def load_prior_seen_ids(seed: set[str] | None = None) -> set[str]:
 
 
 def persist_seen_ids(seen: set[str], results: list[JobResult]) -> None:
-    """Rolling artifact so tomorrow's run does not rely on hardcoded IDs alone."""
-    for r in results:
-        if r.status in ("submitted", "blocked") and (r.job_id or "").isdigit():
-            seen.add(r.job_id)
+    """Rolling artifact so tomorrow's run does not rely on hardcoded IDs alone.
+
+    Persist confirmed submits only. The in-memory `seen` set includes skips and
+    fill-step blocks; writing those would prevent a same-day retry after a
+    filler fix (Cyara 4461107562 exceeded steps on empty salary/location).
+    """
+    confirmed = {
+        r.job_id
+        for r in results
+        if r.status == "submitted" and (r.job_id or "").isdigit()
+    }
     try:
         SEEN_IDS_PATH.parent.mkdir(parents=True, exist_ok=True)
         payload = {
             "updatedAt": datetime.now(timezone.utc).isoformat(),
-            "ids": sorted(seen),
-            "count": len(seen),
+            "ids": sorted(confirmed),
+            "count": len(confirmed),
         }
         SEEN_IDS_PATH.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-        print(f"DEDUP wrote {len(seen)} ids → {SEEN_IDS_PATH}", flush=True)
+        print(f"DEDUP wrote {len(confirmed)} ids → {SEEN_IDS_PATH}", flush=True)
     except Exception as e:
         print(f"DEDUP persist failed: {e}", flush=True)
 

@@ -1,5 +1,12 @@
 # LinkedIn — issues & fixes
 
+## 2026-09-11 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Easy Apply exceeded steps: salary expectation / location in India empty; few-words essay filled with 15 | answer_for_apply_field maps those labels + persist submitted IDs only so fill-step blocks retry |
+
+
 ## 2026-09-04 (cloud)
 
 | Issue | Fix |
