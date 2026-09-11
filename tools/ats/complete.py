@@ -2115,6 +2115,8 @@ def complete_workday(page, time_cap_s: int) -> tuple[str, str]:
     )
     if owner:
         return owner
+    if page_is_otp_wall(page):
+        return "blocked", "ats_otp_wall"
     if apply_form_still_open(page):
         burst = persist_retry_burst_sec()
         if burst <= 0:
@@ -2172,8 +2174,26 @@ def owner_form_wait_sec() -> int:
     return 0
 
 
+def page_is_otp_wall(page) -> bool:
+    """True when Confirm-Your-Identity / email OTP is the current gate."""
+    try:
+        if blocked_wall(page) == "ats_otp_wall":
+            return True
+    except Exception:
+        pass
+    try:
+        return otp_wall_reason(_body(page, 2500) or "") == "ats_otp_wall"
+    except Exception:
+        return False
+
+
 def apply_form_still_open(page) -> bool:
     """True when the page still looks like an unfinished apply (do not abandon)."""
+    # OTP / Confirm-Your-Identity is a hard wall, not a fillable form. Oracle
+    # careers URLs contain /apply so the URL heuristic below would otherwise
+    # keep persist_retry looping forever after mailbox OTP fails.
+    if page_is_otp_wall(page):
+        return False
     try:
         url = getattr(page, "url", "") or ""
     except Exception:
@@ -2213,6 +2233,18 @@ def wait_owner_finish_apply(page, *, hint: str = "") -> tuple[str, str] | None:
     wait = owner_form_wait_sec()
     if wait <= 0:
         return None
+    if page_is_otp_wall(page):
+        try:
+            from tools.ats.email_otp import try_clear_email_otp
+
+            if try_clear_email_otp(page) and looks_submitted(page):
+                return "applied", "confirmation"
+            if page_is_otp_wall(page):
+                print("ASK_OWNER skip — email OTP still on gate after mailbox", flush=True)
+                return "blocked", "ats_otp_wall"
+        except Exception:
+            print("ASK_OWNER skip — email OTP wall", flush=True)
+            return "blocked", "ats_otp_wall"
     # Overnight / owner-asleep: brief park only — do not extend or burn inventory.
     asleep = owner_asleep()
     if asleep:
@@ -2447,6 +2479,8 @@ def complete_generic(page, time_cap_s: int) -> tuple[str, str]:
     )
     if owner:
         return owner
+    if page_is_otp_wall(page):
+        return "blocked", "ats_otp_wall"
     if apply_form_still_open(page):
         burst = persist_retry_burst_sec()
         if burst <= 0:

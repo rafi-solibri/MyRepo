@@ -661,4 +661,35 @@ class _CandPage:
         return _Empty()
 assert_true(apply_form_still_open(_CandPage()), "candidate profile must count as open form")
 
+from tools.ats.complete import page_is_otp_wall
+
+class _OracleOtpApplyPage:
+    url = "https://careers.oracle.com/en/sites/jobsearch/job/1/apply/email"
+    frames = []
+
+    def locator(self, sel):
+        class _Loc:
+            def count(self):
+                return 0
+
+            def inner_text(self, timeout=4000):
+                return (
+                    "Confirm Your Identity\n"
+                    "The verification code was sent to this email address: a@b.com"
+                )
+
+            def nth(self, i):
+                return self
+
+            def bounding_box(self):
+                return None
+
+        return _Loc()
+
+assert_true(page_is_otp_wall(_OracleOtpApplyPage()), "Oracle Confirm Identity is OTP wall")
+assert_true(
+    not apply_form_still_open(_OracleOtpApplyPage()),
+    "Oracle OTP /apply URL must not persist_retry as an open form",
+)
+
 print("tools/ats/test_complete.py OK")

@@ -191,6 +191,9 @@ CAREERS_TITLE_SKIP = re.compile(
     # IBM Confluent Kafka Storage / Experian Mainframe burned soft walls or no_ats_form.
     r"\bsystems?\s+software\b|workload\s*analytics|workload\s*architect|"
     r"memory\s*systems|memory\s*design|"
+    r"device\s*characterization|\btd\s+device\b|"
+    r"apps\s*(?:&|and)\s*ai|apps\s*ai\s*consultant|"
+    r"oracle\s*health|millennium\s*support|"
     r"kafka\s*storage|confluent\s*kafka\s*storage|"
     r"\bmainframe\b|linux\s*kernel|\byocto\b",
     re.I,

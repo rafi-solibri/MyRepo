@@ -164,6 +164,17 @@ def test_title_ok():
     assert LI_TITLE_SKIP.search("STAFF ENGINEER, DDEG Design Methodology")
     assert CAREERS_TITLE_SKIP.search("Staff Memory Design Engineer")
     assert LI_TITLE_SKIP.search("Staff Memory Design Engineer")
+    assert CAREERS_TITLE_SKIP.search("Senior/Staff Engineer, TD Device Characterization")
+    assert LI_TITLE_SKIP.search("Senior/Staff Engineer, TD Device Characterization")
+    assert CAREERS_TITLE_SKIP.search("Principal Oracle Health Millennium Support & Migration Engineer")
+    assert LI_TITLE_SKIP.search("Principal Oracle Health Millennium Support & Migration Engineer")
+    assert CAREERS_TITLE_SKIP.search("Architect, Apps & AI")
+    assert LI_TITLE_SKIP.search("Architect, Apps & AI")
+    assert skip_reason("Principal Apps AI Consultant") == "title: AI/ML excluded"
+    assert skip_reason("Architect, Apps & AI") == "title: AI/ML excluded"
+    assert skip_reason("ML - Principal Software Engineer") == "title: AI/ML excluded"
+    assert skip_reason("Principal Consultant - Dotnet Full stack & AI") is None
+    assert not CAREERS_TITLE_SKIP.search("Principal Consultant - Dotnet Full stack & AI")
     assert not CAREERS_TITLE_SKIP.search("Software Systems Architect Hyderabad")
     assert LI_TITLE_SKIP.search("Staff Engineer, CAD")
     assert LI_TITLE_SKIP.search("Principal Engineer - STA/Synthesis")

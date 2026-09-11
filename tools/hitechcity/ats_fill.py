@@ -498,6 +498,21 @@ def attempt_ats_apply(
         )
         if owner_asleep() or not persist_on:
             return status, reason
+        try:
+            from tools.ats.complete import page_is_otp_wall
+        except Exception:
+            from ats.complete import page_is_otp_wall  # type: ignore
+        if page_is_otp_wall(page):
+            try:
+                from tools.ats.email_otp import try_clear_email_otp
+
+                if try_clear_email_otp(page):
+                    status, reason = complete_ats(page, time_cap_s=min(90, max(30, int(time_cap_s))))
+                else:
+                    return "blocked", "ats_otp_wall"
+            except Exception:
+                return "blocked", "ats_otp_wall"
+            return status, reason
         if status == "blocked" and "incomplete" in (reason or "").lower():
             try:
                 still = apply_form_still_open(page)
@@ -508,7 +523,24 @@ def attempt_ats_apply(
                     "ATS persist_retry — form still open after incomplete; continuing to submit",
                     flush=True,
                 )
-                status, reason = complete_ats(page, time_cap_s=max(120, int(time_cap_s)))
+                # Do not nest another ASK_OWNER / persist burst — first pass already waited.
+                prev_wait = os.environ.get("ATS_OWNER_FORM_WAIT_SEC")
+                prev_burst = os.environ.get("ATS_PERSIST_RETRY_SEC")
+                os.environ["ATS_OWNER_FORM_WAIT_SEC"] = "0"
+                os.environ["ATS_PERSIST_RETRY_SEC"] = "0"
+                try:
+                    status, reason = complete_ats(page, time_cap_s=min(90, max(30, int(time_cap_s))))
+                finally:
+                    if prev_wait is None:
+                        os.environ.pop("ATS_OWNER_FORM_WAIT_SEC", None)
+                    else:
+                        os.environ["ATS_OWNER_FORM_WAIT_SEC"] = prev_wait
+                    if prev_burst is None:
+                        os.environ.pop("ATS_PERSIST_RETRY_SEC", None)
+                    else:
+                        os.environ["ATS_PERSIST_RETRY_SEC"] = prev_burst
+                if page_is_otp_wall(page):
+                    return "blocked", "ats_otp_wall"
         return status, reason
     finally:
         if role or company or jd:
