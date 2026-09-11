@@ -65,7 +65,7 @@ function skipReason(
   }
 
   if (
-    /\b(salesforce|servicenow|\bsap\b|coupa|conga|cpq|pega|guidewire|hubspot|revit|\bbarch\b|anaplan|kinaxis|shopify|dynamics\s*365|\bd365\b|dynamics\s+f&o|\bf&o\b|finance\s*&\s*operations|jira|atlassian|e2open|gtm|\bdft\b|\batpg\b|\bjtag\b|\bmbist\b|\btessent\b|\bvlsi\b|\basic\b|\bfpga\b|systemverilog|\buvm\b)\b/i.test(
+    /\b(salesforce|servicenow|\bsap\b|coupa|conga|cpq|pega|guidewire|hubspot|revit|\bbarch\b|anaplan|kinaxis|shopify|dynamics\s*365|\bd365\b|dynamics\s+f&o|\bf&o\b|finance\s*&\s*operations|jira|atlassian|e2open|gtm|workday|teamcenter|flex\s*plm|\bdft\b|\batpg\b|\bjtag\b|\bmbist\b|\btessent\b|\bvlsi\b|\basic\b|\bfpga\b|systemverilog|\buvm\b)\b/i.test(
       t
     )
   ) {
@@ -74,10 +74,11 @@ function skipReason(
 
   if (
     (
-      /\b(ai architect|ai engineer|ai scientist|ai developer|ml engineer|ml scientist|machine learning|data scientist|data science|data engineer(?:ing)?|data analyst|data specialist|data architect|genai|architect\s*[-–:]?\s*ai|ai\s*[-–:]?\s*architect|quality data|data analytics|etl architect)\b/i.test(
+      /\b(ai architect|ai engineer|ai scientist|ai developer|ml engineer|ml scientist|machine learning|data scientist|data science|data engineer(?:ing)?|data analyst|data specialist|data architect|genai|architect\s*[-–:]?\s*ai|ai\s*[-–:]?\s*architect|quality data|data analytics|etl architect|ai\s*[\/&-]\s*ml|power\s*bi|tableau|\bqlik\b|\blooker\b)\b/i.test(
         t
       ) ||
-      (/\bai\b/i.test(t) && /\barchitect\b/i.test(t))
+      (/\bai\b/i.test(t) &&
+        /\b(architect|engineering manager|tech(?:nical)?\s+lead|solutions?)\b/i.test(t))
     ) &&
     !hasDotNet(t, "")
   ) {

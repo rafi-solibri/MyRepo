@@ -1,5 +1,12 @@
 # Hirist issues log
 
+## 2026-09-11 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Teamcenter/Workday SA, AI/ML EM, and Principal Power BI passed skipReason (product/data titles, no .NET) | HARD-skip Workday/Teamcenter/Flex PLM as wrong_stack_title; AI/ML + Power BI/Tableau/Looker titles without .NET as pure_ai_data |
+
+
 ## 2026-09-04 (cloud)
 
 | Issue | Fix |

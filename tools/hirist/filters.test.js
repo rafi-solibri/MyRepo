@@ -103,6 +103,48 @@ assert.strictEqual(
   "wrong_stack_title"
 );
 assert.strictEqual(
+  skipReason("Solution Architect - Teamcenter", {
+    location: "Hyderabad",
+    skills: "Teamcenter PLM",
+  }),
+  "wrong_stack_title"
+);
+assert.strictEqual(
+  skipReason("Solution Architect - Workday Recruiting", {
+    location: "Hyderabad",
+    skills: "Workday",
+  }),
+  "wrong_stack_title"
+);
+assert.strictEqual(
+  skipReason("Solution Architect - Flex PLM", {
+    location: "Hyderabad",
+    skills: "FlexPLM",
+  }),
+  "wrong_stack_title"
+);
+assert.strictEqual(
+  skipReason("Engineering Manager - AI/ML Solutions", {
+    location: "Hyderabad",
+    skills: "Python ML",
+  }),
+  "pure_ai_data_without_dotnet"
+);
+assert.strictEqual(
+  skipReason("Principal Power BI Developer", {
+    location: "Hyderabad",
+    skills: "Power BI DAX",
+  }),
+  "pure_ai_data_without_dotnet"
+);
+assert.strictEqual(
+  skipReason("Engineering Manager - .NET / AI/ML", {
+    location: "Hyderabad",
+    skills: "C# ML",
+  }),
+  null
+);
+assert.strictEqual(
   skipReason(
     "Architect/Lead - Design and Verification - SOC/IP, SystemVerilog/UVM",
     { location: "Hyderabad", skills: "SystemVerilog UVM" }
