@@ -640,6 +640,86 @@ assert.strictEqual(
   false,
   ".NET Azure SA must still apply"
 );
+assert.strictEqual(
+  shouldSkipTitle("Fabric Architect"),
+  true,
+  "bare Fabric Architect (Microsoft Fabric) must skip (false Quick Apply 2026-09-11)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Service Fabric Architect .NET"),
+  false,
+  "Service Fabric + .NET must still apply"
+);
+assert.strictEqual(
+  shouldSkipTitle("Apigee Platform Architect"),
+  true,
+  "Apigee Platform Architect must skip (false Quick Apply 2026-09-11)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Data Solution Architect"),
+  true,
+  "Data Solution Architect without .NET must skip (false Quick Apply 2026-09-11)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Oracle Xstore Solution Architect"),
+  true,
+  "Oracle Xstore SA must skip (false Quick Apply 2026-09-11)"
+);
+assert.strictEqual(
+  shouldSkipTitle("AI Tech Lead"),
+  true,
+  "AI Tech Lead without .NET must skip (false Quick Apply 2026-09-11)"
+);
+assert.strictEqual(
+  shouldSkipTitle("AEMaaCS Technical Architect"),
+  true,
+  "Adobe AEM / AEMaaCS Technical Architect must skip (false Quick Apply 2026-09-11)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Principal Software Engineer, Experience (Vue)"),
+  true,
+  "Vue-primary Principal without .NET must skip (false Quick Apply 2026-09-11)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Senior Full Stack Developer - .Net & Vue/Angular"),
+  false,
+  ".NET + Vue fullstack must still apply"
+);
+assert.strictEqual(
+  shouldSkipTitle("Senior Staff Engineer, (CMDB,HAM,ITAM)"),
+  true,
+  "CMDB/ITAM staff engineer must skip even without ServiceNow in title (ATS burn 2026-09-11)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Snowflake + DBT Architect"),
+  true,
+  "Snowflake/DBT Architect must skip (blocked 2026-09-11)"
+);
+assert.strictEqual(
+  shouldSkipTitle("CyberArk Architect"),
+  true,
+  "CyberArk Architect must skip (ATS burn 2026-09-11)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Principal Product Designer"),
+  true,
+  "Product Designer must skip (Greenhouse burn 2026-09-11)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Senior Technical Project Manager"),
+  true,
+  "Technical Project Manager must skip (unconfirmed apply 2026-09-11)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Sr Technical Lead-Testing Services"),
+  true,
+  "Testing Services lead must skip (ATS burn 2026-09-11)"
+);
+assert.strictEqual(
+  shouldSkipTitle("Principal AWS Platform Architect"),
+  true,
+  "AWS Platform Architect must skip (unconfirmed apply 2026-09-11)"
+);
 const { workdayCompliantPassword } = require("./workday_apply");
 assert.strictEqual(workdayCompliantPassword("GoodPass123!"), "GoodPass123!");
 const weak = workdayCompliantPassword("short");

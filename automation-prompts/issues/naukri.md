@@ -1,5 +1,12 @@
 # Naukri — issues & fixes
 
+## 2026-09-11 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| False Quick Applies / ATS burn 2026-09-11: Fabric Architect, Apigee Platform Architect, Data Solution Architect, Oracle Xstore SA, AI Tech Lead, AEMaaCS TA, Vue-primary Principal, CMDB/ITAM staff, Snowflake+DBT, CyberArk, Product Designer, Technical Project Manager, Testing Services lead, AWS Platform Architect | Title-skip fabric architect (not Service Fabric), apigee, data solution architect, xstore, AI tech lead, AEM/AEMaaCS, vue-primary, cmdb/itam, snowflake/dbt, cyberark, product/ux/ui designer, project manager, testing services, aws platform architect in resume_and_filters.js |
+
+
 ## 2026-09-04 (cloud)
 
 | Issue | Fix |
