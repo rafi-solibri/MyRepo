@@ -76,7 +76,7 @@ LI_TITLE_SKIP = re.compile(
     r"kernel\s*optimization|rtl\s*design|physical\s*design|silicon\s*design|"
     r"silicon\s*engineer|product\s*design\s*manager|"
     r"\bstaff\s+engineer\s+design\b|"
-    r"layout\s*design|scribe\s*layout|standard\s*cell|"
+    r"layout\s*design|scribe\s*layout|ams\s*layout|layout\s*engineer|\blpddr\b|standard\s*cell|"
     r"design\s*verification|\bhbm\b|\bdram\b|power\s*integrity|"
     r"\bnvm\b|\bnvmqra\b|ssd\s*.*test|memory\s*verification|"
     r"circuit\s*design|mask\s*design|place\s*and\s*route|\bp&r\b|"
