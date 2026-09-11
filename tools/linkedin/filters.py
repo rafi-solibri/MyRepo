@@ -171,7 +171,9 @@ def skip_reason(role: str, company: str = "", jd: str = "") -> str | None:
     company = company or ""
     if re.search(
         r"\b(ai/?\s*ml architect|ai architect|ai engineer|ml engineer|genai|"
-        r"ai technical (lead|architect)|data scientist|data engineer(?:ing)?)\b",
+        r"agentic\s*ai|ai technical (lead|architect)|data scientist|"
+        r"data engineer(?:ing)?|data\s*(?:&|and)\s*cloud\s*platform|"
+        r"data\s*platform\s*engineer)\b",
         title,
         re.I,
     ) and not re.search(r"\.net|dotnet|\bc#\b", title, re.I):

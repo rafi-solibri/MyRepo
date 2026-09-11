@@ -165,7 +165,9 @@ CAREERS_TITLE_SKIP = re.compile(
     # Micron/AMD "Product Engineering" is semiconductor PE (not software product eng).
     r"(?<!software\s)product\s*engineering|"
     r"data\s*science\s*engineer|"
-    r"sales\s*specialist|especialista|"
+    r"sales\s*specialist|sales\s*engineering|especialista|"
+    r"\bagentic\s*ai\b|"
+    r"\bdata\s*(?:&|and)\s*cloud\s*platform\b|\bdata\s*platform\s*engineer\b|"
     r"program\s*manager|technical\s*program\s*manager|\btpm\b|"
     r"\bai\s*native\b|\bdata\s*&\s*ai\b|staff\s*engineer\s*\(\s*ai|"
     r"\bai\s*/\s*ml\b|\bai\s*&\s*ml\b|\baiml\b|\bai-ml\b|"

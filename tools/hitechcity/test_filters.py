@@ -60,6 +60,16 @@ def test_title_ok():
     assert skip_reason("Staff/Principal Engineer - AI/ML & System-Level Validation") == "title: AI/ML excluded"
     assert skip_reason("Machine Learning Engineer") == "title: AI/ML excluded"
     assert skip_reason("GenAI Architect") == "title: AI/ML excluded"
+    # 2026-09-11: Micron Agentic AI + Data & Cloud Platform burned LI EXT / ATS time.
+    assert skip_reason("Principal Solution Architect – Agentic AI") == "title: AI/ML excluded"
+    assert skip_reason("Senior /Staff Data & Cloud Platform Engineer") == "title: AI/ML excluded"
+    assert CAREERS_TITLE_SKIP.search("Principal Solution Architect – Agentic AI")
+    assert CAREERS_TITLE_SKIP.search("Senior /Staff Data & Cloud Platform Engineer")
+    assert CAREERS_TITLE_SKIP.search("Principal, Sales Engineering Hyderabad, India")
+    assert LI_TITLE_SKIP.search("Principal Solution Architect – Agentic AI")
+    assert LI_TITLE_SKIP.search("Senior /Staff Data & Cloud Platform Engineer")
+    assert LI_TITLE_SKIP.search("Principal, Sales Engineering")
+    assert not CAREERS_TITLE_SKIP.search("Solution Architect (Microsoft .NET/Azure Cloud)")
     assert CAREERS_TITLE_SKIP.search("Staff/Principal Engineer - AI/ML & System-Level Validation")
     assert LI_TITLE_SKIP.search("Staff/Principal Engineer - AI/ML & System-Level Validation")
     assert skip_reason("Salesforce Developer") is not None

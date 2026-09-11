@@ -279,11 +279,8 @@ def fetch_otp_via_gmail_tab(page, *, after_epoch: float | None = None, timeout_s
                     mark_gmail_login_required()
                     print("email_otp=gmail_login_required", flush=True)
                     return None
-                codes = extract_otp_candidates(blob)
-                if codes:
-                    print(f"email_otp=gmail_hit len={len(codes[0])} via=list", flush=True)
-                    return codes[0]
-                # Try opening the first result row.
+                # List-view snippets often show a stale OTP from an older thread.
+                # Always open the newest matching row before accepting a code.
                 clicked = False
                 for sel in (
                     "table.th tr.zA",
@@ -336,10 +333,33 @@ def fetch_email_otp(page=None, *, after_epoch: float | None = None, timeout_s: f
     return fetch_otp_via_gmail_tab(page, after_epoch=after_epoch, timeout_s=timeout_s)
 
 
+def _otp_targets(page):
+    """Page plus same-origin frames (Oracle Confirm Identity is often nested)."""
+    yield page
+    try:
+        frames = list(page.frames)
+    except Exception:
+        return
+    for fr in frames:
+        try:
+            if fr == page.main_frame:
+                continue
+        except Exception:
+            pass
+        yield fr
+
+
 def fill_otp_fields(page, code: str) -> bool:
     """Type the OTP into visible code inputs on the ATS page."""
     if not code:
         return False
+    for target in _otp_targets(page):
+        if _fill_otp_fields_on(target, code):
+            return True
+    return False
+
+
+def _fill_otp_fields_on(page, code: str) -> bool:
     selectors = (
         'input[autocomplete="one-time-code"]',
         'input[inputmode="numeric"]',
@@ -412,6 +432,17 @@ def fill_otp_fields(page, code: str) -> bool:
 
 
 def submit_otp_form(page) -> bool:
+    for target in _otp_targets(page):
+        if _submit_otp_form_on(target):
+            return True
+    try:
+        page.keyboard.press("Enter")
+        return True
+    except Exception:
+        return False
+
+
+def _submit_otp_form_on(page) -> bool:
     labels = (
         "Verify",
         "Verify email",
@@ -438,11 +469,7 @@ def submit_otp_form(page) -> bool:
                 return True
         except Exception:
             continue
-    try:
-        page.keyboard.press("Enter")
-        return True
-    except Exception:
-        return False
+    return False
 
 
 _OTP_WALL_RE = re.compile(
@@ -505,6 +532,7 @@ def try_clear_email_otp(page, *, wait_s: float | None = None) -> bool:
     print(f"email_otp=start wait={int(budget)}s", flush=True)
     deadline = time.time() + max(8.0, budget)
     attempt = 0
+    used_codes: set[str] = set()
     while time.time() < deadline:
         attempt += 1
         code = fetch_email_otp(page, after_epoch=sent_after, timeout_s=min(25.0, deadline - time.time()))
@@ -514,15 +542,20 @@ def try_clear_email_otp(page, *, wait_s: float | None = None) -> bool:
                 return False
             time.sleep(3.0)
             continue
+        if code in used_codes:
+            print("email_otp=stale_code_skip", flush=True)
+            time.sleep(3.0)
+            continue
         if not fill_otp_fields(page, code):
             print("email_otp=fill_miss", flush=True)
             time.sleep(2.0)
             continue
         submit_otp_form(page)
-        time.sleep(2.0)
+        time.sleep(2.5)
         if not otp_wall_still_present(page):
             print(f"email_otp=cleared attempt={attempt}", flush=True)
             return True
+        used_codes.add(code)
         print(f"email_otp=still_on_gate attempt={attempt}", flush=True)
         time.sleep(2.5)
     print("email_otp=timeout", flush=True)

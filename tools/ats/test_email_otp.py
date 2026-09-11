@@ -11,6 +11,7 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from tools.ats.email_otp import (
+    _otp_targets,
     extract_otp_candidates,
     gmail_session_known_dead,
     mailbox_unavailable_for_otp,
@@ -79,5 +80,14 @@ assert_true(gmail_session_known_dead(), "flag set")
 assert_true(mailbox_unavailable_for_otp(), "unavailable after mark without IMAP")
 reset_gmail_login_flag()
 assert_true(not gmail_session_known_dead(), "flag reset")
+
+class _FakeFramePage:
+    def __init__(self):
+        self.main_frame = object()
+        self.frames = [self.main_frame, object()]
+
+
+targets = list(_otp_targets(_FakeFramePage()))
+assert_true(len(targets) == 2, f"otp targets include page + extra frame, got {len(targets)}")
 
 print("tools/ats/test_email_otp.py OK")

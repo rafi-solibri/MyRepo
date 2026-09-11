@@ -92,6 +92,14 @@ assert_true(
     "Data Platform tech lead without .NET must skip",
 )
 assert_true(
+    skip_reason("Principal Solution Architect – Agentic AI", "Micron Technology", "") is not None,
+    "Agentic AI architect without .NET must skip",
+)
+assert_true(
+    skip_reason("Senior /Staff Data & Cloud Platform Engineer", "Micron Technology", "") is not None,
+    "Data & Cloud Platform engineer without .NET must skip",
+)
+assert_true(
     skip_reason("Data Engineering Architect .NET", "Acme", "") is None,
     "Data Engineering + .NET on title must allow",
 )

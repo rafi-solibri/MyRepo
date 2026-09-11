@@ -1,5 +1,12 @@
 # Hitech City / Knowledge City — issues & fixes
 
+## 2026-09-11 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Micron Agentic AI + Data & Cloud Platform titles burned LI EXT/ATS; Oracle OTP gmail_hit via=list reused a stale code (still_on_gate) | Skip agentic AI / data-platform / sales-engineering titles; Gmail OTP opens newest thread (not list snippet), skip stale codes, fill/submit in frames |
+
+
 ## 2026-09-04 (cloud)
 
 | Issue | Fix |
