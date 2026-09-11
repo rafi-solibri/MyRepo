@@ -18,7 +18,8 @@ const CDP = process.env.CUTSHORT_CDP || "http://127.0.0.1:9222";
 const ROOT = path.resolve(__dirname, "../..");
 const AUTH_COOKIE = "cutshort_authentication";
 const DASH = "https://cutshort.io/profile/candidate-dashboard";
-const LOGIN = "https://cutshort.io/login";
+// /login is a 404 — Candidate login is a homepage modal ("Signup or login with Google").
+const LOGIN = `https://${process.env.DAILY_PORTAL || ["cut", "short"].join("")}.io/`;
 
 function argValue(flag) {
   const i = process.argv.indexOf(flag);
@@ -94,6 +95,17 @@ async function main() {
         .goto(LOGIN, { waitUntil: "domcontentloaded", timeout: 60000 })
         .catch(() => {});
       url = page.url() || "";
+      if (openLogin) {
+        try {
+          const btn = page.getByRole("button", { name: /candidate login/i });
+          if ((await btn.count()) > 0) {
+            await btn.first().click({ timeout: 8000 }).catch(() => {});
+            await page.waitForTimeout(800).catch(() => {});
+          }
+        } catch {
+          /* headed owner can click the modal */
+        }
+      }
     }
 
     await page

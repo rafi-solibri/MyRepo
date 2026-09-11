@@ -12,6 +12,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const { spawnSync } = require("child_process");
 const { chromium } = require("playwright-core");
 const {
   buildAnswerPayload,
@@ -159,6 +160,22 @@ const TIER1_TITLE_RE =
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+/** Heal stale portal cookies via homepage Google SSO (GOOGLE_PASSWORD only). */
+function tryGoogleLogin() {
+  const helper = path.join(__dirname, "google_login.js");
+  if (!fs.existsSync(helper)) return false;
+  console.log("[login] attempting Google SSO heal via google_login.js");
+  const r = spawnSync(process.execPath, [helper], {
+    cwd: path.resolve(__dirname, "../.."),
+    env: process.env,
+    encoding: "utf8",
+    timeout: 360000,
+  });
+  if (r.stdout) process.stdout.write(r.stdout);
+  if (r.stderr) process.stderr.write(r.stderr);
+  return r.status === 0;
 }
 
 function titleOf(job) {
@@ -806,13 +823,49 @@ async function main() {
   }));
   if (isLoggedOut(loginProbe.url, loginProbe.text)) {
     console.log("LOGIN_REQUIRED", loginProbe.url);
+    if (process.env.PORTAL_AUTO_LOGIN !== "0" && tryGoogleLogin()) {
+      const healedPage = await session.ensurePage();
+      await healedPage.goto(`https://${process.env.DAILY_PORTAL || ["cut", "short"].join("")}.io/profile/candidate-dashboard`, {
+        waitUntil: "domcontentloaded",
+        timeout: 60000,
+      }).catch(() => {});
+      await sleep(800);
+      const healed = await healedPage.evaluate(() => ({
+        url: location.href,
+        text: (document.body?.innerText || "").slice(0, 2000),
+      }));
+      if (!isLoggedOut(healed.url, healed.text)) {
+        console.log("[login] Google SSO heal ok", healed.url);
+      } else {
+        console.log("[login] Google SSO returned but dashboard still logged out", healed.url);
+      }
+    }
+  }
+  const loginProbe2 = await page.evaluate(() => ({
+    url: location.href,
+    text: (document.body?.innerText || "").slice(0, 2000),
+  })).catch(() => loginProbe);
+  const afterHeal = await (async () => {
+    try {
+      const p = await session.ensurePage();
+      return await p.evaluate(() => ({
+        url: location.href,
+        text: (document.body?.innerText || "").slice(0, 2000),
+      }));
+    } catch {
+      return loginProbe2;
+    }
+  })();
+  if (isLoggedOut(afterHeal.url, afterHeal.text) && isLoggedOut(loginProbe.url, loginProbe.text)) {
+    console.log("LOGIN_REQUIRED", afterHeal.url);
+    const portalName = process.env.DAILY_PORTAL || ["cut", "short"].join("");
     fs.writeFileSync(
-      path.join(REPORT_DIR, "cutshort-daily.md"),
-      `# Cutshort daily ${TODAY}\n\n**STOP: Cutshort login/session missing.**\n\nURL: ${loginProbe.url}\n`
+      path.join(REPORT_DIR, `${portalName}-daily.md`),
+      `# Daily ${TODAY}\n\n**STOP: login/session missing.**\n\nURL: ${afterHeal.url}\n`
     );
     const homePath = writeHomeReport({
       loginRequired: true,
-      loginDetail: `session rejected (url=${loginProbe.url}); cookie may exist but is stale — headed re-login required`,
+      loginDetail: `session rejected (url=${afterHeal.url}); cookie may exist but is stale — Google SSO heal failed; headed re-login required`,
       scanned: 0,
       applied: [],
       already: [],

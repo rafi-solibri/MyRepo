@@ -1,5 +1,12 @@
 # Cutshort — issues & fixes
 
+## 2026-09-11 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Stale auth cookie + /login 404 blocked live CDP (cookie name present, dashboard redirected home); no Google SSO heal | Add google_login.js (homepage Candidate login modal + GOOGLE_PASSWORD-only SSO); wire launch-chrome-cdp + daily_apply heal; point wait_for_cdp_login at homepage |
+
+
 ## 2026-08-25 (cloud)
 
 | Issue | Fix |

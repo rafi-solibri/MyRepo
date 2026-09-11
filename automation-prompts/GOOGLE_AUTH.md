@@ -16,6 +16,7 @@ Use this on **every** LinkedIn, Foundit, Naukri, Cutshort, Instahyre, Indeed, Hi
 | --- | --- |
 | LinkedIn | `tools/linkedin/auto_login.py` (Google SSO + 2FA chat wait) |
 | Hirist | `node tools/hirist/google_login.js` then `daily_apply.js` |
+| This 9 AM IST portal | homepage Candidate login modal Google SSO (`google_login.js`; `/login` is 404; `GOOGLE_PASSWORD` only) |
 | Indeed | `tools/indeed/google_sso.py` (wired from `uc_daily_apply` on Sign-in wall; `GOOGLE_PASSWORD` only) |
 | ATS email OTP | `tools/ats/email_otp.py` |
 | Shared 2FA banner | `tools/google_2fa_prompt.py` (`/challenge/pwd` is password, not 2FA) |

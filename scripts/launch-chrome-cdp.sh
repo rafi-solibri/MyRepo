@@ -372,6 +372,50 @@ PY
 
 echo "Chrome CDP ready for $portal using $profile (log: $log)"
 
+# Portal: SQLite auth-cookie name can be stale; /login is a 404.
+# Live-probe dashboard, then Google SSO heal (GOOGLE_PASSWORD only).
+_daily_portal="${DAILY_PORTAL:-$(printf '%s%s' cut short)}"
+if [[ "$portal" == "$_daily_portal" ]]; then
+  if [[ "${CDP_LIVE_LOGIN_CHECK:-1}" == "1" ]] && command -v node >/dev/null 2>&1; then
+    export NODE_PATH="$ROOT/tools/node_modules${NODE_PATH:+:$NODE_PATH}"
+    set +e
+    node "$ROOT/tools/${_daily_portal}/wait_for_cdp_login.js"
+    live_rc=$?
+    set -e
+    if [[ "$live_rc" -ne 0 ]]; then
+      echo "WARNING: portal CDP not logged in (live check exit $live_rc)." >&2
+      if [[ "${PORTAL_AUTO_LOGIN:-1}" == "1" && -f "$ROOT/tools/${_daily_portal}/google_login.js" ]]; then
+        echo "Attempting unattended portal Google SSO…"
+        # shellcheck disable=SC1091
+        source "$ROOT/scripts/load-job-secrets.sh" || true
+        set +e
+        node "$ROOT/tools/${_daily_portal}/google_login.js"
+        auto_rc=$?
+        set -e
+        if [[ "$auto_rc" -eq 0 ]]; then
+          node "$ROOT/tools/${_daily_portal}/wait_for_cdp_login.js"
+          live_rc=$?
+          if [[ "$live_rc" -eq 0 ]]; then
+            echo "Portal Google SSO OK — refreshing .portal-sessions seed."
+            bash "$ROOT/scripts/refresh-portal-session-seed.sh" "$_daily_portal" || true
+          fi
+        else
+          echo "NOTE: portal Google SSO exit $auto_rc (5=login required, 6=2FA/password)." >&2
+        fi
+      fi
+    fi
+    if [[ "$live_rc" -eq 0 ]]; then
+      if [[ "${PORTAL_REFRESH_SEED:-1}" == "1" ]]; then
+        bash "$ROOT/scripts/refresh-portal-session-seed.sh" "$_daily_portal" || true
+      fi
+    elif [[ "${CDP_REQUIRE_LIVE_LOGIN:-1}" == "1" ]]; then
+      echo "ERROR: CDP_REQUIRE_LIVE_LOGIN=1 — refusing to continue without a live portal session." >&2
+      echo "       Prefer Gmail SSO (ASK_OWNER_GOOGLE_2FA) or: bash scripts/home-headed-login.sh $_daily_portal" >&2
+      exit "$live_rc"
+    fi
+  fi
+fi
+
 # LinkedIn on Windows ABE: SQLite cookie names can lie. Live-probe CDP when asked.
 if [[ "$portal" == "linkedin" || "$portal" == "hitechcity" ]]; then
   if [[ "${CDP_LIVE_LOGIN_CHECK:-1}" == "1" ]] && command -v node >/dev/null 2>&1; then
