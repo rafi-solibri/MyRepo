@@ -190,7 +190,7 @@ CAREERS_TITLE_SKIP = re.compile(
     # 2026-09-04 cron: TTEC Systems Software / Micron Workload Analytics /
     # IBM Confluent Kafka Storage / Experian Mainframe burned soft walls or no_ats_form.
     r"\bsystems?\s+software\b|workload\s*analytics|workload\s*architect|"
-    r"memory\s*systems|"
+    r"memory\s*systems|memory\s*design|"
     r"kafka\s*storage|confluent\s*kafka\s*storage|"
     r"\bmainframe\b|linux\s*kernel|\byocto\b",
     re.I,
