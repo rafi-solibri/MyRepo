@@ -44,6 +44,10 @@ assert_true(
     "AEC high-rise/Mivan project architect must skip",
 )
 assert_true(
+    skip_reason("Senior Concept Architect", "Latinem Private Limited", "") is not None,
+    "AEC concept architect must skip",
+)
+assert_true(
     skip_reason(
         "Dell Boomi Architect- 9+ Years of experience - ONLY immediate to 15 days joiner",
         "Tek Grove",

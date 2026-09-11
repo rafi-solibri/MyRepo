@@ -27,7 +27,7 @@ TITLE_BLACKLIST = re.compile(
     r"interior designer|civil engineer|electrical engineering|electrical design|"
     r"architectural visualization|restaurant architect|landscape architect|"
     r"architect\s*/\s*designer|interior architect|building architect|"
-    r"high[- ]?rise|\bmivan\b|project architect|"
+    r"high[- ]?rise|\bmivan\b|project architect|concept architect|"
     r"golang &|golang and|"
     r"bpo|call center|marketing cloud|success architect|"
     r"director training|training director|associate director training|"
