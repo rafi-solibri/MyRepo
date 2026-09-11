@@ -49,6 +49,15 @@ assert_true(
 )
 assert_true(
     skip_reason(
+        "Junior Architect (1-2 years experience)",
+        "Us Design Studio",
+        "",
+    )
+    is not None,
+    "junior AEC architect title must skip",
+)
+assert_true(
+    skip_reason(
         "Dell Boomi Architect- 9+ Years of experience - ONLY immediate to 15 days joiner",
         "Tek Grove",
         "",

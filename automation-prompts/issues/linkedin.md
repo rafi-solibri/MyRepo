@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| TITLE_OK allowed Junior Architect (1-2 years) at a design studio | Blacklist junior architect and 1-2 years titles |
 | TITLE_OK allowed Senior Concept Architect (AEC building-design) | Blacklist concept architect |
 | Bare TITLE_OK director matched Associate Director Training (Sagility false Easy Apply) | Require engineering/software/architect context on director; blacklist training director |
 | Cyara Easy Apply still exceeded steps after field mapping: Apply chrome had no modal class so Next was never clicked | If Apply to heading is visible, recover the ancestor that contains Next/Review/Submit instead of treating the form as lost |

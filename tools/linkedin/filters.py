@@ -28,6 +28,8 @@ TITLE_BLACKLIST = re.compile(
     r"architectural visualization|restaurant architect|landscape architect|"
     r"architect\s*/\s*designer|interior architect|building architect|"
     r"high[- ]?rise|\bmivan\b|project architect|concept architect|"
+    r"\bjunior architect\b|\bjunior\b.{0,24}architect|"
+    r"\b(1[-–]2|1 to 2)\s*years?\b|"
     r"golang &|golang and|"
     r"bpo|call center|marketing cloud|success architect|"
     r"director training|training director|associate director training|"
