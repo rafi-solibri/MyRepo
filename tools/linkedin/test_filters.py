@@ -75,6 +75,15 @@ assert_true(
 )
 assert_true(
     skip_reason(
+        "Remote Senior Software Engineer – Python",
+        "Turing",
+        "",
+    )
+    is not None,
+    "Python-primary senior software engineer must skip",
+)
+assert_true(
+    skip_reason(
         "Technical Lead",
         "Acme",
         "Java is mandatory. 10+ years building Spring Boot services.",

@@ -18,6 +18,7 @@ TITLE_BLACKLIST = re.compile(
     r"\bjava\b(?!.*(?:\.net|dotnet|c#))|"  # Java primary titles (allow if .NET also on title)
     r"node\.?js[- ]?(mandatory|only)|"
     r"python[- ]?(mandatory|only)|principal engineer\s*\(\s*python|"
+    r"software engineer.{0,40}\bpython\b|\bpython\b.{0,40}software engineer|"
     # Data Engineer / Data Engineering* without .NET on the same title
     r"\bdata engineer(?:ing)?\b(?!.*(?:\.net|dotnet|c#))|"
     r"\bmachine learning engineer\b|"
