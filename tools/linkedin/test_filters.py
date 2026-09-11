@@ -106,6 +106,20 @@ for title in [
 ]:
     assert_true(TITLE_OK.search(title), f"TITLE_OK should match: {title}")
 
+assert_true(
+    TITLE_OK.search("Software Development Manager") is not None,
+    "Software Development Manager must still match",
+)
+assert_true(
+    not TITLE_OK.search("Business Development Manager"),
+    "Business Development Manager must not match TITLE_OK",
+)
+assert_true(
+    skip_reason("Business Development Manager", "Zigsaw", "") is not None
+    or not TITLE_OK.search("Business Development Manager"),
+    "BDM title must skip",
+)
+
 # Location: primary line wins — chrome Hyd must not false-allow Bengaluru/Mumbai
 assert_true(
     location_allowed("Hyderabad, Telangana, India · 2 days ago", "On-site"),

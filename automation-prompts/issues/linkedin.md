@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| TITLE_OK matched Business Development Manager via bare 'development manager' | Drop standalone development manager token; Software Development Manager still matches |
 | Easy Apply exceeded steps: salary expectation / location in India empty; few-words essay filled with 15 | answer_for_apply_field maps those labels + persist submitted IDs only so fill-step blocks retry |
 
 
