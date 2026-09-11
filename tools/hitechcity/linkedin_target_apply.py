@@ -97,7 +97,8 @@ LI_TITLE_SKIP = re.compile(
     r"\bqa\s*automation\b|\btest(?:ing)?\s*automation\b|"
     r"\bdata\s*scientist\b|\bcomputer\s*vision\b|"
     # 2026-09-04: systems/OS + analytics/storage infra titles (parity with CAREERS_TITLE_SKIP).
-    r"\bsystems?\s+software\b|workload\s*analytics|"
+    r"\bsystems?\s+software\b|workload\s*analytics|workload\s*architect|"
+    r"memory\s*systems|"
     r"kafka\s*storage|confluent\s*kafka\s*storage|"
     r"\bmainframe\b|linux\s*kernel|\byocto\b",
     re.I,
