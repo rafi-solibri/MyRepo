@@ -75,3 +75,13 @@ URLs (Naukri job-listings):
 
 ## Code fix this run
 - `tools/naukri/resume_and_filters.js` + `test_filters.js`: title-skip Fabric Architect (not Service Fabric), Apigee, Data Solution Architect, Xstore, AI Tech Lead, AEMaaCS/AEM, Vue-primary, CMDB/ITAM, Snowflake/DBT, CyberArk, Product Designer, Technical Project Manager, Testing Services, AWS Platform Architect
+- Same-day follow-up: skip Wood Plc offshore piping/electrical/C&I and Engineering Manager-AI (Oracle Cloud ATS burn during age-expand re-run)
+
+## Same-day post-fix re-run
+- profileUpdated: **true** (re-upload `Rafi_Resume.docx`, Uploaded today; canonical restore at end)
+- applied: **0** (did not re-submit; first-run jobs + false titles skipped)
+- externalCompleted: **0**
+- blocked: **3** — Knowbe4 Staff Engineer (Greenhouse timeout), WSA Solution Architect (company site timeout), Medtronic Senior Principal Enterprise Software Engineer (Workday timeout)
+- skipped: 2099 · seen: 207 · early expand 3/7 · age expand 15/30/60 · extra .NET/Azure queries ran
+- False titles now skip_title_keyword: Fabric Architect, Snowflake+DBT, Xstore, EM-AI, Wood offshore piping/electrical/C&I
+- PR to main: branch `cursor/naukri-daily-2026-09-11-bbcf` pushed; GitHub createPullRequest was denied for this integration (owner must open/merge the registered PR)
