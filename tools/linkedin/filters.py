@@ -30,6 +30,7 @@ TITLE_BLACKLIST = re.compile(
     r"high[- ]?rise|\bmivan\b|project architect|"
     r"golang &|golang and|"
     r"bpo|call center|marketing cloud|success architect|"
+    r"director training|training director|associate director training|"
     r"non-?it staffing|us non-?it|staffing recruiter|talent acquisition|"
     r"\brevit\b|\bbarch\b|hubspot|m365 architect|microsoft 365 architect|"
     r"solutions engineer|presales|pre-sales|"
@@ -67,10 +68,11 @@ TITLE_OK = re.compile(
     r"cloud architect|azure architect|platform architect|technical architect|"
     r"\.net|dotnet|c#|software (development )?manager|"
     # "Manager of Software Engineering" / "Director of Engineering" (JPMC-style titles)
-    r"manager of (software|engineering)|director of (software|engineering)|"
+    r"manager of (software|engineering)|director of (software|engineering|technology)|"
     r"software engineering manager|"
-    r"lead (software|development|engineer)|director|head of eng|"
-    r"senior engineering|engineering director|"
+    r"lead (software|development|engineer)|head of eng|"
+    r"senior engineering|engineering director|technical director|technology director|"
+    r"director[, ].{0,60}(engineer|engineering|\.net|dotnet|software|architect)|"
     # Senior IC titles (campus .NET / platform runs) — not junior Software Engineer II
     r"senior software engineer|sr\.?\s*software engineer|senior (dotnet|\.net|c#)|"
     r"senior (application|platform|backend) engineer",

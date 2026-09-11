@@ -130,6 +130,8 @@ for title in [
     "Lead Software Engineer",
     "Technology Lead",
     "Application Architect",
+    "Technical Director",
+    "Engineering Director",
 ]:
     assert_true(TITLE_OK.search(title), f"TITLE_OK should match: {title}")
 
@@ -140,6 +142,15 @@ assert_true(
 assert_true(
     not TITLE_OK.search("Business Development Manager"),
     "Business Development Manager must not match TITLE_OK",
+)
+assert_true(
+    not TITLE_OK.search("Associate Director Training"),
+    "Associate Director Training must not match TITLE_OK",
+)
+assert_true(
+    skip_reason("Associate Director Training", "Sagility", "") is not None
+    or not TITLE_OK.search("Associate Director Training"),
+    "Training director must skip",
 )
 assert_true(
     skip_reason("Business Development Manager", "Zigsaw", "") is not None
