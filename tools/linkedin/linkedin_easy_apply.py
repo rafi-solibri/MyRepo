@@ -1292,7 +1292,7 @@ def _easy_apply_cta(scope, page: Page):
     return None
 
 
-def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
+def easy_apply_flow(page: Page, job: JobResult, *, remote_search: bool = False) -> JobResult:
     close_overlays(page)
     # Stable CTA is on classic /jobs/view/{id} (AI search split-pane often hides it)
     if job.job_id and "/jobs/view/" not in (page.url or ""):
@@ -1318,7 +1318,9 @@ def easy_apply_flow(page: Page, job: JobResult) -> JobResult:
         if loc2:
             job.location = loc2
         workplace2 = top_card_workplace_text(page, "")
-        if not location_allowed(job.location or "", workplace2[:800]):
+        if not location_allowed(
+            job.location or "", workplace2[:800], remote_search=remote_search
+        ):
             job.status = "skipped"
             job.reason = f"location filter (view): {(job.location or '')[:120]}"
             return job
@@ -2069,7 +2071,7 @@ def process_search(
                 print("  STOP: LinkedIn temporary restriction", flush=True)
                 OUT.write_text(json.dumps([asdict(r) for r in results], indent=2))
                 raise SystemExit(7)
-            job = easy_apply_flow(page, job)
+            job = easy_apply_flow(page, job, remote_search=remote)
         finally:
             try:
                 from tools.resume_paths import clear_active_resume
