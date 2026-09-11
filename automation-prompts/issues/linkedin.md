@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| View location leaked job title via pipes so Remote India Cloud Architect was skipped | If first \| segment looks like a title, use later Remote/India/city segment |
 | TITLE_OK allowed Senior Project Architect High-Rise/Mivan/BIM (AEC) | Blacklist project architect, high-rise, Mivan |
 | TITLE_OK allowed Restaurant Architect / Designer (architectural visualization) | Blacklist restaurant architect, architectural visualization, architect/designer building titles |
 | TITLE_BLACKLIST missed Dell Boomi Architect (iPaaS, same class as MuleSoft/Workato) | Add boomi to TITLE_BLACKLIST |

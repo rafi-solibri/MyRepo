@@ -179,6 +179,13 @@ assert_true(
     "India + remote_search must allow",
 )
 assert_true(
+    location_allowed(
+        "Cloud Infrastructure & Platform Automation Architect | 1+year Contract | Remote | US Shift",
+        "Remote",
+    ),
+    "title-leaked location with Remote pill must allow (India remote / US shift)",
+)
+assert_true(
     not location_allowed("", "Remote Hyderabad", remote_search=True),
     "empty primary location must reject",
 )

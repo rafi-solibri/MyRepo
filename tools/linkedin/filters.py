@@ -104,14 +104,38 @@ BAD_CITY = re.compile(
 )
 
 
+_LOC_HINT = re.compile(
+    r"hyderabad|telangana|india|remote|wfh|hybrid|on-site|bengaluru|bangalore|"
+    r"pune|chennai|mumbai|delhi|noida|gurgaon|gurugram",
+    re.I,
+)
+_TITLE_LEAK = re.compile(
+    r"architect|engineer|manager|developer|lead|director|consultant|analyst",
+    re.I,
+)
+
+
 def _primary_location_line(loc: str) -> str:
-    """First location segment before ·/| and applicants noise — never full page chrome."""
+    """First location segment before ·/| and applicants noise — never full page chrome.
+
+    Job titles sometimes leak into the location string with ``|`` separators
+    (e.g. ``Cloud … Architect | 1+year Contract | Remote | US Shift``). If the
+    first segment looks like a title, use the first later segment that looks
+    like a place / workplace pill.
+    """
     loc_s = (loc or "").strip()
     if not loc_s:
         return ""
-    primary = re.split(r"\s*[·|]\s*", loc_s, maxsplit=1)[0].strip()
-    primary = primary.splitlines()[0].strip() if primary else ""
-    return primary[:160]
+    parts = [p.strip() for p in re.split(r"\s*[·|]\s*", loc_s) if p.strip()]
+    if not parts:
+        return ""
+    first = parts[0].splitlines()[0].strip()
+    if _LOC_HINT.search(first) or not _TITLE_LEAK.search(first):
+        return first[:160]
+    for part in parts[1:]:
+        if _LOC_HINT.search(part):
+            return part[:160]
+    return loc_s[:160]
 
 
 def location_allowed(loc: str, workplace: str = "", *, remote_search: bool = False) -> bool:
