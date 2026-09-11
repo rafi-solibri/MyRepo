@@ -371,6 +371,12 @@ function isBrowserClosedError(e) {
   );
 }
 
+function isNavContextDestroyedError(e) {
+  return /Execution context was destroyed|most likely because of a navigation/i.test(
+    String(e?.message || e)
+  );
+}
+
 /** CDP session that can reconnect when Chrome drops the page mid-scan. */
 function createCdpSession() {
   let browser = null;
@@ -479,9 +485,19 @@ async function api(pageOrSession, method, urlPath, body) {
   try {
     return await run(page);
   } catch (e) {
-    if (!session || !isBrowserClosedError(e)) throw e;
-    console.log("[cdp] api retry after closed page:", String(e.message || e).slice(0, 120));
+    const retryable = isBrowserClosedError(e) || isNavContextDestroyedError(e);
+    if (!session || !retryable) throw e;
+    console.log("[cdp] api retry after nav/closed page:", String(e.message || e).slice(0, 120));
     page = await session.ensurePage();
+    try {
+      await page.goto("https://cutshort.io/profile/candidate-dashboard", {
+        waitUntil: "domcontentloaded",
+        timeout: 60000,
+      });
+      await sleep(800);
+    } catch {
+      /* ensurePage already landed somewhere on cutshort */
+    }
     return run(page);
   }
 }

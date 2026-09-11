@@ -4,6 +4,8 @@
 
 | Issue | Fix |
 | --- | --- |
+| Cutshort board scan died on page.evaluate Execution context was destroyed (navigation) | Retry Cutshort API evaluate after context-destroyed / closed page and re-land dashboard |
+| Micron Staff Engineer Design / AMS LPDDR / AMAIS / memory-systems workload architect burned LI EXT persist_retry | Title-skip those HW/process titles in CAREERS_TITLE_SKIP + LI_TITLE_SKIP + tests |
 | Micron Agentic AI + Data & Cloud Platform titles burned LI EXT/ATS; Oracle OTP gmail_hit via=list reused a stale code (still_on_gate) | Skip agentic AI / data-platform / sales-engineering titles; Gmail OTP opens newest thread (not list snippet), skip stale codes, fill/submit in frames |
 
 
