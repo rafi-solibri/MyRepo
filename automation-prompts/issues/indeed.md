@@ -1,5 +1,12 @@
 # Indeed — issues & fixes
 
+## 2026-09-11 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| Sign-in wall google_sso_button_missing: OneTrust cookie strip + visibility-only Google CTA click | Dismiss cookie banner then JS-click Continue with Google (data-tn/GSI iframe); inherit UC stderr for 2FA |
+
+
 ## 2026-09-02 (cloud)
 
 | Issue | Fix |

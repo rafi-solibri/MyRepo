@@ -667,6 +667,9 @@ def restore_signed_in(sb) -> dict:
     IP often keeps "Get Started" until we hit Sign-in / account / myjobs.
     """
     info: dict = {"tried": [], "ok": False}
+    dismissed = dismiss_indeed_cookie_banner(sb)
+    if dismissed:
+        info["tried"].append({"cookie_banner": dismissed})
 
     def _snap() -> tuple[str, str, str]:
         try:
@@ -3395,6 +3398,8 @@ def main() -> int:
                 session_ok = True
             elif warmed.get("loginWall") or looks_login_wall(home_body, home_url):
                 # Passport expired / Sign-in wall: try Gmail SSO before hard stop.
+                # Cookie strip covers Continue with Google on secure.indeed.com/auth.
+                dismiss_indeed_cookie_banner(sb)
                 try:
                     from tools.indeed.google_sso import try_google_sso
 

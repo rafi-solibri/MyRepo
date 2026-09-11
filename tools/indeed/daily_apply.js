@@ -19,7 +19,13 @@ const OUT =
   "/opt/cursor/artifacts/indeed-apply-report.json";
 
 function run(cmd, args, timeoutMs = 180000) {
-  return spawnSync(cmd, args, { encoding: "utf8", timeout: timeoutMs });
+  // Inherit stderr so ASK_OWNER_GOOGLE_2FA / UC progress is visible live;
+  // keep stdout piped so the final JSON report can still be parsed.
+  return spawnSync(cmd, args, {
+    encoding: "utf8",
+    timeout: timeoutMs,
+    stdio: ["ignore", "pipe", "inherit"],
+  });
 }
 
 function runPython(args, timeoutMs = 180000) {

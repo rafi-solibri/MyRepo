@@ -27,6 +27,128 @@ WRONG_PASSWORD_RE = re.compile(
     re.I,
 )
 
+GOOGLE_SSO_LABELS = (
+    "continue with google",
+    "sign in with google",
+    "sign in using google",
+    "sign in with your google",
+)
+
+GOOGLE_SSO_SELECTORS = (
+    "button[data-tn-element*='google' i]",
+    "a[data-tn-element*='google' i]",
+    "[data-tn-element*='google' i]",
+    "button[id*='google' i]",
+    "button[aria-label*='google' i]",
+    "a[aria-label*='google' i]",
+    "a[href*='accounts.google.com']",
+    "iframe[src*='accounts.google.com']",
+    "iframe[title*='Google']",
+    "button[data-tn-element='google-auth']",
+    "//button[contains(translate(., 'GOOGLE', 'google'), 'google')]",
+    "//a[contains(translate(., 'GOOGLE', 'google'), 'google')]",
+    "//*[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'continue with google')]",
+    "//*[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'sign in with google')]",
+)
+
+COOKIE_DISMISS_JS = """
+const labels = [
+  'accept all cookies', 'accept all', 'allow all cookies', 'allow all',
+  'reject all cookies', 'reject all', 'i agree', 'got it', 'ok'
+];
+const byId = document.querySelector(
+  '#onetrust-accept-btn-handler, #onetrust-reject-all-handler'
+);
+if (byId) {
+  try { byId.click(); } catch (e) {}
+  return (byId.innerText || byId.id || '').trim().slice(0, 80);
+}
+const els = [...document.querySelectorAll(
+  'button, a[role=button], [role=button], input[type=button], input[type=submit]'
+)];
+const textOf = (el) => ((el.innerText || el.value || el.getAttribute('aria-label') || '')).trim().toLowerCase();
+const scored = els.map(el => {
+  const t = textOf(el);
+  const r = el.getBoundingClientRect();
+  const idx = labels.findIndex(l => t === l || t.startsWith(l));
+  return {el, t, idx, onScreen: r.width > 0 && r.height > 0};
+}).filter(x => x.idx >= 0 && x.onScreen)
+  .sort((a,b) => a.idx - b.idx);
+const hit = scored[0];
+if (!hit) return null;
+try { hit.el.scrollIntoView({block:'center'}); } catch (e) {}
+try { hit.el.click(); } catch (e) {}
+return (hit.el.innerText || hit.el.value || '').trim().slice(0, 80);
+"""
+
+GOOGLE_SSO_CLICK_JS = """
+const labels = [
+  'continue with google', 'sign in with google',
+  'sign in using google', 'sign in with your google'
+];
+const nodes = [...document.querySelectorAll(
+  'button, a, [role=button], [data-tn-element*="google" i], [id*="google" i], [aria-label*="google" i], iframe'
+)];
+function textOf(el) {
+  return [
+    el.innerText || '',
+    el.getAttribute('aria-label') || '',
+    el.getAttribute('data-tn-element') || '',
+    el.id || '',
+    el.getAttribute('title') || '',
+    el.getAttribute('src') || '',
+    el.getAttribute('href') || ''
+  ].join(' ').replace(/\\s+/g, ' ').trim().toLowerCase();
+}
+const scored = nodes.map(el => {
+  const t = textOf(el);
+  const r = el.getBoundingClientRect();
+  let score = -1;
+  if (labels.some(l => t.includes(l))) score = 0;
+  else if ((el.getAttribute('data-tn-element') || '').toLowerCase().includes('google')) score = 1;
+  else if (el.tagName === 'IFRAME' && t.includes('google')) score = 2;
+  else if (t.includes('google') && /login|auth|sign in|continue|sso/.test(t)) score = 3;
+  return {el, t, score, onScreen: r.width > 8 && r.height > 8};
+}).filter(x => x.score >= 0)
+  .sort((a,b) => a.score - b.score || (Number(b.onScreen) - Number(a.onScreen)));
+const hit = scored[0];
+if (!hit) return null;
+try { hit.el.scrollIntoView({block:'center'}); } catch (e) {}
+try { hit.el.click(); } catch (e) {}
+return (hit.el.innerText || hit.el.getAttribute('aria-label') || hit.el.id || hit.t)
+  .toString().trim().slice(0, 80);
+"""
+
+
+def score_google_sso_candidate(text: str, attrs: dict | None = None) -> int | None:
+    """Lower score is a better Google SSO control. None = not a candidate."""
+    attrs = {str(k).lower(): str(v or "") for k, v in (attrs or {}).items()}
+    blob = " ".join(
+        [
+            text or "",
+            attrs.get("aria-label", ""),
+            attrs.get("data-tn-element", ""),
+            attrs.get("id", ""),
+            attrs.get("title", ""),
+            attrs.get("href", ""),
+            attrs.get("src", ""),
+        ]
+    )
+    blob = re.sub(r"\s+", " ", blob).strip().lower()
+    if "google" not in blob:
+        return None
+    if any(label in blob for label in GOOGLE_SSO_LABELS):
+        return 0
+    tn = attrs.get("data-tn-element", "").lower()
+    if "google" in tn:
+        return 1
+    tag = (attrs.get("tag") or "").lower()
+    if tag == "iframe":
+        return 2
+    if any(tok in blob for tok in ("login", "auth", "sign in", "continue", "sso")):
+        return 3
+    return None
+
 
 def google_email() -> str:
     return (
@@ -78,23 +200,69 @@ def _switch_to_google_window(sb: Any) -> bool:
     return False
 
 
+def _dismiss_cookie_banner(sb: Any) -> str:
+    """OneTrust / cookie strip covers Continue with Google on Sign-in."""
+    try:
+        sb.driver.switch_to.default_content()
+    except Exception:
+        pass
+    try:
+        clicked = sb.execute_script(COOKIE_DISMISS_JS)
+        if clicked:
+            time.sleep(0.8)
+            return str(clicked)
+    except Exception:
+        pass
+    return ""
+
+
+def _js_click_google_sso(sb: Any) -> str:
+    try:
+        hit = sb.execute_script(GOOGLE_SSO_CLICK_JS)
+        return str(hit or "")
+    except Exception:
+        return ""
+
+
 def _click_google_sso(sb: Any) -> bool:
-    patterns = (
-        "//button[contains(translate(., 'GOOGLE', 'google'), 'google')]",
-        "//a[contains(translate(., 'GOOGLE', 'google'), 'google')]",
-        "//*[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'continue with google')]",
-        "//*[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'sign in with google')]",
-        "button[data-tn-element='google-auth']",
-        "a[href*='accounts.google.com']",
-    )
-    for sel in patterns:
-        try:
-            if sb.is_element_visible(sel):
-                sb.click(sel)
-                time.sleep(2.5)
-                return True
-        except Exception:
-            continue
+    """Click Continue-with-Google even when a cookie overlay covers the CTA."""
+    _dismiss_cookie_banner(sb)
+    for _ in range(8):
+        hit = _js_click_google_sso(sb)
+        if hit:
+            time.sleep(2.5)
+            return True
+        for sel in GOOGLE_SSO_SELECTORS:
+            try:
+                present = False
+                try:
+                    present = bool(sb.is_element_present(sel))
+                except Exception:
+                    present = bool(sb.is_element_visible(sel))
+                if not present:
+                    continue
+                clicked = False
+                try:
+                    el = sb.find_element(sel)
+                    sb.execute_script(
+                        "const e=arguments[0];"
+                        "try{e.scrollIntoView({block:'center'});}catch(x){}"
+                        "e.click();",
+                        el,
+                    )
+                    clicked = True
+                except Exception:
+                    try:
+                        sb.click(sel)
+                        clicked = True
+                    except Exception:
+                        clicked = False
+                if clicked:
+                    time.sleep(2.5)
+                    return True
+            except Exception:
+                continue
+        time.sleep(1.0)
     return False
 
 
@@ -241,10 +409,24 @@ def try_google_sso(sb: Any, *, wait_2fa_sec: int | None = None) -> dict:
             except Exception as exc:
                 info["tried"].append({"open_auth": str(exc)[:120]})
 
+        dismissed = _dismiss_cookie_banner(sb)
+        if dismissed:
+            info["tried"].append({"cookie_banner": dismissed})
         clicked = _click_google_sso(sb)
         info["tried"].append({"google_sso_click": clicked})
         if not clicked:
             info["reason"] = "google_sso_button_missing"
+            info["hint"] = (
+                "Sign-in wall loaded but Continue with Google was not clickable "
+                "(cookie strip / selector). Refresh Indeed Passport via Desktop "
+                "Chrome + sync-chrome-sessions if this persists."
+            )
+            try:
+                shot = "/opt/cursor/artifacts/indeed-google-sso-missing.png"
+                sb.save_screenshot(shot)
+                info["screenshot"] = shot
+            except Exception:
+                pass
             return info
         time.sleep(2)
         _switch_to_google_window(sb)

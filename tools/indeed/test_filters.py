@@ -11,6 +11,7 @@ if str(ROOT) not in sys.path:
 
 from tools.indeed.passport_auth_check import status_from_plaintext  # noqa: E402
 from tools.indeed.prepare_uc_profile import COPY_PATHS  # noqa: E402
+from tools.indeed.google_sso import score_google_sso_candidate  # noqa: E402
 from tools.indeed.uc_daily_apply import (  # noqa: E402
     already_applied,
     cookie_banner_visible_from_text,
@@ -268,6 +269,38 @@ def test_indeed_google_sso_uses_google_password_only():
     assert not is_google_2fa_challenge(url=pwd, body="Enter your password")
 
 
+def test_google_sso_candidate_scores_indeed_auth_button():
+    """Cookie-covered Sign-in page still exposes a scoreable Google CTA."""
+    assert (
+        score_google_sso_candidate(
+            "Continue with Google",
+            {"data-tn-element": "auth-page-google-login", "tag": "button"},
+        )
+        == 0
+    )
+    assert (
+        score_google_sso_candidate(
+            "",
+            {"data-tn-element": "login-google-button", "tag": "button"},
+        )
+        == 1
+    )
+    assert score_google_sso_candidate("Accept All Cookies", {"tag": "button"}) is None
+    assert score_google_sso_candidate("Continue with Apple", {"tag": "button"}) is None
+    # Overlay-covered GSI iframe still counts as a click target.
+    assert (
+        score_google_sso_candidate(
+            "",
+            {
+                "tag": "iframe",
+                "src": "https://accounts.google.com/gsi/button",
+                "title": "Sign in with Google",
+            },
+        )
+        == 0
+    )
+
+
 if __name__ == "__main__":
     test_skip_hyd_remote_ok()
     test_skip_bengaluru_not_overridden_by_snippet_remote()
@@ -283,4 +316,5 @@ if __name__ == "__main__":
     test_job_dedupe_key_from_jk()
     test_passport_expiry_from_oauth_and_jwt()
     test_indeed_google_sso_uses_google_password_only()
+    test_google_sso_candidate_scores_indeed_auth_button()
     print("ok")
