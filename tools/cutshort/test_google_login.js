@@ -2,7 +2,7 @@
 "use strict";
 
 const assert = require("assert");
-const { passwordCandidates, isLoggedOut, HOME, DASH, PORTAL } = require("./google_login");
+const { passwordCandidates, isLoggedOut, isGoogle2faChallenge, HOME, DASH, PORTAL } = require("./google_login");
 
 assert.ok(new RegExp(`${PORTAL}\\.io\\/?$`).test(HOME), `HOME must be homepage, got ${HOME}`);
 assert.doesNotMatch(HOME, /\/login$/, "HOME must not use the 404 /login path");
@@ -39,6 +39,21 @@ assert.ok(
     "Matches for you\nRecommended jobs\nYour profile"
   ),
   "dashboard is logged in"
+);
+
+assert.ok(
+  isGoogle2faChallenge(
+    "https://accounts.google.com/v3/signin/challenge/dp",
+    "Check your phone. Tap Yes on the notification"
+  ),
+  "device-prompt challenge/dp is 2FA"
+);
+assert.ok(
+  !isGoogle2faChallenge(
+    "https://accounts.google.com/v3/signin/challenge/pwd",
+    "Enter your password"
+  ),
+  "challenge/pwd is not 2FA"
 );
 
 console.log("portal test_google_login: ok");

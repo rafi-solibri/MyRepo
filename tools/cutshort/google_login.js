@@ -85,7 +85,7 @@ function isGoogle2faChallenge(url, body) {
   const u = String(url || "");
   const text = String(body || "");
   if (isGooglePasswordChallenge(u, text)) return false;
-  if (/signin\/challenge\/(totp|ipp|az|sk|iap|selection)/i.test(u)) return true;
+  if (/signin\/challenge\/(totp|ipp|az|sk|iap|selection|dp)/i.test(u)) return true;
   return /2[- ]step|authenticator|verification code|check your phone|tap yes|confirm it.?s you/i.test(
     `${u}\n${text}`
   );
@@ -229,6 +229,34 @@ async function openCandidateLoginModal(page) {
     .catch(() => false);
   if (clicked) await sleep(1200);
   return clicked;
+}
+
+/** Tick the terms checkbox. Do not click the Terms/Privacy text (opens /terms). */
+async function agreeToTermsCheckbox(page) {
+  const boxes = page.locator("input[type=checkbox]");
+  const n = await boxes.count().catch(() => 0);
+  for (let i = 0; i < n; i++) {
+    const box = boxes.nth(i);
+    if (!(await box.isVisible().catch(() => false))) continue;
+    const checked = await box.isChecked().catch(() => false);
+    if (!checked) {
+      await box.click({ timeout: 8000, force: true }).catch(() => {});
+      await sleep(400);
+    }
+    if (await box.isChecked().catch(() => false)) return true;
+  }
+  const ok = await page
+    .evaluate(() => {
+      const input = [...document.querySelectorAll("input[type=checkbox]")].find((el) => {
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0;
+      });
+      if (!input) return false;
+      if (!input.checked) input.click();
+      return !!input.checked;
+    })
+    .catch(() => false);
+  return Boolean(ok);
 }
 
 async function clickGoogleSso(page) {
@@ -454,6 +482,7 @@ async function main() {
     process.exit(5);
   }
 
+  await agreeToTermsCheckbox(page);
   const clicked = await clickGoogleSso(page);
   if (!clicked) {
     console.log(
@@ -518,6 +547,7 @@ module.exports = {
   isGooglePasswordChallenge,
   isGoogle2faChallenge,
   isLoggedOut,
+  isGoogle2faChallenge,
   passwordCandidates,
   AUTH_COOKIE,
   HOME,
