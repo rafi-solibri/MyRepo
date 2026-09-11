@@ -1001,4 +1001,74 @@ assert.strictEqual(
   "Technical Lead AI Development must skip Arch/Lead band (2026-09-03 Falcon redirect noise)"
 );
 
+assert.strictEqual(
+  classifyJob({
+    jobId: 66501389,
+    title: "Technical Account Manager",
+    companyName: "UiPath",
+    locations: [{ text: "Remote" }],
+    skills: [{ text: ".NET" }, { text: "UiPath" }, { text: "RPA" }],
+    minimumExperience: { years: 8 },
+    maximumExperience: { years: 12 },
+  }).reason,
+  "account manager / sales / CS",
+  "UiPath Technical Account Manager must skip even with skills laundry .NET (2026-09-11)"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 66501370,
+    title: "Senior Technical Account Manager - Federal",
+    companyName: "UiPath",
+    locations: [{ text: "Remote" }],
+    skills: [{ text: ".NET" }, { text: "UiPath" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "account manager / sales / CS",
+  "Senior TAM Federal must skip (2026-09-11 Falcon APPLY_REDIRECT noise)"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 66506839,
+    title: "Proposal Solution Architect - VivSoft Technologies - Career Page",
+    companyName: "Vsoft Technologies",
+    locations: [{ text: "Hyderabad / Secunderabad" }],
+    skills: [{ text: "Azure" }, { text: ".NET" }],
+    minimumExperience: { years: 10 },
+    maximumExperience: { years: 15 },
+  }).reason,
+  "presales",
+  "Proposal Solution Architect is presales — skip Arch/Lead band (2026-09-11)"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: 66332607,
+    title: "Senior Engineering Manager, ITSM Operations",
+    companyName: "Atlassian",
+    locations: [{ text: "Hyderabad / Secunderabad" }],
+    skills: [{ text: "Jira" }, { text: "ITSM" }, { text: ".NET" }],
+    minimumExperience: { years: 12 },
+    maximumExperience: { years: 18 },
+  }).reason,
+  "ITSM without .NET on title",
+  "Atlassian ITSM Operations EM must skip Arch/Lead band (2026-09-11)"
+);
+
+assert.strictEqual(
+  classifyJob({
+    jobId: "atlassian-employer",
+    title: "Senior Engineering Manager",
+    companyName: "Atlassian",
+    locations: [{ text: "Remote" }],
+    skills: [{ text: "Jira" }, { text: ".NET" }],
+    minimumExperience: { years: 12 },
+    maximumExperience: { years: 18 },
+  }).reason,
+  "Atlassian without .NET on title",
+  "Atlassian employer + no .NET on title must skip (Salesforce company parity)"
+);
+
 console.log("filters.test.js OK");

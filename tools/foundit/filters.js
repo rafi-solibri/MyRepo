@@ -169,14 +169,31 @@ function isStaffPrincipal(title) {
 
 function skipTitleReason(title) {
   const t = titleForMatch(title);
-  if (/\b(qa\b|sdet|test\s+engineer)\b/i.test(t) && !hasDotNet(t, "")) return "QA/test";
+  if (
+    /\b(qa\b|sdet|test\s+engineer|quality\s+engineering)\b/i.test(t) &&
+    !hasDotNet(t, "")
+  )
+    return "QA/test";
   if (
     /\b(project\s+manager|program\s+manager|delivery\s+manager|technical\s+program\s+manager|\btpm\b)\b/i.test(
       t
     )
   )
     return "PM/TPM/delivery";
-  if (/\bpresales|pre-sales\b/i.test(t)) return "presales";
+  // Sales / TAM / CS — hasSeniority matches bare "manager"; skills laundry .NET is noise
+  // (UiPath Technical Account Manager + Senior TAM Federal 2026-09-11 Falcon APPLY_REDIRECT).
+  if (
+    /\baccount\s+managers?\b|\btechnical\s+account\s+manager|\btam\b|customer\s+success|\bsales\s+managers?\b/i.test(
+      t
+    )
+  )
+    return "account manager / sales / CS";
+  if (/\bpresales|pre-sales|proposal\s+(solution\s+)?architect\b/i.test(t))
+    return "presales";
+  // Jira/Service Management ops EM — Arch/Lead must not waive .NET
+  // (Atlassian "Senior Engineering Manager, ITSM Operations" 2026-09-11).
+  if (/\bit\s*sm\b|\bitsm\b/i.test(t) && !hasDotNet(t, ""))
+    return "ITSM without .NET on title";
   // Agentforce/SFDC titles are Salesforce-stack even when "Salesforce" is only the employer.
   if (/\b(salesforce|agentforce|sfdc)\b/i.test(t)) return "Salesforce";
   if (/\bservicenow\b/i.test(t)) return "ServiceNow";
@@ -349,6 +366,11 @@ function classifyJob(job) {
   const company = job.companyName || job.company?.name || "";
   if (/\bsalesforce\b/i.test(company) && !hasDotNet(title, "")) {
     return { pass: false, reason: "Salesforce" };
+  }
+  // Employer Atlassian + no .NET on TITLE → Jira/ITSM stack (title-only Atlassian skip
+  // missed "Senior Engineering Manager, ITSM Operations" 2026-09-11).
+  if (/\batlassian\b/i.test(company) && !hasDotNet(title, "")) {
+    return { pass: false, reason: "Atlassian without .NET on title" };
   }
   if (!hasSeniority(title))
     return { pass: false, reason: "no seniority keyword on title" };

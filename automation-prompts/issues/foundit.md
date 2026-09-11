@@ -1,5 +1,12 @@
 # Foundit — issues & fixes
 
+## 2026-09-11 (cloud)
+
+| Issue | Fix |
+| --- | --- |
+| False Falcon redirects: UiPath Technical Account Manager / Senior TAM Federal (manager + skills laundry .NET); VivSoft Proposal Solution Architect (presales); Atlassian Senior EM ITSM Operations (Arch/Lead waived .NET) | filters.js: skip account manager/TAM/sales/CS; proposal architect → presales; ITSM without .NET on title; Atlassian employer without .NET on title (Salesforce parity); tests for 66501389/66501370/66506839/66332607 |
+
+
 ## 2026-09-04 (cloud)
 
 | Issue | Fix |
