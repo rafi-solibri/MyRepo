@@ -52,7 +52,7 @@ Hi — I'm applying for .NET Architect Consultant at galaxy weblinks inc. 15+ yr
 Hi — I'm applying for Walk in - Azure Solution Architect - Hyderabad at Tata Consultancy Services. 15+ yrs Solutions Architect / Tech Lead (.NET, Azure/AWS), Hyderabad/remote, immediate. Current 52 LPA → expected 65 LPA. Happy to share Rafi_Resume.docx — could you refer me to the hiring manager? Thanks, Rafi Ahmed
 
 ## Notes
-- Artifact: `/opt/cursor/artifacts/foundit-apply-report.json` (copy: `reports/2026-09-11/foundit-apply-report.json`)
+- Artifact: `/opt/cursor/artifacts/foundit-apply-report.json` (JSON kept out of git — referral drafts include owner contact).
 - Resume: `resumes/Rafi_Resume.docx` (JD-tailored per apply + profile upload).
 - No invented applies. Falcon APPLY_REDIRECT / Applied-tab bump not counted when company ATS did not confirm submit.
 - Inventory: Hyd/.NET Arch-Lead still thin on native Falcon; most leftover hits are LinkedIn/Ashby/Workday without confirmation, or already Applied.
