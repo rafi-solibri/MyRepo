@@ -4,6 +4,7 @@
 
 | Issue | Fix |
 | --- | --- |
+| TITLE_OK allowed Senior Project Architect High-Rise/Mivan/BIM (AEC) | Blacklist project architect, high-rise, Mivan |
 | TITLE_OK allowed Restaurant Architect / Designer (architectural visualization) | Blacklist restaurant architect, architectural visualization, architect/designer building titles |
 | TITLE_BLACKLIST missed Dell Boomi Architect (iPaaS, same class as MuleSoft/Workato) | Add boomi to TITLE_BLACKLIST |
 | TITLE_OK matched Business Development Manager via bare 'development manager' | Drop standalone development manager token; Software Development Manager still matches |

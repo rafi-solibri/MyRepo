@@ -36,6 +36,15 @@ assert_true(
 )
 assert_true(
     skip_reason(
+        "Senior Project Architect - High-Rise | Mivan | BIM",
+        "Studio Infinite",
+        "",
+    )
+    is not None,
+    "AEC high-rise/Mivan project architect must skip",
+)
+assert_true(
+    skip_reason(
         "Dell Boomi Architect- 9+ Years of experience - ONLY immediate to 15 days joiner",
         "Tek Grove",
         "",
